@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Account\AccountChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit;
@@ -13,9 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE USER [IF NOT EXISTS] account [auth], … [DEFAULT ROLE …] [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to create accounts.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Creating an account with a password and a lock
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@`%` IDENTIFIED BY 'pw' ACCOUNT LOCK"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create user if not exists app@'%' identified by 'pw' account lock")->toString() // => "CREATE USER IF NOT EXISTS app@`%` IDENTIFIED BY 'pw' ACCOUNT LOCK"
  */
 final class CreateUser implements Statement
 {

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Functions;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Finds the aggregate function calls among the parts of a selection.
@@ -33,7 +33,7 @@ final class Aggregation
      */
     public function aggregates(array $nodes): bool
     {
-        $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']);
+        $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']);
         $functions = new Functions();
         foreach ($nodes as $node) {
             foreach ($graph->objects($node) as $object) {

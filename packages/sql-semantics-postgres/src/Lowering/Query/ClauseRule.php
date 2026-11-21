@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling;
@@ -22,7 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the clauses of a selection and the clauses written after a query body.

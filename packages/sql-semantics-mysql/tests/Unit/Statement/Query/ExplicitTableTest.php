@@ -7,18 +7,17 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(ExplicitTable::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class ExplicitTableTest extends TestCase
 {
     public function testNameAnswersTheTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('TABLE shop.t');
+        $operation = (new Semantics())->analyze('TABLE shop.t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertSame('t', $operation->statement->name()->name->value);
@@ -35,7 +34,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testAliasAnswersNoCorrelationName(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t');
+        $operation = (new Semantics())->analyze('TABLE t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertNull($operation->statement->alias());
@@ -43,7 +42,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testDeriveStatementRecordsTheColumnsAsTheOutput(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -61,7 +60,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testDeriveQueryAnswersEveryColumnOfTheTable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -78,7 +77,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testDeriveRelationDependsOnAnUndeclaredTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t');
+        $operation = (new Semantics())->analyze('TABLE t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
@@ -87,6 +86,6 @@ final class ExplicitTableTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('TABLE shop.t', (new Semantics(Dialect::MySql))->analyze('table shop.t')->toString());
+        self::assertSame('TABLE shop.t', (new Semantics())->analyze('table shop.t')->toString());
     }
 }

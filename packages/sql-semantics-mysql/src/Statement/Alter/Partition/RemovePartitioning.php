@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Partition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `REMOVE PARTITIONING`: a request to turn a partitioned table into an unpartitioned one.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Removing the partitioning
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t REMOVE PARTITIONING')->toString() // => 'ALTER TABLE t REMOVE PARTITIONING'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REMOVE PARTITIONING')->toString() // => 'ALTER TABLE t REMOVE PARTITIONING'
  */
 final class RemovePartitioning implements TrailingCommand
 {

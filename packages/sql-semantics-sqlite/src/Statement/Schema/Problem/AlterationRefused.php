@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * An ALTER TABLE request SQLite refuses because of what it adds or drops.
@@ -14,8 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an added UNIQUE column
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ALTER TABLE t ADD COLUMN code TEXT UNIQUE');
- *     $alter->facts->diagnostics[0]->message() // => 'A UNIQUE column cannot be added.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t ADD COLUMN code TEXT UNIQUE') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A UNIQUE column cannot be added.
  */
 final class AlterationRefused implements Diagnostic
 {

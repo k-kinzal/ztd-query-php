@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A query that PostgreSQL rejects because it breaks a rule of the language.
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'SELECT * with no tables specified is not valid'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: SELECT * with no tables specified is not valid
  */
 final class QueryMisuse implements Diagnostic
 {

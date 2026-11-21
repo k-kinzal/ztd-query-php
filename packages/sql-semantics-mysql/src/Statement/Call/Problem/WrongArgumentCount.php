@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A call of a native function with a number of arguments the function does not accept (ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT).
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a call with too many arguments
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT abs(1, 2)');
- *     $query->facts->diagnostics[0]->message() // => "Incorrect parameter count in the call to native function 'abs'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect parameter count in the call to native function 'abs'
  */
 final class WrongArgumentCount implements Diagnostic
 {

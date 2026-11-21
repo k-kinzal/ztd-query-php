@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A TEMP object whose name is qualified with a schema other than `temp`.
@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a temporary table in the main schema
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TEMP TABLE main.t (a)');
- *     $create->facts->diagnostics[0]->message() // => 'Temporary object t must not be qualified with schema main.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TEMP TABLE main.t (a)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Temporary object t must not be qualified with schema main.
  */
 final class QualifiedTemporaryName implements Diagnostic
 {

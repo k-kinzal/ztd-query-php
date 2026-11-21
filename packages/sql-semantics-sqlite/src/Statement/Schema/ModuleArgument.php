@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ModuleArguments;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One argument of a virtual table module: the exact text SQLite hands to the module.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the arguments a module receives
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("CREATE VIRTUAL TABLE docs USING fts5(title,  body , , tokenize = 'porter ascii')");
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE VIRTUAL TABLE docs USING fts5(title,  body , , tokenize = 'porter ascii')");
  *     [$create->statement->arguments[1]->text, $create->statement->arguments[2]->passed(), $create->statement->arguments[3]->text] // => ['body', false, "tokenize = 'porter ascii'"]
  */
 final class ModuleArgument implements Node

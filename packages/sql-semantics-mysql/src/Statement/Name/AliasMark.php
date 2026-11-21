@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 
 /**
  * What is written between an operand and its alias: `AS`, nothing, or in MySQL 5.6 and 5.7 `=` before a table alias.
@@ -17,7 +17,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Reading how an alias is written
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a total FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a total FROM t');
  *     $query->statement->items[0]->mark // => \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Bare
  */
 enum AliasMark
@@ -30,7 +30,7 @@ enum AliasMark
      * Writes what precedes the alias.
      *
      * @example Writing the keyword of an alias
-     *     $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+     *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));
      *     \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As->write($out);
      *     $out->pieces()[0]->text // => 'AS'
      */

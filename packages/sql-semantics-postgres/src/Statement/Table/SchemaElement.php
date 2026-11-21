@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * A statement that CREATE SCHEMA may contain: CREATE TABLE, CREATE INDEX, CREATE SEQUENCE, CREATE TRIGGER or CREATE VIEW.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the schema written on an element
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE s.t (a int)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE s.t (a int)');
  *     $create->statement->createdSchema()?->value // => 's'
  */
 interface SchemaElement extends Statement

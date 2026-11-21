@@ -7,9 +7,8 @@ namespace Tests\Unit\Rules\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
 
@@ -19,9 +18,9 @@ final class HistogramsTest extends TestCase
 {
     public function testDeriveReportsAnUnknownColumn(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $analyze = $semantics->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $analyze = $semantics->inspect('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
 
         self::assertCount(1, $analyze->facts->diagnostics);
         self::assertInstanceOf(UnknownHistogramColumn::class, $analyze->facts->diagnostics[0]);
@@ -29,7 +28,7 @@ final class HistogramsTest extends TestCase
 
     public function testDeriveAcceptsAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
     }
 
     public function testBucketsTellsWhetherTheCountIsInRange(): void
@@ -41,6 +40,6 @@ final class HistogramsTest extends TestCase
 
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON `a b`, c', (new Semantics(Dialect::MySql))->analyze('analyze table t drop histogram on `a b`, c')->toString());
+        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON `a b`, c', (new Semantics())->inspect('analyze table t drop histogram on `a b`, c')->toString());
     }
 }

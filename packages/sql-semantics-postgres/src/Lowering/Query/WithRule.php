@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchOrder;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause;
-use SqlSemantics\Statement\Query;
 
 /**
  * Lowers WITH clauses and their common table expressions.

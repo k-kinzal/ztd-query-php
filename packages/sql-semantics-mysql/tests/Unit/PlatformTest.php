@@ -8,18 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Platform::class)]
 #[Medium]
@@ -60,7 +59,7 @@ final class PlatformTest extends TestCase
     {
         $this->expectExceptionMessage('MySQL reads SQL under a MySQL session mode');
 
-        new Semantics(Dialect::MySql, null, new class () implements \SqlSemantics\Contract\Mode {
+        new Semantics(null, new class () implements \SqlSemantics\Contract\Mode {
             public function toString(): string
             {
                 return '';
@@ -108,7 +107,7 @@ final class PlatformTest extends TestCase
 
         self::assertSame('`order`', $codec->name(new Name('order'), NameUse::Column));
         self::assertSame('t', $codec->name(new Name('t'), NameUse::Relation));
-        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT `rank`, `order` FROM t')->toString());
+        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics('mysql-8.4.7'))->analyze('SELECT `rank`, `order` FROM t')->toString());
     }
 
     public function testLeafKeysReadTokensUnderTheLexicalSettings(): void
@@ -152,5 +151,10 @@ final class PlatformTest extends TestCase
         self::assertSame('SqlSemantics\\Platform\\MySql\\Statement\\', (new Platform())->statementNamespace());
         self::assertStringStartsWith((new Platform())->statementNamespace(), Select::class);
         self::assertStringEndsWith('\\', (new Platform())->statementNamespace());
+    }
+
+    public function testSharedReusesTheDatabasePlatform(): void
+    {
+        self::assertSame(Platform::shared(), Platform::shared());
     }
 }

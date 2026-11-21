@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Transaction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Commit;
 
 #[CoversClass(Commit::class)]
@@ -17,7 +16,7 @@ final class CommitTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('COMMIT', []);
+        $operation = (new Semantics())->analyze('COMMIT', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -25,7 +24,7 @@ final class CommitTest extends TestCase
 
     public function testRenderWritesEndAsCommit(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertSame('COMMIT', $semantics->analyze('END')->toString());
         self::assertSame('COMMIT', $semantics->analyze('commit transaction')->toString());
@@ -34,7 +33,7 @@ final class CommitTest extends TestCase
 
     public function testRenderKeepsTheIgnoredName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('END TRANSACTION t1');
+        $operation = (new Semantics())->analyze('END TRANSACTION t1');
 
         self::assertInstanceOf(Commit::class, $operation->statement);
         self::assertSame('t1', $operation->statement->name?->value);

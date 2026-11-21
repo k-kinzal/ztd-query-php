@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  *
  * @visibility public
  * @example Reading the spelling of a NULL test
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a NOT NULL FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a NOT NULL FROM t');
  *     $query->statement->columns[0]->expression->form // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::NotNullWords
  */
 enum NullTestForm

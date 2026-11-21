@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Legacy;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
-use SqlSemantics\Statement\Query;
 
 /**
  * Lowers the statements, views and unions of the 5.x grammars.

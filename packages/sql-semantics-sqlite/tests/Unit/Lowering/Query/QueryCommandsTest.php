@@ -8,14 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Lists;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\QueryCommands;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Platform;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
@@ -31,7 +30,7 @@ final class QueryCommandsTest extends TestCase
 {
     public function testCommandLowersEveryFormOfASelectCommand(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(Select::class, $semantics->analyze('SELECT 1')->statement);
         self::assertInstanceOf(ValuesClause::class, $semantics->analyze('VALUES (1)')->statement);
@@ -41,7 +40,7 @@ final class QueryCommandsTest extends TestCase
 
     public function testCommandLowersACreateTriggerCommand(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END');
+        $operation = (new Semantics())->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         self::assertSame('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END', $operation->toString());
@@ -49,7 +48,7 @@ final class QueryCommandsTest extends TestCase
 
     public function testCommandPassesDataChangesToTheMutationRules(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(InsertRows::class, $semantics->analyze('INSERT INTO t VALUES (1)')->statement);
         self::assertInstanceOf(Update::class, $semantics->analyze('UPDATE t SET a = 1')->statement);

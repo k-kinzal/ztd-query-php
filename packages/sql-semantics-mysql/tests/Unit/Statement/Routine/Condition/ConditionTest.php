@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Routine\Condition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
@@ -25,7 +24,7 @@ final class ConditionTest extends TestCase
 {
     public function testImplementationsAreTheValuesAHandlerNames(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR SQLWARNING, 1052, SQLSTATE '42S02', c BEGIN END; END");
+        $create = (new Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR SQLWARNING, 1052, SQLSTATE '42S02', c BEGIN END; END");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

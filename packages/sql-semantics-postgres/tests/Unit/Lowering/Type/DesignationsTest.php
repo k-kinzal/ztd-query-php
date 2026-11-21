@@ -8,12 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Lowering\Type\Designations;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\BitDesignation;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\DecimalKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\FloatDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Designations::class)]
 #[Small]

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Telling that a dotted name refers to an object
- *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('t')]);
+ *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')]);
  *     $name instanceof \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference // => true
  */
 interface ObjectReference extends Clause

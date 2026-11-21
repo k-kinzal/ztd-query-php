@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\CopyFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * COPY of the rows of a query to a file, a program or the client.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a COPY of a query
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY (SELECT 1) TO '/tmp/x' CSV");
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY (SELECT 1) TO '/tmp/x' CSV");
  *     [$copy->statement->query instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $copy->toString()] // => [true, "COPY (SELECT 1) TO '/tmp/x' CSV"]
  */
 final class CopyQuery implements Statement

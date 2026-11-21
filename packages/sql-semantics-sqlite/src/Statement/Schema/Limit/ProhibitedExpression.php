@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * An expression of a definition that uses a construct SQLite rejects at its position.
@@ -18,8 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a subquery in a partial index condition
- *     $index = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE INDEX i ON t (a) WHERE a IN (SELECT 1)');
- *     $index->facts->diagnostics[0]->message() // => 'Subqueries are prohibited in partial index WHERE clauses.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE INDEX i ON t (a) WHERE a IN (SELECT 1)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Subqueries are prohibited in partial index WHERE clauses.
  */
 final class ProhibitedExpression implements Diagnostic
 {

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\Layouts;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Layouts;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers result column lists, aliases and VALUES clauses.

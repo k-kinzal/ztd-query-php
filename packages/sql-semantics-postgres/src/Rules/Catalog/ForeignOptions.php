@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
-use SqlSemantics\Rendering\Output;
 
 /**
  * Writes and checks the option lists of foreign-data commands.

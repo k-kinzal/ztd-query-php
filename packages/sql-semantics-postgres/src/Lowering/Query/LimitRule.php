@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockingClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockStrength;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\FetchFirst;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\Offset;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the LIMIT, OFFSET, FETCH and locking clauses.

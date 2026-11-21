@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node as StatementNode;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonExistsColumn;
@@ -21,8 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlColumnOptionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlNamespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node as StatementNode;
 
 /**
  * Lowers XMLTABLE and JSON_TABLE in FROM.

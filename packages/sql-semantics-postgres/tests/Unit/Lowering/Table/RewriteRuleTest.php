@@ -14,7 +14,7 @@ final class RewriteRuleTest extends TestCase
 {
     public function testRuleLowersAlso(): void
     {
-        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves(), \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE RULE r AS ON INSERT TO t DO ALSO NOTHING');
         $value = (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\RewriteRule($lowering))->rule($tree->find('RuleStmt')[0]);
         self::assertSame(false, $value->instead);
@@ -22,7 +22,7 @@ final class RewriteRuleTest extends TestCase
 
     public function testActionsDropsEmptyStatements(): void
     {
-        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves(), \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE RULE r AS ON INSERT TO t DO (; SELECT 1;)');
         $value = (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\RewriteRule($lowering))->actions($tree->find('RuleActionList')[0]);
         self::assertSame([
@@ -33,9 +33,9 @@ final class RewriteRuleTest extends TestCase
 
     public function testActionLowersASelection(): void
     {
-        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves(), \SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE RULE r AS ON INSERT TO t DO SELECT 1');
         $value = (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\RewriteRule($lowering))->action($tree->find('RuleActionStmt')[0]);
-        self::assertSame(true, $value instanceof \SqlSemantics\Statement\Query);
+        self::assertSame(true, $value instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Query);
     }
 }

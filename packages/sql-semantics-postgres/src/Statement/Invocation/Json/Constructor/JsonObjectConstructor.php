@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair;
@@ -13,14 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * `JSON_OBJECT (key : value, ... [NULL | ABSENT ON NULL] [WITH | WITHOUT UNIQUE] [RETURNING type])`.
@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $object = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectConstructor([]);
  *     [$object->pairs, $object->outputName()->value] // => [[], 'json_object']
  * @example Rejecting a NULL clause without pairs
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectConstructor([], \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling::Absent) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectConstructor([], \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling::Absent) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class JsonObjectConstructor implements Scalar, OutputNaming
 {

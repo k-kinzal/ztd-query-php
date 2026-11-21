@@ -7,9 +7,9 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\ResultRule;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
-use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(ResultRule::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class ResultRuleTest extends TestCase
 {
     public function testColumnsLowersExpressionsStarsAndTableStarsInWrittenOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, *, t.*, b + 1 AS c FROM t');
+        $operation = (new Semantics())->analyze('SELECT a, *, t.*, b + 1 AS c FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([ResultColumn::class, Star::class, TableStar::class, ResultColumn::class], array_map(static fn (object $column): string => $column::class, $operation->statement->columns));
@@ -39,7 +38,7 @@ final class ResultRuleTest extends TestCase
 
     public function testMarkerCarriesNothingIntoTheResultColumns(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1, t.*, * FROM t');
+        $operation = (new Semantics())->analyze('SELECT 1, t.*, * FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertCount(3, $operation->statement->columns);
@@ -51,7 +50,7 @@ final class ResultRuleTest extends TestCase
 
     public function testAliasReadsTheAliasAfterAsABareWordAStringOrNone(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a AS b, a c, a 'd', a \"e\", a FROM t");
+        $operation = (new Semantics())->analyze("SELECT a AS b, a c, a 'd', a \"e\", a FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(['b', 'c', 'd', 'e', null], array_map(static function (object $column): ?string {
@@ -67,7 +66,7 @@ final class ResultRuleTest extends TestCase
 
     public function testColumnKeepsTheLayoutOfAnUnaliasedExpressionThatIsNotCanonical(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a+1, a + 1, a+1 AS x FROM t');
+        $operation = (new Semantics())->analyze('SELECT a+1, a + 1, a+1 AS x FROM t');
         self::assertInstanceOf(Select::class, $operation->statement);
         $columns = $operation->statement->columns;
 
@@ -82,7 +81,7 @@ final class ResultRuleTest extends TestCase
 
     public function testKeywordTellsWhetherAsIntroducesTheAlias(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a AS b, a c, a 'd', a FROM t AS x, t y, t");
+        $operation = (new Semantics())->analyze("SELECT a AS b, a c, a 'd', a FROM t AS x, t y, t");
         self::assertInstanceOf(Select::class, $operation->statement);
 
         self::assertSame([true, false, false, true], array_map(static fn (ResultColumn|Star|TableStar $column): bool => $column instanceof ResultColumn && $column->as, $operation->statement->columns));
@@ -91,7 +90,7 @@ final class ResultRuleTest extends TestCase
 
     public function testQuantifierLowersDistinctAllOrNone(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $distinct = $semantics->analyze('SELECT DISTINCT a FROM t');
         $all = $semantics->analyze('SELECT ALL a FROM t');
         $plain = $semantics->analyze('SELECT a FROM t');
@@ -108,7 +107,7 @@ final class ResultRuleTest extends TestCase
 
     public function testValuesLowersEveryRowInWrittenOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('VALUES (1, 2), (3, 4), (5, 6)');
+        $operation = (new Semantics())->analyze('VALUES (1, 2), (3, 4), (5, 6)');
 
         self::assertInstanceOf(ValuesClause::class, $operation->statement);
         self::assertSame([['1', '2'], ['3', '4'], ['5', '6']], array_map(static fn (ValueRow $row): array => array_map(static function (object $value): string {
@@ -124,7 +123,7 @@ final class ResultRuleTest extends TestCase
 
     public function testValuesLowersASingleRow(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("VALUES ('one')");
+        $operation = (new Semantics())->analyze("VALUES ('one')");
 
         self::assertInstanceOf(ValuesClause::class, $operation->statement);
         self::assertCount(1, $operation->statement->rows);

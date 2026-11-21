@@ -7,16 +7,15 @@ namespace Tests\Unit\Rules\Definition\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\QueryColumns;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(QueryColumns::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class QueryColumnsTest extends TestCase
 {
     public function testSettledStopsBeforeTheFirstUnexpandedStar(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a, *, 2 AS b FROM undeclared');
+        $query = (new Semantics())->inspect('SELECT 1 AS a, *, 2 AS b FROM undeclared');
 
         self::assertNotNull($query->facts->output);
         self::assertCount(1, (new QueryColumns())->settled($query->facts->output));
@@ -65,9 +64,9 @@ final class QueryColumnsTest extends TestCase
 
     public function testTableColumnsRecordTheTypeOfTheExpressionAffinity(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n NUMERIC, r REAL, b BLOB)');
-        $query = $semantics->analyze('SELECT i, t, n, r, b, 1 AS one, CAST(i AS TEXT) AS c, (SELECT i FROM s) AS sq, * FROM s', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n NUMERIC, r REAL, b BLOB)');
+        $query = $semantics->inspect('SELECT i, t, n, r, b, 1 AS one, CAST(i AS TEXT) AS c, (SELECT i FROM s) AS sq, * FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -80,9 +79,9 @@ final class QueryColumnsTest extends TestCase
 
     public function testTableColumnsRecordACompoundFromItsArms(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
-        $query = $semantics->analyze("SELECT t AS x, i AS y, CAST(i AS INT) AS c, 1 AS one FROM s UNION ALL SELECT 1, 'a', 2, 2 FROM s", [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->inspect("SELECT t AS x, i AS y, CAST(i AS INT) AS c, 1 AS one FROM s UNION ALL SELECT 1, 'a', 2, 2 FROM s", [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
@@ -93,10 +92,10 @@ final class QueryColumnsTest extends TestCase
 
     public function testTableColumnsStopAtAFieldWithoutADeterminedNameOrAffinity(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
-        $unnamed = $semantics->analyze('SELECT i, i, i, i, i, i, t FROM s', [$table]);
-        $undeclared = $semantics->analyze('SELECT s.i, u.x, s.t FROM s, u', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
+        $unnamed = $semantics->inspect('SELECT i, i, i, i, i, i, t FROM s', [$table]);
+        $undeclared = $semantics->inspect('SELECT s.i, u.x, s.t FROM s, u', [$table]);
         $columns = new QueryColumns();
 
         self::assertInstanceOf(Select::class, $unnamed->statement);
@@ -109,11 +108,11 @@ final class QueryColumnsTest extends TestCase
 
     public function testNamedGivesTheNamesSqliteGivesAfterResolution(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
-        $query = $semantics->analyze('SELECT I COLLATE nocase, unlikely(T), 1+1, "zz", true, s.i AS x, * FROM s', [$table]);
-        $values = $semantics->analyze('VALUES (1, i) UNION SELECT 2, 3');
-        $conditional = $semantics->analyze('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->inspect('SELECT I COLLATE nocase, unlikely(T), 1+1, "zz", true, s.i AS x, * FROM s', [$table]);
+        $values = $semantics->inspect('VALUES (1, i) UNION SELECT 2, 3');
+        $conditional = $semantics->inspect('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(Compound::class, $values->statement);
@@ -128,9 +127,9 @@ final class QueryColumnsTest extends TestCase
 
     public function testViewColumnsKeepTheDeclaredTypeAndTheNullFactOfAReferencedColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n)');
-        $query = $semantics->analyze('SELECT i, t, CAST(t AS INTEGER) AS c, 1 AS one, n FROM s', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n)');
+        $query = $semantics->inspect('SELECT i, t, CAST(t AS INTEGER) AS c, 1 AS one, n FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -144,9 +143,9 @@ final class QueryColumnsTest extends TestCase
 
     public function testViewColumnsRecordACompoundFromItsArms(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t VARCHAR(5))');
-        $query = $semantics->analyze('SELECT t AS x, i AS y, t AS z FROM s UNION ALL SELECT 1, i, t FROM s', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t VARCHAR(5))');
+        $query = $semantics->inspect('SELECT t AS x, i AS y, t AS z FROM s UNION ALL SELECT 1, i, t FROM s', [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
@@ -157,9 +156,9 @@ final class QueryColumnsTest extends TestCase
 
     public function testViewColumnsGiveNoTypesWhenTheColumnListDoesNotFitTheQuery(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE s (i INTEGER)');
-        $query = $semantics->analyze('SELECT i FROM s', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE s (i INTEGER)');
+        $query = $semantics->inspect('SELECT i FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -173,8 +172,8 @@ final class QueryColumnsTest extends TestCase
 
     public function testViewColumnsTakeTheirNamesFromAColumnListAndStopAtANameWithoutAField(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('SELECT 1 AS a, 2 AS b');
+        $semantics = new Semantics();
+        $query = $semantics->inspect('SELECT 1 AS a, 2 AS b');
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);

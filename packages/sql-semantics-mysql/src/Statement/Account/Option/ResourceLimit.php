@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One resource limit of the WITH clause of CREATE USER, ALTER USER or MySQL 5.x GRANT.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a limit
- *     $limit = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE USER u WITH MAX_QUERIES_PER_HOUR 10')->statement->resources[0];
+ *     $limit = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE USER u WITH MAX_QUERIES_PER_HOUR 10')->statement->resources[0];
  *     [$limit->kind, $limit->number->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceKind::QueriesPerHour, '10']
  */
 final class ResourceLimit implements WithOption

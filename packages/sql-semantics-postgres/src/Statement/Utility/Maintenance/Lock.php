@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOCK [TABLE] name [, ...] [IN mode MODE] [NOWAIT]`: a request to lock tables for the current transaction.
@@ -27,10 +27,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the mode a LOCK takes
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('LOCK TABLE ONLY a, b NOWAIT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LOCK TABLE ONLY a, b NOWAIT');
  *     [$operation->statement->mode, $operation->statement->effectiveMode(), $operation->toString()] // => [null, \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::AccessExclusive, 'LOCK ONLY a, b NOWAIT']
  * @example Refusing a LOCK without a table
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Lock([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Lock([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Lock implements Statement
 {

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Attributes;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
@@ -22,8 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEvent;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEventKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Derives and writes triggers and event triggers.
@@ -175,7 +175,7 @@ final class Triggers
      *
      * @param list<TriggerArgument> $arguments
      */
-    public function tail(Output $out, ?\SqlSemantics\Statement\Scalar $when, \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName $function, array $arguments): void
+    public function tail(Output $out, ?\SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar $when, \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName $function, array $arguments): void
     {
         if ($when !== null) {
             $out->keyword('WHEN')->symbol('(')->node($when)->symbol(')');

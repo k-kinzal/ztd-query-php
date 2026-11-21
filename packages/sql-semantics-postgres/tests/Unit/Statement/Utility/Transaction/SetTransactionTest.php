@@ -14,11 +14,11 @@ final class SetTransactionTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')->facts->diagnostics);
     }
 
     public function testRenderDropsTheCommasAndKeepsLocal(): void
     {
-        self::assertSame('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED DEFERRABLE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED, DEFERRABLE')->toString());
+        self::assertSame('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED DEFERRABLE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED, DEFERRABLE')->toString());
     }
 }

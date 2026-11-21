@@ -7,8 +7,8 @@ namespace Tests\Unit\Rendering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
 use SqlSemantics\Platform\PostgreSql\Rendering\Keywords;
 
 #[CoversClass(Keywords::class)]

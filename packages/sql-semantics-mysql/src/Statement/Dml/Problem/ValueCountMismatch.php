@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A row of an INSERT or REPLACE with another number of values than the columns it writes.
@@ -18,8 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a row with too many values
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a) VALUES (1), (2, 3)');
- *     [$insert->facts->diagnostics[0]->expected, $insert->facts->diagnostics[0]->actual, $insert->facts->diagnostics[0]->message()] // => [1, 2, "Column count doesn't match value count at row 2"]
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) VALUES (1), (2, 3)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
  */
 final class ValueCountMismatch implements Diagnostic
 {

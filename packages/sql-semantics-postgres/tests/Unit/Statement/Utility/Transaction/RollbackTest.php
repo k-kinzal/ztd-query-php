@@ -14,17 +14,17 @@ final class RollbackTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ROLLBACK')->facts->diagnostics);
     }
 
     public function testRenderWritesTheChaining(): void
     {
-        self::assertSame('ABORT AND NO CHAIN', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ABORT AND NO CHAIN')->toString());
+        self::assertSame('ABORT AND NO CHAIN', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ABORT AND NO CHAIN')->toString());
     }
 
     public function testSpellingIsRead(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ABORT')->statement;
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ABORT')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpelling::Abort, $statement->spelling);
     }

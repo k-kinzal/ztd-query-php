@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Limit;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * LIMIT count, offset: a spelling the grammar accepts and PostgreSQL rejects.
@@ -18,8 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting LIMIT with a comma
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 LIMIT 1, 2');
- *     $query->facts->diagnostics[0]->message() // => 'LIMIT #,# syntax is not supported'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 LIMIT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: LIMIT #,# syntax is not supported
  */
 final class CommaLimit implements Node
 {

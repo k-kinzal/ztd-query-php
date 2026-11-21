@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\TransactionRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Commit;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Release;
@@ -24,7 +23,7 @@ final class TransactionRuleTest extends TestCase
 {
     public function testCommandLowersEachTransactionCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(Begin::class, $semantics->analyze('BEGIN')->statement);
         self::assertInstanceOf(Commit::class, $semantics->analyze('COMMIT')->statement);
@@ -37,7 +36,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testBehaviorKeepsTheWrittenWordAndItsAbsence(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('BEGIN')->statement;
         $deferred = $semantics->analyze('BEGIN DEFERRED')->statement;
         $immediate = $semantics->analyze('BEGIN IMMEDIATE')->statement;
@@ -55,7 +54,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testNameIsNullUnlessANameFollowsTheKeyword(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $bare = $semantics->analyze('ROLLBACK TRANSACTION')->statement;
         $named = $semantics->analyze('ROLLBACK TRANSACTION t1')->statement;
 
@@ -67,7 +66,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testSavepointReadsTheNameWithOrWithoutTheKeyword(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $short = $semantics->analyze('RELEASE s1')->statement;
         $long = $semantics->analyze('RELEASE SAVEPOINT s1')->statement;
 

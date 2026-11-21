@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Spelling\Layout;
 
 /**
  * One projected expression of a select list with its optional alias.
@@ -27,10 +27,10 @@ use SqlSemantics\Statement\Spelling\Layout;
  *
  * @visibility public
  * @example Reading a projected expression and its alias
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a AS total FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a AS total FROM t');
  *     [$query->statement->items[0]->expression->name->value, $query->statement->items[0]->alias?->value] // => ['a', 'total']
  * @example Reading the text an unaliased item is written as
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1+1');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1+1');
  *     [$query->statement->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
  */
 final class SelectExpression implements SelectItem
@@ -42,7 +42,7 @@ final class SelectExpression implements SelectItem
      * @param Name|null $alias The output name
      * @param Layout|null $layout How the expression of an unaliased item is written; null for the canonical rendering
      * @param AliasMark $mark Whether the alias is written after AS; `=` is not a select alias
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an aliased item is given a layout, or the mark does not fit the alias
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When an aliased item is given a layout, or the mark does not fit the alias
      */
     public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly AliasMark $mark = AliasMark::As)
     {

@@ -7,10 +7,14 @@ namespace Tests\Unit\Statement\Object;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
@@ -22,11 +26,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 #[CoversClass(Rename::class)]
 #[Medium]
@@ -35,19 +34,19 @@ final class RenameTest extends TestCase
     public function testDeriveStatementChecksTheRenamedColumn(): void
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
-        $semantics = new Semantics(Dialect::PostgreSql);
-        $missing = $semantics->analyze('ALTER TABLE ONLY t RENAME b TO c', [$table]);
-        $taken = $semantics->analyze('ALTER TABLE IF EXISTS t RENAME COLUMN a TO a', [$table]);
+        $semantics = new Semantics();
+        $missing = $semantics->inspect('ALTER TABLE ONLY t RENAME b TO c', [$table]);
+        $taken = $semantics->inspect('ALTER TABLE IF EXISTS t RENAME COLUMN a TO a', [$table]);
         self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t')))], $missing->facts->diagnostics);
         self::assertSame(['column "a" already exists'], [$taken->facts->diagnostics[0]->message()]);
     }
 
     public function testRenderWritesRolesAndAttributes(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['ALTER USER a RENAME TO b', 'ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE', 'ALTER TRIGGER g ON s.t RENAME TO h', 'ALTER LANGUAGE l RENAME TO m'],
-            [$semantics->analyze('ALTER USER a RENAME TO b')->toString(), $semantics->analyze('ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE')->toString(), $semantics->analyze('ALTER TRIGGER g ON s.t RENAME TO h')->toString(), $semantics->analyze('ALTER PROCEDURAL LANGUAGE l RENAME TO m')->toString()],
+            [$semantics->inspect('ALTER USER a RENAME TO b')->toString(), $semantics->inspect('ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE')->toString(), $semantics->inspect('ALTER TRIGGER g ON s.t RENAME TO h')->toString(), $semantics->inspect('ALTER PROCEDURAL LANGUAGE l RENAME TO m')->toString()],
         );
     }
 
@@ -89,10 +88,10 @@ final class RenameTest extends TestCase
 
     public function testDeriveStatementReportsAnotherKind(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
-        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
-        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
+        $semantics = new Semantics();
+        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE SEQUENCE s')];
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
+        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
     }
 }

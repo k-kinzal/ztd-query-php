@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * An ALGORITHM or LOCK name the server of the release does not know.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the problem
- *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice(true, new \SqlSemantics\Statement\Identifier\Name('FAST')))->message() // => 'FAST is not a LOCK the server knows.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice(true, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('FAST')))->message() // => 'FAST is not a LOCK the server knows.'
  */
 final class UnknownAlterChoice implements Diagnostic
 {

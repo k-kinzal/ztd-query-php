@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Trigger;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\TriggerFacts;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
@@ -18,12 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a trigger: a program of statements that runs when rows of a table change.
@@ -38,12 +38,12 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the parts of a trigger
- *     $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TEMP TRIGGER IF NOT EXISTS r AFTER UPDATE OF a ON t FOR EACH ROW WHEN new.a > old.a BEGIN DELETE FROM log; SELECT 1; END');
+ *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TEMP TRIGGER IF NOT EXISTS r AFTER UPDATE OF a ON t FOR EACH ROW WHEN new.a > old.a BEGIN DELETE FROM log; SELECT 1; END');
  *     $statement = $trigger->statement;
  *     [$statement->name->name->value, $statement->temporary, $statement->timing, $statement->columns[0]->value, $statement->forEachRow, count($statement->steps)] // => ['r', true, \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming::After, 'a', true, 2]
  * @example Refusing a program statement the trigger grammar does not admit
- *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DELETE FROM t RETURNING a')->statement;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('r')), \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent::Delete, new \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), [$delete]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $delete = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DELETE FROM t RETURNING a')->statement;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('r')), \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent::Delete, new \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), [$delete]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class CreateTrigger implements Statement
 {

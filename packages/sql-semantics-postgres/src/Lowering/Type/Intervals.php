@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Type;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields;

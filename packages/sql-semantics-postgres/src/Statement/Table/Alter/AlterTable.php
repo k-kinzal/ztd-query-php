@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Alterations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to change a table, an index, a sequence, a view, a materialized view or a foreign table.
@@ -27,8 +27,8 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Resolving the altered table
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE IF EXISTS ONLY t ADD c int CHECK (c > a), ALTER b DROP NOT NULL');
- *     $statement->facts->relation($statement->statement)->table::class // => 'SqlSemantics\\Statement\\Reference\\Table\\UndeclaredTable'
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE IF EXISTS ONLY t ADD c int CHECK (c > a), ALTER b DROP NOT NULL');
+ *     $statement->facts->relation($statement->statement)->table::class // => 'SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\Reference\\Table\\UndeclaredTable'
  */
 final class AlterTable implements Statement, Relation
 {

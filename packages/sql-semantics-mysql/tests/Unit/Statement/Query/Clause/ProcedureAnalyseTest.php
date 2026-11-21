@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 
@@ -18,8 +17,8 @@ final class ProcedureAnalyseTest extends TestCase
 {
     public function testRenderWritesTheArguments(): void
     {
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE()', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a from t procedure analyse ( )')->toString());
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a from t procedure analyse(10,2000)')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE()', (new Semantics('mysql-5.6.51'))->analyze('select a from t procedure analyse ( )')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)', (new Semantics('mysql-5.7.44'))->analyze('select a from t procedure analyse(10,2000)')->toString());
     }
 
     public function testADecimalArgumentIsRejected(): void

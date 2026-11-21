@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Relation\Json;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * One column definition of JSON_TABLE: FOR ORDINALITY, a value column, an EXISTS column, or NESTED columns.

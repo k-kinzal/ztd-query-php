@@ -7,16 +7,15 @@ namespace Tests\Unit\Statement\Inspection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 #[CoversClass(Explain::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class ExplainTest extends TestCase
 {
     public function testDeriveStatementReturnsTheRowsOfTheReportAndNotThoseOfTheQuery(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('EXPLAIN SELECT 1 AS one');
+        $operation = (new Semantics())->inspect('EXPLAIN SELECT 1 AS one');
 
         self::assertCount(8, $operation->fields() ?? []);
         self::assertSame('opcode', $operation->field(1)->name?->value);
@@ -32,7 +31,7 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementDerivesTheWrappedStatement(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
+        $operation = (new Semantics())->inspect('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
 
         self::assertCount(4, $operation->fields() ?? []);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -40,18 +39,18 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementReportsOnAStatementThatReturnsNoRows(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('EXPLAIN BEGIN');
+        $operation = (new Semantics())->inspect('EXPLAIN BEGIN');
 
         self::assertCount(8, $operation->fields() ?? []);
     }
 
     public function testDeriveStatementDiscardsTheRowsAndTheDeclarationOfTheInspectedStatement(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $returning = $semantics->analyze('EXPLAIN INSERT INTO t (a) VALUES (1) RETURNING a, b', [$table]);
-        $create = $semantics->analyze('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
-        $view = $semantics->analyze('EXPLAIN CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $returning = $semantics->inspect('EXPLAIN INSERT INTO t (a) VALUES (1) RETURNING a, b', [$table]);
+        $create = $semantics->inspect('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
+        $view = $semantics->inspect('EXPLAIN CREATE VIEW v AS SELECT a FROM t', [$table]);
 
         $report = $returning->fields();
         self::assertNotNull($report);
@@ -74,15 +73,15 @@ final class ExplainTest extends TestCase
 
     public function testRenderWritesThePrefixOfEachMode(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
-        self::assertSame('EXPLAIN SELECT 1', $semantics->analyze('explain select 1')->toString());
-        self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $semantics->analyze('explain query plan select 1')->toString());
+        self::assertSame('EXPLAIN SELECT 1', $semantics->inspect('explain select 1')->toString());
+        self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $semantics->inspect('explain query plan select 1')->toString());
     }
 
     public function testRenderWritesANewlyBuiltRequest(): void
     {
-        $operation = new Operation((new Semantics(Dialect::Sqlite))->context(), new Explain(ExplainMode::QueryPlan, new Begin()));
+        $operation = new Operation((new Semantics())->context(), new Explain(ExplainMode::QueryPlan, new Begin()));
 
         self::assertSame('EXPLAIN QUERY PLAN BEGIN', $operation->toString());
     }

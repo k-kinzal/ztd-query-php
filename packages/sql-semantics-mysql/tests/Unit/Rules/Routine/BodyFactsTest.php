@@ -8,17 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Rules\Routine\BodyFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(BodyFacts::class)]
 #[Medium]
@@ -26,16 +25,16 @@ final class BodyFactsTest extends TestCase
 {
     public function testStatementsDerivesEveryStatementInOrder(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
 
         self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testStatementResolvesAVariableInANestedQuery(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $operation = $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -49,14 +48,14 @@ final class BodyFactsTest extends TestCase
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
     }
 
     public function testStatementResolvesAVariableInAnInspectedStatement(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $operation = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $operation = $semantics->inspect('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
         $create = $operation->statement;
         self::assertInstanceOf(CreateEvent::class, $create);
         $block = $create->body;
@@ -76,8 +75,8 @@ final class BodyFactsTest extends TestCase
     #[DataProvider('providerStatementKeepsTheDiagnosticsOfAnSqlStatement')]
     public function testStatementKeepsTheDiagnosticsOfAnSqlStatement(string $sql, array $messages): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -100,8 +99,8 @@ final class BodyFactsTest extends TestCase
     #[DataProvider('providerStatementChecksTheRestrictionsOfTheProgramKind')]
     public function testStatementChecksTheRestrictionsOfTheProgramKind(string $sql, array $messages): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -124,8 +123,8 @@ final class BodyFactsTest extends TestCase
     #[DataProvider('providerStatementChecksTheAssignmentsOfATrigger')]
     public function testStatementChecksTheAssignmentsOfATrigger(string $sql, array $messages): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

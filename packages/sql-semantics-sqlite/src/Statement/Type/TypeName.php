@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Type;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A type name as SQLite reads it: one or more words and up to two signed numbers in parentheses.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the target type of a CAST
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT CAST(a AS UNSIGNED BIG INT(10))');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(1 AS UNSIGNED BIG INT(10))');
  *     $target = $query->statement->columns[0]->expression->target;
  *     [count($target->words), $target->text(), $target->affinity()] // => [3, 'UNSIGNED BIG INT', \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Integer]
  */

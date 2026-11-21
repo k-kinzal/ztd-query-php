@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnStar;
@@ -15,9 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEvent;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEventKind;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Reports the references to OLD and NEW that a trigger's WHEN condition may not make.
@@ -84,7 +84,7 @@ final class TriggerReferences
      */
     public function references(Scalar $when, RelationFact $fact): array
     {
-        $objects = array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($when));
+        $objects = array_reverse((new ValueGraph(['SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($when));
         $selected = [];
         foreach ($objects as $object) {
             $base = $object instanceof Indirection && $this->selected($object) !== null ? $object->base : null;

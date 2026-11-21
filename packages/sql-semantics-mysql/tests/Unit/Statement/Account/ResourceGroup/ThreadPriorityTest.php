@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Account\ResourceGroup;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
@@ -23,6 +22,6 @@ final class ThreadPriorityTest extends TestCase
 
     public function testRenderWritesTheSign(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = -5', (new Semantics(Dialect::MySql))->analyze('alter resource group g thread_priority = -5')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = -5', (new Semantics())->analyze('alter resource group g thread_priority = -5')->toString());
     }
 }

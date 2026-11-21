@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict;
 
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignment;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON CONFLICT [ conflict_target ] DO UPDATE SET ... [ WHERE condition ]`: the existing row that conflicts is updated instead.
@@ -24,10 +24,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the assignments of an upsert
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0');
  *     [count($insert->statement->conflict->assignments), $insert->toString()] // => [1, 'INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0']
  * @example Refusing DO UPDATE without an assignment
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoUpdate(null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoUpdate(null, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ConflictDoUpdate implements Node
 {

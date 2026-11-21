@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKin
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the resource group statements (8.0+).

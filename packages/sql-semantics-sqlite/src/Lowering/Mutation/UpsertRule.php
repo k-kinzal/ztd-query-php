@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Mutation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;

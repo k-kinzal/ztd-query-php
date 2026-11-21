@@ -7,7 +7,7 @@ namespace Tests\Unit\Rules\Lexical;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Strings;
 
 #[CoversClass(Strings::class)]

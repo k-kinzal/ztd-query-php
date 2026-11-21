@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Attributes;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Triggers;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
@@ -13,14 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a constraint trigger: an AFTER ROW trigger whose firing can be deferred.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a constraint trigger
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()');
  *     $statement->toString() // => 'CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()'
  */
 final class CreateConstraintTrigger implements SchemaElement, Relation

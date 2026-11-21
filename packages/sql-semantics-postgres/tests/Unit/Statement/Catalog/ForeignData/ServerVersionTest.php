@@ -14,13 +14,13 @@ final class ServerVersionTest extends TestCase
 {
     public function testRenderWritesNull(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
         (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ServerVersion())->render($out);
-        self::assertSame('VERSION NULL', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        self::assertSame('VERSION NULL', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 
     public function testRenderWritesTheVersion(): void
     {
-        self::assertSame('ALTER SERVER s VERSION \'2\'', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SERVER s VERSION \'2\'')->toString());
+        self::assertSame('ALTER SERVER s VERSION \'2\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION \'2\'')->toString());
     }
 }

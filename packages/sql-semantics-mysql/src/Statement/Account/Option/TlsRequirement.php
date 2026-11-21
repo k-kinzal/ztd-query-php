@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The REQUIRE clause of CREATE USER, ALTER USER or MySQL 5.x GRANT: `REQUIRE NONE | SSL | X509 | condition [AND] …`.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the conditions of a requirement
- *     $tls = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER u REQUIRE SUBJECT 's' ISSUER 'i'")->statement->tls;
+ *     $tls = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u REQUIRE SUBJECT 's' ISSUER 'i'")->statement->tls;
  *     [$tls?->kind, count($tls?->conditions ?? [])] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::Specified, 2]
  */
 final class TlsRequirement implements Node

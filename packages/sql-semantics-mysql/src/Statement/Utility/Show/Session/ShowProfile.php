@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Session;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PROFILE: the stages of one profiled statement of the session and their resource use.
@@ -30,8 +30,8 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the columns of the sections
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PROFILE SWAPS, CPU FOR QUERY 2');
- *     [array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): ?string => $field->name?->value, iterator_to_array($show->fields())), $show->toString()] // => [['Status', 'Duration', 'CPU_user', 'CPU_system', 'Swaps'], 'SHOW PROFILE SWAPS, CPU FOR QUERY 2']
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PROFILE SWAPS, CPU FOR QUERY 2');
+ *     [array_map(static fn (\SqlSemantics\Platform\MySql\Model\Statement\Shape\Field $field): ?string => $field->name?->value, iterator_to_array($show->fields())), $show->toString()] // => [['Status', 'Duration', 'CPU_user', 'CPU_system', 'Swaps'], 'SHOW PROFILE SWAPS, CPU FOR QUERY 2']
  */
 final class ShowProfile implements Statement
 {

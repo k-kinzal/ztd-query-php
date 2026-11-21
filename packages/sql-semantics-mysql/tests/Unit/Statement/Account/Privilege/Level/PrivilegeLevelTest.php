@@ -7,13 +7,13 @@ namespace Tests\Unit\Statement\Account\Privilege\Level;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversNothing]
 #[Small]

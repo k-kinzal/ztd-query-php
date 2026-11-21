@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `ROTATE {INNODB | BINLOG} MASTER KEY`: rotate the master encryption key of InnoDB or of the binary log.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Rotating the binary log master key
- *     $rotate = new \SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey(new \SqlSemantics\Statement\Identifier\Name('binlog'));
+ *     $rotate = new \SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('binlog'));
  *     $rotate->binaryLog() // => true
  */
 final class RotateMasterKey implements InstanceAction

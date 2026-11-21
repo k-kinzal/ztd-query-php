@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A size option: `INITIAL_SIZE [=] size`, `MAX_SIZE [=] size`, `FILE_BLOCK_SIZE [=] size`, ….
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding an initial size written with a multiplier
- *     $option = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind::Initial, new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('16M')));
+ *     $option = new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind::Initial, new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('16M')));
  *     [$option->keyword(), $option->size->word?->value] // => ['INITIAL_SIZE', '16M']
  */
 final class SizeOption implements StorageOption

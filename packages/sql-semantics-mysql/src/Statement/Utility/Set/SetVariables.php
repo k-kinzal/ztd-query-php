@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SET with a list of assignments: variables, the connection character sets, and in MySQL 5.6 a password.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the scope an assignment inherits
- *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET GLOBAL a = 1, b = ON');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET GLOBAL a = 1, b = ON');
  *     [$set->statement->scopeOf(1), $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'SET GLOBAL a = 1, b = ON']
  */
 final class SetVariables implements Statement
@@ -56,7 +56,7 @@ final class SetVariables implements Statement
      * variable is assigned in the session, or the item is no system
      * variable assignment.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the position is not one of the items
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the position is not one of the items
      */
     public function scopeOf(int $position): ?VariableScope
     {

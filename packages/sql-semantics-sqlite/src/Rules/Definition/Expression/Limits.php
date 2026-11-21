@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition\Expression;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -18,9 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Finds the constructs SQLite rejects inside the expressions of a definition.

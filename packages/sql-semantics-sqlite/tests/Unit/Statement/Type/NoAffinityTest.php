@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Type;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 
 #[CoversClass(NoAffinity::class)]
@@ -22,7 +21,7 @@ final class NoAffinityTest extends TestCase
 
     public function testNameOfAViewColumnWithoutAffinityStaysEmptyThroughAFurtherView(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE s (n)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one, n FROM s', [$table]);
         $further = $semantics->analyze('CREATE VIEW w AS SELECT one, n FROM v', [$view]);

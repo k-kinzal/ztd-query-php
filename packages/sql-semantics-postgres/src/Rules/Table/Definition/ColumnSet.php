@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * Collects the columns of a table declaration while a definition is read; lives for one derivation.

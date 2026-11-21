@@ -9,13 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\VariableRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -30,8 +29,8 @@ final class VariableRuleTest extends TestCase
 {
     public function testVariableLowersUserAndSystemVariablesOfEveryGeneration(): void
     {
-        $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
-        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
+        $modern = (new Semantics('mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
+        $legacy = (new Semantics('mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
 
         self::assertInstanceOf(Select::class, $modern->statement);
         self::assertInstanceOf(Select::class, $legacy->statement);
@@ -52,7 +51,7 @@ final class VariableRuleTest extends TestCase
 
     public function testUserLowersEverySpellingOfAUserVariableName(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
+        $operation = (new Semantics('mysql-8.4.7'))->analyze("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item1 = $operation->statement->items[1];
@@ -64,8 +63,8 @@ final class VariableRuleTest extends TestCase
 
     public function testAssignmentLowersAnAssignmentInsideAnExpression(): void
     {
-        $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v := 1');
-        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v := 1');
+        $modern = (new Semantics('mysql-8.4.7'))->analyze('SELECT @v := 1');
+        $legacy = (new Semantics('mysql-5.6.51'))->analyze('SELECT @v := 1');
 
         self::assertInstanceOf(Select::class, $modern->statement);
         $item0 = $modern->statement->items[0];
@@ -79,7 +78,7 @@ final class VariableRuleTest extends TestCase
 
     public function testLegacySystemLowersTheScopeAndComponentOfMySql5(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
+        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];

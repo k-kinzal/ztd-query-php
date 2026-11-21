@@ -8,13 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Replication\ReplicationRules;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(ReplicationRules::class)]
 #[Medium]
@@ -22,8 +21,8 @@ final class ReplicationRulesTest extends TestCase
 {
     public function testStatementHandsEveryStatementToItsRule(): void
     {
-        self::assertSame('BINLOG \'x\'', (new Semantics(Dialect::MySql))->analyze("binlog 'x'")->toString());
-        self::assertSame('STOP GROUP_REPLICATION', (new Semantics(Dialect::MySql))->analyze('stop group_replication')->toString());
+        self::assertSame('BINLOG \'x\'', (new Semantics())->analyze("binlog 'x'")->toString());
+        self::assertSame('STOP GROUP_REPLICATION', (new Semantics())->analyze('stop group_replication')->toString());
     }
 
     public function testStatementReportsANodeOfAnotherRule(): void
@@ -39,12 +38,12 @@ final class ReplicationRulesTest extends TestCase
 
     public function testChannelLowersTheName(): void
     {
-        self::assertSame("STOP REPLICA FOR CHANNEL 'c'", (new Semantics(Dialect::MySql))->analyze("stop replica for channel 'c'")->toString());
+        self::assertSame("STOP REPLICA FOR CHANNEL 'c'", (new Semantics())->analyze("stop replica for channel 'c'")->toString());
     }
 
     public function testTerminologyAnswersTheWrittenSpelling(): void
     {
-        self::assertSame('STOP SLAVE', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('stop slave')->toString());
-        self::assertSame('STOP REPLICA', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('stop replica')->toString());
+        self::assertSame('STOP SLAVE', (new Semantics('mysql-8.3.0'))->analyze('stop slave')->toString());
+        self::assertSame('STOP REPLICA', (new Semantics('mysql-8.3.0'))->analyze('stop replica')->toString());
     }
 }

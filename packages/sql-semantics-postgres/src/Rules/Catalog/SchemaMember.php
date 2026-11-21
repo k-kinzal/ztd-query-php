@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
@@ -13,10 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * An element of CREATE SCHEMA as the server reads it: created in the new schema, with that schema searched first.

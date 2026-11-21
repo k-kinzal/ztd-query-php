@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A data-modifying statement: INSERT, UPDATE, DELETE or MERGE.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Telling whether a statement returns rows
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     [$semantics->analyze('DELETE FROM t')->statement->returnsRows(), $semantics->analyze('DELETE FROM t RETURNING *')->statement->returnsRows()] // => [false, true]
  */
 interface Modification extends Statement, Query

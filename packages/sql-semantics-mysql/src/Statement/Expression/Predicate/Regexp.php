@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Predicate;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A regular expression match: `x [NOT] REGEXP pattern` (`Item_func_regex`, `Item_func_regexp_like` in 8.0 and later).
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing RLIKE as REGEXP
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE a NOT RLIKE '^x'")->toString() // => "SELECT a FROM t WHERE a NOT REGEXP '^x'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a NOT RLIKE '^x'")->toString() // => "SELECT a FROM t WHERE a NOT REGEXP '^x'"
  */
 final class Regexp implements Scalar
 {

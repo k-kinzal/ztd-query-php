@@ -6,9 +6,11 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Expression;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
@@ -24,8 +26,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers expression productions into scalar structure.

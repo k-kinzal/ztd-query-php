@@ -8,10 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\Routine\CursorFacts;
-use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(CursorFacts::class)]
 #[Medium]
@@ -23,7 +22,7 @@ final class CursorFactsTest extends TestCase
     #[DataProvider('providerCursorReportsACursorDeclaredNowhereAround')]
     public function testCursorReportsACursorDeclaredNowhereAround(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -49,7 +48,7 @@ final class CursorFactsTest extends TestCase
     #[DataProvider('providerVariablesReportsEveryTargetThatIsNoVariable')]
     public function testVariablesReportsEveryTargetThatIsNoVariable(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -67,7 +66,7 @@ final class CursorFactsTest extends TestCase
 
     public function testVariablesReportsATargetOfGetDiagnosticsThatIsNoVariable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
 
         self::assertSame(['Undeclared variable: r'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

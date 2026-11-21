@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Server;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -86,7 +86,7 @@ final class Magnitudes
     /**
      * Refuses an XA transaction identifier whose format identifier the release rejects while it parses.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the format identifier exceeds what the release reads
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the format identifier exceeds what the release reads
      */
     public function identifier(Xid $xid, GrammarRelease $release): void
     {

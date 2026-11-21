@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOAD 'filename'`: a request to load a shared library into the server process.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the library file
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
  */
 final class Load implements Statement
 {

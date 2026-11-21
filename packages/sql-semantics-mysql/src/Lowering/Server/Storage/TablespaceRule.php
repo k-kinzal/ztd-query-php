@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Storage;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
@@ -20,8 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropUndoTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\RenameTablespace;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the tablespace and undo tablespace statements.

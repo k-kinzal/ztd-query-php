@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayAggregate;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayQuery;
@@ -28,8 +30,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\KeyValueSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the SQL/JSON constructors and aggregates and the clauses they share with the query functions.

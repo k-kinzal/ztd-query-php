@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Column;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `FIRST` or `AFTER column`: where an added or changed column goes in the column order of the table.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Placing a column after another
- *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition(new \SqlSemantics\Statement\Identifier\Name('id')))->after?->value // => 'id'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')))->after?->value // => 'id'
  */
 final class ColumnPosition implements Node
 {

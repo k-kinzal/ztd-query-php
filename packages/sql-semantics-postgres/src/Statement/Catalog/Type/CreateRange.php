@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\DefineChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttribute;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to define a range type: `CREATE TYPE name AS RANGE ( subtype = type, ... )`.
@@ -29,8 +29,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Defining a range type without its subtype
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)');
- *     $operation->facts->diagnostics[0]->message() // => 'type attribute "subtype" is required'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: type attribute "subtype" is required
  */
 final class CreateRange implements Statement
 {

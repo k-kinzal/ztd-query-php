@@ -14,6 +14,6 @@ final class ExtensionOptionTest extends TestCase
 {
     public function testOptionOfTheSchemaOption(): void
     {
-        self::assertSame('schema', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Statement\Identifier\Name('ext')))->option());
+        self::assertSame('schema', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('ext')))->option());
     }
 }

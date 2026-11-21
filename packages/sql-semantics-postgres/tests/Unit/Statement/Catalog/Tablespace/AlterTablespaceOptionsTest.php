@@ -14,16 +14,16 @@ final class AlterTablespaceOptionsTest extends TestCase
 {
     public function testRenderWritesReset(): void
     {
-        self::assertSame('ALTER TABLESPACE fast RESET (seq_page_cost)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLESPACE fast RESET (seq_page_cost)')->toString());
+        self::assertSame('ALTER TABLESPACE fast RESET (seq_page_cost)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLESPACE fast RESET (seq_page_cost)')->toString());
     }
 
     public function testDeriveStatementReportsAValueGivenToReset(): void
     {
-        self::assertSame('RESET must not include values for parameters', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLESPACE fast RESET (seq_page_cost = 1)')->facts->diagnostics[0]->message());
+        self::assertSame('RESET must not include values for parameters', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLESPACE fast RESET (seq_page_cost = 1)')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveStatementAcceptsSetValues(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLESPACE fast SET (seq_page_cost = 1)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLESPACE fast SET (seq_page_cost = 1)')->facts->diagnostics);
     }
 }

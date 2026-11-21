@@ -7,8 +7,14 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -18,13 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Comparison::class)]
 #[Medium]
@@ -32,7 +31,7 @@ final class ComparisonTest extends TestCase
 {
     public function testDeriveScalarYieldsAnIntegerThatCanBeNullWhenAnOperandCan(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -50,7 +49,7 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarNeverYieldsNullWhenBothOperandsCannot(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
@@ -65,7 +64,7 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarNeverYieldsNullForTheNullSafeEquality(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
@@ -80,7 +79,7 @@ final class ComparisonTest extends TestCase
 
     public function testDeriveScalarDependsOnTheOperandsOfAnUndeclaredTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a >= 10');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a >= 10');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -94,7 +93,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderWritesTheOperandsAroundTheOperatorInTheOrderWritten(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('select a from t where 10 <= a');
+        $operation = (new Semantics())->analyze('select a from t where 10 <= a');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -105,7 +104,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderSpellsTheNotEqualOperatorInItsStandardForm(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a != 1');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a != 1');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -115,7 +114,7 @@ final class ComparisonTest extends TestCase
 
     public function testRenderKeepsTheLeftAssociationOfAChain(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 < a = 2');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE 1 < a = 2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -127,9 +126,9 @@ final class ComparisonTest extends TestCase
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a from t where a <=> 1')->toString());
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a from t where a <=> 1')->toString());
-        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-5.6.51'))->analyze('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-5.7.44'))->analyze('select a from t where a <=> 1')->toString());
+        self::assertSame('SELECT a FROM t WHERE a <=> 1', (new Semantics('mysql-8.0.44'))->analyze('select a from t where a <=> 1')->toString());
     }
 
     public function testAComparisonAsRightOperandIsRejected(): void

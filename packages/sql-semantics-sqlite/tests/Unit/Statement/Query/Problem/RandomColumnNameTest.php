@@ -7,12 +7,11 @@ namespace Tests\Unit\Statement\Query\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(RandomColumnName::class)]
 #[Medium]
@@ -25,7 +24,7 @@ final class RandomColumnNameTest extends TestCase
 
     public function testDescribeIsTheMissingInputOfALookupThatOnlyARandomlyNamedColumnCouldAnswer(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT x, "a:4", * FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)', []);
+        $query = (new Semantics())->analyze('SELECT x, "a:4", * FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)', []);
         $resolution = $query->field(0)->resolution;
 
         self::assertInstanceOf(ConditionalColumn::class, $resolution);

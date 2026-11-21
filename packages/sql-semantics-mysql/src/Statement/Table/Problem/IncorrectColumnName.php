@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A column of a created table or an alias of a view column that is not a valid column name (ER_WRONG_COLUMN_NAME).
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a selected column whose generated name ends in a space
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE TABLE t AS SELECT 'a '", []);
- *     $create->facts->diagnostics[0]->message() // => "Incorrect column name 'a '."
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE TABLE t AS SELECT 'a '", []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect column name 'a '.
  */
 final class IncorrectColumnName implements Diagnostic
 {

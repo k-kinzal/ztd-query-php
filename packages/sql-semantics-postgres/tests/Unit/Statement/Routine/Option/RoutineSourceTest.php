@@ -7,17 +7,16 @@ namespace Tests\Unit\Statement\Routine\Option;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(RoutineSource::class)]
 #[Medium]
@@ -32,7 +31,7 @@ final class RoutineSourceTest extends TestCase
 
     public function testAnalyzeKeepsAnSqlDefinitionUnanalysedWithItsLanguage(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f(a int4) RETURNS int4 AS $$ SELECT a FROM missing $$ LANGUAGE sql');
+        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a int4) RETURNS int4 AS $$ SELECT a FROM missing $$ LANGUAGE sql');
         $function = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $function);
         $definition = $function->options[0];
@@ -42,7 +41,7 @@ final class RoutineSourceTest extends TestCase
 
     public function testAnalyzeNamesNoLanguageWithoutALanguageOption(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze("CREATE FUNCTION f() RETURNS int4 AS 'x'");
+        $operation = (new Semantics())->inspect("CREATE FUNCTION f() RETURNS int4 AS 'x'");
         $function = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $function);
         $definition = $function->options[0];

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Modern;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
@@ -14,12 +12,14 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
-use SqlSemantics\Statement\Query;
 
 /**
  * Lowers the query primaries and the WITH clause of the 8.0 and later grammars.

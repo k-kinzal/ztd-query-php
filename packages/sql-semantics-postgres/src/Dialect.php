@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql;
  *
  * @visibility public
  * @example Analyzing PostgreSQL SQL
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $semantics->analyze('SELECT 42')->toString() // => 'SELECT 42'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Invalid;
 
 /**
  * An expression with an explicit collating sequence for the comparisons it takes part in.
@@ -30,11 +30,11 @@ use SqlSemantics\Statement\Type\Invalid;
  *
  * @visibility public
  * @example Reading the collation of an expression
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a COLLATE NOCASE FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a COLLATE NOCASE FROM t');
  *     $query->statement->columns[0]->expression->collation->value // => 'NOCASE'
  * @example Refusing an operand that would be read back differently
- *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate($sum, new \SqlSemantics\Statement\Identifier\Name('NOCASE')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate($sum, new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('NOCASE')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Collate implements Scalar
 {

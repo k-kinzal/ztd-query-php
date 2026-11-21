@@ -8,9 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
@@ -19,9 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Parameter::class)]
 #[Medium]
@@ -29,7 +28,7 @@ final class ParameterTest extends TestCase
 {
     public function testRenderKeepsTheDirectionTheNameTheTypeAndTheCollation(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin) SELECT 1')->statement;
+        $statement = (new Semantics())->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin) SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
         self::assertEquals([
@@ -60,12 +59,12 @@ final class ParameterTest extends TestCase
     #[DataProvider('providerRenderWritesTheParameter')]
     public function testRenderWritesTheParameter(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     public function testRenderWritesAConstructedParameter(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $plain = new Output(new Codec($semantics->profile()->grammar));
         (new Parameter(new Name('a'), new Integral(IntegralKind::BigInt)))->render($plain);
         $full = new Output(new Codec($semantics->profile()->grammar));

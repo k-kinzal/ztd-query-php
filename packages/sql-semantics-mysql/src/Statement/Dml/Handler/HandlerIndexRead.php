@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ index FIRST|NEXT|PREV|LAST: reads rows of an open handler in the order of an index.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading an index read of a handler
- *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ idx PREV');
+ *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ idx PREV');
  *     [$read->statement->index->value, $read->statement->direction, $read->toString()] // => ['idx', \SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Previous, 'HANDLER h READ idx PREV']
  */
 final class HandlerIndexRead implements Statement

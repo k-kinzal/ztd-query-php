@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop;
@@ -121,7 +121,7 @@ final class DropRule
     /**
      * Answers each name as an unqualified object name.
      *
-     * @param list<\SqlSemantics\Statement\Identifier\Name> $names
+     * @param list<\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name> $names
      *
      * @return list<UnqualifiedName>
      */

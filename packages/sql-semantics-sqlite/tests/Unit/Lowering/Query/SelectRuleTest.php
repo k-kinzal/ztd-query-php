@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\SelectRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
@@ -28,7 +27,7 @@ final class SelectRuleTest extends TestCase
 {
     public function testSelectLowersAPlainQueryAndAQueryWithCommonTables(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('SELECT 1')->statement;
         $with = $semantics->analyze('WITH c AS (SELECT 1) SELECT * FROM c')->statement;
         $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c')->statement;
@@ -44,7 +43,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLowersACompoundQueryWithItsArmsInOrderAndTheTrailingOrderByAndLimit(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
+        $operation = (new Semantics())->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->first);
@@ -61,7 +60,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLeavesACompoundThatEndsInValuesWithoutOrderByAndLimit(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 UNION VALUES (2)');
+        $operation = (new Semantics())->analyze('SELECT 1 UNION VALUES (2)');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(ValuesClause::class, $operation->statement->steps[0]->query);
@@ -72,7 +71,7 @@ final class SelectRuleTest extends TestCase
 
     public function testOperatorLowersEveryCompoundOperatorAsWritten(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select 1 union select 2 union all select 3 except select 4 intersect select 5');
+        $operation = (new Semantics())->analyze('select 1 union select 2 union all select 3 except select 4 intersect select 5');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertSame(['UNION', 'UNION ALL', 'EXCEPT', 'INTERSECT'], array_map(static fn (CompoundStep $step): string => $step->operator->value, $operation->statement->steps));
@@ -81,7 +80,7 @@ final class SelectRuleTest extends TestCase
 
     public function testArmLowersASelectionOrAValuesClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $compound = $semantics->analyze('VALUES (1) UNION SELECT 2')->statement;
         $rows = $semantics->analyze('VALUES (1), (2)')->statement;
 
@@ -94,7 +93,7 @@ final class SelectRuleTest extends TestCase
 
     public function testSelectionLowersEveryClauseInGrammarOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
+        $operation = (new Semantics())->analyze('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
@@ -114,7 +113,7 @@ final class SelectRuleTest extends TestCase
 
     public function testGroupsTurnsAnIntegerConstantIntoAResultColumnPosition(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $grouped = $semantics->analyze('SELECT a, count(*) FROM t GROUP BY 1, a')->statement;
         $plain = $semantics->analyze('SELECT a FROM t')->statement;
 
@@ -129,7 +128,7 @@ final class SelectRuleTest extends TestCase
 
     public function testHavingIsNullWithoutTheClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $bare = $semantics->analyze('SELECT a FROM t GROUP BY a')->statement;
         $filtered = $semantics->analyze('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->statement;
 
@@ -142,7 +141,7 @@ final class SelectRuleTest extends TestCase
 
     public function testLimitKeepsTheSpellingOfTheOffset(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('SELECT 1 LIMIT 5');
         $offset = $semantics->analyze('SELECT 1 LIMIT 5 OFFSET 2');
         $comma = $semantics->analyze('SELECT 1 LIMIT 2, 5');

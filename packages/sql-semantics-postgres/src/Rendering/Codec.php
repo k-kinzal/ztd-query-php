@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rendering;
 
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Identifiers;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Spells a decoded PostgreSQL name so that it decodes to the same name at its position.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Codec implements \SqlSemantics\Contract\Codec
+final class Codec implements \SqlSemantics\Platform\PostgreSql\Model\Contract\Codec
 {
     /**
      * @param GrammarRelease $release The grammar release whose keywords decide quoting

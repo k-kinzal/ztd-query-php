@@ -8,16 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Platform::class)]
 #[Small]
@@ -95,5 +95,10 @@ final class PlatformTest extends TestCase
     public function testStatementNamespaceIsTheStatementNamespaceOfThePackage(): void
     {
         self::assertSame('SqlSemantics\\Platform\\PostgreSql\\Statement\\', (new Platform())->statementNamespace());
+    }
+
+    public function testSharedReusesTheDatabasePlatform(): void
+    {
+        self::assertSame(Platform::shared(), Platform::shared());
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The DETERMINISTIC or NOT DETERMINISTIC characteristic of a stored routine.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading whether a function is declared deterministic
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT NOT DETERMINISTIC RETURN 1');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION f() RETURNS INT NOT DETERMINISTIC RETURN 1');
  *     $create->statement->characteristics[0]->deterministic // => false
  */
 final class Determinism implements Characteristic

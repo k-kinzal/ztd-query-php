@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Utility\Set;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers SET statements: the assignment list, SET TRANSACTION, and the routing of SET PASSWORD.

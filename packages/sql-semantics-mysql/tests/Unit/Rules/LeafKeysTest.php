@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
-use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
 use SqlSemantics\Platform\MySql\Rules\Noise\AccountNoise;
 use SqlSemantics\Platform\MySql\Rules\Noise\CallNoise;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
-use SqlSemantics\Statement\Node;
 
 /**
  * The objects of a GRANT or REVOKE: named objects of one kind, or every object of a kind in schemas.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the kind of the objects of a grant
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT USAGE ON SCHEMA app TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT USAGE ON SCHEMA app TO joe');
  *     $operation->statement->target->object() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema
  */
 interface PrivilegeTarget extends Node

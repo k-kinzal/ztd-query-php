@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A statement that is only a partitioning clause, `PARTITION BY …` (5.6 and 5.7).
@@ -24,8 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reporting a partitioning clause sent as a statement
- *     $entry = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('PARTITION BY KEY () PARTITIONS 2');
- *     [$entry->toString(), $entry->facts->diagnostics[0]->message()] // => ['PARTITION BY KEY () PARTITIONS 2', 'A partitioning clause is not a statement a client can send.']
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARTITION BY KEY () PARTITIONS 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A partitioning clause is not a statement a client can send.
  */
 final class PartitionEntry implements Statement
 {

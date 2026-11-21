@@ -8,14 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(DollarQuotedText::class)]
 #[Medium]
@@ -23,7 +22,7 @@ final class DollarQuotedTextTest extends TestCase
 {
     public function testRenderKeepsTheTextBetweenTheDelimiters(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
+        $create = (new Semantics())->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(ExternalBody::class, $statement->body);
@@ -54,12 +53,12 @@ final class DollarQuotedTextTest extends TestCase
     #[DataProvider('providerRenderWritesTheDelimiters')]
     public function testRenderWritesTheDelimiters(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     public function testRenderWritesAConstructedText(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DollarQuotedText("it's 'quoted'", 'q'))->render($out);
 
@@ -68,7 +67,7 @@ final class DollarQuotedTextTest extends TestCase
 
     public function testRenderWritesAnEmptyTag(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DollarQuotedText('return 1'))->render($out);
 

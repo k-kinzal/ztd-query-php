@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Storage;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\CommentOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EncryptionOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineAttributeOption;

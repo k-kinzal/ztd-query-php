@@ -7,12 +7,11 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Type\Dependent;
 
 #[CoversClass(ProgramVariable::class)]
 #[Medium]
@@ -20,7 +19,7 @@ final class ProgramVariableTest extends TestCase
 {
     public function testDeriveScalarDependsOnTheStoredProgram(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT n');
+        $operation = (new Semantics())->inspect('SELECT a FROM t LIMIT n');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
@@ -31,6 +30,6 @@ final class ProgramVariableTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t INTO x, 'select'")->toString());
+        self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics())->inspect("SELECT a FROM t INTO x, 'select'")->toString());
     }
 }

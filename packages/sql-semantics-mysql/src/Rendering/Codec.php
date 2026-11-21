@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rendering;
 
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 
 /**
  * Spells decoded names as MySQL identifiers of one grammar release.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Codec implements \SqlSemantics\Contract\Codec
+final class Codec implements \SqlSemantics\Platform\MySql\Model\Contract\Codec
 {
     private readonly Keywords $keywords;
 

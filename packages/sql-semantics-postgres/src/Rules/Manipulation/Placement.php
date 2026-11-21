@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\ModifyingCommonTables;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\MergeAction;
@@ -15,8 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Query;
 use UnitEnum;
 
 /**

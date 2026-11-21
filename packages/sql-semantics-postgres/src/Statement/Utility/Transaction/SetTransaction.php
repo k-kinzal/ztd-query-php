@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `SET TRANSACTION modes` or `SET SESSION CHARACTERISTICS AS TRANSACTION modes`: a request to set transaction characteristics.
@@ -21,10 +21,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the modes of SET TRANSACTION
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TRANSACTION READ ONLY, DEFERRABLE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TRANSACTION READ ONLY, DEFERRABLE');
  *     [$operation->statement->modes[1], $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::Deferrable, 'SET TRANSACTION READ ONLY DEFERRABLE']
  * @example Refusing a SET TRANSACTION without modes
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class SetTransaction implements Statement
 {

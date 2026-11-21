@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockingClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockWait;
@@ -14,9 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\FetchFirst;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Derives the LIMIT, OFFSET and FETCH clauses and checks the locking clauses of a query.

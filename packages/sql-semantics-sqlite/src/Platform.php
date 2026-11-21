@@ -9,27 +9,37 @@ use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Contract\LexicalSettings;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\Sqlite\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\Sqlite\Model\Contract\LexicalSettings;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
  *
  * @visibility SqlSemantics
  */
-final class Platform implements \SqlSemantics\Contract\Platform
+final class Platform
 {
+    private static ?self $shared = null;
+
+    /**
+     * Shares the parser cache within this database package.
+     */
+    public static function shared(): self
+    {
+        return self::$shared ??= new self();
+    }
+
     /**
      * @var array<string, SqlParser>
      */
@@ -46,7 +56,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('SQLite reads SQL under no session mode; ' . $mode::class . ' given.');
         }
         $release = GrammarRelease::tryFrom((new SqliteParser($version))->version());
-        if ($release === null || $release->database() !== 'sqlite') {
+        if ($release === null) {
             throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
         }
         $artifact = (new VersionRegistry())->resolve('sqlite', $release->value);
@@ -77,6 +87,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Lowers a parse tree into its statements.
+     *
+     * @return list<Model\Statement\Statement>
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
@@ -102,12 +114,14 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Creates a context: SQLite searches temp, then main, then the attached schemas, and compares names without regard to ASCII case.
      *
+     * @param list<string>|null $searchPath
+     * @param list<Model\Statement\Declaration\Table> $tables
      * @throws InvalidArgumentException When the path does not start with main
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
     {
         $schemas = $searchPath ?? ['main'];
-        if (strcasecmp($schemas[0], 'temp') === 0) {
+        if ($schemas !== [] && strcasecmp($schemas[0], 'temp') === 0) {
             array_shift($schemas);
         }
         if ($schemas === [] || strcasecmp($schemas[0], 'main') !== 0) {

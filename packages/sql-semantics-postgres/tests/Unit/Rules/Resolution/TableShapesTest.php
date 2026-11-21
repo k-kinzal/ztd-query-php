@@ -14,29 +14,29 @@ final class TableShapesTest extends TestCase
 {
     public function testInputReportsASampleOfACommonTable(): void
     {
-        $context = (new \SqlSemantics\Platform\PostgreSql\Platform())->context(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), null, [], true);
-        $derivation = new \SqlSemantics\Construction\Derivation($context);
-        $fact = $derivation->query(new \SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause([new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]), [], null, null, null)], false), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget()], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('x'))), null, [], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableSample(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('system')]), [new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'))])))), $derivation->environment());
+        $context = (new \SqlSemantics\Platform\PostgreSql\Platform())->context(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172), null, [], true);
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($context);
+        $fact = $derivation->query(new \SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause([new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]), [], null, null, null)], false), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget()], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'))), null, [], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableSample(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('system')]), [new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'))])))), $derivation->environment());
         self::assertSame('TABLESAMPLE clause can only be applied to tables and materialized views', $derivation->facts()->diagnostics[0]->message());
     }
 
     public function testInputReportsATableWithoutReturning(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('WITH x AS (INSERT INTO t VALUES (1)) SELECT * FROM x');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('WITH x AS (INSERT INTO t VALUES (1)) SELECT * FROM x');
         self::assertSame('WITH query "x" does not have a RETURNING clause', $query->facts->diagnostics[0]->message());
     }
 
     public function testImplicitIsEmptyWithoutADeclaration(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\TableShapes())->implicit(new \SqlSemantics\Statement\Fact\RelationFact(new \SqlSemantics\Statement\Shape\RowShape([]))));
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\TableShapes())->implicit(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape([]))));
     }
 
     public function testInputReportsSamplingAView(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM v TABLESAMPLE system (1)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM m TABLESAMPLE system (1)', $context)->facts->diagnostics));
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a'), $semantics->inspect('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('SELECT * FROM v TABLESAMPLE system (1)', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('SELECT * FROM m TABLESAMPLE system (1)', $context)->facts->diagnostics));
     }
 }

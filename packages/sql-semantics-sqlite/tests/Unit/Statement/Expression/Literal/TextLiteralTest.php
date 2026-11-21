@@ -7,15 +7,14 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TextLiteral::class)]
 #[Medium]
@@ -23,7 +22,7 @@ final class TextLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesTextAndKeepsTheDecodedValue(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT 'it''s', ''", []);
+        $operation = (new Semantics())->analyze("SELECT 'it''s', ''", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -42,12 +41,12 @@ final class TextLiteralTest extends TestCase
 
     public function testRenderDoublesEveryEmbeddedQuote(): void
     {
-        self::assertSame("SELECT 'it''s', '', ''''", (new Semantics(Dialect::Sqlite))->analyze("select 'it''s', '', ''''")->toString());
+        self::assertSame("SELECT 'it''s', '', ''''", (new Semantics())->analyze("select 'it''s', '', ''''")->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new TextLiteral("it's")), new ResultColumn(new TextLiteral('a"b'))]));
 
         self::assertSame("SELECT 'it''s', 'a\"b'", $operation->toString());

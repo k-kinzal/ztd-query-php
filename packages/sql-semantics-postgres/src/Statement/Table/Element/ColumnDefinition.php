@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\IdentityColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Qualifiers;
@@ -13,10 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\Identity;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The definition of one column: its name, type, storage, compression, foreign-data options and constraints.
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a column definition
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
  *     $column = $create->statement->definition->elements[0];
  *     [$column->name->value, $column->storage->method->value, $column->compression->method->value, count($column->qualifiers)] // => ['a', 'external', 'lz4', 2]
  */

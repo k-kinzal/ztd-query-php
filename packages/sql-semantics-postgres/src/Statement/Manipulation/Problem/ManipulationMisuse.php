@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A data-modifying, COPY, prepared-statement or cursor command that PostgreSQL rejects because it breaks a rule of the language.
  *
  * @visibility public
  * @example Reading the problem of a column written twice
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
- *     $insert->facts->diagnostics[0]->message() // => 'column "a" specified more than once'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: column "a" specified more than once
  * @example Refusing a message without its subjects
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ManipulationMisuse implements Diagnostic
 {

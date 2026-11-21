@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rendering;
 
-use SqlSemantics\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 
 /**
  * Writes the leading dot of a 5.6 or 5.7 name such as `.t` or `.t.a`, apart from the word before it.

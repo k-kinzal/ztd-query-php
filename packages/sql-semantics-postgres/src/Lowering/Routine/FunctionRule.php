@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\DefaultSpelling;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\ResultTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\ReturnStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CREATE FUNCTION and CREATE PROCEDURE with their parameters, results and bodies.

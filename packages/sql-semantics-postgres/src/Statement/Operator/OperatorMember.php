@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `OPERATOR strategy operator [(types)] [FOR SEARCH | FOR ORDER BY family]`: an operator of an operator class or family.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the strategy number
- *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorMember(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'), new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Statement\Identifier\Name('<')));
+ *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorMember(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'), new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('<')));
  *     $member->strategy->digits // => '1'
  */
 final class OperatorMember implements OperatorClassItem

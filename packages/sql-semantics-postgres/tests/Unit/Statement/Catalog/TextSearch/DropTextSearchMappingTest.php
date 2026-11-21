@@ -14,11 +14,11 @@ final class DropTextSearchMappingTest extends TestCase
 {
     public function testRenderWritesIfExists(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word, url', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word, url')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word, url', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word, url')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING FOR word')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING FOR word')->facts->diagnostics);
     }
 }

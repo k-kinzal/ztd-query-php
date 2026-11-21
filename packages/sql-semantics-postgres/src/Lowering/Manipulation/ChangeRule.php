@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignment;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\ColumnTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment;
@@ -15,9 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers UPDATE and DELETE, and the clauses the data-modifying statements share.

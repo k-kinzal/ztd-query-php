@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
@@ -17,9 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Finds the expression a query is written to end with, so that a statement can tell whether a token it writes after the query would continue that expression.

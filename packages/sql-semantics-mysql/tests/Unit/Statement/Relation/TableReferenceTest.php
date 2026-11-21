@@ -7,24 +7,23 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConflictingTables;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TableReference::class)]
 #[Medium]
@@ -32,7 +31,7 @@ final class TableReferenceTest extends TestCase
 {
     public function testNameAnswersTheTableNameWithItsDatabase(): void
     {
-        $input = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM shop.t AS x')->singleNamedInput();
+        $input = (new Semantics())->inspect('SELECT a FROM shop.t AS x')->singleNamedInput();
 
         self::assertInstanceOf(TableReference::class, $input);
         self::assertSame('shop', $input->name()->schema?->value);
@@ -43,7 +42,7 @@ final class TableReferenceTest extends TestCase
 
     public function testNameAnswersAnUnqualifiedNameWithoutADatabase(): void
     {
-        $input = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t')->singleNamedInput();
+        $input = (new Semantics())->inspect('SELECT a FROM t')->singleNamedInput();
 
         self::assertSame('t', $input->name()->name->value);
         self::assertNull($input->name()->schema);
@@ -51,21 +50,21 @@ final class TableReferenceTest extends TestCase
 
     public function testAliasAnswersTheCorrelationName(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
-        self::assertSame('x', $semantics->analyze('SELECT a FROM t AS x')->singleNamedInput()->alias()?->value);
-        self::assertSame('x', $semantics->analyze('SELECT a FROM t x')->singleNamedInput()->alias()?->value);
-        self::assertNull($semantics->analyze('SELECT a FROM t')->singleNamedInput()->alias());
+        self::assertSame('x', $semantics->inspect('SELECT a FROM t AS x')->singleNamedInput()->alias()?->value);
+        self::assertSame('x', $semantics->inspect('SELECT a FROM t x')->singleNamedInput()->alias()?->value);
+        self::assertNull($semantics->inspect('SELECT a FROM t')->singleNamedInput()->alias());
     }
 
     public function testDeriveRelationExposesOneSlotPerDeclaredColumn(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->analyze('SELECT a FROM t', [$table]);
+        $operation = $semantics->inspect('SELECT a FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -85,7 +84,7 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationLeavesTheShapeOpenForAnUndeclaredTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM shop.t AS x');
+        $operation = (new Semantics())->inspect('SELECT a FROM shop.t AS x');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -100,7 +99,7 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationReportsAMissingTableWithAnEmptyCompleteShape(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t', []);
+        $operation = (new Semantics())->inspect('SELECT 1 FROM t', []);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -114,12 +113,12 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationResolvesAnUnqualifiedNameInTheCurrentDatabase(): void
     {
-        $semantics = new Semantics(Dialect::MySql, null, null, ParameterStyle::Native, new SearchPath('shop'));
+        $semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('shop'));
         $table = new Table(new QualifiedName(new Name('t'), new Name('shop')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $unqualified = $semantics->analyze('SELECT a FROM t', [$table]);
-        $qualified = $semantics->analyze('SELECT a FROM shop.t', [$table]);
+        $unqualified = $semantics->inspect('SELECT a FROM t', [$table]);
+        $qualified = $semantics->inspect('SELECT a FROM shop.t', [$table]);
 
         self::assertSame($table->columns[0], $unqualified->field('a')->column());
         self::assertSame($table->columns[0], $qualified->field('a')->column());
@@ -128,11 +127,11 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationDoesNotFindATableOfAnotherDatabase(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT a FROM shop.t', [$table]);
+        $operation = $semantics->inspect('SELECT a FROM shop.t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -142,12 +141,12 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationReportsConflictingDeclarations(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $first = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $second = new Table(new QualifiedName(new Name('t')), $semantics->profile(), []);
-        $operation = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
+        $operation = $semantics->inspect('SELECT 1 FROM t', [$first, $second]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -161,11 +160,11 @@ final class TableReferenceTest extends TestCase
 
     public function testRenderWritesTheDatabaseTheNameAndTheCorrelationName(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
-        self::assertSame('SELECT a FROM shop.t AS x', $semantics->analyze('select a from shop.t as x')->toString());
-        self::assertSame('SELECT a FROM t x', $semantics->analyze('SELECT a FROM t x')->toString());
-        self::assertSame('SELECT a FROM `order`', $semantics->analyze('SELECT a FROM `order`')->toString());
+        self::assertSame('SELECT a FROM shop.t AS x', $semantics->inspect('select a from shop.t as x')->toString());
+        self::assertSame('SELECT a FROM t x', $semantics->inspect('SELECT a FROM t x')->toString());
+        self::assertSame('SELECT a FROM `order`', $semantics->inspect('SELECT a FROM `order`')->toString());
     }
 
     public function testACatalogQualifierIsRejected(): void

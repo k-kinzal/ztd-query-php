@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\IndexConstraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AddConstraint;
@@ -42,8 +44,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachPartition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Checks the actions of ALTER TABLE against the kind of the altered relation.

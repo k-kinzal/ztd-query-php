@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A privilege the server defines statically, such as `SELECT (a, b)` or `CREATE ROUTINE`, with its column list.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a column privilege
- *     $privilege = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT (a, b) ON t TO u')->statement->privileges[0];
+ *     $privilege = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT (a, b) ON t TO u')->statement->privileges[0];
  *     [$privilege->kind, count($privilege->columns)] // => [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, 2]
  */
 final class StaticPrivilege implements Grantable

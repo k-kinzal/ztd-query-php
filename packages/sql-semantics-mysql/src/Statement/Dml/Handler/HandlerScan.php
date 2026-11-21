@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ FIRST|NEXT: reads rows of an open handler in natural row order.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a scan of a handler
- *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
+ *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
  *     [$read->statement->direction, $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next, 'HANDLER h READ NEXT WHERE a > 1 LIMIT 5']
  */
 final class HandlerScan implements Statement

@@ -16,6 +16,6 @@ final class SetItemTest extends TestCase
     public function testDeriveItemIsPartOfEveryItem(): void
     {
         self::assertTrue(interface_exists(SetItem::class));
-        self::assertContains(\SqlSemantics\Statement\Node::class, class_implements(SetItem::class));
+        self::assertContains(\SqlSemantics\Platform\MySql\Model\Statement\Node::class, class_implements(SetItem::class));
     }
 }

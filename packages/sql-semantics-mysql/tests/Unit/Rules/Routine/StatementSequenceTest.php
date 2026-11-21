@@ -7,16 +7,15 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(StatementSequence::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class StatementSequenceTest extends TestCase
 {
     public function testMembersKeepsProgramStatementsAndSqlStatementsInOrder(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $select = $semantics->analyze('SELECT 1')->statement;
@@ -51,12 +50,12 @@ final class StatementSequenceTest extends TestCase
     {
         $this->expectExceptionMessage('A statement list holds statements.');
 
-        (new StatementSequence())->members(['first' => (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement]);
+        (new StatementSequence())->members(['first' => (new Semantics())->analyze('SELECT 1')->statement]);
     }
 
     public function testMemberAcceptsAProgramStatementAndAnSqlStatement(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $procedure = $semantics->analyze('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $block = $procedure->body;
@@ -76,7 +75,7 @@ final class StatementSequenceTest extends TestCase
 
     public function testWriteEndsEveryStatementWithASemicolon(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $out = new Output(new Codec(GrammarRelease::MySql910));
         (new StatementSequence())->write($out, [$semantics->analyze('SELECT 1')->statement, $semantics->analyze('SET @a = 1')->statement]);
 

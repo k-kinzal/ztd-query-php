@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * CYCLE columns SET mark [TO value DEFAULT value] USING path: cycle detection added to a recursive query.
@@ -23,10 +23,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a cycle clause
- *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Statement\Identifier\Name('id')], new \SqlSemantics\Statement\Identifier\Name('is_cycle'), new \SqlSemantics\Statement\Identifier\Name('path'));
+ *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('is_cycle'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('path'));
  *     [$clause->mark->value, $clause->path->value, $clause->markValue] // => ['is_cycle', 'path', null]
  * @example Refusing a mark value without its default
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Statement\Identifier\Name('id')], new \SqlSemantics\Statement\Identifier\Name('m'), new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral(true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('m'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral(true)) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class CycleClause implements Node
 {

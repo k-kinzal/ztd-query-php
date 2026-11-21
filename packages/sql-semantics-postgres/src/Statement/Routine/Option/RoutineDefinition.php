@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `AS 'definition'` or `AS 'object_file', 'link_symbol'`: the routine's definition as unanalysed text of its language.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a string body
- *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition(new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource(new \SqlSemantics\Statement\Identifier\Name('sql'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('SELECT 1')));
+ *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition(new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('sql'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('SELECT 1')));
  *     [$option->source->language?->value, $option->source->text->value, $option->symbol] // => ['sql', 'SELECT 1', null]
  */
 final class RoutineDefinition implements RoutineOption

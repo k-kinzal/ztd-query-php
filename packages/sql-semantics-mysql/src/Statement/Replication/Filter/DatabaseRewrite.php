@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Filter;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * One `(from_db, to_db)` pair of REPLICATE_REWRITE_DB: events of the first database are applied to the second.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding both database names
- *     $pair = new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\Name('b'));
+ *     $pair = new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b'));
  *     [$pair->from->value, $pair->to->value] // => ['a', 'b']
  */
 final class DatabaseRewrite implements Node

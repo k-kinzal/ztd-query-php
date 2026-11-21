@@ -14,11 +14,11 @@ final class AlterSubscriptionOptionsTest extends TestCase
 {
     public function testRenderWritesSet(): void
     {
-        self::assertSame('ALTER SUBSCRIPTION s SET (slot_name = NONE)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s SET (slot_name = NONE)')->toString());
+        self::assertSame('ALTER SUBSCRIPTION s SET (slot_name = NONE)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s SET (slot_name = NONE)')->toString());
     }
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s SET (binary = true)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s SET (binary = true)')->facts->diagnostics);
     }
 }

@@ -8,9 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Rules\Routine\BlockFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -18,8 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CursorDeclaration;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(BlockFacts::class)]
 #[Medium]
@@ -27,7 +26,7 @@ final class BlockFactsTest extends TestCase
 {
     public function testDeriveResolvesTheVariableOfTheInnermostBlock(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; BEGIN DECLARE x CHAR(1); SELECT x; END; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; BEGIN DECLARE x CHAR(1); SELECT x; END; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $outer = $create->body;
@@ -47,16 +46,16 @@ final class BlockFactsTest extends TestCase
 
     public function testDeriveEndsTheScopeOfTheDeclarationsWithTheBlock(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
 
         self::assertSame(['Column x does not exist.', 'Undefined CURSOR: c'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testDeriveDerivesTheCursorQueryInTheScopeOfTheBlock(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT a FROM t WHERE a = x; OPEN c; END', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $operation = $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT a FROM t WHERE a = x; OPEN c; END', [$table]);
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -72,16 +71,16 @@ final class BlockFactsTest extends TestCase
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT zz FROM t; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT zz FROM t; END', [$table])->facts->diagnostics));
     }
 
     public function testDeriveDerivesTheHandlerStatementWithTheDeclarationsBeforeIt(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END')->facts->diagnostics));
-        self::assertSame(['LEAVE with no matching label: b'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b')->facts->diagnostics));
+        self::assertSame([], $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->facts->diagnostics);
+        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END')->facts->diagnostics));
+        self::assertSame(['LEAVE with no matching label: b'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b')->facts->diagnostics));
     }
 
     /**
@@ -90,7 +89,7 @@ final class BlockFactsTest extends TestCase
     #[DataProvider('providerDeriveReportsTheBrokenRule')]
     public function testDeriveReportsTheBrokenRule(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -116,7 +115,7 @@ final class BlockFactsTest extends TestCase
     #[DataProvider('providerOrderedReportsADeclarationAfterOneItMustPrecede')]
     public function testOrderedReportsADeclarationAfterOneItMustPrecede(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -142,7 +141,7 @@ final class BlockFactsTest extends TestCase
     #[DataProvider('providerDistinctComparesNamesWithoutRegardToLetterCase')]
     public function testDistinctComparesNamesWithoutRegardToLetterCase(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -161,7 +160,7 @@ final class BlockFactsTest extends TestCase
 
     public function testVariablesReportsADuplicateNameAndKeepsTheFirstMeaning(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -184,22 +183,22 @@ final class BlockFactsTest extends TestCase
 
     public function testVariablesReportsANameRepeatedInOneDeclaration(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
 
         self::assertSame(['Duplicate variable: x'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testVariablesMakesTheNamesVisibleAfterTheDeclarationOnly(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x; END')->facts->diagnostics);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y INT DEFAULT y; END')->facts->diagnostics));
+        self::assertSame([], $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x; END')->facts->diagnostics);
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x, y INT DEFAULT y; END')->facts->diagnostics));
     }
 
     public function testVariablesHidesAParameterOfTheSameName(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -222,7 +221,7 @@ final class BlockFactsTest extends TestCase
     #[DataProvider('providerHandledReportsAConditionValueHandledTwiceInTheBlock')]
     public function testHandledReportsAConditionValueHandledTwiceInTheBlock(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

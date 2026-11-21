@@ -7,12 +7,11 @@ namespace Tests\Unit\Lowering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
@@ -55,7 +54,7 @@ final class LoweringTest extends TestCase
 
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
+        $operation = (new Semantics('mysql-8.4.7'))->analyze('SET ROLE NONE');
 
         self::assertInstanceOf(SetRole::class, $operation->statement);
         self::assertSame('SET ROLE NONE', $operation->toString());
@@ -63,7 +62,7 @@ final class LoweringTest extends TestCase
 
     public function testStatementHandsBeginToTheServerFamily(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('BEGIN');
+        $operation = (new Semantics('mysql-5.7.44'))->analyze('BEGIN');
 
         self::assertInstanceOf(Begin::class, $operation->statement);
         self::assertSame('BEGIN', $operation->toString());
@@ -71,7 +70,7 @@ final class LoweringTest extends TestCase
 
     public function testDefinitionRoutesCreateAlterAndDrop(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
+        $operation = (new Semantics('mysql-5.7.44'))->analyze('DROP TABLE t');
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -79,7 +78,7 @@ final class LoweringTest extends TestCase
 
     public function testRoutedHandsAModernStatementToItsFamily(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
+        $operation = (new Semantics('mysql-8.4.7'))->analyze('DROP TABLE t');
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -87,11 +86,11 @@ final class LoweringTest extends TestCase
 
     public function testRoutedHandsADefinitionToItsFamilyThroughTheRoutes(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        $semantics = new Semantics('mysql-8.4.7');
 
         self::assertInstanceOf(CreateTablespace::class, $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'")->statement);
         self::assertInstanceOf(CreateDatabase::class, $semantics->analyze('CREATE DATABASE d')->statement);
-        self::assertInstanceOf(CreateDatabase::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE DATABASE d')->statement);
+        self::assertInstanceOf(CreateDatabase::class, (new Semantics('mysql-5.6.51'))->analyze('CREATE DATABASE d')->statement);
     }
 
     public function testFormAnswersTheProductionOfANode(): void

@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Schema\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(DecoratedColumnName::class)]
 #[Small]

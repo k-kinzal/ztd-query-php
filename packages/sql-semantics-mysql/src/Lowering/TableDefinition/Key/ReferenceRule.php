@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceEvent;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceMatch;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ReferentialAction;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers REFERENCES clauses.

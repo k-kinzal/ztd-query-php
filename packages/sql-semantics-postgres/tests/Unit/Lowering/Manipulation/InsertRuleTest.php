@@ -14,14 +14,14 @@ final class InsertRuleTest extends TestCase
 {
     public function testInsertLowersDefaultValues(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t DEFAULT VALUES');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertDefaults::class, $query->statement);
     }
 
     public function testRestLowersTheColumnsAndTheOverride(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t (a, b) OVERRIDING USER VALUE SELECT 1, 2');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect::class, $statement);
@@ -30,21 +30,21 @@ final class InsertRuleTest extends TestCase
 
     public function testRowsMakesValuesInParenthesesRows(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t (a) ((VALUES (1)))');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $query->statement);
     }
 
     public function testRowsLeavesValuesWithClausesAQuery(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t VALUES (1) LIMIT 1');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect::class, $query->statement);
     }
 
     public function testTargetLowersTheAlias(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO s.t AS x VALUES (1)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $statement);
@@ -53,7 +53,7 @@ final class InsertRuleTest extends TestCase
 
     public function testOverridingLowersSystemValue(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t OVERRIDING SYSTEM VALUE VALUES (1)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $statement);
@@ -62,7 +62,7 @@ final class InsertRuleTest extends TestCase
 
     public function testColumnsLowersTheSteps(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t (a[1:2], b.c) VALUES (1, 2)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $statement);
@@ -71,14 +71,14 @@ final class InsertRuleTest extends TestCase
 
     public function testConflictLowersDoUpdate(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET b = 2');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $query->statement);
     }
 
     public function testInferenceLowersTheConstraintName(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('INSERT INTO t VALUES (1) ON CONFLICT ON CONSTRAINT k DO NOTHING');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows::class, $statement);

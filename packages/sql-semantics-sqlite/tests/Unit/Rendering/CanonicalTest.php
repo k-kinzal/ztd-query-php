@@ -7,16 +7,15 @@ namespace Tests\Unit\Rendering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Spelled;
 use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Spelling\Layout;
-use SqlSemantics\Statement\Spelling\Spelled;
 
 #[CoversClass(Canonical::class)]
 #[Medium]
@@ -32,7 +31,7 @@ final class CanonicalTest extends TestCase
 
     public function testLayoutKeepsTheLayoutsNestedInTheNode(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT 1+1)');
+        $query = (new Semantics())->analyze('SELECT (SELECT 1+1)');
         self::assertInstanceOf(Select::class, $query->statement);
         $column = $query->statement->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);

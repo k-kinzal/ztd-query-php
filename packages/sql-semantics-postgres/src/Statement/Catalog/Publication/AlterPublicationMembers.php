@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to add, replace or remove tables and schemas of a publication.
@@ -23,8 +23,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Removing a table with a row filter
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)');
- *     $operation->facts->diagnostics[0]->message() // => 'cannot use a WHERE clause when removing a table from a publication'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: cannot use a WHERE clause when removing a table from a publication
  */
 final class AlterPublicationMembers implements Statement
 {

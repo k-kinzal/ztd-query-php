@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The operands of a 5.x union before a later UNION, when the last of them is a SELECT that keeps its own LIMIT or locking clauses.
@@ -38,12 +38,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the LIMIT a 5.6 SELECT keeps before a later UNION
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze('SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v');
  *     [$query->statement->left::class, $query->statement->left->right->limit !== null] // => [\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion::class, true]
  * @example Refusing a last operand without clauses of its own
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
- *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class LeadingUnion implements Node
 {
@@ -53,7 +53,7 @@ final class LeadingUnion implements Node
      * @param Query|LeadingUnion $left The operands before the last one
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
      * @param Select $right The last operand, with its own LIMIT or locking clauses and nothing else after its items
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, or the left operand is written in parentheses as a set operand
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, or the left operand is written in parentheses as a set operand
      */
     public function __construct(public readonly Query|LeadingUnion $left, public readonly ?SetQuantifier $quantifier, public readonly Select $right)
     {

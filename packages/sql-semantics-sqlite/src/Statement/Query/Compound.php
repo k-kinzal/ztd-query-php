@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Query\CompoundFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Ordinals;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A compound query: arms combined from left to right by UNION, UNION ALL, INTERSECT and EXCEPT.
@@ -32,11 +32,11 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the arms and the ordering of a compound query
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1');
  *     [count($query->statement->steps), count($query->statement->orderBy), $query->statement->steps[0]->query->orderBy, $query->toString()] // => [1, 1, [], 'SELECT 1 AS a UNION SELECT 2 ORDER BY a LIMIT 1']
  * @example Refusing an ordering left on the last arm
- *     $ordered = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS a ORDER BY a')->statement;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Compound(new \SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause([new \SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()])]), [new \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep(\SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::Union, $ordered)]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $ordered = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a ORDER BY a')->statement;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Compound(new \SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause([new \SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()])]), [new \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep(\SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::Union, $ordered)]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Compound implements Statement, Query
 {

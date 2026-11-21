@@ -14,8 +14,8 @@ final class ColumnCheckTest extends TestCase
 {
     public function testKindIsCheck(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a > 0))', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,8 +29,8 @@ final class ColumnCheckTest extends TestCase
 
     public function testDeriveClauseResolvesTheConditionAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a > 0))', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -44,14 +44,14 @@ final class ColumnCheckTest extends TestCase
         $n6 = $n5->left;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference::class, $n6);
         $n7 = $statement->facts->scalar($n6)->resolution;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $n7);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn::class, $n7);
         self::assertSame(true, $n7->slot->column === $statement->declarations()[0]->columns[0]);
     }
 
     public function testDeriveClauseReportsAConditionThatIsNotBoolean(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a + 1))', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CHECK (a + 1))', []);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -59,8 +59,8 @@ final class ColumnCheckTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int CONSTRAINT c CHECK (a > 0) NO INHERIT)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CONSTRAINT c CHECK (a > 0) NO INHERIT)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT c CHECK (a > 0) NO INHERIT)', $statement->toString());
     }
 }

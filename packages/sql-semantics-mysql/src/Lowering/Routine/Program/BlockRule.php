@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine\Program;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\ConditionRule;
 use SqlSemantics\Platform\MySql\Lowering\Routine\ParameterRule;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CloseCursor;
@@ -21,8 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers BEGIN ... END blocks, their declarations and the cursor statements.

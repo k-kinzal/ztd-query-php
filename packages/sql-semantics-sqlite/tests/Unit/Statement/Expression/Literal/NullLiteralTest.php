@@ -7,14 +7,13 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(NullLiteral::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class NullLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesTheNullOnlyType(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT NULL', []);
+        $operation = (new Semantics())->analyze('SELECT NULL', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -38,12 +37,12 @@ final class NullLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        self::assertSame('SELECT NULL AS c1, NULL AS c2', (new Semantics(Dialect::Sqlite))->analyze('select null AS c1, Null AS c2')->toString());
+        self::assertSame('SELECT NULL AS c1, NULL AS c2', (new Semantics())->analyze('select null AS c1, Null AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new NullLiteral())]));
 
         self::assertSame('SELECT NULL', $operation->toString());

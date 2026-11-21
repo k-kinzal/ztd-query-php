@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Inspection;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ExplainRows;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to report how SQLite would run a statement instead of running it.
@@ -25,10 +25,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the columns of a query plan report
- *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('EXPLAIN QUERY PLAN SELECT 1');
+ *     $explain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('EXPLAIN QUERY PLAN SELECT 1');
  *     [count($explain->fields()), $explain->field(3)->name?->value, $explain->toString()] // => [4, 'detail', 'EXPLAIN QUERY PLAN SELECT 1']
  * @example Inspecting a definition without declaring it
- *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('EXPLAIN CREATE TABLE t (a)');
+ *     $explain = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('EXPLAIN CREATE TABLE t (a)');
  *     [$explain->declarations(), count($explain->fields())] // => [[], 8]
  */
 final class Explain implements Statement

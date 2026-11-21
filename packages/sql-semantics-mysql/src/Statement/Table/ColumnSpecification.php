@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
 
 /**
  * The definition of a column without its name: data type, attributes, generation expression and reference.

@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint;
  *
  * @visibility public
  * @example Reading the kind of a table constraint
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, PRIMARY KEY (a))');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, PRIMARY KEY (a))');
  *     $create->statement->definition->elements[1]->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind::PrimaryKey
  */
 enum ConstraintKind

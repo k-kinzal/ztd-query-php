@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `CHECKPOINT`: a request to force a write-ahead log checkpoint.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Writing a checkpoint request
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('checkpoint')->toString() // => 'CHECKPOINT'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('checkpoint')->toString() // => 'CHECKPOINT'
  */
 final class Checkpoint implements Statement
 {

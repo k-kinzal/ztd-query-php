@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Utility\Set;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the value of a variable assignment in SET.
@@ -87,7 +87,7 @@ final class ValueRule
         if ($idents === [] || count($idents) > 3 || array_filter($idents, static fn (Node $ident): bool => $ident->name !== 'ident') !== []) {
             return null;
         }
-        $parts = array_map(fn (Node $ident): \SqlSemantics\Statement\Identifier\Name => $this->lowering->names->identifier($ident), $idents);
+        $parts = array_map(fn (Node $ident): \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name => $this->lowering->names->identifier($ident), $idents);
         $word = array_pop($parts);
         $qualifier = match (count($parts)) {
             0 => null,

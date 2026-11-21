@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\CopyFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\AliasSpelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * COPY between a table and a file, a program or the client.
@@ -30,10 +30,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a COPY of a table
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY t (a) FROM PROGRAM 'cat x' WITH (format csv) WHERE a > 0");
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t (a) FROM PROGRAM 'cat x' WITH (format csv) WHERE a > 0");
  *     [$copy->statement->program, $copy->statement->file->value, $copy->toString()] // => [true, 'cat x', "COPY t (a) FROM PROGRAM 'cat x' (format csv) WHERE a > 0"]
  * @example Refusing both kinds of options
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable(false, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), [], \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::To, false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout, null, [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyFlag::Csv], [new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyOption(new \SqlSemantics\Statement\Identifier\Name('header'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable(false, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), [], \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::To, false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout, null, [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyFlag::Csv], [new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('header'))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class CopyTable implements Statement
 {

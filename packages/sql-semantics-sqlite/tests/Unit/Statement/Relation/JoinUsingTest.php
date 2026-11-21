@@ -7,8 +7,13 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
@@ -16,12 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(JoinUsing::class)]
 #[Medium]
@@ -29,10 +28,10 @@ final class JoinUsingTest extends TestCase
 {
     public function testRenderWritesTheColumnsInParentheses(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $step = new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a'), new Name('b')]));
         $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
-        $query = $semantics->analyze('select * from t join u using(a,b)');
+        $query = $semantics->inspect('select * from t join u using(a,b)');
 
         self::assertSame('SELECT * FROM t JOIN u USING (a, b)', $built->toString());
         self::assertSame('SELECT * FROM t JOIN u USING (a, b)', $query->toString());
@@ -44,10 +43,10 @@ final class JoinUsingTest extends TestCase
 
     public function testColumnsResolveToTheLeftSideUnlessQualified(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $query = $semantics->analyze('SELECT a, u.a FROM t LEFT JOIN u USING (a)', [$t, $u]);
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $query = $semantics->inspect('SELECT a, u.a FROM t LEFT JOIN u USING (a)', [$t, $u]);
         $bare = $query->field(0)->resolution;
         $qualified = $query->field(1)->resolution;
 
@@ -66,11 +65,11 @@ final class JoinUsingTest extends TestCase
 
     public function testColumnsMustBePresentOnBothSidesWhenTheyAreKnown(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $closed = $semantics->analyze('SELECT * FROM t JOIN u USING (zz)', [$t, $u]);
-        $open = $semantics->analyze('SELECT * FROM t JOIN u USING (zz)');
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $closed = $semantics->inspect('SELECT * FROM t JOIN u USING (zz)', [$t, $u]);
+        $open = $semantics->inspect('SELECT * FROM t JOIN u USING (zz)');
 
         self::assertInstanceOf(MissingColumn::class, $closed->facts->diagnostics[0]);
         self::assertSame('zz', $closed->facts->diagnostics[0]->name->value);

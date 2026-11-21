@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
  *
  * @visibility public
  * @example Reading the kind of a FORCE option
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t FROM STDIN CSV FORCE NOT NULL a');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t FROM STDIN CSV FORCE NOT NULL a');
  *     $copy->statement->legacy[1]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::NotNull
  */
 enum CopyForceKind

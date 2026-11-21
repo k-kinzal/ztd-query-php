@@ -7,11 +7,15 @@ namespace Tests\Unit\Rules\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
@@ -20,11 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(AlterationProblems::class)]
 #[Medium]
@@ -32,8 +31,8 @@ final class AlterationProblemsTest extends TestCase
 {
     public function testOccurrencesCountsTheColumnsWithANameWithoutRegardToCase(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $derivation = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a, b)')]));
+        $semantics = new Semantics();
+        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
 
         self::assertSame(1, (new AlterationProblems())->occurrences($fact, new Name('A'), $derivation));
@@ -42,7 +41,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testOccurrencesIsNullWhileTheColumnsAreNotKnown(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $open = new Derivation($semantics->context());
         $missing = new Derivation($semantics->context([]));
 
@@ -52,9 +51,9 @@ final class AlterationProblemsTest extends TestCase
 
     public function testStrictIsReadFromTheDeclaredColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $strict = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a INT) STRICT')]));
-        $plain = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a INT)')]));
+        $semantics = new Semantics();
+        $strict = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a INT) STRICT')]));
+        $plain = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a INT)')]));
 
         self::assertTrue((new AlterationProblems())->strict((new TableShapes())->target($strict, new QualifiedName(new Name('t')))));
         self::assertFalse((new AlterationProblems())->strict((new TableShapes())->target($plain, new QualifiedName(new Name('t')))));
@@ -62,9 +61,9 @@ final class AlterationProblemsTest extends TestCase
 
     public function testSlotHasTheRecordedTypeAndTheNullFactOfTheNewColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $derivation = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a)')]));
-        $statement = $semantics->analyze('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
+        $semantics = new Semantics();
+        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a)')]));
+        $statement = $semantics->inspect('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         $slot = (new AlterationProblems())->slot((new TableShapes())->target($derivation, new QualifiedName(new Name('t'))), $statement->column);
@@ -76,9 +75,9 @@ final class AlterationProblemsTest extends TestCase
 
     public function testAddedReportsEveryObstacleOfTheNewColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a INT) STRICT');
-        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->analyze($sql, [$table])->facts->diagnostics);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT) STRICT');
+        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->inspect($sql, [$table])->facts->diagnostics);
 
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT NOT NULL DEFAULT 0'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT AS (a) VIRTUAL NOT NULL'));
@@ -102,8 +101,8 @@ final class AlterationProblemsTest extends TestCase
 
     public function testDroppedReportsAnUnknownColumnAndTheOnlyColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $one = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a)')]));
+        $semantics = new Semantics();
+        $one = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a)')]));
         $fact = (new TableShapes())->target($one, new QualifiedName(new Name('t')));
         (new AlterationProblems())->dropped($fact, new Name('zz'), $one);
         (new AlterationProblems())->dropped($fact, new Name('a'), $one);
@@ -116,8 +115,8 @@ final class AlterationProblemsTest extends TestCase
 
     public function testRenamedReportsAnUnknownOldNameAndATakenNewName(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $derivation = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a, b)')]));
+        $semantics = new Semantics();
+        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
         (new AlterationProblems())->renamed($fact, new Name('zz'), new Name('c'), $derivation);
         (new AlterationProblems())->renamed($fact, new Name('a'), new Name('b'), $derivation);

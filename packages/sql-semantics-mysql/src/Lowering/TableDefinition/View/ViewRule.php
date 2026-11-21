@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition\View;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption;
 use SqlSemantics\Platform\MySql\Statement\View\ViewDefinition;
 use SqlSemantics\Platform\MySql\Statement\View\ViewSecurity;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers CREATE VIEW, ALTER VIEW and DROP VIEW.

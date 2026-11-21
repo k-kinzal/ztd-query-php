@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\TableResolution;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\TableResolution;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A relation name that a complete context does not declare, at a use that tolerates the absence.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Dropping a table that does not exist without a diagnostic
- *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DROP TABLE IF EXISTS t', []);
+ *     $drop = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DROP TABLE IF EXISTS t', []);
  *     [$drop->facts->relation($drop->statement)->table->name->name->value, $drop->facts->diagnostics] // => ['t', []]
  */
 final class AbsentRelation implements TableResolution

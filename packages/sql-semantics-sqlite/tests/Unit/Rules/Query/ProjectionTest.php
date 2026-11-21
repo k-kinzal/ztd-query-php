@@ -7,30 +7,29 @@ namespace Tests\Unit\Rules\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Projection;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Projection::class)]
 #[Medium]
@@ -38,9 +37,9 @@ final class ProjectionTest extends TestCase
 {
     public function testItemsNamesEveryKindOfResultColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->analyze('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $select = $semantics->inspect('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
         self::assertInstanceOf(Select::class, $select);
         $from = $select->from;
         self::assertNotNull($from);
@@ -63,7 +62,7 @@ final class ProjectionTest extends TestCase
 
     public function testItemsReportsAStarWithoutInputAndAQualifierThatNamesNoRelation(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
         $relation = new VisibleRelation(new TableInput(new QualifiedName(new Name('t'))), new RowShape([new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull)]), new Name('x'));
 
@@ -81,8 +80,8 @@ final class ProjectionTest extends TestCase
 
     public function testItemsReportsARowValueResultColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $select = $semantics->analyze('SELECT (1, 2)')->statement;
+        $semantics = new Semantics();
+        $select = $semantics->inspect('SELECT (1, 2)')->statement;
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([]));
 

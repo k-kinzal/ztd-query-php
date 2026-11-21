@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 #[CoversNothing]
 #[Medium]
@@ -21,7 +20,7 @@ final class TableConstraintTest extends TestCase
 {
     public function testDeriveConstraintDerivesTheOperandsOfEachConstraint(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (a), CHECK (b > 0))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (a), CHECK (b > 0))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

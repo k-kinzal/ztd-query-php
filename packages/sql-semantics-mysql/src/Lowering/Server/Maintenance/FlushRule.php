@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Maintenance;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers FLUSH.

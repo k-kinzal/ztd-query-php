@@ -14,8 +14,8 @@ final class ListedColumnsTest extends TestCase
 {
     public function testElementsAnswersTheElementsInOrder(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int, CHECK (a > 0))', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int, CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -25,8 +25,8 @@ final class ListedColumnsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t () INHERITS (a, s.b)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t () INHERITS (a, s.b)', []);
         self::assertSame('CREATE TABLE t () INHERITS (a, s.b)', $statement->toString());
     }
 

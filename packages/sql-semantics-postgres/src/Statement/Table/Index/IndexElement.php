@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Index;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One key of an index, an exclusion constraint or an ON CONFLICT target: a column or expression with its collation, operator class and ordering.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the options of an index key
- *     $index = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE INDEX ON t (a COLLATE "C" text_pattern_ops DESC NULLS LAST)');
+ *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE INDEX ON t (a COLLATE "C" text_pattern_ops DESC NULLS LAST)');
  *     $key = $index->statement->elements[0];
  *     [$key->collation->last()->value, $key->operatorClass->last()->value, $key->direction, $key->nulls] // => ['C', 'text_pattern_ops', \SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection::Descending, \SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder::Last]
  */

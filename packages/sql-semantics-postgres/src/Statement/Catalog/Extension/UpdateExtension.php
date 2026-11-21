@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to update an extension: `ALTER EXTENSION name UPDATE [ TO version ]`.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Updating to a version
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER EXTENSION hstore UPDATE TO '2.0'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER EXTENSION hstore UPDATE TO '2.0'");
  *     $operation->statement->versions[0]->value // => '2.0'
  */
 final class UpdateExtension implements Statement
@@ -44,7 +44,7 @@ final class UpdateExtension implements Statement
     public function __construct(public readonly Name $name, array $versions = [])
     {
         $checked = [];
-        foreach (Check::listOf($versions, \SqlSemantics\Statement\Node::class, 'Versions are a list.') as $version) {
+        foreach (Check::listOf($versions, \SqlSemantics\Platform\PostgreSql\Model\Statement\Node::class, 'Versions are a list.') as $version) {
             Check::input($version instanceof Word || $version instanceof StringConstant, 'A version is a word or a string.');
             $checked[] = $version;
         }

@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -33,7 +32,7 @@ final class ParameterPrefixTest extends TestCase
 
     public function testFromMatchesThePrefixOfAnAnalyzedParameter(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT $id')->statement;
+        $statement = (new Semantics())->analyze('SELECT $id')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

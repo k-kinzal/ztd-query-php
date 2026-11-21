@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateForeignTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;
@@ -175,7 +175,7 @@ final class CreateTableRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function method(Node $clause): ?\SqlSemantics\Statement\Identifier\Name
+    public function method(Node $clause): ?\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name
     {
         $form = $this->lowering->productions->form($clause);
 

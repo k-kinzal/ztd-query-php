@@ -7,11 +7,10 @@ namespace Tests\Unit\Statement\Schema\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(GeneratedColumnProblem::class)]
 #[Medium]
@@ -27,8 +26,8 @@ final class GeneratedColumnProblemTest extends TestCase
 
     public function testMessageIsReportedForEachWrongUseOfAGeneratedColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $flaw = static fn (string $sql): array => array_map(static fn (object $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->facts->diagnostics);
+        $semantics = new Semantics();
+        $flaw = static fn (string $sql): array => array_map(static fn (object $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->inspect($sql, [])->facts->diagnostics);
 
         self::assertSame([['WithDefault', 'b']], $flaw('CREATE TABLE t (a, b DEFAULT 1 AS (a))'));
         self::assertSame([['WithDefault', 'b']], $flaw('CREATE TABLE t (a, b GENERATED ALWAYS AS (a) STORED DEFAULT (1))'));

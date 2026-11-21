@@ -19,14 +19,14 @@ final class SelectOptionsTest extends TestCase
 
     public function testRenderKeepsTheOrderOfLimitAndLocking(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT 1 FOR UPDATE LIMIT 1');
         self::assertSame('SELECT 1 FOR UPDATE LIMIT 1', $query->toString());
     }
 
     public function testWriteLockingWritesReadOnly(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT 1 LIMIT 1 FOR READ ONLY');
         self::assertSame('SELECT 1 LIMIT 1 FOR READ ONLY', $query->toString());
     }

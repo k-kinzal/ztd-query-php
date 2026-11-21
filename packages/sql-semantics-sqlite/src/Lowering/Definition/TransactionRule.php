@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Commit;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Release;
@@ -15,8 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Transaction\Rollback;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\RollbackTo;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Savepoint;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers transaction control commands.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The conversion MySQL applies to the text of an introduced string from the character set of its introducer to the system character set.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading why a column of a derived table cannot be decided by name
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT x FROM (SELECT _latin2'é') AS d", []);
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT x FROM (SELECT _latin2'é') AS d", []);
  *     $query->field('x')->type->missing[0]->describe() // => 'the conversion MySQL applies to text in the character set latin2 when it names a column after it'
  */
 final class NameConversion implements MissingInput

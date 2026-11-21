@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A parameter reference whose number no statement can bind.
@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting parameter zero
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT $0');
- *     $query->field(0)->type->cause->message() // => 'There is no parameter $0.'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $0') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: There is no parameter $0.
  */
 final class NoSuchParameter implements Diagnostic
 {

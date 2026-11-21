@@ -7,10 +7,19 @@ namespace Tests\Unit\Rules\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\CommonBinding;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Query\CommonTables;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference;
@@ -21,16 +30,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Resolution\CommonBinding;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(CommonTables::class)]
 #[Medium]
@@ -38,8 +37,8 @@ final class CommonTablesTest extends TestCase
 {
     public function testBindSeesEarlierTablesOnly(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
-        $forward = (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
+        $operation = (new Semantics())->inspect('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
+        $forward = (new Semantics())->inspect('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
@@ -48,7 +47,7 @@ final class CommonTablesTest extends TestCase
 
     public function testExtendedAddsTablesWithoutAQueryLevel(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         $outer = $derivation->environment();
         $extended = (new CommonTables())->extended($outer, [new CommonBinding(new Name('c'), new Dual(), new RowShape([]))]);
@@ -59,12 +58,12 @@ final class CommonTablesTest extends TestCase
 
     public function testPendingFindsTheRecursiveTableARightOperandRefersTo(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         $pending = new CommonBinding(new Name('c'), new Dual(), new RowShape([], [new RecursiveReference(new Name('c'))]));
         $scope = (new CommonTables())->extended($derivation->environment(), [$pending]);
-        $refers = $semantics->analyze('SELECT 1 FROM c')->statement;
-        $other = $semantics->analyze('SELECT 1 FROM d')->statement;
+        $refers = $semantics->inspect('SELECT 1 FROM c')->statement;
+        $other = $semantics->inspect('SELECT 1 FROM d')->statement;
 
         self::assertInstanceOf(Select::class, $refers);
         self::assertInstanceOf(Select::class, $other);
@@ -74,7 +73,7 @@ final class CommonTablesTest extends TestCase
 
     public function testAnchoredBindsTheColumnsOfTheNonrecursivePart(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         $pending = new CommonBinding(new Name('c'), new Dual(), new RowShape([], [new RecursiveReference(new Name('c'))]));
         $scope = (new CommonTables())->extended($derivation->environment(), [$pending]);
@@ -89,7 +88,7 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeRenamesTheColumnsByTheColumnList(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         $table = new CommonTableExpression(new Name('c'), [new Name('x')], new Select([], [new SelectExpression(new NumberLiteral('1'))]));
         $anchor = new QueryFact([new Field(0, new OutputSlot(new Name('n'), new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull))], $semantics->context()->columnNames);
@@ -100,7 +99,7 @@ final class CommonTablesTest extends TestCase
 
     public function testNullableMakesEveryColumnNullable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $anchor = new QueryFact([new Field(0, new OutputSlot(new Name('n'), new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull))], $semantics->context()->columnNames);
 
         self::assertSame(Nullability::Nullable, (new CommonTables())->nullable($anchor)->fields()?->at(0)->nullability);
@@ -108,7 +107,7 @@ final class CommonTablesTest extends TestCase
 
     public function testOperandsAnswersTheChainInWrittenOrder(): void
     {
-        $query = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 UNION SELECT 2 UNION SELECT 3)')->statement;
+        $query = (new Semantics())->inspect('(SELECT 1 UNION SELECT 2 UNION SELECT 3)')->statement;
 
         self::assertInstanceOf(ParenthesizedQuery::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
@@ -119,10 +118,10 @@ final class CommonTablesTest extends TestCase
 
     public function testRefersFindsAnUnqualifiedReference(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
-        $query = $semantics->analyze('SELECT 1 FROM db.c, (SELECT 1 FROM c) AS d')->statement;
-        $qualified = $semantics->analyze('SELECT 1 FROM db.c')->statement;
+        $query = $semantics->inspect('SELECT 1 FROM db.c, (SELECT 1 FROM c) AS d')->statement;
+        $qualified = $semantics->inspect('SELECT 1 FROM db.c')->statement;
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(Select::class, $qualified);
@@ -132,7 +131,7 @@ final class CommonTablesTest extends TestCase
 
     public function testOperandsWalksALeadingUnion(): void
     {
-        $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+        $query = (new Semantics('mysql-5.6.51'))->inspect('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
 
         self::assertInstanceOf(SetOperation::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
@@ -140,14 +139,14 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT x FROM c) SELECT 1");
+        $operation = (new Semantics())->inspect("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT x FROM c) SELECT 1");
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testNullableKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
+        $operation = (new Semantics())->inspect("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
 
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }

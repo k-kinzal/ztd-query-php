@@ -8,7 +8,7 @@ use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Lowering\Lists;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
 
 /**
  * Reads the argument texts of a virtual table module from a parse tree, and checks a text against the grammar.

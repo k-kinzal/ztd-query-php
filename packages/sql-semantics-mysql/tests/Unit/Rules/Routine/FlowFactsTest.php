@@ -8,9 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
@@ -18,8 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(FlowFacts::class)]
 #[Medium]
@@ -31,7 +30,7 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerBranchesDerivesEveryConditionAndStatement')]
     public function testBranchesDerivesEveryConditionAndStatement(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -49,7 +48,7 @@ final class FlowFactsTest extends TestCase
 
     public function testBranchesResolvesAVariableInTheCondition(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; IF x > 0 THEN SELECT 1; END IF; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; IF x > 0 THEN SELECT 1; END IF; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -71,7 +70,7 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerLoopDerivesTheLabelsTheConditionAndTheStatements')]
     public function testLoopDerivesTheLabelsTheConditionAndTheStatements(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -90,7 +89,7 @@ final class FlowFactsTest extends TestCase
 
     public function testLoopResolvesAVariableInTheCondition(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 3; WHILE x > 0 DO SET x = x - 1; END WHILE; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 3; WHILE x > 0 DO SET x = x - 1; END WHILE; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -112,7 +111,7 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerJumpChecksTheLabel')]
     public function testJumpChecksTheLabel(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -137,8 +136,8 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerReturnedReportsAReturnOutsideAFunction')]
     public function testReturnedReportsAReturnOutsideAFunction(string $sql, array $messages): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -157,7 +156,7 @@ final class FlowFactsTest extends TestCase
 
     public function testReturnedResolvesTheValueToALocalVariable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN DECLARE x INT DEFAULT 2; RETURN x; END');
+        $operation = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS INT BEGIN DECLARE x INT DEFAULT 2; RETURN x; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $create);
         $block = $create->body;

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnCheck;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
@@ -29,7 +30,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnStorage;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the elements of a table definition: column definitions, column options, column constraints and LIKE.

@@ -14,7 +14,7 @@ final class XmlNamespaceTest extends TestCase
 {
     public function testRenderWritesThePrefixOrDefault(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze("SELECT * FROM XMLTABLE (XMLNAMESPACES ('u' AS x, DEFAULT 'v'), '/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' DEFAULT 'z' NOT NULL, b int) AS x");
         self::assertSame("SELECT * FROM XMLTABLE (XMLNAMESPACES ('u' AS x, DEFAULT 'v'), '/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' DEFAULT 'z' NOT NULL, b INT) AS x", $query->toString());
     }

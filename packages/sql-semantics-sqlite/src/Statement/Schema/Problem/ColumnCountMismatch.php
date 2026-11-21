@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A view whose column list has another length than the result of its query.
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a column list that is too short
- *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE VIEW v (a) AS SELECT 1, 2');
- *     $view->facts->diagnostics[0]->message() // => 'The column list names 1 columns but the query returns 2.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (a) AS SELECT 1, 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The column list names 1 columns but the query returns 2.
  */
 final class ColumnCountMismatch implements Diagnostic
 {

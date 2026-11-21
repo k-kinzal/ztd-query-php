@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\ColumnNaming;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Subscripting;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\Slice;
@@ -14,12 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\ScalarSubquer
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NamedParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\PositionalParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Field selections, subscripts and slices applied to a value: `(x).f`, `$1[2]`, `a[1:2]`, `(SELECT …).f`.
@@ -37,11 +37,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Selecting a field of a row
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT (ROW(1, 2)).f2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (ROW(1, 2)).f2');
  *     [$query->field(0)->name->value, $query->field(0)->type->descriptor->name()] // => ['f2', 'integer']
  * @example Rejecting a field step that the dotted name would absorb
- *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('a')]);
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Indirection($a, [new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Statement\Identifier\Name('b'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Indirection($a, [new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Indirection implements Scalar, OutputNaming
 {

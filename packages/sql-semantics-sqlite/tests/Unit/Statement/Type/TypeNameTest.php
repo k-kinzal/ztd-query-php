@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Type;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(TypeName::class)]
 #[Medium]
@@ -94,7 +93,7 @@ final class TypeNameTest extends TestCase
 
     public function testRenderWritesTheWordsAndTheArgumentsWithoutSpaces(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $spaced = $semantics->analyze('select cast(a as decimal ( + 10 , -2 )) AS c1 from t');
         $quoted = $semantics->analyze('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t');
         $cast = $spaced->field(0)->expression;

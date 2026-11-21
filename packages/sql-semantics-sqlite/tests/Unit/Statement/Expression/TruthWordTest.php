@@ -7,19 +7,18 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TruthWord::class)]
 #[Medium]
@@ -27,7 +26,7 @@ final class TruthWordTest extends TestCase
 {
     public function testDeriveScalarReadsTheConstantWhenNoColumnCanResolve(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $withTable = $semantics->analyze('SELECT true, FALSE FROM t', [$create]);
         $withoutTable = $semantics->analyze('SELECT true', []);
@@ -51,7 +50,7 @@ final class TruthWordTest extends TestCase
 
     public function testDeriveScalarResolvesAColumnNamedTrueOrFalse(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $create = $semantics->analyze('CREATE TABLE t2 (true INTEGER NOT NULL, "false" TEXT)');
         $operation = $semantics->analyze('SELECT true, false FROM t2', [$create]);
         $statement = $operation->statement;
@@ -68,7 +67,7 @@ final class TruthWordTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT true FROM u');
+        $operation = (new Semantics())->analyze('SELECT true FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -82,12 +81,12 @@ final class TruthWordTest extends TestCase
 
     public function testRenderWritesTheBareWordInUpperCase(): void
     {
-        self::assertSame('SELECT TRUE AS c1, FALSE AS c2', (new Semantics(Dialect::Sqlite))->analyze('select true AS c1, false AS c2')->toString());
+        self::assertSame('SELECT TRUE AS c1, FALSE AS c2', (new Semantics())->analyze('select true AS c1, false AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltWord(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new TruthWord(false)), new ResultColumn(new TruthWord(true))]));
 
         self::assertSame('SELECT FALSE, TRUE', $operation->toString());

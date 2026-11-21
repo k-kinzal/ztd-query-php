@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\ConnectionRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Attach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
@@ -22,7 +21,7 @@ final class ConnectionRuleTest extends TestCase
 {
     public function testCommandLowersAttachAndDetach(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(Attach::class, $semantics->analyze("ATTACH 'f' AS a")->statement);
         self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a')->statement);
@@ -30,7 +29,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testKeywordIsOptionalBeforeTheOperand(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $short = $semantics->analyze('DETACH a')->statement;
         $long = $semantics->analyze('DETACH DATABASE a')->statement;
 
@@ -42,7 +41,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testKeyIsNullUnlessAKeyIsWritten(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze("ATTACH 'f' AS a")->statement;
         $keyed = $semantics->analyze("ATTACH 'f' AS a KEY secret")->statement;
 
@@ -54,7 +53,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testOperandReadsAnIdentifierInsideParenthesesAsItsName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('DETACH ((aux))');
+        $operation = (new Semantics())->analyze('DETACH ((aux))');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Detach::class, $statement);
@@ -66,7 +65,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testOperandLowersAnyOtherExpressionAsAnExpression(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("ATTACH 'f' AS a")->statement;
+        $statement = (new Semantics())->analyze("ATTACH 'f' AS a")->statement;
 
         self::assertInstanceOf(Attach::class, $statement);
         self::assertInstanceOf(TextLiteral::class, $statement->file);

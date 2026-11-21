@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Call;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the date and time functions with a special syntax: the clock functions, interval arithmetic, EXTRACT, GET_FORMAT, TIMESTAMPADD and TIMESTAMPDIFF.

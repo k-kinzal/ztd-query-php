@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a foreign table: a table whose rows a foreign server provides.
@@ -29,10 +29,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Declaring a foreign table
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE FOREIGN TABLE f (a int OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')");
- *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Statement\Type\Nullability::NotNull, "CREATE FOREIGN TABLE f (a INT OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')"]
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FOREIGN TABLE f (a int OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')");
+ *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, "CREATE FOREIGN TABLE f (a INT OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')"]
  */
-final class CreateForeignTable implements Relation, \SqlSemantics\Statement\Statement
+final class CreateForeignTable implements Relation, \SqlSemantics\Platform\PostgreSql\Model\Statement\Statement
 {
     use Snapshot;
 

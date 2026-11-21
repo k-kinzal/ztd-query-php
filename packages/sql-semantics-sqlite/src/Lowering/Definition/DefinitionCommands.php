@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the commands that define, change or administer the database.

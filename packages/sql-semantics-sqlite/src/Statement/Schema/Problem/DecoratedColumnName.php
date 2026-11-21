@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A column name in a plain column list that is written with a collation or a sort order.
@@ -18,8 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a sort order in a foreign key column list
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)');
- *     $create->facts->diagnostics[0]->message() // => 'Column name p of a column list is written with a collation or a sort order.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column name p of a column list is written with a collation or a sort order.
  */
 final class DecoratedColumnName implements Diagnostic
 {

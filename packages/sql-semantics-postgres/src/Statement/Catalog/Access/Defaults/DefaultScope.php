@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * One clause that limits ALTER DEFAULT PRIVILEGES: IN SCHEMA or FOR ROLE.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Telling which option of the server a clause fills
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES FOR USER joe GRANT SELECT ON TABLES TO ann');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES FOR USER joe GRANT SELECT ON TABLES TO ann');
  *     $operation->statement->scopes[0]->option() // => 'roles'
  */
 interface DefaultScope extends Node

@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  *
  * @visibility public
  * @example Reading the spelling of an END
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('END');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END');
  *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\CommitSpelling::End
  */
 enum CommitSpelling: string

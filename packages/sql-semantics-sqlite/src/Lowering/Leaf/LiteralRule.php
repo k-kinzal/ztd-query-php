@@ -6,9 +6,10 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Rules\Identifiers;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers literal tokens into exact literal values.

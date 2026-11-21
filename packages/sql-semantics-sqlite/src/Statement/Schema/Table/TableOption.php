@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
 
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option written after the closing parenthesis of a table definition.
@@ -21,8 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Telling a known option from an unknown one
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"');
- *     [$create->statement->options[0]->kind(), $create->statement->options[1]->kind()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::Strict, null]
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Table option "rowid" is unknown.
  */
 final class TableOption implements Node
 {

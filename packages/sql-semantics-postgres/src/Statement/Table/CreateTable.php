@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a table.
@@ -36,10 +36,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Providing a declaration to a context
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $create = $semantics->analyze('CREATE TABLE app.t (id serial PRIMARY KEY, name varchar(20) NOT NULL, note text)', []);
  *     $table = $create->declarations()[0];
- *     [array_map(static fn ($column) => $column->type->name(), $table->columns), $table->columns[2]->nullability, $table->implicit[0]->names[0]->value] // => [['integer', 'character varying(20)', 'text'], \SqlSemantics\Statement\Type\Nullability::Nullable, 'tableoid']
+ *     [array_map(static fn ($column) => $column->type->name(), $table->columns), $table->columns[2]->nullability, $table->implicit[0]->names[0]->value] // => [['integer', 'character varying(20)', 'text'], \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, 'tableoid']
  */
 final class CreateTable implements SchemaElement, Relation
 {

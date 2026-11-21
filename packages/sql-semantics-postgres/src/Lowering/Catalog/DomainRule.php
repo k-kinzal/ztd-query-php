@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\AlterDomainConstraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\AlterDomainNotNull;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\CreateDomain;
@@ -15,8 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\DomainDefaultChang
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\DomainNotNull;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\DropDomainConstraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\ValidateDomainConstraint;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the domain commands.

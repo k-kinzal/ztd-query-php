@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\IndexConstraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\TableCheck;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\TablePrimaryKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\TableUnique;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers table constraints, constraint attributes and foreign-key clauses.

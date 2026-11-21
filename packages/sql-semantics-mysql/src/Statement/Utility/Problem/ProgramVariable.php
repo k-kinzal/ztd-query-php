@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The declarations of the stored program a SET runs in, which decide whether a name is one of its variables.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the missing declarations
- *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable(new \SqlSemantics\Statement\Identifier\Name('x')))->describe() // => 'the variable declarations of the enclosing stored program, which decide what x denotes'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x')))->describe() // => 'the variable declarations of the enclosing stored program, which decide what x denotes'
  */
 final class ProgramVariable implements MissingInput
 {

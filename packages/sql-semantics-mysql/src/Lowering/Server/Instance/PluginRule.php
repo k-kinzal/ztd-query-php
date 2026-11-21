@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Instance;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSTALL and UNINSTALL of plugins and components.

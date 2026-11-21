@@ -14,14 +14,14 @@ final class PublicationTableTest extends TestCase
 {
     public function testIntroducedWhenTableIsWritten(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a')->statement;
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE a')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         self::assertSame(true, $statement->objects[0]->introduced());
     }
 
     public function testBareOfAContinuedName(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a, b')->statement;
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE a, b')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         $table = $statement->objects[1];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable::class, $table);
@@ -30,27 +30,27 @@ final class PublicationTableTest extends TestCase
 
     public function testBareIsFalseForAStar(): void
     {
-        self::assertFalse((new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), [], null, false, true))->bare());
+        self::assertFalse((new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))), [], null, false, true))->bare());
     }
 
     public function testRenderKeepsTheStarAfterASchema(): void
     {
-        self::assertSame('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t *', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t *')->toString());
+        self::assertSame('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t *', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t *')->toString());
     }
 
     public function testRenderWritesColumnsAndFilter(): void
     {
-        self::assertSame('CREATE PUBLICATION p FOR TABLE ONLY t (a, b) WHERE (a > 1)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE ONLY t (a, b) WHERE (a > 1)')->toString());
+        self::assertSame('CREATE PUBLICATION p FOR TABLE ONLY t (a, b) WHERE (a > 1)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE ONLY t (a, b) WHERE (a > 1)')->toString());
     }
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4)], [], true);
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE t (a) WHERE (a > 0)', [$t]);
+        $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172), [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4)], [], true);
+        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLE t (a) WHERE (a > 0)', [$t]);
         $statement = $operation->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         $resolution = $operation->facts->relation($statement->objects[0])->table;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $resolution);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable::class, $resolution);
         self::assertSame($t, $resolution->table);
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -58,6 +58,6 @@ final class PublicationTableTest extends TestCase
     public function testRejectsOnlyWithAStar(): void
     {
         $this->expectExceptionMessage('A table name is written with ONLY or with a trailing star, not both.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), true), [], null, true, true);
+        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), true), [], null, true, true);
     }
 }

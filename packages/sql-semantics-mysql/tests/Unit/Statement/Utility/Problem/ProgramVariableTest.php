@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ProgramVariable::class)]
 #[Small]

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
-use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
@@ -24,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Statement\Type\TypeDescriptor;
 
 /**
  * The classes of MySQL data types that decide the result type of a function or of a type aggregation.

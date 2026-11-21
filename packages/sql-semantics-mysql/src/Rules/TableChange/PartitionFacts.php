@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
-use SqlSemantics\Resolution\Environment;
 
 /**
  * Derives the partitioning of a table for the statement that holds it.

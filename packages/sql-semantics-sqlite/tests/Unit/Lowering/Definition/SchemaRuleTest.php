@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\SchemaRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
@@ -25,7 +24,7 @@ final class SchemaRuleTest extends TestCase
 {
     public function testCommandLowersEachSchemaCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(CreateView::class, $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement);
         self::assertInstanceOf(CreateIndex::class, $semantics->analyze('CREATE INDEX i ON t (a)')->statement);
@@ -37,7 +36,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testCommandLowersEachDropToItsObjectKind(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $kinds = array_map(static fn (string $sql): ?SchemaObjectKind => $semantics->analyze($sql)->statement instanceof Drop ? $semantics->analyze($sql)->statement->object : null, ['DROP TABLE a', 'DROP VIEW a', 'DROP INDEX a', 'DROP TRIGGER a']);
 
         self::assertSame([SchemaObjectKind::Table, SchemaObjectKind::View, SchemaObjectKind::Index, SchemaObjectKind::Trigger], $kinds);
@@ -45,7 +44,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testViewKeepsTheHeaderFlagsAndTheOptionalColumnList(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('CREATE VIEW v AS SELECT 1')->statement;
         $full = $semantics->analyze('CREATE TEMP VIEW IF NOT EXISTS v (a) AS SELECT 1')->statement;
 
@@ -60,7 +59,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testIndexKeepsTheFlagsTheTermsAndTheCondition(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
         $full = $semantics->analyze('CREATE UNIQUE INDEX IF NOT EXISTS aux.i ON t (a, b DESC) WHERE a > 0')->statement;
 
@@ -77,7 +76,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testIfExistsLowersTheOptionalClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('DROP TABLE t')->statement;
         $tolerant = $semantics->analyze('DROP TABLE IF EXISTS t')->statement;
 
@@ -89,7 +88,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testAddedLowersTheQualifiedTableName(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('ALTER TABLE aux.t ADD a')->statement;
+        $statement = (new Semantics())->analyze('ALTER TABLE aux.t ADD a')->statement;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         self::assertSame('aux', $statement->table->schema?->value);
@@ -98,7 +97,7 @@ final class SchemaRuleTest extends TestCase
 
     public function testKeywordIsOptionalBeforeTheColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $short = $semantics->analyze('ALTER TABLE t DROP a')->statement;
         $long = $semantics->analyze('ALTER TABLE t DROP COLUMN a')->statement;
 

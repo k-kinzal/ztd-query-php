@@ -7,17 +7,16 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Grouped::class)]
 #[Medium]
@@ -25,7 +24,7 @@ final class GroupedTest extends TestCase
 {
     public function testDeriveScalarKeepsTheTypeAndNullFactAndLeavesTheResolutionToTheOperand(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT (a), ((b)) FROM t', [$create]);
         $statement = $operation->statement;
@@ -50,7 +49,7 @@ final class GroupedTest extends TestCase
 
     public function testDeriveScalarKeepsANullOperandNull(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Grouped(new NullLiteral()))]));
 
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
@@ -60,7 +59,7 @@ final class GroupedTest extends TestCase
 
     public function testRenderKeepsEveryWrittenGrouping(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select (1 + 2) * 3, ((a)), (1) from t');
+        $operation = (new Semantics())->analyze('select (1 + 2) * 3, ((a)), (1) from t');
 
         self::assertSame('SELECT (1 + 2) * 3, ((a)), (1) FROM t', $operation->toString());
     }

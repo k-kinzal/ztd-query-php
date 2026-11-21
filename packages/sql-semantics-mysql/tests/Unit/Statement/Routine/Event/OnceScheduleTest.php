@@ -8,18 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(OnceSchedule::class)]
 #[Medium]
@@ -27,7 +26,7 @@ final class OnceScheduleTest extends TestCase
 {
     public function testDeriveScheduleDerivesTheTime(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', []);
+        $create = (new Semantics())->inspect('CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', []);
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(OnceSchedule::class, $statement->schedule);
@@ -41,16 +40,16 @@ final class OnceScheduleTest extends TestCase
 
     public function testDeriveScheduleReportsAColumnEvenWhenATableHasIt(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a DATETIME)');
-        $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE AT a DO SELECT a FROM t', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a DATETIME)');
+        $create = $semantics->inspect('CREATE EVENT e ON SCHEDULE AT a DO SELECT a FROM t', [$table]);
 
         self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveScheduleResolvesALocalVariableOfTheEnclosingProcedure(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v DATETIME; ALTER EVENT e ON SCHEDULE AT v; END', []);
+        $create = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE v DATETIME; ALTER EVENT e ON SCHEDULE AT v; END', []);
 
         self::assertSame([], $create->facts->diagnostics);
     }
@@ -68,12 +67,12 @@ final class OnceScheduleTest extends TestCase
     #[DataProvider('providerRenderWritesAtAndTheTime')]
     public function testRenderWritesAtAndTheTime(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedSchedule(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new OnceSchedule(new NumberLiteral('20300101')))->render($out);
 
         self::assertSame('AT 20300101', (new Lexical())->join($out->pieces()));

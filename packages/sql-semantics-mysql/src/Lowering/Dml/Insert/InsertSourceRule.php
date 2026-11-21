@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Dml\Insert;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Dml\ListRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow;
-use SqlSemantics\Statement\Query;
 
 /**
  * Lowers what INSERT and REPLACE write: the column list and the rows of VALUES or the query.

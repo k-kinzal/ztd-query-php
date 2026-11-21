@@ -7,10 +7,9 @@ namespace Tests\Unit\Rules\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
@@ -24,8 +23,8 @@ final class ProgramOnlyTest extends TestCase
 {
     public function testOutsideProgramReportsARaiseFunction(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('SELECT (SELECT RAISE(IGNORE))')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('SELECT (SELECT RAISE(IGNORE))')->statement;
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
@@ -38,8 +37,8 @@ final class ProgramOnlyTest extends TestCase
 
     public function testOutsideProgramReportsNothingWithoutRaise(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('SELECT ?, abs(1)')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('SELECT ?, abs(1)')->statement;
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
 
@@ -48,9 +47,9 @@ final class ProgramOnlyTest extends TestCase
 
     public function testOutsideProgramIsAppliedToAQueryAndNotToATriggerProgram(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('SELECT RAISE(IGNORE)');
-        $trigger = $semantics->analyze("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'x'); END");
+        $semantics = new Semantics();
+        $query = $semantics->inspect('SELECT RAISE(IGNORE)');
+        $trigger = $semantics->inspect("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'x'); END");
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -60,7 +59,7 @@ final class ProgramOnlyTest extends TestCase
 
     public function testInsideProgramReportsABindParameterOnce(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->insideProgram([new IntegerLiteral('1'), new BindParameter(ParameterPrefix::Question), new BindParameter(ParameterPrefix::Colon, 'x')], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
@@ -73,7 +72,7 @@ final class ProgramOnlyTest extends TestCase
 
     public function testInsideProgramReportsNothingWithoutAParameter(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->insideProgram([new IntegerLiteral('1')], $derivation);
         (new ProgramOnly())->insideProgram([], $derivation);
@@ -83,9 +82,9 @@ final class ProgramOnlyTest extends TestCase
 
     public function testInsideProgramIsAppliedToTheConditionAndTheStatementsOfATrigger(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $body = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT ?; SELECT ?2; END');
-        $condition = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t WHEN ?1 = 1 BEGIN SELECT 1; END');
+        $semantics = new Semantics();
+        $body = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT ?; SELECT ?2; END');
+        $condition = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t WHEN ?1 = 1 BEGIN SELECT 1; END');
 
         self::assertCount(1, $body->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $body->facts->diagnostics[0]);
@@ -97,7 +96,7 @@ final class ProgramOnlyTest extends TestCase
 
     public function testHoldsFindsANodeOfAClassAnywhereInTheStructure(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)')->statement;
+        $statement = (new Semantics())->inspect('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)')->statement;
         $rules = new ProgramOnly();
 
         self::assertTrue($rules->holds($statement, Raise::class));

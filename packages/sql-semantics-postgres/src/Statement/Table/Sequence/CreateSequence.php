@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Sequences;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a sequence.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Declaring a sequence
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TEMP SEQUENCE IF NOT EXISTS s AS bigint INCREMENT BY 2 START WITH 10 OWNED BY t.id');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TEMP SEQUENCE IF NOT EXISTS s AS bigint INCREMENT BY 2 START WITH 10 OWNED BY t.id');
  *     [$statement->declarations()[0]->name->schema->value, $statement->declarations()[0]->columns[0]->name->value, $statement->toString()] // => ['pg_temp', 'last_value', 'CREATE TEMP SEQUENCE IF NOT EXISTS s AS BIGINT INCREMENT 2 START 10 OWNED BY t.id']
  */
 final class CreateSequence implements SchemaElement

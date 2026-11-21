@@ -7,14 +7,13 @@ namespace Tests\Unit\Lowering\TableDefinition\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column\ColumnRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
@@ -71,7 +70,7 @@ final class ColumnRuleTest extends TestCase
 
     public function testRefuseNamesTheFirstRefusedAttribute(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
@@ -84,12 +83,12 @@ final class ColumnRuleTest extends TestCase
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
 
-        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        (new Semantics())->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
     }
 
     public function testRefuseAcceptsTheOtherAttributes(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 
         self::assertSame([], $create->facts->diagnostics);
     }

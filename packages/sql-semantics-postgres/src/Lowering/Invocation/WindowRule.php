@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameExclusion;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowFrame;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers OVER clauses and window specifications.

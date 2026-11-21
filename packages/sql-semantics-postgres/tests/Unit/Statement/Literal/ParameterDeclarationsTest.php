@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\ParameterDeclarations;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
@@ -19,7 +18,7 @@ final class ParameterDeclarationsTest extends TestCase
 {
     public function testInfersUndeclaredInPrepareOnly(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         $prepare = $semantics->analyze('PREPARE p (integer) AS SELECT $1')->statement;
         $function = $semantics->analyze('CREATE FUNCTION f(a integer) RETURNS integer RETURN $1')->statement;
         self::assertInstanceOf(Prepare::class, $prepare);

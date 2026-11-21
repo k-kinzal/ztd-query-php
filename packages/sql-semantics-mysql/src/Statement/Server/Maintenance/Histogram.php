@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * The histogram request of ANALYZE TABLE (MySQL 8.0 and later): update, load or drop the histograms of columns.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the columns of a histogram request
- *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a, b');
+ *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a, b');
  *     count($analyze->statement->histogram?->columns() ?? []) // => 2
  */
 interface Histogram extends Node

@@ -20,7 +20,7 @@ final class PrivilegeListsTest extends TestCase
     public function testPrivilegesRejectsAForeignItem(): void
     {
         $this->expectExceptionMessage('The privileges of a grant are a list of privileges.');
-        (new \SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists())->privileges([new \SqlSemantics\Statement\Identifier\Name('select')]);
+        (new \SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists())->privileges([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('select')]);
     }
 
     public function testRolesRejectsAnEmptyList(): void
@@ -31,6 +31,6 @@ final class PrivilegeListsTest extends TestCase
 
     public function testWriteSpellsAnEmptyListAsAll(): void
     {
-        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
+        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
     }
 }

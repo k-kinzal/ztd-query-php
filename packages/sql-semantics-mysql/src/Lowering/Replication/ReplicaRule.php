@@ -6,15 +6,15 @@ namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StopReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers START SLAVE, START REPLICA, STOP SLAVE and STOP REPLICA of every release.

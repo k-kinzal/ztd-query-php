@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(ValuesQuery::class)]
 #[Medium]
@@ -28,7 +27,7 @@ final class ValuesQueryTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1')])]);
         $derivation = new Derivation($semantics->context());
         $derivation->statement($values);
@@ -39,7 +38,7 @@ final class ValuesQueryTest extends TestCase
 
     public function testDeriveQueryNamesTheColumnsAndCombinesTheRows(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1'), new NumberLiteral('2')]), new ValueRow([new NullLiteral(), new NumberLiteral('3')])]);
         $derivation = new Derivation($semantics->context());
         $fact = $derivation->query($values, $derivation->environment());
@@ -53,7 +52,7 @@ final class ValuesQueryTest extends TestCase
 
     public function testDeriveQueryReportsRowsOfDifferentLengths(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1'), new NumberLiteral('2')]), new ValueRow([new NumberLiteral('3')])]);
         $derivation = new Derivation($semantics->context());
         $derivation->query($values, $derivation->environment());
@@ -65,7 +64,7 @@ final class ValuesQueryTest extends TestCase
 
     public function testRenderWritesTheRows(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1')]), new ValueRow([new NumberLiteral('2')])]);
         $out = new Output(new Codec($semantics->profile()->grammar));
         $values->render($out);

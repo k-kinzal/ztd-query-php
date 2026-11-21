@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * One WHEN branch of a CASE expression.
  *
  * @visibility public
  * @example Reading a branch
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT CASE WHEN a THEN 'x' END FROM t");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT CASE WHEN a THEN 'x' END FROM t");
  *     $query->statement->columns[0]->expression->branches[0]->then->value // => 'x'
  */
 final class CaseBranch implements Node

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The character set attribute of a character type: ASCII, UNICODE, BYTE, a named character set, BINARY, or a set with BINARY.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a named character set with the binary attribute
- *     $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, new \SqlSemantics\Statement\Identifier\Name('utf8mb4'), \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing);
+ *     $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4'), \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing);
  *     [$attribute->charset?->value, $attribute->binary()] // => ['utf8mb4', true]
  */
 final class CharsetAttribute implements Node

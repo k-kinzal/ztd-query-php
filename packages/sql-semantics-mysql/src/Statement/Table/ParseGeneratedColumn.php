@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * The internal statement PARSE_GCOL_EXPR(expr) of MySQL 5.7, which the server uses to read a stored generated column expression.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the expression
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('PARSE_GCOL_EXPR(1 + 2)');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARSE_GCOL_EXPR(1 + 2)');
  *     $statement->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn // => true
  */
 final class ParseGeneratedColumn implements Statement

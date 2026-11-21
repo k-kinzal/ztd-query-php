@@ -7,9 +7,8 @@ namespace Tests\Unit\Rules\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Aggregation;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 #[CoversClass(Aggregation::class)]
@@ -18,7 +17,7 @@ final class AggregationTest extends TestCase
 {
     public function testAggregatesFindsASetFunctionOutsideNestedQueries(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $aggregate = $semantics->analyze('SELECT COUNT(*) + 1 FROM t')->statement;
         $windowed = $semantics->analyze('SELECT COUNT(*) OVER () FROM t')->statement;
         $nested = $semantics->analyze('SELECT (SELECT COUNT(*) FROM u) FROM t')->statement;

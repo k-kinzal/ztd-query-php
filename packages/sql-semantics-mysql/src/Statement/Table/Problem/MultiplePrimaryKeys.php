@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A table definition with more than one primary key (ER_MULTIPLE_PRI_KEY).
@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)')->facts->diagnostics[0]->message() // => 'Multiple primary key defined.'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Multiple primary key defined.
  */
 final class MultiplePrimaryKeys implements Diagnostic
 {

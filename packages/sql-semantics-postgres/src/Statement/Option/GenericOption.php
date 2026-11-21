@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
 
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of an `OPTIONS ( name 'value', ... )` list of a foreign-data object.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a foreign-data option
- *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption(new \SqlSemantics\Statement\Identifier\Name('host'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('db1'));
+ *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('host'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('db1'));
  *     [$option->name->value, $option->value->value] // => ['host', 'db1']
  */
 final class GenericOption implements Node

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AddConstraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
@@ -42,7 +43,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\SetAccessMetho
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the actions of ALTER TABLE.
@@ -139,7 +139,7 @@ final class AlterCommandRule
         $column = $form->signature === 'alter_table_cmd: ALTER opt_column Iconst SET STATISTICS SignedIconst' || $form->signature === 'alter_table_cmd: ALTER opt_column Iconst SET STATISTICS set_statistics_value'
             ? $this->lowering->literals->integer($form->node(2))
             : $this->lowering->names->name($form->node(2));
-        if (!$column instanceof \SqlSemantics\Statement\Identifier\Name) {
+        if (!$column instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name) {
             return new ColumnStatistics($column, $this->statistics($form->node(5)));
         }
         $columns = new ColumnRule($this->lowering);
@@ -220,7 +220,7 @@ final class AlterCommandRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function defaulted(\SqlSemantics\Statement\Identifier\Name $column, Node $change): AlterCommand
+    public function defaulted(\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name $column, Node $change): AlterCommand
     {
         $value = $this->defaultValue($change);
 
@@ -283,7 +283,7 @@ final class AlterCommandRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function method(Node $value): ?\SqlSemantics\Statement\Identifier\Name
+    public function method(Node $value): ?\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name
     {
         $form = $this->lowering->productions->form($value);
 

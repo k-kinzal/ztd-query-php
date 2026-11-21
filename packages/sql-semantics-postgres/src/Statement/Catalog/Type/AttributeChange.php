@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Telling that dropping an attribute is an attribute change
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\DropAttribute(new \SqlSemantics\Statement\Identifier\Name('a'))) instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AttributeChange // => true
+ *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\DropAttribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'))) instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AttributeChange // => true
  */
 interface AttributeChange extends Clause
 {

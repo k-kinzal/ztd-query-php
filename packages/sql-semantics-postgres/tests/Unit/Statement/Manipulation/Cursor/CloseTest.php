@@ -14,7 +14,7 @@ final class CloseTest extends TestCase
 {
     public function testDeriveStatementDerivesNothing(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('CLOSE ALL');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close::class, $statement);
@@ -23,7 +23,7 @@ final class CloseTest extends TestCase
 
     public function testRenderWritesTheCursor(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('CLOSE c');
         self::assertSame('CLOSE c', $query->toString());
     }

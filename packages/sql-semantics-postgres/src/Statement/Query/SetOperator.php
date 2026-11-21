@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
  *
  * @visibility public
  * @example Reading the operator of a set operation
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 EXCEPT SELECT 2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 EXCEPT SELECT 2');
  *     $query->statement->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperator::Except
  */
 enum SetOperator: string

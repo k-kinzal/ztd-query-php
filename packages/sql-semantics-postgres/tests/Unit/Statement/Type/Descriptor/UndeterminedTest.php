@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Type\Descriptor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UnboundParameter;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredDomain;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredDomain;
 
 #[CoversClass(Undetermined::class)]
 #[Small]

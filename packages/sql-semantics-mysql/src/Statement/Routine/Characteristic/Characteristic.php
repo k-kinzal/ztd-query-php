@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * One characteristic of a stored routine: COMMENT, LANGUAGE, the data access, SQL SECURITY or DETERMINISTIC.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the characteristics of a routine
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ALTER PROCEDURE p COMMENT 'x' SQL SECURITY INVOKER");
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER PROCEDURE p COMMENT 'x' SQL SECURITY INVOKER");
  *     $alter->statement->characteristics[1] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic // => true
  */
 interface Characteristic extends Node

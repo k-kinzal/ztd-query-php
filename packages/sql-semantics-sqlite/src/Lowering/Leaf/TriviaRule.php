@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use WeakMap;
 
 /**
@@ -57,7 +57,7 @@ final class TriviaRule
     /**
      * Answers the trivia written between the last token of a region and the next token of its command.
      *
-     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the region is empty or its command was not indexed
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvariantViolation When the region is empty or its command was not indexed
      */
     public function after(Node $region): string
     {

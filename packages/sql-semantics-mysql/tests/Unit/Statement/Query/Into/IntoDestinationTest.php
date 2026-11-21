@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Query\Into;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile;
-use SqlSemantics\Statement\Node;
 
 #[CoversNothing]
 #[Small]

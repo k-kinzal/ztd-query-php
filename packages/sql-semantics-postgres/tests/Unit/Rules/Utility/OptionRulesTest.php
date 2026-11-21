@@ -7,16 +7,15 @@ namespace Tests\Unit\Rules\Utility;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(OptionRules::class)]
 #[Medium]
@@ -44,10 +43,10 @@ final class OptionRulesTest extends TestCase
 
     public function testWriteWritesEachSyntax(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['VACUUM FULL FREEZE VERBOSE ANALYSE', 'VACUUM (verbose, parallel 2) t', 'VACUUM t'],
-            [$semantics->analyze('VACUUM FULL FREEZE VERBOSE ANALYSE')->toString(), $semantics->analyze('VACUUM (VERBOSE, PARALLEL 2) t')->toString(), $semantics->analyze('VACUUM t')->toString()],
+            [$semantics->inspect('VACUUM FULL FREEZE VERBOSE ANALYSE')->toString(), $semantics->inspect('VACUUM (VERBOSE, PARALLEL 2) t')->toString(), $semantics->inspect('VACUUM t')->toString()],
         );
     }
 
@@ -69,7 +68,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized ANALYZE option "full"', 'verbose requires a Boolean value', 'buffer_usage_limit requires a parameter'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->facts->diagnostics),
         );
     }
 
@@ -77,7 +76,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized CLUSTER option "Verbose"'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE, "Verbose") t')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect('CLUSTER (VERBOSE, "Verbose") t')->facts->diagnostics),
         );
     }
 }

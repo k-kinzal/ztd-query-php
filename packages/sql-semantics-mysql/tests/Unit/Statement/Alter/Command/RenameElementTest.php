@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Alter\Command;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
 
 #[CoversClass(RenameElement::class)]
@@ -17,7 +16,7 @@ final class RenameElementTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t RENAME INDEX i TO j', [$table]);
 
@@ -26,6 +25,6 @@ final class RenameElementTest extends TestCase
 
     public function testRenderWritesTheKind(): void
     {
-        self::assertSame('ALTER TABLE t RENAME INDEX i TO j', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t RENAME KEY i TO j')->toString());
+        self::assertSame('ALTER TABLE t RENAME INDEX i TO j', (new Semantics())->analyze('ALTER TABLE t RENAME KEY i TO j')->toString());
     }
 }

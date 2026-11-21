@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\DiagnosticsRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
@@ -29,7 +29,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\Statemen
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(DiagnosticsRule::class)]
 #[Medium]
@@ -49,7 +48,7 @@ final class DiagnosticsRuleTest extends TestCase
     #[DataProvider('providerStatementLowersStatementInformation')]
     public function testStatementLowersStatementInformation(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('get diagnostics @n = number, @r = row_count');
+        $operation = (new Semantics($release))->analyze('get diagnostics @n = number, @r = row_count');
 
         self::assertEquals(new GetDiagnostics(new StatementDiagnostics([
             new InformationItem(new UserVariable(new Name('n')), StatementItemName::Number),
@@ -72,7 +71,7 @@ final class DiagnosticsRuleTest extends TestCase
     #[DataProvider('providerStatementLowersTheArea')]
     public function testStatementLowersTheArea(string $release, string $sql, ?DiagnosticsArea $area, string $rendering): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->analyze($sql);
         $statement = $operation->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
@@ -94,7 +93,7 @@ final class DiagnosticsRuleTest extends TestCase
     #[DataProvider('providerStatementLowersConditionInformation')]
     public function testStatementLowersConditionInformation(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('get current diagnostics condition 1 @a = class_origin, @b = returned_sqlstate');
+        $operation = (new Semantics($release))->analyze('get current diagnostics condition 1 @a = class_origin, @b = returned_sqlstate');
 
         self::assertEquals(new GetDiagnostics(new ConditionDiagnostics(new NumberLiteral('1'), [
             new InformationItem(new UserVariable(new Name('a')), ConditionItemName::ClassOrigin),
@@ -105,7 +104,7 @@ final class DiagnosticsRuleTest extends TestCase
 
     public function testStatementLowersTheConditionNumberAsAVariable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('get diagnostics condition @c @m = message_text');
+        $operation = (new Semantics())->analyze('get diagnostics condition @c @m = message_text');
         $statement = $operation->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);
@@ -139,7 +138,7 @@ final class DiagnosticsRuleTest extends TestCase
     #[DataProvider('providerItemsLowersEveryConditionItemName')]
     public function testItemsLowersEveryConditionItemName(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('get diagnostics condition 1 @a = class_origin, @b = subclass_origin, @c = constraint_catalog, @d = constraint_schema, @e = constraint_name, @f = catalog_name, @g = schema_name, @h = table_name, @i = column_name, @j = cursor_name, @k = message_text, @l = mysql_errno, @m = returned_sqlstate');
+        $operation = (new Semantics($release))->analyze('get diagnostics condition 1 @a = class_origin, @b = subclass_origin, @c = constraint_catalog, @d = constraint_schema, @e = constraint_name, @f = catalog_name, @g = schema_name, @h = table_name, @i = column_name, @j = cursor_name, @k = message_text, @l = mysql_errno, @m = returned_sqlstate');
         $statement = $operation->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
@@ -160,7 +159,7 @@ final class DiagnosticsRuleTest extends TestCase
     #[DataProvider('providerItemsLowersLocalVariableTargets')]
     public function testItemsLowersLocalVariableTargets(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare n, t int; get diagnostics n = number; get diagnostics condition n t = mysql_errno; end');
+        $operation = (new Semantics($release))->analyze('create procedure p() begin declare n, t int; get diagnostics n = number; get diagnostics condition n t = mysql_errno; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);

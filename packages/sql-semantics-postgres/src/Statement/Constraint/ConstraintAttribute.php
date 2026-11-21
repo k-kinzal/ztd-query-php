@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
 
 /**
  * A property written after a constraint: whether it can be deferred, when it is checked, and whether it is validated or inherited.
@@ -19,7 +19,7 @@ use SqlSemantics\Resolution\Environment;
  *
  * @visibility public
  * @example Reading the attributes of a table constraint
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
  *     $create->statement->definition->elements[1]->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::Deferrable, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::InitiallyDeferred]
  */
 enum ConstraintAttribute: string implements Clause

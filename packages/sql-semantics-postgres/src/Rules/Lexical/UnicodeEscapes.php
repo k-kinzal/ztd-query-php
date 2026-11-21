@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Lexical;
 
-use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
 
 /**
  * Replaces the Unicode escapes of `U&'...'` strings and `U&"..."` identifiers.

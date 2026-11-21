@@ -7,10 +7,9 @@ namespace Tests\Unit\Statement\Server\KeyCache;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 #[CoversClass(LoadIndex::class)]
 #[Medium]
@@ -18,12 +17,12 @@ final class LoadIndexTest extends TestCase
 {
     public function testRenderWritesTheTables(): void
     {
-        self::assertSame('LOAD INDEX INTO CACHE t, u', (new Semantics(Dialect::MySql))->analyze('load index into cache t, u')->toString());
+        self::assertSame('LOAD INDEX INTO CACHE t, u', (new Semantics())->analyze('load index into cache t, u')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('LOAD INDEX INTO CACHE t', [$table]);
         self::assertInstanceOf(LoadIndex::class, $operation->statement);

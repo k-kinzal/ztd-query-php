@@ -14,11 +14,11 @@ final class SavepointCommandTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SAVEPOINT s')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SAVEPOINT s')->facts->diagnostics);
     }
 
     public function testRenderDropsTheOptionalWords(): void
     {
-        self::assertSame(['SAVEPOINT s', 'RELEASE s', 'ROLLBACK TO s', 'ROLLBACK TO "S"'], [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SAVEPOINT s')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RELEASE SAVEPOINT s')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK TRANSACTION TO SAVEPOINT s')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK TO "S"')->toString()]);
+        self::assertSame(['SAVEPOINT s', 'RELEASE s', 'ROLLBACK TO s', 'ROLLBACK TO "S"'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SAVEPOINT s')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RELEASE SAVEPOINT s')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ROLLBACK TRANSACTION TO SAVEPOINT s')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ROLLBACK TO "S"')->toString()]);
     }
 }

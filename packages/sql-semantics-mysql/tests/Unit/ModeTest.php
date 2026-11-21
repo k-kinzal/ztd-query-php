@@ -7,9 +7,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(Mode::class)]
 #[Medium]
@@ -42,7 +41,7 @@ final class ModeTest extends TestCase
 
     public function testToStringFixesTheProfileLexicalSettings(): void
     {
-        $semantics = new Semantics(Dialect::MySql, null, Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+        $semantics = new Semantics(null, Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
 
         self::assertTrue($semantics->profile()->lexical->ansiQuotes);
         self::assertTrue($semantics->profile()->lexical->noBackslashEscapes);

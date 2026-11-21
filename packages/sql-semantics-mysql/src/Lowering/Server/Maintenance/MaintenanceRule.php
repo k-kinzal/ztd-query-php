@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Maintenance;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
@@ -24,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the table maintenance statements and their options.
@@ -225,7 +225,7 @@ final class MaintenanceRule
     /**
      * Lowers UPDATE HISTOGRAM from its columns and its parameters: a node of `opt_histogram_update_param`.
      *
-     * @param list<\SqlSemantics\Statement\Identifier\Name> $columns
+     * @param list<\SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name> $columns
      * @throws ImplementationGap When a production has no rule
      */
     public function update(array $columns, Node $parameters): UpdateHistogram|LoadHistogram

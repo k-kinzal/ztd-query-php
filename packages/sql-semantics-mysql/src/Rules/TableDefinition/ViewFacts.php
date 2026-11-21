@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount;
 use SqlSemantics\Platform\MySql\Statement\View\ViewDefinition;
-use SqlSemantics\Statement\Declaration\Table;
 
 /**
  * Derives the query of a view definition and the declaration it stands for.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * One step applied to a value or an assignment target: a field selection, a subscript, a slice or a star.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility public
  * @example Reading the field a step selects
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Statement\Identifier\Name('city')))->field()->value // => 'city'
+ *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('city')))->field()->value // => 'city'
  */
 interface IndirectionStep extends Clause
 {

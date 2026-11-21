@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `NAMES = expr` in a SET of MySQL 5.6 and 5.7, which the grammar reads and the server refuses.
@@ -27,8 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the refusal
- *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze("SET NAMES = 'utf8'");
- *     [$set->facts->diagnostics[0]->rule, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression, "SET NAMES = 'utf8'"]
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("SET NAMES = 'utf8'") // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SET NAMES takes a character set name, not an expression
  */
 final class NamesExpression implements SetItem
 {

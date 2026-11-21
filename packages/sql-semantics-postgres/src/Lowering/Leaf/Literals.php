@@ -6,10 +6,11 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Strings;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringConstant;
@@ -24,7 +25,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\PositionalParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers constants and parameter markers.

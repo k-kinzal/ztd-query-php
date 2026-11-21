@@ -14,6 +14,6 @@ final class JoinedInputTest extends TestCase
 {
     public function testVisibleHoldsTheRelationsInOrder(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\JoinedInput(new \SqlSemantics\Statement\Fact\RelationFact(new \SqlSemantics\Statement\Shape\RowShape([])), []))->visible);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\JoinedInput(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape([])), []))->visible);
     }
 }

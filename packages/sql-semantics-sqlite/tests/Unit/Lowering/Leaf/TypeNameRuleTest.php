@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\TypeNameRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
@@ -28,7 +27,7 @@ final class TypeNameRuleTest extends TestCase
 {
     public function testNamedIsNullWhenNoTypeIsWritten(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $cast = $semantics->analyze('SELECT CAST(a AS) FROM t')->statement;
         $table = $semantics->analyze('CREATE TABLE t (a)')->statement;
 
@@ -42,7 +41,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testNamedKeepsTheWordsOfATypeNameInWrittenOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a UNSIGNED BIG INT, b Text)');
+        $operation = (new Semantics())->analyze('CREATE TABLE t (a UNSIGNED BIG INT, b Text)');
 
         self::assertInstanceOf(CreateTable::class, $operation->statement);
         self::assertSame(['UNSIGNED', 'BIG', 'INT'], array_map(static fn (Word $word): string => $word->name->value, $operation->statement->columns[0]->type->words ?? []));
@@ -53,7 +52,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testNamedKeepsOneOrTwoNumericArgumentsWithTheirSigns(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10, -2)) AS c2 FROM t');
+        $operation = (new Semantics())->analyze('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10, -2)) AS c2 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([[[null, '10']], [[NumberSign::Plus, '10'], [NumberSign::Minus, '2']]], array_map(static function (object $column): array {
@@ -71,7 +70,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testWordsKeepTheQuotingOfEachWord(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS "my" [type] `t` \'q\' plain) FROM t');
+        $operation = (new Semantics())->analyze('SELECT CAST(a AS "my" [type] `t` \'q\' plain) FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -84,7 +83,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testSignedLowersARealAndAHexadecimalArgument(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(1.5, -0x10)) AS c1 FROM t');
+        $operation = (new Semantics())->analyze('SELECT CAST(a AS N(1.5, -0x10)) AS c1 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -102,7 +101,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testPlusNumberLowersAnUnsignedAndAPlusSignedNumber(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(3, +.5)) AS c1 FROM t');
+        $operation = (new Semantics())->analyze('SELECT CAST(a AS N(3, +.5)) AS c1 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -118,7 +117,7 @@ final class TypeNameRuleTest extends TestCase
 
     public function testMinusNumberLowersAMinusSignedNumber(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(-1e2)) FROM t');
+        $operation = (new Semantics())->analyze('SELECT CAST(a AS N(-1e2)) FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);

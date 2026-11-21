@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * The persistence written between CREATE and the kind of object: temporary, unlogged or permanent.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the persistence of a table
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LOCAL TEMP TABLE t (a int)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE LOCAL TEMP TABLE t (a int)');
  *     [$create->statement->persistence->temporary(), $create->declarations()[0]->name->schema->value] // => [true, 'pg_temp']
  */
 enum Persistence: string implements Node

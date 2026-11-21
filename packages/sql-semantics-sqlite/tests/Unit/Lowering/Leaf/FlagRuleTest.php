@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\FlagRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 
 #[CoversClass(FlagRule::class)]
@@ -18,7 +17,7 @@ final class FlagRuleTest extends TestCase
 {
     public function testTemporaryIsTrueForTempAndTemporaryAndFalseWithoutEither(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
         $temp = $semantics->analyze('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
         $temporary = $semantics->analyze('CREATE TEMPORARY TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
@@ -33,14 +32,14 @@ final class FlagRuleTest extends TestCase
 
     public function testTemporaryRendersAsTemp(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('create temporary trigger tr insert on t begin select 1; end');
+        $operation = (new Semantics())->analyze('create temporary trigger tr insert on t begin select 1; end');
 
         self::assertSame('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END', $operation->toString());
     }
 
     public function testIfNotExistsIsTrueOnlyWhenTheClauseIsWritten(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
         $guarded = $semantics->analyze('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->statement;
 

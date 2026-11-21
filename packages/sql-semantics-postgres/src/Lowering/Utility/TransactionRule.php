@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Utility;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\BeginSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining;
@@ -19,7 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpell
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the transaction commands.

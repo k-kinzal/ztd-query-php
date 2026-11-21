@@ -7,16 +7,15 @@ namespace Tests\Unit\Statement\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(TablePrimaryKey::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class TablePrimaryKeyTest extends TestCase
 {
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -38,7 +37,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsAMissingKeyColumn(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -46,7 +45,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsATermThatIsNoColumnName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(PrimaryKeyProblem::class, $operation->facts->diagnostics[0]);
@@ -55,7 +54,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testRenderWritesAutoincrementInsideTheParentheses(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
+        $operation = (new Semantics())->inspect('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -71,6 +70,6 @@ final class TablePrimaryKeyTest extends TestCase
     {
         $this->expectExceptionMessage('A string literal written as a key term names a column: write it as a LiteralColumn.');
 
-        new TablePrimaryKey([new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'), new \SqlSemantics\Statement\Identifier\Name('nocase')))]);
+        new TablePrimaryKey([new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'), new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('nocase')))]);
     }
 }

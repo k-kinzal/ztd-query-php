@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Lexical;
 
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
 /**
  * Decodes the spelling of a PostgreSQL string constant token into its value.

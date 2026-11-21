@@ -8,8 +8,9 @@ namespace SqlSemantics\Contract;
  * The database whose SQL is analyzed; each database package provides one enum that implements it.
  *
  * @visibility public
- * @example Selecting a database
- *     \SqlSemantics\Platform\Sqlite\Dialect::Sqlite->database() // => 'sqlite'
+ * @example Naming the database family
+ *     $dialect = new class implements \SqlSemantics\Contract\Dialect { public function database(): string { return 'sqlite'; } };
+ *     $dialect->database() // => 'sqlite'
  */
 interface Dialect
 {

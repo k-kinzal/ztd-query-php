@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [sql-semantics, sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
+        package: [sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}

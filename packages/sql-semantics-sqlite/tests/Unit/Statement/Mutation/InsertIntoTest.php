@@ -7,16 +7,15 @@ namespace Tests\Unit\Statement\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(InsertInto::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class InsertIntoTest extends TestCase
 {
     public function testRenderWritesTheVerbTheResolutionTheTargetAndTheColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $replace = $semantics->analyze('replace into t (a, b) values (1, 2)');
         $insert = $semantics->analyze('insert or abort into main.t as x (a) values (1)');
         $with = $semantics->analyze('with w as (select 1 as q) insert into t select q from w');

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `RESET parameter`, `RESET ALL` or a keyword form: a request to restore the default of a configuration parameter.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a RESET of a keyword form
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RESET TIME ZONE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET TIME ZONE');
  *     [$operation->statement->parameter->parameter(), $operation->toString()] // => ['timezone', 'RESET TIME ZONE']
  */
 final class Reset implements Statement

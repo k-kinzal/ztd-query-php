@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * A catalog type constrained by type modifiers, such as `numeric(10,2)` or `character varying(5)`.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the type of a typed constant with modifiers
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT numeric(10, 2) '1.5'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(10, 2) '1.5'");
  *     $query->field(0)->type->descriptor->name() // => 'numeric(10,2)'
  */
 final class Parameterized implements TypeDescriptor

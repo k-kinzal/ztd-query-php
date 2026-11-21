@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
@@ -25,7 +24,7 @@ final class ConflictResolutionTest extends TestCase
 
     public function testCasesAreReadAfterOrInInsertAndUpdate(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $insert = $semantics->analyze('insert or replace into t values (1)');
         $update = $semantics->analyze('update or fail t set a = 1');
 

@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(ConflictTarget::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class ConflictTargetTest extends TestCase
 {
     public function testRenderWritesTheTermsAndThePredicate(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('insert into t values (1) on conflict (id collate nocase asc, a) where id > 0 do nothing');
+        $query = (new Semantics())->inspect('insert into t values (1) on conflict (id collate nocase asc, a) where id > 0 do nothing');
 
         self::assertSame('INSERT INTO t VALUES (1) ON CONFLICT (id COLLATE nocase ASC, a) WHERE id > 0 DO NOTHING', $query->toString());
         self::assertInstanceOf(InsertRows::class, $query->statement);
@@ -32,9 +31,9 @@ final class ConflictTargetTest extends TestCase
 
     public function testTermsAndPredicateSeeTheTargetTableOnly(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) WHERE excluded.id > 0 DO NOTHING', [$t]);
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) WHERE excluded.id > 0 DO NOTHING', [$t]);
 
         self::assertInstanceOf(InsertRows::class, $query->statement);
         $target = $query->statement->upserts[0]->target;

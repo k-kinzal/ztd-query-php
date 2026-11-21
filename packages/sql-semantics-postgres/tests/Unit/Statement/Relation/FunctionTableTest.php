@@ -14,21 +14,21 @@ final class FunctionTableTest extends TestCase
 {
     public function testDeriveRelationHasTheDefinedColumns(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT * FROM f() AS x (a integer)');
-        self::assertSame(['a:Nullable'], array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
+        self::assertSame(['a:Nullable'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
     }
 
     public function testDeriveRelationAddsOrdinality(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT * FROM ROWS FROM (f() AS (a integer)) WITH ORDINALITY');
-        self::assertSame(['a:Nullable', 'ordinality:NotNull'], array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
+        self::assertSame(['a:Nullable', 'ordinality:NotNull'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): string => ($field->name->value ?? '') . ':' . $field->nullability->name, $query->fields()->items ?? []));
     }
 
     public function testNameIsTheFunctionName(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT * FROM f() AS (a integer)');
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
@@ -39,7 +39,7 @@ final class FunctionTableTest extends TestCase
 
     public function testRenderWritesAsBeforeDefinitionsWithoutAlias(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT * FROM LATERAL f() AS (a integer)');
         self::assertSame('SELECT * FROM LATERAL f() AS (a INTEGER)', $query->toString());
     }

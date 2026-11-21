@@ -14,10 +14,10 @@ final class AlterTableTest extends TestCase
 {
     public function testDeriveStatementDerivesTheActionsAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -25,27 +25,27 @@ final class AlterTableTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('ALTER TABLE t DROP b', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('ALTER TABLE t DROP b', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $statement->facts->relation($n1)->table;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n2);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable::class, $n2);
         self::assertSame(true, $n2->table === $context[0]);
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER TABLE IF EXISTS ONLY s.t ADD COLUMN d int, DROP COLUMN e', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('ALTER TABLE IF EXISTS ONLY s.t ADD COLUMN d int, DROP COLUMN e', []);
         self::assertSame('ALTER TABLE IF EXISTS ONLY s.t ADD d INT, DROP e', $statement->toString());
     }
 
     public function testRefusesOnlyForAnIndex(): void
     {
         $this->expectExceptionMessage('ONLY is written for tables and foreign tables.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTarget::Index, new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('i')), true), [new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableAction(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::SetLogged)]);
+        new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTarget::Index, new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('i')), true), [new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableAction(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::SetLogged)]);
     }
 }

@@ -14,17 +14,17 @@ final class AlterForeignServerTest extends TestCase
 {
     public function testRenderWritesTheVersionAndOptions(): void
     {
-        self::assertSame('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')')->toString());
+        self::assertSame('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION NULL OPTIONS (ADD a \'b\')')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SERVER s OPTIONS (DROP a)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s OPTIONS (DROP a)')->facts->diagnostics);
     }
 
     public function testRejectsAnEmptyChange(): void
     {
         $this->expectExceptionMessage('ALTER SERVER changes the version or an option.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\AlterForeignServer(new \SqlSemantics\Statement\Identifier\Name('s'), null);
+        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\AlterForeignServer(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'), null);
     }
 }

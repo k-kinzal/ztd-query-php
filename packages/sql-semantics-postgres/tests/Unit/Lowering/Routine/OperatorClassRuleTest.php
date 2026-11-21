@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Lowering\Routine\OperatorClassRule;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\CreateOperatorClass;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\FunctionMember;
@@ -85,6 +85,6 @@ final class OperatorClassRuleTest extends TestCase
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR = (int, int) SET (restrict = ALL)');
-        self::assertEquals(new KeywordWord(new \SqlSemantics\Statement\Identifier\Name('all')), (new OperatorClassRule($lowering))->argument($tree->find('operator_def_arg')[0]));
+        self::assertEquals(new KeywordWord(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('all')), (new OperatorClassRule($lowering))->argument($tree->find('operator_def_arg')[0]));
     }
 }

@@ -7,18 +7,17 @@ namespace Tests\Unit\Statement\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 
 #[CoversClass(CreateIndex::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class CreateIndexTest extends TestCase
 {
     public function testIndexedGivesTheTableTheSchemaOfTheIndexName(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE INDEX aux.i ON t (a)')->statement;
+        $statement = (new Semantics())->inspect('CREATE INDEX aux.i ON t (a)')->statement;
 
         self::assertInstanceOf(CreateIndex::class, $statement);
         self::assertSame('aux', $statement->indexed()->schema?->value);
@@ -35,9 +34,9 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveStatementResolvesTheTableAndTheIndexedColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a, b)');
-        $operation = $semantics->analyze('CREATE INDEX i ON t (b, a COLLATE nocase) WHERE rowid > 0', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a, b)');
+        $operation = $semantics->inspect('CREATE INDEX i ON t (b, a COLLATE nocase) WHERE rowid > 0', [$table]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateIndex::class, $statement);
@@ -58,9 +57,9 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveStatementSeesNoRowIdentifierInAnIndexedExpression(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a)');
-        $operation = $semantics->analyze('CREATE INDEX i ON t (a + rowid)', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a)');
+        $operation = $semantics->inspect('CREATE INDEX i ON t (a + rowid)', [$table]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -68,9 +67,9 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveStatementReportsWhatAnIndexExpressionAndACondionMayNotContain(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a)');
-        $operation = $semantics->analyze('CREATE INDEX i ON t (t.a, random()) WHERE a IN (SELECT 1) AND ? AND current_time > 0', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a)');
+        $operation = $semantics->inspect('CREATE INDEX i ON t (t.a, random()) WHERE a IN (SELECT 1) AND ? AND current_time > 0', [$table]);
         $reported = array_map(static fn (object $diagnostic): array => $diagnostic instanceof ProhibitedExpression ? [$diagnostic->construct->name, $diagnostic->position->name] : [$diagnostic::class], $operation->facts->diagnostics);
 
         self::assertSame([
@@ -84,17 +83,17 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveStatementReportsAMissingTableAndAMissingColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a)');
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a)');
 
-        self::assertInstanceOf(MissingTable::class, $semantics->analyze('CREATE INDEX i ON u (a)', [$table])->facts->diagnostics[0]);
-        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE INDEX i ON t (zz)', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTable::class, $semantics->inspect('CREATE INDEX i ON u (a)', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $semantics->inspect('CREATE INDEX i ON t (zz)', [$table])->facts->diagnostics[0]);
     }
 
     public function testDeriveRelationKeepsAnUndeclaredTableOpen(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('CREATE INDEX i ON t (a)')->statement;
         $derivation = new Derivation($semantics->context());
 
         self::assertInstanceOf(CreateIndex::class, $statement);
@@ -105,7 +104,7 @@ final class CreateIndexTest extends TestCase
 
     public function testRenderWritesEveryPartInGrammarOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('create unique index if not exists main.i on t (a collate nocase desc, b + 1) where a is not null');
+        $operation = (new Semantics())->inspect('create unique index if not exists main.i on t (a collate nocase desc, b + 1) where a is not null');
 
         self::assertSame('CREATE UNIQUE INDEX IF NOT EXISTS main.i ON t (a COLLATE nocase DESC, b + 1) WHERE a IS NOT NULL', $operation->toString());
     }
@@ -114,6 +113,6 @@ final class CreateIndexTest extends TestCase
     {
         $this->expectExceptionMessage('A string literal written as an index term names a column: write it as a LiteralColumn.');
 
-        new CreateIndex(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('i')), new \SqlSemantics\Statement\Identifier\Name('t'), [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'))]);
+        new CreateIndex(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('i')), new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'), [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'))]);
     }
 }

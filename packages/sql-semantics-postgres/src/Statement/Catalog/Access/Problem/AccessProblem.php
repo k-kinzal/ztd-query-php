@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A role or privilege command that PostgreSQL rejects because it breaks a rule of the command.
  *
  * @visibility public
  * @example Reading the problem of a privilege that does not apply to the object
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT EXECUTE ON SCHEMA s TO joe');
- *     $operation->facts->diagnostics[0]->message() // => 'invalid privilege type EXECUTE for schema'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT EXECUTE ON SCHEMA s TO joe') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: invalid privilege type EXECUTE for schema
  */
 final class AccessProblem implements Diagnostic
 {

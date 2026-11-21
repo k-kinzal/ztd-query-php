@@ -14,13 +14,13 @@ final class FunctionClauseTest extends TestCase
 {
     public function testRenderWritesTheNoForm(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
         (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionRole::Handler))->render($out);
-        self::assertSame('NO HANDLER', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        self::assertSame('NO HANDLER', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 
     public function testRenderWritesTheFunction(): void
     {
-        self::assertSame('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v')->toString());
+        self::assertSame('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE FOREIGN DATA WRAPPER w VALIDATOR s.v')->toString());
     }
 }

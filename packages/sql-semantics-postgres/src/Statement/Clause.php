@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * A part of a statement that is not itself an expression, relation or query but may hold some.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Telling that a type name is a clause
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT numeric(4, 2) '1.5'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(4, 2) '1.5'");
  *     $query->statement->targets[0]->expression->type instanceof \SqlSemantics\Platform\PostgreSql\Statement\Clause // => true
  */
 interface Clause extends Node

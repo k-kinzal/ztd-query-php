@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One parameter of a routine definition or signature: mode, name, type and default value.
@@ -26,8 +26,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a named output parameter
- *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('text')])));
- *     $parameter = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter($type, new \SqlSemantics\Statement\Identifier\Name('label'), \SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode::Out);
+ *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('text')])));
+ *     $parameter = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter($type, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('label'), \SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode::Out);
  *     [$parameter->name?->value, $parameter->input()] // => ['label', false]
  */
 final class FunctionParameter implements Clause

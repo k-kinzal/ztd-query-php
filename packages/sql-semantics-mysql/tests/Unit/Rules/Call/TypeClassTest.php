@@ -41,7 +41,7 @@ final class TypeClassTest extends TestCase
     {
         $this->expectExceptionMessage('A MySQL fact holds a MySQL type descriptor.');
 
-        TypeClass::of(new class () implements \SqlSemantics\Statement\Type\TypeDescriptor {
+        TypeClass::of(new class () implements \SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor {
             public function name(): string
             {
                 return 'TEXT';

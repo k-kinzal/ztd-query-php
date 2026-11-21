@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A pattern match: LIKE, GLOB, REGEXP or MATCH, optionally negated, optionally with an escape character.
@@ -37,12 +37,12 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading a negated LIKE with an escape character
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT a NOT LIKE 'x!%' ESCAPE '!' FROM t");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT a NOT LIKE 'x!%' ESCAPE '!' FROM t");
  *     $match = $query->statement->columns[0]->expression;
  *     [$match->operator, $match->negated, $match->escape->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, true, '!']
  * @example Refusing a pattern that the rendered SQL would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $or = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Like, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class PatternMatch implements Scalar
 {

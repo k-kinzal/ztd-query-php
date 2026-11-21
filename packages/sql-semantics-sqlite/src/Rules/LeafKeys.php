@@ -25,7 +25,7 @@ use SqlParser\Lexer\Token;
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
-final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
+final class LeafKeys implements \SqlSemantics\Platform\Sqlite\Model\Contract\LeafKeys
 {
     /**
      * The grammar symbols at which a token is an identifier.

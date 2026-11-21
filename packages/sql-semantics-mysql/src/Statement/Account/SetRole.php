@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET ROLE {DEFAULT | NONE | ALL [EXCEPT role, …] | role, …}` (8.0+): a request to change the active roles of the session.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Activating named roles
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('set role r1, r2')->toString() // => 'SET ROLE r1, r2'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set role r1, r2')->toString() // => 'SET ROLE r1, r2'
  */
 final class SetRole implements Statement
 {

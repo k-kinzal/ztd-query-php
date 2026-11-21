@@ -6,21 +6,21 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model. An analyzed statement is an `Operation`: the concrete structure of what the statement requests (its operation, operands and input relations), the facts derived for it against an explicit declaration context (name resolution, output fields, types, NULL facts and diagnostics), and SQL rendered from that structure. Before an operation is returned, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input.
+SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model. An analyzed statement is an `Operation`: the concrete structure of what the statement requests (its operation, operands and input relations), the facts derived for it against an explicit declaration context (name resolution, output fields, types and NULL facts), and SQL rendered from that structure. Before an operation is returned, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input.
 
 The model is read-only. There is no API that edits an operation; another statement is analyzed from new SQL or built from explicit inputs, and it stands on its own. Analysis reads the grammar of the selected release and needs no database connection; it does not execute or simulate statements.
 
-This package is the shared runtime. Install the package of your database: [MySQL](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-mysql/README.md), [PostgreSQL](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-postgres/README.md) or [SQLite](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md).
+This package defines the interfaces for SQL analysis. Each database package supplies the analyzer, declaration context, query model and analysis exceptions. Install the package of your database: [MySQL](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-mysql/README.md), [PostgreSQL](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-postgres/README.md) or [SQLite](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md).
 
 ## Requirements
 
 - PHP 8.1+
-- No PHP extension, FFI or external tool. The package is pure PHP and reads the grammar artifacts of [SQL Parser](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-parser/README.md).
+- The database implementations are pure PHP and read the grammar artifacts of [SQL Parser](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-parser/README.md).
 - One of the database packages listed below
 
 ## Support Syntax
 
-The following grammar releases are available. Pass the database dialect and, optionally, its version tag to `Semantics`; omitting the tag selects the default. A statement is read with the grammar of the selected release only, and each release is pinned by the digests of its grammar and keyword artifacts.
+The following grammar releases are available. Pass a version tag to your database package’s `Semantics` constructor; omitting the tag selects the default. A statement is read with the grammar of the selected release only, and each release is pinned by the digests of its grammar and keyword artifacts.
 
 ### MySQL
 
@@ -51,7 +51,7 @@ The following grammar releases are available. Pass the database dialect and, opt
 
 ## Installation
 
-Install the package of your database; it installs this runtime.
+Install the package of your database. It installs the common interfaces. Libraries that accept SQL Semantics interfaces can require k-kinzal/sql-semantics directly.
 
 MySQL:
 
@@ -71,20 +71,19 @@ SQLite:
 composer require k-kinzal/sql-semantics-sqlite
 ```
 
-Each package provides its dialect: `SqlSemantics\Platform\MySql\Dialect::MySql`, `SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql` or `SqlSemantics\Platform\Sqlite\Dialect::Sqlite`. The examples below use SQLite; the API is the same for every database.
+Create a `Semantics` instance from the namespace of your database package. The examples below use SQLite. The `SqlSemantics\Analyzer` interface declares `analyze(string $sql, ?AnalysisContext $context = null): Query`. Its database-specific implementations also accept declaration lists as a convenience.
 
 ## Usage
 
 ### Analyzing a statement
 
-`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into an `Operation`.
+`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into a `SqlSemantics\Query` implemented by the database package’s `Operation`.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $query = $semantics->analyze('select   id, name  from users -- active users');
 
 $query->statement instanceof Select; // => true
@@ -99,13 +98,12 @@ $semantics->profile()->grammar->value; // => 'sqlite-3.47.2'
 The facts of an operation depend on the declarations it is analyzed against. A CREATE statement provides declarations; pass the operation (or its `Table` declarations) as the context of the next analysis.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
 $query = $semantics->analyze('SELECT u.id, upper(name) AS label, email FROM users AS u', [$users]);
 
@@ -121,14 +119,13 @@ $query->field(0)->name?->value; // => 'id'
 `field()` is a convenience for a name that denotes exactly one field, and throws otherwise. `lookupField()` tells the cases apart: one field, no field, several fields with the name, or a lookup that missing inputs leave undecided, such as missing declarations.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Shape\AbsentField;
-use SqlSemantics\Statement\Shape\AmbiguousFields;
-use SqlSemantics\Statement\Shape\DependentField;
-use SqlSemantics\Statement\Shape\UniqueField;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\AbsentField;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\AmbiguousFields;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $semantics->analyze('SELECT 1 AS a')->lookupField('a') instanceof UniqueField; // => true
 $semantics->analyze('SELECT 1 AS a')->lookupField('b') instanceof AbsentField; // => true
@@ -137,22 +134,20 @@ $semantics->analyze('SELECT * FROM users')->lookupField('id') instanceof Depende
 $semantics->analyze('SELECT 1 AS a, 2 AS a')->field('a'); // throws InvalidConstruction
 ```
 
-Semantic problems of grammatical SQL, such as a missing column, are facts of the operation, not exceptions:
+Analysis throws a database-specific exception when it establishes a semantic problem. Catch the common `SqlSemantics\AnalysisException` interface for syntax, semantics, or incompatible-context errors.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\AnalysisException;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-$query = $semantics->analyze('SELECT nickname FROM users', [$users]);
 
-$query->facts->diagnostics[0]->message(); // => 'Column nickname does not exist.'
-$query->field('nickname')->resolution instanceof MissingColumn; // => true
-$query->field('nickname')->type instanceof Invalid; // => true
-$query->toString(); // => 'SELECT nickname FROM users'
+try {
+    $semantics->analyze('SELECT nickname FROM users', [$users]);
+} catch (AnalysisException $error) {
+    $error->getMessage(); // => 'Column nickname does not exist.'
+}
 ```
 
 The [model](docs/model.md) describes operations, fields, shapes, resolutions, types, diagnostics and missing inputs.
@@ -162,10 +157,9 @@ The [model](docs/model.md) describes operations, fields, shapes, resolutions, ty
 A resolved reference reaches the declaration object that was passed in the context. Declarations are never copied, so identity comparison works.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $table = $users->declarations()[0];
 $query = $semantics->analyze('SELECT name FROM users', [$users]);
@@ -183,24 +177,22 @@ The context states what is known about the database, and the facts say what foll
 | Context | How to pass it | An undeclared name |
 |---------|----------------|--------------------|
 | Open | `analyze($sql)` or `analyze($sql, null)` | may exist: facts that need it depend on its declaration |
-| Complete | `analyze($sql, [...])`, also `[]` | does not exist: a diagnostic |
+| Complete | `analyze($sql, [...])`, also `[]` | throws `SemanticException` |
 | Partial | `analyze($sql, $semantics->context([...], false))` | may exist, even where it would hide a declared one |
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $open = $semantics->analyze('SELECT name FROM users');
 $open->field('name')->type instanceof Dependent; // => true
 $open->field('name')->type->missing[0]->describe(); // => 'the declaration of relation users'
 $open->field('name')->resolution instanceof ConditionalColumn; // => true
 
-$complete = $semantics->analyze('SELECT name FROM users', []);
-$complete->facts->diagnostics[0]->message(); // => 'Relation users does not exist.'
+$semantics->analyze('SELECT name FROM users', []); // throws SemanticException
 ```
 
 A fact that depends on missing information carries the missing input; it is never used for a rule that is not implemented. See [Contexts](docs/contexts.md) for search paths, name comparison, conflicts and completeness.
@@ -210,17 +202,16 @@ A fact that depends on missing information carries the missing input; it is neve
 An input with several statements is one operation whose statement is a `Script`. `analyzeAll()` analyzes each statement into its own operation, and `split()` finds the statement boundaries as the database does. Every statement sees the same explicit context: a CREATE earlier in a script declares nothing for the statements after it.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Script;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $sql = 'CREATE TABLE t (a INTEGER); SELECT a FROM t';
 
-$semantics->analyze($sql, [])->statement instanceof Script; // => true
-count($semantics->analyzeAll($sql, [])); // => 2
-$semantics->analyzeAll($sql, [])[1]->facts->diagnostics[0]->message(); // => 'Relation t does not exist.'
+$semantics->analyze($sql)->statement instanceof Script; // => true
+count($semantics->analyzeAll($sql)); // => 2
 $semantics->split("SELECT 1; SELECT ';'"); // => ['SELECT 1;', " SELECT ';'"]
+$semantics->analyzeAll($sql, []); // throws SemanticException
 ```
 
 To analyze a statement against the table a script creates, analyze the CREATE first and pass its operation as the context.
@@ -230,8 +221,7 @@ To analyze a statement against the table a script creates, analyze the CREATE fi
 `new Operation($context, $statement)` derives, renders and checks a new root from a context and an explicit statement structure. Structure values hold decoded names and exact literals and no bindings, so they are the inputs of a construction; the database package documents the constructor of each class.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -239,10 +229,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $query = $semantics->analyze('SELECT id FROM users', [$users]);
 
@@ -265,11 +255,10 @@ The new operation resolves its names at their new positions against the context 
 You can also read names from a model, assemble SQL text, and analyze it. `SqlNames::table()` spells a decoded, optionally qualified relation name for a relation name position of a profile, quoting only as the database requires.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Facade\SqlNames;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\SqlNames;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $name = $semantics->analyze('SELECT a FROM "order items"')->singleNamedInput()->name();
 $table = SqlNames::table($name, $semantics->profile());
 
@@ -295,7 +284,7 @@ The package also does not execute SQL, connect to a database, infer session sett
 | Situation | Result |
 |-----------|--------|
 | SQL outside the selected grammar | `AnalysisException` |
-| Missing or ambiguous names, arity mismatches and other semantic problems | facts of the returned operation: resolutions and `facts->diagnostics` |
+| Missing or ambiguous names, arity mismatches and other semantic problems | `SemanticException` with structured diagnostics |
 | Declarations, signatures, parameter values or session state the context does not hold | `Dependent` facts that name the missing input |
 | A rule the library has not implemented | `ImplementationGap`, a defect of the library |
 | A constructor input outside its documented domain, a node shared between two positions, or a context of another profile | `InvalidConstruction` |

@@ -8,14 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\RoutineRules;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
@@ -34,7 +33,7 @@ final class RoutineRulesTest extends TestCase
 {
     public function testStatementLowersSignalResignalAndGetDiagnostics(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         self::assertInstanceOf(Signal::class, $semantics->analyze("SIGNAL SQLSTATE '45000'")->statement);
         self::assertInstanceOf(Resignal::class, $semantics->analyze('RESIGNAL')->statement);
         self::assertInstanceOf(GetDiagnostics::class, $semantics->analyze('GET DIAGNOSTICS @n = NUMBER')->statement);
@@ -55,7 +54,7 @@ final class RoutineRulesTest extends TestCase
 
     public function testDefinitionRoutesAlterAndDropForms(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $semantics = new Semantics('mysql-5.7.44');
         self::assertSame('ALTER FUNCTION db.f NO SQL', $semantics->analyze('alter function db.f no sql')->toString());
         self::assertInstanceOf(AlterEvent::class, $semantics->analyze('ALTER EVENT e ENABLE')->statement);
         self::assertSame('DROP PROCEDURE IF EXISTS p', $semantics->analyze('drop procedure if exists p')->toString());
@@ -74,7 +73,7 @@ final class RoutineRulesTest extends TestCase
 
     public function testCreateLowersEveryKindOfStoredProgram(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         self::assertInstanceOf(CreateProcedure::class, $semantics->analyze('CREATE PROCEDURE p() SELECT 1')->statement);
         self::assertInstanceOf(CreateFunction::class, $semantics->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement);
         self::assertInstanceOf(CreateLoadableFunction::class, $semantics->analyze("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'")->statement);

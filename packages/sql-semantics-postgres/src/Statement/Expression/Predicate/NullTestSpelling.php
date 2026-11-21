@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  *
  * @visibility public
  * @example Reading the spelling of a NULL test
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 NOTNULL');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 NOTNULL');
  *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTestSpelling::Postfix
  */
 enum NullTestSpelling

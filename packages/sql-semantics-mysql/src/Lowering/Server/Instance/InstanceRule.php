@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Instance;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\AlterInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers KILL, SHUTDOWN, RESTART, CLONE and ALTER INSTANCE.

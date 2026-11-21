@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AlterRoutine;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\SupportFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\Transforms;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers routine options and ALTER FUNCTION, PROCEDURE and ROUTINE.

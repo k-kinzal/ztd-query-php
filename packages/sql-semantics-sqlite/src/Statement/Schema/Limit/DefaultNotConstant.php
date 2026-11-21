@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A DEFAULT expression that SQLite does not accept as a constant.
@@ -19,8 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a bound parameter in a default
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT (?))');
- *     $create->facts->diagnostics[0]->message() // => 'The default value of column a is not constant.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a DEFAULT (?))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The default value of column a is not constant.
  */
 final class DefaultNotConstant implements Diagnostic
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
 
-use SqlSemantics\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 
 /**
  * The CASCADE option of CREATE EXTENSION: extensions the new one depends on are installed too.

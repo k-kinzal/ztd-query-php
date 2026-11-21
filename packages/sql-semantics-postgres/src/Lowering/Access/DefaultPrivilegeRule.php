@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Access;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\AlterDefaultPrivileges;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\DefaultGrant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\DefaultObjectKind;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\InSchemas
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Owned\DropOwned;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Owned\ReassignOwned;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers ALTER DEFAULT PRIVILEGES, DROP OWNED and REASSIGN OWNED.

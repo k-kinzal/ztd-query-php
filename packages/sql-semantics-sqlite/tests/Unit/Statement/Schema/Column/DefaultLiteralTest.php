@@ -7,15 +7,14 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(DefaultLiteral::class)]
 #[Medium]
@@ -23,7 +22,7 @@ final class DefaultLiteralTest extends TestCase
 {
     public function testDeriveConstraintDerivesTheLiteral(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT 5)', []);
+        $operation = (new Semantics())->analyze('CREATE TABLE t (a DEFAULT 5)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -36,7 +35,7 @@ final class DefaultLiteralTest extends TestCase
 
     public function testRenderKeepsTheWrittenSign(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $negative = $semantics->analyze('create table t (a default -1.5)');
         $positive = $semantics->analyze("create table t (a default +'x')");
         $statement = $negative->statement;
@@ -54,7 +53,7 @@ final class DefaultLiteralTest extends TestCase
 
     public function testRenderWritesEveryKindOfLiteral(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a DEFAULT NULL, b DEFAULT 'x', c DEFAULT x'0A', d DEFAULT CURRENT_TIMESTAMP)");
+        $operation = (new Semantics())->analyze("CREATE TABLE t (a DEFAULT NULL, b DEFAULT 'x', c DEFAULT x'0A', d DEFAULT CURRENT_TIMESTAMP)");
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

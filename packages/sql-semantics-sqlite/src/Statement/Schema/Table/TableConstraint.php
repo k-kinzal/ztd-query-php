@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
-use SqlSemantics\Statement\Node;
 
 /**
  * One clause of the constraint list written after the columns of a table definition.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading a table constraint
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
  *     $create->statement->constraints[0]->items[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint // => true
  */
 interface TableConstraint extends Node

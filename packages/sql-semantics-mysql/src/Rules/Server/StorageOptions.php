@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Server;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageRule;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption;
-use SqlSemantics\Rendering\Output;
 
 /**
  * Checks, derives and writes the option list of a tablespace, undo tablespace or log file group statement.

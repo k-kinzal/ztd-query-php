@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * One index hint of a table reference: `USE|FORCE|IGNORE INDEX [FOR scope] (indexes)`.
@@ -21,10 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an index hint
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t IGNORE KEY FOR GROUP BY (i, j)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t IGNORE KEY FOR GROUP BY (i, j)');
  *     [$query->statement->from->indexHints[0]->action, count($query->statement->from->indexHints[0]->indexes)] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Ignore, 2]
  * @example Refusing FORCE INDEX without an index
- *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force, null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force, null, []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class IndexHint implements Node
 {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The column, constraint or attribute ALTER ... RENAME renames: `COLUMN a`, `CONSTRAINT c` or `ATTRIBUTE a`.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the renamed column
- *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedMember(\SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart::Column, new \SqlSemantics\Statement\Identifier\Name('a'));
+ *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedMember(\SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart::Column, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'));
  *     [$member->part->value, $member->name->value] // => ['COLUMN', 'a']
  */
 final class RenamedMember implements Node

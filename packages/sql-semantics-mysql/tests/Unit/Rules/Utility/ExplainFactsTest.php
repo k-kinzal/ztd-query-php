@@ -7,10 +7,9 @@ namespace Tests\Unit\Rules\Utility;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 
 #[CoversClass(ExplainFacts::class)]
@@ -27,7 +26,7 @@ final class ExplainFactsTest extends TestCase
 
     public function testRowsAnswersOneColumnForADocument(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE SELECT 1')->fields() ?? []);
+        self::assertCount(1, (new Semantics())->inspect('EXPLAIN ANALYZE SELECT 1')->fields() ?? []);
     }
 
     public function testLegacyTellsTheReleasesWithoutTree(): void
@@ -38,10 +37,10 @@ final class ExplainFactsTest extends TestCase
 
     public function testDeriveAnswersTheLayoutOfTheFormat(): void
     {
-        self::assertCount(10, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('EXPLAIN SELECT 1')->fields() ?? []);
-        self::assertCount(12, (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
-        self::assertFalse((new Semantics(Dialect::MySql))->analyze('EXPLAIN SELECT 1')->shape()?->complete());
-        self::assertSame('Unknown EXPLAIN format name', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1')->facts->diagnostics[0]->message());
-        self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
+        self::assertCount(10, (new Semantics('mysql-5.6.51'))->inspect('EXPLAIN SELECT 1')->fields() ?? []);
+        self::assertCount(12, (new Semantics())->inspect('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
+        self::assertFalse((new Semantics())->inspect('EXPLAIN SELECT 1')->shape()?->complete());
+        self::assertSame('Unknown EXPLAIN format name', (new Semantics('mysql-5.7.44'))->inspect('EXPLAIN FORMAT = TREE SELECT 1')->facts->diagnostics[0]->message());
+        self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics())->inspect('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
     }
 }

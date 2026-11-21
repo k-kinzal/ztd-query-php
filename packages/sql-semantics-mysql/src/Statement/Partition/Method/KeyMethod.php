@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnNames;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[LINEAR] KEY [ALGORITHM = n] (columns)`: partitioning by the server's hash of column values.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a linear key partitioning
- *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Statement\Identifier\Name('id')]);
+ *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')]);
  *     [$method->linear, $method->columns[0]->value] // => [true, 'id']
  */
 final class KeyMethod implements PartitionMethod

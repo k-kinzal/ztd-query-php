@@ -7,8 +7,9 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -20,8 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(NumberLiteral::class)]
 #[Medium]
@@ -90,7 +89,7 @@ final class NumberLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheTypeOfTheTextThatIsNeverNull(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 18446744073709551615');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = 18446744073709551615');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -108,7 +107,7 @@ final class NumberLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersDecimalForAnExactNumberWithAPoint(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT .5');
+        $operation = (new Semantics())->analyze('SELECT .5');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -122,7 +121,7 @@ final class NumberLiteralTest extends TestCase
 
     public function testRenderWritesTheExactText(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
         self::assertSame('SELECT 007', $semantics->analyze('SELECT 007')->toString());
         self::assertSame('SELECT 1.50', $semantics->analyze('SELECT 1.50')->toString());

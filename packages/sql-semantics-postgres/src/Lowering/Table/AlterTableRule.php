@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\AttachIndex;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\AttachPartition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachMode;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachPartition;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the statements built on `AlterTableStmt` and the partition actions.

@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange\Alter;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the modifiers of ALTER TABLE and the ALGORITHM and LOCK options of CREATE INDEX and DROP INDEX.

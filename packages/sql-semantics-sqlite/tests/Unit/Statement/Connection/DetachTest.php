@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Connection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
 
@@ -18,7 +17,7 @@ final class DetachTest extends TestCase
 {
     public function testDeriveStatementDerivesTheOperand(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('DETACH aux', []);
+        $operation = (new Semantics())->analyze('DETACH aux', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Detach::class, $statement);
@@ -28,7 +27,7 @@ final class DetachTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('detach database aux');
+        $operation = (new Semantics())->analyze('detach database aux');
 
         self::assertInstanceOf(Detach::class, $operation->statement);
         self::assertInstanceOf(NameOperand::class, $operation->statement->schema);

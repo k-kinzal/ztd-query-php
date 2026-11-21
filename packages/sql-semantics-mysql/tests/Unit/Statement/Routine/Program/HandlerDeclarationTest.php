@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(HandlerDeclaration::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class HandlerDeclarationTest extends TestCase
 {
     public function testRenderWritesTheActionTheConditionsAndTheStatement(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
+        $operation = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -44,7 +43,7 @@ final class HandlerDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheHandler')]
     public function testRenderWritesTheHandler(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     /**

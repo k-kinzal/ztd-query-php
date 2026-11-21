@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Utility\Set;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(BareName::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class BareNameTest extends TestCase
 {
     public function testDeriveScalarIsTextForASystemVariable(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET @@sql_mode = a.b');
+        $set = (new Semantics())->inspect('SET @@sql_mode = a.b');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         $item = $set->statement->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment::class, $item);
@@ -33,7 +32,7 @@ final class BareNameTest extends TestCase
 
     public function testDeriveScalarDependsOnTheProgramOtherwise(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET x = y');
+        $set = (new Semantics())->inspect('SET x = y');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         $item = $set->statement->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment::class, $item);
@@ -46,15 +45,15 @@ final class BareNameTest extends TestCase
 
     public function testRenderWritesEveryNamePart(): void
     {
-        self::assertSame('SET @@x = a.b.c', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set @@x = a.b.c')->toString());
+        self::assertSame('SET @@x = a.b.c', (new Semantics('mysql-5.7.44'))->inspect('set @@x = a.b.c')->toString());
     }
 
     public function testDeriveScalarResolvesARowOfATriggerAsAColumn(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (b INT)');
-        $known = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = new.b', [$table]);
-        $missing = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = NEW.zz', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (b INT)');
+        $known = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = new.b', [$table]);
+        $missing = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = NEW.zz', [$table]);
 
         self::assertSame([], $known->facts->diagnostics);
         self::assertCount(1, $missing->facts->diagnostics);

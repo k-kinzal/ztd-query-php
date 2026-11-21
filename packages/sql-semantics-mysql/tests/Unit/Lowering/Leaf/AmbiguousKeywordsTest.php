@@ -7,8 +7,8 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\AmbiguousKeywords;
+use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
 
 #[CoversClass(AmbiguousKeywords::class)]
 #[Medium]

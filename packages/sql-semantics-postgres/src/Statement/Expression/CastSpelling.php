@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
  *
  * @visibility public
  * @example Reading the spelling of a cast
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1::text');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1::text');
  *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling::Operator
  */
 enum CastSpelling

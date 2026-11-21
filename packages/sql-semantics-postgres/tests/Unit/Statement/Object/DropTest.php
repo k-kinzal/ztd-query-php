@@ -7,10 +7,14 @@ namespace Tests\Unit\Statement\Object;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop;
@@ -18,11 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 #[CoversClass(Drop::class)]
 #[Medium]
@@ -31,7 +30,7 @@ final class DropTest extends TestCase
     public function testDeriveStatementResolvesTheDroppedTables(): void
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP TABLE t, u', [$table]);
+        $operation = (new Semantics())->inspect('DROP TABLE t, u', [$table]);
         $statement = $operation->statement;
         self::assertInstanceOf(Drop::class, $statement);
         $resolution = $operation->facts->relation($statement->objects[0])->table;
@@ -42,7 +41,7 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementSkipsAMissingTableUnderIfExists(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP VIEW IF EXISTS v', []);
+        $operation = (new Semantics())->inspect('DROP VIEW IF EXISTS v', []);
         $statement = $operation->statement;
         self::assertInstanceOf(Drop::class, $statement);
         self::assertNull($operation->facts->relation($statement->objects[0])->table);
@@ -51,16 +50,16 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementReportsConcurrentDrops(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP INDEX CONCURRENTLY i, j CASCADE');
+        $operation = (new Semantics())->inspect('DROP INDEX CONCURRENTLY i, j CASCADE');
         self::assertEquals([new ObjectProblem(ObjectProblemKind::ConcurrentMultiple), new ObjectProblem(ObjectProblemKind::ConcurrentCascade)], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesEachKind(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['DROP LANGUAGE l', 'DROP TRIGGER IF EXISTS g ON t RESTRICT', 'DROP DOMAIN d, e', 'DROP OPERATOR FAMILY f USING btree', 'DROP TEXT SEARCH PARSER p'],
-            [$semantics->analyze('DROP PROCEDURAL LANGUAGE l')->toString(), $semantics->analyze('DROP TRIGGER IF EXISTS g ON t RESTRICT')->toString(), $semantics->analyze('DROP DOMAIN d, e')->toString(), $semantics->analyze('DROP OPERATOR FAMILY f USING btree')->toString(), $semantics->analyze('drop text search parser p')->toString()],
+            [$semantics->inspect('DROP PROCEDURAL LANGUAGE l')->toString(), $semantics->inspect('DROP TRIGGER IF EXISTS g ON t RESTRICT')->toString(), $semantics->inspect('DROP DOMAIN d, e')->toString(), $semantics->inspect('DROP OPERATOR FAMILY f USING btree')->toString(), $semantics->inspect('drop text search parser p')->toString()],
         );
     }
 
@@ -84,9 +83,9 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementReportsAnotherKind(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
-        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP TABLE IF EXISTS v, t', $context)->facts->diagnostics));
-        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP SEQUENCE t', $context)->facts->diagnostics));
+        $semantics = new Semantics();
+        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('DROP TABLE IF EXISTS v, t', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('DROP SEQUENCE t', $context)->facts->diagnostics));
     }
 }

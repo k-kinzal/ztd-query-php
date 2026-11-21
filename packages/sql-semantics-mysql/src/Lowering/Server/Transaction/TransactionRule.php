@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the transaction statements: BEGIN, START TRANSACTION, COMMIT, ROLLBACK and the savepoint statements.

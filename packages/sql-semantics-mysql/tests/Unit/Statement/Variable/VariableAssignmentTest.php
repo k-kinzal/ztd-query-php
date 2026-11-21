@@ -7,8 +7,14 @@ namespace Tests\Unit\Statement\Variable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -16,13 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(VariableAssignment::class)]
 #[Medium]
@@ -30,12 +29,12 @@ final class VariableAssignmentTest extends TestCase
 {
     public function testDeriveScalarHasTheFactsOfTheValue(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->analyze('SELECT @n := b, @m := a FROM t', [$table]);
+        $operation = $semantics->inspect('SELECT @n := b, @m := a FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -59,7 +58,7 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarRecordsTheTargetAsMissingSessionState(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @n := 5');
+        $operation = (new Semantics())->inspect('SELECT @n := 5');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -73,7 +72,7 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarTakesEverythingRightOfTheOperatorAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
+        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = @n := 5');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -86,23 +85,23 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarReportsARowOnceAndPassesOnAValueWithoutType(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @a := (1, 2)');
+        $operation = (new Semantics())->inspect('SELECT @a := (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testRenderWritesTheTargetTheOperatorAndTheValue(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
-        self::assertSame('SELECT @n := 5 AS v', $semantics->analyze('select @n:=5 as v')->toString());
-        self::assertSame('SELECT @n:=5', $semantics->analyze('select @n:=5')->toString());
-        self::assertSame('SELECT @n := a FROM t', $semantics->analyze('SELECT @n := a FROM t')->toString());
+        self::assertSame('SELECT @n := 5 AS v', $semantics->inspect('select @n:=5 as v')->toString());
+        self::assertSame('SELECT @n:=5', $semantics->inspect('select @n:=5')->toString());
+        self::assertSame('SELECT @n := a FROM t', $semantics->inspect('SELECT @n := a FROM t')->toString());
     }
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @n := 5', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @n := 5')->toString());
-        self::assertSame('SELECT @n := 5', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @n := 5')->toString());
+        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.6.51'))->inspect('select @n := 5')->toString());
+        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.7.44'))->inspect('select @n := 5')->toString());
     }
 }

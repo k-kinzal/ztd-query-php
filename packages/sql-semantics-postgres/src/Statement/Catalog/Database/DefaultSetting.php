@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
 
 /**
  * The keyword DEFAULT written as the value of a database option: the option takes its default.
@@ -16,7 +16,7 @@ use SqlSemantics\Resolution\Environment;
  *
  * @visibility public
  * @example Reading the value of an option set to its default
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d TEMPLATE DEFAULT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d TEMPLATE DEFAULT');
  *     $operation->statement->options[0]->value // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DefaultSetting::Default
  */
 enum DefaultSetting: string implements OptionArgument

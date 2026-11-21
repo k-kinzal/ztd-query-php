@@ -14,40 +14,40 @@ final class TargetsTest extends TestCase
 {
     public function testResolveAnswersTheDeclaredTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $value = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
+        $value = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')));
         $n1 = $value->table;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n1);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable::class, $n1);
         self::assertSame(true, $n1->table === $context[0]);
     }
 
     public function testShapeHasASlotPerColumn(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         self::assertSame(3, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0])->slots));
     }
 
     public function testImplicitAnswersTheSystemColumns(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        self::assertSame(6, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->implicit((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))));
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
+        self::assertSame(6, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->implicit((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))))));
     }
 
     public function testScopeMakesTheTableTheOnlyVisibleRelation(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX ON t (a, ctid)', $context);
@@ -57,13 +57,13 @@ final class TargetsTest extends TestCase
 
     public function testExistingOpensTheShapeOfAMissingRelationUnderIfExists(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('SELECT 1', []);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('nope'));
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
+        $name = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('nope'));
         $skipped = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, true);
         $missing = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, false);
         self::assertSame([false, null], [$skipped->shape->complete(), $skipped->table]);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $missing->table);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\MissingTable::class, $missing->table);
     }
 }

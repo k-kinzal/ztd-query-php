@@ -1,6 +1,6 @@
 # Model
 
-`Semantics::analyze()` returns an `SqlSemantics\Statement\Operation`. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
+`Semantics::analyze()` returns a `SqlSemantics\Query` implemented as an `Operation` in the selected database package. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
 
 ## Operations
 
@@ -25,17 +25,16 @@ An operation separates two kinds of information.
 
 The **structure** describes what the SQL requests: the operation, its operands and its input relations, as concrete classes of the database package (for example `SqlSemantics\Platform\Sqlite\Statement\Query\Select`, `...\Mutation\InsertRows`, `...\Schema\CreateTable`). It holds decoded names (`Name`, `QualifiedName`), exact literal values (digits as strings, decoded text, hexadecimal digits; never a PHP float), enum cases for closed choices, and lists in written order. It holds no parser node, no token and no binding: which declaration a name denotes is not part of the structure. It holds no source text either, except the checked spelling of a result column that the database names after its text (a `Layout`, see [Rendering](rendering.md#spelled-regions)). A structure value may occur at one position of a statement only.
 
-The **facts** are everything that depends on the context: name resolutions, row shapes, output fields, types, NULL facts and diagnostics. They are kept in `$operation->facts`, keyed by the identity of the structure node they are about.
+The **facts** are everything that depends on the context: name resolutions, row shapes, output fields, types and NULL facts. They are kept in `$operation->facts`, keyed by the identity of the structure node they are about.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $query = $semantics->analyze('SELECT name FROM users WHERE id > 10', [$users]);
 
@@ -49,9 +48,9 @@ $sum = $semantics->analyze('SELECT 1 + NULL');
 $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly; // => true
 ```
 
-`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries. `$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
+`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries. `$facts->declarations` lists the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
 
-The structure classes and their properties are documented in each database package. The core defines the roles they play:
+The structure classes and their properties are documented in each database package. Each database package defines the roles its structure classes play:
 
 | Interface | Role |
 |-----------|------|
@@ -63,7 +62,7 @@ The structure classes and their properties are documented in each database packa
 | `Scalar` | An expression. |
 | `Node` | Any structure value. |
 
-A `Script` holds the statements of an input with several statements, in order. Its diagnostics and declarations are those of all its members; it returns no rows itself.
+A `Script` holds the statements of an input with several statements, in order. It collects declarations from its members; it returns no rows itself.
 
 ## Fields and lookups
 
@@ -93,11 +92,10 @@ A `Field` has:
 A field whose name is undecided could have any name, so while one field of the result is in that state, every lookup by name is a `DependentField`, and `field($name)` throws:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Shape\DependentField;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $query = $semantics->analyze('SELECT "a", 1 AS b FROM t');
 
 $query->field(0)->name; // => null
@@ -118,11 +116,10 @@ A `RowShape` lists the `OutputSlot`s of a query or a relation occurrence in orde
 An `OutputSlot` is an output position, not a declaration. A slot of a named table refers to the declared column (`column`); a slot that a join or a query re-exposes refers to the slot it comes from (`origin`) and carries its own type and NULL fact. `declaration()` follows `origin` back to the declared column. A slot without a `name` lists in `unnamed` the missing inputs its name depends on; the list is empty when the position has no name at all. When no slot of a relation has a column name that is looked up and one of its slots is unnamed in this way, the name resolves to a `ConditionalColumn`, not to a `MissingColumn`. An outer join therefore makes the re-exposed slot nullable without changing the declaration:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
 $orders = $semantics->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL)');
 $query = $semantics->analyze('SELECT u.name, o.user_id FROM users AS u LEFT JOIN orders AS o ON o.user_id = u.id', [$users, $orders]);
@@ -137,11 +134,10 @@ $userId->nullability; // => Nullability::NotNull
 A shape is **open** when missing declarations prevent listing every position. The known slots are still exact, and `missing` names the inputs that would complete the shape. A star that cannot be expanded stays an `OpenStar` in `$facts->output->projection`, carrying its missing inputs; no placeholder field is invented for it, and `fields()` answers null.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $open = $semantics->analyze('SELECT * FROM users');
 
 $open->fields(); // => null
@@ -155,7 +151,7 @@ count($semantics->analyze('SELECT * FROM users', [$users])->fields()); // => 2
 
 ## Resolutions
 
-A name used as a value resolves to one of the following (namespace `SqlSemantics\Statement\Reference\Column`). Finding a candidate and resolving uniquely are different outcomes.
+A name used as a value resolves to one of the following (namespace `SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column`). Finding a candidate and resolving uniquely are different outcomes.
 
 | Resolution | Meaning |
 |------------|---------|
@@ -168,12 +164,10 @@ A name used as a value resolves to one of the following (namespace `SqlSemantics
 A known candidate in a farther scope is not chosen while a nearer scope is incompletely known. A database package can add resolutions of its own, for example `SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias`; test with `instanceof` and treat other classes as database-specific.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $orders = $semantics->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER)');
 
@@ -187,12 +181,10 @@ $outer = $correlated->facts->scalar($correlated->statement->columns[1]->expressi
 $outer->depth; // => 1
 $outer->relation === $correlated->inputRelation(); // => true
 
-$both = $semantics->analyze('SELECT id FROM users, orders', [$users, $orders]);
-$both->field('id')->resolution instanceof AmbiguousColumn; // => true
-$both->facts->diagnostics[0]->message(); // => 'Column id is ambiguous.'
+$semantics->analyze('SELECT id FROM users, orders', [$users, $orders]); // throws SemanticException
 ```
 
-A relation name resolves to one of the following (namespace `SqlSemantics\Statement\Reference\Table`), read from `$facts->relation($occurrence)->table`:
+A relation name resolves to one of the following (namespace `SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table`), read from `$facts->relation($occurrence)->table`:
 
 | Resolution | Meaning |
 |------------|---------|
@@ -205,7 +197,7 @@ A relation name resolves to one of the following (namespace `SqlSemantics\Statem
 
 ## Types and nullability
 
-A type fact (`SqlSemantics\Statement\Type\TypeFact`) is one of:
+A type fact (`SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeFact`) is one of:
 
 | Type fact | Meaning |
 |-----------|---------|
@@ -220,13 +212,12 @@ A type fact (`SqlSemantics\Statement\Type\TypeFact`) is one of:
 A `TypeDescriptor` is a data type of one database; `name()` names it as the database reports it. Each database package has its own closed set of descriptor classes, for example SQLite's `Storage` (the storage class of a computed value) and `ColumnDomain` (a declared column type with its affinity), PostgreSQL's `Builtin` and `NamedOnPath`, and MySQL's `Integral`, `Character` or `Temporal`.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $semantics->analyze('SELECT 1')->field(0)->type->descriptor; // => Storage::Integer
 $choice = $semantics->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
@@ -239,22 +230,23 @@ $semantics->analyze('SELECT NULL')->field(0)->nullability; // => Nullability::Nu
 
 ## Diagnostics
 
-A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, a wrong number of values, a statement on a relation of the wrong [kind](contexts.md#relation-kinds), or a write into a [generated column](contexts.md#generated-columns), is a value implementing `SqlSemantics\Statement\Fact\Diagnostic`. Such SQL is still structured and rendered; the database would reject it, or warn, when it runs. `$facts->diagnostics` lists them in derivation order. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
+A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, a wrong number of values, a statement on a relation of the wrong [kind](contexts.md#relation-kinds), or a write into a [generated column](contexts.md#generated-columns), is a value implementing `SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic`. `analyze()` throws `SemanticException` with these values in its `diagnostics` property, in derivation order. Warnings remain available through the query’s `facts->diagnostics` property. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-$insert = $semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]);
 
-$insert->facts->diagnostics[0] instanceof ArityMismatch; // => true
-$insert->facts->diagnostics[0]->message(); // => '2 values for 1 columns.'
+try {
+    $semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]);
+} catch (SemanticException $error) {
+    $error->diagnostics[0] instanceof ArityMismatch; // => true
+    $error->getMessage(); // => '2 values for 1 columns.'
+}
 ```
-
-A diagnostic is not an analysis failure: the operation is complete, and `toString()` renders the statement as requested.
 
 ## Missing inputs
 
@@ -269,14 +261,13 @@ A `MissingInput` names information that a fact depends on and that the context d
 | `UnboundParameter` | The value bound to a statement parameter, which also fixes its type. |
 | `SessionState` | Connection state, such as a user variable or the current database. |
 
-They are in `SqlSemantics\Statement\Reference\Missing`. Database packages add their own, for example SQLite's `RandomColumnName`, the random suffix SQLite gives a column of a subquery whose name repeats five earlier names, and MySQL's `NameConversion`, the character set conversion the server applies to some strings when it names a column after them.
+They are in `SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing`. Database packages add their own, for example SQLite's `RandomColumnName`, the random suffix SQLite gives a column of a subquery whose name repeats five earlier names, and MySQL's `NameConversion`, the character set conversion the server applies to some strings when it names a column after them.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $parameters = $semantics->analyze('SELECT ?, :name');
 
 $parameters->field(0)->type instanceof Dependent; // => true

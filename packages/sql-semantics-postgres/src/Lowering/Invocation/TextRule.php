@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Extract;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\SimilarSubstring;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Substring;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Trim;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\TrimSide;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers EXTRACT, OVERLAY, POSITION, SUBSTRING and TRIM with their keyword-separated operands.

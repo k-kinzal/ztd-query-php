@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * Two column counts that SQLite requires to agree and that differ.
  *
  * @visibility public
  * @example Reading the counts of an INSERT that supplies too few values
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $problem = $semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics[0];
- *     [$problem->expected, $problem->actual] // => [2, 1]
+ *     $semantics->analyze('INSERT INTO t VALUES (1)', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: 1 values for 2 columns.
  */
 final class ArityMismatch implements Diagnostic
 {

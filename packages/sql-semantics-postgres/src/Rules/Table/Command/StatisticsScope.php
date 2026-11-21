@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Derives the FROM items of CREATE STATISTICS and the scope of its columns and expressions.

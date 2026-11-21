@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `AS user [WITH ROLE …]` of GRANT (8.0.16+): the account and active roles whose privileges and partial revokes the grant is executed with.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the account a grant is executed as
- *     $as = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT ON *.* TO u AS admin WITH ROLE DEFAULT')->statement->as;
+ *     $as = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT ON *.* TO u AS admin WITH ROLE DEFAULT')->statement->as;
  *     $as?->roles?->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Default
  */
 final class GrantAs implements Node

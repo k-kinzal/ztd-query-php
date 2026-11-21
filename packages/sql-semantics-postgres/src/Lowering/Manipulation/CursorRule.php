@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor;

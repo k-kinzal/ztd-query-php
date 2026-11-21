@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
  *
  * @visibility public
  * @example Reading which rule a call breaks
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT row_number()');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT row_number()');
  *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuseRule::WindowWithoutOver
  */
 enum CallMisuseRule

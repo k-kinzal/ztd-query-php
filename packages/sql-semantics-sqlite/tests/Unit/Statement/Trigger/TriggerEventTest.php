@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Trigger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 
@@ -24,7 +23,7 @@ final class TriggerEventTest extends TestCase
 
     public function testCasesAreReadFromTheEventWordWhateverItsSpelling(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $delete = $semantics->analyze('create trigger tr delete on t begin select 1; end');
         $insert = $semantics->analyze('create trigger tr after Insert on t begin select 1; end');
 

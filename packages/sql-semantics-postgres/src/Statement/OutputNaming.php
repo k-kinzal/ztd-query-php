@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement;
 
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 
 /**
  * An expression that gives a result column its name when the column has no alias.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility public
  * @example Reading the name a typed constant gives its column
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT integer '1'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT integer '1'");
  *     $query->statement->targets[0]->expression->outputName()?->value // => 'int4'
  */
 interface OutputNaming

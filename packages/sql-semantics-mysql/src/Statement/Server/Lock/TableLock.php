@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One table LOCK TABLES locks: `t [[AS] alias] lock_type`.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a table, its alias and the lock
- *     $lock = new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write);
+ *     $lock = new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write);
  *     [$lock->table->name->value, $lock->alias?->value, $lock->mode] // => ['t', 'a', \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write]
  */
 final class TableLock implements Node

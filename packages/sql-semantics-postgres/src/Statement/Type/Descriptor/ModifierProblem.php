@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * Type modifiers the named type does not accept.
@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a precision the numeric type does not allow
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT numeric(0) '1'");
- *     $query->field(0)->type->cause->message() // => 'Invalid type modifier for type numeric.'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(0) '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Invalid type modifier for type numeric.
  */
 final class ModifierProblem implements Diagnostic
 {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A column of a STRICT table whose declared type is missing or not one of the six allowed names.
@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a type a STRICT table does not allow
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a VARCHAR(10)) STRICT');
- *     $create->facts->diagnostics[0]->message() // => 'Column a of a STRICT table has the unknown datatype VARCHAR(10).'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a VARCHAR(10)) STRICT') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a of a STRICT table has the unknown datatype VARCHAR(10).
  */
 final class StrictTypeViolation implements Diagnostic
 {

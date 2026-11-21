@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Limit;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The LIMIT, FETCH FIRST and OFFSET clauses of a query, in the order written.
@@ -19,10 +19,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping an offset written before the limit
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 OFFSET 1 LIMIT 2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 OFFSET 1 LIMIT 2');
  *     [$query->statement->options->limit->offsetFirst, $query->toString()] // => [true, 'SELECT 1 OFFSET 1 LIMIT 2']
  * @example Refusing an empty limit
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit() // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit() // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class RowLimit implements Node
 {

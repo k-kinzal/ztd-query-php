@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A column of a column privilege that the completely declared table of GRANT does not have.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the problem
- *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn(new \SqlSemantics\Statement\Identifier\Name('c'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))->message() // => 'Column c does not exist in table t.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->message() // => 'Column c does not exist in table t.'
  */
 final class UnknownGrantColumn implements Diagnostic
 {

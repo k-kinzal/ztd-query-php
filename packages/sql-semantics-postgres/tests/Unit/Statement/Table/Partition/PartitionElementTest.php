@@ -14,10 +14,10 @@ final class PartitionElementTest extends TestCase
 {
     public function testDeriveClauseResolvesTheKey(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE TABLE n (a int) PARTITION BY RANGE (zz)', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE TABLE n (a int) PARTITION BY RANGE (zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -25,8 +25,8 @@ final class PartitionElementTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE n (a text) PARTITION BY LIST (a COLLATE "C" text_ops, (a || \'x\'), lower(a))', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE n (a text) PARTITION BY LIST (a COLLATE "C" text_ops, (a || \'x\'), lower(a))', []);
         self::assertSame('CREATE TABLE n (a text) PARTITION BY list (a COLLATE "C" text_ops, (a || \'x\'), lower(a))', $statement->toString());
     }
 }

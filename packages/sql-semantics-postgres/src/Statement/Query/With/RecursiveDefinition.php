@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
 
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
 
 /**
  * A named relation whose query may refer to itself: a common table expression, or a recursive view.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Query;
  * @visibility public
  * @example Reading the recursive query of a common table expression
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
- *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Statement\Identifier\Name('a')]);
+ *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);
  *     [$table->recursiveQuery() === $one, $table->recursiveColumns()[0]->value] // => [true, 'a']
  */
 interface RecursiveDefinition extends Node

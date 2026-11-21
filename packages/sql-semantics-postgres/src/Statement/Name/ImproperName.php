@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Name;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A dotted name with more parts than the object it must name can have.
@@ -14,8 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a type name with four parts
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT a.b.c.d '1'");
- *     $query->field(0)->type->cause->message() // => 'Improper qualified name (too many dotted names): a.b.c.d.'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT a.b.c.d '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Improper qualified name (too many dotted names): a.b.c.d.
  */
 final class ImproperName implements Diagnostic
 {

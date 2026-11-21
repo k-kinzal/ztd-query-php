@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A character set at a position that names one: a character set name or the keyword DEFAULT.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a character set name and the default
- *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4'));
+ *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4'));
  *     [$named->name?->value, (new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null))->name] // => ['utf8mb4', null]
  */
 final class CharsetName implements Node

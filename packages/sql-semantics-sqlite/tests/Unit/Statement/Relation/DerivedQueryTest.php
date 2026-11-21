@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(DerivedQuery::class)]
 #[Medium]
@@ -28,9 +27,9 @@ final class DerivedQueryTest extends TestCase
 {
     public function testDeriveRelationNamesTheRelationByItsResultColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT * FROM (SELECT a, b AS bb, a + 1 FROM t) AS d', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT * FROM (SELECT a, b AS bb, a + 1 FROM t) AS d', [$create]);
         $fields = $query->fields();
 
         self::assertInstanceOf(Select::class, $query->statement);
@@ -48,9 +47,9 @@ final class DerivedQueryTest extends TestCase
 
     public function testDeriveRelationKeepsDuplicateNamesApartLikeSqlite(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT * FROM (SELECT a, a FROM t) AS d', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT * FROM (SELECT a, a FROM t) AS d', [$create]);
         $fields = $query->fields();
 
         self::assertNotNull($fields);
@@ -59,9 +58,9 @@ final class DerivedQueryTest extends TestCase
 
     public function testDeriveRelationNamesAnUnaliasedExpressionAfterItsText(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT d."a+1", d.zz FROM (SELECT a+1 FROM t) AS d', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT d."a+1", d.zz FROM (SELECT a+1 FROM t) AS d', [$create]);
 
         self::assertInstanceOf(ResolvedColumn::class, $query->field(0)->resolution);
         self::assertSame('a+1', $query->field(0)->name?->value);
@@ -71,7 +70,7 @@ final class DerivedQueryTest extends TestCase
 
     public function testDeriveRelationLeavesAColumnAfterAnUnexpandedStarUnnamed(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT d.x FROM (SELECT *, 1 AS x FROM t) AS d');
+        $query = (new Semantics())->inspect('SELECT d.x FROM (SELECT *, 1 AS x FROM t) AS d');
         $resolution = $query->field(0)->resolution;
 
         self::assertInstanceOf(ConditionalColumn::class, $resolution);
@@ -82,12 +81,12 @@ final class DerivedQueryTest extends TestCase
 
     public function testRenderWritesTheQueryInParenthesesWithItsAlias(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $built = new Operation($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'))));
 
         self::assertSame('SELECT * FROM (SELECT 1 AS q) AS d', $built->toString());
-        self::assertSame('SELECT * FROM (SELECT 1)', $semantics->analyze('select * from (select 1)')->toString());
-        self::assertSame('SELECT q FROM (SELECT 1 AS q) d', $semantics->analyze('SELECT q FROM (SELECT 1 AS q) d')->toString());
+        self::assertSame('SELECT * FROM (SELECT 1)', $semantics->inspect('select * from (select 1)')->toString());
+        self::assertSame('SELECT q FROM (SELECT 1 AS q) d', $semantics->inspect('SELECT q FROM (SELECT 1 AS q) d')->toString());
         self::assertSame('SELECT * FROM (SELECT 1 AS q) d', (new Operation($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'), false))))->toString());
     }
 

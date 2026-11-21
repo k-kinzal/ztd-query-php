@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A table definition that states its primary key in a way SQLite rejects.
@@ -14,8 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting AUTOINCREMENT on a column that is no integer primary key
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a TEXT PRIMARY KEY AUTOINCREMENT)');
- *     $create->facts->diagnostics[0]->message() // => 'AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a TEXT PRIMARY KEY AUTOINCREMENT)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY.
  */
 final class PrimaryKeyProblem implements Diagnostic
 {

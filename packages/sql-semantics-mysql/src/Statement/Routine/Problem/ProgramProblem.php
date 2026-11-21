@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A stored program statement MySQL rejects because it breaks a rule of the language.
  *
  * @visibility public
  * @example Reading the problem of a LEAVE without a label in scope
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() LEAVE missing');
- *     $create->facts->diagnostics[0]->message() // => 'LEAVE with no matching label: missing'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() LEAVE missing') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: LEAVE with no matching label: missing
  */
 final class ProgramProblem implements Diagnostic
 {

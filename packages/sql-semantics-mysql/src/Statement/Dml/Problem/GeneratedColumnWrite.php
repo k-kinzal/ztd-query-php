@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A value other than DEFAULT that a statement writes into a generated column.
@@ -18,9 +18,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the generated column written by an INSERT
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))');
- *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations())->facts->diagnostics[0]->message() // => "The value specified for generated column 'g' in table 't' is not allowed."
+ *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations()) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The value specified for generated column 'g' in table 't' is not allowed.
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

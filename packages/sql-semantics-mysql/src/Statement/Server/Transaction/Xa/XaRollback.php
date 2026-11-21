@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `XA ROLLBACK xid`: a request to roll back an XA transaction.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa rollback X'0f', 'b', 3");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa rollback X'0f', 'b', 3");
  *     [$xa->toString(), $xa->statement->xid->format?->text === '3'] // => ["XA ROLLBACK x'0f', 'b', 3", true]
  */
 final class XaRollback implements Statement
@@ -37,7 +37,7 @@ final class XaRollback implements Statement
     /**
      * Refuses a format identifier the release rejects; the request names no relation and no value.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the release does not read the format identifier
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the release does not read the format identifier
      */
     public function deriveStatement(Derivation $derivation): void
     {

@@ -7,9 +7,9 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\FromRule;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
@@ -23,7 +23,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(FromRule::class)]
 #[Medium]
@@ -31,9 +30,9 @@ final class FromRuleTest extends TestCase
 {
     public function testFromIsNullWithoutTheClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('SELECT 1')->statement;
-        $read = $semantics->analyze('SELECT 1 FROM t')->statement;
+        $semantics = new Semantics();
+        $bare = $semantics->inspect('SELECT 1')->statement;
+        $read = $semantics->inspect('SELECT 1 FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $read);
@@ -44,10 +43,10 @@ final class FromRuleTest extends TestCase
 
     public function testTermsAnswersOneTermWithoutAConstraintAndAChainOtherwise(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $single = $semantics->analyze('SELECT * FROM t')->statement;
-        $pair = $semantics->analyze('SELECT * FROM t, u')->statement;
-        $leading = $semantics->analyze('SELECT * FROM t ON 1');
+        $semantics = new Semantics();
+        $single = $semantics->inspect('SELECT * FROM t')->statement;
+        $pair = $semantics->inspect('SELECT * FROM t, u')->statement;
+        $leading = $semantics->inspect('SELECT * FROM t ON 1');
 
         self::assertInstanceOf(Select::class, $single);
         self::assertInstanceOf(Select::class, $pair);
@@ -68,7 +67,7 @@ final class FromRuleTest extends TestCase
 
     public function testTermLowersEachKindOfTermWithItsAlias(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT * FROM t AS x, main.u INDEXED BY i, json_each('[1]') AS j, (SELECT 1) AS d, (t JOIN u) AS n");
+        $operation = (new Semantics())->inspect("SELECT * FROM t AS x, main.u INDEXED BY i, json_each('[1]') AS j, (SELECT 1) AS d, (t JOIN u) AS n");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -95,7 +94,7 @@ final class FromRuleTest extends TestCase
 
     public function testOperatorLowersTheCommaTheBareJoinAndTheKeywordJoins(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q');
+        $operation = (new Semantics())->inspect('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -105,7 +104,7 @@ final class FromRuleTest extends TestCase
 
     public function testWordLowersAWordBeforeJoinAsAKeywordWhenWrittenAsOneAndAsANameOtherwise(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t LEFT bogus JOIN u');
+        $operation = (new Semantics())->inspect('SELECT * FROM t LEFT bogus JOIN u');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -121,7 +120,7 @@ final class FromRuleTest extends TestCase
 
     public function testConstraintLowersOnUsingAndNone(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t JOIN u ON t.a = u.a JOIN v USING (a, b) JOIN w');
+        $operation = (new Semantics())->inspect('SELECT * FROM t JOIN u ON t.a = u.a JOIN v USING (a, b) JOIN w');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -135,7 +134,7 @@ final class FromRuleTest extends TestCase
 
     public function testIndexedLowersIndexedByAndNotIndexed(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t INDEXED BY i, u NOT INDEXED');
+        $operation = (new Semantics())->inspect('SELECT * FROM t INDEXED BY i, u NOT INDEXED');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -151,10 +150,10 @@ final class FromRuleTest extends TestCase
 
     public function testOptionalIndexedIsNullWithoutAClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('DELETE FROM t')->statement;
-        $chosen = $semantics->analyze('DELETE FROM t INDEXED BY i')->statement;
-        $refused = $semantics->analyze('DELETE FROM t NOT INDEXED')->statement;
+        $semantics = new Semantics();
+        $bare = $semantics->inspect('DELETE FROM t')->statement;
+        $chosen = $semantics->inspect('DELETE FROM t INDEXED BY i')->statement;
+        $refused = $semantics->inspect('DELETE FROM t NOT INDEXED')->statement;
 
         self::assertInstanceOf(Delete::class, $bare);
         self::assertInstanceOf(Delete::class, $chosen);

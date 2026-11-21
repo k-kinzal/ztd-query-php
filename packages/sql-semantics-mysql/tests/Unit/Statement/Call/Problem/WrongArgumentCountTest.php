@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Call\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(WrongArgumentCount::class)]
 #[Small]

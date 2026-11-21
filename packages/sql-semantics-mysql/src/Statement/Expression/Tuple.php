@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * The type of a row of several values: a row constructor or a subquery of several columns (`ROW_RESULT`).
@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the width of a row
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE (a, b) IS NULL');
- *     $query->facts->scalar($query->statement->where->operand)->type->descriptor->width // => 2
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE (a, b) IS NULL') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
  */
 final class Tuple implements TypeDescriptor
 {

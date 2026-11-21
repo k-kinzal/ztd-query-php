@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `ON [TABLE|FUNCTION|PROCEDURE] [db.]name`: one table or stored routine.
@@ -21,9 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving the table of a grant
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $grant = $semantics->analyze('GRANT SELECT ON t TO u', [$semantics->analyze('CREATE TABLE t (a INT)')]);
- *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable // => true
+ *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable // => true
  */
 final class ObjectLevel implements PrivilegeLevel
 {

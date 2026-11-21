@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Access;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\LargeObjectsTarget;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\RoutinesTar
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\SchemaContentsTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\TypesTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of privileges on objects.

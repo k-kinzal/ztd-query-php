@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DO [LANGUAGE name] code`: a request to run an anonymous code block.
@@ -26,10 +26,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the code of an anonymous block
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
  *     [$operation->statement->code()?->value, $operation->statement->language()?->name()] // => ['BEGIN NULL; END', 'plpgsql']
  * @example Refusing a block without items
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class DoBlock implements Statement
 {

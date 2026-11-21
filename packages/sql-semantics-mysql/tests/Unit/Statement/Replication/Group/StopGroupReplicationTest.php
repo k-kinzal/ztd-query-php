@@ -7,10 +7,9 @@ namespace Tests\Unit\Statement\Replication\Group;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Operation;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StopGroupReplication::class)]
 #[Medium]
@@ -20,11 +19,11 @@ final class StopGroupReplicationTest extends TestCase
     {
         $this->expectExceptionMessage('Group replication needs MySQL 5.7 or later.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new StopGroupReplication());
+        new Operation((new Semantics('mysql-5.6.51'))->context([]), new StopGroupReplication());
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('STOP GROUP_REPLICATION', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('stop group_replication')->toString());
+        self::assertSame('STOP GROUP_REPLICATION', (new Semantics('mysql-5.7.44'))->analyze('stop group_replication')->toString());
     }
 }

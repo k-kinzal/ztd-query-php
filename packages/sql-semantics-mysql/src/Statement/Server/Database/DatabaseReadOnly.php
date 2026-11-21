@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `READ ONLY [=] {DEFAULT | 0 | 1}`: whether the database may be modified (ALTER DATABASE, MySQL 8.0.22 and later).
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Making a database read-only
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d READ ONLY = 1');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d READ ONLY = 1');
  *     [$alter->toString(), $alter->statement->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY 1', true]
  */
 final class DatabaseReadOnly implements DatabaseOption

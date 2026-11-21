@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A data manipulation statement MySQL rejects because it breaks a rule of the language.
  *
  * @visibility public
  * @example Reading the problem of a multiple-table UPDATE with LIMIT
- *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE t, u SET t.a = 1 LIMIT 1');
- *     $update->facts->diagnostics[0]->message() // => 'Incorrect usage of UPDATE and LIMIT'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('UPDATE t, u SET t.a = 1 LIMIT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect usage of UPDATE and LIMIT
  */
 final class WriteMisuse implements Diagnostic
 {

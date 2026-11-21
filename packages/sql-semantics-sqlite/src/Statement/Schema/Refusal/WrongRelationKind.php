@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A request SQLite refuses because the relation it names is of another kind.
@@ -17,9 +17,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting DROP TABLE of a view
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1');
- *     $semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message() // => 'Relation v is a view: DROP TABLE removes only a table.'
+ *     $semantics->analyze('DROP TABLE v', [$view]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Relation v is a view: DROP TABLE removes only a table.
  */
 final class WrongRelationKind implements Diagnostic
 {
@@ -28,7 +28,7 @@ final class WrongRelationKind implements Diagnostic
     /**
      * @param Table $relation The declaration the name resolved to
      * @param KindRefusal $refusal The request and the kind it needs
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the relation is of the kind the request needs
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the relation is of the kind the request needs
      */
     public function __construct(public readonly Table $relation, public readonly KindRefusal $refusal)
     {

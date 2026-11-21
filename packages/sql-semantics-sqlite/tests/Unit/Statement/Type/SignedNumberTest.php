@@ -7,8 +7,10 @@ namespace Tests\Unit\Statement\Type;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
@@ -20,9 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(SignedNumber::class)]
 #[Medium]
@@ -30,7 +29,7 @@ final class SignedNumberTest extends TestCase
 {
     public function testRenderWritesTheSignDirectlyBeforeTheNumber(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1');
+        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1');
         $cast = $query->field(0)->expression;
 
         self::assertInstanceOf(Cast::class, $cast);
@@ -43,7 +42,7 @@ final class SignedNumberTest extends TestCase
 
     public function testRenderWritesEveryKindOfNumericLiteral(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(1 AS DECIMAL(10)), CAST(1 AS DECIMAL(0x10)), CAST(1 AS DECIMAL(1.5))');
+        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL(10)), CAST(1 AS DECIMAL(0x10)), CAST(1 AS DECIMAL(1.5))');
         $numbers = array_map(static fn (Field $field): ?string => $field->expression instanceof Cast ? $field->expression->target?->arguments[0]->number::class : null, $query->fields()->items ?? []);
 
         self::assertSame([IntegerLiteral::class, HexLiteral::class, RealLiteral::class], $numbers);
@@ -52,7 +51,7 @@ final class SignedNumberTest extends TestCase
 
     public function testRenderWritesAPragmaValue(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('pragma cache_size = -2000');
+        $operation = (new Semantics())->analyze('pragma cache_size = -2000');
         $pragma = $operation->statement;
 
         self::assertInstanceOf(Pragma::class, $pragma);
@@ -65,7 +64,7 @@ final class SignedNumberTest extends TestCase
 
     public function testRenderWritesANewlyBuiltNumber(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $target = new TypeName([new Word(new Name('DECIMAL'))], [new SignedNumber(NumberSign::Plus, new IntegerLiteral('10')), new SignedNumber(null, new RealLiteral('2', '5'))]);
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Cast(new IntegerLiteral('1'), $target))]));
 

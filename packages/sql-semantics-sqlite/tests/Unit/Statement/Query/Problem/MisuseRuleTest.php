@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 
@@ -37,7 +36,7 @@ final class MisuseRuleTest extends TestCase
     #[DataProvider('providerStatements')]
     public function testCasesAreReportedForTheStatementsThatBreakThem(string $sql, MisuseRule $rule): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze($sql);
+        $query = (new Semantics())->inspect($sql);
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame($rule, $query->facts->diagnostics[0]->rule);

@@ -8,13 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(Determinism::class)]
 #[Medium]
@@ -33,7 +32,7 @@ final class DeterminismTest extends TestCase
     #[DataProvider('providerRenderWritesNotBeforeANonDeterministicRoutine')]
     public function testRenderWritesNotBeforeANonDeterministicRoutine(string $release, string $sql, string $expected, bool $deterministic): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $create = (new Semantics($release))->analyze($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[array_key_last($statement->characteristics)] ?? null;
@@ -47,12 +46,12 @@ final class DeterminismTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() DETERMINISTIC NOT DETERMINISTIC SELECT 1';
 
-        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze(strtolower($sql))->toString());
+        self::assertSame($sql, (new Semantics())->analyze(strtolower($sql))->toString());
     }
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $codec = new Codec((new Semantics(Dialect::MySql))->profile()->grammar);
+        $codec = new Codec((new Semantics())->profile()->grammar);
         $deterministic = new Output($codec);
         (new Determinism(true))->render($deterministic);
         $nondeterministic = new Output($codec);

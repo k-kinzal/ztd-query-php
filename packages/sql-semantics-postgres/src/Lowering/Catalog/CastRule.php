@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CreateCast;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\CastPair;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\TransformFor;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the cast and transform commands.

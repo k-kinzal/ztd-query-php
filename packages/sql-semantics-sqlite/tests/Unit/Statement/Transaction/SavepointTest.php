@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Transaction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Savepoint;
 
 #[CoversClass(Savepoint::class)]
@@ -17,7 +16,7 @@ final class SavepointTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SAVEPOINT s1', []);
+        $operation = (new Semantics())->analyze('SAVEPOINT s1', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -25,7 +24,7 @@ final class SavepointTest extends TestCase
 
     public function testRenderWritesTheDecodedName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("savepoint 'before import'");
+        $operation = (new Semantics())->analyze("savepoint 'before import'");
 
         self::assertInstanceOf(Savepoint::class, $operation->statement);
         self::assertSame('before import', $operation->statement->name->value);

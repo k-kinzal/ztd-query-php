@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type;
 
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * A MySQL data type as a statement writes it: the declared type of a column, parameter or variable, or a cast target.

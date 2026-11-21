@@ -7,10 +7,9 @@ namespace Tests\Unit\Statement\Maintenance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 #[CoversClass(Vacuum::class)]
 #[Medium]
@@ -18,7 +17,7 @@ final class VacuumTest extends TestCase
 {
     public function testDeriveStatementDerivesTheTargetWhereNoRelationIsVisible(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('VACUUM INTO backup');
+        $operation = (new Semantics())->inspect('VACUUM INTO backup');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -26,7 +25,7 @@ final class VacuumTest extends TestCase
 
     public function testDeriveStatementRecordsNothingWithoutATarget(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('VACUUM', []);
+        $operation = (new Semantics())->inspect('VACUUM', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -34,7 +33,7 @@ final class VacuumTest extends TestCase
 
     public function testRenderWritesTheSchemaAndTheTarget(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("vacuum main into 'backup.db'");
+        $operation = (new Semantics())->inspect("vacuum main into 'backup.db'");
 
         self::assertInstanceOf(Vacuum::class, $operation->statement);
         self::assertSame('main', $operation->statement->schema?->value);

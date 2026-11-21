@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `BEGIN` or `START TRANSACTION`: a request to start a transaction block.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the modes of a BEGIN
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
  *     [count($operation->statement->modes), $operation->toString()] // => [2, 'BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY']
  */
 final class Begin implements Statement

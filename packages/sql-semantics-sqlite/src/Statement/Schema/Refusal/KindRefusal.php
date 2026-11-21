@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal;
 
-use SqlSemantics\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 
 /**
  * The requests SQLite carries out only for one kind of relation.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Declaration\RelationKind;
  *
  * @visibility public
  * @example Reading the relation kind a request needs
- *     \SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal::DropView->required() // => \SqlSemantics\Statement\Declaration\RelationKind::View
+ *     \SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal::DropView->required() // => \SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind::View
  */
 enum KindRefusal: string
 {

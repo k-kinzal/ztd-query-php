@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER TABLESPACE name {READ_ONLY | READ_WRITE | NOT ACCESSIBLE}`: a request to change the access mode of a tablespace (MySQL 5.6 and 5.7).
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Making a tablespace read-only
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('alter tablespace ts not accessible');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('alter tablespace ts not accessible');
  *     [$alter->toString(), $alter->statement->access] // => ['ALTER TABLESPACE ts NOT ACCESSIBLE', \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess::NotAccessible]
  */
 final class AlterTablespaceAccess implements Statement

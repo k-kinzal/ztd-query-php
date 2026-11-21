@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Server\Instance\DatabaseRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Instance\ForeignServerRule;
@@ -22,7 +19,10 @@ use SqlSemantics\Platform\MySql\Lowering\Server\Storage\TablespaceRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\LockRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\TransactionRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\XaRule;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * Hands a statement rule of the server family to the rule class of its area.

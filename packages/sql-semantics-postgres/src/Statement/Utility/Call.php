@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CALL name(arguments)`: a request to run a procedure.
@@ -28,10 +28,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the open result of a procedure call
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CALL app.p(1)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CALL app.p(1)');
  *     [$operation->statement->call->name->last()->value, $operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => ['p', false, 'the signature of routine p']
  * @example Refusing a window call
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Call(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('p')]), [], false, false, false, [], false, null, new \SqlSemantics\Statement\Identifier\Name('w'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Call(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('p')]), [], false, false, false, [], false, null, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('w'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Call implements Statement
 {

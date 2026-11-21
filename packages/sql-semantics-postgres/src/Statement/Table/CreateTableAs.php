@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Trailing;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a table from the rows of a query.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Declaring the table of a query
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE TEMP TABLE t (n) AS SELECT 1, 'x' AS s WITH NO DATA");
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TEMP TABLE t (n) AS SELECT 1, 'x' AS s WITH NO DATA");
  *     $table = $create->declarations()[0];
  *     [$table->name->schema->value, array_map(static fn ($column) => $column->name->value . ' ' . $column->type->name(), $table->columns)] // => ['pg_temp', ['n integer', 's text']]
  */

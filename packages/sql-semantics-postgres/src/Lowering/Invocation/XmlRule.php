@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlConcat;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlElement;
@@ -22,7 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlSerialize;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlStandalone;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlWhitespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the SQL/XML functions.

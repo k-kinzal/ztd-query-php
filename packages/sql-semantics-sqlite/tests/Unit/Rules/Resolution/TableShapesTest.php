@@ -7,29 +7,28 @@ namespace Tests\Unit\Rules\Resolution;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\CommonBinding;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Resolution\CommonBinding;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]
@@ -37,7 +36,7 @@ final class TableShapesTest extends TestCase
 {
     public function testFactAnswersTheDeclaredShapeWithItsColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $fact = (new TableShapes())->fact($derivation, new QualifiedName(new Name('T')), $derivation->environment());
@@ -55,7 +54,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactCopiesTheShapeOfACommonTableAndLinksItsSlots(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $with = $semantics->analyze('WITH w AS (SELECT a FROM t) SELECT 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
@@ -77,7 +76,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactAnswersAnOpenShapeForAnUndeclaredTableAndAnEmptyOneForAMissingTable(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $open = new Derivation($semantics->context());
         $closed = new Derivation($semantics->context([]));
         $shapes = new TableShapes();
@@ -95,7 +94,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactMarksAnIncompleteDeclarationAsOpen(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new ColumnDomain('INTEGER'))], [], false);
         $derivation = new Derivation($semantics->context([$table]));
         $fact = (new TableShapes())->fact($derivation, new QualifiedName(new Name('t')), $derivation->environment());
@@ -108,7 +107,7 @@ final class TableShapesTest extends TestCase
 
     public function testImplicitListsTheRowIdentifierOfADeclaredTableOnly(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $plain = $semantics->analyze('CREATE TABLE p (a)');
         $without = $semantics->analyze('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');

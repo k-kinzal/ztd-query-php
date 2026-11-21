@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Server\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart;
 
 #[CoversClass(Restart::class)]
@@ -17,12 +16,12 @@ final class RestartTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('RESTART', (new Semantics(Dialect::MySql))->analyze('restart')->toString());
+        self::assertSame('RESTART', (new Semantics())->analyze('restart')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('RESTART');
+        $operation = (new Semantics())->analyze('RESTART');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

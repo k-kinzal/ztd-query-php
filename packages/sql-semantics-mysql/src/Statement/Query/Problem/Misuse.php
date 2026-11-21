@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A query MySQL rejects because it breaks a rule of the language.
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'No tables used'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: No tables used
  */
 final class Misuse implements Diagnostic
 {

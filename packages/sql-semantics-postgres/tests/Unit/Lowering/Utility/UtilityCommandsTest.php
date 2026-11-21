@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Checkpoint;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter;
@@ -23,7 +23,7 @@ final class UtilityCommandsTest extends TestCase
 {
     public function testStatementHandsEachStatementToItsGroup(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         self::assertSame(
             ['BEGIN', 'SET a TO 1', 'VACUUM', 'LISTEN c'],
             [$semantics->analyze('BEGIN')->toString(), $semantics->analyze('SET a = 1')->toString(), $semantics->analyze('VACUUM')->toString(), $semantics->analyze('LISTEN c')->toString()],

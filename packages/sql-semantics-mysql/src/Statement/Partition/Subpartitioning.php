@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUBPARTITION BY [LINEAR] HASH|KEY … [SUBPARTITIONS n]`: the subpartitioning of each partition.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a subpartitioning by key
- *     $sub = new \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, [new \SqlSemantics\Statement\Identifier\Name('id')]), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2'));
+ *     $sub = new \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')]), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2'));
  *     $sub->count?->text // => '2'
  */
 final class Subpartitioning implements Node

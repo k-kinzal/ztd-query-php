@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
-use SqlSemantics\Rendering\Output;
 
 /**
  * Writes the keywords of an object kind in a generic object command.

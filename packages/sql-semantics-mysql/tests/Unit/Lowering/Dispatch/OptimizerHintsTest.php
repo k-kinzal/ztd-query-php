@@ -8,9 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\MySql\MySqlParser;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\OptimizerHints;
+use SqlSemantics\Platform\MySql\Semantics;
 
 #[CoversClass(OptimizerHints::class)]
 #[Medium]
@@ -31,10 +30,10 @@ final class OptimizerHintsTest extends TestCase
 
     public function testFirstMakesAHintedStatementAMissingRule(): void
     {
-        self::assertSame('SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1')->toString());
+        self::assertSame('SELECT 1', (new Semantics('mysql-5.6.51'))->analyze('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1')->toString());
 
         $this->expectExceptionMessage('No semantic rule is implemented for: MySQL optimizer hints, which the parser delivers as a comment: /*+ MAX_EXECUTION_TIME(1000) */');
 
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1');
+        (new Semantics('mysql-8.4.7'))->analyze('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1');
     }
 }

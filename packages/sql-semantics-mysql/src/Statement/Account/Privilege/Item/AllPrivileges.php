@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `ALL [PRIVILEGES]`: every privilege of the level the grant names, except GRANT OPTION and, globally, PROXY.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Granting every privilege of a database
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
  */
 final class AllPrivileges implements Grantable
 {

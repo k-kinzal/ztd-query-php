@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A column an INSERT or REPLACE names twice among the columns it writes.
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the column written twice
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
- *     $insert->facts->diagnostics[0]->message() // => "Column 'a' specified twice"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column 'a' specified twice
  */
 final class DuplicateColumn implements Diagnostic
 {

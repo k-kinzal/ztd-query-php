@@ -14,12 +14,12 @@ final class ClosedListTest extends TestCase
 {
     public function testOfAcceptsItemsOfTheClasses(): void
     {
-        self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList())->of([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'))], [\SqlSemantics\Statement\Scalar::class], 'm'));
+        self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList())->of([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'))], [\SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar::class], 'm'));
     }
 
     public function testOfRefusesAnItemOfAnotherClass(): void
     {
         $this->expectExceptionMessage('m');
-        (new \SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList())->of([new \SqlSemantics\Statement\Identifier\Name('a')], [\SqlSemantics\Statement\Scalar::class], 'm');
+        (new \SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList())->of([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], [\SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar::class], 'm');
     }
 }

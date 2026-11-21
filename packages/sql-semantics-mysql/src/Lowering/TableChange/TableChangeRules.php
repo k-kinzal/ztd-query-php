@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\ModifierRule;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\StandaloneRule;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the table change family: the methods other families and the statement dispatcher call.

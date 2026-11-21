@@ -7,12 +7,11 @@ namespace Tests\Unit\Rules\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
 
 #[CoversClass(ViewFacts::class)]
@@ -21,7 +20,7 @@ final class ViewFactsTest extends TestCase
 {
     public function testDeriveAnswersTheDeclarationOfTheView(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a');
+        $create = (new Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
         $platform = new Platform();
