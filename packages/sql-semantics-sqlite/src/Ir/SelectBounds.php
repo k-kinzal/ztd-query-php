@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
@@ -31,6 +32,7 @@ final class SelectBounds
         array $joins = [],
         Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
         array $orderBy = [],
+        ?Limit $limit = null,
     ): void {
         Check::input(count($results) <= 2000, 'A SELECT can have at most 2000 result columns in this profile.');
         Check::input(count($joins) < 64 && ($joins === [] || $source !== null), 'Joins require a first table and at most 64 inputs.');
@@ -50,8 +52,10 @@ final class SelectBounds
         foreach ($results as $result) {
             $pending[] = [$result->expression, 0, count($tables)];
         }
-        if ($where !== null) {
-            $pending[] = [$where, 0, count($tables)];
+        foreach ([$where, $limit?->count, $limit?->offset] as $operand) {
+            if ($operand !== null) {
+                $pending[] = [$operand, 0, count($tables)];
+            }
         }
 
         $nodes = 0;

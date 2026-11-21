@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -28,7 +29,7 @@ final class SelectSql
         foreach ($select->columns as $column) {
             $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();
         }
-        $sql = 'SELECT ' . implode(', ', $items);
+        $sql = 'SELECT ' . ($select->distinct ? 'DISTINCT ' : '') . implode(', ', $items);
         if ($source !== null) {
             $sql .= ' FROM ' . $this->source($source, 0);
         }
@@ -49,7 +50,22 @@ final class SelectSql
             $sql .= ' ORDER BY ' . implode(', ', $terms);
         }
 
-        return $sql;
+        return $sql . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));
+    }
+
+    /**
+     * Emits the row bounds in the recorded operand order.
+     */
+    public function limit(Limit $limit): string
+    {
+        $count = $this->expression($limit->count, null);
+        if ($limit->offset === null) {
+            return 'LIMIT ' . $count;
+        }
+
+        $offset = $this->expression($limit->offset, null);
+
+        return $limit->offsetFirst ? 'LIMIT ' . $offset . ', ' . $count : 'LIMIT ' . $count . ' OFFSET ' . $offset;
     }
 
     /**

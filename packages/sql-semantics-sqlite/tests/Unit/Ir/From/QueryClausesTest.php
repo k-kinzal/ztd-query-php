@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
@@ -52,5 +55,18 @@ final class QueryClausesTest extends TestCase
         self::assertSame(2, $query->orderBy[0]->position);
         self::assertFalse($query->orderBy[0]->descending);
         self::assertTrue($query->orderBy[0]->nullsFirst);
+    }
+
+    public function testLimitResolvesTheOffsetFirstFormAndSignedInteger(): void
+    {
+        $select = (new Semantics())->analyze('SELECT DISTINCT 1 LIMIT ?02, +5');
+
+        self::assertTrue($select->distinct);
+        self::assertInstanceOf(Limit::class, $select->limit);
+        self::assertTrue($select->limit->offsetFirst);
+        self::assertInstanceOf(IntegerLiteral::class, $select->limit->count);
+        self::assertSame('5', $select->limit->count->decimal);
+        self::assertInstanceOf(Parameter::class, $select->limit->offset);
+        self::assertSame('02', $select->limit->offset->label);
     }
 }

@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
@@ -91,8 +92,13 @@ function direct(array $input): Select
         $step[2] === null ? null : operand($step[2]),
     ), $input['joins'] ?? []);
     $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
+    $limit = null;
+    if (isset($input['limit'])) {
+        [$count, $offset, $offsetFirst] = $input['limit'];
+        $limit = new Limit(operand($count), $offset === null ? null : operand($offset), $offsetFirst);
+    }
 
-    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy);
+    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
 function analyzed(array $input): Select
@@ -146,6 +152,10 @@ function runCase(array $input): array
         ], $value->joins),
         'where' => $value->where === null ? null : observeOperand($value->where),
         'orderBy' => array_map(static fn (Order $order): array => [$order->position, $order->descending, $order->nullsFirst], $value->orderBy),
+        'distinct' => $value->distinct,
+        'limit' => $value->limit === null ? null : [
+            observeOperand($value->limit->count), $value->limit->offset === null ? null : observeOperand($value->limit->offset), $value->limit->offsetFirst,
+        ],
         'columns' => array_map(static fn (ResultColumn $field): array => [observeOperand($field->expression), $field->name->value], $value->columns),
         'sql' => $value->toString(),
     ];

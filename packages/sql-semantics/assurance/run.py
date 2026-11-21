@@ -330,7 +330,7 @@ def run(args, db, contract, output):
                 (case(None, [["null"]], labels=["a\0b"]), "without NUL", "rejected"),
                 (case(None, [["null"]], labels=["a" * 256]), "at most 255 bytes", "rejected"),
                 ({"sql": "SELECT id FROM accounts", "declarations": []}, "resolved, complete base table", "rejected"),
-                ({"sql": "SELECT DISTINCT 1", "declarations": []}, "bag projections", "rejected"),
+                ({"sql": "SELECT 1 GROUP BY 1", "declarations": []}, "without grouping or windows", "rejected"),
                 ({"sql": "SELECT ?", "declarations": []}, "numbered parameter label", "rejected"),
                 ({"sql": "SELECT id FROM", "declarations": []}, "Unexpected", "analysis-rejected"),
             ]

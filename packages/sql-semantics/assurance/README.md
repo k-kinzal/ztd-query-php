@@ -92,3 +92,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_re
 The evaluator treats outer joins as filtered products with unmatched-row extension, uses SQL truth rules for predicates and checks ordering without constraining ties. It reads fixture data with deliberately different and duplicate rows, NULLs and empty inputs. Separate analyzed cases compare the original and emitted statements, including a self join and ordering by a column with a declared collation. The relational mutations change an occurrence alias, remove NULL-extended rows, drop a filter, reverse an ordering key and bypass the snapshot restoration guard. Run the initial F01–F12 exercise on the same distribution.
 
 The source audit also checks the baseline digests of the value primitives used by all three dialects. A change to list copying, constructor checks, name comparison or the snapshot restoration guard is visible to the verifier. Any intentional revision of those primitives belongs in the review of the assurance mechanism.
+
+## SQLite DISTINCT and row bounds
+
+Run the [result selection contract](sqlite-result-v1.json) with the same SQLite library and worker requirements:
+
+```sh
+result_evidence=$(mktemp -d)/sqlite-result-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_result.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$result_evidence"
+```
+
+The oracle groups entire typed rows using SQLite's BINARY duplicate equivalence, then models each band of tied ordering keys. The limit must select the expected number of members from each band. The checker preserves storage classes and row multiplicities when testing membership. An analyzed probe exercises a declared NOCASE collation. The runner records both native parameter labels and specific binding failures. It injects wrong duplicate handling, swapped count and offset roles, and changed first-label binding order.

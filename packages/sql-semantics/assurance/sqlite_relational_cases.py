@@ -171,18 +171,18 @@ def evaluate(expression, row, bindings):
     return a * b
 
 
-def table_rows(source):
+def table_rows(source, data):
     assert source[0] == "main"
     positions = [("key", "value").index(name) for name in source[2]]
-    return [tuple(row[position] for position in positions) for row in DATA[source[1]]]
+    return [tuple(row[position] for position in positions) for row in data[source[1]]]
 
 
-def expected(item):
+def expected(item, data=DATA):
     base = item["source"]
-    rowsets = [()] if base is None else [(row,) for row in table_rows(base)]
+    rowsets = [()] if base is None else [(row,) for row in table_rows(base, data)]
     widths = [] if base is None else [len(base[2])]
     for kind, table, predicate in item["joins"]:
-        right = table_rows(table)
+        right = table_rows(table, data)
         rows = []
         matched_right = set()
         for prefix in rowsets:

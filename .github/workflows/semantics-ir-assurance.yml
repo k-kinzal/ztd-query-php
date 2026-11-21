@@ -15,7 +15,7 @@ jobs:
   initial-domain:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     services:
       mysql:
         image: container-registry.oracle.com/mysql/community-server@sha256:d41e2405f035982ef25911a3e21283cbbccd5e967bafffd3454031c050b37eac
@@ -97,6 +97,16 @@ jobs:
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" \
             --out "$RUNNER_TEMP/semantics-ir-sqlite-relational-evidence"
+      - name: Collect SQLite result selection observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_result.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" \
+            --out "$RUNNER_TEMP/semantics-ir-sqlite-result-evidence"
       - name: Collect MySQL and PostgreSQL projection observations
         if: ${{ !cancelled() }}
         env:
@@ -121,3 +131,4 @@ jobs:
             ${{ runner.temp }}/semantics-ir-evidence/
             ${{ runner.temp }}/semantics-ir-server-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-relational-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-result-evidence/

@@ -69,8 +69,11 @@ if ($dialect === 'sqlite') {
     $properties['Select']['joins'] = ['array'];
     $properties['Select']['orderBy'] = ['array'];
     $properties['Select']['where'] = $nullablePredicates;
+    $properties['Select']['distinct'] = ['bool'];
+    $properties['Select']['limit'] = ['?Ordering\\Limit'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
+    $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
@@ -82,7 +85,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\JoinKind', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator'] as $enum) {
         $methods[$enum] = $properties[$enum] = [];
     }
-    foreach (['From\\Join', 'Ordering\\Order', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
+    foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
     array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses');

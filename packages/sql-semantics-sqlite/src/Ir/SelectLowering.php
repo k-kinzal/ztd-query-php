@@ -28,10 +28,8 @@ final class SelectLowering
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete SQLite IR currently supports a single projection SELECT.');
         Check::input(
-            $statement->groupBy === [] && $statement->having === null
-                && $statement->windows === [] && $statement->limit === null
-                && $statement->quantifier !== SetQuantifier::Distinct,
-            'Complete SQLite IR currently supports bag projections without grouping, windows or limits.',
+            $statement->groupBy === [] && $statement->having === null && $statement->windows === [],
+            'Complete SQLite IR currently supports projections without grouping or windows.',
         );
         $binding = new SourceBinding($operation, $statement->from);
         $expressions = new ExpressionLowering();
@@ -47,6 +45,14 @@ final class SelectLowering
         $where = $clauses->predicate($statement->where, $binding);
         $joins = $clauses->joins($statement->from, $binding);
 
-        return new Select($results, $binding->source(), $joins, $where, $clauses->ordering($statement->orderBy));
+        return new Select(
+            $results,
+            $binding->source(),
+            $joins,
+            $where,
+            $clauses->ordering($statement->orderBy),
+            $statement->quantifier === SetQuantifier::Distinct,
+            $clauses->limit($statement->limit, $binding),
+        );
     }
 }

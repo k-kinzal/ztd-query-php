@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
@@ -23,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Limit as ParsedLimit;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
@@ -149,5 +151,23 @@ final class QueryClauses
         }
 
         return $orders;
+    }
+
+    /**
+     * Resolves the supported row-bound operands, retaining their written order.
+     */
+    public function limit(?ParsedLimit $limit, SourceBinding $binding): ?Limit
+    {
+        if ($limit === null) {
+            return null;
+        }
+
+        $expressions = new ExpressionLowering();
+        $count = $expressions->lower($limit->count, $binding);
+        $offset = $limit->offset === null ? null : $expressions->lower($limit->offset, $binding);
+        Check::input($count instanceof IntegerLiteral || $count instanceof Parameter, 'LIMIT requires an integer literal or numbered parameter.');
+        Check::input($offset === null || $offset instanceof IntegerLiteral || $offset instanceof Parameter, 'OFFSET requires an integer literal or numbered parameter.');
+
+        return new Limit($count, $offset, $limit->comma);
     }
 }

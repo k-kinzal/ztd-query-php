@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
@@ -47,6 +48,8 @@ final class Select implements SemanticsIR
      * @param list<Join> $joins The inputs joined to the left prefix
      * @param Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where The post-join filter
      * @param list<Order> $orderBy The output ordering
+     * @param bool $distinct Whether equivalent result rows are collapsed
+     * @param Limit|null $limit The bounds applied after ordering
      */
     public function __construct(
         array $columns,
@@ -54,11 +57,13 @@ final class Select implements SemanticsIR
         array $joins = [],
         public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
         array $orderBy = [],
+        public readonly bool $distinct = false,
+        public readonly ?Limit $limit = null,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
         $this->joins = Check::listOf($joins, Join::class, 'Joins must be an ordered list of join steps.');
         $this->orderBy = Check::listOf($orderBy, Order::class, 'Ordering must be an ordered list of output positions.');
-        (new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy);
+        (new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy, $limit);
         $this->columns = $results;
     }
 

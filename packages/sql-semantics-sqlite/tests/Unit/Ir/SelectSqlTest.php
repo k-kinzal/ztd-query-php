@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
@@ -22,6 +24,13 @@ final class SelectSqlTest extends TestCase
     {
         $select = new Select([new ResultColumn(new IntegerLiteral('2'), new Identifier('"'))]);
         self::assertSame('SELECT 2 AS """"', (new SelectSql())->render($select));
+    }
+
+    public function testLimitPreservesTheFirstSpellingOfASharedSlot(): void
+    {
+        $limit = new Limit(new Parameter('1'), new Parameter('01'), true);
+
+        self::assertSame('LIMIT ?01, ?1', (new SelectSql())->limit($limit));
     }
 
     public function testExpressionKeepsNegativeValues(): void

@@ -46,10 +46,12 @@ final class ExpressionLowering
 
             return new IntegerLiteral($digits === '' ? '0' : $digits);
         }
-        if ($expression instanceof Unary && $expression->operator === UnaryOperator::Minus && $expression->operand instanceof ParsedInteger) {
+        if ($expression instanceof Unary && $expression->operand instanceof ParsedInteger
+            && in_array($expression->operator, [UnaryOperator::Plus, UnaryOperator::Minus], true)) {
             $digits = ltrim($expression->operand->digits, '0');
+            $sign = $expression->operator === UnaryOperator::Minus ? '-' : '';
 
-            return new IntegerLiteral($digits === '' ? '0' : '-' . $digits);
+            return new IntegerLiteral($digits === '' ? '0' : $sign . $digits);
         }
 
         return match (true) {
