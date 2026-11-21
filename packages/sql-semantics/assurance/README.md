@@ -139,3 +139,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_va
 The checker compares ordered column names and an unordered bag of typed rows. It records native labels in lexical order. Positive cases go through direct row constructors and through analysis. Negative controls exercise empty lists, width mismatch and a column hidden inside arithmetic. The renderer faults remove a row and change the positions within a row.
 
 The result, DELETE and VALUES suites share evidence setup, ledger checks and renderer fault execution. Their 240-second observation budgets are specified in their contracts. The renderer controls and mutations use a separate 180-second worker startup window followed by a 45-second probe budget. A startup or probe timeout yields a failure record and no successful index. Runtime fault detection requires the specified failure signal after the candidate executes.
+
+## SQLite local row sources
+
+Run the [local source contract](sqlite-local-source-v1.json) with the same engine:
+
+```sh
+local_source_evidence=$(mktemp -d)/sqlite-local-source-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_local_source.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$local_source_evidence"
+```
+
+The evaluator supplies the definition's independently evaluated rows as the local input to the projection. The observed dimensions include width, height, typed multiplicity, result names, order, binding labels and read-only execution. The direct construction probes vary the operand graphs and exercise filtering, duplicate elimination and bounds. Analyzed statements run with a same-named physical table holding deliberately different rows. The mutations reverse the definition's column order and alter the first native parameter label.

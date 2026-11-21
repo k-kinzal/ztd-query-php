@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
@@ -59,7 +60,7 @@ final class QueryClauses
         $joins = [];
         foreach ($source->steps as $index => $step) {
             $right = $binding->source($index + 1);
-            Check::invariant($right !== null, 'Every join step has a bound table occurrence.');
+            Check::invariant($right instanceof TableSource, 'Every join step has a bound external table occurrence.');
             $joins[] = new Join($this->kind($step->operator), $right, $predicates[$index]);
         }
 

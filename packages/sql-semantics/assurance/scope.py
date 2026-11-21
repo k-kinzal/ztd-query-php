@@ -23,6 +23,7 @@ CONTRACTS = {
     "sqlite-result-v1.json": "8cd76f55067fe32c08d14b648be3a0b886b6e34785db7bb8707f20edc2c37237",
     "sqlite-delete-v1.json": "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b",
     "sqlite-values-v1.json": "2c1f212e5fae261258dc8c0fb450fd663a41fffc965c7988346b6dcfa39c6ad3",
+    "sqlite-local-source-v1.json": "d177e36ff5d5bf4d5de779b9f91d69f91f459c41715a73228ec7c655703829bd",
 }
 PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
@@ -116,7 +117,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES and single-target DELETE",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE and one ordinary local VALUES source",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

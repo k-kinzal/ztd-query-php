@@ -35,6 +35,7 @@ use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 
 /**
  * Analyzes SQL of one fixed language profile into read-only operations.
@@ -147,7 +148,7 @@ final class Semantics implements Analyzer
         $statement = $operation->statement;
 
         return match (true) {
-            $statement instanceof ParsedSelect => (new SelectLowering())->lower($operation),
+            $statement instanceof ParsedSelect, $statement instanceof WithQuery => (new SelectLowering())->lower($operation),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
             default => throw new InvalidConstruction('This SQLite statement has no complete IR representation.'),

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn as ParsedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 
 /**
  * Resolves the supported SELECT projection and constructs its complete value.
@@ -26,12 +28,17 @@ final class SelectLowering
     public function lower(Operation $operation): Select
     {
         $statement = $operation->statement;
+        $local = null;
+        if ($statement instanceof WithQuery) {
+            $local = (new LocalSourceLowering())->lower($operation, $statement);
+            $statement = $statement->body;
+        }
         Check::input($statement instanceof ParsedSelect, 'Complete SQLite IR currently supports a single projection SELECT.');
         Check::input(
             $statement->groupBy === [] && $statement->having === null && $statement->windows === [],
             'Complete SQLite IR currently supports projections without grouping or windows.',
         );
-        $binding = new SourceBinding($operation, $statement->from);
+        $binding = new SourceBinding($operation, $statement->from, $local);
         $expressions = new ExpressionLowering();
         $results = [];
         foreach ($statement->columns as $index => $column) {

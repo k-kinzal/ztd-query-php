@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
@@ -22,7 +23,7 @@ final class ExpressionScope
     /**
      * Traverses the closed operand graph and applies the expression and SQL size budgets.
      *
-     * @param list<TableSource|null> $tables The table occurrences
+     * @param list<TableSource|LocalSource|null> $tables The table occurrences
      * @param list<array{Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical, int, int}> $pending The expressions with height and scope width
      */
     public function check(array $tables, array $pending): void

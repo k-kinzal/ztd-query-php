@@ -19,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -84,6 +85,12 @@ function observeSource(TableSource $source): array
 function direct(array $input): Select
 {
     $from = $input['source'] === null ? null : source($input['source']);
+    if (isset($input['local'])) {
+        $from = new LocalSource(directValues($input['local']), array_map(
+            static fn (string $name): Identifier => new Identifier($name),
+            $input['local']['names'],
+        ));
+    }
     $columns = array_map(
         static fn (array $field): ResultColumn => new ResultColumn(operand($field[0]), new Identifier($field[1])),
         $input['columns'],
@@ -143,9 +150,14 @@ function observeValues(ValuesQuery $value): array
         'status' => 'constructed',
         'operation' => 'values',
         'profile' => $value->profileId(),
-        'rows' => array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows),
+        'rows' => valueRows($value),
         'sql' => $value->toString(),
     ];
+}
+
+function valueRows(ValuesQuery $value): array
+{
+    return array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows);
 }
 
 function runCase(array $input): array
@@ -190,11 +202,16 @@ function runCase(array $input): array
     }
 
     $source = $value->source;
+    $local = $source instanceof LocalSource ? [
+        'names' => array_map(static fn (Identifier $name): string => $name->value, $source->columns),
+        'rows' => valueRows($source->query),
+    ] : null;
 
     return [
         'status' => 'constructed',
         'profile' => $value->profileId(),
-        'source' => $source === null ? null : observeSource($source),
+        'source' => $source instanceof TableSource ? observeSource($source) : null,
+        ...($local === null ? [] : ['local' => $local]),
         'joins' => array_map(static fn (Join $join): array => [
             $join->kind->value, observeSource($join->source), $join->on === null ? null : observeOperand($join->on),
         ], $value->joins),

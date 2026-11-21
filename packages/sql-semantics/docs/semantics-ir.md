@@ -32,6 +32,7 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 - The default UTF-8 profile with short column names enabled and full column names disabled. The engine uses the standard SQLite 3.47.2 limits. The initial IR domain also bounds identifier length, the number of result columns, and expanded expression size.
 - Top-level DELETE of one declared base table. The IR records the absolute target and checks any WHERE predicate against its slots. This domain covers DELETE without WITH, RETURNING or an explicit index choice. The DELETE changes rows only when the caller executes its output. Execution supplies the same target definitions and trigger rules.
 - Top-level VALUES with fixed-width, nonempty rows of integer, NULL, numbered parameter and arithmetic operands. Its result names are column1 through columnN, and each written row contributes one result row.
+- A projection from one ordinary CTE whose definition is VALUES with explicit column names. The IR carries the definition and its ordered column slots in a `LocalSource`. The CTE supplies the rows even when the database contains a same-named base table. Recursion, hints and joins with CTE inputs remain open.
 
 `Semantics::analyze()` returns the complete value. Handle `SqlSemantics\\AnalysisException` for malformed, unresolved or unsupported input. `analyzeAll()` applies the same contract to each statement against the same explicit context.
 

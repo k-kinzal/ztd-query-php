@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
@@ -19,17 +20,27 @@ final class SelectSql
 {
     private const SOURCE_ALIAS = '"__ztd_source"';
 
+    private const CTE_NAME = '"__ztd_cte"';
+
     /**
      * Renders the SELECT, the join chain, the filter and the ordering in clause order.
      */
     public function render(Select $select): string
     {
         $source = $select->source;
+        $sql = '';
+        if ($source instanceof LocalSource) {
+            $names = [];
+            foreach ($source->columns as $name) {
+                $names[] = $name->quoted();
+            }
+            $sql = 'WITH ' . self::CTE_NAME . ' (' . implode(', ', $names) . ') AS (' . $source->query->toString() . ') ';
+        }
         $items = [];
         foreach ($select->columns as $column) {
             $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();
         }
-        $sql = 'SELECT ' . ($select->distinct ? 'DISTINCT ' : '') . implode(', ', $items);
+        $sql .= 'SELECT ' . ($select->distinct ? 'DISTINCT ' : '') . implode(', ', $items);
         if ($source !== null) {
             $sql .= ' FROM ' . $this->source($source, 0);
         }
@@ -75,7 +86,7 @@ final class SelectSql
      */
     public function expression(
         Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical $expression,
-        ?TableSource $source,
+        TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
         if ($expression instanceof ColumnReference) {
@@ -95,11 +106,13 @@ final class SelectSql
     }
 
     /**
-     * Renders an absolute external reference with its local alias.
+     * Renders a local or absolute external reference with its occurrence alias.
      */
-    public function source(TableSource $source, int $occurrence): string
+    public function source(TableSource|LocalSource $source, int $occurrence): string
     {
-        return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($occurrence);
+        $name = $source instanceof LocalSource ? self::CTE_NAME : $source->schema->quoted() . '.' . $source->table->quoted();
+
+        return $name . ' AS ' . $this->alias($occurrence);
     }
 
     /**

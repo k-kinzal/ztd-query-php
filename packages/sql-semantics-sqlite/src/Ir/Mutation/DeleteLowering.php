@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
@@ -26,7 +27,7 @@ final class DeleteLowering
         $binding = new SourceBinding($operation, $statement->target);
         $where = (new QueryClauses())->predicate($statement->where, $binding);
         $target = $binding->source();
-        Check::invariant($target !== null, 'A resolved DELETE has one target.');
+        Check::invariant($target instanceof TableSource, 'A resolved DELETE has one external target.');
 
         return new Delete($target, $where);
     }

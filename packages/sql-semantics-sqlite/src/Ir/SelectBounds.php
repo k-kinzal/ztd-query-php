@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
@@ -23,13 +24,13 @@ final class SelectBounds
      * Checks every expression occurrence in the scope of its clause.
      *
      * @param non-empty-list<ResultColumn> $results The result expressions
-     * @param TableSource|null $source The first input
+     * @param TableSource|LocalSource|null $source The first input
      * @param list<Join> $joins The remaining inputs
      * @param list<Order> $orderBy The output ordering
      */
     public function check(
         array $results,
-        ?TableSource $source,
+        TableSource|LocalSource|null $source,
         array $joins = [],
         Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
         array $orderBy = [],
@@ -37,6 +38,7 @@ final class SelectBounds
     ): void {
         Check::input(count($results) <= 2000, 'A SELECT can have at most 2000 result columns in this profile.');
         Check::input(count($joins) < 64 && ($joins === [] || $source !== null), 'Joins require a first table and at most 64 inputs.');
+        Check::input(!$source instanceof LocalSource || $joins === [], 'A local row source requires a SELECT without joins.');
         Check::input(count($orderBy) <= 2000, 'A SELECT can have at most 2000 ordering terms in this profile.');
         foreach ($orderBy as $order) {
             Check::input($order->position <= count($results), 'An output order position must belong to the projection.');
@@ -44,6 +46,13 @@ final class SelectBounds
 
         $tables = [$source];
         $pending = [];
+        if ($source instanceof LocalSource) {
+            foreach ($source->query->rows as $row) {
+                foreach ($row->values as $value) {
+                    $pending[] = [$value, 0, 0];
+                }
+            }
+        }
         foreach ($joins as $join) {
             $tables[] = $join->source;
             if ($join->on !== null) {

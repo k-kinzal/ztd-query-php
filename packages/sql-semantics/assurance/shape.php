@@ -73,14 +73,17 @@ if ($dialect === 'sqlite') {
     $properties['Select']['where'] = $nullablePredicates;
     $properties['Select']['distinct'] = ['bool'];
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
+    $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
     $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates];
     $methods['Mutation\\Delete'] = $methods['Select'];
     $properties['Rows\\ValueRow'] = ['values' => ['array']];
+    $properties['Rows\\LocalSource'] = ['columns' => ['array'], 'query' => ['Rows\\ValuesQuery']];
     $properties['Rows\\ValuesQuery'] = ['rows' => ['array']];
     $methods['Rows\\ValueRow'] = ['__construct', 'toString'];
+    $methods['Rows\\LocalSource'] = ['__construct'];
     $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Rows\\ValuesQuery';
@@ -98,7 +101,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
@@ -147,7 +150,7 @@ try {
     $analyze = 'return (new \\' . $prefix . 'SelectLowering())->lower($this->inspect($sql, $context));';
     if ($dialect === 'sqlite') {
         $analyze = '$operation = $this->inspect($sql, $context); $statement = $operation->statement; return match (true) {'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . 'default => throw new \\' . $platform . "\\Model\\Diagnostic\\InvalidConstruction('This SQLite statement has no complete IR representation.'), };";

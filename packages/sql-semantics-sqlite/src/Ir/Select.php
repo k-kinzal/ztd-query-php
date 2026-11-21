@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -44,7 +45,7 @@ final class Select implements SemanticsIR
      * Establishes the list and scope conditions before publication.
      *
      * @param non-empty-list<ResultColumn> $columns The ordered result columns
-     * @param TableSource|null $source The first external input
+     * @param TableSource|LocalSource|null $source The first input
      * @param list<Join> $joins The inputs joined to the left prefix
      * @param Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where The post-join filter
      * @param list<Order> $orderBy The output ordering
@@ -53,7 +54,7 @@ final class Select implements SemanticsIR
      */
     public function __construct(
         array $columns,
-        public readonly ?TableSource $source = null,
+        public readonly TableSource|LocalSource|null $source = null,
         array $joins = [],
         public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
         array $orderBy = [],

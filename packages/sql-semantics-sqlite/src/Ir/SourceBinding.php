@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
@@ -40,9 +41,12 @@ final class SourceBinding
     /**
      * Resolves the relation occurrences before allocating column slots.
      */
-    public function __construct(private readonly Operation $operation, ?Relation $source)
-    {
-        $this->tables = (new SourceDeclarations())->bind($operation, $source);
+    public function __construct(
+        private readonly Operation $operation,
+        private readonly ?Relation $source,
+        private readonly ?LocalSource $local = null,
+    ) {
+        $this->tables = $local === null ? (new SourceDeclarations())->bind($operation, $source) : [];
     }
 
     /**
@@ -54,6 +58,17 @@ final class SourceBinding
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'The column must resolve to the projection source.');
+        if ($this->local !== null) {
+            $name = $resolution->slot->name;
+            Check::input($resolution->relation === $this->source && $name !== null, 'The column must resolve to the local input occurrence.');
+            $key = (new Identifier($name->value))->key();
+            foreach ($this->local->columns as $index => $column) {
+                if ($column->key() === $key) {
+                    return new ColumnReference($index);
+                }
+            }
+            throw new InvalidConstruction('The column must belong to the local input.');
+        }
         $column = $resolution->declaration();
         foreach ($this->tables as $index => [$occurrence, $table]) {
             if ($resolution->relation === $occurrence) {
@@ -72,10 +87,13 @@ final class SourceBinding
     }
 
     /**
-     * Exports the external identity and consumed column names of the specified occurrence.
+     * Exports the local definition or the external identity and consumed column names.
      */
-    public function source(int $index = 0): ?TableSource
+    public function source(int $index = 0): TableSource|LocalSource|null
     {
+        if ($index === 0 && $this->local !== null) {
+            return $this->local;
+        }
         $table = $this->tables[$index][1] ?? null;
 
         return $table === null ? null : new TableSource(
