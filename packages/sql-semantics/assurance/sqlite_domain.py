@@ -109,6 +109,7 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
     verify_candidate(args.candidate, commit, distribution)
     write_json(args.out / "index.json", {
         "status": f"provisional-sqlite-{label.lower()}-domain", "candidate": commit, "contract": sha256,
+        "candidateIdentityContract": IDENTITY_CONTRACT,
         "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,
         "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},
         "tools": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in (".php", ".py", ".json")},
