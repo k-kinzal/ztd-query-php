@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Ir;
+namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a two's-complement hexadecimal integer
- *     (new \SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral('FFFFFFFFFFFFFFFF'))->digits // => 'FFFFFFFFFFFFFFFF'
+ *     (new \SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral('FFFFFFFFFFFFFFFF'))->digits // => 'FFFFFFFFFFFFFFFF'
  */
 final class HexIntegerLiteral
 {

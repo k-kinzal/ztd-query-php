@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Ir;
+namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding bytes zero and 255
- *     (new \SqlSemantics\Platform\Sqlite\Ir\BlobLiteral('00FF'))->hex // => '00FF'
+ *     (new \SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral('00FF'))->hex // => '00FF'
  */
 final class BlobLiteral
 {

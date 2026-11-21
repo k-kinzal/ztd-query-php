@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
@@ -13,6 +9,10 @@ use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;

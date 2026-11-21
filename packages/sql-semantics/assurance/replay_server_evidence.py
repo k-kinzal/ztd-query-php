@@ -37,6 +37,8 @@ class RecordedObserver:
             require(not self.frames, "unconsumed-server-observations", len(self.frames))
 
     def request(self, request):
+        if isinstance(request, list):
+            return [self.request(item) for item in request]
         require(bool(self.frames), "missing-server-observation", request)
         recorded, observation = self.frames.popleft()
         require(recorded == request, "server-observation-request-mismatch", request)

@@ -39,6 +39,11 @@ CONTRACTS = {
 PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
 
+SQLITE_LITERAL_TYPES = {
+    role: "Literal/" + role for role in ("BlobLiteral", "HexIntegerLiteral", "RealLiteral", "TextLiteral")
+}
+
+
 def constructor_scope(by_class):
     definitions = {}
     publication = (TOOL / "publication-v2.json").read_bytes()
@@ -55,7 +60,10 @@ def constructor_scope(by_class):
         contract = json.loads(raw)
         sqlite_roots.extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
         for role, record in contract["constructors"].items():
-            concrete = record.get("type", role).replace("/", "\\")
+            concrete = record.get("type", role)
+            if name == "sqlite-scalars-v1.json":
+                concrete = SQLITE_LITERAL_TYPES.get(concrete, concrete)
+            concrete = concrete.replace("/", "\\")
             for platform in prefixes[:2] if name == "server-projection-v1.json" else prefixes[2:]:
                 clas = platform + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})

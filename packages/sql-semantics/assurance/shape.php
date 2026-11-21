@@ -31,7 +31,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'BlobLiteral', 'HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'RealLiteral', 'TextLiteral');
+    array_push($operands, 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -71,11 +71,11 @@ $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
     $predicates = $operands;
-    $properties['BlobLiteral'] = ['hex' => ['string']];
-    $properties['HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
-    $properties['RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool']];
-    $properties['TextLiteral'] = ['value' => ['string']];
-    foreach (['BlobLiteral', 'HexIntegerLiteral', 'RealLiteral', 'TextLiteral'] as $literal) {
+    $properties['Literal\\BlobLiteral'] = ['hex' => ['string']];
+    $properties['Literal\\HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
+    $properties['Literal\\RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool']];
+    $properties['Literal\\TextLiteral'] = ['value' => ['string']];
+    foreach (['Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral', 'Literal\\TextLiteral'] as $literal) {
         $methods[$literal] = ['__construct'];
     }
     $nullablePredicates = [...$predicates, 'null'];
@@ -119,7 +119,7 @@ if ($dialect === 'sqlite') {
     $methods['Rows\\CompoundStep'] = ['__construct'];
     $methods['Rows\\CompoundOperator'] = [];
     $roots[] = 'Rows\\Compound';
-    array_push($internal, 'NumericLiteralLowering', 'Rows\\CompoundBounds', 'Rows\\CompoundLowering');
+    array_push($internal, 'Expression\\BinaryOperatorLowering', 'Literal\\NumericLiteralLowering', 'Rows\\CompoundBounds', 'Rows\\CompoundLowering');
     $pureCollaborators[] = 'Rows\\CompoundBounds';
     $enumCases['Rows\\CompoundOperator'] = ['UnionAll' => 'UNION ALL', 'Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $roots[] = 'Rows\\ValuesQuery';

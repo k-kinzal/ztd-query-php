@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
-use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
-use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
-use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 

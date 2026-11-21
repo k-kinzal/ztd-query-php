@@ -2,12 +2,13 @@
 
 import argparse
 import collections
+import itertools
 import json
 from pathlib import Path
 import subprocess
 import time
 
-from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
+from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, Failure, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from server_cases import (
     case, direct_cases, expected, explore, finite_ids, fixtures, node_key, source, source_key,
     observation, VERSIONS, SCHEMAS, analyzed, walk,
@@ -15,6 +16,7 @@ from server_cases import (
 
 CONTRACT = "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97"
 DIALECTS = ("mysql", "postgres")
+TRANSPORT = "64a958eac4238161c3c1fb4242af55d7c4042ed1123d984e671e1b5338c9da1e"
 
 
 class Observer(Worker):
@@ -48,19 +50,50 @@ def check_server(dialect, release, db):
     same({"status": "fixture"}, db.request({"fixture": fixtures(dialect)}))
 
 
-def check_direct(dialect, item, key, worker, db, ledger, distribution):
-    ledger.record(key, "attempted", input=item)
-    result = worker.request(item)
-    require(result["status"] == "constructed", "server-positive-rejected", result)
-    ledger.record(key, "constructed", response=result)
-    require(result["profile"].startswith(item["release"] + "/"), "server-release-mismatch", result)
-    require(result["columns"] == item["columns"] and result["source"] == item["source"], "server-shape-mismatch", result)
-    actual = observation(db.request({"sql": result["sql"]}))
-    same(expected(item), actual)
-    ledger.record(key, "compared", observation=actual)
-    for operand, _ in result["columns"]:
-        distribution.update(walk(operand))
-    return result
+def responses(request, inputs, signal):
+    observed = request(inputs)
+    require(type(observed) is list and len(observed) == len(inputs) and all(type(value) is dict for value in observed),
+            signal, {"expected": len(inputs), "observed": len(observed) if type(observed) is list else type(observed).__name__})
+    return observed
+
+
+def check_transport():
+    contract = TOOL / "server-projection-transport-v1.json"
+    require(digest(contract) == TRANSPORT, "server-transport-contract-mismatch")
+    specification = json.loads(contract.read_text())
+    inputs = [{"sql": "SELECT 1"}, {"sql": "SELECT 2"}]
+    normal = [{"fields": [["first", "LONG"]]}, {"fields": [["second", "LONG"]]}]
+    same(normal, responses(lambda items: normal if items == inputs else [], inputs, "server-worker-batch-mismatch"))
+    for incorrect, signal in (
+        (normal[:1], "server-worker-batch-mismatch"),
+        ([*normal, normal[0]], "server-observer-batch-mismatch"),
+    ):
+        try:
+            responses(lambda _, result=incorrect: result, inputs, signal)
+        except Failure as failure:
+            require(failure.signal == signal, "server-transport-control-failed", str(failure))
+        else:
+            raise Failure("server-batch-control-accepted", signal)
+    return {"contract": TRANSPORT, "maximumBatch": specification["maximumBatch"], "controls": specification["controls"]}
+
+
+def check_direct(records, worker, db, ledger, distribution):
+    for key, item in records:
+        ledger.record(key, "attempted", input=item)
+    replies = responses(worker.request, [item for _, item in records], "server-worker-batch-mismatch")
+    for (key, item), result in zip(records, replies):
+        require(result["status"] == "constructed", "server-positive-rejected", {"case": key, "result": result})
+        ledger.record(key, "constructed", response=result)
+        require(result["profile"].startswith(item["release"] + "/"), "server-release-mismatch", result)
+        require(result["columns"] == item["columns"] and result["source"] == item["source"], "server-shape-mismatch", result)
+    native = responses(db.request, [{"sql": result["sql"]} for result in replies], "server-observer-batch-mismatch")
+    for (key, item), result, row in zip(records, replies, native):
+        actual = observation(row)
+        same(expected(item), actual)
+        ledger.record(key, "compared", observation=actual)
+        for operand, _ in result["columns"]:
+            distribution.update(walk(operand))
+    return replies
 
 
 def check_analyzed(dialect, tag, worker, db, ledger):
@@ -113,6 +146,7 @@ def negatives(dialect):
 
 def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, observer_factory=Observer):
     tag = ("pg-" if dialect == "postgres" else "mysql-") + release
+    transport = check_transport()
     deadline = time.monotonic() + settings["timeoutSeconds"]
     exported = collections.Counter()
     histogram = collections.Counter()
@@ -121,18 +155,22 @@ def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, o
         check_server(dialect, release, db)
         current_input = None
         try:
-            for index, item in enumerate(direct_cases(dialect)):
-                item["release"] = tag
-                current_input = item
-                result = check_direct(dialect, item, f"finite/{index}", worker, db, ledger, histogram)
+            def compare_cases(phase, cases):
+                nonlocal current_input
+                indexed = enumerate(cases)
+                while (chunk := list(itertools.islice(indexed, transport["maximumBatch"]))):
+                    records = [(f"{phase}/{index}", item | {"release": tag}) for index, item in chunk]
+                    current_input = {"batch": records}
+                    yield from check_direct(records, worker, db, ledger, histogram)
+
+            for result in compare_cases("finite", direct_cases(dialect)):
                 exported[(source_key(result["source"]), node_key(result["columns"][0][0]))] += 1
             require(set(exported) == finite_ids(dialect) and set(exported.values()) == {1}, "server-finite-incomplete",
                     {"missing": list(finite_ids(dialect) - set(exported)), "extra": list(set(exported) - finite_ids(dialect))})
             for seed in settings["seeds"]:
-                for index, item in enumerate(explore(dialect, seed, settings["attemptsPerSeed"], settings["maxDepth"], settings["maxWidth"])):
-                    item["release"] = tag
-                    current_input = item
-                    check_direct(dialect, item, f"seed/{seed}/{index}", worker, db, ledger, histogram)
+                candidates = explore(dialect, seed, settings["attemptsPerSeed"], settings["maxDepth"], settings["maxWidth"])
+                for _ in compare_cases(f"seed/{seed}", candidates):
+                    pass
                 actual = sum(1 for key, events in ledger.events.items() if key.startswith(f"seed/{seed}/") and events[-1] == "compared")
                 require(actual == settings["attemptsPerSeed"], "server-seed-budget-mismatch", {"seed": seed, "compared": actual})
             for index, item in enumerate([
@@ -143,7 +181,7 @@ def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, o
             ]):
                 item["release"] = tag
                 current_input = item
-                check_direct(dialect, item, f"boundary/{index}", worker, db, ledger, histogram)
+                check_direct([(f"boundary/{index}", item)], worker, db, ledger, histogram)
             current_input = None
             check_analyzed(dialect, tag, worker, db, ledger)
             for index, (current_input, signal) in enumerate(negatives(dialect)):
@@ -160,7 +198,7 @@ def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, o
         counts = ledger.verify()
         return {
             "finiteIds": sorted(exported), "distribution": dict(histogram), "execution": counts,
-            "engine": db.environment, "release": release, "php": worker.environment,
+            "engine": db.environment, "release": release, "php": worker.environment, "transport": transport,
         }
 
 

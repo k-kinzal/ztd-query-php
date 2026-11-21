@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir;
+namespace Tests\Unit\Ir\Literal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\NumericLiteralLowering;
-use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\NumericLiteralLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as ParsedInteger;
 
 #[CoversClass(NumericLiteralLowering::class)]

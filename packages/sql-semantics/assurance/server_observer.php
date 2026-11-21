@@ -34,16 +34,14 @@ if ($engine === 'mysql') {
 }
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
-$readOnly = false;
-while (($line = fgets(STDIN)) !== false) {
-    $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+
+function measure(PDO $pdo, array $input, bool &$readOnly): array
+{
     if (isset($input['fixture'])) {
         foreach ($input['fixture'] as $sql) {
             $pdo->exec($sql);
         }
-        echo "{\"status\":\"fixture\"}\n";
-
-        continue;
+        return ['status' => 'fixture'];
     }
     if (!$readOnly) {
         $pdo->exec('START TRANSACTION READ ONLY');
@@ -65,5 +63,19 @@ while (($line = fgets(STDIN)) !== false) {
         $pdo->exec('ROLLBACK');
         $readOnly = false;
     }
-    echo json_encode($result, JSON_THROW_ON_ERROR) . "\n";
+    return $result;
+}
+
+$readOnly = false;
+while (($line = fgets(STDIN)) !== false) {
+    $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+    if (array_is_list($input)) {
+        $response = [];
+        foreach ($input as $request) {
+            $response[] = measure($pdo, $request, $readOnly);
+        }
+    } else {
+        $response = measure($pdo, $input, $readOnly);
+    }
+    echo json_encode($response, JSON_THROW_ON_ERROR) . "\n";
 }

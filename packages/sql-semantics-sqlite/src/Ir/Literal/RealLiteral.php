@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Ir;
+namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Representing a negative zero with REAL storage
- *     (new \SqlSemantics\Platform\Sqlite\Ir\RealLiteral('0', '0', null, true))->negative // => true
+ *     (new \SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral('0', '0', null, true))->negative // => true
  */
 final class RealLiteral
 {

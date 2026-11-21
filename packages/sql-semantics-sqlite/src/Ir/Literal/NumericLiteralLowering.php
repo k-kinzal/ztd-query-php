@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Ir;
+namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral as ParsedHex;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as ParsedInteger;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;

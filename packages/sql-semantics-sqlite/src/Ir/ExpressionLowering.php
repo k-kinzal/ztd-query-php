@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Expression\BinaryOperatorLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\NumericLiteralLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
@@ -22,7 +28,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral as Par
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral as ParsedText;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
@@ -46,25 +51,7 @@ final class ExpressionLowering
         }
 
         if ($expression instanceof Binary) {
-            $operator = match ($expression->operator) {
-                BinaryOperator::Add => ArithmeticOperator::Add,
-                BinaryOperator::Subtract => ArithmeticOperator::Subtract,
-                BinaryOperator::Multiply => ArithmeticOperator::Multiply,
-                BinaryOperator::And => LogicalOperator::And,
-                BinaryOperator::Or => LogicalOperator::Or,
-                BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,
-                BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,
-                BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,
-                BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,
-                BinaryOperator::Less => ComparisonOperator::Less,
-                BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,
-                BinaryOperator::Greater => ComparisonOperator::Greater,
-                BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,
-                BinaryOperator::Divide, BinaryOperator::Modulo,
-                BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight,
-                BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue
-                    => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),
-            };
+            $operator = (new BinaryOperatorLowering())->lower($expression->operator);
             $left = $this->lower($expression->left, $binding);
             $right = $this->lower($expression->right, $binding);
 
