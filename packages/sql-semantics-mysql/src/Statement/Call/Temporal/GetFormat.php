@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
  *
  * @visibility public
  * @example Typing GET_FORMAT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT GET_FORMAT(DATE, 'EUR')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT GET_FORMAT(DATE, 'EUR')");
  *     $query->field(0)->type->descriptor->name() // => 'VARCHAR'
  */
 final class GetFormat implements Scalar

@@ -16,17 +16,17 @@ final class FormatRuleTest extends TestCase
 {
     public function testCharsetLowersBothSpellings(): void
     {
-        self::assertSame('SELECT 1 INTO OUTFILE \'f\' CHARSET DEFAULT', (new Semantics('mysql-5.6.51'))->analyze('select 1 into outfile \'f\' char set default')->toString());
-        self::assertSame('SELECT 1 INTO OUTFILE \'f\' CHARSET latin1', (new Semantics())->analyze('select 1 into outfile \'f\' charset latin1')->toString());
+        self::assertSame('SELECT 1 INTO OUTFILE \'f\' CHARSET DEFAULT', (new Semantics('mysql-5.6.51'))->inspect('select 1 into outfile \'f\' char set default')->toString());
+        self::assertSame('SELECT 1 INTO OUTFILE \'f\' CHARSET latin1', (new Semantics())->inspect('select 1 into outfile \'f\' charset latin1')->toString());
     }
 
     public function testFieldsLowersEveryOption(): void
     {
-        self::assertSame('SELECT 1 INTO OUTFILE \'f\' COLUMNS TERMINATED BY \',\' OPTIONALLY ENCLOSED BY \'"\' ESCAPED BY x\'5c\'', (new Semantics())->analyze('select 1 into outfile \'f\' columns terminated by \',\' optionally enclosed by \'"\' escaped by x\'5c\'')->toString());
+        self::assertSame('SELECT 1 INTO OUTFILE \'f\' COLUMNS TERMINATED BY \',\' OPTIONALLY ENCLOSED BY \'"\' ESCAPED BY x\'5c\'', (new Semantics())->inspect('select 1 into outfile \'f\' columns terminated by \',\' optionally enclosed by \'"\' escaped by x\'5c\'')->toString());
     }
 
     public function testLinesLowersEveryOption(): void
     {
-        self::assertSame('SELECT 1 INTO OUTFILE \'f\' LINES STARTING BY \'>\' TERMINATED BY \';\'', (new Semantics())->analyze('select 1 into outfile \'f\' lines starting by \'>\' terminated by \';\'')->toString());
+        self::assertSame('SELECT 1 INTO OUTFILE \'f\' LINES STARTING BY \'>\' TERMINATED BY \';\'', (new Semantics())->inspect('select 1 into outfile \'f\' lines starting by \'>\' terminated by \';\'')->toString());
     }
 }

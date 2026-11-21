@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
  *
  * @visibility public
  * @example Declaring a foreign table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FOREIGN TABLE f (a int OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')");
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE FOREIGN TABLE f (a int OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')");
  *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, "CREATE FOREIGN TABLE f (a INT OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')"]
  */
 final class CreateForeignTable implements Relation, \SqlSemantics\Platform\PostgreSql\Model\Statement\Statement

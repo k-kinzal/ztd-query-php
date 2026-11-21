@@ -16,11 +16,11 @@ final class PurgeLogsToTest extends TestCase
 {
     public function testDeriveStatementRecordsNoDiagnostic(): void
     {
-        self::assertSame([], (new Semantics())->analyze("PURGE BINARY LOGS TO 'b.000001'")->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect("PURGE BINARY LOGS TO 'b.000001'")->facts->diagnostics);
     }
 
     public function testRenderWritesBinaryLogs(): void
     {
-        self::assertSame("PURGE BINARY LOGS TO 'b.000001'", (new Semantics('mysql-8.3.0'))->analyze("purge master logs to 'b.000001'")->toString());
+        self::assertSame("PURGE BINARY LOGS TO 'b.000001'", (new Semantics('mysql-8.3.0'))->inspect("purge master logs to 'b.000001'")->toString());
     }
 }

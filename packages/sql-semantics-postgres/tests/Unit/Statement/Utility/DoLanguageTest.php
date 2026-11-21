@@ -24,6 +24,6 @@ final class DoLanguageTest extends TestCase
 
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame("DO 'x' LANGUAGE \"PL\"", (new Semantics())->analyze("DO 'x' LANGUAGE \"PL\"")->toString());
+        self::assertSame("DO 'x' LANGUAGE \"PL\"", (new Semantics())->inspect("DO 'x' LANGUAGE \"PL\"")->toString());
     }
 }

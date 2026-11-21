@@ -49,10 +49,14 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
             }
             $methods = [];
             $publicReturns = [];
+            $publicArrays = [];
             foreach ($type->getMethods() as $method) {
                 if ($method->isPublic() && $method->returnType !== null) {
                     $names = $finder->findInstanceOf($method->returnType, FullyQualified::class);
                     $publicReturns[$method->name->toString()] = array_map(static fn (FullyQualified $name) => $name->toString(), $names);
+                    if ($method->returnType instanceof PhpParser\Node\Identifier && $method->returnType->toString() === 'array') {
+                        $publicArrays[] = $method->name->toString();
+                    }
                 }
                 if ($method->isPublic() || str_starts_with($method->name->toString(), '__')) {
                     $signature = clone $method;
@@ -80,6 +84,7 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                 )),
                 'public_and_magic_signatures' => $methods,
                 'public_return_roles' => (object) $publicReturns,
+                'public_array_returns' => $publicArrays,
             ];
         }
     }

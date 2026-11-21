@@ -16,6 +16,6 @@ final class ShowWhereTest extends TestCase
 {
     public function testRenderWritesTheCondition(): void
     {
-        self::assertSame('SHOW STATUS WHERE Variable_name = 1', (new Semantics())->analyze('SHOW STATUS WHERE Variable_name = 1')->toString());
+        self::assertSame('SHOW STATUS WHERE Variable_name = 1', (new Semantics())->inspect('SHOW STATUS WHERE Variable_name = 1')->toString());
     }
 }

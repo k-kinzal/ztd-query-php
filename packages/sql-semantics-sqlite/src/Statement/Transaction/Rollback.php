@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a rollback
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ROLLBACK TRANSACTION')->toString() // => 'ROLLBACK'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ROLLBACK TRANSACTION')->toString() // => 'ROLLBACK'
  */
 final class Rollback implements Statement
 {

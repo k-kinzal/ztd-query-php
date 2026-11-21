@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  *
  * @visibility public
  * @example Revoking everything
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
  */
 final class RevokeAll implements Statement
 {

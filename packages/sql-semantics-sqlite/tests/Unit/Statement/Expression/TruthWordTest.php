@@ -27,9 +27,9 @@ final class TruthWordTest extends TestCase
     public function testDeriveScalarReadsTheConstantWhenNoColumnCanResolve(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $withTable = $semantics->analyze('SELECT true, FALSE FROM t', [$create]);
-        $withoutTable = $semantics->analyze('SELECT true', []);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $withTable = $semantics->inspect('SELECT true, FALSE FROM t', [$create]);
+        $withoutTable = $semantics->inspect('SELECT true', []);
         $statement = $withTable->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -51,8 +51,8 @@ final class TruthWordTest extends TestCase
     public function testDeriveScalarResolvesAColumnNamedTrueOrFalse(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t2 (true INTEGER NOT NULL, "false" TEXT)');
-        $operation = $semantics->analyze('SELECT true, false FROM t2', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t2 (true INTEGER NOT NULL, "false" TEXT)');
+        $operation = $semantics->inspect('SELECT true, false FROM t2', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -67,7 +67,7 @@ final class TruthWordTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT true FROM u');
+        $operation = (new Semantics())->inspect('SELECT true FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -81,7 +81,7 @@ final class TruthWordTest extends TestCase
 
     public function testRenderWritesTheBareWordInUpperCase(): void
     {
-        self::assertSame('SELECT TRUE AS c1, FALSE AS c2', (new Semantics())->analyze('select true AS c1, false AS c2')->toString());
+        self::assertSame('SELECT TRUE AS c1, FALSE AS c2', (new Semantics())->inspect('select true AS c1, false AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltWord(): void

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\StorageMedium;
  *
  * @visibility public
  * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT STORAGE DISK)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT STORAGE DISK)');
  *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\StorageAttribute // => true
  */
 final class StorageAttribute implements ColumnAttribute

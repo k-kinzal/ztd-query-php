@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Selecting all roles but one
- *     $selection = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET ROLE ALL EXCEPT r')->statement->roles;
+ *     $selection = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SET ROLE ALL EXCEPT r')->statement->roles;
  *     [$selection->set, $selection->roles[0]->user->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All, 'r']
  */
 final class RoleSelection implements Node

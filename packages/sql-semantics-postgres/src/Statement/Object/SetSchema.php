@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  *
  * @visibility public
  * @example Reading the new schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EXTENSION hstore SET SCHEMA util');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION hstore SET SCHEMA util');
  *     $operation->statement->schema->value // => 'util'
  */
 final class SetSchema implements Statement

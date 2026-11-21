@@ -34,7 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a recognized attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
  *     $attribute = $operation->statement->definition[2];
  *     [$attribute->known, $attribute->value->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::Function, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Function]
  * @example Rejecting a recognized attribute whose value is left as written although the command reads it

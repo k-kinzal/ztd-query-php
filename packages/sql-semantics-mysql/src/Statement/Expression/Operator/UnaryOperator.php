@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
  *
  * @visibility public
  * @example Reading a unary minus
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE -a < 0');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE -a < 0');
  *     $query->statement->where->left->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus
  */
 enum UnaryOperator: string

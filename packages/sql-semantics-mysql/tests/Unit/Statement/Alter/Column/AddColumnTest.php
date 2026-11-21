@@ -17,14 +17,14 @@ final class AddColumnTest extends TestCase
     public function testDeriveCommandDerivesTheDefinitionInTheChangedTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->analyze('ALTER TABLE t ADD c INT AS (a + d), ADD d INT', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->inspect('ALTER TABLE t ADD c INT AS (a + d), ADD d INT', [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheDefinitionAndThePosition(): void
     {
-        self::assertSame('ALTER TABLE t ADD COLUMN c INT NOT NULL AFTER a', (new Semantics('mysql-5.6.51'))->analyze('ALTER TABLE t ADD c INT NOT NULL AFTER a')->toString());
+        self::assertSame('ALTER TABLE t ADD COLUMN c INT NOT NULL AFTER a', (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t ADD c INT NOT NULL AFTER a')->toString());
     }
 }

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'");
  *     [$show->statement->channel?->value, $show->toString()] // => ['c', "SHOW RELAYLOG EVENTS LIMIT 1 FOR CHANNEL 'c'"]
  */
 final class ShowRelaylogEvents implements Statement

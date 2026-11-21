@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  *
  * @visibility public
  * @example Reading the collation of a column
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a TEXT COLLATE NOCASE)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a TEXT COLLATE NOCASE)');
  *     $create->statement->columns[0]->constraints[0]->name->value // => 'NOCASE'
  */
 final class Collation implements ColumnConstraint

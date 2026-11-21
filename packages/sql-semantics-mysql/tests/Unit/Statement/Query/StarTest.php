@@ -17,7 +17,7 @@ final class StarTest extends TestCase
 {
     public function testRenderWritesTheStar(): void
     {
-        $operation = (new Semantics())->analyze('select * from t');
+        $operation = (new Semantics())->inspect('select * from t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Star::class, $operation->statement->items[0]);

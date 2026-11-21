@@ -21,7 +21,7 @@ final class IntoVariablesTest extends TestCase
 {
     public function testRenderWritesTheTargets(): void
     {
-        $operation = (new Semantics())->inspect('select a, b from t into @x, y');
+        $operation = (new Semantics())->diagnose('select a, b from t into @x, y');
 
         self::assertSame('SELECT a, b FROM t INTO @x, y', $operation->toString());
         self::assertInstanceOf(Select::class, $operation->statement);
@@ -32,7 +32,7 @@ final class IntoVariablesTest extends TestCase
 
     public function testADifferentNumberOfColumnsIsReported(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1, 2 INTO @x');
+        $operation = (new Semantics())->diagnose('SELECT 1, 2 INTO @x');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);

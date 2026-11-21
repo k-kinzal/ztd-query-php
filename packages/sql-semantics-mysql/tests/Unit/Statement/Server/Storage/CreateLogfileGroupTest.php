@@ -17,12 +17,12 @@ final class CreateLogfileGroupTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' INITIAL_SIZE 1", (new Semantics())->inspect("create logfile group g add undofile 'f' initial_size 1")->toString());
+        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' INITIAL_SIZE 1", (new Semantics())->diagnose("create logfile group g add undofile 'f' initial_size 1")->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a' COMMENT 'b'");
+        $operation = (new Semantics())->diagnose("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' COMMENT 'a' COMMENT 'b'");
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

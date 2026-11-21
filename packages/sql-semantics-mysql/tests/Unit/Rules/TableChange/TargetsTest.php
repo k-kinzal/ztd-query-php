@@ -21,15 +21,15 @@ final class TargetsTest extends TestCase
     public function testTargetAnswersTheDeclaredColumns(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $truncate = $semantics->analyze('TRUNCATE t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $truncate = $semantics->inspect('TRUNCATE t', [$table]);
 
         self::assertCount(2, $truncate->facts->relation($truncate->statement)->shape->slots);
     }
 
     public function testOptionalResolvesAMissingTableToAbsent(): void
     {
-        $drop = (new Semantics())->analyze('DROP TABLE IF EXISTS t', []);
+        $drop = (new Semantics())->inspect('DROP TABLE IF EXISTS t', []);
 
         self::assertInstanceOf(DropTable::class, $drop->statement);
         self::assertInstanceOf(AbsentTable::class, $drop->facts->relation($drop->statement->tables[0])->table);

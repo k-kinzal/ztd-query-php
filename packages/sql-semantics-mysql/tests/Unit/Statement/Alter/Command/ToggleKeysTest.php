@@ -17,12 +17,12 @@ final class ToggleKeysTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ENABLE KEYS', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t ENABLE KEYS', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesEnableOrDisable(): void
     {
-        self::assertSame('ALTER TABLE t ENABLE KEYS, DISABLE KEYS', (new Semantics())->analyze('ALTER TABLE t ENABLE KEYS, DISABLE KEYS')->toString());
+        self::assertSame('ALTER TABLE t ENABLE KEYS, DISABLE KEYS', (new Semantics())->inspect('ALTER TABLE t ENABLE KEYS, DISABLE KEYS')->toString());
     }
 }

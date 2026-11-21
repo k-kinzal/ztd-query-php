@@ -21,7 +21,7 @@ final class CallChecksTest extends TestCase
 {
     public function testReportRecordsAWindowFunctionCalledWithoutOver(): void
     {
-        $query = (new Semantics())->inspect('SELECT row_number()');
+        $query = (new Semantics())->diagnose('SELECT row_number()');
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
@@ -32,7 +32,7 @@ final class CallChecksTest extends TestCase
 
     public function testReportRecordsAScalarFunctionCalledAsAWindowOrWithFilter(): void
     {
-        $query = (new Semantics())->inspect('SELECT abs(1) OVER (), abs(1) FILTER (WHERE 1)');
+        $query = (new Semantics())->diagnose('SELECT abs(1) OVER (), abs(1) FILTER (WHERE 1)');
         $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
 
         self::assertSame(['abs() may not be used as a window function', 'FILTER may not be used with non-aggregate abs()'], $messages);
@@ -44,7 +44,7 @@ final class CallChecksTest extends TestCase
 
     public function testReportRecordsAFilterOnAWindowOnlyFunction(): void
     {
-        $query = (new Semantics())->inspect('SELECT row_number() FILTER (WHERE 1) OVER ()');
+        $query = (new Semantics())->diagnose('SELECT row_number() FILTER (WHERE 1) OVER ()');
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
@@ -55,7 +55,7 @@ final class CallChecksTest extends TestCase
     public function testReportRecordsAnArgumentOrderingOutsideAnAggregate(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT abs(a ORDER BY b), count(a ORDER BY b) OVER (), group_concat(a ORDER BY b) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT abs(a ORDER BY b), count(a ORDER BY b) OVER (), group_concat(a ORDER BY b) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
 
         self::assertSame(['ORDER BY may not be used with non-aggregate abs()', 'ORDER BY may not be used with non-aggregate count()'], $messages);
@@ -66,7 +66,7 @@ final class CallChecksTest extends TestCase
     public function testReportRecordsDistinctInAWindowAndDistinctWithSeveralArguments(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT sum(DISTINCT a) OVER (), group_concat(DISTINCT a, ',') FROM t", [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose("SELECT sum(DISTINCT a) OVER (), group_concat(DISTINCT a, ',') FROM t", [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
 
         self::assertSame(['DISTINCT is not supported for window functions', 'DISTINCT aggregates must have exactly one argument'], $messages);
@@ -79,7 +79,7 @@ final class CallChecksTest extends TestCase
     public function testReportAdmitsTheClausesEachKindTakes(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT count(*) FILTER (WHERE 1) OVER (), max(DISTINCT a, b), count(DISTINCT a), sum(a) FILTER (WHERE b IS NULL), row_number() OVER (ORDER BY a), abs(a) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT count(*) FILTER (WHERE 1) OVER (), max(DISTINCT a, b), count(DISTINCT a), sum(a) FILTER (WHERE b IS NULL), row_number() OVER (ORDER BY a), abs(a) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertSame([], $query->facts->diagnostics);
     }
@@ -87,8 +87,8 @@ final class CallChecksTest extends TestCase
     public function testReportIgnoresANameOutsideTheTableOrAWrongArgumentCount(): void
     {
         $semantics = new Semantics();
-        $unknown = $semantics->inspect('SELECT nosuch(1) OVER ()');
-        $wrong = $semantics->inspect('SELECT abs(1, 2) OVER ()');
+        $unknown = $semantics->diagnose('SELECT nosuch(1) OVER ()');
+        $wrong = $semantics->diagnose('SELECT abs(1, 2) OVER ()');
 
         self::assertSame([], $unknown->facts->diagnostics);
         self::assertCount(1, $wrong->facts->diagnostics);
@@ -98,7 +98,7 @@ final class CallChecksTest extends TestCase
     public function testReportRecordsThroughTheDerivation(): void
     {
         $semantics = new Semantics();
-        $call = $semantics->inspect('SELECT abs(1) FILTER (WHERE 1) OVER ()')->field(0)->expression;
+        $call = $semantics->diagnose('SELECT abs(1) FILTER (WHERE 1) OVER ()')->field(0)->expression;
         $derivation = new Derivation($semantics->context());
 
         self::assertInstanceOf(FunctionCall::class, $call);
@@ -112,7 +112,7 @@ final class CallChecksTest extends TestCase
 
     public function testBrokenAnswersTheRulesInAFixedOrderForEachKind(): void
     {
-        $call = (new Semantics())->inspect('SELECT count(DISTINCT a ORDER BY b) FILTER (WHERE 1) OVER () FROM t')->field(0)->expression;
+        $call = (new Semantics())->diagnose('SELECT count(DISTINCT a ORDER BY b) FILTER (WHERE 1) OVER () FROM t')->field(0)->expression;
         $checks = new CallChecks();
 
         self::assertInstanceOf(FunctionCall::class, $call);
@@ -124,8 +124,8 @@ final class CallChecksTest extends TestCase
     public function testBrokenOfAPlainCallDependsOnTheKindOnly(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->inspect('SELECT abs(1)')->field(0)->expression;
-        $distinct = $semantics->inspect("SELECT group_concat(DISTINCT a, ',') FROM t")->field(0)->expression;
+        $plain = $semantics->diagnose('SELECT abs(1)')->field(0)->expression;
+        $distinct = $semantics->diagnose("SELECT group_concat(DISTINCT a, ',') FROM t")->field(0)->expression;
         $checks = new CallChecks();
 
         self::assertInstanceOf(FunctionCall::class, $plain);

@@ -33,7 +33,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
  *
  * @visibility public
  * @example Reading the output of a VALUES clause
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VALUES (1, 'a'), (2, NULL)");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("VALUES (1, 'a'), (2, NULL)");
  *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class ValuesClause implements Statement, Query

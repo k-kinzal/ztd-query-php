@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading the attributes of a table constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
  *     $create->statement->definition->elements[1]->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::Deferrable, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::InitiallyDeferred]
  */
 enum ConstraintAttribute: string implements Clause

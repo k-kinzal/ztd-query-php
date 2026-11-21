@@ -16,12 +16,12 @@ final class ListenTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('LISTEN jobs');
+        $operation = (new Semantics())->inspect('LISTEN jobs');
         self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
     }
 
     public function testRenderQuotesWhatFoldingWouldChange(): void
     {
-        self::assertSame(['LISTEN "Jobs"', 'LISTEN "select"', 'LISTEN jobs'], [(new Semantics())->analyze('LISTEN "Jobs"')->toString(), (new Semantics())->analyze('LISTEN "select"')->toString(), (new Semantics())->analyze('LISTEN Jobs')->toString()]);
+        self::assertSame(['LISTEN "Jobs"', 'LISTEN "select"', 'LISTEN jobs'], [(new Semantics())->inspect('LISTEN "Jobs"')->toString(), (new Semantics())->inspect('LISTEN "select"')->toString(), (new Semantics())->inspect('LISTEN Jobs')->toString()]);
     }
 }

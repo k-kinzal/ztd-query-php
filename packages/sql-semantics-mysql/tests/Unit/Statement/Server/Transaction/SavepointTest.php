@@ -16,12 +16,12 @@ final class SavepointTest extends TestCase
 {
     public function testRenderWritesTheSavepoint(): void
     {
-        self::assertSame('SAVEPOINT s', (new Semantics('mysql-5.6.51'))->analyze('savepoint s')->toString());
+        self::assertSame('SAVEPOINT s', (new Semantics('mysql-5.6.51'))->inspect('savepoint s')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('SAVEPOINT s');
+        $operation = (new Semantics())->inspect('SAVEPOINT s');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

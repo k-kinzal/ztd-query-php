@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChange
  *
  * @visibility public
  * @example Reading the changed properties
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE t SET (storage = plain)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE t SET (storage = plain)');
  *     $operation->statement->options[0]->attribute->known // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::Storage
  */
 final class AlterTypeOptions implements Statement

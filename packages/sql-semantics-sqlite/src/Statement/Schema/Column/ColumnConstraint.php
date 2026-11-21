@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  *
  * @visibility public
  * @example Reading the constraints of a column in written order
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
  *     count($create->statement->columns[0]->constraints) // => 2
  */
 interface ColumnConstraint extends Node

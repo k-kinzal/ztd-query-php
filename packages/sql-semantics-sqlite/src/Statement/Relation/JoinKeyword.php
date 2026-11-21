@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
  *
  * @visibility public
  * @example Reading the keywords of a join
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t LEFT OUTER JOIN u');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 FROM t LEFT OUTER JOIN u');
  *     $query->statement->from->steps[0]->operator->words // => [\SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Left, \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Outer]
  */
 enum JoinKeyword: string

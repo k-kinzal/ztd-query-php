@@ -19,11 +19,11 @@ final class ParameterNameTest extends TestCase
 
     public function testRenderQuotesAKeywordPart(): void
     {
-        self::assertSame('SET "select".x TO 1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET "select".x = 1')->toString());
+        self::assertSame('SET "select".x TO 1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET "select".x = 1')->toString());
     }
 
     public function testRenderKeepsCaseOfAQuotedPart(): void
     {
-        self::assertSame('RESET "A".b', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET "A".b')->toString());
+        self::assertSame('RESET "A".b', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('RESET "A".b')->toString());
     }
 }

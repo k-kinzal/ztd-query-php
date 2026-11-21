@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Resolution\ColumnAliases;
  *
  * @visibility public
  * @example Reading a derived table
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT x.b FROM (SELECT 1 AS a) AS x (b)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT x.b FROM (SELECT 1 AS a) AS x (b)');
  *     [$query->statement->from->alias->value, $query->field(0)->type->descriptor->name()] // => ['x', 'integer']
  */
 final class DerivedTable implements Relation

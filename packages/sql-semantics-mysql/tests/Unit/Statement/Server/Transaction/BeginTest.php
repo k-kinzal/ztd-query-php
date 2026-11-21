@@ -16,12 +16,12 @@ final class BeginTest extends TestCase
 {
     public function testRenderWritesBegin(): void
     {
-        self::assertSame('BEGIN', (new Semantics())->analyze('begin work')->toString());
+        self::assertSame('BEGIN', (new Semantics())->inspect('begin work')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics('mysql-5.6.51'))->analyze('BEGIN');
+        $operation = (new Semantics('mysql-5.6.51'))->inspect('BEGIN');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

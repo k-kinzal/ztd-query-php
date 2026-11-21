@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Reading a locking clause
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM t FOR SHARE OF t SKIP LOCKED');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 FROM t FOR SHARE OF t SKIP LOCKED');
  *     [$query->statement->options->locking[0]->strength->value, $query->statement->options->locking[0]->relations[0]->name->value, $query->statement->options->locking[0]->wait->value] // => ['SHARE', 't', 'SKIP LOCKED']
  */
 final class LockingClause implements Node

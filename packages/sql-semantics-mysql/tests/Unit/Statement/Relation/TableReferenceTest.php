@@ -31,7 +31,7 @@ final class TableReferenceTest extends TestCase
 {
     public function testNameAnswersTheTableNameWithItsDatabase(): void
     {
-        $input = (new Semantics())->inspect('SELECT a FROM shop.t AS x')->singleNamedInput();
+        $input = (new Semantics())->diagnose('SELECT a FROM shop.t AS x')->singleNamedInput();
 
         self::assertInstanceOf(TableReference::class, $input);
         self::assertSame('shop', $input->name()->schema?->value);
@@ -42,7 +42,7 @@ final class TableReferenceTest extends TestCase
 
     public function testNameAnswersAnUnqualifiedNameWithoutADatabase(): void
     {
-        $input = (new Semantics())->inspect('SELECT a FROM t')->singleNamedInput();
+        $input = (new Semantics())->diagnose('SELECT a FROM t')->singleNamedInput();
 
         self::assertSame('t', $input->name()->name->value);
         self::assertNull($input->name()->schema);
@@ -52,9 +52,9 @@ final class TableReferenceTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('x', $semantics->inspect('SELECT a FROM t AS x')->singleNamedInput()->alias()?->value);
-        self::assertSame('x', $semantics->inspect('SELECT a FROM t x')->singleNamedInput()->alias()?->value);
-        self::assertNull($semantics->inspect('SELECT a FROM t')->singleNamedInput()->alias());
+        self::assertSame('x', $semantics->diagnose('SELECT a FROM t AS x')->singleNamedInput()->alias()?->value);
+        self::assertSame('x', $semantics->diagnose('SELECT a FROM t x')->singleNamedInput()->alias()?->value);
+        self::assertNull($semantics->diagnose('SELECT a FROM t')->singleNamedInput()->alias());
     }
 
     public function testDeriveRelationExposesOneSlotPerDeclaredColumn(): void
@@ -64,7 +64,7 @@ final class TableReferenceTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->inspect('SELECT a FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -84,7 +84,7 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationLeavesTheShapeOpenForAnUndeclaredTable(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM shop.t AS x');
+        $operation = (new Semantics())->diagnose('SELECT a FROM shop.t AS x');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -99,7 +99,7 @@ final class TableReferenceTest extends TestCase
 
     public function testDeriveRelationReportsAMissingTableWithAnEmptyCompleteShape(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 FROM t', []);
+        $operation = (new Semantics())->diagnose('SELECT 1 FROM t', []);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -117,8 +117,8 @@ final class TableReferenceTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('shop')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $unqualified = $semantics->inspect('SELECT a FROM t', [$table]);
-        $qualified = $semantics->inspect('SELECT a FROM shop.t', [$table]);
+        $unqualified = $semantics->diagnose('SELECT a FROM t', [$table]);
+        $qualified = $semantics->diagnose('SELECT a FROM shop.t', [$table]);
 
         self::assertSame($table->columns[0], $unqualified->field('a')->column());
         self::assertSame($table->columns[0], $qualified->field('a')->column());
@@ -131,7 +131,7 @@ final class TableReferenceTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT a FROM shop.t', [$table]);
+        $operation = $semantics->diagnose('SELECT a FROM shop.t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -146,7 +146,7 @@ final class TableReferenceTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $second = new Table(new QualifiedName(new Name('t')), $semantics->profile(), []);
-        $operation = $semantics->inspect('SELECT 1 FROM t', [$first, $second]);
+        $operation = $semantics->diagnose('SELECT 1 FROM t', [$first, $second]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);
@@ -162,9 +162,9 @@ final class TableReferenceTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT a FROM shop.t AS x', $semantics->inspect('select a from shop.t as x')->toString());
-        self::assertSame('SELECT a FROM t x', $semantics->inspect('SELECT a FROM t x')->toString());
-        self::assertSame('SELECT a FROM `order`', $semantics->inspect('SELECT a FROM `order`')->toString());
+        self::assertSame('SELECT a FROM shop.t AS x', $semantics->diagnose('select a from shop.t as x')->toString());
+        self::assertSame('SELECT a FROM t x', $semantics->diagnose('SELECT a FROM t x')->toString());
+        self::assertSame('SELECT a FROM `order`', $semantics->diagnose('SELECT a FROM `order`')->toString());
     }
 
     public function testACatalogQualifierIsRejected(): void

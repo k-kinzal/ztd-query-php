@@ -16,13 +16,13 @@ final class HelpTest extends TestCase
 {
     public function testDeriveStatementLeavesTheShapeOpen(): void
     {
-        $help = (new Semantics())->analyze('HELP contents');
+        $help = (new Semantics())->inspect('HELP contents');
         self::assertInstanceOf(Help::class, $help->statement);
         self::assertFalse($help->shape()?->complete());
     }
 
     public function testRenderWritesTheTopic(): void
     {
-        self::assertSame('HELP `SHOW TABLES`', (new Semantics('mysql-5.6.51'))->analyze("help 'SHOW TABLES'")->toString());
+        self::assertSame('HELP `SHOW TABLES`', (new Semantics('mysql-5.6.51'))->inspect("help 'SHOW TABLES'")->toString());
     }
 }

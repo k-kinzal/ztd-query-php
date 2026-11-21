@@ -29,7 +29,7 @@ final class OrderedSetOperationTest extends TestCase
 {
     public function testDeriveQueryOrdersTheResultAndKeepsTheClausesOfTheLastSelect(): void
     {
-        $operation = (new Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
+        $operation = (new Semantics('mysql-5.6.51'))->inspect('SELECT (SELECT 1 AS x UNION SELECT 2 FROM DUAL LIMIT 1 ORDER BY x LIMIT 3)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -60,8 +60,8 @@ final class OrderedSetOperationTest extends TestCase
     {
         $semantics = new Semantics('mysql-5.6.51');
 
-        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->analyze('select (select 1 union select a from t for update order by 1) as v')->toString());
-        self::assertInstanceOf(QueryExpression::class, $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
+        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->inspect('select (select 1 union select a from t for update order by 1) as v')->toString());
+        self::assertInstanceOf(QueryExpression::class, $semantics->inspect('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
     }
 
     public function testRejectsALastSelectWithoutClausesOfItsOwn(): void

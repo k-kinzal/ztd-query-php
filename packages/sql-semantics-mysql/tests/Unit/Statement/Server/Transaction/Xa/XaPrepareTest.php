@@ -20,12 +20,12 @@ final class XaPrepareTest extends TestCase
 {
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame("XA PREPARE 'g', 'b'", (new Semantics())->analyze("xa prepare 'g', 'b'")->toString());
+        self::assertSame("XA PREPARE 'g', 'b'", (new Semantics())->inspect("xa prepare 'g', 'b'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA PREPARE 'g'");
+        $operation = (new Semantics())->inspect("XA PREPARE 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

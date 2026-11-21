@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Removing the partitioning
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REMOVE PARTITIONING')->toString() // => 'ALTER TABLE t REMOVE PARTITIONING'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t REMOVE PARTITIONING')->toString() // => 'ALTER TABLE t REMOVE PARTITIONING'
  */
 final class RemovePartitioning implements TrailingCommand
 {

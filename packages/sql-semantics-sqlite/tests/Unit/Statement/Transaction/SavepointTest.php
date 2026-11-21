@@ -16,7 +16,7 @@ final class SavepointTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics())->analyze('SAVEPOINT s1', []);
+        $operation = (new Semantics())->inspect('SAVEPOINT s1', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -24,7 +24,7 @@ final class SavepointTest extends TestCase
 
     public function testRenderWritesTheDecodedName(): void
     {
-        $operation = (new Semantics())->analyze("savepoint 'before import'");
+        $operation = (new Semantics())->inspect("savepoint 'before import'");
 
         self::assertInstanceOf(Savepoint::class, $operation->statement);
         self::assertSame('before import', $operation->statement->name->value);

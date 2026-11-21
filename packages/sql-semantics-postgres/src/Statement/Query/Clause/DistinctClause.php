@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a DISTINCT ON clause
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT DISTINCT ON (1) 1, 2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT DISTINCT ON (1) 1, 2');
  *     count($query->statement->distinct->on) // => 1
  */
 final class DistinctClause implements Node

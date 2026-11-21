@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Establishing that a column does not exist
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $semantics->analyze('SELECT b FROM t', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist.
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $semantics->inspect('SELECT b FROM t', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist.
  */
 final class MissingColumn implements Resolution, Diagnostic
 {

@@ -17,7 +17,7 @@ final class DropHistogramTest extends TestCase
 {
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON a, `b c`', (new Semantics())->analyze('analyze table t drop histogram on a, `b c`')->toString());
+        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON a, `b c`', (new Semantics())->inspect('analyze table t drop histogram on a, `b c`')->toString());
     }
 
     public function testColumnsAnswersTheColumnNames(): void

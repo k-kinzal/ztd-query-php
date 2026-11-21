@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Changing the access method
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t SET ACCESS METHOD heap');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t SET ACCESS METHOD heap');
  *     $statement->statement->commands[0]->method->value // => 'heap'
  */
 final class SetAccessMethod implements AlterCommand

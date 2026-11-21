@@ -16,7 +16,7 @@ final class AnalyzeTest extends TestCase
 {
     public function testDeriveStatementRecordsNoResolutionForTheName(): void
     {
-        $operation = (new Semantics())->analyze('ANALYZE users', []);
+        $operation = (new Semantics())->inspect('ANALYZE users', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertFalse($operation->facts->covers($operation->statement));
@@ -25,11 +25,11 @@ final class AnalyzeTest extends TestCase
     public function testRenderWritesTheOptionalTarget(): void
     {
         $semantics = new Semantics();
-        $qualified = $semantics->analyze('analyze main.users');
+        $qualified = $semantics->inspect('analyze main.users');
 
         self::assertInstanceOf(Analyze::class, $qualified->statement);
         self::assertSame('users', $qualified->statement->target?->name->value);
         self::assertSame('ANALYZE main.users', $qualified->toString());
-        self::assertSame('ANALYZE', $semantics->analyze('ANALYZE')->toString());
+        self::assertSame('ANALYZE', $semantics->inspect('ANALYZE')->toString());
     }
 }

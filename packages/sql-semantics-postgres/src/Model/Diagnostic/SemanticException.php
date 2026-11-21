@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
  *
  * @visibility public
  * @example Rejecting a query that names a missing relation
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM t', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM t', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

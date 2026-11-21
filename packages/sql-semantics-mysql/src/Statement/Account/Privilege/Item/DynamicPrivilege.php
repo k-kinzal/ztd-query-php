@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a dynamic privilege
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT BACKUP_ADMIN ON *.* TO u')->statement->privileges[0]->name->value // => 'BACKUP_ADMIN'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT BACKUP_ADMIN ON *.* TO u')->statement->privileges[0]->name->value // => 'BACKUP_ADMIN'
  */
 final class DynamicPrivilege implements Grantable
 {

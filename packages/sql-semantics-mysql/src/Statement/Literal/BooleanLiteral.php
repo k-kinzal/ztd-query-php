@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
  *
  * @visibility public
  * @example Reading a boolean literal
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = TRUE');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = TRUE');
  *     $query->statement->where->right->value // => true
  */
 final class BooleanLiteral implements Scalar

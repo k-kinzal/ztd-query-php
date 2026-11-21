@@ -25,7 +25,7 @@ final class SelectItemTest extends TestCase
 
     public function testAProjectedExpressionIsASelectItem(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a, 1 AS one FROM t');
+        $operation = (new Semantics())->inspect('SELECT a, 1 AS one FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertContainsOnlyInstancesOf(SelectItem::class, $operation->statement->items);

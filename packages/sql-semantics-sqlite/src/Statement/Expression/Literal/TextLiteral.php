@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the decoded text of a string literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'it''s'");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT 'it''s'");
  *     [$query->statement->columns[0]->expression->value, $query->toString()] // => ["it's", "SELECT 'it''s'"]
  */
 final class TextLiteral implements Scalar

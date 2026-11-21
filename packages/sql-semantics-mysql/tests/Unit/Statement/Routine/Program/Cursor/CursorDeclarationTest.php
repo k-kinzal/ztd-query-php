@@ -21,7 +21,7 @@ final class CursorDeclarationTest extends TestCase
 {
     public function testRenderWritesTheNameAndTheQuery(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT x; END');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT x; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -37,7 +37,7 @@ final class CursorDeclarationTest extends TestCase
 
     public function testRenderWritesAQueryThatSeesOnlyTheVariablesDeclaredBefore(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT y; END');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT y; END');
 
         self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT y; END', $operation->toString());
@@ -46,7 +46,7 @@ final class CursorDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheDeclaration')]
     public function testRenderWritesTheDeclaration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     /**

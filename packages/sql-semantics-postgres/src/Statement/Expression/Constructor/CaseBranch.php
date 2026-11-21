@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a branch
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT CASE WHEN true THEN 1 END');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT CASE WHEN true THEN 1 END');
  *     $query->field(0)->expression->branches[0]->result->value->digits // => '1'
  */
 final class CaseBranch implements Node

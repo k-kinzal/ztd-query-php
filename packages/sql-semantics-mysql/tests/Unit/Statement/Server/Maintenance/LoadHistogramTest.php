@@ -18,7 +18,7 @@ final class LoadHistogramTest extends TestCase
 {
     public function testRenderWritesTheData(): void
     {
-        self::assertSame("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", (new Semantics())->analyze("analyze table t update histogram on a using data '{}'")->toString());
+        self::assertSame("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", (new Semantics())->inspect("analyze table t update histogram on a using data '{}'")->toString());
     }
 
     public function testColumnsAnswersTheColumnNames(): void

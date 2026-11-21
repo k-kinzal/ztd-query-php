@@ -16,13 +16,13 @@ final class HandlerIndexReadTest extends TestCase
 {
     public function testDeriveStatementRecordsOpenRows(): void
     {
-        $operation = (new Semantics())->analyze('HANDLER h READ i LAST');
+        $operation = (new Semantics())->inspect('HANDLER h READ i LAST');
 
         self::assertNotNull($operation->facts->output);
     }
 
     public function testRenderWritesTheRead(): void
     {
-        self::assertSame('HANDLER h READ i PREV LIMIT 3', (new Semantics())->analyze('handler h read i prev limit 3')->toString());
+        self::assertSame('HANDLER h READ i PREV LIMIT 3', (new Semantics())->inspect('handler h read i prev limit 3')->toString());
     }
 }

@@ -18,7 +18,7 @@ final class PatternOperatorTest extends TestCase
 {
     public function testEachOperatorIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze("SELECT a LIKE 'x', a glob 'x', a REGEXP 'x', a match 'x' FROM t");
+        $query = (new Semantics())->inspect("SELECT a LIKE 'x', a glob 'x', a REGEXP 'x', a match 'x' FROM t");
         $operators = array_map(static fn (Field $field): ?PatternOperator => $field->expression instanceof PatternMatch ? $field->expression->operator : null, $query->fields()->items ?? []);
 
         self::assertSame([PatternOperator::Like, PatternOperator::Glob, PatternOperator::Regexp, PatternOperator::Match], $operators);

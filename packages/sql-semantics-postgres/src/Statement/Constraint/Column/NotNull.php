@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  *
  * @visibility public
  * @example Reading the constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int CONSTRAINT nn NOT NULL)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int CONSTRAINT nn NOT NULL)');
  *     $create->statement->definition->elements[0]->qualifiers[0]->name?->value // => 'nn'
  */
 final class NotNull implements Constraint

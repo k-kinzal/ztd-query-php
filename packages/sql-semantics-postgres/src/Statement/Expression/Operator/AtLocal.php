@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Converting to the session time zone
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '2024-01-01 00:00'::timestamp AT LOCAL", [])->field(0)->type->descriptor->name() // => 'timestamp with time zone'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT '2024-01-01 00:00'::timestamp AT LOCAL", [])->field(0)->type->descriptor->name() // => 'timestamp with time zone'
  */
 final class AtLocal implements Scalar
 {

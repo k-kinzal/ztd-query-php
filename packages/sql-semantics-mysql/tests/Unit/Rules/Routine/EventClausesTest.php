@@ -44,8 +44,8 @@ final class EventClausesTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame("CREATE EVENT db.e ON SCHEDULE EVERY 1 DAY ON COMPLETION NOT PRESERVE DISABLE ON REPLICA COMMENT 'c' DO SELECT 1", $semantics->analyze("create event db.e on schedule every 1 day on completion not preserve disable on replica comment 'c' do select 1")->toString());
-        self::assertSame("ALTER EVENT e ON COMPLETION PRESERVE DISABLE ON SLAVE COMMENT 'x'", $semantics->analyze("alter event e on completion preserve disable on slave comment 'x'")->toString());
-        self::assertSame('ALTER EVENT e ENABLE', (new Semantics('mysql-5.7.44'))->analyze('alter event e enable')->toString());
+        self::assertSame("CREATE EVENT db.e ON SCHEDULE EVERY 1 DAY ON COMPLETION NOT PRESERVE DISABLE ON REPLICA COMMENT 'c' DO SELECT 1", $semantics->inspect("create event db.e on schedule every 1 day on completion not preserve disable on replica comment 'c' do select 1")->toString());
+        self::assertSame("ALTER EVENT e ON COMPLETION PRESERVE DISABLE ON SLAVE COMMENT 'x'", $semantics->inspect("alter event e on completion preserve disable on slave comment 'x'")->toString());
+        self::assertSame('ALTER EVENT e ENABLE', (new Semantics('mysql-5.7.44'))->inspect('alter event e enable')->toString());
     }
 }

@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
  *
  * @visibility public
  * @example Reading the message of a RAISE
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END");
+ *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END");
  *     $trigger->statement->steps[0]->columns[0]->expression->message->value // => 'no'
  * @example Refusing a message for IGNORE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Raise(\SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Ignore, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('x')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

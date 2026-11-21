@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
  *
  * @visibility public
  * @example Setting a sequence option of an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET CYCLE');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a SET CYCLE');
  *     $statement->statement->commands[0]->options[0]->option->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::Cycle
  */
 final class IdentitySetting implements Node

@@ -21,15 +21,15 @@ final class CreateTableRuleTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(CreateTable::class, $semantics->inspect('CREATE TABLE t (a)')->statement);
-        self::assertInstanceOf(CreateTableAs::class, $semantics->inspect('CREATE TABLE t AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateTable::class, $semantics->diagnose('CREATE TABLE t (a)')->statement);
+        self::assertInstanceOf(CreateTableAs::class, $semantics->diagnose('CREATE TABLE t AS SELECT 1')->statement);
     }
 
     public function testCommandKeepsTheHeaderFlagsAndTheName(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->inspect('CREATE TABLE t (a)')->statement;
-        $full = $semantics->inspect('CREATE TEMP TABLE IF NOT EXISTS aux.t (a)')->statement;
+        $plain = $semantics->diagnose('CREATE TABLE t (a)')->statement;
+        $full = $semantics->diagnose('CREATE TEMP TABLE IF NOT EXISTS aux.t (a)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $plain);
         self::assertInstanceOf(CreateTable::class, $full);
@@ -43,12 +43,12 @@ final class CreateTableRuleTest extends TestCase
 
     public function testCreatedAcceptsTheCreateKeywordOfEveryDefinition(): void
     {
-        self::assertInstanceOf(CreateView::class, (new Semantics())->inspect('CREATE VIEW v AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateView::class, (new Semantics())->diagnose('CREATE VIEW v AS SELECT 1')->statement);
     }
 
     public function testColumnsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics())->inspect('CREATE TABLE t (c, a, b)')->statement;
+        $statement = (new Semantics())->diagnose('CREATE TABLE t (c, a, b)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame(['c', 'a', 'b'], array_map(static fn (object $column): string => $column->name->value, $statement->columns));

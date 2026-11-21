@@ -16,7 +16,7 @@ final class ReleaseTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics())->analyze('RELEASE s1', []);
+        $operation = (new Semantics())->inspect('RELEASE s1', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -24,7 +24,7 @@ final class ReleaseTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->analyze('release savepoint s1');
+        $operation = (new Semantics())->inspect('release savepoint s1');
 
         self::assertInstanceOf(Release::class, $operation->statement);
         self::assertSame('s1', $operation->statement->name->value);

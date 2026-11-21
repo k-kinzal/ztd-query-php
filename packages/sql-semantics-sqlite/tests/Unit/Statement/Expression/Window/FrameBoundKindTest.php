@@ -25,7 +25,7 @@ final class FrameBoundKindTest extends TestCase
 
     public function testCasesMatchTheBoundariesOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics())->analyze('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t')->statement;
+        $statement = (new Semantics())->inspect('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

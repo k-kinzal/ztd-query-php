@@ -18,7 +18,7 @@ final class DiagnosticTest extends TestCase
 {
     public function testMessageDescribesEachProblemInDerivationOrder(): void
     {
-        $operation = (new Semantics())->inspect('SELECT b FROM t', []);
+        $operation = (new Semantics())->diagnose('SELECT b FROM t', []);
 
         self::assertSame(['Relation t does not exist.', 'Column b does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -28,8 +28,8 @@ final class DiagnosticTest extends TestCase
     public function testMessageIsNotNeededForAStatementWithoutProblems(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (b INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (b INTEGER)');
 
-        self::assertSame([], $semantics->inspect('SELECT b FROM t', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('SELECT b FROM t', [$table])->facts->diagnostics);
     }
 }

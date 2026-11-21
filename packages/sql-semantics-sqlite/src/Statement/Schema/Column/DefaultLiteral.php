@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
  *
  * @visibility public
  * @example Reading a negative default
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INT DEFAULT -1)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a INT DEFAULT -1)');
  *     $default = $create->statement->columns[0]->constraints[0];
  *     [$default->sign, $default->literal->digits] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign::Minus, '1']
  */

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Dropping a tablespace if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLESPACE IF EXISTS fast');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP TABLESPACE IF EXISTS fast');
  *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP TABLESPACE IF EXISTS fast']
  */
 final class DropTablespace implements Statement

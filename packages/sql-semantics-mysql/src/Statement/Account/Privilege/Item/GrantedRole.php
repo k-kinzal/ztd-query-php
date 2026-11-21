@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Reading a granted role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
  */
 final class GrantedRole implements Grantable
 {

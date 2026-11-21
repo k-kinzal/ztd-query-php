@@ -15,7 +15,7 @@ final class DropConstraintTest extends TestCase
     public function testDeriveClauseHasNoOperand(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t DROP CONSTRAINT k', []);
+        $statement = $semantics->diagnose('ALTER TABLE t DROP CONSTRAINT k', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class DropConstraintTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t DROP CONSTRAINT IF EXISTS k CASCADE', []);
+        $statement = $semantics->diagnose('ALTER TABLE t DROP CONSTRAINT IF EXISTS k CASCADE', []);
         self::assertSame('ALTER TABLE t DROP CONSTRAINT IF EXISTS k CASCADE', $statement->toString());
     }
 }

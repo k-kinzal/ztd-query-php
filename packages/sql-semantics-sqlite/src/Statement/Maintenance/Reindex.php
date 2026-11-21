@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  *
  * @visibility public
  * @example Reading the target of a reindex
- *     $reindex = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('REINDEX main.users');
+ *     $reindex = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('REINDEX main.users');
  *     [$reindex->statement->target?->schema?->value, $reindex->statement->target?->name->value] // => ['main', 'users']
  */
 final class Reindex implements Statement

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics;
 
 /**
- * Analyzes SQL under a database-specific language profile.
+ * Publishes complete SQL semantics under a database-specific language profile.
  *
  * @visibility public
  * @example Accepting an analyzer from any database package
@@ -15,9 +15,9 @@ namespace SqlSemantics;
 interface Analyzer
 {
     /**
-     * Analyzes SQL against the supplied declaration context or an open context.
+     * Resolves SQL against the supplied declarations and publishes a complete statement.
      *
-     * @throws AnalysisException When the SQL is rejected or the context is incompatible
+     * @throws AnalysisException When the SQL is invalid, unresolved, or outside the supported language profile
      */
-    public function analyze(string $sql, ?AnalysisContext $context = null): Query;
+    public function analyze(string $sql, ?AnalysisContext $context = null): SemanticsIR;
 }

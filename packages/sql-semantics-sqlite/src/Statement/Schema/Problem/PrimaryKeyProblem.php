@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting AUTOINCREMENT on a column that is no integer primary key
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a TEXT PRIMARY KEY AUTOINCREMENT)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a TEXT PRIMARY KEY AUTOINCREMENT)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: AUTOINCREMENT is only allowed on an INTEGER PRIMARY KEY.
  */
 final class PrimaryKeyProblem implements Diagnostic
 {

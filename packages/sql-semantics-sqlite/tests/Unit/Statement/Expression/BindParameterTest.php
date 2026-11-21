@@ -32,7 +32,7 @@ final class BindParameterTest extends TestCase
 
     public function testMarkerReadsEveryWrittenPrefix(): void
     {
-        $statement = (new Semantics())->analyze('SELECT ?, ?7, :a, @b, $c')->statement;
+        $statement = (new Semantics())->inspect('SELECT ?, ?7, :a, @b, $c')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $parameters = array_map(static function (object $column): BindParameter {
@@ -48,7 +48,7 @@ final class BindParameterTest extends TestCase
 
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT ?2', []);
+        $operation = (new Semantics())->inspect('SELECT ?2', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -63,7 +63,7 @@ final class BindParameterTest extends TestCase
 
     public function testDeriveScalarNamesTheMarkerOfANamedParameter(): void
     {
-        $operation = (new Semantics())->analyze('SELECT :name', []);
+        $operation = (new Semantics())->inspect('SELECT :name', []);
         $type = $operation->field(0)->type;
 
         self::assertInstanceOf(Dependent::class, $type);
@@ -74,7 +74,7 @@ final class BindParameterTest extends TestCase
 
     public function testRenderWritesTheMarkerAsWritten(): void
     {
-        self::assertSame('SELECT ?, ?7, :a, @b, $c', (new Semantics())->analyze('select ?, ?7, :a, @b, $c')->toString());
+        self::assertSame('SELECT ?, ?7, :a, @b, $c', (new Semantics())->inspect('select ?, ?7, :a, @b, $c')->toString());
     }
 
     public function testRenderWritesANewlyBuiltParameter(): void

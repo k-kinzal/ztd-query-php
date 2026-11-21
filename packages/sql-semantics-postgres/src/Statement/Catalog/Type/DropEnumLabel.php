@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the rejected request
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood DROP VALUE 'sad'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: dropping an enum value is not implemented
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER TYPE mood DROP VALUE 'sad'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: dropping an enum value is not implemented
  */
 final class DropEnumLabel implements Statement
 {

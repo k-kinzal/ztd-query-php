@@ -19,7 +19,7 @@ final class OpenStarTest extends TestCase
 {
     public function testMissingNamesTheUndeclaredRelationBehindAStar(): void
     {
-        $fact = (new Semantics())->analyze('SELECT t.*, u.a FROM t, u')->facts->output;
+        $fact = (new Semantics())->inspect('SELECT t.*, u.a FROM t, u')->facts->output;
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);
@@ -31,9 +31,9 @@ final class OpenStarTest extends TestCase
     public function testMissingNamesTheIncompleteMemberListOfADeclaredRelation(): void
     {
         $semantics = new Semantics();
-        $view = $semantics->analyze('CREATE VIRTUAL TABLE v USING fts5(a)');
+        $view = $semantics->inspect('CREATE VIRTUAL TABLE v USING fts5(a)');
 
-        $fact = $semantics->analyze('SELECT * FROM v', [$view])->facts->output;
+        $fact = $semantics->inspect('SELECT * FROM v', [$view])->facts->output;
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);

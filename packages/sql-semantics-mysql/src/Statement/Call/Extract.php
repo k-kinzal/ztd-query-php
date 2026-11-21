@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  *
  * @visibility public
  * @example Typing EXTRACT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT EXTRACT(YEAR_MONTH FROM '2024-07-02')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT EXTRACT(YEAR_MONTH FROM '2024-07-02')");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class Extract implements Scalar

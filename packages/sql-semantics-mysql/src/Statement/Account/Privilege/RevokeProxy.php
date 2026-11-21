@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Revoking a proxy
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('REVOKE PROXY ON root FROM app')->toString() // => 'REVOKE PROXY ON root FROM app'
  */
 final class RevokeProxy implements Statement
 {

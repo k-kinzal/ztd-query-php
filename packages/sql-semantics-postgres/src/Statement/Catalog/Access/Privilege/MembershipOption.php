@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a membership option
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT staff TO joe WITH INHERIT FALSE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff TO joe WITH INHERIT FALSE');
  *     [$operation->statement->options[0]->name->value, $operation->statement->options[0]->recognized(), $operation->statement->options[0]->setting->enabled()] // => ['inherit', true, false]
  */
 final class MembershipOption implements Node

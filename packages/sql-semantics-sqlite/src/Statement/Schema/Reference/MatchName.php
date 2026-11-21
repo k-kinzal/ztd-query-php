@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a MATCH name
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p REFERENCES parent MATCH FULL)');
  *     $create->statement->columns[0]->constraints[0]->arguments[0]->name->value // => 'FULL'
  */
 final class MatchName implements ReferenceArgument

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading the type a keyword spelling denotes
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT bigint '1'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT bigint '1'");
  *     $query->field(0)->type->descriptor->name() // => 'bigint'
  */
 final class KeywordDesignation implements TypeDesignation

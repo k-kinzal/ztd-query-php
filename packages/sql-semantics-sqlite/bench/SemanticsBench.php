@@ -24,7 +24,7 @@ final class SemanticsBench
     {
         $this->semantics = new Semantics();
         $this->context = $this->semantics->context([
-            $this->semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'),
+            $this->semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'),
         ]);
     }
 
@@ -36,7 +36,7 @@ final class SemanticsBench
     #[Benchmark\Iterations(5)]
     public function benchAnalyze(): void
     {
-        $this->semantics->analyze('SELECT child.id, parent.score, coalesce(parent.score, 0) AS effective_score FROM users AS child LEFT JOIN users AS parent ON child.parent_id = parent.id WHERE child.score > 0 ORDER BY child.id LIMIT 10');
+        $this->semantics->inspect('SELECT child.id, parent.score, coalesce(parent.score, 0) AS effective_score FROM users AS child LEFT JOIN users AS parent ON child.parent_id = parent.id WHERE child.score > 0 ORDER BY child.id LIMIT 10');
     }
 
     /**
@@ -47,7 +47,7 @@ final class SemanticsBench
     #[Benchmark\Iterations(5)]
     public function benchResolve(): void
     {
-        $this->semantics->analyze('SELECT child.id, parent.score FROM users AS child LEFT JOIN users AS parent ON child.parent_id = parent.id WHERE child.score > 0', $this->context);
+        $this->semantics->inspect('SELECT child.id, parent.score FROM users AS child LEFT JOIN users AS parent ON child.parent_id = parent.id WHERE child.score > 0', $this->context);
     }
 
     /**
@@ -58,7 +58,7 @@ final class SemanticsBench
     #[Benchmark\Iterations(5)]
     public function benchDeclaration(): void
     {
-        $this->semantics->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', []);
+        $this->semantics->inspect('CREATE TABLE items (id INTEGER PRIMARY KEY, parent_id INTEGER REFERENCES parent(id), amount NUMERIC(7) DEFAULT 1.25)', []);
     }
 
     /**

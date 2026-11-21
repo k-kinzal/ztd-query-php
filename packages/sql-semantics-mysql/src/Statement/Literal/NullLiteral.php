@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
  *
  * @visibility public
  * @example Typing a bare NULL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = NULL');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = NULL');
  *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
  */
 final class NullLiteral implements Scalar

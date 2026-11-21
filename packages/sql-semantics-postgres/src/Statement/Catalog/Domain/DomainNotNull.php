@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  *
  * @visibility public
  * @example Adding a named not-null constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL');
  *     $operation->statement->constraint->name?->value // => 'nn'
  */
 final class DomainNotNull implements Clause

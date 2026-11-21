@@ -24,6 +24,6 @@ final class StopGroupReplicationTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('STOP GROUP_REPLICATION', (new Semantics('mysql-5.7.44'))->analyze('stop group_replication')->toString());
+        self::assertSame('STOP GROUP_REPLICATION', (new Semantics('mysql-5.7.44'))->inspect('stop group_replication')->toString());
     }
 }

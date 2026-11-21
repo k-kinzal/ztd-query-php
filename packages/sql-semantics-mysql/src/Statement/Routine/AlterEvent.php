@@ -33,7 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the changes of an event
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER EVENT e RENAME TO shop.f ENABLE');
  *     [$alter->statement->newName->name->value, $alter->statement->status, $alter->statement->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
  */
 final class AlterEvent implements Statement

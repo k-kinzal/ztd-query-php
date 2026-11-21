@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  *
  * @visibility public
  * @example Reading the element an assignment writes
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t SET a[1] = 2');
+ *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('UPDATE t SET a[1] = 2');
  *     [$update->statement->assignments[0]->column->column->value, count($update->statement->assignments[0]->column->steps)] // => ['a', 1]
  */
 final class ColumnTarget implements Clause

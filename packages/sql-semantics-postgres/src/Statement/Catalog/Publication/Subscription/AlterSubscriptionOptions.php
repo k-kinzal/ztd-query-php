@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Skipping a transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER SUBSCRIPTION s SKIP (lsn = '0/14C0378')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER SUBSCRIPTION s SKIP (lsn = '0/14C0378')");
  *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction::Skip
  */
 final class AlterSubscriptionOptions implements Statement

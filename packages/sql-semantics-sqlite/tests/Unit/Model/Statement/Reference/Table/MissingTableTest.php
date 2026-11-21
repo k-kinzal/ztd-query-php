@@ -16,7 +16,7 @@ final class MissingTableTest extends TestCase
 {
     public function testMessageNamesTheRelationACompleteContextDoesNotDeclare(): void
     {
-        $query = (new Semantics())->inspect('SELECT a FROM t', []);
+        $query = (new Semantics())->diagnose('SELECT a FROM t', []);
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -29,8 +29,8 @@ final class MissingTableTest extends TestCase
     public function testMessageOfAQualifiedNameSearchesThatSchemaOnly(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->inspect('SELECT a FROM aux.t', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->diagnose('SELECT a FROM aux.t', [$table]);
 
         self::assertInstanceOf(MissingTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }

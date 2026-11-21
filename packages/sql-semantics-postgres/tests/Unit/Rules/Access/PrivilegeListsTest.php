@@ -31,6 +31,6 @@ final class PrivilegeListsTest extends TestCase
 
     public function testWriteSpellsAnEmptyListAsAll(): void
     {
-        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
+        self::assertSame('REVOKE ALL ON TABLE t FROM joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE ALL PRIVILEGES ON t FROM joe')->toString());
     }
 }

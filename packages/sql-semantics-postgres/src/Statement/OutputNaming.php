@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
  *
  * @visibility public
  * @example Reading the name a typed constant gives its column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT integer '1'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT integer '1'");
  *     $query->statement->targets[0]->expression->outputName()?->value // => 'int4'
  */
 interface OutputNaming

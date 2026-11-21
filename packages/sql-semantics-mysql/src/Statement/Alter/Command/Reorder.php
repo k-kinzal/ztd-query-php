@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  *
  * @visibility public
  * @example Ordering the rows by a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ORDER BY a DESC');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ORDER BY a DESC');
  *     $alter->toString() // => 'ALTER TABLE t ORDER BY a DESC'
  */
 final class Reorder implements AlterCommand

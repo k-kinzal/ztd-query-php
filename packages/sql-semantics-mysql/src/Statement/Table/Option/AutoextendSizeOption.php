@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  *
  * @visibility public
  * @example Reading a table option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) AUTOEXTEND_SIZE = 4M');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT) AUTOEXTEND_SIZE = 4M');
  *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\AutoextendSizeOption // => true
  */
 final class AutoextendSizeOption implements TableOption

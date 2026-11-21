@@ -16,6 +16,6 @@ final class ConstraintNameTest extends TestCase
 {
     public function testRenderWritesConstraintAndTheSymbol(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT PRIMARY KEY (a), CONSTRAINT c UNIQUE (a))', (new Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT PRIMARY KEY (a), CONSTRAINT c UNIQUE (a))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT PRIMARY KEY (a), CONSTRAINT c UNIQUE (a))', (new Semantics())->inspect('CREATE TABLE t (a INT, CONSTRAINT PRIMARY KEY (a), CONSTRAINT c UNIQUE (a))')->toString());
     }
 }

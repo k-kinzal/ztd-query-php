@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  *
  * @visibility public
  * @example Reading a constraint on an existing index
- *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i');
+ *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i');
  *     [$alter->statement->commands[0]->constraint->primary, $alter->statement->commands[0]->constraint->index->value] // => [true, 'i']
  */
 final class IndexConstraint implements Constraint

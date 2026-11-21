@@ -29,7 +29,7 @@ final class SignedNumberTest extends TestCase
 {
     public function testRenderWritesTheSignDirectlyBeforeTheNumber(): void
     {
-        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1');
+        $query = (new Semantics())->inspect('SELECT CAST(1 AS DECIMAL( + 10 , - 2 )) AS c1');
         $cast = $query->field(0)->expression;
 
         self::assertInstanceOf(Cast::class, $cast);
@@ -42,7 +42,7 @@ final class SignedNumberTest extends TestCase
 
     public function testRenderWritesEveryKindOfNumericLiteral(): void
     {
-        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL(10)), CAST(1 AS DECIMAL(0x10)), CAST(1 AS DECIMAL(1.5))');
+        $query = (new Semantics())->inspect('SELECT CAST(1 AS DECIMAL(10)), CAST(1 AS DECIMAL(0x10)), CAST(1 AS DECIMAL(1.5))');
         $numbers = array_map(static fn (Field $field): ?string => $field->expression instanceof Cast ? $field->expression->target?->arguments[0]->number::class : null, $query->fields()->items ?? []);
 
         self::assertSame([IntegerLiteral::class, HexLiteral::class, RealLiteral::class], $numbers);
@@ -51,7 +51,7 @@ final class SignedNumberTest extends TestCase
 
     public function testRenderWritesAPragmaValue(): void
     {
-        $operation = (new Semantics())->analyze('pragma cache_size = -2000');
+        $operation = (new Semantics())->inspect('pragma cache_size = -2000');
         $pragma = $operation->statement;
 
         self::assertInstanceOf(Pragma::class, $pragma);

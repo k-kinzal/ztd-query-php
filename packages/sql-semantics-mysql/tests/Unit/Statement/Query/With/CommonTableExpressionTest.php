@@ -19,17 +19,17 @@ final class CommonTableExpressionTest extends TestCase
 {
     public function testRenderWritesTheNameTheColumnsAndTheQuery(): void
     {
-        self::assertSame('WITH c (x, y) AS (SELECT 1, 2) SELECT x FROM c', (new Semantics())->inspect('with c(x,y) as (select 1, 2) select x from c')->toString());
-        self::assertSame('WITH c AS ((SELECT 1)) SELECT 1', (new Semantics())->inspect('with c as ((select 1)) select 1')->toString());
+        self::assertSame('WITH c (x, y) AS (SELECT 1, 2) SELECT x FROM c', (new Semantics())->diagnose('with c(x,y) as (select 1, 2) select x from c')->toString());
+        self::assertSame('WITH c AS ((SELECT 1)) SELECT 1', (new Semantics())->diagnose('with c as ((select 1)) select 1')->toString());
     }
 
     public function testAColumnListOfAnotherLengthIsReported(): void
     {
-        $operation = (new Semantics())->inspect('WITH c (x, y) AS (SELECT 1) SELECT x FROM c', []);
+        $operation = (new Semantics())->diagnose('WITH c (x, y) AS (SELECT 1) SELECT x FROM c', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
-        self::assertInstanceOf(Invalid::class, (new Semantics())->inspect('WITH c (x, y) AS (SELECT 1) SELECT y FROM c', [])->field('y')->type);
+        self::assertInstanceOf(Invalid::class, (new Semantics())->diagnose('WITH c (x, y) AS (SELECT 1) SELECT y FROM c', [])->field('y')->type);
     }
 }

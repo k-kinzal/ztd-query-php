@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
  *
  * @visibility public
  * @example Discarding the tablespace of a table
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DISCARD TABLESPACE');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t DISCARD TABLESPACE');
  *     [$alter->statement->commands[0]->import, $alter->toString()] // => [false, 'ALTER TABLE t DISCARD TABLESPACE']
  */
 final class TablespaceCommand implements StandaloneCommand

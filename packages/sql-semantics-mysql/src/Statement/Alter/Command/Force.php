@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  *
  * @visibility public
  * @example Rebuilding a table
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter table t force')->toString() // => 'ALTER TABLE t FORCE'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter table t force')->toString() // => 'ALTER TABLE t FORCE'
  */
 final class Force implements AlterCommand
 {

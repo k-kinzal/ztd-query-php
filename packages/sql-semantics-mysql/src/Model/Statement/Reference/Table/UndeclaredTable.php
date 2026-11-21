@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping the missing declaration of a named input
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t');
  *     $query->facts->relation($query->inputRelation())->table->missing->name->name->value // => 't'
  */
 final class UndeclaredTable implements TableResolution

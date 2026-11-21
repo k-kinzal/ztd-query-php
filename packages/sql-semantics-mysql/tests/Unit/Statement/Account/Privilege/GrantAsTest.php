@@ -16,6 +16,6 @@ final class GrantAsTest extends TestCase
 {
     public function testRenderWritesTheAccountAndRoles(): void
     {
-        self::assertSame('GRANT SELECT ON *.* TO u AS a WITH ROLE ALL EXCEPT r', (new Semantics())->analyze('grant select on *.* to u as a with role all except r')->toString());
+        self::assertSame('GRANT SELECT ON *.* TO u AS a WITH ROLE ALL EXCEPT r', (new Semantics())->inspect('grant select on *.* to u as a with role all except r')->toString());
     }
 }

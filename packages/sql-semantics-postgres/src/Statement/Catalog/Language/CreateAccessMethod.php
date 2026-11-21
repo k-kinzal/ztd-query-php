@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the kind of a new access method
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ACCESS METHOD heap2 TYPE TABLE HANDLER heap_tableam_handler');
  *     $operation->statement->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\AccessMethodKind::Table
  */
 final class CreateAccessMethod implements Statement

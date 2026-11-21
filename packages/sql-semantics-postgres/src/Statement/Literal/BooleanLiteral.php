@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading the name TRUE gives its column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT TRUE');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT TRUE');
  *     [$query->statement->targets[0]->expression->value, $query->field(0)->name->value] // => [true, '?column?']
  */
 final class BooleanLiteral implements Scalar

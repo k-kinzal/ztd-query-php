@@ -34,7 +34,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading both operands
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a >= 10');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a >= 10');
  *     [$query->statement->where->left->name->value, $query->statement->where->right->text] // => ['a', '10']
  */
 final class Comparison implements Scalar

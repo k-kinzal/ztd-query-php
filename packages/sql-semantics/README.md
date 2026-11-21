@@ -8,7 +8,7 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics analyzes SQL of one database release into an immutable, typed semantic model. An analyzed statement is an `Operation`: the concrete structure of what the statement requests (its operation, operands and input relations), the facts derived for it against an explicit declaration context (name resolution, output fields, types and NULL facts), and SQL rendered from that structure. Before an operation is returned, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input.
+SQL Semantics resolves SQL to a complete, immutable `SemanticsIR` where the dialect implements that statement's full contract. `inspect()` supplies a diagnostic `Operation`: the concrete structure of what the statement requests (its operation, operands and input relations), the facts derived for it against an explicit declaration context (name resolution, output fields, types and NULL facts), and SQL rendered from that structure. Before an operation is returned, the rendered SQL is parsed again and checked against the structure, and the structure is checked against the analyzed input.
 
 The model is read-only. There is no API that edits an operation; another statement is analyzed from new SQL or built from explicit inputs, and it stands on its own. Analysis reads the grammar of the selected release and needs no database connection; it does not execute or simulate statements.
 
@@ -73,11 +73,11 @@ SQLite:
 composer require k-kinzal/sql-semantics-sqlite
 ```
 
-Create a `Semantics` instance from the namespace of your database package. The examples below use SQLite. The `SqlSemantics\Analyzer` interface declares `analyze(string $sql, ?AnalysisContext $context = null): Query`. Its database-specific implementations also accept declaration lists as a convenience.
+Create a `Semantics` instance from the namespace of your database package. The examples below use SQLite. The `SqlSemantics\Analyzer` interface declares `analyze(string $sql, ?AnalysisContext $context = null): SemanticsIR`. Its database-specific implementations also accept declaration lists as a convenience.
 
 ## Usage
 
-### Analyzing a statement
+### Analyzing and inspecting a statement
 
 `Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into a `SqlSemantics\Query` implemented by the database package’s `Operation`.
 
@@ -86,7 +86,10 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 
 $semantics = new Semantics();
-$query = $semantics->analyze('select   id, name  from users -- active users');
+$ir = $semantics->analyze('SELECT 42 AS answer');
+$ir->toString(); // => 'SELECT 42 AS "answer"'
+
+$query = $semantics->inspect('select   id, name  from users -- active users');
 
 $query->statement instanceof Select; // => true
 $query->toString(); // => 'SELECT id, name FROM users'
@@ -106,8 +109,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
-$query = $semantics->analyze('SELECT u.id, upper(name) AS label, email FROM users AS u', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
+$query = $semantics->inspect('SELECT u.id, upper(name) AS label, email FROM users AS u', [$users]);
 
 count($query->fields()); // => 3
 $query->field('label')->type instanceof Known; // => true
@@ -129,11 +132,11 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
 
 $semantics = new Semantics();
 
-$semantics->analyze('SELECT 1 AS a')->lookupField('a') instanceof UniqueField; // => true
-$semantics->analyze('SELECT 1 AS a')->lookupField('b') instanceof AbsentField; // => true
-$semantics->analyze('SELECT 1 AS a, 2 AS a')->lookupField('a') instanceof AmbiguousFields; // => true
-$semantics->analyze('SELECT * FROM users')->lookupField('id') instanceof DependentField; // => true
-$semantics->analyze('SELECT 1 AS a, 2 AS a')->field('a'); // throws InvalidConstruction
+$semantics->inspect('SELECT 1 AS a')->lookupField('a') instanceof UniqueField; // => true
+$semantics->inspect('SELECT 1 AS a')->lookupField('b') instanceof AbsentField; // => true
+$semantics->inspect('SELECT 1 AS a, 2 AS a')->lookupField('a') instanceof AmbiguousFields; // => true
+$semantics->inspect('SELECT * FROM users')->lookupField('id') instanceof DependentField; // => true
+$semantics->inspect('SELECT 1 AS a, 2 AS a')->field('a'); // throws InvalidConstruction
 ```
 
 Analysis throws a database-specific exception when it establishes a semantic problem. Catch the common `SqlSemantics\AnalysisException` interface for syntax, semantics, or incompatible-context errors.
@@ -143,10 +146,10 @@ use SqlSemantics\AnalysisException;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 
 try {
-    $semantics->analyze('SELECT nickname FROM users', [$users]);
+    $semantics->inspect('SELECT nickname FROM users', [$users]);
 } catch (AnalysisException $error) {
     $error->getMessage(); // => 'Column nickname does not exist.'
 }
@@ -162,9 +165,9 @@ A resolved reference reaches the declaration object that was passed in the conte
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $table = $users->declarations()[0];
-$query = $semantics->analyze('SELECT name FROM users', [$users]);
+$query = $semantics->inspect('SELECT name FROM users', [$users]);
 
 $query->field('name')->column() === $table->columns[1]; // => true
 $query->facts->relation($query->inputRelation())->table->table === $table; // => true
@@ -189,19 +192,19 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 
 $semantics = new Semantics();
 
-$open = $semantics->analyze('SELECT name FROM users');
+$open = $semantics->inspect('SELECT name FROM users');
 $open->field('name')->type instanceof Dependent; // => true
 $open->field('name')->type->missing[0]->describe(); // => 'the declaration of relation users'
 $open->field('name')->resolution instanceof ConditionalColumn; // => true
 
-$semantics->analyze('SELECT name FROM users', []); // throws SemanticException
+$semantics->inspect('SELECT name FROM users', []); // throws SemanticException
 ```
 
 A fact that depends on missing information carries the missing input; it is never used for a rule that is not implemented. See [Contexts](docs/contexts.md) for search paths, name comparison, conflicts and completeness.
 
 ### Scripts
 
-An input with several statements is one operation whose statement is a `Script`. `analyzeAll()` analyzes each statement into its own operation, and `split()` finds the statement boundaries as the database does. Every statement sees the same explicit context: a CREATE earlier in a script declares nothing for the statements after it.
+`inspect()` can inspect a script as one `Operation` whose statement is a `Script`. `analyzeAll()` publishes a list of complete IR values by applying `analyze()` to each statement. `split()` finds statement boundaries and can be combined with `inspect()` for a list of diagnostic operations. All statements use the same declaration context.
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -210,13 +213,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 $semantics = new Semantics();
 $sql = 'CREATE TABLE t (a INTEGER); SELECT a FROM t';
 
-$semantics->analyze($sql)->statement instanceof Script; // => true
-count($semantics->analyzeAll($sql)); // => 2
+$semantics->inspect($sql)->statement instanceof Script; // => true
+count($semantics->analyzeAll('SELECT 1; SELECT 2')); // => 2
 $semantics->split("SELECT 1; SELECT ';'"); // => ['SELECT 1;', " SELECT ';'"]
-$semantics->analyzeAll($sql, []); // throws SemanticException
+$semantics->analyzeAll('SELECT 1; SELECT a FROM t', []); // throws SemanticException
 ```
 
-To analyze a statement against the table a script creates, analyze the CREATE first and pass its operation as the context.
+Inspect the CREATE statement first to use its declaration as context for subsequent analysis.
 
 ### Building a new root
 
@@ -235,8 +238,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-$query = $semantics->analyze('SELECT id FROM users', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$query = $semantics->inspect('SELECT id FROM users', [$users]);
 
 $other = new Operation($query->context, new Select(
     [new ResultColumn(new ColumnUse(new Name('name')), new Name('label'))],
@@ -261,11 +264,11 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\SqlNames;
 
 $semantics = new Semantics();
-$name = $semantics->analyze('SELECT a FROM "order items"')->singleNamedInput()->name();
+$name = $semantics->inspect('SELECT a FROM "order items"')->singleNamedInput()->name();
 $table = SqlNames::table($name, $semantics->profile());
 
 $table; // => '`order items`'
-$semantics->analyze("SELECT count(*) FROM {$table}")->singleNamedInput()->name()->name->value; // => 'order items'
+$semantics->inspect("SELECT count(*) FROM {$table}")->singleNamedInput()->name()->name->value; // => 'order items'
 ```
 
 `SqlNames` is not a general escaping function: it does not spell values, expressions or statements, and SQL assembled with it is unchecked until you analyze it.

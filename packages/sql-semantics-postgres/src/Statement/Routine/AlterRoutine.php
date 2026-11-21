@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignatur
  *
  * @visibility public
  * @example Reading the altered routine
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FUNCTION f(int4) IMMUTABLE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER FUNCTION f(int4) IMMUTABLE');
  *     [$operation->statement->kind->value, $operation->statement->signature->name->last()->value] // => ['FUNCTION', 'f']
  */
 final class AlterRoutine implements Statement

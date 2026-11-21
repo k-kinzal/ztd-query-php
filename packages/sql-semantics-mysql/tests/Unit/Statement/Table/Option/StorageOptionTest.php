@@ -17,7 +17,7 @@ final class StorageOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) STORAGE DISK');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) STORAGE DISK');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

@@ -15,14 +15,14 @@ final class XmlColumnOptionTest extends TestCase
     public function testRenderWritesANamedOptionAsAnIdentifier(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')");
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')");
         self::assertSame("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')", $query->toString());
     }
 
     public function testRenderKeepsANamedOptionSpelledLikeAKeywordQuoted(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text \"path\" 'a', b text \"default\" 'b')");
+        $query = $semantics->diagnose("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text \"path\" 'a', b text \"default\" 'b')");
         self::assertSame("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text \"path\" 'a', b text \"default\" 'b')", $query->toString());
     }
 }

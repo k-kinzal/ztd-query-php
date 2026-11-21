@@ -34,7 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW KEYS FROM t WHERE Key_name = 'PRIMARY'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW KEYS FROM t WHERE Key_name = 'PRIMARY'");
  *     [$show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value, $show->toString()] // => ['Key_name', "SHOW INDEXES FROM t WHERE Key_name = 'PRIMARY'"]
  */
 final class ShowKeys implements Statement, Relation

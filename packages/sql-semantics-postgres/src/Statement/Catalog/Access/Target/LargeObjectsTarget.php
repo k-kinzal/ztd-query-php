@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * @visibility public
  * @example Reading the identifier of a large object
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SELECT ON LARGE OBJECT 16385 TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SELECT ON LARGE OBJECT 16385 TO joe');
  *     $operation->statement->target->identifiers[0]->magnitude->digits // => '16385'
  */
 final class LargeObjectsTarget implements PrivilegeTarget

@@ -32,7 +32,7 @@ final class DeterminismTest extends TestCase
     #[DataProvider('providerRenderWritesNotBeforeANonDeterministicRoutine')]
     public function testRenderWritesNotBeforeANonDeterministicRoutine(string $release, string $sql, string $expected, bool $deterministic): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Semantics($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[array_key_last($statement->characteristics)] ?? null;
@@ -46,7 +46,7 @@ final class DeterminismTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() DETERMINISTIC NOT DETERMINISTIC SELECT 1';
 
-        self::assertSame($sql, (new Semantics())->analyze(strtolower($sql))->toString());
+        self::assertSame($sql, (new Semantics())->inspect(strtolower($sql))->toString());
     }
 
     public function testRenderWritesAConstructedCharacteristic(): void

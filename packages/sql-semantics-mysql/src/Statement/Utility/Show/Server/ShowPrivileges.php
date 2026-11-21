@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PRIVILEGES');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW PRIVILEGES');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Privilege', 'SHOW PRIVILEGES']
  */
 final class ShowPrivileges implements Statement

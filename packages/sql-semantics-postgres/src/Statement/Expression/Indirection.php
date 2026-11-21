@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Selecting a field of a row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (ROW(1, 2)).f2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT (ROW(1, 2)).f2');
  *     [$query->field(0)->name->value, $query->field(0)->type->descriptor->name()] // => ['f2', 'integer']
  * @example Rejecting a field step that the dotted name would absorb
  *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);

@@ -42,7 +42,7 @@ final class TailFactsTest extends TestCase
 
     public function testLimitDerivesTheOperands(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t LIMIT ?, ?');
+        $operation = (new Semantics())->inspect('SELECT a FROM t LIMIT ?, ?');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);

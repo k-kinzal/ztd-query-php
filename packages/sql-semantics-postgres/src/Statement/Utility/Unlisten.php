@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Leaving every channel
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UNLISTEN *');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('UNLISTEN *');
  *     [$operation->statement->channel, $operation->toString()] // => [null, 'UNLISTEN *']
  */
 final class Unlisten implements Statement

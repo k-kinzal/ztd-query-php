@@ -55,7 +55,7 @@ final class GeneralConditionTest extends TestCase
     #[DataProvider('providerRenderWritesTheClassesAHandlerNames')]
     public function testRenderWritesTheClassesAHandlerNames(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
+        $create = (new Semantics($release))->inspect('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

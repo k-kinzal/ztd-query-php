@@ -18,7 +18,7 @@ final class DefaultLiteralTest extends TestCase
 {
     public function testDeriveAttributeDerivesTheValue(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT DEFAULT -1)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT DEFAULT -1)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class DefaultLiteralTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT DEFAULT - 1)', (new Semantics())->analyze('CREATE TABLE t (a INT DEFAULT -1)')->toString());
+        self::assertSame('CREATE TABLE t (a INT DEFAULT - 1)', (new Semantics())->inspect('CREATE TABLE t (a INT DEFAULT -1)')->toString());
     }
 }

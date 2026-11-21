@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the labels of an enum type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TYPE mood AS ENUM ('sad', 'happy')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE TYPE mood AS ENUM ('sad', 'happy')");
  *     $operation->statement->labels[1]->value // => 'happy'
  */
 final class CreateEnum implements Statement

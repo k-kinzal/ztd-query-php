@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW FULL TRIGGERS IN shop WHERE `Table` = 'orders'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW FULL TRIGGERS IN shop WHERE `Table` = 'orders'");
  *     [$show->statement->full, $show->toString()] // => [true, "SHOW FULL TRIGGERS FROM shop WHERE `Table` = 'orders'"]
  */
 final class ShowTriggers implements Statement, Relation

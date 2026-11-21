@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading the operator of a disjunction
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a || b');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a || b');
  *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::Or
  */
 enum LogicalOperator: string

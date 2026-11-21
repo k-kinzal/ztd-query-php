@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading the parts of a revoke
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE GRANT OPTION FOR SELECT ON accounts FROM joe CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE GRANT OPTION FOR SELECT ON accounts FROM joe CASCADE');
  *     [$operation->statement->grantOptionOnly, $operation->statement->behavior?->value] // => [true, 'CASCADE']
  */
 final class Revoke implements Statement

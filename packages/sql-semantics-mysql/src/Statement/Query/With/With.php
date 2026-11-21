@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
  *
  * @visibility public
  * @example Reading a recursive WITH clause
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c');
  *     [$query->statement->with->recursive, count($query->statement->with->tables)] // => [true, 1]
  * @example Refusing a WITH clause without tables
  *     new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

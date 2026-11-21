@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Writing END as COMMIT
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('END TRANSACTION')->toString() // => 'COMMIT'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('END TRANSACTION')->toString() // => 'COMMIT'
  */
 final class Commit implements Statement
 {

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  *
  * @visibility public
  * @example Reading a table constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b, UNIQUE (a, b))');
  *     $create->statement->constraints[0]->items[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint // => true
  */
 interface TableConstraint extends Node

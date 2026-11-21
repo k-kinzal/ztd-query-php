@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Installing a language by name
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE LANGUAGE plperl');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OR REPLACE LANGUAGE plperl');
  *     [$operation->statement->ifNotExists(), $operation->statement->name->value] // => [true, 'plperl']
  */
 final class CreateLanguageExtension implements Statement

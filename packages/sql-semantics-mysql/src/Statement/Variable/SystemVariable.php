@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading a scoped system variable
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = @@GLOBAL.sort_buffer_size');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = @@GLOBAL.sort_buffer_size');
  *     [$query->statement->where->right->scope, $query->statement->where->right->name->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'sort_buffer_size']
  */
 final class SystemVariable implements Scalar

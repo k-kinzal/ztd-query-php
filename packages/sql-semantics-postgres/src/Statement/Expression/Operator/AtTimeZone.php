@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\PredicateTyping;
  *
  * @visibility public
  * @example Converting a timestamp with time zone
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '2024-01-01 00:00+00'::timestamptz AT TIME ZONE 'UTC'", [])->field(0)->type->descriptor->name() // => 'timestamp without time zone'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT '2024-01-01 00:00+00'::timestamptz AT TIME ZONE 'UTC'", [])->field(0)->type->descriptor->name() // => 'timestamp without time zone'
  */
 final class AtTimeZone implements Scalar
 {

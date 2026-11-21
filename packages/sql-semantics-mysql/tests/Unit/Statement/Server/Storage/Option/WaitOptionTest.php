@@ -16,7 +16,7 @@ final class WaitOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame('DROP LOGFILE GROUP g WAIT', (new Semantics())->analyze('drop logfile group g wait')->toString());
+        self::assertSame('DROP LOGFILE GROUP g WAIT', (new Semantics())->inspect('drop logfile group g wait')->toString());
     }
 
     public function testKeywordNamesTheOption(): void

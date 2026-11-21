@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\NotImplemented
  *
  * @visibility public
  * @example Reporting the predicate
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: UNIQUE predicate is not yet implemented.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: UNIQUE predicate is not yet implemented.
  */
 final class UniquePredicate implements Scalar
 {

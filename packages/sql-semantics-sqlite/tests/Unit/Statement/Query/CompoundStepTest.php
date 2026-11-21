@@ -20,7 +20,7 @@ final class CompoundStepTest extends TestCase
 {
     public function testRenderWritesTheOperatorBeforeTheArm(): void
     {
-        $query = (new Semantics())->analyze('select 1 union all select 2 except values (3)');
+        $query = (new Semantics())->inspect('select 1 union all select 2 except values (3)');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertSame(CompoundOperator::UnionAll, $query->statement->steps[0]->operator);
@@ -32,7 +32,7 @@ final class CompoundStepTest extends TestCase
 
     public function testRenderWritesIntersect(): void
     {
-        $query = (new Semantics())->analyze('SELECT 1 INTERSECT SELECT 1');
+        $query = (new Semantics())->inspect('SELECT 1 INTERSECT SELECT 1');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         self::assertSame(CompoundOperator::Intersect, $query->statement->steps[0]->operator);

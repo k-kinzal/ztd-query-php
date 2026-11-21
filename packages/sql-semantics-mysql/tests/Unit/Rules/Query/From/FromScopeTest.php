@@ -36,8 +36,8 @@ final class FromScopeTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT x.a FROM t AS x', [$t]);
-        $wrong = $semantics->inspect('SELECT t.a FROM t AS x', [$t]);
+        $operation = $semantics->diagnose('SELECT x.a FROM t AS x', [$t]);
+        $wrong = $semantics->diagnose('SELECT t.a FROM t AS x', [$t]);
 
         self::assertSame($t->columns[0], $operation->field('a')->column());
         self::assertInstanceOf(MissingColumn::class, $wrong->facts->diagnostics[0]);
@@ -45,7 +45,7 @@ final class FromScopeTest extends TestCase
 
     public function testEnterReportsARowAsTheJoinCondition(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 FROM t JOIN u ON (1, 2)');
+        $operation = (new Semantics())->diagnose('SELECT 1 FROM t JOIN u ON (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -61,7 +61,7 @@ final class FromScopeTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT 1 FROM t LEFT JOIN u ON u.c = 1', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT 1 FROM t LEFT JOIN u ON u.c = 1', [$t, $u]);
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the attribute a word names
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe CREATEDB');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE joe CREATEDB');
  *     $operation->statement->options[0]->flag() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleFlag::CreateDb
  */
 final class RoleAttribute implements RoleOption

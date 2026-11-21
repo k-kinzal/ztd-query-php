@@ -38,10 +38,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  *
  * @visibility public
  * @example Creating a schema for a role
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA IF NOT EXISTS AUTHORIZATION joe');
  *     [$operation->statement->name, $operation->statement->authorization?->name?->value] // => [null, 'joe']
  * @example Declaring a table in the new schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SCHEMA AUTHORIZATION joe CREATE TABLE t (a int4)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SCHEMA AUTHORIZATION joe CREATE TABLE t (a int4)');
  *     $operation->declarations()[0]->name->schema?->value // => 'joe'
  */
 final class CreateSchema implements Statement

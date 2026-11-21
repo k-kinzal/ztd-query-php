@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
  *
  * @visibility public
  * @example Reading a join
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM t LEFT JOIN u USING (a)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 FROM t LEFT JOIN u USING (a)');
  *     [$query->statement->from->operator, $query->statement->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
  * @example Refusing a left join without a condition
  *     $t = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')));

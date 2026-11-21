@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Setting the password of another account
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("set password for app = 'pw' retain current password")->toString() // => "SET PASSWORD FOR app = 'pw' RETAIN CURRENT PASSWORD"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("set password for app = 'pw' retain current password")->toString() // => "SET PASSWORD FOR app = 'pw' RETAIN CURRENT PASSWORD"
  */
 final class SetPassword implements Statement
 {

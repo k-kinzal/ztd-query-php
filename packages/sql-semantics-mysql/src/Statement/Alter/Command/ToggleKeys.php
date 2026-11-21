@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  *
  * @visibility public
  * @example Stopping index updates
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DISABLE KEYS')->statement->commands[0]->enable // => false
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t DISABLE KEYS')->statement->commands[0]->enable // => false
  */
 final class ToggleKeys implements AlterCommand
 {

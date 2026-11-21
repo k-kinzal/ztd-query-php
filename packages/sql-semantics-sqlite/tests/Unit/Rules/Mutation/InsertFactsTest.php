@@ -39,9 +39,9 @@ final class InsertFactsTest extends TestCase
     public function testDeriveCountsTheSourceColumnsAgainstTheTarget(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $rows = $semantics->inspect('INSERT INTO t VALUES (1, 2)', [$t])->statement;
-        $listed = $semantics->inspect('INSERT INTO t (a) VALUES (1, 2)', [$t])->statement;
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $rows = $semantics->diagnose('INSERT INTO t VALUES (1, 2)', [$t])->statement;
+        $listed = $semantics->diagnose('INSERT INTO t (a) VALUES (1, 2)', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
         $facts = new InsertFacts();
 
@@ -64,12 +64,12 @@ final class InsertFactsTest extends TestCase
     public function testDeriveCountsTheColumnsThatAreNotGeneratedWhenNoListIsWritten(string $sql, int $actual, string $message): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
-        $operation = $semantics->inspect($sql, [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
+        $operation = $semantics->diagnose($sql, [$t]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
-        self::assertSame([], $semantics->inspect('INSERT INTO t VALUES (1)', [$t])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('INSERT INTO t VALUES (1)', [$t])->facts->diagnostics);
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $operation->facts->diagnostics[0]);
         self::assertSame([ArityRule::InsertedValues, 1, $actual], [$operation->facts->diagnostics[0]->rule, $operation->facts->diagnostics[0]->expected, $operation->facts->diagnostics[0]->actual]);
@@ -82,9 +82,9 @@ final class InsertFactsTest extends TestCase
     public function testDeriveSkipsTheCountWhenEitherSideIsOpen(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $open = $semantics->inspect('INSERT INTO t SELECT * FROM u', [$t], );
-        $undeclared = $semantics->inspect('INSERT INTO u VALUES (1)', [$t], );
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $open = $semantics->diagnose('INSERT INTO t SELECT * FROM u', [$t], );
+        $undeclared = $semantics->diagnose('INSERT INTO u VALUES (1)', [$t], );
         $derivation = new Derivation($semantics->context([$t], false));
         $facts = new InsertFacts();
 
@@ -98,7 +98,7 @@ final class InsertFactsTest extends TestCase
     public function testDeriveLetsUpsertsSeeTheTargetAndExcludedInTheRightPlaces(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $into = new InsertInto(new MutationTarget(new QualifiedName(new Name('t'))), [new Name('a')]);
         $term = new ColumnUse(new Name('id'));
@@ -122,8 +122,8 @@ final class InsertFactsTest extends TestCase
     public function testDeriveBindsTheWithClauseAndReturnsTheTargetRow(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->inspect('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w', [$t])->statement;
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->diagnose('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
         $returning = new ResultColumn(new ColumnUse(new Name('b')));
 

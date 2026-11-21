@@ -18,7 +18,7 @@ final class CommentAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT COMMENT \'x\')');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT COMMENT \'x\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class CommentAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT COMMENT \'x\')', (new Semantics())->analyze('CREATE TABLE t (a INT COMMENT \'x\')')->toString());
+        self::assertSame('CREATE TABLE t (a INT COMMENT \'x\')', (new Semantics())->inspect('CREATE TABLE t (a INT COMMENT \'x\')')->toString());
     }
 }

@@ -86,10 +86,10 @@ function analyzeSelect(string $platform, array $input): SemanticsIR
     $semantics = new $class($input['release']);
     $declarations = [];
     foreach ($input['declarations'] as $ddl) {
-        $declarations[] = $semantics->analyze($ddl, []);
+        $declarations[] = $semantics->inspect($ddl, []);
     }
 
-    return $semantics->ir()->analyze($input['sql'], $declarations === [] ? null : $declarations);
+    return $semantics->analyze($input['sql'], $declarations === [] ? null : $declarations);
 }
 
 function observeSelect(array $input): array

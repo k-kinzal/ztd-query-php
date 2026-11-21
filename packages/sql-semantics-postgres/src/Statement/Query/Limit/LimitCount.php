@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading LIMIT ALL
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 LIMIT ALL');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 LIMIT ALL');
  *     $query->statement->options->limit->count->count // => null
  */
 final class LimitCount implements Node

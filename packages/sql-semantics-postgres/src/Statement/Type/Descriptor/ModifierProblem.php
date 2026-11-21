@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a precision the numeric type does not allow
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(0) '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Invalid type modifier for type numeric.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT numeric(0) '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Invalid type modifier for type numeric.
  */
 final class ModifierProblem implements Diagnostic
 {

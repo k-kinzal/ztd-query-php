@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Starting a transaction with BEGIN WORK
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('BEGIN WORK')->toString() // => 'BEGIN'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('BEGIN WORK')->toString() // => 'BEGIN'
  */
 final class Begin implements Statement
 {

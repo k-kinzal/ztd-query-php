@@ -16,6 +16,6 @@ final class AccountOptionTest extends TestCase
 {
     public function testRenderWritesTheNumberAndItsUnit(): void
     {
-        self::assertSame('CREATE USER u PASSWORD EXPIRE INTERVAL 90 DAY PASSWORD REUSE INTERVAL DEFAULT PASSWORD_LOCK_TIME UNBOUNDED FAILED_LOGIN_ATTEMPTS 3', (new Semantics())->analyze('create user u password expire interval 90 day password reuse interval default password_lock_time unbounded failed_login_attempts 3')->toString());
+        self::assertSame('CREATE USER u PASSWORD EXPIRE INTERVAL 90 DAY PASSWORD REUSE INTERVAL DEFAULT PASSWORD_LOCK_TIME UNBOUNDED FAILED_LOGIN_ATTEMPTS 3', (new Semantics())->inspect('create user u password expire interval 90 day password reuse interval default password_lock_time unbounded failed_login_attempts 3')->toString());
     }
 }

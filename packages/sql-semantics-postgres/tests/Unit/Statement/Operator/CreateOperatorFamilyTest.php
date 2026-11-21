@@ -16,13 +16,13 @@ final class CreateOperatorFamilyTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE OPERATOR FAMILY f USING btree', []);
+        $operation = (new Semantics())->inspect('CREATE OPERATOR FAMILY f USING btree', []);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheMethod(): void
     {
-        $operation = (new Semantics())->analyze('create operator family s.f using "Hash"');
+        $operation = (new Semantics())->inspect('create operator family s.f using "Hash"');
         self::assertSame('CREATE OPERATOR FAMILY s.f USING "Hash"', $operation->toString());
     }
 }

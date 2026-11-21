@@ -17,7 +17,7 @@ final class IndexCommentTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) COMMENT \'c\')');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, KEY (a) COMMENT \'c\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

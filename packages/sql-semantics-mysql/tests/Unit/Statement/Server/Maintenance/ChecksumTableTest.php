@@ -17,14 +17,14 @@ final class ChecksumTableTest extends TestCase
 {
     public function testRenderWritesTheMode(): void
     {
-        self::assertSame('CHECKSUM TABLE t, u QUICK', (new Semantics())->analyze('checksum table t, u quick')->toString());
+        self::assertSame('CHECKSUM TABLE t, u QUICK', (new Semantics())->inspect('checksum table t, u quick')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $operation = $semantics->analyze('CHECKSUM TABLE t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $operation = $semantics->inspect('CHECKSUM TABLE t', [$table]);
         self::assertInstanceOf(ChecksumTable::class, $operation->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);

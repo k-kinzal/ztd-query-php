@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
  *
  * @visibility public
  * @example Setting a component variable to ON
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("INSTALL COMPONENT 'file://c' SET c.v = ON");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("INSTALL COMPONENT 'file://c' SET c.v = ON");
  *     $install->statement->settings[0]->value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord // => true
  */
 final class OnWord implements Scalar

@@ -15,7 +15,7 @@ final class SequenceFlagTest extends TestCase
     public function testDeriveClauseHasNoOperand(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE SEQUENCE s CYCLE', []);
+        $statement = $semantics->diagnose('CREATE SEQUENCE s CYCLE', []);
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
@@ -23,7 +23,7 @@ final class SequenceFlagTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER SEQUENCE s NO CYCLE NO MAXVALUE RESTART LOGGED', []);
+        $statement = $semantics->diagnose('ALTER SEQUENCE s NO CYCLE NO MAXVALUE RESTART LOGGED', []);
         self::assertSame('ALTER SEQUENCE s NO CYCLE NO MAXVALUE RESTART LOGGED', $statement->toString());
     }
 }

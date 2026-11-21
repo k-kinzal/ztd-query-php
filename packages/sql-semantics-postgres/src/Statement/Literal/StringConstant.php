@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  *
  * @visibility public
  * @example Reading the value of an escape string
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT E'a\\tb'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT E'a\\tb'");
  *     $query->statement->targets[0]->expression->value->value // => "a\tb"
  * @example Rejecting a value the server cannot hold
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant("a\0b") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

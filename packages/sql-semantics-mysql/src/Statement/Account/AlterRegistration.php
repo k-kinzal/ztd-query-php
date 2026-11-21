@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Starting the registration of a device
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter user user() 2 factor initiate registration')->toString() // => 'ALTER USER USER() 2 FACTOR INITIATE REGISTRATION'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter user user() 2 factor initiate registration')->toString() // => 'ALTER USER USER() 2 FACTOR INITIATE REGISTRATION'
  */
 final class AlterRegistration implements Statement
 {

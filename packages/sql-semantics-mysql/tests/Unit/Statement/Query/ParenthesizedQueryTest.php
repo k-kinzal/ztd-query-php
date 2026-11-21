@@ -34,7 +34,7 @@ final class ParenthesizedQueryTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('(SELECT a FROM t)', [$t]);
+        $operation = $semantics->inspect('(SELECT a FROM t)', [$t]);
 
         self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->query);
@@ -52,7 +52,7 @@ final class ParenthesizedQueryTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('((SELECT a FROM t)) UNION SELECT c FROM u', [$t, $u]);
+        $operation = $semantics->inspect('((SELECT a FROM t)) UNION SELECT c FROM u', [$t, $u]);
 
         self::assertInstanceOf(SetOperation::class, $operation->statement);
         self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement->left);
@@ -62,6 +62,6 @@ final class ParenthesizedQueryTest extends TestCase
 
     public function testRenderWritesTheParentheses(): void
     {
-        self::assertSame('((SELECT 1)) UNION SELECT 2', (new Semantics())->analyze('((select 1)) union select 2')->toString());
+        self::assertSame('((SELECT 1)) UNION SELECT 2', (new Semantics())->inspect('((select 1)) union select 2')->toString());
     }
 }

@@ -21,7 +21,7 @@ final class NullLiteralTest extends TestCase
 {
     public function testDeriveScalarAnswersTheNullOnlyTypeThatIsNullable(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = NULL');
+        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = NULL');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -35,7 +35,7 @@ final class NullLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        $operation = (new Semantics())->analyze('select null');
+        $operation = (new Semantics())->inspect('select null');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];

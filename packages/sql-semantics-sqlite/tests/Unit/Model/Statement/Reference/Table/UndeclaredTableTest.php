@@ -16,7 +16,7 @@ final class UndeclaredTableTest extends TestCase
 {
     public function testMissingNamesTheRelationAnOpenContextDoesNotDeclare(): void
     {
-        $query = (new Semantics())->analyze('SELECT a FROM s.t');
+        $query = (new Semantics())->inspect('SELECT a FROM s.t');
         $fact = $query->facts->relation($query->singleNamedInput());
 
         self::assertInstanceOf(UndeclaredTable::class, $fact->table);

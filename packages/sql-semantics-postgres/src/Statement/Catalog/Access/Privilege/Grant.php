@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading the parts of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT ALL PRIVILEGES ON accounts TO GROUP staff WITH GRANT OPTION');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT ALL PRIVILEGES ON accounts TO GROUP staff WITH GRANT OPTION');
  *     [$operation->statement->privileges, $operation->statement->grantOption, $operation->toString()] // => [[], true, 'GRANT ALL ON TABLE accounts TO staff WITH GRANT OPTION']
  */
 final class Grant implements Statement

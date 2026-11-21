@@ -19,8 +19,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading the generated column written by an INSERT
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))');
- *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations()) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The value specified for generated column 'g' in table 't' is not allowed.
+ *     $table = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))');
+ *     $semantics->inspect('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations()) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The value specified for generated column 'g' in table 't' is not allowed.
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

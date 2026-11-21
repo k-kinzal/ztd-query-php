@@ -34,10 +34,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading a comparison
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t WHERE a >= 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT a FROM t WHERE a >= 1');
  *     [$query->statement->where->operator->name->value, $query->statement->where->right->value->digits] // => ['>=', '1']
  * @example Reading the type of an arithmetic operation
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 + 2.5')->field(0)->type->descriptor->name() // => 'numeric'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 + 2.5')->field(0)->type->descriptor->name() // => 'numeric'
  * @example Rejecting an operand that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));

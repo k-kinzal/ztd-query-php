@@ -30,7 +30,7 @@ final class RowAssignmentTest extends TestCase
         $semantics = new Semantics();
         $assignment = new RowAssignment([new Name('a'), new Name('b')], new RowExpression([new IntegerLiteral('1'), new TextLiteral('x')]));
         $built = new Operation($semantics->context(), new Update(new MutationTarget(new QualifiedName(new Name('t'))), [$assignment]));
-        $query = $semantics->inspect("update t set (a, b) = (1, 'x'), (a) = (2)");
+        $query = $semantics->diagnose("update t set (a, b) = (1, 'x'), (a) = (2)");
 
         self::assertSame("UPDATE t SET (a, b) = (1, 'x')", $built->toString());
         self::assertSame("UPDATE t SET (a, b) = (1, 'x'), (a) = (2)", $query->toString());
@@ -43,11 +43,11 @@ final class RowAssignmentTest extends TestCase
     public function testColumnsMustMatchTheWidthOfTheValue(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $wide = $semantics->inspect('UPDATE t SET (a, b) = (1, 2, 3)', [$t]);
-        $narrow = $semantics->inspect('UPDATE t SET (a) = (1, 2)', [$t]);
-        $exact = $semantics->inspect('UPDATE t SET (a, b) = (1, 2)', [$t]);
-        $missing = $semantics->inspect('UPDATE t SET (a, zz) = (1, 2)', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $wide = $semantics->diagnose('UPDATE t SET (a, b) = (1, 2, 3)', [$t]);
+        $narrow = $semantics->diagnose('UPDATE t SET (a) = (1, 2)', [$t]);
+        $exact = $semantics->diagnose('UPDATE t SET (a, b) = (1, 2)', [$t]);
+        $missing = $semantics->diagnose('UPDATE t SET (a, zz) = (1, 2)', [$t]);
 
         self::assertInstanceOf(ArityMismatch::class, $wide->facts->diagnostics[0]);
         self::assertSame(ArityRule::RowAssignment, $wide->facts->diagnostics[0]->rule);

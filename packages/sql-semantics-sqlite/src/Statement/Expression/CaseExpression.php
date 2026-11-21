@@ -28,7 +28,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
  *
  * @visibility public
  * @example Reading the type of a CASE
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t");
  *     [count($query->field(0)->type->alternatives), $query->field(0)->nullability] // => [2, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  * @example Refusing an expression without branches
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression(null, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

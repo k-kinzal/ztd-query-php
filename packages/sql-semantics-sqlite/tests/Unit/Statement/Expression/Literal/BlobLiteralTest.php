@@ -27,7 +27,7 @@ final class BlobLiteralTest extends TestCase
 
     public function testDeriveScalarGivesBlob(): void
     {
-        $operation = (new Semantics())->analyze("SELECT x'0aff'", []);
+        $operation = (new Semantics())->inspect("SELECT x'0aff'", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -43,7 +43,7 @@ final class BlobLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsInUpperCase(): void
     {
-        self::assertSame('SELECT x\'0AFF\' AS c1, x\'\' AS c2', (new Semantics())->analyze('select X\'0aFf\' AS c1, x\'\' AS c2')->toString());
+        self::assertSame('SELECT x\'0AFF\' AS c1, x\'\' AS c2', (new Semantics())->inspect('select X\'0aFf\' AS c1, x\'\' AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltBlob(): void

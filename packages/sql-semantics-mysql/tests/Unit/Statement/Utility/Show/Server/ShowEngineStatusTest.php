@@ -16,13 +16,13 @@ final class ShowEngineStatusTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW ENGINE ALL STATUS');
+        $show = (new Semantics())->inspect('SHOW ENGINE ALL STATUS');
         self::assertInstanceOf(ShowEngineStatus::class, $show->statement);
         self::assertSame('Type', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW ENGINE ALL STATUS', (new Semantics())->analyze('SHOW ENGINE ALL STATUS')->toString());
+        self::assertSame('SHOW ENGINE ALL STATUS', (new Semantics())->inspect('SHOW ENGINE ALL STATUS')->toString());
     }
 }

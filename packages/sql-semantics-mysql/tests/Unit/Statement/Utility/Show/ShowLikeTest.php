@@ -16,6 +16,6 @@ final class ShowLikeTest extends TestCase
 {
     public function testRenderWritesThePattern(): void
     {
-        self::assertSame("SHOW COLLATION LIKE 'a\\\\%'", (new Semantics())->analyze("SHOW COLLATION LIKE 'a\\\\%'")->toString());
+        self::assertSame("SHOW COLLATION LIKE 'a\\\\%'", (new Semantics())->inspect("SHOW COLLATION LIKE 'a\\\\%'")->toString());
     }
 }

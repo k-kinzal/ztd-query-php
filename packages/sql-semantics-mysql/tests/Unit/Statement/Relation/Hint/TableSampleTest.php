@@ -23,13 +23,13 @@ final class TableSampleTest extends TestCase
     {
         $semantics = new Semantics('mysql-9.1.0');
 
-        self::assertSame('SELECT a FROM t x TABLESAMPLE SYSTEM (@p)', $semantics->analyze('select a from t x tablesample system (@p)')->toString());
-        self::assertSame('SELECT a FROM t TABLESAMPLE BERNOULLI (?)', $semantics->analyze('select a from t tablesample bernoulli (?)')->toString());
+        self::assertSame('SELECT a FROM t x TABLESAMPLE SYSTEM (@p)', $semantics->inspect('select a from t x tablesample system (@p)')->toString());
+        self::assertSame('SELECT a FROM t TABLESAMPLE BERNOULLI (?)', $semantics->inspect('select a from t tablesample bernoulli (?)')->toString());
     }
 
     public function testThePercentageIsDerivedWithoutColumns(): void
     {
-        $operation = (new Semantics('mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
+        $operation = (new Semantics('mysql-9.1.0'))->inspect('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableReference::class, $operation->statement->from);

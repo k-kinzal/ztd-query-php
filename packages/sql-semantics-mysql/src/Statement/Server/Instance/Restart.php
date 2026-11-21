@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('restart')->toString() // => 'RESTART'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('restart')->toString() // => 'RESTART'
  */
 final class Restart implements Statement
 {

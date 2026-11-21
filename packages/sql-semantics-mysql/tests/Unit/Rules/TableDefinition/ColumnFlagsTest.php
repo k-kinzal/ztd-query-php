@@ -19,7 +19,7 @@ final class ColumnFlagsTest extends TestCase
 {
     public function testFlagsAppliesTheAttributesInOrder(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t (a INT PRIMARY KEY NULL)');
+        $create = (new Semantics())->diagnose('CREATE TABLE t (a INT PRIMARY KEY NULL)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -30,7 +30,7 @@ final class ColumnFlagsTest extends TestCase
 
     public function testNullabilityFollowsTheFlags(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL NULL, b SERIAL, c TIMESTAMP, d INT AUTO_INCREMENT)');
+        $create = (new Semantics())->diagnose('CREATE TABLE t (a INT NOT NULL NULL, b SERIAL, c TIMESTAMP, d INT AUTO_INCREMENT)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $flags = new ColumnFlags();
@@ -52,7 +52,7 @@ final class ColumnFlagsTest extends TestCase
 
     public function testInvisibleFollowsTheLastVisibilityAttribute(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t (a INT INVISIBLE VISIBLE, b INT INVISIBLE)');
+        $create = (new Semantics())->diagnose('CREATE TABLE t (a INT INVISIBLE VISIBLE, b INT INVISIBLE)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 

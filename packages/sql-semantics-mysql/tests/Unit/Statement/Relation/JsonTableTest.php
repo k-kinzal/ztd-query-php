@@ -21,7 +21,7 @@ final class JsonTableTest extends TestCase
 {
     public function testDeriveRelationAnswersTheColumnsOfTheDefinitions(): void
     {
-        $operation = (new Semantics())->inspect("SELECT a, n FROM JSON_TABLE('[1]', '$[*]' COLUMNS (n FOR ORDINALITY, a INT PATH '$')) AS j", []);
+        $operation = (new Semantics())->diagnose("SELECT a, n FROM JSON_TABLE('[1]', '$[*]' COLUMNS (n FOR ORDINALITY, a INT PATH '$')) AS j", []);
 
         self::assertSame(['a', 'n'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
         self::assertSame([], $operation->facts->diagnostics);
@@ -29,7 +29,7 @@ final class JsonTableTest extends TestCase
 
     public function testDeriveRelationReportsAMissingAlias(): void
     {
-        $operation = (new Semantics())->inspect("SELECT 1 FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$'))", []);
+        $operation = (new Semantics())->diagnose("SELECT 1 FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$'))", []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -38,7 +38,7 @@ final class JsonTableTest extends TestCase
 
     public function testRenderWritesTheTableFunction(): void
     {
-        self::assertSame("SELECT a FROM t, JSON_TABLE(t.d, '$' COLUMNS (a INT PATH '$')) j", (new Semantics())->inspect("select a from t, json_table(t.d, '$' columns (a int path '$')) j")->toString());
+        self::assertSame("SELECT a FROM t, JSON_TABLE(t.d, '$' COLUMNS (a INT PATH '$')) j", (new Semantics())->diagnose("select a from t, json_table(t.d, '$' columns (a int path '$')) j")->toString());
     }
 
     public function testATableWithoutColumnsIsRejected(): void

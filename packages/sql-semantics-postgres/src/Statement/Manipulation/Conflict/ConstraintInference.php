@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the constraint name
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT ON CONSTRAINT t_pkey DO NOTHING');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT ON CONSTRAINT t_pkey DO NOTHING');
  *     $insert->statement->conflict->target->constraint->value // => 't_pkey'
  */
 final class ConstraintInference implements Node

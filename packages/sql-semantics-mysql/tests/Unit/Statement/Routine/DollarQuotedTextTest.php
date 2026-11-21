@@ -22,7 +22,7 @@ final class DollarQuotedTextTest extends TestCase
 {
     public function testRenderKeepsTheTextBetweenTheDelimiters(): void
     {
-        $create = (new Semantics())->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
+        $create = (new Semantics())->inspect('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(ExternalBody::class, $statement->body);
@@ -53,7 +53,7 @@ final class DollarQuotedTextTest extends TestCase
     #[DataProvider('providerRenderWritesTheDelimiters')]
     public function testRenderWritesTheDelimiters(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedText(): void

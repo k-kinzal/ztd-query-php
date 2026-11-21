@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Declaring an implicit row identifier
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a TEXT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (a TEXT)')->declarations()[0];
  *     $table->implicit[0]->names[0]->value // => 'rowid'
  */
 final class ImplicitColumn

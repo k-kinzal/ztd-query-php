@@ -10,11 +10,11 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\AnalysisContext;
 use SqlSemantics\AnalysisException;
 use SqlSemantics\Analyzer;
+use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Operation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Semantics;
-use SqlSemantics\Query;
+use SqlSemantics\SemanticsIR;
 
 #[CoversClass(Semantics::class)]
 #[Medium]
@@ -23,30 +23,36 @@ final class SemanticsTest extends TestCase
     /**
      * @throws AnalysisException
      */
-    public function testAnalyzeReturnsTheDatabaseOperationThroughTheCommonInterface(): void
+    public function testAnalyzeReturnsTheCompleteValueThroughTheCommonInterface(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (id INTEGER)');
+        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
         $context = $semantics->context([$table]);
-        $analyze = static fn (Analyzer $analyzer): Query => $analyzer->analyze('select id from t', $context);
+        $analyze = static fn (Analyzer $analyzer): SemanticsIR => $analyzer->analyze('SELECT id, t.id FROM t', $context);
         $query = $analyze($semantics);
 
-        self::assertInstanceOf(Operation::class, $query);
-        self::assertSame('SELECT id FROM t', $query->toString());
-        self::assertSame($table->declarations()[0]->columns[0], $query->field('id')->column());
-        self::assertSame($context, $query->context);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertCount(1, $query->source?->columns ?? []);
+        self::assertEquals($query->columns[0]->expression, $query->columns[1]->expression);
     }
 
-    public function testIrPublishesACompleteProjection(): void
+    public function testAnalyzePublishesACompleteProjection(): void
     {
-        $ir = (new Semantics())->ir()->analyze('SELECT 42 AS answer');
+        $ir = (new Semantics())->analyze('SELECT 42 AS answer');
 
         self::assertSame('SELECT CAST(42 AS pg_catalog.int4) AS "answer"', $ir->toString());
     }
 
+    public function testAnalyzeRejectsAnOperationOutsideTheCompleteDomain(): void
+    {
+        $this->expectExceptionMessage('Complete PostgreSQL IR currently supports a single projection SELECT.');
+
+        (new Semantics())->analyze('CREATE TABLE t (id INTEGER)');
+    }
+
     public function testLeavesMissingInputsInAnOpenContextAsFacts(): void
     {
-        $query = (new Semantics())->analyze('SELECT id FROM t');
+        $query = (new Semantics())->inspect('SELECT id FROM t');
 
         $type = $query->field(0)->type;
         self::assertInstanceOf(Dependent::class, $type);
@@ -64,7 +70,7 @@ final class SemanticsTest extends TestCase
     public function testThrowsAnExceptionWithTheSemanticDiagnostics(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (id INTEGER)');
+        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
 
         try {
             $semantics->analyze('SELECT missing FROM t', [$table]);
@@ -78,7 +84,7 @@ final class SemanticsTest extends TestCase
 
     public function testKeepsWarningsOnTheQuery(): void
     {
-        $query = (new Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
+        $query = (new Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
 
         self::assertSame('operator attribute "colour" not recognized', $query->facts->diagnostics[0]->message());
     }
@@ -95,7 +101,7 @@ final class SemanticsTest extends TestCase
     {
         $this->expectException(SemanticException::class);
 
-        (new Semantics())->analyzeAll('CREATE TABLE t (id INTEGER); SELECT id FROM t', []);
+        (new Semantics())->analyzeAll('SELECT 1; SELECT id FROM t', []);
     }
 
     public function testProfileIsFixedForAnAnalyzer(): void
@@ -108,7 +114,7 @@ final class SemanticsTest extends TestCase
     public function testContextPreparesDeclarationsAndChecksPreparedContexts(): void
     {
         $semantics = new Semantics();
-        $declaration = $semantics->analyze('CREATE TABLE t (id INTEGER)');
+        $declaration = $semantics->inspect('CREATE TABLE t (id INTEGER)');
         $context = $semantics->context([$declaration]);
 
         self::assertSame($declaration->declarations(), $context->tables);
@@ -122,9 +128,9 @@ final class SemanticsTest extends TestCase
         self::assertSame(['SELECT 1;', ' SELECT 2;'], $semantics->split('SELECT 1; SELECT 2;'));
     }
 
-    public function testInspectRetainsDiagnosticsForStatementValidation(): void
+    public function testDiagnoseRetainsDiagnosticsForStatementValidation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t', []);
+        $operation = (new Semantics())->diagnose('SELECT * FROM t', []);
 
         self::assertSame('SELECT * FROM t', $operation->toString());
         self::assertNotEmpty($operation->facts->diagnostics);

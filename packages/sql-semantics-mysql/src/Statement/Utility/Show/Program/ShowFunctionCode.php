@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  *
  * @visibility public
  * @example Reading the statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW FUNCTION CODE shop.p') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW FUNCTION CODE shop.p') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
  */
 final class ShowFunctionCode implements Statement
 {

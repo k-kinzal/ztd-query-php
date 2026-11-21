@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the setting of ALTER SYSTEM
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SYSTEM SET wal_level = replica');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SYSTEM SET wal_level = replica');
  *     [$operation->statement->setting->parameter->text(), $operation->toString()] // => ['wal_level', 'ALTER SYSTEM SET wal_level TO replica']
  * @example Refusing a transaction-local setting
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystemSetting(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom(

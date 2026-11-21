@@ -21,7 +21,7 @@ final class TableCheckTest extends TestCase
 {
     public function testDeriveConstraintResolvesColumnsAndTheRowIdentifier(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, CHECK (a < rowid))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, CHECK (a < rowid))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -35,14 +35,14 @@ final class TableCheckTest extends TestCase
 
     public function testDeriveConstraintReportsANameThatIsNoColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, CHECK (zz > 0))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, CHECK (zz > 0))', []);
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
 
     public function testRenderKeepsTheIgnoredConflictResolution(): void
     {
-        $operation = (new Semantics())->inspect('create table t (a, check (a > 0) on conflict fail)');
+        $operation = (new Semantics())->diagnose('create table t (a, check (a > 0) on conflict fail)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

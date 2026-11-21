@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
  *
  * @visibility public
  * @example Reading the operator of a comparison
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a != 1');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a != 1');
  *     $query->statement->where->operator // => \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::NotEqual
  */
 enum ComparisonOperator: string

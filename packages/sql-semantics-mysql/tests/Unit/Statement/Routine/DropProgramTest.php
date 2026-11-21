@@ -24,8 +24,8 @@ final class DropProgramTest extends TestCase
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $drop = $semantics->analyze('DROP TRIGGER IF EXISTS shop.tr', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $drop = $semantics->inspect('DROP TRIGGER IF EXISTS shop.tr', [$table]);
 
         self::assertSame([], $drop->facts->diagnostics);
         self::assertSame([], $drop->facts->declarations);
@@ -46,7 +46,7 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerDeriveStatementReadsTheDroppedProgram')]
     public function testDeriveStatementReadsTheDroppedProgram(string $sql, ProgramKind $kind, bool $ifExists, ?string $schema, string $name): void
     {
-        $statement = (new Semantics())->analyze($sql)->statement;
+        $statement = (new Semantics())->inspect($sql)->statement;
         self::assertInstanceOf(DropProgram::class, $statement);
 
         self::assertSame($kind, $statement->kind);
@@ -70,7 +70,7 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerRenderWritesTheDrop')]
     public function testRenderWritesTheDrop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedDrop(): void

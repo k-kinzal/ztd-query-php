@@ -19,7 +19,7 @@ final class RoutineChecksTest extends TestCase
 {
     public function testOptionsReportsInvalidParallelModes(): void
     {
-        $operation = (new Semantics())->inspect('ALTER FUNCTION f() PARALLEL fast', []);
+        $operation = (new Semantics())->diagnose('ALTER FUNCTION f() PARALLEL fast', []);
         self::assertEquals([new RoutineProblem(RoutineProblemKind::ParallelLevel)], $operation->facts->diagnostics);
     }
 
@@ -29,9 +29,9 @@ final class RoutineChecksTest extends TestCase
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::MissingBody)], [new RoutineProblem(RoutineProblemKind::DuplicateBody)], [new RoutineProblem(RoutineProblemKind::InlineBodyLanguage)]],
             [
-                $semantics->inspect('CREATE PROCEDURE p() LANGUAGE sql')->facts->diagnostics,
-                $semantics->inspect("CREATE PROCEDURE p() AS 'x' BEGIN ATOMIC END")->facts->diagnostics,
-                $semantics->inspect('CREATE PROCEDURE p() LANGUAGE plpgsql BEGIN ATOMIC END')->facts->diagnostics,
+                $semantics->diagnose('CREATE PROCEDURE p() LANGUAGE sql')->facts->diagnostics,
+                $semantics->diagnose("CREATE PROCEDURE p() AS 'x' BEGIN ATOMIC END")->facts->diagnostics,
+                $semantics->diagnose('CREATE PROCEDURE p() LANGUAGE plpgsql BEGIN ATOMIC END')->facts->diagnostics,
             ],
         );
     }
@@ -41,7 +41,7 @@ final class RoutineChecksTest extends TestCase
         $semantics = new Semantics();
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::SingleDefinition, 'sql')], []],
-            [$semantics->inspect("CREATE FUNCTION f() RETURNS int4 LANGUAGE sql AS 'a', 'b'")->facts->diagnostics, $semantics->inspect("CREATE FUNCTION f() RETURNS int4 LANGUAGE C AS 'a', 'b'")->facts->diagnostics],
+            [$semantics->diagnose("CREATE FUNCTION f() RETURNS int4 LANGUAGE sql AS 'a', 'b'")->facts->diagnostics, $semantics->diagnose("CREATE FUNCTION f() RETURNS int4 LANGUAGE C AS 'a', 'b'")->facts->diagnostics],
         );
     }
 
@@ -56,17 +56,17 @@ final class RoutineChecksTest extends TestCase
                 [],
             ],
             [
-                $semantics->inspect("CREATE FUNCTION f(OUT a int4) RETURNS TABLE (b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
-                $semantics->inspect("CREATE FUNCTION f(OUT a int4 DEFAULT 1) LANGUAGE sql AS 'x'")->facts->diagnostics,
-                $semantics->inspect("CREATE PROCEDURE p(a int4 DEFAULT 1, OUT b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
-                $semantics->inspect("CREATE FUNCTION f(VARIADIC a int4[], OUT b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(OUT a int4) RETURNS TABLE (b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(OUT a int4 DEFAULT 1) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE PROCEDURE p(a int4 DEFAULT 1, OUT b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(VARIADIC a int4[], OUT b int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
             ],
         );
     }
 
     public function testParameterReportsAnInputAfterVariadic(): void
     {
-        $operation = (new Semantics())->inspect("CREATE FUNCTION f(VARIADIC a int4[], b int4) LANGUAGE sql AS 'x'");
+        $operation = (new Semantics())->diagnose("CREATE FUNCTION f(VARIADIC a int4[], b int4) LANGUAGE sql AS 'x'");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame([null, RoutineProblemKind::VariadicNotLast], [(new RoutineChecks())->parameter($statement, $statement->parameters->parameters[1], false, false), (new RoutineChecks())->parameter($statement, $statement->parameters->parameters[1], true, false)]);
@@ -78,9 +78,9 @@ final class RoutineChecksTest extends TestCase
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::DuplicateParameter, 'a')], [], [new RoutineProblem(RoutineProblemKind::OutputInTableFunction), new RoutineProblem(RoutineProblemKind::DuplicateParameter, 'a')]],
             [
-                $semantics->inspect("CREATE FUNCTION f(a int4, INOUT a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
-                $semantics->inspect("CREATE FUNCTION f(a int4, OUT a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
-                $semantics->inspect("CREATE FUNCTION f(OUT a int4) RETURNS TABLE (a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(a int4, INOUT a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(a int4, OUT a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
+                $semantics->diagnose("CREATE FUNCTION f(OUT a int4) RETURNS TABLE (a int4) LANGUAGE sql AS 'x'")->facts->diagnostics,
             ],
         );
     }

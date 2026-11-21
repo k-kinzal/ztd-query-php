@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Clearing the default roles of two accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set default role none to a, b')->toString() // => 'SET DEFAULT ROLE NONE TO a, b'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('set default role none to a, b')->toString() // => 'SET DEFAULT ROLE NONE TO a, b'
  */
 final class SetDefaultRole implements Statement
 {

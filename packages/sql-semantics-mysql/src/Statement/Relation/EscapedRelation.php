@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  *
  * @visibility public
  * @example Reading a 5.x ODBC escape
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }');
  *     $query->statement->from->word->value // => 'oj'
  */
 final class EscapedRelation implements Relation

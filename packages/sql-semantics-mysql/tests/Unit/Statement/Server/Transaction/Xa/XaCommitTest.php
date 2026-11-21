@@ -20,12 +20,12 @@ final class XaCommitTest extends TestCase
 {
     public function testRenderWritesOnePhase(): void
     {
-        self::assertSame("XA COMMIT 'g' ONE PHASE", (new Semantics())->analyze("xa commit 'g' one phase")->toString());
+        self::assertSame("XA COMMIT 'g' ONE PHASE", (new Semantics())->inspect("xa commit 'g' one phase")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA COMMIT 'g'");
+        $operation = (new Semantics())->inspect("XA COMMIT 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

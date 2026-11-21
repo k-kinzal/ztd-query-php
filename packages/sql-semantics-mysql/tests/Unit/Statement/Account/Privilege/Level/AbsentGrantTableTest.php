@@ -17,7 +17,7 @@ final class AbsentGrantTableTest extends TestCase
 {
     public function testGrantOfCreateAcceptsAMissingTable(): void
     {
-        $grant = (new Semantics())->analyze('GRANT CREATE, SELECT ON shop.t TO u', []);
+        $grant = (new Semantics())->inspect('GRANT CREATE, SELECT ON shop.t TO u', []);
 
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertInstanceOf(AbsentGrantTable::class, $grant->facts->relation($grant->statement->level)->table);

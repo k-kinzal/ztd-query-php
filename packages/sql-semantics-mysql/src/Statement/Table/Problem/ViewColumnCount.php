@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE VIEW v (a, b) AS SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: View's SELECT and view's field list have different column counts (2 and 1).
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE VIEW v (a, b) AS SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: View's SELECT and view's field list have different column counts (2 and 1).
  */
 final class ViewColumnCount implements Diagnostic
 {

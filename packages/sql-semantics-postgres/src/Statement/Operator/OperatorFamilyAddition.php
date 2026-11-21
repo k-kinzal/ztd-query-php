@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
  *
  * @visibility public
  * @example Counting the added items
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8)');
  *     count($operation->statement->items) // => 1
  */
 final class OperatorFamilyAddition implements Statement

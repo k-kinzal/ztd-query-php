@@ -35,7 +35,7 @@ final class RoutineCommentTest extends TestCase
     #[DataProvider('providerRenderWritesTheCommentText')]
     public function testRenderWritesTheCommentText(string $release, string $sql, string $expected, string $text): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Semantics($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;

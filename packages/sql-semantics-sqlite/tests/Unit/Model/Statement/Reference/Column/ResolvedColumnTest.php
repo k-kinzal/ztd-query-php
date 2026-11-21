@@ -24,8 +24,8 @@ final class ResolvedColumnTest extends TestCase
     public function testDeclarationReachesTheSuppliedColumnThroughTheOccurrence(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         $resolution = $query->field('a')->resolution;
 
@@ -38,7 +38,7 @@ final class ResolvedColumnTest extends TestCase
 
     public function testDeclarationIsNullForASlotOfADerivedQuery(): void
     {
-        $query = (new Semantics())->analyze('SELECT x FROM (SELECT 1 AS x)');
+        $query = (new Semantics())->inspect('SELECT x FROM (SELECT 1 AS x)');
 
         $resolution = $query->field('x')->resolution;
 

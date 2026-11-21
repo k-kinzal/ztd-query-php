@@ -17,7 +17,7 @@ final class ProcedureCallTest extends TestCase
 {
     public function testDeriveStatementDerivesTheArguments(): void
     {
-        $operation = (new Semantics())->analyze('CALL p(1, @x)');
+        $operation = (new Semantics())->inspect('CALL p(1, @x)');
         self::assertInstanceOf(ProcedureCall::class, $operation->statement);
 
         self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->arguments[1])->type);
@@ -26,7 +26,7 @@ final class ProcedureCallTest extends TestCase
 
     public function testRenderWritesParenthesesOnlyForArguments(): void
     {
-        self::assertSame('CALL p', (new Semantics())->analyze('call p()')->toString());
-        self::assertSame('CALL db.p(1)', (new Semantics('mysql-5.6.51'))->analyze('call db.p (1)')->toString());
+        self::assertSame('CALL p', (new Semantics())->inspect('call p()')->toString());
+        self::assertSame('CALL db.p(1)', (new Semantics('mysql-5.6.51'))->inspect('call db.p (1)')->toString());
     }
 }

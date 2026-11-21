@@ -17,14 +17,14 @@ final class RenameElementTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->analyze('ALTER TABLE t RENAME INDEX i TO j', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->inspect('ALTER TABLE t RENAME INDEX i TO j', [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheKind(): void
     {
-        self::assertSame('ALTER TABLE t RENAME INDEX i TO j', (new Semantics())->analyze('ALTER TABLE t RENAME KEY i TO j')->toString());
+        self::assertSame('ALTER TABLE t RENAME INDEX i TO j', (new Semantics())->inspect('ALTER TABLE t RENAME KEY i TO j')->toString());
     }
 }

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a row assignment
- *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE t SET (a, b) = (1, 2)');
+ *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('UPDATE t SET (a, b) = (1, 2)');
  *     [count($update->statement->assignments[0]->columns), count($update->statement->assignments[0]->value->items)] // => [2, 2]
  */
 final class RowAssignment implements Node

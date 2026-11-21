@@ -28,11 +28,11 @@ final class ConflictRuleTest extends TestCase
     public function testResolutionLowersEachOfTheFiveAlgorithms(): void
     {
         $semantics = new Semantics();
-        $ignore = $semantics->analyze('INSERT OR IGNORE INTO t VALUES (1)')->statement;
-        $replace = $semantics->analyze('INSERT OR REPLACE INTO t VALUES (1)')->statement;
-        $rollback = $semantics->analyze('INSERT OR ROLLBACK INTO t VALUES (1)')->statement;
-        $abort = $semantics->analyze('INSERT OR ABORT INTO t VALUES (1)')->statement;
-        $fail = $semantics->analyze('INSERT OR FAIL INTO t VALUES (1)')->statement;
+        $ignore = $semantics->inspect('INSERT OR IGNORE INTO t VALUES (1)')->statement;
+        $replace = $semantics->inspect('INSERT OR REPLACE INTO t VALUES (1)')->statement;
+        $rollback = $semantics->inspect('INSERT OR ROLLBACK INTO t VALUES (1)')->statement;
+        $abort = $semantics->inspect('INSERT OR ABORT INTO t VALUES (1)')->statement;
+        $fail = $semantics->inspect('INSERT OR FAIL INTO t VALUES (1)')->statement;
 
         self::assertInstanceOf(InsertRows::class, $ignore);
         self::assertInstanceOf(InsertRows::class, $replace);
@@ -50,13 +50,13 @@ final class ConflictRuleTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('INSERT OR IGNORE INTO t VALUES (1)', $semantics->analyze('insert or ignore into t values (1)')->toString());
-        self::assertSame('UPDATE OR REPLACE t SET a = 1', $semantics->analyze('update or replace t set a = 1')->toString());
+        self::assertSame('INSERT OR IGNORE INTO t VALUES (1)', $semantics->inspect('insert or ignore into t values (1)')->toString());
+        self::assertSame('UPDATE OR REPLACE t SET a = 1', $semantics->inspect('update or replace t set a = 1')->toString());
     }
 
     public function testRaisedLowersTheAlgorithmsRaiseCanName(): void
     {
-        $trigger = (new Semantics())->analyze("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(FAIL, 'x'), RAISE(ROLLBACK, 'y'), RAISE(ABORT, 'z'); END")->statement;
+        $trigger = (new Semantics())->inspect("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(FAIL, 'x'), RAISE(ROLLBACK, 'y'), RAISE(ABORT, 'z'); END")->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         $select = $trigger->steps[0];
@@ -71,7 +71,7 @@ final class ConflictRuleTest extends TestCase
 
     public function testOnConflictLowersTheAlgorithmOfAConstraintAndNullWithoutTheClause(): void
     {
-        $table = (new Semantics())->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT IGNORE, b UNIQUE, c PRIMARY KEY ON CONFLICT ABORT)')->statement;
+        $table = (new Semantics())->inspect('CREATE TABLE t (a UNIQUE ON CONFLICT IGNORE, b UNIQUE, c PRIMARY KEY ON CONFLICT ABORT)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $table);
         $ignore = $table->columns[0]->constraints[0];
@@ -88,9 +88,9 @@ final class ConflictRuleTest extends TestCase
     public function testOrConflictLowersTheAlgorithmAfterOrAndNullWithoutTheClause(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze('UPDATE t SET a = 1')->statement;
-        $fail = $semantics->analyze('UPDATE OR FAIL t SET a = 1')->statement;
-        $insert = $semantics->analyze('INSERT INTO t VALUES (1)')->statement;
+        $plain = $semantics->inspect('UPDATE t SET a = 1')->statement;
+        $fail = $semantics->inspect('UPDATE OR FAIL t SET a = 1')->statement;
+        $insert = $semantics->inspect('INSERT INTO t VALUES (1)')->statement;
 
         self::assertInstanceOf(Update::class, $plain);
         self::assertInstanceOf(Update::class, $fail);

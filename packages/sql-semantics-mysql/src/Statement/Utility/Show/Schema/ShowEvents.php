@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW EVENTS FROM shop LIKE 'a%'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW EVENTS FROM shop LIKE 'a%'");
  *     [$show->statement->database?->value, $show->toString()] // => ['shop', "SHOW EVENTS FROM shop LIKE 'a%'"]
  */
 final class ShowEvents implements Statement, Relation

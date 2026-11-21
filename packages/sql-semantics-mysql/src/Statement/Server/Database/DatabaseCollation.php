@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  *
  * @visibility public
  * @example Reading the collation
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER DATABASE d COLLATE utf8mb4_bin');
  *     $alter->statement->options[0]->collation->name?->value // => 'utf8mb4_bin'
  */
 final class DatabaseCollation implements DatabaseOption

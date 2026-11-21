@@ -32,7 +32,7 @@ final class NestedRelationTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT t.a, c FROM (t, u)', [$t, $u]);
+        $operation = $semantics->inspect('SELECT t.a, c FROM (t, u)', [$t, $u]);
 
         self::assertSame($t->columns[0], $operation->field(0)->column());
         self::assertSame($u->columns[1], $operation->field(1)->column());
@@ -41,7 +41,7 @@ final class NestedRelationTest extends TestCase
 
     public function testRenderWritesTheParentheses(): void
     {
-        self::assertSame('SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u), v)', (new Semantics())->analyze('select 1 from ((t)), ((t join u)), ((t, u), v)')->toString());
-        self::assertSame('SELECT 1 FROM (t, u)', (new Semantics('mysql-5.7.44'))->analyze('select 1 from (t, u)')->toString());
+        self::assertSame('SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u), v)', (new Semantics())->inspect('select 1 from ((t)), ((t join u)), ((t, u), v)')->toString());
+        self::assertSame('SELECT 1 FROM (t, u)', (new Semantics('mysql-5.7.44'))->inspect('select 1 from (t, u)')->toString());
     }
 }

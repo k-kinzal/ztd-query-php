@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a conflict clause without target
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING');
  *     $insert->statement->conflict->target // => null
  */
 final class ConflictDoNothing implements Node

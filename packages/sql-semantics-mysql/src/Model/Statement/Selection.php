@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement;
  *
  * @visibility public
  * @example Reading the input relation of a selection
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t JOIN u');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t JOIN u');
  *     $query->statement instanceof \SqlSemantics\Platform\MySql\Model\Statement\Selection // => true
  */
 interface Selection extends Node

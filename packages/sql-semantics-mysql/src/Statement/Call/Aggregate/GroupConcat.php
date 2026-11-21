@@ -39,7 +39,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  *
  * @visibility public
  * @example Typing GROUP_CONCAT()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable]
  */
 final class GroupConcat implements SetFunction

@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
  *
  * @visibility public
  * @example Typing a binary cast
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE BINARY a = 'x'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE BINARY a = 'x'");
  *     $query->facts->scalar($query->statement->where->left)->type->descriptor->name() // => 'VARBINARY'
  */
 final class BinaryCast implements Scalar

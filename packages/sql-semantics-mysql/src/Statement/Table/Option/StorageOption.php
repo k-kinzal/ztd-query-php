@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  *
  * @visibility public
  * @example Reading a table option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) STORAGE DISK');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT) STORAGE DISK');
  *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\StorageOption // => true
  */
 final class StorageOption implements TableOption

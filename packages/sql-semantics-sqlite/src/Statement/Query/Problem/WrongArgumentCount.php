@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a call with too many arguments
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: wrong number of arguments to function abs()
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: wrong number of arguments to function abs()
  */
 final class WrongArgumentCount implements Diagnostic
 {

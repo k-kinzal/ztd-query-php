@@ -30,7 +30,7 @@ final class LiteralColumnTest extends TestCase
 
     public function testDeriveScalarResolvesTheColumnOfTheTableBeingDefined(): void
     {
-        $create = (new Semantics())->inspect("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
+        $create = (new Semantics())->diagnose("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
         $statement = $create->statement;
         $table = $create->declarations()[0];
 
@@ -52,9 +52,9 @@ final class LiteralColumnTest extends TestCase
     public function testDeriveScalarReportsANameThatIsNoColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a)');
-        $create = $semantics->inspect("CREATE TABLE u (a, UNIQUE ('zz'))");
-        $index = $semantics->inspect("CREATE INDEX i ON t ('zz')", [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a)');
+        $create = $semantics->diagnose("CREATE TABLE u (a, UNIQUE ('zz'))");
+        $index = $semantics->diagnose("CREATE INDEX i ON t ('zz')", [$table]);
 
         self::assertCount(1, $create->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $create->facts->diagnostics[0]);
@@ -65,10 +65,10 @@ final class LiteralColumnTest extends TestCase
     public function testRenderWritesTheLiteralAsWritten(): void
     {
         $semantics = new Semantics();
-        $index = $semantics->inspect("create index i on t ('a' collate nocase desc, (('b')))");
+        $index = $semantics->diagnose("create index i on t ('a' collate nocase desc, (('b')))");
 
         self::assertInstanceOf(CreateIndex::class, $index->statement);
         self::assertSame("CREATE INDEX i ON t ('a' COLLATE nocase DESC, (('b')))", $index->toString());
-        self::assertSame("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))", $semantics->inspect("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))")->toString());
+        self::assertSame("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))", $semantics->diagnose("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))")->toString());
     }
 }

@@ -18,6 +18,6 @@ final class DialectTest extends TestCase
     {
         self::assertSame('mysql', Dialect::MySql->database());
         self::assertSame('mysql', (new Semantics())->profile()->grammar->database());
-        self::assertSame('SELECT a FROM t', (new Semantics())->analyze('select a from t')->toString());
+        self::assertSame('SELECT a FROM t', (new Semantics())->inspect('select a from t')->toString());
     }
 }

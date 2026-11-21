@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the storage of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE DEFAULT)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text STORAGE DEFAULT)');
  *     $create->statement->definition->elements[0]->storage->method // => null
  */
 final class ColumnStorage implements Node

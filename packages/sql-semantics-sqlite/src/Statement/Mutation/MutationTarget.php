@@ -28,8 +28,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
  * @visibility public
  * @example Reading the table a statement writes to
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $delete = $semantics->analyze('DELETE FROM t AS x WHERE x.a = 1', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $delete = $semantics->inspect('DELETE FROM t AS x WHERE x.a = 1', [$table]);
  *     [$delete->statement->target->alias()->value, $delete->facts->relation($delete->statement->target)->table->table === $table->declarations()[0]] // => ['x', true]
  */
 final class MutationTarget implements NamedRelation

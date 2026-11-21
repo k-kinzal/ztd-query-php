@@ -50,7 +50,7 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testDeriveColumnDerivesTheTypeArgumentsAndTheConstraints(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a DECIMAL(10, 2) DEFAULT 0)', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a DECIMAL(10, 2) DEFAULT 0)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -63,8 +63,8 @@ final class ColumnDefinitionTest extends TestCase
     public function testDeriveColumnReportsADefaultNotConstantAndADefaultOnAGeneratedColumn(): void
     {
         $semantics = new Semantics();
-        $constant = $semantics->inspect('CREATE TABLE t (a DEFAULT (abs(?)))', []);
-        $generated = $semantics->inspect('CREATE TABLE t (a, b AS (a) DEFAULT 1, c DEFAULT word AS (a))', []);
+        $constant = $semantics->diagnose('CREATE TABLE t (a DEFAULT (abs(?)))', []);
+        $generated = $semantics->diagnose('CREATE TABLE t (a, b AS (a) DEFAULT 1, c DEFAULT word AS (a))', []);
 
         self::assertCount(1, $constant->facts->diagnostics);
         self::assertInstanceOf(DefaultNotConstant::class, $constant->facts->diagnostics[0]);
@@ -79,14 +79,14 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testRenderWritesTheNameTheTypeAndTheConstraintsInOrder(): void
     {
-        $operation = (new Semantics())->inspect('create table t ("my col" unsigned big int default 1 not null)');
+        $operation = (new Semantics())->diagnose('create table t ("my col" unsigned big int default 1 not null)');
 
         self::assertSame('CREATE TABLE t (`my col` unsigned big int DEFAULT 1 NOT NULL)', $operation->toString());
     }
 
     public function testRenderKeepsTheQuotingOfTypeWords(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a "big int", b [x] INT, c \'text\')');
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a "big int", b [x] INT, c \'text\')');
 
         self::assertSame('CREATE TABLE t (a "big int", b [x] INT, c \'text\')', $operation->toString());
     }

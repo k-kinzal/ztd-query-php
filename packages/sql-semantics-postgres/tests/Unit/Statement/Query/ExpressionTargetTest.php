@@ -21,7 +21,7 @@ final class ExpressionTargetTest extends TestCase
     public function testProjectResolvesAStringConstantToText(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT 'a', NULL");
+        $query = $semantics->inspect("SELECT 'a', NULL");
         self::assertSame(['text', 'text'], [($query->field(0)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $query->field(0)->type->descriptor->name() : null), ($query->field(1)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $query->field(1)->type->descriptor->name() : null)]);
     }
 
@@ -31,7 +31,7 @@ final class ExpressionTargetTest extends TestCase
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT u.* FROM t, u', [$t, $u]);
+        $query = $semantics->inspect('SELECT u.* FROM t, u', [$t, $u]);
         self::assertSame(['a', 'c'], [$query->field(0)->name?->value, $query->field(1)->name?->value]);
     }
 
@@ -41,14 +41,14 @@ final class ExpressionTargetTest extends TestCase
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT t.* AS r FROM t', [$t, $u]);
+        $query = $semantics->inspect('SELECT t.* AS r FROM t', [$t, $u]);
         self::assertCount(1, $query->fields() ?? []);
     }
 
     public function testRenderWritesTheAliasAfterAs(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze('SELECT 1 x');
+        $query = $semantics->inspect('SELECT 1 x');
         self::assertSame('SELECT 1 AS x', $query->toString());
     }
 }

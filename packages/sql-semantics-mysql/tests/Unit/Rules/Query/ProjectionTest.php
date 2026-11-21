@@ -42,7 +42,7 @@ final class ProjectionTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT *, b, t.* FROM t', [$t]);
+        $operation = $semantics->diagnose('SELECT *, b, t.* FROM t', [$t]);
 
         self::assertSame(['a', 'b', 'b', 'a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
         self::assertSame($t->columns[0], $operation->field(3)->column());
@@ -50,7 +50,7 @@ final class ProjectionTest extends TestCase
 
     public function testStarReportsAStarWithoutTables(): void
     {
-        $operation = (new Semantics())->inspect('SELECT *');
+        $operation = (new Semantics())->diagnose('SELECT *');
 
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
     }
@@ -66,7 +66,7 @@ final class ProjectionTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT u.* FROM t', [$t]);
+        $operation = $semantics->diagnose('SELECT u.* FROM t', [$t]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -74,7 +74,7 @@ final class ProjectionTest extends TestCase
 
     public function testExpandAppendsAnOpenStarForUndeclaredColumns(): void
     {
-        $operation = (new Semantics())->inspect('SELECT t.*, 1 FROM t');
+        $operation = (new Semantics())->diagnose('SELECT t.*, 1 FROM t');
 
         self::assertNull($operation->fields());
         self::assertNotNull($operation->shape());

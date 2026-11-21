@@ -52,7 +52,7 @@ final class TriggerOrderTest extends TestCase
     #[DataProvider('providerRenderWritesThePlacementAndTheOtherTrigger')]
     public function testRenderWritesThePlacementAndTheOtherTrigger(string $release, string $sql, string $expected, OrderPlacement $placement, string $other): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Semantics($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertNotNull($statement->order);

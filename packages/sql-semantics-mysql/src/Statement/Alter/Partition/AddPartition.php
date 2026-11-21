@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
  *
  * @visibility public
  * @example Adding two hash partitions
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD PARTITION PARTITIONS 2');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ADD PARTITION PARTITIONS 2');
  *     $alter->statement->commands[0]->count?->text // => '2'
  */
 final class AddPartition implements StandaloneCommand

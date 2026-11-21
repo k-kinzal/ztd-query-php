@@ -16,12 +16,12 @@ final class UninstallPluginTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('UNINSTALL PLUGIN p', (new Semantics('mysql-5.7.44'))->analyze('uninstall plugin p')->toString());
+        self::assertSame('UNINSTALL PLUGIN p', (new Semantics('mysql-5.7.44'))->inspect('uninstall plugin p')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('UNINSTALL PLUGIN p');
+        $operation = (new Semantics())->inspect('UNINSTALL PLUGIN p');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

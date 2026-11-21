@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Dropping a constraint if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE');
  *     [$operation->statement->ifExists, $operation->statement->behavior] // => [true, \SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Cascade]
  */
 final class DropDomainConstraint implements Statement

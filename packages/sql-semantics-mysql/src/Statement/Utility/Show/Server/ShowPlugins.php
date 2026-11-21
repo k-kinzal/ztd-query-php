@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PLUGINS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW PLUGINS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Name', 'SHOW PLUGINS']
  */
 final class ShowPlugins implements Statement

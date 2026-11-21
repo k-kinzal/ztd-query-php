@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a chained end of a transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END AND CHAIN');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('END AND CHAIN');
  *     [$operation->statement->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'END AND CHAIN']
  */
 final class Commit implements Statement

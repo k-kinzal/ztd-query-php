@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
  *
  * @visibility public
  * @example Reading the input relation of a query
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t');
  *     $operation->inputRelation() instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Relation // => true
  */
 interface Relation extends Node

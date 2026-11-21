@@ -38,8 +38,8 @@ final class SortScopesTest extends TestCase
     public function testDeriveLetsABareAliasWinOnlyWhenAskedTo(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
         $select = $query->statement;
         self::assertInstanceOf(Select::class, $select);
         $from = $select->from;
@@ -66,7 +66,7 @@ final class SortScopesTest extends TestCase
     public function testDeriveResolvesAnOrdinalAgainstTheProjectionAndReportsARowValue(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->analyze("SELECT 1 AS a, 'x' AS b");
+        $query = $semantics->inspect("SELECT 1 AS a, 'x' AS b");
         $select = $query->statement;
         $output = $query->facts->output;
         self::assertInstanceOf(Select::class, $select);

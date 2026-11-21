@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Purging the logs before a moment
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("purge binary logs before '2024-01-01 00:00:00'")->toString() // => "PURGE BINARY LOGS BEFORE '2024-01-01 00:00:00'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("purge binary logs before '2024-01-01 00:00:00'")->toString() // => "PURGE BINARY LOGS BEFORE '2024-01-01 00:00:00'"
  */
 final class PurgeLogsBefore implements Statement
 {

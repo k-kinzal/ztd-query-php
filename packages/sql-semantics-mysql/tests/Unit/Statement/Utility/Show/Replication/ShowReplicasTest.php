@@ -16,13 +16,13 @@ final class ShowReplicasTest extends TestCase
 {
     public function testDeriveStatementNamesTheColumnsAfterTheSpelling(): void
     {
-        $show = (new Semantics())->analyze('SHOW REPLICAS');
+        $show = (new Semantics())->inspect('SHOW REPLICAS');
         self::assertInstanceOf(ShowReplicas::class, $show->statement);
         self::assertSame('Replica_UUID', $show->field(4)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW REPLICAS', (new Semantics())->analyze('SHOW REPLICAS')->toString());
+        self::assertSame('SHOW REPLICAS', (new Semantics())->inspect('SHOW REPLICAS')->toString());
     }
 }

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading the normal form of a test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' IS NOT NFKC NORMALIZED");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT 'a' IS NOT NFKC NORMALIZED");
  *     [$query->field(0)->expression->form, $query->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\NormalForm::Nfkc, "SELECT 'a' IS NOT NFKC NORMALIZED"]
  */
 final class NormalizationTest implements Scalar

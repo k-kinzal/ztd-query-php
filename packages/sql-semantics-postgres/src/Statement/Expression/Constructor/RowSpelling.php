@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor;
  *
  * @visibility public
  * @example Reading the spelling of an implicit row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (1, 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT (1, 2)');
  *     $query->field(0)->expression->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling::Implicit
  */
 enum RowSpelling

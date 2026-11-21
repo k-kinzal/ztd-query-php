@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
  *
  * @visibility public
  * @example Reading an assignment
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = @n := 5');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = @n := 5');
  *     [$query->statement->where->right->target->name->value, $query->statement->where->right->value->text] // => ['n', '5']
  */
 final class VariableAssignment implements Scalar

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  *
  * @visibility public
  * @example Adding two columns
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD (b INT, c INT)');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ADD (b INT, c INT)');
  *     [count($alter->statement->commands[0]->elements), $alter->toString()] // => [2, 'ALTER TABLE t ADD COLUMN (b INT, c INT)']
  */
 final class AddColumns implements AlterCommand

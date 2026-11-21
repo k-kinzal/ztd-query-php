@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the returned expression
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
  *     $create->statement->body->value->name->value // => 'a'
  */
 final class ReturnStatement implements ProgramStatement

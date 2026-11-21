@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
  *
  * @visibility public
  * @example Reading a conflict target
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) WHERE a > 0 DO NOTHING');
+ *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT (a) WHERE a > 0 DO NOTHING');
  *     [count($insert->statement->upserts[0]->target->terms), $insert->statement->upserts[0]->target->where !== null] // => [1, true]
  */
 final class ConflictTarget implements Node

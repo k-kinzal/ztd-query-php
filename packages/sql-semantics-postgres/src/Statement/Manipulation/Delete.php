@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  *
  * @visibility public
  * @example Reading the parts of a DELETE
- *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *');
+ *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *');
  *     [$delete->statement->target->table->only, $delete->toString()] // => [true, 'DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *']
  */
 final class Delete implements Modification

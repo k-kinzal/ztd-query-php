@@ -16,7 +16,7 @@ final class NamedRelationTest extends TestCase
 {
     public function testNameAndAliasAreReadDecoded(): void
     {
-        $input = (new Semantics())->analyze('SELECT a FROM main."order items" AS "x y"')->singleNamedInput();
+        $input = (new Semantics())->inspect('SELECT a FROM main."order items" AS "x y"')->singleNamedInput();
 
         self::assertSame('order items', $input->name()->name->value);
         self::assertSame('main', $input->name()->schema?->value);
@@ -25,7 +25,7 @@ final class NamedRelationTest extends TestCase
 
     public function testAliasIsNullWhenTheOccurrenceIsNotRenamed(): void
     {
-        $input = (new Semantics())->analyze('SELECT a FROM t')->singleNamedInput();
+        $input = (new Semantics())->inspect('SELECT a FROM t')->singleNamedInput();
 
         self::assertNull($input->alias());
         self::assertNull($input->name()->schema);

@@ -24,7 +24,7 @@ final class PragmaTest extends TestCase
 {
     public function testDeriveStatementRecordsNoOutputAndNoDiagnostic(): void
     {
-        $operation = (new Semantics())->analyze('PRAGMA table_info(users)', []);
+        $operation = (new Semantics())->inspect('PRAGMA table_info(users)', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
@@ -33,7 +33,7 @@ final class PragmaTest extends TestCase
 
     public function testDeriveStatementDerivesTheNumberOfASignedValue(): void
     {
-        $operation = (new Semantics())->analyze('PRAGMA cache_size = -2000');
+        $operation = (new Semantics())->inspect('PRAGMA cache_size = -2000');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Pragma::class, $statement);
@@ -46,17 +46,17 @@ final class PragmaTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('PRAGMA foreign_keys', $semantics->analyze('pragma foreign_keys')->toString());
-        self::assertSame('PRAGMA main.cache_size = 4000', $semantics->analyze('PRAGMA main.cache_size(4000)')->toString());
-        self::assertSame('PRAGMA main.cache_size = 4000', $semantics->analyze('PRAGMA main.cache_size == 4000')->toString());
+        self::assertSame('PRAGMA foreign_keys', $semantics->inspect('pragma foreign_keys')->toString());
+        self::assertSame('PRAGMA main.cache_size = 4000', $semantics->inspect('PRAGMA main.cache_size(4000)')->toString());
+        self::assertSame('PRAGMA main.cache_size = 4000', $semantics->inspect('PRAGMA main.cache_size == 4000')->toString());
     }
 
     public function testRenderKeepsTheKindOfEachValue(): void
     {
         $semantics = new Semantics();
-        $keyword = $semantics->analyze('PRAGMA journal_mode = delete');
-        $name = $semantics->analyze("PRAGMA journal_mode = 'delete'");
-        $word = $semantics->analyze('PRAGMA journal_mode = wal');
+        $keyword = $semantics->inspect('PRAGMA journal_mode = delete');
+        $name = $semantics->inspect("PRAGMA journal_mode = 'delete'");
+        $word = $semantics->inspect('PRAGMA journal_mode = wal');
 
         self::assertInstanceOf(Pragma::class, $keyword->statement);
         self::assertInstanceOf(Pragma::class, $name->statement);

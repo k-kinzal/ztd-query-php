@@ -31,7 +31,7 @@ final class JoinUsingTest extends TestCase
         $semantics = new Semantics();
         $step = new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a'), new Name('b')]));
         $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
-        $query = $semantics->inspect('select * from t join u using(a,b)');
+        $query = $semantics->diagnose('select * from t join u using(a,b)');
 
         self::assertSame('SELECT * FROM t JOIN u USING (a, b)', $built->toString());
         self::assertSame('SELECT * FROM t JOIN u USING (a, b)', $query->toString());
@@ -44,9 +44,9 @@ final class JoinUsingTest extends TestCase
     public function testColumnsResolveToTheLeftSideUnlessQualified(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $query = $semantics->inspect('SELECT a, u.a FROM t LEFT JOIN u USING (a)', [$t, $u]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $query = $semantics->diagnose('SELECT a, u.a FROM t LEFT JOIN u USING (a)', [$t, $u]);
         $bare = $query->field(0)->resolution;
         $qualified = $query->field(1)->resolution;
 
@@ -66,10 +66,10 @@ final class JoinUsingTest extends TestCase
     public function testColumnsMustBePresentOnBothSidesWhenTheyAreKnown(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $closed = $semantics->inspect('SELECT * FROM t JOIN u USING (zz)', [$t, $u]);
-        $open = $semantics->inspect('SELECT * FROM t JOIN u USING (zz)');
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $closed = $semantics->diagnose('SELECT * FROM t JOIN u USING (zz)', [$t, $u]);
+        $open = $semantics->diagnose('SELECT * FROM t JOIN u USING (zz)');
 
         self::assertInstanceOf(MissingColumn::class, $closed->facts->diagnostics[0]);
         self::assertSame('zz', $closed->facts->diagnostics[0]->name->value);

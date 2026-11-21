@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading the option a revoke turns off
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REVOKE ADMIN OPTION FOR staff FROM joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REVOKE ADMIN OPTION FOR staff FROM joe');
  *     [$operation->statement->option?->value, $operation->statement->roles[0]->privilege()] // => ['admin', 'staff']
  */
 final class RevokeRole implements Statement

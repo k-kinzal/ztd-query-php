@@ -16,6 +16,6 @@ final class DatabaseRewriteTest extends TestCase
 {
     public function testRenderWritesThePair(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_REWRITE_DB = ((a, `b c`))', (new Semantics('mysql-5.7.44'))->analyze('change replication filter replicate_rewrite_db = ((a, `b c`))')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_REWRITE_DB = ((a, `b c`))', (new Semantics('mysql-5.7.44'))->inspect('change replication filter replicate_rewrite_db = ((a, `b c`))')->toString());
     }
 }

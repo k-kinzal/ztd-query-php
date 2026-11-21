@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding;
  *
  * @visibility public
  * @example Reading an insert action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
  *     [count($merge->statement->clauses[0]->action->values), $merge->toString()] // => [1, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)']
  * @example Refusing an insert without value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert([], null, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

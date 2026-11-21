@@ -19,8 +19,8 @@ final class SourceBindingTest extends TestCase
     public function testReferenceAndSourceKeepTheBoundColumnName(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE ir_fixture.t (A INTEGER, b INTEGER)');
-        $operation = $semantics->analyze('SELECT a FROM ir_fixture.t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE ir_fixture.t (A INTEGER, b INTEGER)');
+        $operation = $semantics->inspect('SELECT a FROM ir_fixture.t', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $result = $select->items[0];
@@ -33,7 +33,7 @@ final class SourceBindingTest extends TestCase
 
     public function testSourceIsOptional(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1');
+        $operation = (new Semantics())->inspect('SELECT 1');
 
         self::assertNull((new SourceBinding($operation, null))->source());
     }

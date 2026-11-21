@@ -18,7 +18,7 @@ final class AnalysisExceptionTest extends TestCase
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics())->inspect('SELEC 1');
+        (new Semantics())->diagnose('SELEC 1');
     }
 
     public function testSplitRejectsATailOutsideTheGrammar(): void
@@ -30,7 +30,7 @@ final class AnalysisExceptionTest extends TestCase
 
     public function testSemanticProblemsAreFactsAndNotRejections(): void
     {
-        $operation = (new Semantics())->inspect('SELECT b FROM t', []);
+        $operation = (new Semantics())->diagnose('SELECT b FROM t', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertSame('SELECT b FROM t', $operation->toString());

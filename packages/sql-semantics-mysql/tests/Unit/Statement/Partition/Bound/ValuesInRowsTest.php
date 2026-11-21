@@ -16,13 +16,13 @@ final class ValuesInRowsTest extends TestCase
 {
     public function testDeriveBoundDerivesEveryTuple(): void
     {
-        $alter = (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1, b), (c, 2)))');
+        $alter = (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1, b), (c, 2)))');
 
         self::assertCount(2, $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheTuples(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1, 2), (3, 4)))', (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1,2),(3,4)))')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1, 2), (3, 4)))', (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN ((1,2),(3,4)))')->toString());
     }
 }

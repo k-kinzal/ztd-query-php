@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Granting CREATE on a table that does not exist yet
- *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT CREATE ON t TO u', []);
+ *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT CREATE ON t TO u', []);
  *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable // => true
  */
 final class AbsentGrantTable implements TableResolution

@@ -34,7 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading a collation
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' COLLATE \"C\"");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT 'a' COLLATE \"C\"");
  *     [$query->field(0)->expression->collation->last()->value, $query->toString()] // => ['C', "SELECT 'a' COLLATE \"C\""]
  */
 final class Collation implements Scalar, OutputNaming

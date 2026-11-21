@@ -35,8 +35,8 @@ final class RenameTest extends TestCase
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         $semantics = new Semantics();
-        $missing = $semantics->inspect('ALTER TABLE ONLY t RENAME b TO c', [$table]);
-        $taken = $semantics->inspect('ALTER TABLE IF EXISTS t RENAME COLUMN a TO a', [$table]);
+        $missing = $semantics->diagnose('ALTER TABLE ONLY t RENAME b TO c', [$table]);
+        $taken = $semantics->diagnose('ALTER TABLE IF EXISTS t RENAME COLUMN a TO a', [$table]);
         self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t')))], $missing->facts->diagnostics);
         self::assertSame(['column "a" already exists'], [$taken->facts->diagnostics[0]->message()]);
     }
@@ -46,7 +46,7 @@ final class RenameTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['ALTER USER a RENAME TO b', 'ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE', 'ALTER TRIGGER g ON s.t RENAME TO h', 'ALTER LANGUAGE l RENAME TO m'],
-            [$semantics->inspect('ALTER USER a RENAME TO b')->toString(), $semantics->inspect('ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE')->toString(), $semantics->inspect('ALTER TRIGGER g ON s.t RENAME TO h')->toString(), $semantics->inspect('ALTER PROCEDURAL LANGUAGE l RENAME TO m')->toString()],
+            [$semantics->diagnose('ALTER USER a RENAME TO b')->toString(), $semantics->diagnose('ALTER TYPE t RENAME ATTRIBUTE a TO b CASCADE')->toString(), $semantics->diagnose('ALTER TRIGGER g ON s.t RENAME TO h')->toString(), $semantics->diagnose('ALTER PROCEDURAL LANGUAGE l RENAME TO m')->toString()],
         );
     }
 
@@ -89,9 +89,9 @@ final class RenameTest extends TestCase
     public function testDeriveStatementReportsAnotherKind(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
-        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
+        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
     }
 }

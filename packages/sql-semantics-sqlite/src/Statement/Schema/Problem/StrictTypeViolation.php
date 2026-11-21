@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a type a STRICT table does not allow
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a VARCHAR(10)) STRICT') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a of a STRICT table has the unknown datatype VARCHAR(10).
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a VARCHAR(10)) STRICT') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a of a STRICT table has the unknown datatype VARCHAR(10).
  */
 final class StrictTypeViolation implements Diagnostic
 {

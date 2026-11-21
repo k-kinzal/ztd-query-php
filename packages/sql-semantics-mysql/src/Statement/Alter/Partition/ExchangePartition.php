@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption;
  *
  * @visibility public
  * @example Swapping a partition with a table
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t EXCHANGE PARTITION p0 WITH TABLE u WITHOUT VALIDATION');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t EXCHANGE PARTITION p0 WITH TABLE u WITHOUT VALIDATION');
  *     [$alter->statement->commands[0]->table->name->value, $alter->statement->commands[0]->validation?->validate] // => ['u', false]
  */
 final class ExchangePartition implements StandaloneCommand

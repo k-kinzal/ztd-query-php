@@ -16,6 +16,7 @@ use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter\Standard;
 
 require $argv[1];
 $root = $argv[2];
@@ -59,7 +60,7 @@ if ($dialect === 'postgres') {
     $methods['Identifier'] = ['__construct', 'quoted'];
     $properties['TableSource']['only'] = ['bool'];
 }
-$internal = ['Analyzer', 'ExpressionLowering', 'SelectBounds', 'SelectSql', 'SourceBinding'];
+$internal = ['ExpressionLowering', 'SelectBounds', 'SelectLowering', 'SelectSql', 'SourceBinding'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
     $predicates = [...array_slice($operands, 0, 2), 'IntegerLiteral', 'NullLiteral', 'Parameter', 'Predicate\\Comparison', 'Predicate\\Logical'];
@@ -119,6 +120,27 @@ $traverser = new NodeTraverser(new NameResolver());
 $finder = new NodeFinder();
 try {
     $package = 'sql-semantics-' . $dialect;
+    $facadePath = $package . '/src/Semantics.php';
+    $patchedFacade = $overlay === '' ? '' : $overlay . '/' . $facadePath;
+    $facadeFile = is_file($patchedFacade) ? $patchedFacade : $root . '/packages/' . $facadePath;
+    $facadeAst = $traverser->traverse($parser->parse(file_get_contents($facadeFile)));
+    $facade = $finder->findFirstInstanceOf($facadeAst, Class_::class);
+    requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
+        && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
+    requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
+    requireShape($facade->getMethod('ir') === null, 'The façade must publish IR directly');
+    $printer = new Standard();
+    $routes = [
+        'analyze' => [$prefix . 'Select', 'return (new \\' . $prefix . 'SelectLowering())->lower($this->inspect($sql, $context));'],
+        'analyzeAll' => ['array', '$declarations = $this->context($context); $results = [];'
+            . 'foreach ($this->split($sql) as $statement) { $results[] = $this->analyze($statement, $declarations); } return $results;'],
+    ];
+    foreach ($routes as $name => [$return, $body]) {
+        $method = $facade->getMethod($name);
+        requireShape($method !== null && $method->isPublic() && !$method->isStatic()
+            && $method->returnType?->toString() === $return, "Publication signature differs in $name");
+        requireShape($printer->prettyPrint($method->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)), "Publication body differs in $name");
+    }
     $primitives = json_decode(file_get_contents(__DIR__ . '/value-primitives.json'), true, 512, JSON_THROW_ON_ERROR);
     foreach ($primitives['artifacts'][$dialect] as $path => $approved) {
         $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
@@ -159,14 +181,14 @@ try {
         if (in_array($short, $internal, true)) {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open IR collaborator $short");
             $interfaces = array_map(static fn ($interface) => $interface->toString(), $class->implements);
-            requireShape($interfaces === ($short === 'Analyzer' ? ['SqlSemantics\\IrAnalyzer'] : []), "Unexpected collaborator interface in $short");
-            if ($short === 'Analyzer') {
+            requireShape($interfaces === [], "Unexpected collaborator interface in $short");
+            if ($short === 'SelectLowering') {
                 $publicMethods = array_values(array_map(
                     static fn ($method) => $method->name->toString(),
                     array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
                 ));
-                requireShape($publicMethods === ['__construct', 'analyze'], 'Unexpected public analyzer entry point');
-                requireShape($class->getMethod('analyze')?->returnType?->toString() === $prefix . 'Select', 'Analyzer return role differs');
+                requireShape($publicMethods === ['lower'], 'Unexpected projection lowering entry point');
+                requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . 'Select', 'Projection lowering return role differs');
             }
         }
         if (in_array($short, $internal, true) && $short !== 'SelectBounds' && $short !== 'SelectSql') {

@@ -20,7 +20,7 @@ final class StartReplicaTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedConditions(): void
     {
-        $start = (new Semantics())->inspect("START REPLICA SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f' USER = 'u'");
+        $start = (new Semantics())->diagnose("START REPLICA SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f' USER = 'u'");
 
         self::assertEquals([new RefusedSetting(ReplicationError::UntilCondition), new RefusedSetting(ReplicationError::ApplierWithCredentials)], $start->facts->diagnostics);
     }
@@ -36,7 +36,7 @@ final class StartReplicaTest extends TestCase
     {
         self::assertSame(
             "START SLAVE IO_THREAD, SQL_THREAD UNTIL SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4 USER = 'u' PASSWORD = 'p' DEFAULT_AUTH = 'a' PLUGIN_DIR = 'd' FOR CHANNEL 'c'",
-            (new Semantics('mysql-8.0.44'))->inspect("start slave io_thread, sql_thread until master_log_file = 'f', master_log_pos = 4 user = 'u' password = 'p' default_auth = 'a' plugin_dir = 'd' for channel 'c'")->toString(),
+            (new Semantics('mysql-8.0.44'))->diagnose("start slave io_thread, sql_thread until master_log_file = 'f', master_log_pos = 4 user = 'u' password = 'p' default_auth = 'a' plugin_dir = 'd' for channel 'c'")->toString(),
         );
     }
 }

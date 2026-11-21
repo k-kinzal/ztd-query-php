@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  *
  * @visibility public
  * @example A check refers to the columns of its table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int CHECK (a > 0) NO INHERIT)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int CHECK (a > 0) NO INHERIT)');
  *     $check = $create->statement->definition->elements[0]->qualifiers[0];
  *     [$check->noInherit, $create->facts->scalar($check->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0]] // => [true, true]
  */

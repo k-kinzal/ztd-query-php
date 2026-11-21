@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Removing a database
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop schema if exists shop');
+ *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('drop schema if exists shop');
  *     [$drop->toString(), $drop->statement->ifExists] // => ['DROP DATABASE IF EXISTS shop', true]
  */
 final class DropDatabase implements Statement

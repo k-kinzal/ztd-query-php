@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a DEALLOCATE PREPARE
- *     $deallocate = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP PREPARE stmt');
+ *     $deallocate = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DROP PREPARE stmt');
  *     [$deallocate->statement->name->value, $deallocate->toString()] // => ['stmt', 'DEALLOCATE PREPARE stmt']
  */
 final class Deallocate implements Statement

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
  *
  * @visibility public
  * @example Reading a COPY of a query
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY (SELECT 1) TO '/tmp/x' CSV");
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("COPY (SELECT 1) TO '/tmp/x' CSV");
  *     [$copy->statement->query instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $copy->toString()] // => [true, "COPY (SELECT 1) TO '/tmp/x' CSV"]
  */
 final class CopyQuery implements Statement

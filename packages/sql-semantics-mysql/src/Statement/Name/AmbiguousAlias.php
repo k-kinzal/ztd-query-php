@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping every select list item an alias names
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column x is ambiguous.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column x is ambiguous.
  * @example Refusing a single candidate
  *     new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x'), []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

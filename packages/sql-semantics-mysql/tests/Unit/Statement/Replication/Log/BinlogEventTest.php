@@ -16,11 +16,11 @@ final class BinlogEventTest extends TestCase
 {
     public function testDeriveStatementRecordsNoDiagnostic(): void
     {
-        self::assertSame([], (new Semantics())->analyze("BINLOG 'AAAA'")->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect("BINLOG 'AAAA'")->facts->diagnostics);
     }
 
     public function testRenderWritesTheEvents(): void
     {
-        self::assertSame("BINLOG 'AAAA'", (new Semantics('mysql-5.6.51'))->analyze("binlog 'AAAA'")->toString());
+        self::assertSame("BINLOG 'AAAA'", (new Semantics('mysql-5.6.51'))->inspect("binlog 'AAAA'")->toString());
     }
 }

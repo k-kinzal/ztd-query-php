@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
  *
  * @visibility public
  * @example Reading the name of a named input
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t AS x');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t AS x');
  *     [$query->singleNamedInput()->name()->name->value, $query->singleNamedInput()->alias()?->value] // => ['t', 'x']
  */
 interface NamedRelation extends Relation

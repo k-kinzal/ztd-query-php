@@ -17,11 +17,11 @@ final class SetResourceGroupTest extends TestCase
 {
     public function testDeriveStatementReportsANonIntegerThread(): void
     {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics())->inspect('SET RESOURCE GROUP g FOR 1.5')->facts->diagnostics[0]);
+        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics())->diagnose('SET RESOURCE GROUP g FOR 1.5')->facts->diagnostics[0]);
     }
 
     public function testRenderWritesTheThreads(): void
     {
-        self::assertSame('SET RESOURCE GROUP g FOR 1, 2', (new Semantics())->inspect('set resource group g for 1, 2')->toString());
+        self::assertSame('SET RESOURCE GROUP g FOR 1, 2', (new Semantics())->diagnose('set resource group g for 1, 2')->toString());
     }
 }

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
  *
  * @visibility public
  * @example Reading an ANALYZE in the British spelling
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ANALYSE VERBOSE t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ANALYSE VERBOSE t');
  *     [$operation->statement->keyword, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Analyse, 'ANALYSE VERBOSE t']
  * @example Refusing a command keyword that is not a spelling of ANALYZE
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Analyze(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

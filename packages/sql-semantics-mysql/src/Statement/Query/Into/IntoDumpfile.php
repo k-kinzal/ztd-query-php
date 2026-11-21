@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the file name
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t INTO DUMPFILE '/tmp/a.bin'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t INTO DUMPFILE '/tmp/a.bin'");
  *     $query->statement->into->file->value // => '/tmp/a.bin'
  */
 final class IntoDumpfile implements IntoDestination

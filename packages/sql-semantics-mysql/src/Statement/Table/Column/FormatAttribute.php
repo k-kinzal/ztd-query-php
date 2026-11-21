@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnFormat;
  *
  * @visibility public
  * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT COLUMN_FORMAT FIXED)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT COLUMN_FORMAT FIXED)');
  *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\FormatAttribute // => true
  */
 final class FormatAttribute implements ColumnAttribute

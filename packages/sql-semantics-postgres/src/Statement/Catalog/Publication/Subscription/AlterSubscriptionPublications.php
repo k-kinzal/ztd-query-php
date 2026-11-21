@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Adding a publication
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s ADD PUBLICATION p3');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SUBSCRIPTION s ADD PUBLICATION p3');
  *     [$operation->statement->action, $operation->statement->publications[0]->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction::Add, 'p3']
  */
 final class AlterSubscriptionPublications implements Statement

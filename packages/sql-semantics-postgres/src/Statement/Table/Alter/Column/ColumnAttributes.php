@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Setting column options
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET (n_distinct = 100)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a SET (n_distinct = 100)');
  *     $statement->toString() // => 'ALTER TABLE t ALTER a SET (n_distinct = 100)'
  */
 final class ColumnAttributes implements AlterCommand

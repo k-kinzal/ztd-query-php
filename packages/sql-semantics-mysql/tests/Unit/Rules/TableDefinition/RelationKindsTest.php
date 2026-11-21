@@ -62,12 +62,12 @@ final class RelationKindsTest extends TestCase
     public function testRefusalsFollowLiveServers(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
         $context = [$table, $view];
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->facts->diagnostics));
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->inspect('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->inspect('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->facts->diagnostics);
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($d): string => $d->message(), $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', $context)->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($d): string => $d->message(), $semantics->diagnose('CREATE OR REPLACE VIEW t AS SELECT 1', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->diagnose('CREATE OR REPLACE VIEW v AS SELECT 1', $context)->facts->diagnostics);
     }
 }

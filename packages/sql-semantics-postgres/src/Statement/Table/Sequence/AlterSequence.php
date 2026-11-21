@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Changing a sequence
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SEQUENCE IF EXISTS s RESTART WITH 1 NO MAXVALUE');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SEQUENCE IF EXISTS s RESTART WITH 1 NO MAXVALUE');
  *     $statement->toString() // => 'ALTER SEQUENCE IF EXISTS s RESTART 1 NO MAXVALUE'
  */
 final class AlterSequence implements Statement, Relation

@@ -26,8 +26,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
  * @visibility public
  * @example Telling the text default from the truth default
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $text = $semantics->analyze('CREATE TABLE t (a DEFAULT unknown)')->statement->columns[0]->constraints[0];
- *     $truth = $semantics->analyze('CREATE TABLE t (a DEFAULT TRUE)')->statement->columns[0]->constraints[0];
+ *     $text = $semantics->inspect('CREATE TABLE t (a DEFAULT unknown)')->statement->columns[0]->constraints[0];
+ *     $truth = $semantics->inspect('CREATE TABLE t (a DEFAULT TRUE)')->statement->columns[0]->constraints[0];
  *     [$text->truth(), $text->word->name->value, $truth->truth()] // => [null, 'unknown', true]
  */
 final class DefaultWord implements ColumnConstraint

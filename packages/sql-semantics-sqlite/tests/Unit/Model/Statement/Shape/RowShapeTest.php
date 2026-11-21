@@ -47,9 +47,9 @@ final class RowShapeTest extends TestCase
     public function testCompleteOfAnAnalyzedStarOverDeclaredTables(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
 
-        $shape = $semantics->analyze('SELECT * FROM t', [$table])->shape();
+        $shape = $semantics->inspect('SELECT * FROM t', [$table])->shape();
 
         self::assertNotNull($shape);
         self::assertTrue($shape->complete());

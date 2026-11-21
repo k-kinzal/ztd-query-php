@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE SCHEMA IF NOT EXISTS shop');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW CREATE SCHEMA IF NOT EXISTS shop');
  *     [$show->field(1)->name?->value, $show->toString()] // => ['Create Database', 'SHOW CREATE DATABASE IF NOT EXISTS shop']
  */
 final class ShowCreateDatabase implements Statement

@@ -29,7 +29,7 @@ final class CollateTest extends TestCase
 {
     public function testAcceptsAPrefixOperandWhichBindsTighter(): void
     {
-        $statement = (new Semantics())->inspect('SELECT -1')->statement;
+        $statement = (new Semantics())->diagnose('SELECT -1')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -41,8 +41,8 @@ final class CollateTest extends TestCase
     public function testDeriveScalarKeepsTheTypeAndNullFactAndLeavesTheResolutionToTheOperand(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT a COLLATE NOCASE FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT a COLLATE NOCASE FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -63,8 +63,8 @@ final class CollateTest extends TestCase
     public function testDeriveScalarCollatesAPrefixExpression(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT -a COLLATE nocase AS c1 FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT -a COLLATE nocase AS c1 FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -76,7 +76,7 @@ final class CollateTest extends TestCase
 
     public function testDeriveScalarReportsACollatedRowValue(): void
     {
-        $operation = (new Semantics())->inspect('SELECT (1, 2) COLLATE nocase', []);
+        $operation = (new Semantics())->diagnose('SELECT (1, 2) COLLATE nocase', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -90,7 +90,7 @@ final class CollateTest extends TestCase
 
     public function testRenderWritesTheOperandAndTheCollationName(): void
     {
-        $operation = (new Semantics())->inspect('select a collate nocase AS c1, (a) collate "nocase" AS c2, b collate BINARY collate rtrim AS c3 from t');
+        $operation = (new Semantics())->diagnose('select a collate nocase AS c1, (a) collate "nocase" AS c2, b collate BINARY collate rtrim AS c3 from t');
 
         self::assertSame('SELECT a COLLATE nocase AS c1, (a) COLLATE nocase AS c2, b COLLATE BINARY COLLATE rtrim AS c3 FROM t', $operation->toString());
     }

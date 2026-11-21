@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the handler of a read
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ FIRST');
+ *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('HANDLER h READ FIRST');
  *     $read->statement->handler->name->value // => 'h'
  */
 final class OpenHandler implements Relation

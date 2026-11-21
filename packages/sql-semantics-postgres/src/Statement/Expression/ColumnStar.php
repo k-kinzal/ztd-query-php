@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading the relation of a star
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ROW(t.*) FROM t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ROW(t.*) FROM t');
  *     $query->toString() // => 'SELECT ROW (t.*) FROM t'
  */
 final class ColumnStar implements Scalar, OutputNaming

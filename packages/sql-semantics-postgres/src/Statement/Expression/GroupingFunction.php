@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading the arguments of GROUPING
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT GROUPING(1, 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT GROUPING(1, 2)');
  *     [count($query->field(0)->expression->arguments), $query->field(0)->name->value] // => [2, 'grouping']
  */
 final class GroupingFunction implements Scalar, OutputNaming

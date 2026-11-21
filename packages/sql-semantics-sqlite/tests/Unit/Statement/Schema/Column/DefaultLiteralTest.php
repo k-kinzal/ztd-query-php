@@ -22,7 +22,7 @@ final class DefaultLiteralTest extends TestCase
 {
     public function testDeriveConstraintDerivesTheLiteral(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a DEFAULT 5)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a DEFAULT 5)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -36,8 +36,8 @@ final class DefaultLiteralTest extends TestCase
     public function testRenderKeepsTheWrittenSign(): void
     {
         $semantics = new Semantics();
-        $negative = $semantics->analyze('create table t (a default -1.5)');
-        $positive = $semantics->analyze("create table t (a default +'x')");
+        $negative = $semantics->inspect('create table t (a default -1.5)');
+        $positive = $semantics->inspect("create table t (a default +'x')");
         $statement = $negative->statement;
         $other = $positive->statement;
 
@@ -53,7 +53,7 @@ final class DefaultLiteralTest extends TestCase
 
     public function testRenderWritesEveryKindOfLiteral(): void
     {
-        $operation = (new Semantics())->analyze("CREATE TABLE t (a DEFAULT NULL, b DEFAULT 'x', c DEFAULT x'0A', d DEFAULT CURRENT_TIMESTAMP)");
+        $operation = (new Semantics())->inspect("CREATE TABLE t (a DEFAULT NULL, b DEFAULT 'x', c DEFAULT x'0A', d DEFAULT CURRENT_TIMESTAMP)");
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

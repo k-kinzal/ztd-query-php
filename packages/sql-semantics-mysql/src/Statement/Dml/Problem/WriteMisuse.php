@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a multiple-table UPDATE with LIMIT
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('UPDATE t, u SET t.a = 1 LIMIT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect usage of UPDATE and LIMIT
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('UPDATE t, u SET t.a = 1 LIMIT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect usage of UPDATE and LIMIT
  */
 final class WriteMisuse implements Diagnostic
 {

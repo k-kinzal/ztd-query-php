@@ -17,11 +17,11 @@ final class RevokeRolesTest extends TestCase
 {
     public function testDeriveStatementReportsAPrivilegeInTheRoleList(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->inspect('REVOKE BACKUP_ADMIN (c) FROM u')->facts->diagnostics[0]);
+        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->diagnose('REVOKE BACKUP_ADMIN (c) FROM u')->facts->diagnostics[0]);
     }
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE IF EXISTS r1, r2 FROM u IGNORE UNKNOWN USER', (new Semantics())->inspect('revoke if exists r1, r2 from u ignore unknown user')->toString());
+        self::assertSame('REVOKE IF EXISTS r1, r2 FROM u IGNORE UNKNOWN USER', (new Semantics())->diagnose('revoke if exists r1, r2 from u ignore unknown user')->toString());
     }
 }

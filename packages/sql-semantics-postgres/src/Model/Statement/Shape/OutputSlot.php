@@ -22,8 +22,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the slot of a query field
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
+ *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 final class OutputSlot
 {

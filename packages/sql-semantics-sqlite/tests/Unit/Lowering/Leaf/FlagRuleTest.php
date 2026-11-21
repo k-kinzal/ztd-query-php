@@ -18,9 +18,9 @@ final class FlagRuleTest extends TestCase
     public function testTemporaryIsTrueForTempAndTemporaryAndFalseWithoutEither(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $temp = $semantics->analyze('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $temporary = $semantics->analyze('CREATE TEMPORARY TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $plain = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $temp = $semantics->inspect('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $temporary = $semantics->inspect('CREATE TEMPORARY TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $temp);
@@ -32,7 +32,7 @@ final class FlagRuleTest extends TestCase
 
     public function testTemporaryRendersAsTemp(): void
     {
-        $operation = (new Semantics())->analyze('create temporary trigger tr insert on t begin select 1; end');
+        $operation = (new Semantics())->inspect('create temporary trigger tr insert on t begin select 1; end');
 
         self::assertSame('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END', $operation->toString());
     }
@@ -40,13 +40,13 @@ final class FlagRuleTest extends TestCase
     public function testIfNotExistsIsTrueOnlyWhenTheClauseIsWritten(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $guarded = $semantics->analyze('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $plain = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $guarded = $semantics->inspect('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $guarded);
         self::assertFalse($plain->ifNotExists);
         self::assertTrue($guarded->ifNotExists);
-        self::assertSame('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END', $semantics->analyze('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->toString());
+        self::assertSame('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END', $semantics->inspect('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->toString());
     }
 }

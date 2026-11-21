@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
  *
  * @visibility public
  * @example Reading a named window
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 WINDOW w AS ()');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 WINDOW w AS ()');
  *     $query->statement->windows[0]->name->value // => 'w'
  */
 final class WindowDefinition implements Clause

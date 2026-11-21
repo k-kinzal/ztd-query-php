@@ -16,6 +16,6 @@ final class UserCommentTest extends TestCase
 {
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame('ALTER USER u ATTRIBUTE \'{"team": "ops"}\'', (new Semantics())->analyze('alter user u attribute \'{"team": "ops"}\'')->toString());
+        self::assertSame('ALTER USER u ATTRIBUTE \'{"team": "ops"}\'', (new Semantics())->inspect('alter user u attribute \'{"team": "ops"}\'')->toString());
     }
 }

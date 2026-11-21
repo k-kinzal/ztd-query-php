@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
  *
  * @visibility public
  * @example A distinctness test is never NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 IS DISTINCT FROM NULL')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 IS DISTINCT FROM NULL')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 final class DistinctTest implements Scalar
 {

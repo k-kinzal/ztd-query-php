@@ -16,13 +16,13 @@ final class AttributeChangeTest extends TestCase
 {
     public function testRenderKeepsNoneAndTheNameAlone(): void
     {
-        $operation = (new Semantics('pg-17.2'))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join, merges = true)');
+        $operation = (new Semantics('pg-17.2'))->inspect('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join, merges = true)');
         self::assertSame('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join, merges = TRUE)', $operation->toString());
     }
 
     public function testDeriveClauseDerivesTheValue(): void
     {
-        $operation = (new Semantics())->analyze('ALTER TYPE t SET (receive = r, send = NONE)');
+        $operation = (new Semantics())->inspect('ALTER TYPE t SET (receive = r, send = NONE)');
         self::assertSame([], $operation->facts->diagnostics);
     }
 }

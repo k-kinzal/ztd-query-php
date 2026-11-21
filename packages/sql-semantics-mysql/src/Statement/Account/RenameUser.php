@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
  *
  * @visibility public
  * @example Renaming two accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('rename user a to b, c to d')->toString() // => 'RENAME USER a TO b, c TO d'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('rename user a to b, c to d')->toString() // => 'RENAME USER a TO b, c TO d'
  */
 final class RenameUser implements Statement
 {

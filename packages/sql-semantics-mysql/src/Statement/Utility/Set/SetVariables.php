@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  *
  * @visibility public
  * @example Reading the scope an assignment inherits
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET GLOBAL a = 1, b = ON');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SET GLOBAL a = 1, b = ON');
  *     [$set->statement->scopeOf(1), $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, 'SET GLOBAL a = 1, b = ON']
  */
 final class SetVariables implements Statement

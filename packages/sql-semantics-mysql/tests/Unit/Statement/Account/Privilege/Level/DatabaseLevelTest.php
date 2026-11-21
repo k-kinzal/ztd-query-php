@@ -22,6 +22,6 @@ final class DatabaseLevelTest extends TestCase
 
     public function testRenderWritesTheDatabase(): void
     {
-        self::assertSame('GRANT SELECT ON `my db`.* TO u', (new Semantics())->analyze('grant select on `my db`.* to u')->toString());
+        self::assertSame('GRANT SELECT ON `my db`.* TO u', (new Semantics())->inspect('grant select on `my db`.* to u')->toString());
     }
 }

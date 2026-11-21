@@ -17,12 +17,12 @@ final class DropSpatialReferenceTest extends TestCase
 {
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 9', (new Semantics())->inspect('drop spatial reference system 9')->toString());
+        self::assertSame('DROP SPATIAL REFERENCE SYSTEM 9', (new Semantics())->diagnose('drop spatial reference system 9')->toString());
     }
 
     public function testDeriveStatementReportsIdentifierZero(): void
     {
-        $operation = (new Semantics())->inspect('DROP SPATIAL REFERENCE SYSTEM 0');
+        $operation = (new Semantics())->diagnose('DROP SPATIAL REFERENCE SYSTEM 0');
 
         self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
     }

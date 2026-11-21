@@ -26,7 +26,7 @@ final class OnceScheduleTest extends TestCase
 {
     public function testDeriveScheduleDerivesTheTime(): void
     {
-        $create = (new Semantics())->inspect('CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', []);
+        $create = (new Semantics())->diagnose('CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', []);
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(OnceSchedule::class, $statement->schedule);
@@ -41,15 +41,15 @@ final class OnceScheduleTest extends TestCase
     public function testDeriveScheduleReportsAColumnEvenWhenATableHasIt(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a DATETIME)');
-        $create = $semantics->inspect('CREATE EVENT e ON SCHEDULE AT a DO SELECT a FROM t', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a DATETIME)');
+        $create = $semantics->diagnose('CREATE EVENT e ON SCHEDULE AT a DO SELECT a FROM t', [$table]);
 
         self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveScheduleResolvesALocalVariableOfTheEnclosingProcedure(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE v DATETIME; ALTER EVENT e ON SCHEDULE AT v; END', []);
+        $create = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE v DATETIME; ALTER EVENT e ON SCHEDULE AT v; END', []);
 
         self::assertSame([], $create->facts->diagnostics);
     }
@@ -67,7 +67,7 @@ final class OnceScheduleTest extends TestCase
     #[DataProvider('providerRenderWritesAtAndTheTime')]
     public function testRenderWritesAtAndTheTime(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedSchedule(): void

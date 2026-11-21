@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the cursor an OPEN names
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() OPEN c') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Undefined CURSOR: c
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() OPEN c') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Undefined CURSOR: c
  */
 final class OpenCursor implements ProgramStatement
 {

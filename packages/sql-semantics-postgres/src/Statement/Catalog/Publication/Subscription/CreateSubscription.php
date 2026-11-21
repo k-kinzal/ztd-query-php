@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Reading the publications of a subscription
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE SUBSCRIPTION s CONNECTION 'host=a' PUBLICATION p1, p2 WITH (enabled = false)");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE SUBSCRIPTION s CONNECTION 'host=a' PUBLICATION p1, p2 WITH (enabled = false)");
  *     count($operation->statement->publications) // => 2
  */
 final class CreateSubscription implements Statement

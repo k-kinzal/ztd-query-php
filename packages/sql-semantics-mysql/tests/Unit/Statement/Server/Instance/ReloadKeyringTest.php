@@ -16,6 +16,6 @@ final class ReloadKeyringTest extends TestCase
 {
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER INSTANCE RELOAD KEYRING', (new Semantics())->analyze('alter instance reload keyring')->toString());
+        self::assertSame('ALTER INSTANCE RELOAD KEYRING', (new Semantics())->inspect('alter instance reload keyring')->toString());
     }
 }

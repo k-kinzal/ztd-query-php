@@ -16,11 +16,11 @@ final class ReorganizePartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics())->inspect('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics())->diagnose('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t REORGANIZE PARTITION', (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t REORGANIZE PARTITION')->toString());
+        self::assertSame('ALTER TABLE t REORGANIZE PARTITION', (new Semantics('mysql-5.6.51'))->diagnose('ALTER TABLE t REORGANIZE PARTITION')->toString());
     }
 }

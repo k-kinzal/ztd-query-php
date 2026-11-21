@@ -19,9 +19,9 @@ final class ConflictingTablesTest extends TestCase
     public function testMessageAndCandidatesOfANameTwoDeclarationsClaim(): void
     {
         $semantics = new Semantics();
-        $first = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $second = $semantics->inspect('CREATE TABLE t (b TEXT)');
-        $query = $semantics->inspect('SELECT 1 FROM t', [$first, $second]);
+        $first = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $second = $semantics->diagnose('CREATE TABLE t (b TEXT)');
+        $query = $semantics->diagnose('SELECT 1 FROM t', [$first, $second]);
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -34,7 +34,7 @@ final class ConflictingTablesTest extends TestCase
 
     public function testMessageIsNotReachedWithFewerThanTwoDeclarations(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $table = (new Semantics())->diagnose('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
         $this->expectExceptionMessage('A declaration conflict has at least two declarations.');
 

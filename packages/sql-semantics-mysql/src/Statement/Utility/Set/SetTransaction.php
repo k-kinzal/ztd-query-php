@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  *
  * @visibility public
  * @example Reading the characteristics
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
  *     [$set->statement->scope, $set->statement->characteristics, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly, \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::Serializable], 'SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE']
  */
 final class SetTransaction implements Statement

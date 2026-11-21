@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  *
  * @visibility public
  * @example Reading the quantity and the unit
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a + INTERVAL 2 DAY_HOUR');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a + INTERVAL 2 DAY_HOUR');
  *     [$query->statement->where->interval->quantity->text, $query->statement->where->interval->unit->value] // => ['2', 'DAY_HOUR']
  */
 final class Interval implements Node

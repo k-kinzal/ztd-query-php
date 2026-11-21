@@ -17,7 +17,7 @@ final class NumberSignTest extends TestCase
 {
     public function testEachSignIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT CAST(1 AS DECIMAL(+10, -2)), CAST(1 AS DECIMAL(3))');
+        $query = (new Semantics())->inspect('SELECT CAST(1 AS DECIMAL(+10, -2)), CAST(1 AS DECIMAL(3))');
         $signed = $query->field(0)->expression;
         $unsigned = $query->field(1)->expression;
 

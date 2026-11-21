@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an assignment
- *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE t SET a = 1');
+ *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('UPDATE t SET a = 1');
  *     [$update->statement->assignments[0]->column->value, $update->statement->assignments[0]->value->digits] // => ['a', '1']
  */
 final class Assignment implements Node

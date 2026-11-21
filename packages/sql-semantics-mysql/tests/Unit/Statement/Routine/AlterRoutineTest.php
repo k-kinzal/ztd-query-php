@@ -29,8 +29,8 @@ final class AlterRoutineTest extends TestCase
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $alter = $semantics->analyze("ALTER PROCEDURE shop.p COMMENT 'c' MODIFIES SQL DATA", [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $alter = $semantics->inspect("ALTER PROCEDURE shop.p COMMENT 'c' MODIFIES SQL DATA", [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
         self::assertSame([], $alter->facts->declarations);
@@ -39,7 +39,7 @@ final class AlterRoutineTest extends TestCase
 
     public function testDeriveStatementReadsTheKindTheNameAndTheCharacteristics(): void
     {
-        $alter = (new Semantics())->analyze('ALTER FUNCTION shop.f NO SQL SQL SECURITY INVOKER');
+        $alter = (new Semantics())->inspect('ALTER FUNCTION shop.f NO SQL SQL SECURITY INVOKER');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
 
@@ -67,7 +67,7 @@ final class AlterRoutineTest extends TestCase
     #[DataProvider('providerRenderWritesTheAlteration')]
     public function testRenderWritesTheAlteration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedAlteration(): void

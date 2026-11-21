@@ -16,7 +16,7 @@ final class UniqueFieldTest extends TestCase
 {
     public function testFieldIsTheOnlyFieldWithTheName(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 AS a, 2 AS b');
+        $operation = (new Semantics())->inspect('SELECT 1 AS a, 2 AS b');
 
         $lookup = $operation->lookupField('b');
 

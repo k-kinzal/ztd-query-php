@@ -16,13 +16,13 @@ final class UseDatabaseTest extends TestCase
 {
     public function testDeriveStatementReturnsNoRows(): void
     {
-        $use = (new Semantics())->analyze('USE db');
+        $use = (new Semantics())->inspect('USE db');
         self::assertInstanceOf(UseDatabase::class, $use->statement);
         self::assertNull($use->shape());
     }
 
     public function testRenderWritesTheDatabase(): void
     {
-        self::assertSame('USE db', (new Semantics('mysql-5.7.44'))->analyze('use db')->toString());
+        self::assertSame('USE db', (new Semantics('mysql-5.7.44'))->inspect('use db')->toString());
     }
 }

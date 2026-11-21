@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the statement
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('RESIGNAL SET MYSQL_ERRNO = 5');
+ *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('RESIGNAL SET MYSQL_ERRNO = 5');
  *     [$signal->statement->condition, $signal->toString()] // => [null, 'RESIGNAL SET MYSQL_ERRNO = 5']
  */
 final class Resignal implements Statement, ProgramStatement

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the fact of a nested expression
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 + NULL');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 + NULL');
  *     $query->facts->scalar($query->field(0)->expression->right)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly // => true
  */
 final class Facts

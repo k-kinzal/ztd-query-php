@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW BINARY LOGS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW BINARY LOGS');
  *     [$show->field(1)->name?->value, $show->toString()] // => ['File_size', 'SHOW BINARY LOGS']
  */
 final class ShowBinaryLogs implements Statement

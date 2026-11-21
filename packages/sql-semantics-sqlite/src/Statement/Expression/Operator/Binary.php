@@ -30,10 +30,10 @@ use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
  *
  * @visibility public
  * @example Reading both operands
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 + 2');
  *     [$query->statement->columns[0]->expression->left->digits, $query->statement->columns[0]->expression->right->digits] // => ['1', '2']
  * @example Refusing an operand that the rendered SQL would associate differently
- *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 + 2')->statement->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator::Multiply, $sum, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('3')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Binary implements Scalar

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a variable length
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE box3 (input = box3_in, output = box3_out, internallength = VARIABLE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TYPE box3 (input = box3_in, output = box3_out, internallength = VARIABLE)');
  *     [$operation->statement->definition[2]->value->bytes(), $operation->statement->definition[2]->value->variable()] // => [null, true]
  * @example Rejecting another word
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\LengthArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('fixed')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

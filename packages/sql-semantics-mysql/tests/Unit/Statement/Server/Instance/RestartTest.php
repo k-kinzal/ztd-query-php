@@ -16,12 +16,12 @@ final class RestartTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('RESTART', (new Semantics())->analyze('restart')->toString());
+        self::assertSame('RESTART', (new Semantics())->inspect('restart')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('RESTART');
+        $operation = (new Semantics())->inspect('RESTART');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

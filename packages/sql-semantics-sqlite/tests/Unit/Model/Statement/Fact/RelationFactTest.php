@@ -20,8 +20,8 @@ final class RelationFactTest extends TestCase
     public function testShapeAndTableResolutionOfANamedInput(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         $fact = $query->facts->relation($query->singleNamedInput());
 
@@ -33,7 +33,7 @@ final class RelationFactTest extends TestCase
 
     public function testTableIsNullForAnOccurrenceWithoutAName(): void
     {
-        $query = (new Semantics())->analyze('SELECT x FROM (SELECT 1 AS x)');
+        $query = (new Semantics())->inspect('SELECT x FROM (SELECT 1 AS x)');
         $input = $query->inputRelation();
 
         self::assertInstanceOf(DerivedQuery::class, $input);

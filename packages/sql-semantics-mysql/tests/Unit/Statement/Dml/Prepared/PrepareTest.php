@@ -18,7 +18,7 @@ final class PrepareTest extends TestCase
 {
     public function testDeriveStatementDerivesTheVariable(): void
     {
-        $operation = (new Semantics())->analyze('PREPARE s FROM @q');
+        $operation = (new Semantics())->inspect('PREPARE s FROM @q');
         self::assertInstanceOf(Prepare::class, $operation->statement);
         self::assertInstanceOf(UserVariable::class, $operation->statement->source);
 
@@ -27,6 +27,6 @@ final class PrepareTest extends TestCase
 
     public function testRenderWritesTheSource(): void
     {
-        self::assertSame("PREPARE s FROM 'SELECT ?'", (new Semantics('mysql-5.6.51'))->analyze("prepare s from 'SELECT ?'")->toString());
+        self::assertSame("PREPARE s FROM 'SELECT ?'", (new Semantics('mysql-5.6.51'))->inspect("prepare s from 'SELECT ?'")->toString());
     }
 }

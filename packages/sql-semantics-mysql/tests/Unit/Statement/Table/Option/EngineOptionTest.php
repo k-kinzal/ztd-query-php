@@ -17,7 +17,7 @@ final class EngineOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) ENGINE = \'InnoDB\'');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) ENGINE = \'InnoDB\'');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

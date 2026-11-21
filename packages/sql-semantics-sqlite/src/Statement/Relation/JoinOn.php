@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the condition of a join
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 FROM t JOIN u ON t.a = u.a');
  *     $query->statement->from->steps[0]->constraint->condition->right->qualifier->name->value // => 'u'
  */
 final class JoinOn implements Node

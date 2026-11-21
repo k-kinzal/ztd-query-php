@@ -22,7 +22,7 @@ final class BodyFactsTest extends TestCase
 {
     public function testDeriveReportsUtilityStatements(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC DROP TABLE t; SELECT 1 INTO x; (SELECT 1); END', []);
+        $operation = (new Semantics())->diagnose('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC DROP TABLE t; SELECT 1 INTO x; (SELECT 1); END', []);
         self::assertSame(['Relation t does not exist.'], [$operation->facts->diagnostics[1]->message()]);
         self::assertEquals([new RoutineProblem(RoutineProblemKind::UtilityInBody), new RoutineProblem(RoutineProblemKind::UtilityInBody)], [$operation->facts->diagnostics[0], $operation->facts->diagnostics[2]]);
         self::assertCount(3, $operation->facts->diagnostics);
@@ -31,7 +31,7 @@ final class BodyFactsTest extends TestCase
 
     public function testFirstFindsTheSelectionOfANestedQuery(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC (SELECT 1 UNION SELECT 2); END');
+        $operation = (new Semantics())->diagnose('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC (SELECT 1 UNION SELECT 2); END');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(AtomicBody::class, $statement->body);

@@ -30,8 +30,8 @@ final class LockingClauseTest extends TestCase
         $clause->render($out);
 
         self::assertSame('FOR UPDATE OF t, db.u NOWAIT', (new Lexical())->join($out->pieces()));
-        self::assertSame('SELECT a FROM t FOR SHARE SKIP LOCKED LOCK IN SHARE MODE', $semantics->analyze('select a from t for share skip locked lock in share mode')->toString());
-        self::assertSame('SELECT a FROM t FOR UPDATE', (new Semantics('mysql-5.6.51'))->analyze('select a from t for update')->toString());
+        self::assertSame('SELECT a FROM t FOR SHARE SKIP LOCKED LOCK IN SHARE MODE', $semantics->inspect('select a from t for share skip locked lock in share mode')->toString());
+        self::assertSame('SELECT a FROM t FOR UPDATE', (new Semantics('mysql-5.6.51'))->inspect('select a from t for update')->toString());
     }
 
     public function testATableListOnShareModeIsRejected(): void

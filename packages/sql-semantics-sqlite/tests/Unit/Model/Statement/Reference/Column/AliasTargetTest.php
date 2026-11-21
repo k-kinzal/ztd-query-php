@@ -17,7 +17,7 @@ final class AliasTargetTest extends TestCase
 {
     public function testFieldIsTheOutputFieldTheAliasNames(): void
     {
-        $query = (new Semantics())->analyze('SELECT 1 AS x, 2 AS y ORDER BY y');
+        $query = (new Semantics())->inspect('SELECT 1 AS x, 2 AS y ORDER BY y');
         $statement = $query->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -30,8 +30,8 @@ final class AliasTargetTest extends TestCase
     public function testFieldIsNotUsedWhenTheNameIsAColumnOfTheInput(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, x INTEGER)');
-        $query = $semantics->analyze('SELECT a AS x FROM t ORDER BY x', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, x INTEGER)');
+        $query = $semantics->inspect('SELECT a AS x FROM t ORDER BY x', [$table]);
         $statement = $query->statement;
 
         self::assertInstanceOf(Select::class, $statement);

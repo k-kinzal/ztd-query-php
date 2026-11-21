@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting LIMIT with a comma
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 LIMIT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: LIMIT #,# syntax is not supported
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 LIMIT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: LIMIT #,# syntax is not supported
  */
 final class CommaLimit implements Node
 {

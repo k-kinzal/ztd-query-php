@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Dropping accounts
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, b@h'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("drop user if exists a, 'b'@'h'")->toString() // => 'DROP USER IF EXISTS a, b@h'
  */
 final class DropUser implements Statement
 {

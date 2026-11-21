@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
  *
  * @visibility public
  * @example Reading the structure of an analyzed statement
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1');
  *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Model\Statement\Node // => true
  */
 interface Node

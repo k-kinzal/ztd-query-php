@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Shape;
  *
  * @visibility public
  * @example Looking up a name no field has
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS a');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 AS a');
  *     $operation->lookupField('b') instanceof \SqlSemantics\Platform\MySql\Model\Statement\Shape\AbsentField // => true
  */
 interface FieldLookup

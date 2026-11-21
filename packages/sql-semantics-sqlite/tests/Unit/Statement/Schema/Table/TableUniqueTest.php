@@ -20,7 +20,7 @@ final class TableUniqueTest extends TestCase
 {
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b, UNIQUE (a, b COLLATE nocase))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, b, UNIQUE (a, b COLLATE nocase))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -32,7 +32,7 @@ final class TableUniqueTest extends TestCase
 
     public function testDeriveConstraintReportsAMissingColumnAndAnExpressionTerm(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, UNIQUE (zz, a + 1))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, UNIQUE (zz, a + 1))', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -41,7 +41,7 @@ final class TableUniqueTest extends TestCase
 
     public function testRenderKeepsTheTermsAndTheConflictResolution(): void
     {
-        $operation = (new Semantics())->inspect('create table t (a, b, unique (a asc, b) on conflict ignore)');
+        $operation = (new Semantics())->diagnose('create table t (a, b, unique (a asc, b) on conflict ignore)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

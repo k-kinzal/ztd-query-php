@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading a loadable function
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'");
  *     [$create->statement->aggregate, $create->statement->returns->value, $create->statement->library->value] // => [true, 'REAL', 'udf.so']
  */
 final class CreateLoadableFunction implements Statement

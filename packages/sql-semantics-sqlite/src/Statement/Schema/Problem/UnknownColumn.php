@@ -19,8 +19,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reporting a dropped column that does not exist
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column c does not exist in the table.
+ *     $table = $semantics->inspect('CREATE TABLE t (a, b)');
+ *     $semantics->inspect('ALTER TABLE t DROP COLUMN c', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column c does not exist in the table.
  */
 final class UnknownColumn implements Diagnostic
 {

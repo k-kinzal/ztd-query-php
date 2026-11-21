@@ -16,6 +16,6 @@ final class PartitionMaximumTest extends TestCase
 {
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE COLUMNS (a) (PARTITION p VALUES LESS THAN (MAXVALUE))', (new Semantics())->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS (a) (PARTITION p VALUES LESS THAN (maxvalue))')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE COLUMNS (a) (PARTITION p VALUES LESS THAN (MAXVALUE))', (new Semantics())->inspect('ALTER TABLE t PARTITION BY RANGE COLUMNS (a) (PARTITION p VALUES LESS THAN (maxvalue))')->toString());
     }
 }

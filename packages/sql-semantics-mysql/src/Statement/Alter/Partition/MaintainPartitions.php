@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
  *
  * @visibility public
  * @example Rebuilding every partition
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REBUILD PARTITION ALL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t REBUILD PARTITION ALL');
  *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
  */
 final class MaintainPartitions implements StandaloneCommand

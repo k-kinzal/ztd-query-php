@@ -28,8 +28,8 @@ final class TableCallTest extends TestCase
     public function testDeriveRelationIsAnOpenShapeNamingTheUndeclaredRoutine(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT * FROM json_each(1) AS j', [$t]);
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT * FROM json_each(1) AS j', [$t]);
         $shape = $query->shape();
 
         self::assertInstanceOf(Select::class, $query->statement);
@@ -49,8 +49,8 @@ final class TableCallTest extends TestCase
     public function testDeriveRelationResolvesArgumentsAgainstTheTablesToTheLeft(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT * FROM t, json_each(b) AS j', [$t]);
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('SELECT * FROM t, json_each(b) AS j', [$t]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);
@@ -70,9 +70,9 @@ final class TableCallTest extends TestCase
         $built = new Operation($semantics->context(), new Select([new Star()], $call));
 
         self::assertSame("SELECT * FROM main.json_each(1, 'x') AS j", $built->toString());
-        self::assertSame('SELECT * FROM generate_series(1, 3)', $semantics->analyze('select * from generate_series(1,3)')->toString());
-        self::assertSame('SELECT * FROM pragma_table_info() p', $semantics->analyze('SELECT * FROM pragma_table_info() p')->toString());
-        self::assertSame('SELECT * FROM pragma_table_info() AS p', $semantics->analyze('SELECT * FROM pragma_table_info() as p')->toString());
+        self::assertSame('SELECT * FROM generate_series(1, 3)', $semantics->inspect('select * from generate_series(1,3)')->toString());
+        self::assertSame('SELECT * FROM pragma_table_info() p', $semantics->inspect('SELECT * FROM pragma_table_info() p')->toString());
+        self::assertSame('SELECT * FROM pragma_table_info() AS p', $semantics->inspect('SELECT * FROM pragma_table_info() as p')->toString());
     }
 
     public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void

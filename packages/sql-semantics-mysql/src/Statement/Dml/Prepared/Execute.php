@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading an EXECUTE
- *     $execute = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXECUTE stmt USING @a, @b');
+ *     $execute = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('EXECUTE stmt USING @a, @b');
  *     [count($execute->statement->variables), $execute->toString()] // => [2, 'EXECUTE stmt USING @a, @b']
  */
 final class Execute implements Statement

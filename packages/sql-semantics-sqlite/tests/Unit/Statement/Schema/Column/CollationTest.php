@@ -17,14 +17,14 @@ final class CollationTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothingForAnUnknownCollation(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a COLLATE no_such_collation)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a COLLATE no_such_collation)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheCollationName(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a text collate "RTRIM")');
+        $operation = (new Semantics())->inspect('create table t (a text collate "RTRIM")');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

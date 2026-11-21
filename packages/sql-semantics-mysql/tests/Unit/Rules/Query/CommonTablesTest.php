@@ -37,8 +37,8 @@ final class CommonTablesTest extends TestCase
 {
     public function testBindSeesEarlierTablesOnly(): void
     {
-        $operation = (new Semantics())->inspect('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
-        $forward = (new Semantics())->inspect('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
+        $operation = (new Semantics())->diagnose('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
+        $forward = (new Semantics())->diagnose('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
@@ -62,8 +62,8 @@ final class CommonTablesTest extends TestCase
         $derivation = new Derivation($semantics->context());
         $pending = new CommonBinding(new Name('c'), new Dual(), new RowShape([], [new RecursiveReference(new Name('c'))]));
         $scope = (new CommonTables())->extended($derivation->environment(), [$pending]);
-        $refers = $semantics->inspect('SELECT 1 FROM c')->statement;
-        $other = $semantics->inspect('SELECT 1 FROM d')->statement;
+        $refers = $semantics->diagnose('SELECT 1 FROM c')->statement;
+        $other = $semantics->diagnose('SELECT 1 FROM d')->statement;
 
         self::assertInstanceOf(Select::class, $refers);
         self::assertInstanceOf(Select::class, $other);
@@ -107,7 +107,7 @@ final class CommonTablesTest extends TestCase
 
     public function testOperandsAnswersTheChainInWrittenOrder(): void
     {
-        $query = (new Semantics())->inspect('(SELECT 1 UNION SELECT 2 UNION SELECT 3)')->statement;
+        $query = (new Semantics())->diagnose('(SELECT 1 UNION SELECT 2 UNION SELECT 3)')->statement;
 
         self::assertInstanceOf(ParenthesizedQuery::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
@@ -120,8 +120,8 @@ final class CommonTablesTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context());
-        $query = $semantics->inspect('SELECT 1 FROM db.c, (SELECT 1 FROM c) AS d')->statement;
-        $qualified = $semantics->inspect('SELECT 1 FROM db.c')->statement;
+        $query = $semantics->diagnose('SELECT 1 FROM db.c, (SELECT 1 FROM c) AS d')->statement;
+        $qualified = $semantics->diagnose('SELECT 1 FROM db.c')->statement;
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(Select::class, $qualified);
@@ -131,7 +131,7 @@ final class CommonTablesTest extends TestCase
 
     public function testOperandsWalksALeadingUnion(): void
     {
-        $query = (new Semantics('mysql-5.6.51'))->inspect('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+        $query = (new Semantics('mysql-5.6.51'))->diagnose('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
 
         self::assertInstanceOf(SetOperation::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
@@ -139,14 +139,14 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics())->inspect("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT x FROM c) SELECT 1");
+        $operation = (new Semantics())->diagnose("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT x FROM c) SELECT 1");
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testNullableKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics())->inspect("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
+        $operation = (new Semantics())->diagnose("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
 
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }

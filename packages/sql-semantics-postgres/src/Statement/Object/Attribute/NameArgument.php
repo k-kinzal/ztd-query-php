@@ -36,7 +36,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the function an operator calls
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = pg_catalog.int4eq)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = pg_catalog.int4eq)');
  *     $function = $operation->statement->definition[1]->value;
  *     [$function->kind->value, array_map(static fn ($part) => $part->value, $function->parts())] // => ['FUNCTION', ['pg_catalog', 'int4eq']]
  * @example Rejecting a bare type name, which is written as a dotted name

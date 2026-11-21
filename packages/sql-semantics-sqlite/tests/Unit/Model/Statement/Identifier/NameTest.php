@@ -21,7 +21,7 @@ final class NameTest extends TestCase
 
     public function testValueIsDecodedFromEveryQuotingStyleOfTheProfile(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM `a b`, [c d], "e f"');
+        $operation = (new Semantics())->inspect('SELECT a FROM `a b`, [c d], "e f"');
 
         self::assertSame('SELECT a FROM `a b`, `c d`, `e f`', $operation->toString());
     }

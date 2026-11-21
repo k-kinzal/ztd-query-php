@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
  *
  * @visibility public
  * @example Reading a renamed join
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM (a CROSS JOIN b) AS j');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 FROM (a CROSS JOIN b) AS j');
  *     [$query->statement->from->alias->value, $query->toString()] // => ['j', 'SELECT 1 FROM (a CROSS JOIN b) AS j']
  */
 final class ParenthesizedJoin implements Relation

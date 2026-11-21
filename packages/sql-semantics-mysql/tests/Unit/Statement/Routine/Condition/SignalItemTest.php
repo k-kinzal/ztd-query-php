@@ -33,7 +33,7 @@ final class SignalItemTest extends TestCase
 
     public function testRenderWritesEveryKindOfValue(): void
     {
-        $signal = (new Semantics())->analyze("SIGNAL SQLSTATE '45000' SET message_text = @m, mysql_errno = NULL, class_origin = x'41', table_name = 't'");
+        $signal = (new Semantics())->inspect("SIGNAL SQLSTATE '45000' SET message_text = @m, mysql_errno = NULL, class_origin = x'41', table_name = 't'");
         $statement = $signal->statement;
         self::assertInstanceOf(Signal::class, $statement);
 

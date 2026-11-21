@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading a string option
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t FROM STDIN NULL AS '-' ENCODING 'UTF8'");
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("COPY t FROM STDIN NULL AS '-' ENCODING 'UTF8'");
  *     [$copy->statement->legacy[0]->value->value, $copy->statement->legacy[1]->option(), $copy->toString()] // => ['-', 'encoding', "COPY t FROM STDIN NULL '-' ENCODING 'UTF8'"]
  */
 final class CopyText implements Node

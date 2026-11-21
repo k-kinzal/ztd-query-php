@@ -16,11 +16,11 @@ final class SecondaryLoadTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics())->analyze('ALTER TABLE t SECONDARY_UNLOAD')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('ALTER TABLE t SECONDARY_UNLOAD')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t SECONDARY_LOAD PARTITION (p0, p1)', (new Semantics('mysql-9.1.0'))->analyze('ALTER TABLE t SECONDARY_LOAD PARTITION (p0, p1)')->toString());
+        self::assertSame('ALTER TABLE t SECONDARY_LOAD PARTITION (p0, p1)', (new Semantics('mysql-9.1.0'))->inspect('ALTER TABLE t SECONDARY_LOAD PARTITION (p0, p1)')->toString());
     }
 }

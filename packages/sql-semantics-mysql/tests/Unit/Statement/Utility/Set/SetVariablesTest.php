@@ -17,7 +17,7 @@ final class SetVariablesTest extends TestCase
 {
     public function testScopeOfAnswersTheInheritedScope(): void
     {
-        $set = (new Semantics())->inspect('SET PERSIST a = 1, b = 2, @@SESSION.c = 3, @d = 4, e = 5');
+        $set = (new Semantics())->diagnose('SET PERSIST a = 1, b = 2, @@SESSION.c = 3, @d = 4, e = 5');
         self::assertInstanceOf(SetVariables::class, $set->statement);
         self::assertSame(VariableScope::Persist, $set->statement->scopeOf(1));
         self::assertSame(VariableScope::Session, $set->statement->scopeOf(2));
@@ -27,7 +27,7 @@ final class SetVariablesTest extends TestCase
 
     public function testScopeOfRefusesAPositionOutsideTheItems(): void
     {
-        $set = (new Semantics())->inspect('SET a = 1');
+        $set = (new Semantics())->diagnose('SET a = 1');
         self::assertInstanceOf(SetVariables::class, $set->statement);
         $this->expectExceptionMessage('The position is one of the items.');
         $set->statement->scopeOf(1);
@@ -35,7 +35,7 @@ final class SetVariablesTest extends TestCase
 
     public function testDeriveStatementDerivesEveryItem(): void
     {
-        $set = (new Semantics())->inspect('SET @a = b, @@x = c', []);
+        $set = (new Semantics())->diagnose('SET @a = b, @@x = c', []);
         self::assertInstanceOf(SetVariables::class, $set->statement);
         self::assertCount(1, $set->facts->diagnostics);
         self::assertNull($set->shape());
@@ -43,7 +43,7 @@ final class SetVariablesTest extends TestCase
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame('SET SESSION a = 1, @b = 2', (new Semantics('mysql-5.7.44'))->inspect('set local a = 1, @b := 2')->toString());
+        self::assertSame('SET SESSION a = 1, @b = 2', (new Semantics('mysql-5.7.44'))->diagnose('set local a = 1, @b := 2')->toString());
     }
 
     public function testRefusesAnEmptyList(): void

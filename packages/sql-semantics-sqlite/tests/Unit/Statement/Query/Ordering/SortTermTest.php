@@ -26,7 +26,7 @@ final class SortTermTest extends TestCase
 {
     public function testRenderWritesTheDirectionAndTheNullPlacement(): void
     {
-        $query = (new Semantics())->analyze('select a from t order by a + 1 asc nulls first, b desc, a nulls last, b');
+        $query = (new Semantics())->inspect('select a from t order by a + 1 asc nulls first, b desc, a nulls last, b');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $terms = $query->statement->orderBy;
@@ -53,7 +53,7 @@ final class SortTermTest extends TestCase
 
     public function testRenderWritesTheOrderingOfAnAggregateArgument(): void
     {
-        $query = (new Semantics())->analyze('select group_concat(a order by b desc, a) AS c1 from t');
+        $query = (new Semantics())->inspect('select group_concat(a order by b desc, a) AS c1 from t');
 
         self::assertSame('SELECT group_concat(a ORDER BY b DESC, a) AS c1 FROM t', $query->toString());
     }

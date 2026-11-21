@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the statement
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'");
+ *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'");
  *     [$signal->statement->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no'"]
  */
 final class Signal implements Statement, ProgramStatement

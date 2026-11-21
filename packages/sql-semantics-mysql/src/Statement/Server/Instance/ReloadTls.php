@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reloading the TLS context of the administrative interface
- *     $reload = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_admin NO ROLLBACK ON ERROR');
+ *     $reload = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_admin NO ROLLBACK ON ERROR');
  *     [$reload->statement->action->channel?->value, $reload->statement->action->noRollbackOnError] // => ['mysql_admin', true]
  */
 final class ReloadTls implements InstanceAction

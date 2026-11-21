@@ -34,7 +34,7 @@ final class VariableAssignmentTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $operation = $semantics->inspect('SELECT @n := b, @m := a FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT @n := b, @m := a FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -58,7 +58,7 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarRecordsTheTargetAsMissingSessionState(): void
     {
-        $operation = (new Semantics())->inspect('SELECT @n := 5');
+        $operation = (new Semantics())->diagnose('SELECT @n := 5');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -72,7 +72,7 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarTakesEverythingRightOfTheOperatorAsTheValue(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = @n := 5');
+        $operation = (new Semantics())->diagnose('SELECT a FROM t WHERE a = @n := 5');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(Comparison::class, $operation->statement->where);
@@ -85,7 +85,7 @@ final class VariableAssignmentTest extends TestCase
 
     public function testDeriveScalarReportsARowOnceAndPassesOnAValueWithoutType(): void
     {
-        $operation = (new Semantics())->inspect('SELECT @a := (1, 2)');
+        $operation = (new Semantics())->diagnose('SELECT @a := (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -94,14 +94,14 @@ final class VariableAssignmentTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT @n := 5 AS v', $semantics->inspect('select @n:=5 as v')->toString());
-        self::assertSame('SELECT @n:=5', $semantics->inspect('select @n:=5')->toString());
-        self::assertSame('SELECT @n := a FROM t', $semantics->inspect('SELECT @n := a FROM t')->toString());
+        self::assertSame('SELECT @n := 5 AS v', $semantics->diagnose('select @n:=5 as v')->toString());
+        self::assertSame('SELECT @n:=5', $semantics->diagnose('select @n:=5')->toString());
+        self::assertSame('SELECT @n := a FROM t', $semantics->diagnose('SELECT @n := a FROM t')->toString());
     }
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.6.51'))->inspect('select @n := 5')->toString());
-        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.7.44'))->inspect('select @n := 5')->toString());
+        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.6.51'))->diagnose('select @n := 5')->toString());
+        self::assertSame('SELECT @n := 5', (new Semantics('mysql-5.7.44'))->diagnose('select @n := 5')->toString());
     }
 }

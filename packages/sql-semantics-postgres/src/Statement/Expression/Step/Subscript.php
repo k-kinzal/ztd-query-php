@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  *
  * @visibility public
  * @example Reading a subscript
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $1[2]');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT $1[2]');
  *     $query->field(0)->expression->steps[0]->index->value->digits // => '2'
  */
 final class Subscript implements IndirectionStep

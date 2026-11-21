@@ -35,8 +35,8 @@ final class JoiningTest extends TestCase
     public function testJoinHidesTheRightUsingColumnAndKeepsTheLeftSide(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -57,7 +57,7 @@ final class JoiningTest extends TestCase
     public function testJoinMergesEveryCommonNameOfANaturalJoin(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -73,8 +73,8 @@ final class JoiningTest extends TestCase
     public function testJoinExtendsTheRightSideOfALeftJoin(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -95,8 +95,8 @@ final class JoiningTest extends TestCase
     public function testJoinCoalescesTheMergedColumnAndExtendsTheLeftSideOfARightJoin(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -117,7 +117,7 @@ final class JoiningTest extends TestCase
     public function testJoinReportsAUsingColumnThatAClosedSideLacks(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -168,8 +168,8 @@ final class JoiningTest extends TestCase
     public function testLocateFindsTheFirstVisibleSlotByName(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
         $shapes = new TableShapes();
         $left = new TableInput(new QualifiedName(new Name('t')));
@@ -189,7 +189,7 @@ final class JoiningTest extends TestCase
     public function testClosedIsTrueOnlyForCompleteFullyNamedShapes(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
         $input = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
@@ -207,7 +207,7 @@ final class JoiningTest extends TestCase
     public function testExtendMakesEverySlotAndImplicitNullableAndKeepsOrigins(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();
         $input = new TableInput(new QualifiedName(new Name('t')), new Name('x'));

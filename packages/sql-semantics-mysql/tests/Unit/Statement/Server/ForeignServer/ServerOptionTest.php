@@ -16,6 +16,6 @@ final class ServerOptionTest extends TestCase
 {
     public function testRenderWritesKeywordAndValue(): void
     {
-        self::assertSame("ALTER SERVER s OPTIONS (PORT 1, SOCKET '/s')", (new Semantics())->analyze("alter server s options (port 1, socket '/s')")->toString());
+        self::assertSame("ALTER SERVER s OPTIONS (PORT 1, SOCKET '/s')", (new Semantics())->inspect("alter server s options (port 1, socket '/s')")->toString());
     }
 }

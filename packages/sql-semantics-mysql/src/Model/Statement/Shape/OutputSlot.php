@@ -22,8 +22,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the slot of a query field
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
+ *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
  */
 final class OutputSlot
 {

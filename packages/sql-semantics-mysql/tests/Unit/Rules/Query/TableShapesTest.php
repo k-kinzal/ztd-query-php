@@ -38,7 +38,7 @@ final class TableShapesTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('WITH t AS (SELECT 1 AS z) SELECT * FROM t', [$t]);
+        $operation = $semantics->inspect('WITH t AS (SELECT 1 AS z) SELECT * FROM t', [$t]);
 
         self::assertSame(['z'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
@@ -48,8 +48,8 @@ final class TableShapesTest extends TestCase
         $semantics = new Semantics();
         $hidden = new Column(new Name('h'), new Integral(IntegralKind::Int), Nullability::Nullable);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)], [new ImplicitColumn([new Name('h')], $hidden)]);
-        $named = $semantics->analyze('SELECT h FROM t', [$table]);
-        $star = $semantics->analyze('SELECT * FROM t', [$table]);
+        $named = $semantics->inspect('SELECT h FROM t', [$table]);
+        $star = $semantics->inspect('SELECT * FROM t', [$table]);
         $fact = $named->statement instanceof Select && $named->statement->from !== null ? $named->facts->relation($named->statement->from) : null;
 
         self::assertSame($hidden, $named->field('h')->column());
@@ -70,7 +70,7 @@ final class TableShapesTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('TABLE t', [$t]);
+        $operation = $semantics->inspect('TABLE t', [$t]);
         $table = $operation->statement;
 
         self::assertInstanceOf(ExplicitTable::class, $table);
@@ -79,7 +79,7 @@ final class TableShapesTest extends TestCase
 
     public function testExplicitKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics())->analyze("WITH c AS (SELECT 'é') TABLE c");
+        $operation = (new Semantics())->inspect("WITH c AS (SELECT 'é') TABLE c");
 
         self::assertSame(1, $operation->fields()?->count());
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);

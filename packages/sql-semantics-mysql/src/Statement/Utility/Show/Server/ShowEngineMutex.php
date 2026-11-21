@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW ENGINE InnoDB MUTEX');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW ENGINE InnoDB MUTEX');
  *     [$show->statement->engine?->value, $show->toString()] // => ['InnoDB', 'SHOW ENGINE InnoDB MUTEX']
  */
 final class ShowEngineMutex implements Statement

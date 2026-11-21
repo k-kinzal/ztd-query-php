@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Removing a plugin
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('uninstall plugin audit')->toString() // => 'UNINSTALL PLUGIN audit'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('uninstall plugin audit')->toString() // => 'UNINSTALL PLUGIN audit'
  */
 final class UninstallPlugin implements Statement
 {

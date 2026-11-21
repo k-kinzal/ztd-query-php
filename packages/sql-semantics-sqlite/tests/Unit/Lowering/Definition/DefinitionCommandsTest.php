@@ -24,25 +24,25 @@ final class DefinitionCommandsTest extends TestCase
 {
     public function testCommandLowersATransactionCommand(): void
     {
-        self::assertInstanceOf(Begin::class, (new Semantics())->analyze('BEGIN')->statement);
+        self::assertInstanceOf(Begin::class, (new Semantics())->inspect('BEGIN')->statement);
     }
 
     public function testCommandLowersACommandOfEveryFamily(): void
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a')->statement);
-        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a')->statement);
-        self::assertInstanceOf(CreateTable::class, $semantics->analyze('CREATE TABLE t (a)')->statement);
-        self::assertInstanceOf(Drop::class, $semantics->analyze('DROP TABLE t')->statement);
-        self::assertInstanceOf(CreateVirtualTable::class, $semantics->analyze('CREATE VIRTUAL TABLE t USING m')->statement);
+        self::assertInstanceOf(Pragma::class, $semantics->inspect('PRAGMA a')->statement);
+        self::assertInstanceOf(Detach::class, $semantics->inspect('DETACH a')->statement);
+        self::assertInstanceOf(CreateTable::class, $semantics->inspect('CREATE TABLE t (a)')->statement);
+        self::assertInstanceOf(Drop::class, $semantics->inspect('DROP TABLE t')->statement);
+        self::assertInstanceOf(CreateVirtualTable::class, $semantics->inspect('CREATE VIRTUAL TABLE t USING m')->statement);
     }
 
     public function testExplainedWrapsTheCommandInTheWrittenRequest(): void
     {
         $semantics = new Semantics();
-        $program = $semantics->analyze('EXPLAIN BEGIN')->statement;
-        $plan = $semantics->analyze('EXPLAIN QUERY PLAN BEGIN')->statement;
+        $program = $semantics->inspect('EXPLAIN BEGIN')->statement;
+        $plan = $semantics->inspect('EXPLAIN QUERY PLAN BEGIN')->statement;
 
         self::assertInstanceOf(Explain::class, $program);
         self::assertInstanceOf(Explain::class, $plan);

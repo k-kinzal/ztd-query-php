@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  *
  * @visibility public
  * @example Reading the target of an analysis request
- *     $analyze = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ANALYZE users');
+ *     $analyze = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ANALYZE users');
  *     $analyze->statement->target?->name->value // => 'users'
  */
 final class Analyze implements Statement

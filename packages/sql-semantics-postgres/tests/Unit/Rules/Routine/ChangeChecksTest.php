@@ -21,7 +21,7 @@ final class ChangeChecksTest extends TestCase
 {
     public function testDeriveReportsEachRefusedAttribute(): void
     {
-        $operation = (new Semantics('pg-17.2'))->inspect('ALTER OPERATOR = (int4, int4) SET (restrict, negator = NONE, commutator = 1, hashes, sort1 = <)');
+        $operation = (new Semantics('pg-17.2'))->diagnose('ALTER OPERATOR = (int4, int4) SET (restrict, negator = NONE, commutator = 1, hashes, sort1 = <)');
         self::assertSame([
             'negator requires a parameter',
             'argument of commutator must be a name',

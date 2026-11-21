@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a foreign key action
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent ON DELETE NO ACTION)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p REFERENCES parent ON DELETE NO ACTION)');
  *     $action = $create->statement->columns[0]->constraints[0]->arguments[0];
  *     [$action->event->value, $action->reaction->value] // => ['DELETE', 'NO ACTION']
  */

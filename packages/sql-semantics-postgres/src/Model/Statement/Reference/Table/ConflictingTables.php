@@ -16,8 +16,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Keeping conflicting declarations
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
- *     $semantics->analyze('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
+ *     $declarations = $semantics->context([$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE t (b TEXT)')]);
+ *     $semantics->inspect('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
  */
 final class ConflictingTables implements TableResolution, Diagnostic
 {

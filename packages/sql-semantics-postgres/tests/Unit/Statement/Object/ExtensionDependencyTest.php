@@ -19,13 +19,13 @@ final class ExtensionDependencyTest extends TestCase
 {
     public function testDeriveStatementRecordsNothingForATrigger(): void
     {
-        $operation = (new Semantics())->inspect('ALTER TRIGGER g ON t DEPENDS ON EXTENSION e');
+        $operation = (new Semantics())->diagnose('ALTER TRIGGER g ON t DEPENDS ON EXTENSION e');
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesNo(): void
     {
-        $operation = (new Semantics())->inspect('ALTER FUNCTION f NO DEPENDS ON EXTENSION e');
+        $operation = (new Semantics())->diagnose('ALTER FUNCTION f NO DEPENDS ON EXTENSION e');
         self::assertSame('ALTER FUNCTION f NO DEPENDS ON EXTENSION e', $operation->toString());
     }
 
@@ -38,7 +38,7 @@ final class ExtensionDependencyTest extends TestCase
     public function testDeriveStatementReportsAnotherKind(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not an index'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER INDEX v DEPENDS ON EXTENSION e', $context)->facts->diagnostics));
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not an index'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER INDEX v DEPENDS ON EXTENSION e', $context)->facts->diagnostics));
     }
 }

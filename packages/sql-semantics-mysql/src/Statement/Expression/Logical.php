@@ -29,10 +29,10 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading both operands of a conjunction
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a && b');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a && b');
  *     [$query->statement->where->operator->value, $query->toString()] // => ['AND', 'SELECT a FROM t WHERE a AND b']
  * @example Refusing an operand that would associate differently
- *     $or = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a OR b')->statement->where;
+ *     $or = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a OR b')->statement->where;
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c'))) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class Logical implements Scalar

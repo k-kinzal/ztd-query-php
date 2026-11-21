@@ -17,7 +17,7 @@ final class VacuumTest extends TestCase
 {
     public function testDeriveStatementDerivesTheTargetWhereNoRelationIsVisible(): void
     {
-        $operation = (new Semantics())->inspect('VACUUM INTO backup');
+        $operation = (new Semantics())->diagnose('VACUUM INTO backup');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -25,7 +25,7 @@ final class VacuumTest extends TestCase
 
     public function testDeriveStatementRecordsNothingWithoutATarget(): void
     {
-        $operation = (new Semantics())->inspect('VACUUM', []);
+        $operation = (new Semantics())->diagnose('VACUUM', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -33,7 +33,7 @@ final class VacuumTest extends TestCase
 
     public function testRenderWritesTheSchemaAndTheTarget(): void
     {
-        $operation = (new Semantics())->inspect("vacuum main into 'backup.db'");
+        $operation = (new Semantics())->diagnose("vacuum main into 'backup.db'");
 
         self::assertInstanceOf(Vacuum::class, $operation->statement);
         self::assertSame('main', $operation->statement->schema?->value);

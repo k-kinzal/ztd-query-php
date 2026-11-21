@@ -14,8 +14,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading the shape of a named input
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+ *     $query = $semantics->inspect('SELECT a FROM t', [$table]);
  *     count($query->facts->relation($query->inputRelation())->shape->slots) // => 2
  */
 final class RelationFact

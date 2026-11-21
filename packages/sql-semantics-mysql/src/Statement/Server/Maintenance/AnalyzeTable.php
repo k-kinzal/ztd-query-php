@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('analyze local tables t, shop.u');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('analyze local tables t, shop.u');
  *     [$statement->toString(), $statement->statement->noWriteToBinlog] // => ['ANALYZE NO_WRITE_TO_BINLOG TABLE t, shop.u', true]
  */
 final class AnalyzeTable implements Statement

@@ -35,7 +35,7 @@ final class CompoundFactsTest extends TestCase
     public function testDeriveCombinesTheArmsAndOrdersByTheNamesOfEveryArm(): void
     {
         $semantics = new Semantics();
-        $compound = $semantics->inspect("SELECT 1 AS a, 'x' AS b UNION SELECT NULL AS c, 2 ORDER BY c, 2 LIMIT 1")->statement;
+        $compound = $semantics->diagnose("SELECT 1 AS a, 'x' AS b UNION SELECT NULL AS c, 2 ORDER BY c, 2 LIMIT 1")->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context([]));
 
@@ -60,7 +60,7 @@ final class CompoundFactsTest extends TestCase
     public function testDeriveReportsAnOrderingOrALimitOnAnEarlierArm(): void
     {
         $semantics = new Semantics();
-        $compound = $semantics->inspect('SELECT 1 ORDER BY 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+        $compound = $semantics->diagnose('SELECT 1 ORDER BY 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context([]));
 
@@ -72,7 +72,7 @@ final class CompoundFactsTest extends TestCase
     public function testCombinedTakesTheNamesOfTheFirstArmAndReportsAnotherWidthOnce(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect("SELECT 1 AS a UNION SELECT 'x', 2 UNION SELECT NULL, 3, 4");
+        $query = $semantics->diagnose("SELECT 1 AS a UNION SELECT 'x', 2 UNION SELECT NULL, 3, 4");
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $facts = [$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query), $query->facts->query($compound->steps[1]->query)];
@@ -96,7 +96,7 @@ final class CompoundFactsTest extends TestCase
     public function testCombinedAnswersAnOpenStarWhenTheFirstArmIsOpen(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT * FROM t UNION SELECT 1');
+        $query = $semantics->diagnose('SELECT * FROM t UNION SELECT 1');
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context());
@@ -111,7 +111,7 @@ final class CompoundFactsTest extends TestCase
     public function testCombinedDependsOnAnOpenLaterArm(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1 AS a UNION SELECT * FROM t');
+        $query = $semantics->diagnose('SELECT 1 AS a UNION SELECT * FROM t');
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
 
@@ -124,7 +124,7 @@ final class CompoundFactsTest extends TestCase
     public function testAliasesNamesTheOutputAfterEveryArm(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1 AS a, 2 UNION SELECT 3 AS b, 4 AS c');
+        $query = $semantics->diagnose('SELECT 1 AS a, 2 UNION SELECT 3 AS b, 4 AS c');
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $arms = [$compound->first, $compound->steps[0]->query];
@@ -143,7 +143,7 @@ final class CompoundFactsTest extends TestCase
     public function testSpelledTellsANameTakenFromTheTextOfAnExpression(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1+1, (a), 2 AS b, * FROM (SELECT 1 AS a)');
+        $query = $semantics->diagnose('SELECT 1+1, (a), 2 AS b, * FROM (SELECT 1 AS a)');
         $select = $query->statement;
         self::assertInstanceOf(Select::class, $select);
         $facts = new CompoundFacts();
@@ -158,7 +158,7 @@ final class CompoundFactsTest extends TestCase
     public function testReboundGivesTheRecursiveReferenceTheNamesOfTheColumnListAndAnyStorageClass(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('WITH RECURSIVE c(n, true, N) AS (SELECT 1 AS x, 2, 3 UNION ALL SELECT n + 1, 2, 3 FROM c) SELECT * FROM c', []);
+        $query = $semantics->diagnose('WITH RECURSIVE c(n, true, N) AS (SELECT 1 AS x, 2, 3 UNION ALL SELECT n + 1, 2, 3 FROM c) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
@@ -180,7 +180,7 @@ final class CompoundFactsTest extends TestCase
     public function testReboundNamesTheColumnsAfterTheFirstArmWithoutAColumnList(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('WITH RECURSIVE c AS (SELECT 1 AS x, 1+1 UNION ALL SELECT x + 1, 2 FROM c) SELECT * FROM c', []);
+        $query = $semantics->diagnose('WITH RECURSIVE c AS (SELECT 1 AS x, 1+1 UNION ALL SELECT x + 1, 2 FROM c) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
@@ -197,7 +197,7 @@ final class CompoundFactsTest extends TestCase
     public function testReboundLeavesAnEnvironmentWithoutTheTableUntouched(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1 UNION SELECT 2');
+        $query = $semantics->diagnose('SELECT 1 UNION SELECT 2');
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
         $outer = new Environment($query->context);

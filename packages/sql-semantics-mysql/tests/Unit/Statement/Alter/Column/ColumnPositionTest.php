@@ -16,6 +16,6 @@ final class ColumnPositionTest extends TestCase
 {
     public function testRenderWritesFirstOrAfter(): void
     {
-        self::assertSame('ALTER TABLE t ADD COLUMN a INT FIRST, ADD COLUMN b INT AFTER a', (new Semantics())->analyze('ALTER TABLE t ADD a INT FIRST, ADD b INT AFTER a')->toString());
+        self::assertSame('ALTER TABLE t ADD COLUMN a INT FIRST, ADD COLUMN b INT AFTER a', (new Semantics())->inspect('ALTER TABLE t ADD a INT FIRST, ADD b INT AFTER a')->toString());
     }
 }

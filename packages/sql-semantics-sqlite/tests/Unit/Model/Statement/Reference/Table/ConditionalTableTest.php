@@ -21,8 +21,8 @@ final class ConditionalTableTest extends TestCase
     public function testCandidatesAreKeptWhileAnEarlierSchemaIsUnknown(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', $semantics->context([$table], false));
+        $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', $semantics->context([$table], false));
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -35,8 +35,8 @@ final class ConditionalTableTest extends TestCase
     public function testCandidatesAreNotNeededWhenTheContextIsComplete(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE main.t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }

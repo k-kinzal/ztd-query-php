@@ -16,16 +16,16 @@ final class PluginRuleTest extends TestCase
 {
     public function testStatementLowersComponents(): void
     {
-        self::assertSame("UNINSTALL COMPONENT 'a', 'b'", (new Semantics())->analyze("uninstall component 'a', 'b'")->toString());
+        self::assertSame("UNINSTALL COMPONENT 'a', 'b'", (new Semantics())->inspect("uninstall component 'a', 'b'")->toString());
     }
 
     public function testSettingsLowersTheList(): void
     {
-        self::assertSame("INSTALL COMPONENT 'a' SET a.x = 1, GLOBAL a.y = ON", (new Semantics())->analyze("install component 'a' set a.x = 1, global a.y = on")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET a.x = 1, GLOBAL a.y = ON", (new Semantics())->inspect("install component 'a' set a.x = 1, global a.y = on")->toString());
     }
 
     public function testSettingLowersPersist(): void
     {
-        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST x = 2", (new Semantics('mysql-9.1.0'))->analyze("install component 'a' set persist x := 2")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST x = 2", (new Semantics('mysql-9.1.0'))->inspect("install component 'a' set persist x := 2")->toString());
     }
 }

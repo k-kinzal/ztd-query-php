@@ -16,8 +16,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Reaching the occurrence and the supplied declaration
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $query = $semantics->inspect('SELECT a FROM t', [$table]);
  *     $resolution = $query->field('a')->resolution;
  *     [$resolution->relation === $query->inputRelation(), $resolution->declaration() === $table->declarations()[0]->columns[0], $resolution->depth] // => [true, true, 0]
  */

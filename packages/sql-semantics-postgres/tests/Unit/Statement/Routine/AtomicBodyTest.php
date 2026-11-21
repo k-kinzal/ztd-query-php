@@ -42,7 +42,7 @@ final class AtomicBodyTest extends TestCase
 
     public function testDropsEmptyStatements(): void
     {
-        $operation = (new Semantics())->analyze('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC ; SELECT 1; ; END');
+        $operation = (new Semantics())->inspect('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC ; SELECT 1; ; END');
         self::assertSame('CREATE FUNCTION f () RETURNS int4 BEGIN ATOMIC SELECT 1; END', $operation->toString());
     }
 

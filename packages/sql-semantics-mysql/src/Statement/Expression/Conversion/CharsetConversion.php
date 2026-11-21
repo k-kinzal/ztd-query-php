@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  *
  * @visibility public
  * @example Reading the character set
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE CONVERT(a USING utf8mb4) = 'x'");
  *     $query->statement->where->left->charset->name->value // => 'utf8mb4'
  */
 final class CharsetConversion implements Scalar

@@ -18,7 +18,7 @@ final class AttachTest extends TestCase
 {
     public function testDeriveStatementDerivesEveryOperandWhereNoRelationIsVisible(): void
     {
-        $operation = (new Semantics())->inspect("ATTACH 'a' || name AS aux KEY 'k'", []);
+        $operation = (new Semantics())->diagnose("ATTACH 'a' || name AS aux KEY 'k'", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Attach::class, $statement);
@@ -31,7 +31,7 @@ final class AttachTest extends TestCase
 
     public function testDeriveStatementProvidesNoDeclaration(): void
     {
-        $operation = (new Semantics())->inspect("ATTACH 'file.db' AS aux");
+        $operation = (new Semantics())->diagnose("ATTACH 'file.db' AS aux");
 
         self::assertSame([], $operation->declarations());
         self::assertNull($operation->shape());
@@ -40,7 +40,7 @@ final class AttachTest extends TestCase
     public function testRenderDropsTheOptionalKeywordAndKeepsTheKey(): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect("attach database 'file.db' as aux key 'secret'");
+        $operation = $semantics->diagnose("attach database 'file.db' as aux key 'secret'");
 
         self::assertInstanceOf(Attach::class, $operation->statement);
         self::assertInstanceOf(NameOperand::class, $operation->statement->schema);

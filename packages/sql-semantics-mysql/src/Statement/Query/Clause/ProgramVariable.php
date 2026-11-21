@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading a program variable used as a row count
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t LIMIT n');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t LIMIT n');
  *     $query->statement->limit->count->name->value // => 'n'
  */
 final class ProgramVariable implements Scalar

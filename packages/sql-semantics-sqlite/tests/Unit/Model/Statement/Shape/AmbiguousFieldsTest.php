@@ -22,7 +22,7 @@ final class AmbiguousFieldsTest extends TestCase
 {
     public function testFieldsAreEveryFieldWithTheNameInOutputOrder(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT 1 AS a, 2 AS b, 3 AS a')->lookupField('a');
+        $lookup = (new Semantics())->inspect('SELECT 1 AS a, 2 AS b, 3 AS a')->lookupField('a');
 
         self::assertInstanceOf(AmbiguousFields::class, $lookup);
         self::assertSame('a', $lookup->name);

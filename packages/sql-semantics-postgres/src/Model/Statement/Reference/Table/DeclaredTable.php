@@ -13,8 +13,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Reaching the supplied declaration object
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $query = $semantics->inspect('SELECT a FROM t', [$table]);
  *     $query->facts->relation($query->inputRelation())->table->table === $table->declarations()[0] // => true
  */
 final class DeclaredTable implements TableResolution

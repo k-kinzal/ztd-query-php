@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
  *
  * @visibility public
  * @example Reading the modifier of a grouping
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t GROUP BY a WITH ROLLUP');
  *     $query->statement->groupBy->modifier // => \SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier::WithRollup
  */
 enum GroupingModifier

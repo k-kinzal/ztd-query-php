@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading the columns of XMLTABLE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' NOT NULL) AS x");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' NOT NULL) AS x");
  *     [$query->field(0)->type->descriptor->name(), $query->field(1)->nullability->name] // => ['integer', 'NotNull']
  */
 final class XmlTable implements Relation

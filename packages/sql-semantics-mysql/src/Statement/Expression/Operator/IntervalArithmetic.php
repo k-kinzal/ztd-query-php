@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\TemporalResult;
  *
  * @visibility public
  * @example Subtracting an interval
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE DATE '2024-01-31' - INTERVAL 1 MONTH");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE DATE '2024-01-31' - INTERVAL 1 MONTH");
  *     [$query->statement->where->subtract, $query->facts->scalar($query->statement->where)->type->descriptor->name()] // => [true, 'DATE']
  */
 final class IntervalArithmetic implements Scalar

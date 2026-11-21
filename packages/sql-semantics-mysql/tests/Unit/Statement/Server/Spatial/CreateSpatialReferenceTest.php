@@ -17,12 +17,12 @@ final class CreateSpatialReferenceTest extends TestCase
 {
     public function testRenderWritesIfNotExists(): void
     {
-        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 9 NAME 'n' DEFINITION 'd'", (new Semantics())->inspect("create spatial reference system if not exists 9 name 'n' definition 'd'")->toString());
+        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 9 NAME 'n' DEFINITION 'd'", (new Semantics())->diagnose("create spatial reference system if not exists 9 name 'n' definition 'd'")->toString());
     }
 
     public function testDeriveStatementReportsAMissingAttribute(): void
     {
-        $operation = (new Semantics())->inspect("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
+        $operation = (new Semantics())->diagnose("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n'");
 
         self::assertInstanceOf(SpatialProblem::class, $operation->facts->diagnostics[0]);
     }

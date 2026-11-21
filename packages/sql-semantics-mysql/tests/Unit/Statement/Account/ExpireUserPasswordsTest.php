@@ -16,11 +16,11 @@ final class ExpireUserPasswordsTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics('mysql-5.6.51'))->analyze('ALTER USER a PASSWORD EXPIRE')->facts->diagnostics);
+        self::assertSame([], (new Semantics('mysql-5.6.51'))->inspect('ALTER USER a PASSWORD EXPIRE')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryAccount(): void
     {
-        self::assertSame('ALTER USER a PASSWORD EXPIRE, CURRENT_USER() PASSWORD EXPIRE', (new Semantics('mysql-5.6.51'))->analyze('alter user a password expire, current_user() password expire')->toString());
+        self::assertSame('ALTER USER a PASSWORD EXPIRE, CURRENT_USER() PASSWORD EXPIRE', (new Semantics('mysql-5.6.51'))->inspect('alter user a password expire, current_user() password expire')->toString());
     }
 }

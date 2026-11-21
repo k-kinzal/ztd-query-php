@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Upgrading a database directory name
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('alter database `#mysql50#a-b` upgrade data directory name')->toString() // => 'ALTER DATABASE `#mysql50#a-b` UPGRADE DATA DIRECTORY NAME'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('alter database `#mysql50#a-b` upgrade data directory name')->toString() // => 'ALTER DATABASE `#mysql50#a-b` UPGRADE DATA DIRECTORY NAME'
  */
 final class UpgradeDatabaseName implements Statement
 {

@@ -35,9 +35,9 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Writing MOD as the remainder operator
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a MOD 2 = 1')->toString() // => 'SELECT a FROM t WHERE a % 2 = 1'
  * @example Typing a division of integers as DECIMAL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE 1 / 2');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE 1 / 2');
  *     $query->facts->scalar($query->statement->where)->type->descriptor->name() // => 'DECIMAL'
  */
 final class Arithmetic implements Scalar

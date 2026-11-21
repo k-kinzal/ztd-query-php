@@ -21,13 +21,13 @@ final class ChangeOwnerTest extends TestCase
 {
     public function testDeriveStatementRecordsNothingForASchema(): void
     {
-        $operation = (new Semantics())->analyze('ALTER SCHEMA s OWNER TO r', []);
+        $operation = (new Semantics())->inspect('ALTER SCHEMA s OWNER TO r', []);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheOwner(): void
     {
-        $operation = (new Semantics())->analyze('ALTER LARGE OBJECT 12 OWNER TO SESSION_USER');
+        $operation = (new Semantics())->inspect('ALTER LARGE OBJECT 12 OWNER TO SESSION_USER');
         self::assertSame('ALTER LARGE OBJECT 12 OWNER TO SESSION_USER', $operation->toString());
     }
 

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Naming the savepoint
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('savepoint sp1');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('savepoint sp1');
  *     [$statement->toString(), $statement->statement->savepoint->value] // => ['SAVEPOINT sp1', 'sp1']
  */
 final class Savepoint implements Statement

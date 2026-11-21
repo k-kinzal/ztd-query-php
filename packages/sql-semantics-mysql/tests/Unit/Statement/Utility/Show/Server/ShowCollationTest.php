@@ -16,20 +16,20 @@ final class ShowCollationTest extends TestCase
 {
     public function testDeriveStatementResolvesTheCondition(): void
     {
-        $show = (new Semantics())->analyze('SHOW COLLATION WHERE Id > 1');
+        $show = (new Semantics())->inspect('SHOW COLLATION WHERE Id > 1');
         self::assertInstanceOf(ShowCollation::class, $show->statement);
         self::assertSame([], $show->facts->diagnostics);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
-        $show = (new Semantics())->analyze('SHOW COLLATION WHERE Id > 1');
+        $show = (new Semantics())->inspect('SHOW COLLATION WHERE Id > 1');
         self::assertInstanceOf(ShowCollation::class, $show->statement);
         self::assertSame('Pad_attribute', $show->facts->relation($show->statement)->shape->slots[6]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW COLLATION WHERE Id > 1', (new Semantics())->analyze('SHOW COLLATION WHERE Id > 1')->toString());
+        self::assertSame('SHOW COLLATION WHERE Id > 1', (new Semantics())->inspect('SHOW COLLATION WHERE Id > 1')->toString());
     }
 }

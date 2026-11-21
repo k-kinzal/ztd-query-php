@@ -17,8 +17,8 @@ final class DescribeTableTest extends TestCase
     public function testDeriveStatementResolvesTheTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $describe = $semantics->analyze('DESCRIBE t a', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $describe = $semantics->inspect('DESCRIBE t a', [$table]);
         self::assertInstanceOf(DescribeTable::class, $describe->statement);
         self::assertSame([], $describe->facts->diagnostics);
         self::assertSame('Field', $describe->field(0)->name?->value);
@@ -26,6 +26,6 @@ final class DescribeTableTest extends TestCase
 
     public function testRenderWritesTheColumn(): void
     {
-        self::assertSame('DESCRIBE db.t `a%`', (new Semantics('mysql-5.6.51'))->analyze('explain db.t `a%`')->toString());
+        self::assertSame('DESCRIBE db.t `a%`', (new Semantics('mysql-5.6.51'))->inspect('explain db.t `a%`')->toString());
     }
 }

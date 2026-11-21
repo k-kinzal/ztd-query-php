@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
  *
  * @visibility public
  * @example Typing a CASE by its results
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
  *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
  */
 final class CaseExpression implements Scalar

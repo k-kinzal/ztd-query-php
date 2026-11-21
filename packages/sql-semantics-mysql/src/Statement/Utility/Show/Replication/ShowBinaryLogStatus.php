@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW BINARY LOG STATUS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW BINARY LOG STATUS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['File', 'SHOW BINARY LOG STATUS']
  */
 final class ShowBinaryLogStatus implements Statement

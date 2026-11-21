@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * @visibility public
  * @example Telling which option of the server a spelling fills
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe NOLOGIN');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE joe NOLOGIN');
  *     $operation->statement->options[0]->option() // => 'canlogin'
  */
 interface RoleOption extends Node

@@ -25,7 +25,7 @@ final class ResetPersistTest extends TestCase
 
     public function testRenderWritesTheComponentVariable(): void
     {
-        $reset = (new Semantics())->analyze('reset persist comp.var');
+        $reset = (new Semantics())->inspect('reset persist comp.var');
 
         self::assertSame('RESET PERSIST comp.var', $reset->toString());
         self::assertEquals(new ResetPersist(false, new Name('var'), new Name('comp')), $reset->statement);

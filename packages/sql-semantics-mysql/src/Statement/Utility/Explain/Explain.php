@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Inspecting a query and reading the report columns
- *     $explain = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXPLAIN FORMAT = TREE SELECT 1');
+ *     $explain = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('EXPLAIN FORMAT = TREE SELECT 1');
  *     [$explain->field(0)->name?->value, $explain->toString()] // => ['EXPLAIN', 'EXPLAIN FORMAT = TREE SELECT 1']
  */
 final class Explain implements Statement

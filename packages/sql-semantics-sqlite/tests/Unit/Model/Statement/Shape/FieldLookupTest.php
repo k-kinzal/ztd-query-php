@@ -21,11 +21,11 @@ final class FieldLookupTest extends TestCase
     public function testTheFourOutcomesAreTheOnlyLookupResults(): void
     {
         $semantics = new Semantics();
-        $complete = $semantics->analyze('SELECT 1 AS a, 2 AS b, 3 AS b');
+        $complete = $semantics->inspect('SELECT 1 AS a, 2 AS b, 3 AS b');
 
         self::assertInstanceOf(UniqueField::class, $complete->lookupField('a'));
         self::assertInstanceOf(AmbiguousFields::class, $complete->lookupField('b'));
         self::assertInstanceOf(AbsentField::class, $complete->lookupField('c'));
-        self::assertInstanceOf(DependentField::class, $semantics->analyze('SELECT * FROM t')->lookupField('a'));
+        self::assertInstanceOf(DependentField::class, $semantics->inspect('SELECT * FROM t')->lookupField('a'));
     }
 }

@@ -47,8 +47,8 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
  * @visibility public
  * @example Reading the actions of a table change
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
- *     $semantics->analyze('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist in the table.
+ *     $table = $semantics->inspect('CREATE TABLE t (a INT)');
+ *     $semantics->inspect('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist in the table.
  */
 final class AlterTable implements Statement, Relation
 {

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an assignment
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t SET a = DEFAULT');
+ *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('UPDATE t SET a = DEFAULT');
  *     $update->statement->assignments[0]->value instanceof \SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest // => true
  */
 final class Assignment implements Node

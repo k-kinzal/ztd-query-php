@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  *
  * @visibility public
  * @example Reading the structure of an analyzed statement
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1');
  *     $operation->statement instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Node // => true
  */
 interface Node

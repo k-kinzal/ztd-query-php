@@ -31,7 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
  *
  * @visibility public
  * @example Reading the parent of a foreign key
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent (id) ON DELETE CASCADE)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p REFERENCES parent (id) ON DELETE CASCADE)');
  *     $clause = $create->statement->columns[0]->constraints[0];
  *     [$clause->table->value, $clause->columns[0]->name->value, count($clause->arguments)] // => ['parent', 'id', 1]
  */

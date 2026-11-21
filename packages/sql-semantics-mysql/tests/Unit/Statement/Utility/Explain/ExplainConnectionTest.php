@@ -19,14 +19,14 @@ final class ExplainConnectionTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $explain = (new Semantics('mysql-5.7.44'))->analyze('EXPLAIN PARTITIONS FOR CONNECTION 7');
+        $explain = (new Semantics('mysql-5.7.44'))->inspect('EXPLAIN PARTITIONS FOR CONNECTION 7');
         self::assertInstanceOf(ExplainConnection::class, $explain->statement);
         self::assertSame('partitions', $explain->field(3)->name?->value);
     }
 
     public function testRenderWritesTheConnection(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 7', (new Semantics())->analyze('explain format = json for connection 7')->toString());
+        self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 7', (new Semantics())->inspect('explain format = json for connection 7')->toString());
     }
 
     public function testRefusesAModifierWithOptions(): void

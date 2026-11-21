@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Changing the type of a column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET DATA TYPE bigint COLLATE "C" USING a + 1');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a SET DATA TYPE bigint COLLATE "C" USING a + 1');
  *     $statement->toString() // => 'ALTER TABLE t ALTER a TYPE BIGINT COLLATE "C" USING a + 1'
  */
 final class TypeChange implements AlterCommand

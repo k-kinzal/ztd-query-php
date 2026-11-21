@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
  *
  * @visibility public
  * @example Changing the connection limit
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d CONNECTION LIMIT 10');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d CONNECTION LIMIT 10');
  *     $operation->toString() // => 'ALTER DATABASE d WITH CONNECTION LIMIT = 10'
  */
 final class AlterDatabase implements Statement

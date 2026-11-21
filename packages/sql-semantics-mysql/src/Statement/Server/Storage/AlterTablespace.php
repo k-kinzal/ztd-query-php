@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Encrypting a tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter tablespace ts encryption = 'Y'");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("alter tablespace ts encryption = 'Y'");
  *     [$statement->toString(), count($statement->statement->options)] // => ["ALTER TABLESPACE ts ENCRYPTION 'Y'", 1]
  */
 final class AlterTablespace implements Statement

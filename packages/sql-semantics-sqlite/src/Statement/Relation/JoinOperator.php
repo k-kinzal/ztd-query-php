@@ -28,7 +28,7 @@ use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
  *
  * @visibility public
  * @example Reading the meaning of a join operator
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t NATURAL LEFT JOIN u');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 FROM t NATURAL LEFT JOIN u');
  *     $operator = $query->statement->from->steps[0]->operator;
  *     [$operator->natural(), $operator->left(), $operator->right(), $operator->valid()] // => [true, true, false, true]
  * @example Refusing words after a comma

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the family name
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR FAMILY f USING btree');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR FAMILY f USING btree');
  *     $operation->statement->name->last()->value // => 'f'
  */
 final class CreateOperatorFamily implements Statement

@@ -17,7 +17,7 @@ final class StartTransactionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t START TRANSACTION AS SELECT 1 AS a');
+        $create = (new Semantics())->inspect('CREATE TABLE t START TRANSACTION AS SELECT 1 AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

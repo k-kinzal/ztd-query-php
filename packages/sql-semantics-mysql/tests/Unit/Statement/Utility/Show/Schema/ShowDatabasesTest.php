@@ -16,7 +16,7 @@ final class ShowDatabasesTest extends TestCase
 {
     public function testDeriveStatementResolvesTheConditionAgainstTheRows(): void
     {
-        $show = (new Semantics())->analyze("SHOW DATABASES WHERE `Database` LIKE 'a%'");
+        $show = (new Semantics())->inspect("SHOW DATABASES WHERE `Database` LIKE 'a%'");
         self::assertInstanceOf(ShowDatabases::class, $show->statement);
         self::assertSame([], $show->facts->diagnostics);
         self::assertSame('Database', $show->field(0)->name?->value);
@@ -24,13 +24,13 @@ final class ShowDatabasesTest extends TestCase
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
-        $show = (new Semantics())->analyze("SHOW DATABASES WHERE `Database` LIKE 'a%'");
+        $show = (new Semantics())->inspect("SHOW DATABASES WHERE `Database` LIKE 'a%'");
         self::assertInstanceOf(ShowDatabases::class, $show->statement);
         self::assertSame('Database', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame("SHOW DATABASES WHERE `Database` LIKE 'a%'", (new Semantics())->analyze("SHOW DATABASES WHERE `Database` LIKE 'a%'")->toString());
+        self::assertSame("SHOW DATABASES WHERE `Database` LIKE 'a%'", (new Semantics())->inspect("SHOW DATABASES WHERE `Database` LIKE 'a%'")->toString());
     }
 }

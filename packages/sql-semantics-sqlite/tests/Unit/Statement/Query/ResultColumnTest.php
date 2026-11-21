@@ -29,7 +29,7 @@ final class ResultColumnTest extends TestCase
 {
     public function testRenderWritesTheAliasWithAsWhenItWasWritten(): void
     {
-        $query = (new Semantics())->analyze('select 1 one, a as "x y", b from t');
+        $query = (new Semantics())->inspect('select 1 one, a as "x y", b from t');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
@@ -56,7 +56,7 @@ final class ResultColumnTest extends TestCase
 
     public function testRenderWritesTheExpressionInItsLayout(): void
     {
-        $query = (new Semantics())->analyze("SELECT 1 + /* one */ 1, a  COLLATE  nocase, (select 2 x), 'y' AS y FROM t");
+        $query = (new Semantics())->inspect("SELECT 1 + /* one */ 1, a  COLLATE  nocase, (select 2 x), 'y' AS y FROM t");
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
 
@@ -71,7 +71,7 @@ final class ResultColumnTest extends TestCase
 
     public function testRenderKeepsNoLayoutForTheCanonicalSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT 1 + 1, a FROM t');
+        $query = (new Semantics())->inspect('SELECT 1 + 1, a FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
 
@@ -99,7 +99,7 @@ final class ResultColumnTest extends TestCase
     public function testRenderKeepsTheNamesAndTheResultsSqliteGives(string $sql): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)')]);
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)')]);
         $source = new PDO('sqlite::memory:');
         $rendered = new PDO('sqlite::memory:');
         $source->exec("CREATE TABLE t (a INTEGER, b TEXT); INSERT INTO t VALUES (1, 'x')");
@@ -124,7 +124,7 @@ final class ResultColumnTest extends TestCase
 
     public function testRenderKeepsTheCommentAfterTheExpression(): void
     {
-        $query = (new Semantics())->analyze("SELECT 1+1 /*c*/ ,2, 3 -- d\n");
+        $query = (new Semantics())->inspect("SELECT 1+1 /*c*/ ,2, 3 -- d\n");
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
 
@@ -175,7 +175,7 @@ final class ResultColumnTest extends TestCase
 
     public function testRenderKeepsDigitSeparatorsThatNameAColumn(): void
     {
-        $operation = (new Semantics())->analyze('SELECT * FROM (SELECT 1_000)');
+        $operation = (new Semantics())->inspect('SELECT * FROM (SELECT 1_000)');
 
         self::assertSame('1_000', $operation->fields()?->at(0)->name?->value);
         self::assertSame('SELECT * FROM (SELECT 1_000)', $operation->toString());

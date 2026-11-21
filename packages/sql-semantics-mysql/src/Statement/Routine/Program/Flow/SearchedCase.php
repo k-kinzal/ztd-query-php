@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading a searched CASE statement
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p(a INT) CASE WHEN a > 1 THEN SELECT 1; WHEN a < 0 THEN SELECT 2; END CASE');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p(a INT) CASE WHEN a > 1 THEN SELECT 1; WHEN a < 0 THEN SELECT 2; END CASE');
  *     [count($create->statement->body->branches), $create->statement->body->otherwise] // => [2, []]
  */
 final class SearchedCase implements ProgramStatement

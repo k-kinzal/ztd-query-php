@@ -17,7 +17,7 @@ final class DependentFieldTest extends TestCase
 {
     public function testCandidatesAreTheKnownFieldsAndMissingNamesTheStarInputs(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT *, 1 AS a FROM t')->lookupField('a');
+        $lookup = (new Semantics())->inspect('SELECT *, 1 AS a FROM t')->lookupField('a');
 
         self::assertInstanceOf(DependentField::class, $lookup);
         self::assertSame('a', $lookup->name);
@@ -29,7 +29,7 @@ final class DependentFieldTest extends TestCase
 
     public function testCandidatesMayBeEmptyWhileMissingIsNot(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT * FROM t')->lookupField('a');
+        $lookup = (new Semantics())->inspect('SELECT * FROM t')->lookupField('a');
 
         self::assertInstanceOf(DependentField::class, $lookup);
         self::assertSame([], $lookup->candidates);

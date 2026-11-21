@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
  *
  * @visibility public
  * @example Reporting a partitioning clause sent as a statement
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARTITION BY KEY () PARTITIONS 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A partitioning clause is not a statement a client can send.
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('PARTITION BY KEY () PARTITIONS 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A partitioning clause is not a statement a client can send.
  */
 final class PartitionEntry implements Statement
 {

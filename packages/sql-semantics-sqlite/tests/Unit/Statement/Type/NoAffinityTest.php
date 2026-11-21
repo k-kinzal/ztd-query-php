@@ -22,9 +22,9 @@ final class NoAffinityTest extends TestCase
     public function testNameOfAViewColumnWithoutAffinityStaysEmptyThroughAFurtherView(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE s (n)');
-        $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one, n FROM s', [$table]);
-        $further = $semantics->analyze('CREATE VIEW w AS SELECT one, n FROM v', [$view]);
+        $table = $semantics->inspect('CREATE TABLE s (n)');
+        $view = $semantics->inspect('CREATE VIEW v AS SELECT 1 AS one, n FROM s', [$table]);
+        $further = $semantics->inspect('CREATE VIEW w AS SELECT one, n FROM v', [$view]);
 
         self::assertInstanceOf(NoAffinity::class, $view->declarations()[0]->columns[0]->type);
         self::assertInstanceOf(NoAffinity::class, $further->declarations()[0]->columns[0]->type);

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  *
  * @visibility public
  * @example Reading the removal of a dependency
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER INDEX i NO DEPENDS ON EXTENSION e');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER INDEX i NO DEPENDS ON EXTENSION e');
  *     [$operation->statement->remove, $operation->statement->extension->value] // => [true, 'e']
  */
 final class ExtensionDependency implements Statement

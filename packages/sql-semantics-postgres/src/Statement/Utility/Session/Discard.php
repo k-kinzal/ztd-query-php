@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading what is discarded
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DISCARD TEMPORARY');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD TEMPORARY');
  *     [$operation->statement->target->temporary(), $operation->toString()] // => [true, 'DISCARD TEMPORARY']
  */
 final class Discard implements Statement

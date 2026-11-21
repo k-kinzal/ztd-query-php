@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  *
  * @visibility public
  * @example Revoking a privilege
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
  */
 final class RevokePrivileges implements Statement
 {

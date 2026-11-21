@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  *
  * @visibility public
  * @example Reading a check constraint
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT positive CHECK (a > 0) NOT ENFORCED)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT, CONSTRAINT positive CHECK (a > 0) NOT ENFORCED)');
  *     [$create->statement->elements[1]->name->name->column->value, $create->statement->elements[1]->enforced] // => ['positive', false]
  */
 final class CheckConstraint implements TableElement, ColumnAttribute

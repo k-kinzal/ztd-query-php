@@ -16,13 +16,13 @@ final class ShowErrorsTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW ERRORS');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW ERRORS');
         self::assertInstanceOf(ShowErrors::class, $show->statement);
         self::assertSame('Level', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW ERRORS', (new Semantics('mysql-5.6.51'))->analyze('SHOW ERRORS')->toString());
+        self::assertSame('SHOW ERRORS', (new Semantics('mysql-5.6.51'))->inspect('SHOW ERRORS')->toString());
     }
 }

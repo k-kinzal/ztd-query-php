@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
  *
  * @visibility public
  * @example Partitioning a table by hash
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 4');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 4');
  *     $alter->toString() // => 'ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 4'
  */
 final class PartitionBy implements TrailingCommand

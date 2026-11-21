@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa commit 'g' one phase");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa commit 'g' one phase");
  *     [$xa->toString(), $xa->statement->onePhase] // => ["XA COMMIT 'g' ONE PHASE", true]
  */
 final class XaCommit implements Statement

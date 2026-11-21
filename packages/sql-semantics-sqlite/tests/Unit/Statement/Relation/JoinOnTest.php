@@ -35,15 +35,15 @@ final class JoinOnTest extends TestCase
         $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
 
         self::assertSame('SELECT * FROM t JOIN u ON 1', $built->toString());
-        self::assertSame('SELECT * FROM t JOIN u ON t.a = u.a', $semantics->inspect('select * from t join u on t.a = u.a')->toString());
+        self::assertSame('SELECT * FROM t JOIN u ON t.a = u.a', $semantics->diagnose('select * from t join u on t.a = u.a')->toString());
     }
 
     public function testConditionSeesBothSidesOfTheJoin(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $query = $semantics->inspect('SELECT * FROM t JOIN u ON t.a = u.a', [$t, $u]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $query = $semantics->diagnose('SELECT * FROM t JOIN u ON t.a = u.a', [$t, $u]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);
@@ -63,8 +63,8 @@ final class JoinOnTest extends TestCase
     public function testConditionMustBeASingleValue(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT * FROM t JOIN t AS t2 ON (1, 2)', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT * FROM t JOIN t AS t2 ON (1, 2)', [$t]);
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::TooManyValueColumns, $query->facts->diagnostics[0]->rule);

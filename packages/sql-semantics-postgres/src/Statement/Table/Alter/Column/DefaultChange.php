@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Reading a new default
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET DEFAULT 0');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a SET DEFAULT 0');
  *     $statement->toString() // => 'ALTER TABLE t ALTER a SET DEFAULT 0'
  */
 final class DefaultChange implements AlterCommand

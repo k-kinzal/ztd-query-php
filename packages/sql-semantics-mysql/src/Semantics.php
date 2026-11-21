@@ -10,7 +10,8 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Platform\MySql\Ir\Analyzer as CompleteAnalyzer;
+use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
@@ -27,12 +28,12 @@ use SqlSemantics\Platform\MySql\Model\Validation\LeafEmbedding;
 use SqlSemantics\Platform\MySql\Model\Validation\Publication;
 use SqlSemantics\Platform\MySql\Model\Validation\TokenCorrespondence;
 use SqlSemantics\Platform\MySql\Model\Validation\ValueGraph;
-use SqlSemantics\Query;
 
 /**
  * Analyzes SQL of one fixed language profile into read-only operations.
  *
- * An operation holds the concrete structure of the statement, the facts
+ * Analyze publishes complete statements. Inspection provides operations with
+ * diagnostic facts. An operation holds the concrete structure of the statement, the facts
  * derived against an explicit declaration context, and SQL rendered from that
  * structure. Nothing here changes an operation: a different statement is
  * analyzed anew or built from explicit inputs.
@@ -40,12 +41,12 @@ use SqlSemantics\Query;
  * @visibility public
  * @example Resolving a query against the declaration it depends on
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
- *     $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
+ *     $users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+ *     $query = $semantics->inspect('SELECT name FROM users WHERE id = 1', [$users]);
  *     $query->field('name')->column() === $users->declarations()[0]->columns[1] // => true
  * @example Rendering SQL from the analyzed structure
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->analyze('select   1')->toString() // => 'SELECT 1'
+ *     $semantics->inspect('select   1')->toString() // => 'SELECT 1'
  * @example Finding the statements of a script
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
@@ -80,14 +81,6 @@ final class Semantics implements Analyzer
         $this->parser = $this->platform->parser($this->profile);
         $this->searchPath = $searchPath?->schemas;
         $this->platform->context($this->profile, $this->searchPath, [], false);
-    }
-
-    /**
-     * Offers analysis that only publishes a complete SemanticsIR value.
-     */
-    public function ir(): CompleteAnalyzer
-    {
-        return new CompleteAnalyzer($this);
     }
 
     /**
@@ -134,18 +127,30 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Analyzes SQL and returns a checked operation against the given declarations.
+     * Resolves a statement and returns its complete database-specific representation.
+     *
+     * @param list<Table|Operation>|Context|null $context
+     * @throws AnalysisException When the grammar rejects the SQL
+     * @throws SemanticException When the analysis establishes a semantic error
+     * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
+     */
+    public function analyze(string $sql, array|Context|null $context = null): Select
+    {
+        return (new SelectLowering())->lower($this->inspect($sql, $context));
+    }
+
+    /**
+     * Returns a checked operation with diagnostic facts and declarations.
      *
      * @param list<Table|Operation>|Context|null $context A declaration list, a prepared context, or null for an open context
-     * @return Operation
      *
      * @throws AnalysisException When the grammar rejects the SQL
      * @throws SemanticException When the analysis establishes a semantic problem
      * @throws InvalidConstruction When the context belongs to another dialect or language profile
      */
-    public function analyze(string $sql, array|Context|null $context = null): Query
+    public function inspect(string $sql, array|Context|null $context = null): Operation
     {
-        $operation = $this->inspect($sql, $context);
+        $operation = $this->diagnose($sql, $context);
         if ($operation->facts->diagnostics !== []) {
             throw new SemanticException($operation->facts->diagnostics);
         }
@@ -161,7 +166,7 @@ final class Semantics implements Analyzer
      * @throws AnalysisException When the grammar rejects the SQL
      * @throws InvalidConstruction When the context belongs to another dialect or language profile
      */
-    public function inspect(string $sql, array|Context|null $context = null): Operation
+    public function diagnose(string $sql, array|Context|null $context = null): Operation
     {
         $declarations = $this->context($context);
         try {
@@ -186,25 +191,26 @@ final class Semantics implements Analyzer
     }
 
     /**
-     * Analyzes each statement of a script against the same explicit declaration context.
+     * Publishes a complete value for each statement of a script against the same explicit declaration context.
      *
      * No statement is executed for the ones after it.
      *
      * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Operation>
+     * @return list<Select>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
+     * @throws InvalidConstruction When any statement has no complete representation
      */
     public function analyzeAll(string $sql, array|Context|null $context = null): array
     {
         $declarations = $this->context($context);
-        $operations = [];
+        $results = [];
         foreach ($this->split($sql) as $statement) {
-            $operations[] = $this->analyze($statement, $declarations);
+            $results[] = $this->analyze($statement, $declarations);
         }
 
-        return $operations;
+        return $results;
     }
 
     /**

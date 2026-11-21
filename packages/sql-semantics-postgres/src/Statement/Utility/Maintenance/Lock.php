@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Reading the mode a LOCK takes
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LOCK TABLE ONLY a, b NOWAIT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('LOCK TABLE ONLY a, b NOWAIT');
  *     [$operation->statement->mode, $operation->statement->effectiveMode(), $operation->toString()] // => [null, \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::AccessExclusive, 'LOCK ONLY a, b NOWAIT']
  * @example Refusing a LOCK without a table
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Lock([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

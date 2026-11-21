@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Resolving a parent table
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t () INHERITS (p)', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation p does not exist.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t () INHERITS (p)', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation p does not exist.
  */
 final class ParentTable implements Node
 {

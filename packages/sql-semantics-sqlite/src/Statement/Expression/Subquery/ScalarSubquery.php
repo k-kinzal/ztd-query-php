@@ -31,7 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
  *
  * @visibility public
  * @example Reading the facts of a scalar subquery
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (SELECT 1)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT (SELECT 1)');
  *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class ScalarSubquery implements Scalar

@@ -25,8 +25,8 @@ final class GroupedTest extends TestCase
     public function testDeriveScalarKeepsTheTypeAndNullFactAndLeavesTheResolutionToTheOperand(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT (a), ((b)) FROM t', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT (a), ((b)) FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -59,7 +59,7 @@ final class GroupedTest extends TestCase
 
     public function testRenderKeepsEveryWrittenGrouping(): void
     {
-        $operation = (new Semantics())->analyze('select (1 + 2) * 3, ((a)), (1) from t');
+        $operation = (new Semantics())->inspect('select (1 + 2) * 3, ((a)), (1) from t');
 
         self::assertSame('SELECT (1 + 2) * 3, ((a)), (1) FROM t', $operation->toString());
     }

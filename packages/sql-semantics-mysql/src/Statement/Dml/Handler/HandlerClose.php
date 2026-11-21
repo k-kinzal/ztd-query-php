@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a HANDLER ... CLOSE
- *     $close = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h CLOSE');
+ *     $close = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('HANDLER h CLOSE');
  *     [$close->statement->handler->value, $close->toString()] // => ['h', 'HANDLER h CLOSE']
  */
 final class HandlerClose implements Statement

@@ -17,7 +17,7 @@ final class CheckConstraintTest extends TestCase
 {
     public function testDeriveElementResolvesTheConditionInTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, CHECK (a > 0))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $check = $statement->elements[1];
@@ -30,13 +30,13 @@ final class CheckConstraintTest extends TestCase
 
     public function testDeriveAttributeResolvesTheConditionInTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT CHECK (b > 0), b INT)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT CHECK (b > 0), b INT)');
 
         self::assertSame([], $create->facts->diagnostics);
     }
 
     public function testRenderWritesTheNameTheConditionAndTheEnforcement(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED, CHECK (a < 9) ENFORCED)', (new Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED, CHECK (a < 9) ENFORCED)')->toString());
+        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED, CHECK (a < 9) ENFORCED)', (new Semantics())->inspect('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED, CHECK (a < 9) ENFORCED)')->toString());
     }
 }

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the new tablespace
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d SET TABLESPACE fast');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d SET TABLESPACE fast');
  *     $operation->statement->tablespace->value // => 'fast'
  */
 final class MoveDatabase implements Statement

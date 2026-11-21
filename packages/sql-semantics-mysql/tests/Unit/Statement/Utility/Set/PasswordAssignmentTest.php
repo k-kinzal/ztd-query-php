@@ -16,7 +16,7 @@ final class PasswordAssignmentTest extends TestCase
 {
     public function testDeriveItemDerivesNothing(): void
     {
-        $set = (new Semantics('mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD = PASSWORD('x')");
+        $set = (new Semantics('mysql-5.6.51'))->inspect("SET @a = 1, PASSWORD = PASSWORD('x')");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         self::assertInstanceOf(PasswordAssignment::class, $set->statement->items[1]);
         self::assertNull($set->statement->items[1]->user);
@@ -25,6 +25,6 @@ final class PasswordAssignmentTest extends TestCase
 
     public function testRenderWritesTheAccount(): void
     {
-        self::assertSame("SET PASSWORD FOR u@h = 'x', @a = 1", (new Semantics('mysql-5.6.51'))->analyze("set password for u@h = 'x', @a = 1")->toString());
+        self::assertSame("SET PASSWORD FOR u@h = 'x', @a = 1", (new Semantics('mysql-5.6.51'))->inspect("set password for u@h = 'x', @a = 1")->toString());
     }
 }

@@ -18,13 +18,13 @@ final class ResetTest extends TestCase
 {
     public function testDeriveStatementDerivesEveryItem(): void
     {
-        $reset = (new Semantics('mysql-8.2.0'))->inspect("RESET SLAVE FOR CHANNEL 'a\\nb', MASTER TO 1.5");
+        $reset = (new Semantics('mysql-8.2.0'))->diagnose("RESET SLAVE FOR CHANNEL 'a\\nb', MASTER TO 1.5");
 
         self::assertEquals([new RefusedSetting(ReplicationError::LineFeed), new RefusedSetting(ReplicationError::FractionalNumber)], $reset->facts->diagnostics);
     }
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame("RESET REPLICA FOR CHANNEL 'a\\nb', BINARY LOGS AND GTIDS TO 1.5", (new Semantics('mysql-8.2.0'))->inspect("reset slave for channel 'a\\nb', master to 1.5")->toString());
+        self::assertSame("RESET REPLICA FOR CHANNEL 'a\\nb', BINARY LOGS AND GTIDS TO 1.5", (new Semantics('mysql-8.2.0'))->diagnose("reset slave for channel 'a\\nb', master to 1.5")->toString());
     }
 }

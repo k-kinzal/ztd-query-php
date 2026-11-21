@@ -43,10 +43,10 @@ final class OutputSlotTest extends TestCase
     public function testDeclarationOfAnOuterJoinSlotIsTheUnchangedColumn(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
-        $u = $semantics->analyze('CREATE TABLE u (a INTEGER)')->declarations()[0];
+        $t = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
+        $u = $semantics->inspect('CREATE TABLE u (a INTEGER)')->declarations()[0];
 
-        $slot = $semantics->analyze('SELECT t.a FROM u LEFT JOIN t ON u.a = t.a', [$t, $u])->field(0)->slot;
+        $slot = $semantics->inspect('SELECT t.a FROM u LEFT JOIN t ON u.a = t.a', [$t, $u])->field(0)->slot;
 
         self::assertSame(Nullability::Nullable, $slot->nullability);
         self::assertSame($t->columns[0], $slot->declaration());

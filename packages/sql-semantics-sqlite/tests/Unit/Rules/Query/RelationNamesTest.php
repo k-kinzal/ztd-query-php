@@ -24,8 +24,8 @@ final class RelationNamesTest extends TestCase
     public function testShapeNamesTheColumnsAsSqliteDoesBeforeResolution(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a COLLATE nocase, true, a, a, a, (a), a, t.b, 1 + 1, "zz", oid, A FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a COLLATE nocase, true, a, a, a, (a), a, t.b, 1 + 1, "zz", oid, A FROM t', [$create]);
         self::assertInstanceOf(Select::class, $query->statement);
         $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
 
@@ -38,7 +38,7 @@ final class RelationNamesTest extends TestCase
     public function testShapeLetsAnAliasWinAndCountsItAmongTheDuplicates(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a AS a, a, a AS "a:1", b AS A FROM t');
+        $query = $semantics->diagnose('SELECT a AS a, a, a AS "a:1", b AS A FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
 
@@ -48,7 +48,7 @@ final class RelationNamesTest extends TestCase
     public function testShapeKeepsTheMissingInputsAndLeavesTheNamesAfterAnOpenStarUnnamed(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a, *, b FROM t');
+        $query = $semantics->diagnose('SELECT a, *, b FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
 
@@ -61,7 +61,7 @@ final class RelationNamesTest extends TestCase
     public function testShapeKeepsAnUndecidedNameAndTheNamesAfterItDependent(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT *, 2 AS two FROM (SELECT *, 1 AS one FROM u)');
+        $query = $semantics->diagnose('SELECT *, 2 AS two FROM (SELECT *, 1 AS one FROM u)');
         self::assertInstanceOf(Select::class, $query->statement);
         $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
 
@@ -72,7 +72,7 @@ final class RelationNamesTest extends TestCase
 
     public function testShapeNamesTheColumnsAfterTheLeftmostArm(): void
     {
-        $query = (new Semantics())->inspect('SELECT * FROM (SELECT 1+1, 2 AS b UNION SELECT 3, 4), (VALUES ("zz", 1, true, "q" COLLATE nocase))', []);
+        $query = (new Semantics())->diagnose('SELECT * FROM (SELECT 1+1, 2 AS b UNION SELECT 3, 4), (VALUES ("zz", 1, true, "q" COLLATE nocase))', []);
 
         self::assertSame(['1+1', 'b', 'zz', 'column2', 'column3', 'q'], array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []));
     }
@@ -80,8 +80,8 @@ final class RelationNamesTest extends TestCase
     public function testNamedPrefersTheAliasThenTheWrittenWordThenTheText(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT oid, a AS x, "zz", true, TRUE AS z, 1, * FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT oid, a AS x, "zz", true, TRUE AS z, 1, * FROM t', [$create]);
         $names = new RelationNames();
         $select = $query->statement;
 
@@ -97,7 +97,7 @@ final class RelationNamesTest extends TestCase
 
     public function testNamedReadsTheWordOfAValuesColumnOrItsPosition(): void
     {
-        $query = (new Semantics())->inspect('VALUES (x, 1)');
+        $query = (new Semantics())->diagnose('VALUES (x, 1)');
         $values = $query->statement;
 
         self::assertInstanceOf(ValuesClause::class, $values);

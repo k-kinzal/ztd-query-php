@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY (b))') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Key column b doesn't exist in table.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT, KEY (b))') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Key column b doesn't exist in table.
  */
 final class UnknownKeyColumn implements Diagnostic
 {

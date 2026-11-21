@@ -19,8 +19,8 @@ final class RelationTest extends TestCase
     public function testDeriveRelationGivesEachOccurrenceOfOneTableItsOwnFact(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
-        $operation = $semantics->analyze('SELECT x.a FROM t AS x JOIN t AS y ON x.a = y.a', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+        $operation = $semantics->inspect('SELECT x.a FROM t AS x JOIN t AS y ON x.a = y.a', [$table]);
         $join = $operation->inputRelation();
 
         self::assertInstanceOf(JoinChain::class, $join);

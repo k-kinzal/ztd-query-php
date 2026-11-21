@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnStorage;
  *
  * @visibility public
  * @example Changing the storage of a column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a SET STORAGE external');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a SET STORAGE external');
  *     $statement->statement->commands[0]->setting->method->value // => 'external'
  */
 final class ColumnStorageChange implements AlterCommand

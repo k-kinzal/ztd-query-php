@@ -27,10 +27,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading a NULL test
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a ISNULL FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a ISNULL FROM t');
  *     [$query->statement->columns[0]->expression->form, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  * @example Refusing an operand that the test would not cover when written
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a OR b FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a OR b FROM t');
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest($query->statement->columns[0]->expression, \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm::IsNull) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class NullTest implements Scalar

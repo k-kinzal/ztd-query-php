@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Naming a transition table
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRIGGER g AFTER INSERT ON t REFERENCING NEW TABLE AS fresh FOR EACH STATEMENT EXECUTE FUNCTION f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TRIGGER g AFTER INSERT ON t REFERENCING NEW TABLE AS fresh FOR EACH STATEMENT EXECUTE FUNCTION f()');
  *     $statement->statement->transitions[0]->name->value // => 'fresh'
  */
 final class TriggerTransition implements Node

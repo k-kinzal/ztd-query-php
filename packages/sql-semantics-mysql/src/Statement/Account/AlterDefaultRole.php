@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Setting every granted role as default
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter user u default role all')->statement->roles->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter user u default role all')->statement->roles->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All
  */
 final class AlterDefaultRole implements Statement
 {

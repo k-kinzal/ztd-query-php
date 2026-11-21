@@ -21,8 +21,8 @@ final class QueryTest extends TestCase
     public function testDeriveQueryRecordsTheOutputOfANestedQueryAtItsPosition(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
-        $operation = $semantics->analyze('SELECT (SELECT t.a FROM t AS inner_t) FROM t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
+        $operation = $semantics->inspect('SELECT (SELECT t.a FROM t AS inner_t) FROM t', [$table]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -40,7 +40,7 @@ final class QueryTest extends TestCase
 
     public function testDeriveQueryOfTheRootIsTheOutputOfTheOperation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 AS one');
+        $operation = (new Semantics())->inspect('SELECT 1 AS one');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Query::class, $statement);

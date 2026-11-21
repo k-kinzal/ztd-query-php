@@ -16,6 +16,6 @@ final class SpineTest extends TestCase
 {
     public function testItemsAnswersTheItemsInOrder(): void
     {
-        self::assertSame('RESET MASTER, SLAVE, QUERY CACHE', (new Semantics('mysql-5.7.44'))->analyze('reset master, slave, query cache')->toString());
+        self::assertSame('RESET MASTER, SLAVE, QUERY CACHE', (new Semantics('mysql-5.7.44'))->inspect('reset master, slave, query cache')->toString());
     }
 }

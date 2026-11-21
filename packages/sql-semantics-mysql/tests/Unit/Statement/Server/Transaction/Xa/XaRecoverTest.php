@@ -16,17 +16,17 @@ final class XaRecoverTest extends TestCase
 {
     public function testRenderWritesConvertXid(): void
     {
-        self::assertSame('XA RECOVER CONVERT XID', (new Semantics())->analyze('xa recover convert xid')->toString());
+        self::assertSame('XA RECOVER CONVERT XID', (new Semantics())->inspect('xa recover convert xid')->toString());
     }
 
     public function testRenderWritesTheBareForm(): void
     {
-        self::assertSame('XA RECOVER', (new Semantics('mysql-5.6.51'))->analyze('xa recover')->toString());
+        self::assertSame('XA RECOVER', (new Semantics('mysql-5.6.51'))->inspect('xa recover')->toString());
     }
 
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $recover = (new Semantics())->analyze('XA RECOVER');
+        $recover = (new Semantics())->inspect('XA RECOVER');
 
         self::assertSame(4, $recover->fields()?->count());
         self::assertSame('formatID', $recover->field(0)->slot->name?->value);

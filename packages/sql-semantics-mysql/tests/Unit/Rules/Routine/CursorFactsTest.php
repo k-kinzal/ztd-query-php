@@ -22,7 +22,7 @@ final class CursorFactsTest extends TestCase
     #[DataProvider('providerCursorReportsACursorDeclaredNowhereAround')]
     public function testCursorReportsACursorDeclaredNowhereAround(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Semantics($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -48,7 +48,7 @@ final class CursorFactsTest extends TestCase
     #[DataProvider('providerVariablesReportsEveryTargetThatIsNoVariable')]
     public function testVariablesReportsEveryTargetThatIsNoVariable(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -66,7 +66,7 @@ final class CursorFactsTest extends TestCase
 
     public function testVariablesReportsATargetOfGetDiagnosticsThatIsNoVariable(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p(n INT) GET DIAGNOSTICS n = NUMBER, r = ROW_COUNT');
 
         self::assertSame(['Undeclared variable: r'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

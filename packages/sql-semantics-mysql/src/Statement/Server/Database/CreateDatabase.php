@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Creating a database with options
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
  *     [$create->toString(), count($create->statement->options)] // => ['CREATE DATABASE IF NOT EXISTS shop CHARACTER SET utf8mb4 COLLATE utf8mb4_bin', 2]
  */
 final class CreateDatabase implements Statement

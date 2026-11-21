@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping an unexpandable star as a typed request
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM t');
  *     $operation->facts->output?->projection[0] instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar // => true
  */
 final class OpenStar

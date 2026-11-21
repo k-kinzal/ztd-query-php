@@ -17,12 +17,12 @@ final class AlterUndoTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('ALTER UNDO TABLESPACE u SET ACTIVE', (new Semantics())->inspect('alter undo tablespace u set active')->toString());
+        self::assertSame('ALTER UNDO TABLESPACE u SET ACTIVE', (new Semantics())->diagnose('alter undo tablespace u set active')->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b');
+        $operation = (new Semantics())->diagnose('ALTER UNDO TABLESPACE u SET ACTIVE ENGINE a ENGINE b');
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

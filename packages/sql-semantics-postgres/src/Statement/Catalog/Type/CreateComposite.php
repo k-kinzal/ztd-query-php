@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  *
  * @visibility public
  * @example Reading the attributes of a composite type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE pair AS (a int4, b text)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TYPE pair AS (a int4, b text)');
  *     count($operation->statement->attributes) // => 2
  */
 final class CreateComposite implements Statement

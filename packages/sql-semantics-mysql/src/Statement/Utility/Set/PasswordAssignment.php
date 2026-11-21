@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Reading a password item of a list
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD FOR u = 'x'");
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->inspect("SET @a = 1, PASSWORD FOR u = 'x'");
  *     [$set->statement->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
  */
 final class PasswordAssignment implements SetItem

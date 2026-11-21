@@ -16,8 +16,8 @@ final class ColumnStatisticsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ALTER zz SET STATISTICS 10', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER zz SET STATISTICS 10', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -26,7 +26,7 @@ final class ColumnStatisticsTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER INDEX i ALTER COLUMN 2 SET STATISTICS DEFAULT', []);
+        $statement = $semantics->diagnose('ALTER INDEX i ALTER COLUMN 2 SET STATISTICS DEFAULT', []);
         self::assertSame('ALTER INDEX i ALTER 2 SET STATISTICS DEFAULT', $statement->toString());
     }
 }

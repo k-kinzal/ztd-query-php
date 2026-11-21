@@ -16,26 +16,26 @@ final class FilterRuleTest extends TestCase
 {
     public function testFiltersLowersTheListInOrder(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_DB = (b), REPLICATE_DO_DB = (a)', (new Semantics())->analyze('change replication filter replicate_ignore_db = (b), replicate_do_db = (a)')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_DB = (b), REPLICATE_DO_DB = (a)', (new Semantics())->inspect('change replication filter replicate_ignore_db = (b), replicate_do_db = (a)')->toString());
     }
 
     public function testValuesLowersPairsAndEmptyLists(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_REWRITE_DB = ((a, b), (c, d)), REPLICATE_REWRITE_DB = ()', (new Semantics())->analyze('change replication filter replicate_rewrite_db = ((a, b), (c, d)), replicate_rewrite_db = ()')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_REWRITE_DB = ((a, b), (c, d)), REPLICATE_REWRITE_DB = ()', (new Semantics())->inspect('change replication filter replicate_rewrite_db = ((a, b), (c, d)), replicate_rewrite_db = ()')->toString());
     }
 
     public function testValueLowersQualifiedTables(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE = (a.b)', (new Semantics('mysql-5.7.44'))->analyze('change replication filter replicate_ignore_table = (a.b)')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE = (a.b)', (new Semantics('mysql-5.7.44'))->inspect('change replication filter replicate_ignore_table = (a.b)')->toString());
     }
 
     public function testDatabaseLowersTheName(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a b`)', (new Semantics())->analyze('change replication filter replicate_do_db = (`a b`)')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a b`)', (new Semantics())->inspect('change replication filter replicate_do_db = (`a b`)')->toString());
     }
 
     public function testPatternLowersTheString(): void
     {
-        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a.%', 'b.c')", (new Semantics())->analyze("change replication filter replicate_wild_do_table = ('a.%', 'b.c')")->toString());
+        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('a.%', 'b.c')", (new Semantics())->inspect("change replication filter replicate_wild_do_table = ('a.%', 'b.c')")->toString());
     }
 }

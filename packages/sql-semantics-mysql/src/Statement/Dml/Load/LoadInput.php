@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the input of LOAD DATA
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA LOCAL INFILE 'f.csv' INTO TABLE t");
+ *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("LOAD DATA LOCAL INFILE 'f.csv' INTO TABLE t");
  *     [$load->statement->input->local, $load->statement->input->source, $load->statement->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
  */
 final class LoadInput implements Node

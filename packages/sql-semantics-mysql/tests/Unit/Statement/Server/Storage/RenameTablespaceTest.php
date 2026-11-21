@@ -16,12 +16,12 @@ final class RenameTablespaceTest extends TestCase
 {
     public function testRenderWritesBothNames(): void
     {
-        self::assertSame('ALTER TABLESPACE a RENAME TO `b c`', (new Semantics())->analyze('alter tablespace a rename to `b c`')->toString());
+        self::assertSame('ALTER TABLESPACE a RENAME TO `b c`', (new Semantics())->inspect('alter tablespace a rename to `b c`')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('ALTER TABLESPACE a RENAME TO b');
+        $operation = (new Semantics())->inspect('ALTER TABLESPACE a RENAME TO b');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

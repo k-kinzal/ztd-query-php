@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
  *
  * @visibility public
  * @example Reading a partition key
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text) PARTITION BY LIST (a COLLATE "C" text_ops)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text) PARTITION BY LIST (a COLLATE "C" text_ops)');
  *     $create->statement->partitioning->elements[0]->operatorClass->last()->value // => 'text_ops'
  */
 final class PartitionElement implements Clause

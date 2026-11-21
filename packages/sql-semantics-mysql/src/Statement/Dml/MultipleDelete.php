@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
  *
  * @visibility public
  * @example Reading a multiple-table DELETE
- *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
+ *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
  *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
  */
 final class MultipleDelete implements Statement

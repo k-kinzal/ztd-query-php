@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the columns of a USING constraint
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u USING (a, b)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 FROM t JOIN u USING (a, b)');
  *     $query->statement->from->steps[0]->constraint->columns[1]->value // => 'b'
  */
 final class JoinUsing implements Node

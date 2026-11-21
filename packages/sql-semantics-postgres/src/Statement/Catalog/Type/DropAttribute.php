@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Dropping an attribute if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b');
  *     $operation->statement->changes[0]->ifExists // => true
  */
 final class DropAttribute implements AttributeChange

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow;
  *
  * @visibility public
  * @example Keeping the parentheses around VALUES
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (VALUES (DEFAULT))');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('INSERT INTO t (VALUES (DEFAULT))');
  *     [count($insert->statement->rows->rows()), $insert->toString()] // => [1, 'INSERT INTO t (VALUES (DEFAULT))']
  */
 final class ParenthesizedRows implements Node

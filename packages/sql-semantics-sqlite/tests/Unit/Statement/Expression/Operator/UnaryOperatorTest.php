@@ -18,7 +18,7 @@ final class UnaryOperatorTest extends TestCase
 {
     public function testEachOperatorIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT NOT 1, ~1, -1, +1');
+        $query = (new Semantics())->inspect('SELECT NOT 1, ~1, -1, +1');
         $operators = array_map(static fn (Field $field): ?UnaryOperator => $field->expression instanceof Unary ? $field->expression->operator : null, $query->fields()->items ?? []);
 
         self::assertSame([UnaryOperator::Not, UnaryOperator::BitNot, UnaryOperator::Minus, UnaryOperator::Plus], $operators);

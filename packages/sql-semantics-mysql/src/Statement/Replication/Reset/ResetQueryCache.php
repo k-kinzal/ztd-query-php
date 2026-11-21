@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
  *
  * @visibility public
  * @example Resetting the query cache
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('reset query cache')->toString() // => 'RESET QUERY CACHE'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('reset query cache')->toString() // => 'RESET QUERY CACHE'
  */
 final class ResetQueryCache implements ResetTarget
 {

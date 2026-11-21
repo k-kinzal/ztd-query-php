@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Dropping a table that does not exist without a diagnostic
- *     $drop = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DROP TABLE IF EXISTS t', []);
+ *     $drop = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('DROP TABLE IF EXISTS t', []);
  *     [$drop->facts->relation($drop->statement)->table->name->name->value, $drop->facts->diagnostics] // => ['t', []]
  */
 final class AbsentRelation implements TableResolution

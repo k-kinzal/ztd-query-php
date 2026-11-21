@@ -16,24 +16,24 @@ final class ResetRuleTest extends TestCase
 {
     public function testStatementLowersBothForms(): void
     {
-        self::assertSame('RESET PERSIST', (new Semantics())->analyze('reset persist')->toString());
-        self::assertSame('RESET REPLICA, REPLICA ALL', (new Semantics())->analyze('reset replica, replica all')->toString());
+        self::assertSame('RESET PERSIST', (new Semantics())->inspect('reset persist')->toString());
+        self::assertSame('RESET REPLICA, REPLICA ALL', (new Semantics())->inspect('reset replica, replica all')->toString());
     }
 
     public function testTargetReadsTheDeprecatedSpellingsAsSynonyms(): void
     {
-        self::assertSame('RESET REPLICA, BINARY LOGS AND GTIDS', (new Semantics('mysql-8.3.0'))->analyze('reset slave, master')->toString());
-        self::assertSame('RESET REPLICA, MASTER', (new Semantics('mysql-8.0.44'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET REPLICA, BINARY LOGS AND GTIDS', (new Semantics('mysql-8.3.0'))->inspect('reset slave, master')->toString());
+        self::assertSame('RESET REPLICA, MASTER', (new Semantics('mysql-8.0.44'))->inspect('reset slave, master')->toString());
     }
 
     public function testFirstLowersTheFileNumber(): void
     {
-        self::assertSame('RESET BINARY LOGS AND GTIDS TO 3', (new Semantics())->analyze('reset binary logs and gtids to 3')->toString());
+        self::assertSame('RESET BINARY LOGS AND GTIDS TO 3', (new Semantics())->inspect('reset binary logs and gtids to 3')->toString());
     }
 
     public function testPersistLowersEveryVariableForm(): void
     {
-        self::assertSame('RESET PERSIST IF EXISTS c.v', (new Semantics())->analyze('reset persist if exists c.v')->toString());
-        self::assertSame('RESET PERSIST v', (new Semantics())->analyze('reset persist v')->toString());
+        self::assertSame('RESET PERSIST IF EXISTS c.v', (new Semantics())->inspect('reset persist if exists c.v')->toString());
+        self::assertSame('RESET PERSIST v', (new Semantics())->inspect('reset persist v')->toString());
     }
 }

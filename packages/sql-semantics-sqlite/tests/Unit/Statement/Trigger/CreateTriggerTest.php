@@ -42,9 +42,9 @@ final class CreateTriggerTest extends TestCase
     public function testDeriveStatementResolvesNewAndOldToTheWatchedTable(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $trigger = $semantics->inspect('CREATE TRIGGER tr AFTER UPDATE ON t WHEN new.a > old.a BEGIN UPDATE u SET a = new.a WHERE a = old.rowid; END', [$t, $u]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t WHEN new.a > old.a BEGIN UPDATE u SET a = new.a WHERE a = old.rowid; END', [$t, $u]);
 
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertInstanceOf(Binary::class, $trigger->statement->when);
@@ -69,10 +69,10 @@ final class CreateTriggerTest extends TestCase
     public function testDeriveStatementHidesTheRowThatTheEventDoesNotProvide(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $delete = $semantics->inspect('CREATE TRIGGER tr AFTER DELETE ON t BEGIN SELECT new.a; END', [$t]);
-        $insert = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT old.a; END', [$t]);
-        $bare = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT a; END', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $delete = $semantics->diagnose('CREATE TRIGGER tr AFTER DELETE ON t BEGIN SELECT new.a; END', [$t]);
+        $insert = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT old.a; END', [$t]);
+        $bare = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT a; END', [$t]);
 
         self::assertInstanceOf(MissingColumn::class, $delete->facts->diagnostics[0]);
         self::assertSame('new', $delete->facts->diagnostics[0]->qualifier?->name->value);
@@ -85,12 +85,12 @@ final class CreateTriggerTest extends TestCase
     public function testDeriveStatementReportsWhatSqliteForbidsInsideATrigger(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
-        $qualified = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO main.u VALUES (1, 2); END', [$t, $u]);
-        $indexed = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN DELETE FROM u NOT INDEXED; END', [$t, $u]);
-        $parameter = $semantics->inspect('CREATE TRIGGER tr INSERT ON t WHEN new.a > ? BEGIN SELECT 1; END', [$t, $u]);
-        $raise = $semantics->inspect("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(ABORT, 'no'); END", [$t, $u]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
+        $qualified = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO main.u VALUES (1, 2); END', [$t, $u]);
+        $indexed = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN DELETE FROM u NOT INDEXED; END', [$t, $u]);
+        $parameter = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t WHEN new.a > ? BEGIN SELECT 1; END', [$t, $u]);
+        $raise = $semantics->diagnose("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(ABORT, 'no'); END", [$t, $u]);
 
         self::assertInstanceOf(Misuse::class, $qualified->facts->diagnostics[0]);
         self::assertSame(MisuseRule::QualifiedTriggerTarget, $qualified->facts->diagnostics[0]->rule);
@@ -104,9 +104,9 @@ final class CreateTriggerTest extends TestCase
     public function testDeriveStatementChecksTheColumnsOfAnUpdateOfTrigger(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $known = $semantics->inspect('CREATE TRIGGER tr UPDATE OF a, b ON t BEGIN SELECT 1; END', [$t]);
-        $unknown = $semantics->inspect('CREATE TRIGGER tr UPDATE OF zz ON t BEGIN SELECT 1; END', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $known = $semantics->diagnose('CREATE TRIGGER tr UPDATE OF a, b ON t BEGIN SELECT 1; END', [$t]);
+        $unknown = $semantics->diagnose('CREATE TRIGGER tr UPDATE OF zz ON t BEGIN SELECT 1; END', [$t]);
 
         self::assertInstanceOf(CreateTrigger::class, $known->statement);
         self::assertSame(['a', 'b'], array_map(static fn (Name $name): string => $name->value, $known->statement->columns));
@@ -118,7 +118,7 @@ final class CreateTriggerTest extends TestCase
     public function testRenderWritesEveryPartInGrammarOrder(): void
     {
         $semantics = new Semantics();
-        $trigger = $semantics->inspect('create temp trigger if not exists tr instead of update of a, b on t for each row when new.a > 1 begin select 1; delete from u; insert into u values (1) on conflict do nothing; values (1); end');
+        $trigger = $semantics->diagnose('create temp trigger if not exists tr instead of update of a, b on t for each row when new.a > 1 begin select 1; delete from u; insert into u values (1) on conflict do nothing; values (1); end');
         $built = new Operation($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr'), new Name('main')), TriggerEvent::Delete, new TriggerTable(new QualifiedName(new Name('t'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])], TriggerTiming::Before));
 
         self::assertSame('CREATE TEMP TRIGGER IF NOT EXISTS tr INSTEAD OF UPDATE OF a, b ON t FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; DELETE FROM u; INSERT INTO u VALUES (1) ON CONFLICT DO NOTHING; VALUES (1); END', $trigger->toString());

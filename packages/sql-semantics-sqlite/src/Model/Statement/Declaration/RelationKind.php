@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Declaration;
  * @visibility public
  * @example Reading the kind of a declared view
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0]->kind // => \SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind::BaseTable
+ *     $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0]->kind // => \SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind::BaseTable
  */
 enum RelationKind
 {

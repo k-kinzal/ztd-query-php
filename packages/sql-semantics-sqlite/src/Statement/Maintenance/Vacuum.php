@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the schema and the target of a vacuum
- *     $vacuum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VACUUM main INTO 'backup.db'");
+ *     $vacuum = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("VACUUM main INTO 'backup.db'");
  *     [$vacuum->statement->schema?->value, $vacuum->statement->into !== null] // => ['main', true]
  */
 final class Vacuum implements Statement

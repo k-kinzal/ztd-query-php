@@ -15,7 +15,7 @@ final class TableCheckTest extends TestCase
     public function testKindIsCheck(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, CHECK (a > 0))', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, CHECK (a > 0))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -28,7 +28,7 @@ final class TableCheckTest extends TestCase
     public function testDeriveClauseChecksTheConditionAndTheAttributes(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, CHECK (a) DEFERRABLE)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, CHECK (a) DEFERRABLE)', []);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
           1 => 'CHECK constraints cannot be marked DEFERRABLE',
@@ -38,7 +38,7 @@ final class TableCheckTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, CONSTRAINT c CHECK (a > 0) NOT VALID NO INHERIT)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, CONSTRAINT c CHECK (a > 0) NOT VALID NO INHERIT)', []);
         self::assertSame('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT VALID NO INHERIT)', $statement->toString());
     }
 }

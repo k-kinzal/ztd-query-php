@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping an unexpandable star as a typed request
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT * FROM t');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT * FROM t');
  *     $operation->facts->output?->projection[0] instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar // => true
  */
 final class OpenStar

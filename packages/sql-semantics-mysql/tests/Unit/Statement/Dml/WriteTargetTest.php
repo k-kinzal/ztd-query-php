@@ -40,7 +40,7 @@ final class WriteTargetTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('DELETE FROM t WHERE a = 1', [$t]);
+        $operation = $semantics->diagnose('DELETE FROM t WHERE a = 1', [$t]);
         self::assertInstanceOf(Delete::class, $operation->statement);
         $fact = $operation->facts->relation($operation->statement->table);
 
@@ -50,7 +50,7 @@ final class WriteTargetTest extends TestCase
 
     public function testDeriveRelationReportsACommonTable(): void
     {
-        $operation = (new Semantics())->inspect('WITH c AS (SELECT 1) DELETE FROM c');
+        $operation = (new Semantics())->diagnose('WITH c AS (SELECT 1) DELETE FROM c');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertSame('The target table is a common table expression, which is not updatable', $operation->facts->diagnostics[0]->message());
@@ -58,7 +58,7 @@ final class WriteTargetTest extends TestCase
 
     public function testRenderWritesNameAliasAndPartitions(): void
     {
-        self::assertSame('DELETE FROM shop.t x PARTITION (p0, p1) WHERE x.a = 1', (new Semantics())->inspect('delete from shop.t x partition (p0, p1) where x.a = 1')->toString());
+        self::assertSame('DELETE FROM shop.t x PARTITION (p0, p1) WHERE x.a = 1', (new Semantics())->diagnose('delete from shop.t x partition (p0, p1) where x.a = 1')->toString());
     }
 
     public function testRenderRejectsACatalog(): void

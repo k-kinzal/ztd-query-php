@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
  *
  * @visibility public
  * @example Reading an ALTER FUNCTION
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER FUNCTION shop.f NO SQL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER FUNCTION shop.f NO SQL');
  *     [$alter->statement->kind, count($alter->statement->characteristics)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function, 1]
  */
 final class AlterRoutine implements Statement

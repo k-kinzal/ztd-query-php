@@ -28,7 +28,7 @@ final class RadixLiteralTest extends TestCase
 {
     public function testDeriveScalarAnswersVarBinaryWithoutAnIntroducer(): void
     {
-        $operation = (new Semantics())->analyze("SELECT a FROM t WHERE a = X'1F'");
+        $operation = (new Semantics())->inspect("SELECT a FROM t WHERE a = X'1F'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -48,7 +48,7 @@ final class RadixLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersVarCharOfTheIntroducedCharacterSet(): void
     {
-        $operation = (new Semantics())->analyze("SELECT _LATIN1 b'1'");
+        $operation = (new Semantics())->inspect("SELECT _LATIN1 b'1'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -73,15 +73,15 @@ final class RadixLiteralTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze('SELECT 0x1F AS v')->toString());
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze("SELECT X'1F' AS v")->toString());
-        self::assertSame("SELECT x'' AS v", $semantics->analyze("SELECT x'' AS v")->toString());
-        self::assertSame('SELECT 0x1F', $semantics->analyze('SELECT 0x1F')->toString());
+        self::assertSame("SELECT x'1F' AS v", $semantics->inspect('SELECT 0x1F AS v')->toString());
+        self::assertSame("SELECT x'1F' AS v", $semantics->inspect("SELECT X'1F' AS v")->toString());
+        self::assertSame("SELECT x'' AS v", $semantics->inspect("SELECT x'' AS v")->toString());
+        self::assertSame('SELECT 0x1F', $semantics->inspect('SELECT 0x1F')->toString());
     }
 
     public function testRenderPrefixesAnOddCountOfHexadecimalDigits(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 0x1');
+        $operation = (new Semantics())->inspect('SELECT 0x1');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -95,7 +95,7 @@ final class RadixLiteralTest extends TestCase
 
     public function testRenderQuotesBitDigitsOfEitherSpelling(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 0b01 AS v');
+        $operation = (new Semantics())->inspect('SELECT 0b01 AS v');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -105,12 +105,12 @@ final class RadixLiteralTest extends TestCase
 
         self::assertSame('01', $literal->digits);
         self::assertSame("SELECT b'01' AS v", $operation->toString());
-        self::assertSame("SELECT b'101' AS v", (new Semantics())->analyze("SELECT B'101' AS v")->toString());
+        self::assertSame("SELECT b'101' AS v", (new Semantics())->inspect("SELECT B'101' AS v")->toString());
     }
 
     public function testRenderWritesTheIntroducerInLowerCase(): void
     {
-        self::assertSame("SELECT _latin1 x'1F' AS v", (new Semantics())->analyze('SELECT _Latin1 0x1F AS v')->toString());
+        self::assertSame("SELECT _latin1 x'1F' AS v", (new Semantics())->inspect('SELECT _Latin1 0x1F AS v')->toString());
     }
 
     public function testRejectsDigitsOutsideTheHexadecimalSystem(): void

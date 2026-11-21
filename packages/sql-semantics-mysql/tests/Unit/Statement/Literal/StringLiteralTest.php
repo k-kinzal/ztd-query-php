@@ -28,7 +28,7 @@ final class StringLiteralTest extends TestCase
 {
     public function testValueConcatenatesTheAdjacentSegments(): void
     {
-        $operation = (new Semantics())->analyze("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
+        $operation = (new Semantics())->inspect("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -42,7 +42,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersVarCharOfNoCharacterSetThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze("SELECT 'a'");
+        $operation = (new Semantics())->inspect("SELECT 'a'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -65,7 +65,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheIntroducedCharacterSet(): void
     {
-        $operation = (new Semantics())->analyze("SELECT _UTF8MB4'x'");
+        $operation = (new Semantics())->inspect("SELECT _UTF8MB4'x'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -84,7 +84,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheNationalCharacterSet(): void
     {
-        $operation = (new Semantics())->analyze("SELECT N'x' 'y'");
+        $operation = (new Semantics())->inspect("SELECT N'x' 'y'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -115,7 +115,7 @@ final class StringLiteralTest extends TestCase
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->analyze("SELECT 'a\\nb'");
+        $operation = $semantics->inspect("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -125,13 +125,13 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame("a\nb", $literal->value());
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
-        self::assertSame("SELECT 'it''s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
-        self::assertSame("SELECT 'a\\\\b'", $semantics->analyze("SELECT 'a\\\\b'")->toString());
+        self::assertSame("SELECT 'it''s'", $semantics->inspect("SELECT 'it\\'s'")->toString());
+        self::assertSame("SELECT 'a\\\\b'", $semantics->inspect("SELECT 'a\\\\b'")->toString());
     }
 
     public function testRenderKeepsBackslashesUnderTheVerbatimRule(): void
     {
-        $operation = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
+        $operation = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->inspect("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -146,7 +146,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderWritesADoubleQuotedStringInSingleQuotes(): void
     {
-        self::assertSame("SELECT 'q'", (new Semantics())->analyze('SELECT "q"')->toString());
+        self::assertSame("SELECT 'q'", (new Semantics())->inspect('SELECT "q"')->toString());
     }
 
     public function testRejectsAnEmptySegmentList(): void

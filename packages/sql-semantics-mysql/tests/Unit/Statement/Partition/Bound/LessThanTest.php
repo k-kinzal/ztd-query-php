@@ -16,13 +16,13 @@ final class LessThanTest extends TestCase
 {
     public function testDeriveBoundDerivesTheRow(): void
     {
-        $alter = (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (b))');
+        $alter = (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (b))');
 
         self::assertSame('Column b does not exist.', $alter->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesMaxvalueWithoutParentheses(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN MAXVALUE)', (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN MAXVALUE)')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN MAXVALUE)', (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN MAXVALUE)')->toString());
     }
 }

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('checksum table t extended');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('checksum table t extended');
  *     [$statement->toString(), $statement->statement->mode === \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode::Extended] // => ['CHECKSUM TABLE t EXTENDED', true]
  */
 final class ChecksumTable implements Statement

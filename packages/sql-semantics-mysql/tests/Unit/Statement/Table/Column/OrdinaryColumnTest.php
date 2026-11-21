@@ -20,7 +20,7 @@ final class OrdinaryColumnTest extends TestCase
 {
     public function testDataTypeAnswersTheType(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT UNSIGNED)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT UNSIGNED)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
@@ -33,7 +33,7 @@ final class OrdinaryColumnTest extends TestCase
 
     public function testColumnAttributesAnswersTheAttributesInOrder(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT NOT NULL NULL)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL NULL)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
@@ -46,13 +46,13 @@ final class OrdinaryColumnTest extends TestCase
 
     public function testDeriveSpecificationDerivesTheAttributes(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT CHECK (a > 0))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT CHECK (a > 0))');
 
         self::assertSame([], $create->facts->diagnostics);
     }
 
     public function testRenderWritesTheTypeTheAttributesAndTheReference(): void
     {
-        self::assertSame('CREATE TABLE t (a INT NOT NULL REFERENCES p (id) ON DELETE CASCADE)', (new Semantics())->analyze('CREATE TABLE t (a INT NOT NULL REFERENCES p (id) ON DELETE CASCADE)')->toString());
+        self::assertSame('CREATE TABLE t (a INT NOT NULL REFERENCES p (id) ON DELETE CASCADE)', (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL REFERENCES p (id) ON DELETE CASCADE)')->toString());
     }
 }

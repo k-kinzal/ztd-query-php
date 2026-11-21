@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
  *
  * @visibility public
  * @example Removing a parent
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t NO INHERIT p');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t NO INHERIT p');
  *     $statement->statement->commands[0]->remove // => true
  */
 final class InheritanceChange implements AlterCommand

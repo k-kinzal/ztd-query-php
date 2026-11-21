@@ -16,7 +16,7 @@ final class ListRuleTest extends TestCase
 {
     public function testItemsFlattensTheList(): void
     {
-        self::assertSame('CALL p(1, 2, 3)', (new Semantics('mysql-5.6.51'))->analyze('call p(1, 2, 3)')->toString());
-        self::assertSame('DELETE QUICK IGNORE QUICK FROM t', (new Semantics())->analyze('delete quick ignore quick from t')->toString());
+        self::assertSame('CALL p(1, 2, 3)', (new Semantics('mysql-5.6.51'))->inspect('call p(1, 2, 3)')->toString());
+        self::assertSame('DELETE QUICK IGNORE QUICK FROM t', (new Semantics())->inspect('delete quick ignore quick from t')->toString());
     }
 }

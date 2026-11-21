@@ -29,7 +29,7 @@ final class DeferrabilityTest extends TestCase
 
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE c (p REFERENCES parent DEFERRABLE)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -48,7 +48,7 @@ final class DeferrabilityTest extends TestCase
 
     public function testRenderKeepsTheClauseAsAColumnConstraintOfItsOwn(): void
     {
-        $operation = (new Semantics())->analyze('create table c (p references parent not deferrable initially deferred)');
+        $operation = (new Semantics())->inspect('create table c (p references parent not deferrable initially deferred)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Publishing every table
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')");
  *     [$operation->statement->allTables, $operation->toString()] // => [true, "CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')"]
  */
 final class CreatePublication implements Statement

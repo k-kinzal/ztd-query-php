@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading trigger arguments
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TRIGGER g BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION f(1, 2.5, 'x', word)");
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE TRIGGER g BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION f(1, 2.5, 'x', word)");
  *     $statement->toString() // => "CREATE TRIGGER g BEFORE INSERT ON t FOR EACH ROW EXECUTE FUNCTION f(1, 2.5, 'x', word)"
  */
 final class TriggerArgument implements Node

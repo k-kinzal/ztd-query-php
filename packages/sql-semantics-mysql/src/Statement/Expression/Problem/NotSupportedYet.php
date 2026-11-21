@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting CAST … AT LOCAL
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
  */
 final class NotSupportedYet implements Diagnostic
 {

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the comment of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER FUNCTION f COMMENT 'adds'");
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("ALTER FUNCTION f COMMENT 'adds'");
  *     $alter->statement->characteristics[0]->text->value // => 'adds'
  */
 final class RoutineComment implements Characteristic

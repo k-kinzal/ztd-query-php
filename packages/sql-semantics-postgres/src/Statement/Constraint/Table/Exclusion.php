@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Reading an exclusion constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH OPERATOR(pg_catalog.&&)) WHERE (c IS NOT NULL))');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH OPERATOR(pg_catalog.&&)) WHERE (c IS NOT NULL))');
  *     $create->toString() // => 'CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH OPERATOR (pg_catalog.&&)) WHERE (c IS NOT NULL))'
  */
 final class Exclusion implements Constraint

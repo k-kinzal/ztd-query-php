@@ -29,9 +29,9 @@ final class RoundTripTarget
         }
         $rendered = null;
         try {
-            $operation = $this->semantics->inspect($sql);
+            $operation = $this->semantics->diagnose($sql);
             $rendered = $operation->toString();
-            $again = $this->semantics->inspect($rendered);
+            $again = $this->semantics->diagnose($rendered);
             $difference = (new Equivalence())->difference($operation->statement, $again->statement);
             if ($difference !== null) {
                 throw new Error('The structure of the rendered SQL differs from the structure of the input at ' . $difference);

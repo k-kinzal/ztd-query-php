@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading the new owner
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SCHEMA app OWNER TO CURRENT_USER');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SCHEMA app OWNER TO CURRENT_USER');
  *     $operation->statement->owner->kind->name // => 'CurrentUser'
  */
 final class ChangeOwner implements Statement

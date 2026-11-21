@@ -34,7 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
  *
  * @visibility public
  * @example Reading the value DEFAULT of an INSERT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) VALUES (DEFAULT)');
+ *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t (a) VALUES (DEFAULT)');
  *     $insert->statement->rows[0]->values[0] instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest // => true
  */
 final class DefaultRequest implements Scalar

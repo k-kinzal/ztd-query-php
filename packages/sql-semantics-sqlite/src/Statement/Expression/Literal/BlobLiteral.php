@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the bytes of a BLOB literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT x'0aff' AS b");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT x'0aff' AS b");
  *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF' AS b"]
  * @example Refusing half a byte
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('ABC') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

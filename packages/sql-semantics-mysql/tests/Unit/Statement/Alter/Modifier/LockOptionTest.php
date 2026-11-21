@@ -16,16 +16,16 @@ final class LockOptionTest extends TestCase
 {
     public function testDeriveOptionReportsALockTheReleaseDoesNotKnow(): void
     {
-        self::assertSame('DEFAULT is not a LOCK the server knows.', (new Semantics())->inspect('DROP INDEX i ON t LOCK = `DEFAULT`')->facts->diagnostics[0]->message());
+        self::assertSame('DEFAULT is not a LOCK the server knows.', (new Semantics())->diagnose('DROP INDEX i ON t LOCK = `DEFAULT`')->facts->diagnostics[0]->message());
     }
 
     public function testDeriveCommandChecksTheLock(): void
     {
-        self::assertSame([], (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t LOCK = `default`')->facts->diagnostics);
+        self::assertSame([], (new Semantics('mysql-5.6.51'))->diagnose('ALTER TABLE t LOCK = `default`')->facts->diagnostics);
     }
 
     public function testRenderWritesTheLockOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = DEFAULT, LOCK = EXCLUSIVE', (new Semantics())->inspect('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
+        self::assertSame('ALTER TABLE t LOCK = DEFAULT, LOCK = EXCLUSIVE', (new Semantics())->diagnose('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
     }
 }

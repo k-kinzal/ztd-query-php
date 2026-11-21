@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArgume
  *
  * @visibility public
  * @example Reading an operator definition
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
  *     [$operation->statement->kind->value, count($operation->statement->definition ?? [])] // => ['OPERATOR', 3]
  */
 final class Define implements Statement

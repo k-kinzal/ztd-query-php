@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  *
  * @visibility public
  * @example Keeping the optional OF as written
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE 1 MEMBER (a)')->toString() // => 'SELECT a FROM t WHERE 1 MEMBER (a)'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE 1 MEMBER (a)')->toString() // => 'SELECT a FROM t WHERE 1 MEMBER (a)'
  */
 final class MemberOf implements Scalar
 {

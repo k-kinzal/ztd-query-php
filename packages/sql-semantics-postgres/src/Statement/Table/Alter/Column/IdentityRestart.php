@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * @visibility public
  * @example Restarting an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a RESTART');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a RESTART');
  *     $statement->statement->commands[0]->options[0]->value // => null
  */
 final class IdentityRestart implements Node

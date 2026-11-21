@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Keeping the grouping of set operations
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 UNION (SELECT 2 UNION SELECT 3)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 UNION (SELECT 2 UNION SELECT 3)');
  *     [$query->statement->right instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery, $query->toString()] // => [true, 'SELECT 1 UNION (SELECT 2 UNION SELECT 3)']
  */
 final class ParenthesizedQuery implements Statement, Query, OutputNaming

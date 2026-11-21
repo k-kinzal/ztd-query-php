@@ -37,7 +37,7 @@ final class RelationKindsTest extends TestCase
     public function testRefuseReportsWhatSqliteRefusesForTheKindOfTheRelation(string $sql, KindRefusal $refusal): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE VIEW v (x) AS SELECT a FROM t')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INTEGER)'), $semantics->diagnose('CREATE VIEW v (x) AS SELECT a FROM t')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
@@ -59,7 +59,7 @@ final class RelationKindsTest extends TestCase
     public function testRefuseReportsNothingForTheKindTheRequestNeeds(string $sql): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE VIEW v (x) AS SELECT a FROM t')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INTEGER)'), $semantics->diagnose('CREATE VIEW v (x) AS SELECT a FROM t')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
@@ -71,8 +71,8 @@ final class RelationKindsTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame([], $semantics->inspect('DROP TABLE v')->facts->diagnostics);
-        self::assertSame([], $semantics->inspect('DROP VIEW v', $semantics->context([$semantics->inspect('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
-        self::assertSame([], $semantics->inspect('DROP TABLE v', $semantics->context([$semantics->inspect('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('DROP TABLE v')->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('DROP VIEW v', $semantics->context([$semantics->diagnose('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose('DROP TABLE v', $semantics->context([$semantics->diagnose('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
     }
 }

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an ordering term
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
  *     $term = $query->statement->orderBy[0];
  *     [$term->direction, $term->nulls] // => [\SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Ascending, \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder::First]
  */

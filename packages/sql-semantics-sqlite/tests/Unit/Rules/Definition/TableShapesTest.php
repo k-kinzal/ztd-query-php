@@ -29,7 +29,7 @@ final class TableShapesTest extends TestCase
 {
     public function testShapeHasOneSlotPerDeclaredColumn(): void
     {
-        $table = (new Semantics())->analyze('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
+        $table = (new Semantics())->inspect('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
         $shape = (new TableShapes())->shape($table);
 
         self::assertCount(2, $shape->slots);
@@ -52,19 +52,19 @@ final class TableShapesTest extends TestCase
     {
         $shapes = new TableShapes();
         $semantics = new Semantics();
-        $aliased = $semantics->analyze('CREATE TABLE t (a, id INTEGER PRIMARY KEY)')->declarations()[0];
-        $plain = $semantics->analyze('CREATE TABLE t (a)')->declarations()[0];
+        $aliased = $semantics->inspect('CREATE TABLE t (a, id INTEGER PRIMARY KEY)')->declarations()[0];
+        $plain = $semantics->inspect('CREATE TABLE t (a)')->declarations()[0];
         $shape = $shapes->shape($aliased);
 
         self::assertSame($shape->slots[1], $shapes->implicit($aliased, $shape)[0]->slot);
         self::assertSame($plain->implicit[0]->column, $shapes->implicit($plain, $shapes->shape($plain))[0]->slot->column);
-        self::assertSame([], $shapes->implicit($semantics->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID')->declarations()[0], $shape));
+        self::assertSame([], $shapes->implicit($semantics->inspect('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID')->declarations()[0], $shape));
     }
 
     public function testTargetResolvesADeclaredAMissingAndAnUndeclaredTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a, b)');
+        $table = $semantics->inspect('CREATE TABLE t (a, b)');
         $shapes = new TableShapes();
         $declared = $shapes->target(new Derivation($semantics->context([$table])), new QualifiedName(new Name('T')));
         $missing = $shapes->target(new Derivation($semantics->context([$table])), new QualifiedName(new Name('u')));
@@ -81,7 +81,7 @@ final class TableShapesTest extends TestCase
     public function testImplicitOfAnswersTheRowIdentifierOfAResolvedTableOnly(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a)');
+        $table = $semantics->inspect('CREATE TABLE t (a)');
         $shapes = new TableShapes();
 
         self::assertCount(1, $shapes->implicitOf($shapes->target(new Derivation($semantics->context([$table])), new QualifiedName(new Name('t')))));
@@ -91,8 +91,8 @@ final class TableShapesTest extends TestCase
     public function testScopeSeesTheRowIdentifierOnlyAtTheRowPosition(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a)');
-        $index = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
+        $table = $semantics->inspect('CREATE TABLE t (a)');
+        $index = $semantics->inspect('CREATE INDEX i ON t (a)')->statement;
         $derivation = new Derivation($semantics->context([$table]));
         $shapes = new TableShapes();
         $fact = $shapes->target($derivation, new QualifiedName(new Name('t')));

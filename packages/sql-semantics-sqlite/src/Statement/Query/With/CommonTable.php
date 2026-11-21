@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
  *
  * @visibility public
  * @example Reading a common table expression
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH c(x) AS (SELECT 1) SELECT x FROM c');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('WITH c(x) AS (SELECT 1) SELECT x FROM c');
  *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->name->value] // => ['c', 'x']
  */
 final class CommonTable implements Node

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a join condition
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM a JOIN b ON TRUE');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 FROM a JOIN b ON TRUE');
  *     $query->statement->from->condition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn // => true
  */
 final class JoinOn implements Node

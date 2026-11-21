@@ -41,7 +41,7 @@ final class InformationItemTest extends TestCase
 
     public function testRenderWritesTheTargetsOfAProgram(): void
     {
-        $create = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
+        $create = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
 
         self::assertSame([], $create->facts->diagnostics);
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END', $create->toString());
@@ -49,7 +49,7 @@ final class InformationItemTest extends TestCase
 
     public function testRenderWritesTheTargetsOfAStatement(): void
     {
-        $get = (new Semantics())->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
+        $get = (new Semantics())->inspect('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         $item = $statement->information->items[1];

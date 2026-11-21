@@ -21,8 +21,8 @@ final class RenamingsTest extends TestCase
     public function testDeriveResolvesANameAnEarlierRenameProduced(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $rename = $semantics->inspect('RENAME TABLE t TO u, u TO v', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $rename = $semantics->diagnose('RENAME TABLE t TO u, u TO v', [$table]);
 
         self::assertInstanceOf(RenameTable::class, $rename->statement);
         self::assertEquals(new DeclaredTable($table->declarations()[0]), $rename->facts->relation($rename->statement->renamings[1])->table);
@@ -31,8 +31,8 @@ final class RenamingsTest extends TestCase
     public function testVacatedMakesAMovedNameMissing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $rename = $semantics->inspect('RENAME TABLE t TO u, t TO v', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $rename = $semantics->diagnose('RENAME TABLE t TO u, t TO v', [$table]);
 
         self::assertInstanceOf(RenameTable::class, $rename->statement);
         self::assertInstanceOf(MissingTable::class, $rename->facts->relation($rename->statement->renamings[1])->table);
@@ -41,8 +41,8 @@ final class RenamingsTest extends TestCase
     public function testExistsReportsANewNameThatIsTaken(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
 
-        self::assertSame(['Relation t does not exist.', 'Table y already exists.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('RENAME TABLE t TO x, x TO y, t TO y', [$table])->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.', 'Table y already exists.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('RENAME TABLE t TO x, x TO y, t TO y', [$table])->facts->diagnostics));
     }
 }

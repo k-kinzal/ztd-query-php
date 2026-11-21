@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
  *
  * @visibility public
  * @example Keeping a NULL constraint without effect on the column
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INT NULL)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a INT NULL)');
  *     $create->declarations()[0]->columns[0]->nullability // => \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable
  */
 final class NullAllowed implements ColumnConstraint

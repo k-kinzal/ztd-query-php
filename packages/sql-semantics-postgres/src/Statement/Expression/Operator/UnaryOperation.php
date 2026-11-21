@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  *
  * @visibility public
  * @example Typing a negated constant as the constant it folds to
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT -2147483648')->field(0)->type->descriptor->name() // => 'integer'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT -2147483648')->field(0)->type->descriptor->name() // => 'integer'
  * @example Rejecting an operator that cannot be written before an operand
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('*')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

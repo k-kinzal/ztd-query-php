@@ -30,10 +30,10 @@ use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
  *
  * @visibility public
  * @example Reading the collation of an expression
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a COLLATE NOCASE FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a COLLATE NOCASE FROM t');
  *     $query->statement->columns[0]->expression->collation->value // => 'NOCASE'
  * @example Refusing an operand that would be read back differently
- *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 + 2')->statement->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate($sum, new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('NOCASE')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Collate implements Scalar

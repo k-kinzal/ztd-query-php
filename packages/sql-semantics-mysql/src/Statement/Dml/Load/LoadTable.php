@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading a LOAD DATA
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA INFILE 'f' REPLACE INTO TABLE t FIELDS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2");
+ *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("LOAD DATA INFILE 'f' REPLACE INTO TABLE t FIELDS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2");
  *     [$load->statement->duplicates, count($load->statement->columns), $load->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Replace, 2, "LOAD DATA INFILE 'f' REPLACE INTO TABLE t COLUMNS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2"]
  */
 final class LoadTable implements Statement

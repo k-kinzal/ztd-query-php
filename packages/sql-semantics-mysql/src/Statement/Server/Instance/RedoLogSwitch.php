@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Disabling redo logging
- *     $switch = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE DISABLE innodb redo_log')->statement->action;
+ *     $switch = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER INSTANCE DISABLE innodb redo_log')->statement->action;
  *     [$switch->enable, $switch->engine->value] // => [false, 'innodb']
  */
 final class RedoLogSwitch implements InstanceAction

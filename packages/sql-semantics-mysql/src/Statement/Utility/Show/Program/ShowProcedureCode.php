@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  *
  * @visibility public
  * @example Reading the statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PROCEDURE CODE shop.p') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW PROCEDURE CODE shop.p') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
  */
 final class ShowProcedureCode implements Statement
 {

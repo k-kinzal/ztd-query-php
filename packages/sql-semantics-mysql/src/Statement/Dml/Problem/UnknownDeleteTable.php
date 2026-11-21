@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the unknown table
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE u FROM t') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown table 'u' in MULTI DELETE
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DELETE u FROM t') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown table 'u' in MULTI DELETE
  */
 final class UnknownDeleteTable implements Diagnostic
 {

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a value column
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (a integer PATH '$.a'))");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->inspect("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (a integer PATH '$.a'))");
  *     [$query->statement->from->columns[0]->path->value, $query->field(0)->type->descriptor->name()] // => ['$.a', 'integer']
  */
 final class JsonValueColumn implements JsonTableColumn

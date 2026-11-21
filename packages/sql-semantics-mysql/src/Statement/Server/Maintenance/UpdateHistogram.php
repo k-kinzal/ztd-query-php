@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS");
+ *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS");
  *     [$analyze->toString(), $analyze->statement->histogram->buckets?->text === '8'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 8 BUCKETS", true]
  */
 final class UpdateHistogram implements Histogram

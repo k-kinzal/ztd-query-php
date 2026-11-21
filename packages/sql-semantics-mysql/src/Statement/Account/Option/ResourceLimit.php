@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Reading a limit
- *     $limit = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE USER u WITH MAX_QUERIES_PER_HOUR 10')->statement->resources[0];
+ *     $limit = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE USER u WITH MAX_QUERIES_PER_HOUR 10')->statement->resources[0];
  *     [$limit->kind, $limit->number->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceKind::QueriesPerHour, '10']
  */
 final class ResourceLimit implements WithOption

@@ -18,8 +18,8 @@ final class SourceDeclarationsTest extends TestCase
     public function testBindKeepsTwoOccurrencesWithOneExternalDeclaration(): void
     {
         $sqlite = new Semantics();
-        $table = $sqlite->analyze('CREATE TABLE t (a INT)');
-        $operation = $sqlite->analyze('SELECT x.a FROM t x INNER JOIN t y ON x.a = y.a', [$table]);
+        $table = $sqlite->inspect('CREATE TABLE t (a INT)');
+        $operation = $sqlite->inspect('SELECT x.a FROM t x INNER JOIN t y ON x.a = y.a', [$table]);
         self::assertInstanceOf(Select::class, $operation->statement);
 
         $bindings = (new SourceDeclarations())->bind($operation, $operation->statement->from);

@@ -23,13 +23,13 @@ final class AlterRoutineTest extends TestCase
 {
     public function testDeriveStatementReportsAttributesOfProcedures(): void
     {
-        $operation = (new Semantics())->inspect('ALTER PROCEDURE p() IMMUTABLE');
+        $operation = (new Semantics())->diagnose('ALTER PROCEDURE p() IMMUTABLE');
         self::assertEquals([new RoutineProblem(RoutineProblemKind::ProcedureAttribute)], $operation->facts->diagnostics);
     }
 
     public function testRenderDropsTheIgnoredRestrict(): void
     {
-        $operation = (new Semantics())->inspect('ALTER ROUTINE r(int4) EXTERNAL SECURITY INVOKER NOT LEAKPROOF RESTRICT');
+        $operation = (new Semantics())->diagnose('ALTER ROUTINE r(int4) EXTERNAL SECURITY INVOKER NOT LEAKPROOF RESTRICT');
         self::assertSame('ALTER ROUTINE r (int4) SECURITY INVOKER NOT LEAKPROOF', $operation->toString());
     }
 

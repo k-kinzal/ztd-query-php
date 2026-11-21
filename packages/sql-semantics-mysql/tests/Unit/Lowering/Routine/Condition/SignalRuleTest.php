@@ -52,7 +52,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerStatementLowersSignal')]
     public function testStatementLowersSignal(string $release): void
     {
-        $operation = (new Semantics($release))->analyze("signal sqlstate '45000'");
+        $operation = (new Semantics($release))->inspect("signal sqlstate '45000'");
 
         self::assertEquals(new Signal(new SqlState(new Text('45000'))), $operation->statement);
         self::assertSame("SIGNAL SQLSTATE '45000'", $operation->toString());
@@ -72,7 +72,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerStatementLowersResignal')]
     public function testStatementLowersResignal(string $release, string $sql, Resignal $expected, string $rendering): void
     {
-        $operation = (new Semantics($release))->analyze($sql);
+        $operation = (new Semantics($release))->inspect($sql);
 
         self::assertEquals($expected, $operation->statement);
         self::assertSame($rendering, $operation->toString());
@@ -102,7 +102,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerConditionLowersAConditionName')]
     public function testConditionLowersAConditionName(string $release): void
     {
-        $operation = (new Semantics($release))->analyze("create procedure p() begin declare c condition for sqlstate '45000'; signal c; resignal c; end");
+        $operation = (new Semantics($release))->inspect("create procedure p() begin declare c condition for sqlstate '45000'; signal c; resignal c; end");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -114,7 +114,7 @@ final class SignalRuleTest extends TestCase
 
     public function testConditionLowersAnSqlstateWithTheWordValue(): void
     {
-        $operation = (new Semantics())->analyze("signal sqlstate value '01000'");
+        $operation = (new Semantics())->inspect("signal sqlstate value '01000'");
 
         self::assertEquals(new Signal(new SqlState(new Text('01000'))), $operation->statement);
         self::assertSame("SIGNAL SQLSTATE '01000'", $operation->toString());
@@ -134,7 +134,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerItemsLowersEveryItemNameInOrder')]
     public function testItemsLowersEveryItemNameInOrder(string $release): void
     {
-        $operation = (new Semantics($release))->analyze("signal sqlstate '45000' set class_origin = 1, subclass_origin = 1, constraint_catalog = 1, constraint_schema = 1, constraint_name = 1, catalog_name = 1, schema_name = 1, table_name = 1, column_name = 1, cursor_name = 1, message_text = 1, mysql_errno = 1");
+        $operation = (new Semantics($release))->inspect("signal sqlstate '45000' set class_origin = 1, subclass_origin = 1, constraint_catalog = 1, constraint_schema = 1, constraint_name = 1, catalog_name = 1, schema_name = 1, table_name = 1, column_name = 1, cursor_name = 1, message_text = 1, mysql_errno = 1");
         $statement = $operation->statement;
         self::assertInstanceOf(Signal::class, $statement);
 
@@ -148,7 +148,7 @@ final class SignalRuleTest extends TestCase
 
     public function testItemsLowersAnAbsentClauseAsEmpty(): void
     {
-        $statement = (new Semantics())->analyze("signal sqlstate '45000'")->statement;
+        $statement = (new Semantics())->inspect("signal sqlstate '45000'")->statement;
         self::assertInstanceOf(Signal::class, $statement);
 
         self::assertSame([], $statement->items);
@@ -168,7 +168,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerOperandLowersLiteralsVariablesAndNames')]
     public function testOperandLowersLiteralsVariablesAndNames(string $release): void
     {
-        $operation = (new Semantics($release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.x, table_name = null, mysql_errno = 1000, column_name = 'c'");
+        $operation = (new Semantics($release))->inspect("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.x, table_name = null, mysql_errno = 1000, column_name = 'c'");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Signal::class, $statement->body);

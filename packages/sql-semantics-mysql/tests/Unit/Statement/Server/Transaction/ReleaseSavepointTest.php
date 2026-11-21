@@ -16,12 +16,12 @@ final class ReleaseSavepointTest extends TestCase
 {
     public function testRenderWritesTheSavepoint(): void
     {
-        self::assertSame('RELEASE SAVEPOINT s', (new Semantics())->analyze('release savepoint s')->toString());
+        self::assertSame('RELEASE SAVEPOINT s', (new Semantics())->inspect('release savepoint s')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('RELEASE SAVEPOINT s');
+        $operation = (new Semantics())->inspect('RELEASE SAVEPOINT s');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

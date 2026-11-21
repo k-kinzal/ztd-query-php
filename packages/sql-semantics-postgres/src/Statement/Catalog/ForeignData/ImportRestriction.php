@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  *
  * @visibility public
  * @example Reading the excluded tables
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('IMPORT FOREIGN SCHEMA remote EXCEPT (logs) FROM SERVER s INTO local');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('IMPORT FOREIGN SCHEMA remote EXCEPT (logs) FROM SERVER s INTO local');
  *     $operation->statement->restriction->tables[0]->name->name->value // => 'logs'
  */
 final class ImportRestriction implements Node

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Typing an array subquery
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ARRAY(SELECT 1)')->field(0)->type->descriptor->name() // => 'integer[]'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ARRAY(SELECT 1)')->field(0)->type->descriptor->name() // => 'integer[]'
  */
 final class ArraySubquery implements Scalar, OutputNaming
 {

@@ -16,12 +16,12 @@ final class AlterServerTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame("ALTER SERVER s OPTIONS (PASSWORD 'p')", (new Semantics('mysql-5.7.44'))->analyze("alter server s options (password 'p')")->toString());
+        self::assertSame("ALTER SERVER s OPTIONS (PASSWORD 'p')", (new Semantics('mysql-5.7.44'))->inspect("alter server s options (password 'p')")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("ALTER SERVER s OPTIONS (HOST 'h')");
+        $operation = (new Semantics())->inspect("ALTER SERVER s OPTIONS (HOST 'h')");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

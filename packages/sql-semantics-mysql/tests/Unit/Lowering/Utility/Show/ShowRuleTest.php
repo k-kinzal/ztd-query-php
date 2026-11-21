@@ -16,14 +16,14 @@ final class ShowRuleTest extends TestCase
 {
     public function testStatementLowersTheSessionStatements(): void
     {
-        self::assertSame('SHOW COUNT(*) ERRORS', (new Semantics())->inspect('show count(*) errors')->toString());
-        self::assertSame('SHOW PARSE_TREE SELECT 1', (new Semantics('mysql-8.1.0'))->inspect('show parse_tree select 1')->toString());
+        self::assertSame('SHOW COUNT(*) ERRORS', (new Semantics())->diagnose('show count(*) errors')->toString());
+        self::assertSame('SHOW PARSE_TREE SELECT 1', (new Semantics('mysql-8.1.0'))->diagnose('show parse_tree select 1')->toString());
     }
 
     public function testReplicationLowersEverySpelling(): void
     {
-        self::assertSame('SHOW SLAVE HOSTS', (new Semantics('mysql-8.0.44'))->inspect('show slave hosts')->toString());
-        self::assertSame("SHOW REPLICA STATUS FOR CHANNEL 'c'", (new Semantics())->inspect('show replica status for channel \'c\'')->toString());
-        self::assertSame('SHOW BINARY LOG STATUS', (new Semantics('mysql-8.2.0'))->inspect('show binary log status')->toString());
+        self::assertSame('SHOW SLAVE HOSTS', (new Semantics('mysql-8.0.44'))->diagnose('show slave hosts')->toString());
+        self::assertSame("SHOW REPLICA STATUS FOR CHANNEL 'c'", (new Semantics())->diagnose('show replica status for channel \'c\'')->toString());
+        self::assertSame('SHOW BINARY LOG STATUS', (new Semantics('mysql-8.2.0'))->diagnose('show binary log status')->toString());
     }
 }

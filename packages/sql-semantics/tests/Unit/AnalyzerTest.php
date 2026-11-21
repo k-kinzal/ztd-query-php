@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\AnalysisException;
 use SqlSemantics\Analyzer;
-use SqlSemantics\Query;
+use SqlSemantics\SemanticsIR;
 
 #[CoversClass(Analyzer::class)]
 #[Small]
@@ -20,7 +20,7 @@ final class AnalyzerTest extends TestCase
      */
     public function testAnalyzeAcceptsSqlWithoutAnExplicitContext(): void
     {
-        $query = self::createStub(Query::class);
+        $query = self::createStub(SemanticsIR::class);
         $analyzer = self::createStub(Analyzer::class);
         $analyzer->method('analyze')->willReturn($query);
 

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  *
  * @visibility public
  * @example Hiding a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER a SET INVISIBLE');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ALTER a SET INVISIBLE');
  *     [$alter->statement->commands[0]->visible, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET INVISIBLE']
  */
 final class ColumnVisibility implements AlterCommand

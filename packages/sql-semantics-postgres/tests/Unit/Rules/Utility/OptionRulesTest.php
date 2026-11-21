@@ -46,7 +46,7 @@ final class OptionRulesTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['VACUUM FULL FREEZE VERBOSE ANALYSE', 'VACUUM (verbose, parallel 2) t', 'VACUUM t'],
-            [$semantics->inspect('VACUUM FULL FREEZE VERBOSE ANALYSE')->toString(), $semantics->inspect('VACUUM (VERBOSE, PARALLEL 2) t')->toString(), $semantics->inspect('VACUUM t')->toString()],
+            [$semantics->diagnose('VACUUM FULL FREEZE VERBOSE ANALYSE')->toString(), $semantics->diagnose('VACUUM (VERBOSE, PARALLEL 2) t')->toString(), $semantics->diagnose('VACUUM t')->toString()],
         );
     }
 
@@ -68,7 +68,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized ANALYZE option "full"', 'verbose requires a Boolean value', 'buffer_usage_limit requires a parameter'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->diagnose("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->facts->diagnostics),
         );
     }
 
@@ -76,7 +76,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized CLUSTER option "Verbose"'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect('CLUSTER (VERBOSE, "Verbose") t')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->diagnose('CLUSTER (VERBOSE, "Verbose") t')->facts->diagnostics),
         );
     }
 }

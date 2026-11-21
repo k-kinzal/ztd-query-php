@@ -23,15 +23,15 @@ final class ConnectionRuleTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(Attach::class, $semantics->analyze("ATTACH 'f' AS a")->statement);
-        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a')->statement);
+        self::assertInstanceOf(Attach::class, $semantics->inspect("ATTACH 'f' AS a")->statement);
+        self::assertInstanceOf(Detach::class, $semantics->inspect('DETACH a')->statement);
     }
 
     public function testKeywordIsOptionalBeforeTheOperand(): void
     {
         $semantics = new Semantics();
-        $short = $semantics->analyze('DETACH a')->statement;
-        $long = $semantics->analyze('DETACH DATABASE a')->statement;
+        $short = $semantics->inspect('DETACH a')->statement;
+        $long = $semantics->inspect('DETACH DATABASE a')->statement;
 
         self::assertInstanceOf(Detach::class, $short);
         self::assertInstanceOf(Detach::class, $long);
@@ -42,8 +42,8 @@ final class ConnectionRuleTest extends TestCase
     public function testKeyIsNullUnlessAKeyIsWritten(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze("ATTACH 'f' AS a")->statement;
-        $keyed = $semantics->analyze("ATTACH 'f' AS a KEY secret")->statement;
+        $plain = $semantics->inspect("ATTACH 'f' AS a")->statement;
+        $keyed = $semantics->inspect("ATTACH 'f' AS a KEY secret")->statement;
 
         self::assertInstanceOf(Attach::class, $plain);
         self::assertInstanceOf(Attach::class, $keyed);
@@ -53,7 +53,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testOperandReadsAnIdentifierInsideParenthesesAsItsName(): void
     {
-        $operation = (new Semantics())->analyze('DETACH ((aux))');
+        $operation = (new Semantics())->inspect('DETACH ((aux))');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Detach::class, $statement);
@@ -65,7 +65,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testOperandLowersAnyOtherExpressionAsAnExpression(): void
     {
-        $statement = (new Semantics())->analyze("ATTACH 'f' AS a")->statement;
+        $statement = (new Semantics())->inspect("ATTACH 'f' AS a")->statement;
 
         self::assertInstanceOf(Attach::class, $statement);
         self::assertInstanceOf(TextLiteral::class, $statement->file);

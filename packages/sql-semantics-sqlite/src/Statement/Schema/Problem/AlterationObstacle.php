@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
  *
  * @visibility public
  * @example Naming the obstacle of adding a primary key column
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t ADD COLUMN id INTEGER PRIMARY KEY');
+ *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t ADD COLUMN id INTEGER PRIMARY KEY');
  *     $alter->facts->diagnostics[0]->obstacle // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle::PrimaryKeyColumn
  */
 enum AlterationObstacle: string

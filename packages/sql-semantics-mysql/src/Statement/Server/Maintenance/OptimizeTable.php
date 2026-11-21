@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('optimize table t');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('optimize table t');
  *     [$statement->toString(), !$statement->statement->noWriteToBinlog] // => ['OPTIMIZE TABLE t', true]
  */
 final class OptimizeTable implements Statement

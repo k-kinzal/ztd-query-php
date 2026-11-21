@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\IndexElement;
  *
  * @visibility public
  * @example Reading the operator of an exclusion element
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH &&))');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (c circle, EXCLUDE USING gist (c WITH &&))');
  *     $create->statement->definition->elements[1]->elements[0]->operator->name->value // => '&&'
  */
 final class ExclusionElement implements Clause

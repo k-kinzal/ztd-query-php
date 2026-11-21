@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * @visibility public
  * @example Telling that a type name is a clause
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(4, 2) '1.5'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT numeric(4, 2) '1.5'");
  *     $query->statement->targets[0]->expression->type instanceof \SqlSemantics\Platform\PostgreSql\Statement\Clause // => true
  */
 interface Clause extends Node

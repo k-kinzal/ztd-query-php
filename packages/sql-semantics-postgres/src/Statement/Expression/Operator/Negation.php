@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Negating a comparison
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NOT 1 = 2')->field(0)->type->descriptor->name() // => 'boolean'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT NOT 1 = 2')->field(0)->type->descriptor->name() // => 'boolean'
  */
 final class Negation implements Scalar
 {

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  *
  * @visibility public
  * @example Writing a hash bound
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 0)'
  */
 final class HashBound implements PartitionBound
 {

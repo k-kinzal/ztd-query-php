@@ -16,21 +16,21 @@ final class OptionRuleTest extends TestCase
 {
     public function testOptionsLowersAnalyze(): void
     {
-        self::assertSame('EXPLAIN ANALYZE SELECT 1', (new Semantics())->analyze('explain analyze select 1')->toString());
+        self::assertSame('EXPLAIN ANALYZE SELECT 1', (new Semantics())->inspect('explain analyze select 1')->toString());
     }
 
     public function testFormatLowersTheName(): void
     {
-        self::assertSame('EXPLAIN FORMAT = tree SELECT 1', (new Semantics())->analyze('explain format = tree select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = tree SELECT 1', (new Semantics())->inspect('explain format = tree select 1')->toString());
     }
 
     public function testIntoLowersTheVariable(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` INTO @x SELECT 1', (new Semantics())->analyze('explain format = json into @x select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = `json` INTO @x SELECT 1', (new Semantics())->inspect('explain format = json into @x select 1')->toString());
     }
 
     public function testDatabaseLowersTheDatabase(): void
     {
-        self::assertSame('EXPLAIN FOR DATABASE `d b` DELETE FROM t', (new Semantics())->analyze('explain for database `d b` delete from t')->toString());
+        self::assertSame('EXPLAIN FOR DATABASE `d b` DELETE FROM t', (new Semantics())->inspect('explain for database `d b` delete from t')->toString());
     }
 }

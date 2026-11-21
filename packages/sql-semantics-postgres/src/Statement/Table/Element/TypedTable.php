@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading a typed table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t OF person (PRIMARY KEY (id))');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t OF person (PRIMARY KEY (id))');
  *     [$create->statement->definition->type->last()->value, $create->declarations()[0]->complete] // => ['person', false]
  */
 final class TypedTable implements TableForm

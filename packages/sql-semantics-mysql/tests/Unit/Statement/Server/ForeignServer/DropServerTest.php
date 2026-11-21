@@ -16,12 +16,12 @@ final class DropServerTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('DROP SERVER s', (new Semantics())->analyze('drop server s')->toString());
+        self::assertSame('DROP SERVER s', (new Semantics())->inspect('drop server s')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('DROP SERVER IF EXISTS s');
+        $operation = (new Semantics())->inspect('DROP SERVER IF EXISTS s');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

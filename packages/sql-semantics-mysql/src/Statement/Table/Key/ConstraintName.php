@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  *
  * @visibility public
  * @example Reading the symbol of a constraint
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE (a))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE (a))');
  *     $create->statement->elements[1]->constraint->name->column->value // => 'c'
  */
 final class ConstraintName implements Node

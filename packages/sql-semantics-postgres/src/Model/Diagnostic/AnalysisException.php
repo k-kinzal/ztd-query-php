@@ -12,7 +12,7 @@ use RuntimeException;
  *
  * @visibility public
  * @example Rejecting text outside the grammar
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELEC 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELEC 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException
  */
 final class AnalysisException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

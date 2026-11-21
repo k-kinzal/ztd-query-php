@@ -16,7 +16,7 @@ final class AbsentFieldTest extends TestCase
 {
     public function testNameIsTheLookedUpNameOfACompleteShape(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT 1 AS a')->lookupField('b');
+        $lookup = (new Semantics())->inspect('SELECT 1 AS a')->lookupField('b');
 
         self::assertInstanceOf(AbsentField::class, $lookup);
         self::assertSame('b', $lookup->name);
@@ -24,7 +24,7 @@ final class AbsentFieldTest extends TestCase
 
     public function testNameOfAPositionWithoutNameIsNeverFound(): void
     {
-        $lookup = (new Semantics())->analyze('SELECT 1')->lookupField('');
+        $lookup = (new Semantics())->inspect('SELECT 1')->lookupField('');
 
         self::assertInstanceOf(AbsentField::class, $lookup);
     }

@@ -17,11 +17,11 @@ final class AlterRegistrationTest extends TestCase
 {
     public function testDeriveStatementReportsAnInvalidFactor(): void
     {
-        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics())->inspect('ALTER USER u 4 FACTOR UNREGISTER')->facts->diagnostics[0]);
+        self::assertInstanceOf(NumberOutOfRange::class, (new Semantics())->diagnose('ALTER USER u 4 FACTOR UNREGISTER')->facts->diagnostics[0]);
     }
 
     public function testRenderWritesTheStep(): void
     {
-        self::assertSame("ALTER USER u 2 FACTOR FINISH REGISTRATION SET CHALLENGE_RESPONSE AS 'r'", (new Semantics())->inspect("alter user u 2 factor finish registration set challenge_response as 'r'")->toString());
+        self::assertSame("ALTER USER u 2 FACTOR FINISH REGISTRATION SET CHALLENGE_RESPONSE AS 'r'", (new Semantics())->diagnose("alter user u 2 factor finish registration set challenge_response as 'r'")->toString());
     }
 }

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
  *
  * @visibility public
  * @example Reading a handler
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
  *     $handler = $create->statement->body->declarations[0];
  *     [$handler->action, count($handler->conditions)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Continue, 2]
  */

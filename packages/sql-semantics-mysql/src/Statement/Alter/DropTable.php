@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
  * @visibility public
  * @example Resolving the dropped table to its declaration
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $drop = $semantics->analyze('drop tables if exists t, u cascade', []);
+ *     $drop = $semantics->inspect('drop tables if exists t, u cascade', []);
  *     [$drop->toString(), $drop->statement->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
  */
 final class DropTable implements Statement

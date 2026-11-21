@@ -28,9 +28,9 @@ final class SelectRuleTest extends TestCase
     public function testSelectLowersAPlainQueryAndAQueryWithCommonTables(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze('SELECT 1')->statement;
-        $with = $semantics->analyze('WITH c AS (SELECT 1) SELECT * FROM c')->statement;
-        $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c')->statement;
+        $plain = $semantics->inspect('SELECT 1')->statement;
+        $with = $semantics->inspect('WITH c AS (SELECT 1) SELECT * FROM c')->statement;
+        $recursive = $semantics->inspect('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c')->statement;
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(WithQuery::class, $with);
@@ -43,7 +43,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLowersACompoundQueryWithItsArmsInOrderAndTheTrailingOrderByAndLimit(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
+        $operation = (new Semantics())->inspect('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->first);
@@ -60,7 +60,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLeavesACompoundThatEndsInValuesWithoutOrderByAndLimit(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 UNION VALUES (2)');
+        $operation = (new Semantics())->inspect('SELECT 1 UNION VALUES (2)');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(ValuesClause::class, $operation->statement->steps[0]->query);
@@ -71,7 +71,7 @@ final class SelectRuleTest extends TestCase
 
     public function testOperatorLowersEveryCompoundOperatorAsWritten(): void
     {
-        $operation = (new Semantics())->analyze('select 1 union select 2 union all select 3 except select 4 intersect select 5');
+        $operation = (new Semantics())->inspect('select 1 union select 2 union all select 3 except select 4 intersect select 5');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertSame(['UNION', 'UNION ALL', 'EXCEPT', 'INTERSECT'], array_map(static fn (CompoundStep $step): string => $step->operator->value, $operation->statement->steps));
@@ -81,8 +81,8 @@ final class SelectRuleTest extends TestCase
     public function testArmLowersASelectionOrAValuesClause(): void
     {
         $semantics = new Semantics();
-        $compound = $semantics->analyze('VALUES (1) UNION SELECT 2')->statement;
-        $rows = $semantics->analyze('VALUES (1), (2)')->statement;
+        $compound = $semantics->inspect('VALUES (1) UNION SELECT 2')->statement;
+        $rows = $semantics->inspect('VALUES (1), (2)')->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
         self::assertInstanceOf(ValuesClause::class, $compound->first);
@@ -93,7 +93,7 @@ final class SelectRuleTest extends TestCase
 
     public function testSelectionLowersEveryClauseInGrammarOrder(): void
     {
-        $operation = (new Semantics())->analyze('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
+        $operation = (new Semantics())->inspect('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
@@ -114,8 +114,8 @@ final class SelectRuleTest extends TestCase
     public function testGroupsTurnsAnIntegerConstantIntoAResultColumnPosition(): void
     {
         $semantics = new Semantics();
-        $grouped = $semantics->analyze('SELECT a, count(*) FROM t GROUP BY 1, a')->statement;
-        $plain = $semantics->analyze('SELECT a FROM t')->statement;
+        $grouped = $semantics->inspect('SELECT a, count(*) FROM t GROUP BY 1, a')->statement;
+        $plain = $semantics->inspect('SELECT a FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $grouped);
         self::assertInstanceOf(Select::class, $plain);
@@ -129,23 +129,23 @@ final class SelectRuleTest extends TestCase
     public function testHavingIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics();
-        $bare = $semantics->analyze('SELECT a FROM t GROUP BY a')->statement;
-        $filtered = $semantics->analyze('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->statement;
+        $bare = $semantics->inspect('SELECT a FROM t GROUP BY a')->statement;
+        $filtered = $semantics->inspect('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->statement;
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $filtered);
         self::assertNull($bare->having);
         self::assertNotNull($filtered->having);
-        self::assertSame('SELECT a FROM t GROUP BY a HAVING count(*) > 1', $semantics->analyze('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->toString());
+        self::assertSame('SELECT a FROM t GROUP BY a HAVING count(*) > 1', $semantics->inspect('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->toString());
     }
 
     public function testLimitKeepsTheSpellingOfTheOffset(): void
     {
         $semantics = new Semantics();
-        $plain = $semantics->analyze('SELECT 1 LIMIT 5');
-        $offset = $semantics->analyze('SELECT 1 LIMIT 5 OFFSET 2');
-        $comma = $semantics->analyze('SELECT 1 LIMIT 2, 5');
-        $none = $semantics->analyze('SELECT 1');
+        $plain = $semantics->inspect('SELECT 1 LIMIT 5');
+        $offset = $semantics->inspect('SELECT 1 LIMIT 5 OFFSET 2');
+        $comma = $semantics->inspect('SELECT 1 LIMIT 2, 5');
+        $none = $semantics->inspect('SELECT 1');
 
         self::assertInstanceOf(Select::class, $plain->statement);
         self::assertInstanceOf(Select::class, $offset->statement);

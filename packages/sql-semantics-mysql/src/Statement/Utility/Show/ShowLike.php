@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the pattern
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW DATABASES LIKE 'shop%'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW DATABASES LIKE 'shop%'");
  *     $show->statement->filter->pattern->value // => 'shop%'
  */
 final class ShowLike implements Node

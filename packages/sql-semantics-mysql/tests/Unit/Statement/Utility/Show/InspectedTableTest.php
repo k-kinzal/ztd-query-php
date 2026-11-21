@@ -16,6 +16,6 @@ final class InspectedTableTest extends TestCase
 {
     public function testRenderWritesTheDatabase(): void
     {
-        self::assertSame('SHOW CREATE TABLE `my db`.t', (new Semantics())->analyze('show create table `my db`.t')->toString());
+        self::assertSame('SHOW CREATE TABLE `my db`.t', (new Semantics())->inspect('show create table `my db`.t')->toString());
     }
 }

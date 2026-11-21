@@ -16,8 +16,8 @@ final class ServerRuleTest extends TestCase
 {
     public function testStatementLowersTheServerStatements(): void
     {
-        self::assertSame('SHOW GRANTS FOR u USING r, s', (new Semantics())->analyze('show grants for u using r, s')->toString());
-        self::assertSame('SHOW ENGINES', (new Semantics())->analyze('show storage engines')->toString());
-        self::assertSame('SHOW CHARSET', (new Semantics())->analyze('show character set')->toString());
+        self::assertSame('SHOW GRANTS FOR u USING r, s', (new Semantics())->inspect('show grants for u using r, s')->toString());
+        self::assertSame('SHOW ENGINES', (new Semantics())->inspect('show storage engines')->toString());
+        self::assertSame('SHOW CHARSET', (new Semantics())->inspect('show character set')->toString());
     }
 }

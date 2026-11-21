@@ -28,7 +28,7 @@ final class OrdinalOutOfRangeTest extends TestCase
 
     public function testMessageIsReportedAndResolvesTheTerm(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1, 2 GROUP BY 3');
+        $query = (new Semantics())->diagnose('SELECT 1, 2 GROUP BY 3');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $fact = $query->facts->scalar($query->statement->groupBy[0]);

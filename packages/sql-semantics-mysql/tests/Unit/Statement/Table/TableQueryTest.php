@@ -18,7 +18,7 @@ final class TableQueryTest extends TestCase
 {
     public function testRenderWritesTheDuplicateHandlingAndTheQuery(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t REPLACE SELECT 1 AS a');
+        $create = (new Semantics())->inspect('CREATE TABLE t REPLACE SELECT 1 AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 

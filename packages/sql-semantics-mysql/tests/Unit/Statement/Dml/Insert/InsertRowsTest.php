@@ -29,7 +29,7 @@ final class InsertRowsTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4)', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t (a, b, a) VALUES (1, 2, 3), (4)', [$t]);
 
         self::assertSame(["Column 'a' specified twice", "Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -38,7 +38,7 @@ final class InsertRowsTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t VALUES (), ()', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t VALUES (), ()', [$t]);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);
@@ -46,7 +46,7 @@ final class InsertRowsTest extends TestCase
 
     public function testRenderWritesValuesAndUpdates(): void
     {
-        self::assertSame('INSERT INTO t VALUES (1), (2) ON DUPLICATE KEY UPDATE a = VALUES(a)', (new Semantics('mysql-5.7.44'))->inspect('insert into t value (1), (2) on duplicate key update a = values(a)')->toString());
+        self::assertSame('INSERT INTO t VALUES (1), (2) ON DUPLICATE KEY UPDATE a = VALUES(a)', (new Semantics('mysql-5.7.44'))->diagnose('insert into t value (1), (2) on duplicate key update a = values(a)')->toString());
     }
 
     public function testRenderRejectsReplaceWithUpdates(): void

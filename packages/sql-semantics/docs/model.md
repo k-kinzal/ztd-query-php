@@ -17,7 +17,7 @@ An operation is one analyzed root:
 | `shape()`, `fields()`, `field()`, `lookupField()` | The rows the statement returns, when it returns rows. |
 | `inputRelation()`, `singleNamedInput()` | The input relation of a statement that reads rows. |
 
-The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later.
+The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `inspect()` uses it too. All facts are established in the constructor; nothing is filled in later.
 
 ## Statement structure and facts
 
@@ -35,8 +35,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-$query = $semantics->analyze('SELECT name FROM users WHERE id > 10', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$query = $semantics->inspect('SELECT name FROM users WHERE id > 10', [$users]);
 
 $where = $query->statement->where;
 $where instanceof Binary; // => true
@@ -44,7 +44,7 @@ $where->operator; // => BinaryOperator::Greater
 $where->right->digits; // => '10'
 $query->facts->scalar($where->left)->resolution instanceof ResolvedColumn; // => true
 
-$sum = $semantics->analyze('SELECT 1 + NULL');
+$sum = $semantics->inspect('SELECT 1 + NULL');
 $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly; // => true
 ```
 
@@ -96,7 +96,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 
 $semantics = new Semantics();
-$query = $semantics->analyze('SELECT "a", 1 AS b FROM t');
+$query = $semantics->inspect('SELECT "a", 1 AS b FROM t');
 
 $query->field(0)->name; // => null
 $query->field(0)->slot->unnamed[0]->describe(); // => 'the declaration of relation t'
@@ -120,9 +120,9 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
-$orders = $semantics->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL)');
-$query = $semantics->analyze('SELECT u.name, o.user_id FROM users AS u LEFT JOIN orders AS o ON o.user_id = u.id', [$users, $orders]);
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
+$orders = $semantics->inspect('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL)');
+$query = $semantics->inspect('SELECT u.name, o.user_id FROM users AS u LEFT JOIN orders AS o ON o.user_id = u.id', [$users, $orders]);
 $userId = $orders->declarations()[0]->columns[1];
 
 $query->field('name')->nullability; // => Nullability::NotNull
@@ -138,15 +138,15 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
 
 $semantics = new Semantics();
-$open = $semantics->analyze('SELECT * FROM users');
+$open = $semantics->inspect('SELECT * FROM users');
 
 $open->fields(); // => null
 $open->shape()->complete(); // => false
 $open->shape()->missing[0]->describe(); // => 'the declaration of relation users'
 $open->facts->output->projection[0] instanceof OpenStar; // => true
 
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-count($semantics->analyze('SELECT * FROM users', [$users])->fields()); // => 2
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+count($semantics->inspect('SELECT * FROM users', [$users])->fields()); // => 2
 ```
 
 ## Resolutions
@@ -168,20 +168,20 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-$orders = $semantics->analyze('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$orders = $semantics->inspect('CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER)');
 
-$sorted = $semantics->analyze('SELECT name AS label FROM users ORDER BY label', [$users]);
+$sorted = $semantics->inspect('SELECT name AS label FROM users ORDER BY label', [$users]);
 $use = $sorted->facts->scalar($sorted->statement->orderBy[0]->expression)->resolution;
 $use instanceof AliasTarget; // => true
 $use->field === $sorted->field('label'); // => true
 
-$correlated = $semantics->analyze('SELECT name, (SELECT count(*) FROM orders WHERE orders.user_id = users.id) AS n FROM users', [$users, $orders]);
+$correlated = $semantics->inspect('SELECT name, (SELECT count(*) FROM orders WHERE orders.user_id = users.id) AS n FROM users', [$users, $orders]);
 $outer = $correlated->facts->scalar($correlated->statement->columns[1]->expression->query->where->right)->resolution;
 $outer->depth; // => 1
 $outer->relation === $correlated->inputRelation(); // => true
 
-$semantics->analyze('SELECT id FROM users, orders', [$users, $orders]); // throws SemanticException
+$semantics->inspect('SELECT id FROM users, orders', [$users, $orders]); // throws SemanticException
 ```
 
 A relation name resolves to one of the following (namespace `SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table`), read from `$facts->relation($occurrence)->table`:
@@ -219,18 +219,18 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
 
-$semantics->analyze('SELECT 1')->field(0)->type->descriptor; // => Storage::Integer
-$choice = $semantics->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
+$semantics->inspect('SELECT 1')->field(0)->type->descriptor; // => Storage::Integer
+$choice = $semantics->inspect("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
 $choice instanceof Choice; // => true
 array_map(static fn ($type) => $type->name(), $choice->alternatives); // => ['INTEGER', 'TEXT']
-$semantics->analyze('SELECT NULL')->field(0)->nullability; // => Nullability::Nullable
+$semantics->inspect('SELECT NULL')->field(0)->nullability; // => Nullability::Nullable
 ```
 
 `Nullability` is `NotNull`, `Nullable` or `Dependent`. `Dependent` means the answer needs information the context does not hold; treat such a value as possibly NULL.
 
 ## Diagnostics
 
-A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, a wrong number of values, a statement on a relation of the wrong [kind](contexts.md#relation-kinds), or a write into a [generated column](contexts.md#generated-columns), is a value implementing `SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic`. `analyze()` throws `SemanticException` with these values in its `diagnostics` property, in derivation order. Warnings remain available through the query’s `facts->diagnostics` property. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
+A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, a wrong number of values, a statement on a relation of the wrong [kind](contexts.md#relation-kinds), or a write into a [generated column](contexts.md#generated-columns), is a value implementing `SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic`. `inspect()` throws `SemanticException` with these values in its `diagnostics` property, in derivation order. Warnings remain available through the query’s `facts->diagnostics` property. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -238,10 +238,10 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 
 try {
-    $semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]);
+    $semantics->inspect('INSERT INTO users (id) VALUES (1, 2)', [$users]);
 } catch (SemanticException $error) {
     $error->diagnostics[0] instanceof ArityMismatch; // => true
     $error->getMessage(); // => '2 values for 1 columns.'
@@ -268,7 +268,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 
 $semantics = new Semantics();
-$parameters = $semantics->analyze('SELECT ?, :name');
+$parameters = $semantics->inspect('SELECT ?, :name');
 
 $parameters->field(0)->type instanceof Dependent; // => true
 $parameters->field(0)->type->missing[0]->describe(); // => 'the value bound to parameter ?'

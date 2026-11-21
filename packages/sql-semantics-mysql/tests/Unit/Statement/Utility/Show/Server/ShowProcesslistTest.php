@@ -16,13 +16,13 @@ final class ShowProcesslistTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW PROCESSLIST');
+        $show = (new Semantics())->inspect('SHOW PROCESSLIST');
         self::assertInstanceOf(ShowProcesslist::class, $show->statement);
         self::assertSame('Id', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PROCESSLIST', (new Semantics())->analyze('SHOW PROCESSLIST')->toString());
+        self::assertSame('SHOW PROCESSLIST', (new Semantics())->inspect('SHOW PROCESSLIST')->toString());
     }
 }

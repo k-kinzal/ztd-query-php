@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the column names of a common table expression
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH c(x, y) AS (SELECT 1, 2) SELECT x FROM c');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('WITH c(x, y) AS (SELECT 1, 2) SELECT x FROM c');
  *     $query->statement->with->tables[0]->columns[1]->name->value // => 'y'
  */
 final class ListedColumn implements Node

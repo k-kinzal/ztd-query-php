@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a row
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t VALUES (1, 2), ()') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t VALUES (1, 2), ()') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
  */
 final class InsertedRow implements Node
 {

@@ -16,12 +16,12 @@ final class DropDatabaseTest extends TestCase
 {
     public function testRenderWritesIfExists(): void
     {
-        self::assertSame('DROP DATABASE IF EXISTS d', (new Semantics('mysql-5.6.51'))->analyze('drop database if exists d')->toString());
+        self::assertSame('DROP DATABASE IF EXISTS d', (new Semantics('mysql-5.6.51'))->inspect('drop database if exists d')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('DROP DATABASE d');
+        $operation = (new Semantics())->inspect('DROP DATABASE d');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

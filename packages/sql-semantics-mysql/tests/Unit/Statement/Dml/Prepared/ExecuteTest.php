@@ -17,7 +17,7 @@ final class ExecuteTest extends TestCase
 {
     public function testDeriveStatementDerivesTheVariables(): void
     {
-        $operation = (new Semantics())->analyze('EXECUTE s USING @a');
+        $operation = (new Semantics())->inspect('EXECUTE s USING @a');
         self::assertInstanceOf(Execute::class, $operation->statement);
 
         self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->variables[0])->type);
@@ -25,7 +25,7 @@ final class ExecuteTest extends TestCase
 
     public function testRenderWritesTheVariables(): void
     {
-        self::assertSame('EXECUTE s', (new Semantics())->analyze('execute s')->toString());
-        self::assertSame('EXECUTE s USING @a, @b', (new Semantics('mysql-5.7.44'))->analyze('execute s using @a, @b')->toString());
+        self::assertSame('EXECUTE s', (new Semantics())->inspect('execute s')->toString());
+        self::assertSame('EXECUTE s USING @a, @b', (new Semantics('mysql-5.7.44'))->inspect('execute s using @a, @b')->toString());
     }
 }

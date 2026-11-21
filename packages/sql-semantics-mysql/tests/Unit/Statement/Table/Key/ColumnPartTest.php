@@ -19,7 +19,7 @@ final class ColumnPartTest extends TestCase
 {
     public function testDeriveKeyPartDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a TEXT, KEY (a(4) DESC))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a TEXT, KEY (a(4) DESC))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -33,6 +33,6 @@ final class ColumnPartTest extends TestCase
 
     public function testRenderWritesTheColumnTheLengthAndTheDirection(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Semantics())->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Semantics())->inspect('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
     }
 }

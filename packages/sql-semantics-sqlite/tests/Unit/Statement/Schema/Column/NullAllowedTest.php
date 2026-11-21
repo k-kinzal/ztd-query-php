@@ -19,7 +19,7 @@ final class NullAllowedTest extends TestCase
 {
     public function testDeriveConstraintLeavesTheColumnNullable(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a INT NULL)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT NULL)', []);
 
         self::assertSame(Nullability::Nullable, $operation->declarations()[0]->columns[0]->nullability);
         self::assertSame([], $operation->facts->diagnostics);
@@ -27,14 +27,14 @@ final class NullAllowedTest extends TestCase
 
     public function testDeriveConstraintDoesNotUndoNotNull(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a INT NOT NULL NULL)');
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL NULL)');
 
         self::assertSame(Nullability::NotNull, $operation->declarations()[0]->columns[0]->nullability);
     }
 
     public function testRenderKeepsTheConflictResolution(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a null on conflict fail)');
+        $operation = (new Semantics())->inspect('create table t (a null on conflict fail)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

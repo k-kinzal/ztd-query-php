@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the area and the kind of information
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
+ *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT');
  *     [$get->statement->area->value, $get->toString()] // => ['STACKED', 'GET STACKED DIAGNOSTICS CONDITION 1 @m = MESSAGE_TEXT']
  */
 final class GetDiagnostics implements Statement, ProgramStatement

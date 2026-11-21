@@ -20,12 +20,12 @@ final class XaStartTest extends TestCase
 {
     public function testRenderWritesStartForBegin(): void
     {
-        self::assertSame("XA START 'g' JOIN", (new Semantics())->analyze("xa begin 'g' join")->toString());
+        self::assertSame("XA START 'g' JOIN", (new Semantics())->inspect("xa begin 'g' join")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA START 'g'");
+        $operation = (new Semantics())->inspect("XA START 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

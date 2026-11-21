@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
  * @visibility public
  * @example Telling whether a statement returns rows
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     [$semantics->analyze('DELETE FROM t')->statement->returnsRows(), $semantics->analyze('DELETE FROM t RETURNING *')->statement->returnsRows()] // => [false, true]
+ *     [$semantics->inspect('DELETE FROM t')->statement->returnsRows(), $semantics->inspect('DELETE FROM t RETURNING *')->statement->returnsRows()] // => [false, true]
  */
 interface Modification extends Statement, Query
 {

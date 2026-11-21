@@ -17,12 +17,12 @@ final class DropTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('DROP TABLESPACE ts', (new Semantics('mysql-5.6.51'))->inspect('drop tablespace ts')->toString());
+        self::assertSame('DROP TABLESPACE ts', (new Semantics('mysql-5.6.51'))->diagnose('drop tablespace ts')->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect('DROP TABLESPACE ts ENGINE a ENGINE b');
+        $operation = (new Semantics())->diagnose('DROP TABLESPACE ts ENGINE a ENGINE b');
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

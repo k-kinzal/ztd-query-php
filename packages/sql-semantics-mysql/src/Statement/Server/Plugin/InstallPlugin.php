@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Installing a plugin
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("install plugin audit soname 'audit.so'");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("install plugin audit soname 'audit.so'");
  *     [$install->toString(), $install->statement->library->value] // => ["INSTALL PLUGIN audit SONAME 'audit.so'", 'audit.so']
  */
 final class InstallPlugin implements Statement

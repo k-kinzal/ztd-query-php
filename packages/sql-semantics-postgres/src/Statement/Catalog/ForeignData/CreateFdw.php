@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  *
  * @visibility public
  * @example Reading the handler of a wrapper
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')");
  *     [$operation->statement->functions[0]->function?->last()->value, $operation->toString()] // => ['h', "CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')"]
  */
 final class CreateFdw implements Statement

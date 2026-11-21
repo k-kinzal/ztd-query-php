@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa prepare 'g'");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa prepare 'g'");
  *     [$xa->toString(), $xa->statement->xid->transaction->value === 'g'] // => ["XA PREPARE 'g'", true]
  */
 final class XaPrepare implements Statement

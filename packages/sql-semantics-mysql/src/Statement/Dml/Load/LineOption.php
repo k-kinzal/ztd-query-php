@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the line terminator of INTO OUTFILE
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT 1 INTO OUTFILE 'f' LINES TERMINATED BY ';'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT 1 INTO OUTFILE 'f' LINES TERMINATED BY ';'");
  *     $query->statement->into->format->lines[0]->kind // => \SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOptionKind::Terminated
  */
 final class LineOption implements Node

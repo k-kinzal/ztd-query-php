@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a known type
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'a'");
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT 'a'");
  *     $operation->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known // => true
  */
 final class Known implements TypeFact

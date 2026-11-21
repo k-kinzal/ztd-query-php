@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  *
  * @visibility public
  * @example Reading the options of a new role
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE USER joe WITH LOGIN ENCRYPTED PASSWORD 'secret'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE USER joe WITH LOGIN ENCRYPTED PASSWORD 'secret'");
  *     [$operation->statement->name->value, $operation->statement->options[0]->option(), $operation->toString()] // => ['joe', 'canlogin', "CREATE USER joe login PASSWORD 'secret'"]
  */
 final class CreateRole implements Statement

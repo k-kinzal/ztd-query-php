@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Dropping a database while it is in use
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP DATABASE IF EXISTS d (FORCE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP DATABASE IF EXISTS d (FORCE)');
  *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP DATABASE IF EXISTS d WITH (FORCE)']
  */
 final class DropDatabase implements Statement

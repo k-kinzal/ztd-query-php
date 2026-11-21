@@ -19,13 +19,13 @@ final class CreateResourceGroupTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(PriorityOutOfRange::class, $semantics->inspect('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY 5')->facts->diagnostics[0]);
-        self::assertInstanceOf(PriorityOutOfRange::class, $semantics->inspect('CREATE RESOURCE GROUP g TYPE = USER THREAD_PRIORITY 20')->facts->diagnostics[0]);
-        self::assertSame([], $semantics->inspect('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY -20')->facts->diagnostics);
+        self::assertInstanceOf(PriorityOutOfRange::class, $semantics->diagnose('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY 5')->facts->diagnostics[0]);
+        self::assertInstanceOf(PriorityOutOfRange::class, $semantics->diagnose('CREATE RESOURCE GROUP g TYPE = USER THREAD_PRIORITY 20')->facts->diagnostics[0]);
+        self::assertSame([], $semantics->diagnose('CREATE RESOURCE GROUP g TYPE = SYSTEM THREAD_PRIORITY -20')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryOption(): void
     {
-        self::assertSame('CREATE RESOURCE GROUP g TYPE = SYSTEM VCPU = 1 THREAD_PRIORITY = 0 ENABLE', (new Semantics())->inspect('create resource group g type system vcpu = 1 thread_priority 0 enable')->toString());
+        self::assertSame('CREATE RESOURCE GROUP g TYPE = SYSTEM VCPU = 1 THREAD_PRIORITY = 0 ENABLE', (new Semantics())->diagnose('create resource group g type system vcpu = 1 thread_priority 0 enable')->toString());
     }
 }

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Ending a transaction with explicit completion choices
- *     $end = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('rollback and chain no release');
+ *     $end = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('rollback and chain no release');
  *     [$end->toString(), $end->statement->chain, $end->statement->release] // => ['ROLLBACK AND CHAIN NO RELEASE', true, false]
  */
 final class Rollback implements Statement

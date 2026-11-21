@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  *
  * @visibility public
  * @example Reading the grouping expressions
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t GROUP BY a, b');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a, b FROM t GROUP BY a, b');
  *     count($query->statement->groupBy->items) // => 2
  * @example Refusing an empty grouping
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

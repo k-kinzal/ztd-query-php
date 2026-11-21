@@ -16,13 +16,13 @@ final class ValuesInTest extends TestCase
 {
     public function testDeriveBoundDerivesTheValues(): void
     {
-        $alter = (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, b))');
+        $alter = (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, b))');
 
         self::assertCount(1, $alter->facts->diagnostics);
     }
 
     public function testRenderWritesOneRow(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, 2))', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, 2))')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, 2))', (new Semantics('mysql-5.7.44'))->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1, 2))')->toString());
     }
 }

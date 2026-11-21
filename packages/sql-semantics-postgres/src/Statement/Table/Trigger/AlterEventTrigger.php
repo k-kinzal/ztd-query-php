@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Disabling an event trigger
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EVENT TRIGGER e DISABLE');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EVENT TRIGGER e DISABLE');
  *     $statement->toString() // => 'ALTER EVENT TRIGGER e DISABLE'
  */
 final class AlterEventTrigger implements Statement

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a limit written with a comma
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t LIMIT 5, 10');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t LIMIT 5, 10');
  *     [$query->statement->limit->offset->digits, $query->statement->limit->count->digits, $query->statement->limit->comma] // => ['5', '10', true]
  * @example Refusing the comma spelling without an offset
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Limit(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'), null, true) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

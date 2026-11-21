@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading a PostgreSQL system column
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a TEXT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (a TEXT)')->declarations()[0];
  *     $table->implicit[0]->names[0]->value // => 'tableoid'
  */
 final class ImplicitColumn

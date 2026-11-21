@@ -32,13 +32,13 @@ final class SettingRuleTest extends TestCase
         self::assertSame(
             ['SET LOCAL a TO 1', 'RESET a', 'SHOW a', 'SHOW ALL', 'ALTER SYSTEM RESET ALL', 'SET CONSTRAINTS ALL IMMEDIATE', 'DISCARD TEMPORARY'],
             [
-                $semantics->inspect('SET LOCAL a = 1')->toString(),
-                $semantics->inspect('RESET a')->toString(),
-                $semantics->inspect('SHOW a')->toString(),
-                $semantics->inspect('SHOW ALL')->toString(),
-                $semantics->inspect('ALTER SYSTEM RESET ALL')->toString(),
-                $semantics->inspect('SET CONSTRAINTS ALL IMMEDIATE')->toString(),
-                $semantics->inspect('DISCARD TEMPORARY')->toString(),
+                $semantics->diagnose('SET LOCAL a = 1')->toString(),
+                $semantics->diagnose('RESET a')->toString(),
+                $semantics->diagnose('SHOW a')->toString(),
+                $semantics->diagnose('SHOW ALL')->toString(),
+                $semantics->diagnose('ALTER SYSTEM RESET ALL')->toString(),
+                $semantics->diagnose('SET CONSTRAINTS ALL IMMEDIATE')->toString(),
+                $semantics->diagnose('DISCARD TEMPORARY')->toString(),
             ],
         );
     }
@@ -48,7 +48,7 @@ final class SettingRuleTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['ALTER ROLE r SET search_path TO a', 'ALTER FUNCTION f () SET TIME ZONE LOCAL'],
-            [$semantics->inspect('ALTER ROLE r SET search_path = a')->toString(), $semantics->inspect('ALTER FUNCTION f() SET TIME ZONE LOCAL')->toString()],
+            [$semantics->diagnose('ALTER ROLE r SET search_path = a')->toString(), $semantics->diagnose('ALTER FUNCTION f() SET TIME ZONE LOCAL')->toString()],
         );
     }
 
@@ -57,7 +57,7 @@ final class SettingRuleTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['SET TRANSACTION ISOLATION LEVEL SERIALIZABLE', 'SET LOCAL SESSION CHARACTERISTICS AS TRANSACTION READ ONLY'],
-            [$semantics->inspect('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE')->toString(), $semantics->inspect('SET LOCAL SESSION CHARACTERISTICS AS TRANSACTION READ ONLY')->toString()],
+            [$semantics->diagnose('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE')->toString(), $semantics->diagnose('SET LOCAL SESSION CHARACTERISTICS AS TRANSACTION READ ONLY')->toString()],
         );
     }
 
@@ -67,27 +67,27 @@ final class SettingRuleTest extends TestCase
         self::assertSame(
             ["SET SCHEMA 'a'", 'SET ROLE r', "SET SESSION AUTHORIZATION 'u'", 'SET XML OPTION DOCUMENT', "SET TRANSACTION SNAPSHOT '1'", "SET CATALOG 'd'", 'SET a FROM CURRENT'],
             [
-                $semantics->inspect("SET SCHEMA 'a'")->toString(),
-                $semantics->inspect('SET ROLE r')->toString(),
-                $semantics->inspect("SET SESSION AUTHORIZATION 'u'")->toString(),
-                $semantics->inspect('SET XML OPTION DOCUMENT')->toString(),
-                $semantics->inspect("SET TRANSACTION SNAPSHOT '1'")->toString(),
-                $semantics->inspect("SET CATALOG 'd'")->toString(),
-                $semantics->inspect('SET a FROM CURRENT')->toString(),
+                $semantics->diagnose("SET SCHEMA 'a'")->toString(),
+                $semantics->diagnose('SET ROLE r')->toString(),
+                $semantics->diagnose("SET SESSION AUTHORIZATION 'u'")->toString(),
+                $semantics->diagnose('SET XML OPTION DOCUMENT')->toString(),
+                $semantics->diagnose("SET TRANSACTION SNAPSHOT '1'")->toString(),
+                $semantics->diagnose("SET CATALOG 'd'")->toString(),
+                $semantics->diagnose('SET a FROM CURRENT')->toString(),
             ],
         );
     }
 
     public function testGenericLowersDefaultAsTheSource(): void
     {
-        $statement = (new Semantics())->inspect('SET a = DEFAULT')->statement;
+        $statement = (new Semantics())->diagnose('SET a = DEFAULT')->statement;
         self::assertInstanceOf(SetParameterFrom::class, $statement);
         self::assertSame(ParameterSource::Default, $statement->source);
     }
 
     public function testParameterLowersTheDottedName(): void
     {
-        $statement = (new Semantics())->inspect('RESET plpgsql.Variable_Conflict')->statement;
+        $statement = (new Semantics())->diagnose('RESET plpgsql.Variable_Conflict')->statement;
         self::assertInstanceOf(Reset::class, $statement);
         self::assertEquals([new Name('plpgsql'), new Name('variable_conflict')], $statement->parameter instanceof \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName ? $statement->parameter->parts : []);
     }
@@ -96,7 +96,7 @@ final class SettingRuleTest extends TestCase
     {
         $semantics = new Semantics();
         $zones = array_map(
-            static fn (string $sql): string => ($statement = $semantics->inspect($sql)->statement) instanceof SetTimeZone ? $statement->zone::class : '',
+            static fn (string $sql): string => ($statement = $semantics->diagnose($sql)->statement) instanceof SetTimeZone ? $statement->zone::class : '',
             ["SET TIME ZONE 'UTC'", 'SET TIME ZONE utc', "SET TIME ZONE INTERVAL '1' HOUR", "SET TIME ZONE INTERVAL(2) '1:30'", 'SET TIME ZONE -7', 'SET TIME ZONE DEFAULT', 'SET TIME ZONE LOCAL'],
         );
         self::assertSame([StringConstant::class, Name::class, TypedLiteral::class, TypedLiteral::class, SignedNumber::class, ZoneKeyword::class, ZoneKeyword::class], $zones);
@@ -105,7 +105,7 @@ final class SettingRuleTest extends TestCase
     public function testNamesLowersEachEncoding(): void
     {
         $semantics = new Semantics();
-        $statements = [$semantics->inspect("SET NAMES 'UTF8'")->statement, $semantics->inspect('SET NAMES DEFAULT')->statement, $semantics->inspect('SET NAMES')->statement];
+        $statements = [$semantics->diagnose("SET NAMES 'UTF8'")->statement, $semantics->diagnose('SET NAMES DEFAULT')->statement, $semantics->diagnose('SET NAMES')->statement];
         self::assertSame(
             [['UTF8', false], [null, true], [null, false]],
             array_map(static fn (object $statement): array => $statement instanceof SetSpecialSetting ? [$statement->value instanceof StringConstant ? $statement->value->value : null, $statement->default] : [], $statements),
@@ -115,7 +115,7 @@ final class SettingRuleTest extends TestCase
     public function testResetLowersEachKeywordForm(): void
     {
         $semantics = new Semantics();
-        $statements = [$semantics->inspect('RESET TIME ZONE')->statement, $semantics->inspect('RESET TRANSACTION ISOLATION LEVEL')->statement, $semantics->inspect('RESET SESSION AUTHORIZATION')->statement, $semantics->inspect('RESET ALL')->statement];
+        $statements = [$semantics->diagnose('RESET TIME ZONE')->statement, $semantics->diagnose('RESET TRANSACTION ISOLATION LEVEL')->statement, $semantics->diagnose('RESET SESSION AUTHORIZATION')->statement, $semantics->diagnose('RESET ALL')->statement];
         self::assertSame(
             [SpecialParameter::TimeZone, SpecialParameter::TransactionIsolationLevel, SpecialParameter::SessionAuthorization, SpecialParameter::All],
             array_map(static fn (object $statement): ?object => $statement instanceof Reset ? $statement->parameter : null, $statements),
@@ -124,8 +124,8 @@ final class SettingRuleTest extends TestCase
 
     public function testConstraintsLowersAllAsNoName(): void
     {
-        $all = (new Semantics())->inspect('SET CONSTRAINTS ALL DEFERRED')->statement;
-        $named = (new Semantics())->inspect('SET CONSTRAINTS a, s.b DEFERRED')->statement;
+        $all = (new Semantics())->diagnose('SET CONSTRAINTS ALL DEFERRED')->statement;
+        $named = (new Semantics())->diagnose('SET CONSTRAINTS a, s.b DEFERRED')->statement;
         self::assertInstanceOf(SetConstraints::class, $all);
         self::assertInstanceOf(SetConstraints::class, $named);
         self::assertSame([0, 2], [count($all->constraints), count($named->constraints)]);
@@ -133,8 +133,8 @@ final class SettingRuleTest extends TestCase
 
     public function testDeferredTellsTheMode(): void
     {
-        $deferred = (new Semantics())->inspect('SET CONSTRAINTS ALL DEFERRED')->statement;
-        $immediate = (new Semantics())->inspect('SET CONSTRAINTS ALL IMMEDIATE')->statement;
+        $deferred = (new Semantics())->diagnose('SET CONSTRAINTS ALL DEFERRED')->statement;
+        $immediate = (new Semantics())->diagnose('SET CONSTRAINTS ALL IMMEDIATE')->statement;
         self::assertInstanceOf(SetConstraints::class, $deferred);
         self::assertInstanceOf(SetConstraints::class, $immediate);
         self::assertSame([true, false], [$deferred->deferred, $immediate->deferred]);

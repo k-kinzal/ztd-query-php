@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  *
  * @visibility public
  * @example Reading the added attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c int8 CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE pair ADD ATTRIBUTE c int8 CASCADE');
  *     $operation->statement->changes[0]->attribute->name->value // => 'c'
  */
 final class AddAttribute implements AttributeChange

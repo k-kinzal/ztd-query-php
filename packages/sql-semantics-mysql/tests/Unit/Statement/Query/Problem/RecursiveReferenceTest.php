@@ -24,7 +24,7 @@ final class RecursiveReferenceTest extends TestCase
 
     public function testAReferenceWithoutAnchorDependsOnTheMissingPart(): void
     {
-        $operation = (new Semantics())->inspect('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1', []);
+        $operation = (new Semantics())->diagnose('WITH RECURSIVE c AS (SELECT x FROM c) SELECT 1', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);

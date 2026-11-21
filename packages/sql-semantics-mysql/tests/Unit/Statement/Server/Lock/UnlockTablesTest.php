@@ -16,12 +16,12 @@ final class UnlockTablesTest extends TestCase
 {
     public function testRenderWritesTables(): void
     {
-        self::assertSame('UNLOCK TABLES', (new Semantics())->analyze('unlock table')->toString());
+        self::assertSame('UNLOCK TABLES', (new Semantics())->inspect('unlock table')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('UNLOCK TABLES');
+        $operation = (new Semantics())->inspect('UNLOCK TABLES');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

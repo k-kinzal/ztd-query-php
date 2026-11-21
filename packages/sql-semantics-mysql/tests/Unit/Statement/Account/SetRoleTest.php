@@ -16,11 +16,11 @@ final class SetRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('SET ROLE DEFAULT')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('SET ROLE DEFAULT')->facts->diagnostics);
     }
 
     public function testRenderWritesTheSelection(): void
     {
-        self::assertSame('SET ROLE NONE', (new Semantics())->analyze('set role none')->toString());
+        self::assertSame('SET ROLE NONE', (new Semantics())->inspect('set role none')->toString());
     }
 }

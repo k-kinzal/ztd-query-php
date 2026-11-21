@@ -28,7 +28,7 @@ final class StorageTest extends TestCase
 
     public function testNameDescribesTheTypeOfALiteral(): void
     {
-        $query = (new Semantics())->analyze("SELECT 1, 1.5, 'a', x'AB'");
+        $query = (new Semantics())->inspect("SELECT 1, 1.5, 'a', x'AB'");
         $types = array_map(static fn (Field $field): ?TypeDescriptor => $field->type instanceof Known ? $field->type->descriptor : null, $query->fields()->items ?? []);
 
         self::assertSame([Storage::Integer, Storage::Real, Storage::Text, Storage::Blob], $types);

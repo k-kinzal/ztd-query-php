@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
  *
  * @visibility public
  * @example Reading a hash bound item
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
  *     [$create->statement->definition->bound->items[1]->name->value, $create->statement->definition->bound->items[1]->value->digits] // => ['remainder', '1']
  */
 final class HashModulus implements Node

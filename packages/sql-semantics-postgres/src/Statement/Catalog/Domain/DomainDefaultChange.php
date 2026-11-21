@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Removing the default
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d DROP DEFAULT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d DROP DEFAULT');
  *     $operation->statement->default // => null
  */
 final class DomainDefaultChange implements Statement

@@ -16,6 +16,6 @@ final class ComponentSettingTest extends TestCase
 {
     public function testRenderWritesScopeVariableAndValue(): void
     {
-        self::assertSame("INSTALL COMPONENT 'c' SET GLOBAL v = 'x'", (new Semantics())->analyze("install component 'c' set global v = 'x'")->toString());
+        self::assertSame("INSTALL COMPONENT 'c' SET GLOBAL v = 'x'", (new Semantics())->inspect("install component 'c' set global v = 'x'")->toString());
     }
 }

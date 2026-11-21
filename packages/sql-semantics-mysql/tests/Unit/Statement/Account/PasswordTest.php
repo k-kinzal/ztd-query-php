@@ -16,11 +16,11 @@ final class PasswordTest extends TestCase
 {
     public function testRenderWritesTheFunction(): void
     {
-        self::assertSame("SET PASSWORD = PASSWORD('x')", (new Semantics('mysql-5.7.44'))->analyze("set password = password('x')")->toString());
+        self::assertSame("SET PASSWORD = PASSWORD('x')", (new Semantics('mysql-5.7.44'))->inspect("set password = password('x')")->toString());
     }
 
     public function testRenderWritesABareString(): void
     {
-        self::assertSame("SET PASSWORD = 'x'", (new Semantics('mysql-5.7.44'))->analyze("set password = 'x'")->toString());
+        self::assertSame("SET PASSWORD = 'x'", (new Semantics('mysql-5.7.44'))->inspect("set password = 'x'")->toString());
     }
 }

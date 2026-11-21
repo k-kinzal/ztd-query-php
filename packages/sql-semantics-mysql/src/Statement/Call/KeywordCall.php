@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  *
  * @visibility public
  * @example Typing a keyword function
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT LEFT('abc', 2)");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT LEFT('abc', 2)");
  *     $query->field(0)->type->descriptor->name() // => 'VARCHAR'
  * @example Refusing an argument count the grammar does not accept
  *     new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Left, []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

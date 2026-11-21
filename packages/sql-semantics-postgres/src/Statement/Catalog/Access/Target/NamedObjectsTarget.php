@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the schemas of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT USAGE ON SCHEMA app, audit TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT USAGE ON SCHEMA app, audit TO joe');
  *     $operation->statement->target->names[1]->value // => 'audit'
  */
 final class NamedObjectsTarget implements PrivilegeTarget

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  *
  * @visibility public
  * @example Removing the validator
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR');
  *     $operation->statement->functions[0]->function // => null
  */
 final class AlterFdw implements Statement

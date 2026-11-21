@@ -21,7 +21,7 @@ final class NullLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesTheNullOnlyType(): void
     {
-        $operation = (new Semantics())->analyze('SELECT NULL', []);
+        $operation = (new Semantics())->inspect('SELECT NULL', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -37,7 +37,7 @@ final class NullLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        self::assertSame('SELECT NULL AS c1, NULL AS c2', (new Semantics())->analyze('select null AS c1, Null AS c2')->toString());
+        self::assertSame('SELECT NULL AS c1, NULL AS c2', (new Semantics())->inspect('select null AS c1, Null AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

@@ -29,8 +29,8 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
  * @visibility public
  * @example Resolving the parent table
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $parent = $semantics->analyze('CREATE TABLE p (id INT PRIMARY KEY)');
- *     $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id) ON DELETE CASCADE)', [$parent]);
+ *     $parent = $semantics->inspect('CREATE TABLE p (id INT PRIMARY KEY)');
+ *     $child = $semantics->inspect('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id) ON DELETE CASCADE)', [$parent]);
  *     $child->facts->relation($child->statement->elements[1]->references)->table->table === $parent->declarations()[0] // => true
  */
 final class References implements Node

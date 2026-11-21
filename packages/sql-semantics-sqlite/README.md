@@ -31,19 +31,21 @@ composer require k-kinzal/sql-semantics-sqlite
 
 ## Usage
 
+Call `Semantics::analyze()` for complete IR and `Semantics::inspect()` for diagnostic operations and declarations. The examples use inspection to show facts from the broader grammar. See the [complete IR scope](../sql-semantics/docs/semantics-ir.md).
+
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
-$insert = $semantics->analyze("insert or replace into users (id, name) values (1, 'Alice') returning id", [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
+$insert = $semantics->inspect("insert or replace into users (id, name) values (1, 'Alice') returning id", [$users]);
 
 $insert->statement instanceof InsertRows; // => true
 $insert->toString(); // => "INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice') RETURNING id"
 $insert->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]); // throws SemanticException with message '2 values for 1 columns.'
+$semantics->inspect('INSERT INTO users (id) VALUES (1, 2)', [$users]); // throws SemanticException with message '2 values for 1 columns.'
 ```
 
 INSERT with VALUES, with a query and with DEFAULT VALUES are three classes: `InsertRows`, `InsertSelect` and `InsertDefaults`.
@@ -61,13 +63,13 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a VARCHAR(10), b integer, c)')->declarations()[0];
+$table = $semantics->inspect('CREATE TABLE t (a VARCHAR(10), b integer, c)')->declarations()[0];
 
 $table->columns[0]->type->affinity; // => Affinity::Text
 $table->columns[1]->type->name(); // => 'INTEGER'
 $table->columns[2]->type->affinity; // => Affinity::Blob
 (new ColumnDomain('UNSIGNED BIG INT'))->affinity; // => Affinity::Integer
-$semantics->analyze('SELECT 1.5')->field(0)->type->descriptor; // => Storage::Real
+$semantics->inspect('SELECT 1.5')->field(0)->type->descriptor; // => Storage::Real
 ```
 
 ### Names
@@ -82,13 +84,13 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 
-$semantics->analyze('SELECT NAME FROM USERS', [$users])->field(0)->column() === $users->declarations()[0]->columns[1]; // => true
-$semantics->analyze('SELECT "name" FROM users', [$users])->field(0)->type->descriptor->name(); // => 'TEXT'
-$semantics->analyze('SELECT "nickname" FROM users', [$users])->field(0)->type->descriptor; // => Storage::Text
-$semantics->analyze('SELECT rowid FROM users', [$users])->field(0)->column() === $users->declarations()[0]->columns[0]; // => true
-$semantics->analyze('SELECT a AS [order] FROM `group`')->toString(); // => 'SELECT a AS `order` FROM `group`'
+$semantics->inspect('SELECT NAME FROM USERS', [$users])->field(0)->column() === $users->declarations()[0]->columns[1]; // => true
+$semantics->inspect('SELECT "name" FROM users', [$users])->field(0)->type->descriptor->name(); // => 'TEXT'
+$semantics->inspect('SELECT "nickname" FROM users', [$users])->field(0)->type->descriptor; // => Storage::Text
+$semantics->inspect('SELECT rowid FROM users', [$users])->field(0)->column() === $users->declarations()[0]->columns[0]; // => true
+$semantics->inspect('SELECT a AS [order] FROM `group`')->toString(); // => 'SELECT a AS `order` FROM `group`'
 ```
 
 In the example, `id` is an `INTEGER PRIMARY KEY`, so `rowid` is another name for it. `"nickname"` names no column, so it is the string `'nickname'`.
@@ -105,7 +107,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 $semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
 
 array_map(static fn ($schema) => $schema->value, $semantics->context()->searchPath); // => ['temp', 'main', 'archive']
-$semantics->analyze('CREATE TEMP TABLE scratch (a)')->declarations()[0]->name->schema?->value; // => 'temp'
+$semantics->inspect('CREATE TEMP TABLE scratch (a)')->declarations()[0]->name->schema?->value; // => 'temp'
 ```
 
 Because `temp` is searched first, an unqualified name in a partial context (`$semantics->context([...], false)`) resolves conditionally even when it is declared in `main`: an undeclared temporary table could hide it. Qualify the name, as in `main.users`, or use a complete context.
@@ -117,7 +119,7 @@ SQLite reads every parameter form natively: `?`, `?NNN`, `:name`, `@name` and `$
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
 
-$query = (new Semantics())->analyze('SELECT ?, ?2, :name, @name, $name');
+$query = (new Semantics())->inspect('SELECT ?, ?2, :name, @name, $name');
 
 $query->toString(); // => 'SELECT ?, ?2, :name, @name, $name'
 $query->field(2)->type->missing[0]->describe(); // => 'the value bound to parameter :name'
@@ -142,12 +144,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 
 $semantics = new Semantics();
 
-$semantics->analyze('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
-$semantics->analyze('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
-$semantics->analyze('SELECT 1+1 /* sum */, 2')->field(0)->name?->value; // => '1+1 /* sum */'
-$semantics->analyze('SELECT 1+1 -- sum')->toString(); // => 'SELECT 1+1 -- sum'
-$semantics->analyze('SELECT "a" FROM t')->fields()?->lookup('a') instanceof DependentField; // => true
-$semantics->analyze('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution instanceof ResolvedColumn; // => true
+$semantics->inspect('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
+$semantics->inspect('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
+$semantics->inspect('SELECT 1+1 /* sum */, 2')->field(0)->name?->value; // => '1+1 /* sum */'
+$semantics->inspect('SELECT 1+1 -- sum')->toString(); // => 'SELECT 1+1 -- sum'
+$semantics->inspect('SELECT "a" FROM t')->fields()?->lookup('a') instanceof DependentField; // => true
+$semantics->inspect('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution instanceof ResolvedColumn; // => true
 ```
 
 ### Views
@@ -159,10 +161,10 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 
 $semantics = new Semantics();
-$view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one');
+$view = $semantics->inspect('CREATE VIEW v AS SELECT 1 AS one');
 
 $view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view]); // throws SemanticException with message 'Relation v is a view: DROP TABLE removes only a table.'
+$semantics->inspect('DROP TABLE v', [$view]); // throws SemanticException with message 'Relation v is a view: DROP TABLE removes only a table.'
 ```
 
 ### Generated columns
@@ -173,11 +175,11 @@ A column defined with `GENERATED ALWAYS AS (...)` or `AS (...)`, `VIRTUAL` or `S
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))');
+$table = $semantics->inspect('CREATE TABLE t (a INTEGER, b AS (a + 1))');
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('UPDATE t SET b = 1', [$table]); // throws SemanticException with message 'cannot UPDATE generated column "b"'
-$semantics->analyze('INSERT INTO t VALUES (1)', [$table]); // Returns a query
+$semantics->inspect('UPDATE t SET b = 1', [$table]); // throws SemanticException with message 'cannot UPDATE generated column "b"'
+$semantics->inspect('INSERT INTO t VALUES (1)', [$table]); // Returns a query
 ```
 
 ## Limitations

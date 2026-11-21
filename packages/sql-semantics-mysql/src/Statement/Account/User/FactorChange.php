@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Dropping the second factor
- *     $change = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER USER u DROP 2 FACTOR')->statement->users[0];
+ *     $change = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER USER u DROP 2 FACTOR')->statement->users[0];
  *     $change->action // => \SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Drop
  */
 final class FactorChange implements UserAlteration

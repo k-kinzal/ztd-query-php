@@ -25,7 +25,7 @@ final class HandlerDeclarationTest extends TestCase
 {
     public function testRenderWritesTheActionTheConditionsAndTheStatement(): void
     {
-        $operation = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -43,7 +43,7 @@ final class HandlerDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheHandler')]
     public function testRenderWritesTheHandler(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

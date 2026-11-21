@@ -32,8 +32,8 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
  * @visibility public
  * @example Copying the columns of a declared table
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE s (a INT NOT NULL)');
- *     $copy = $semantics->analyze('CREATE TABLE c LIKE s', [$source])->declarations()[0];
+ *     $source = $semantics->inspect('CREATE TABLE s (a INT NOT NULL)');
+ *     $copy = $semantics->inspect('CREATE TABLE c LIKE s', [$source])->declarations()[0];
  *     [$copy->name->name->value, $copy->columns[0]->name->value, $copy->columns[0] === $source->declarations()[0]->columns[0]] // => ['c', 'a', false]
  */
 final class CreateTableLike implements Statement

@@ -25,7 +25,7 @@ final class MutationTargetTest extends TestCase
 {
     public function testNameAnswersTheWrittenTableName(): void
     {
-        $query = (new Semantics())->inspect('UPDATE main.t AS x INDEXED BY i SET a = 1');
+        $query = (new Semantics())->diagnose('UPDATE main.t AS x INDEXED BY i SET a = 1');
 
         self::assertInstanceOf(Update::class, $query->statement);
         self::assertSame('t', $query->statement->target->name()->name->value);
@@ -36,8 +36,8 @@ final class MutationTargetTest extends TestCase
     public function testAliasAnswersTheCorrelationNameOrNull(): void
     {
         $semantics = new Semantics();
-        $aliased = $semantics->inspect('UPDATE main.t AS x SET a = 1');
-        $plain = $semantics->inspect('UPDATE t SET a = 1');
+        $aliased = $semantics->diagnose('UPDATE main.t AS x SET a = 1');
+        $plain = $semantics->diagnose('UPDATE t SET a = 1');
 
         self::assertInstanceOf(Update::class, $aliased->statement);
         self::assertInstanceOf(Update::class, $plain->statement);
@@ -48,10 +48,10 @@ final class MutationTargetTest extends TestCase
     public function testDeriveRelationResolvesAmongDeclaredTablesOnly(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $shadowed = $semantics->inspect('WITH t AS (SELECT 1 AS q) UPDATE t SET a = 1', [$t]);
-        $common = $semantics->inspect('WITH w AS (SELECT 1 AS q) UPDATE w SET q = 1', [$t]);
-        $undeclared = $semantics->inspect('UPDATE u SET a = 1', [$t], );
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $shadowed = $semantics->diagnose('WITH t AS (SELECT 1 AS q) UPDATE t SET a = 1', [$t]);
+        $common = $semantics->diagnose('WITH w AS (SELECT 1 AS q) UPDATE w SET q = 1', [$t]);
+        $undeclared = $semantics->diagnose('UPDATE u SET a = 1', [$t], );
 
         self::assertInstanceOf(Update::class, $shadowed->statement);
         $fact = $shadowed->facts->relation($shadowed->statement->target);
@@ -67,7 +67,7 @@ final class MutationTargetTest extends TestCase
 
     public function testDeriveRelationLeavesAnUndeclaredTargetOpen(): void
     {
-        $query = (new Semantics())->inspect('DELETE FROM t RETURNING *');
+        $query = (new Semantics())->diagnose('DELETE FROM t RETURNING *');
 
         self::assertInstanceOf(Delete::class, $query->statement);
         $fact = $query->facts->relation($query->statement->target);
@@ -83,6 +83,6 @@ final class MutationTargetTest extends TestCase
         $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice(new Name('i')))));
 
         self::assertSame('DELETE FROM main.t AS x INDEXED BY i', $built->toString());
-        self::assertSame('UPDATE t AS x NOT INDEXED SET a = 1', $semantics->inspect('update t as x not indexed set a = 1')->toString());
+        self::assertSame('UPDATE t AS x NOT INDEXED SET a = 1', $semantics->diagnose('update t as x not indexed set a = 1')->toString());
     }
 }

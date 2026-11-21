@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the modes of a BEGIN
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('BEGIN WORK ISOLATION LEVEL SERIALIZABLE, READ ONLY');
  *     [count($operation->statement->modes), $operation->toString()] // => [2, 'BEGIN ISOLATION LEVEL SERIALIZABLE READ ONLY']
  */
 final class Begin implements Statement

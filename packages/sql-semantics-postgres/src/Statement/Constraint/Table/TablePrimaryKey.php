@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example The key columns are never NULL
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int, PRIMARY KEY (b))');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int, b int, PRIMARY KEY (b))');
  *     [$create->declarations()[0]->columns[0]->nullability, $create->declarations()[0]->columns[1]->nullability] // => [\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull]
  */
 final class TablePrimaryKey implements Constraint

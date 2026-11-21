@@ -16,6 +16,6 @@ final class DatabaseEncryptionTest extends TestCase
 {
     public function testRenderWritesDefaultEncryption(): void
     {
-        self::assertSame("ALTER DATABASE d DEFAULT ENCRYPTION 'N'", (new Semantics())->analyze("alter database d encryption = 'N'")->toString());
+        self::assertSame("ALTER DATABASE d DEFAULT ENCRYPTION 'N'", (new Semantics())->inspect("alter database d encryption = 'N'")->toString());
     }
 }

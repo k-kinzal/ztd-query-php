@@ -37,7 +37,7 @@ final class CodecTest extends TestCase
         $semantics = new Semantics();
         $spelling = Platform::shared()->codec($semantics->profile())->name(new Name('a`b'), NameUse::Column);
 
-        $query = $semantics->inspect('SELECT ' . $spelling);
+        $query = $semantics->diagnose('SELECT ' . $spelling);
 
         self::assertSame('a`b', $query->field(0)->name?->value);
     }

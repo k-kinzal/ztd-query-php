@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  *
  * @visibility public
  * @example Declaring the table of a prepared statement
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
  *     [$create->declarations()[0]->complete, $create->toString()] // => [false, 'CREATE TABLE t AS EXECUTE q (1) WITH DATA']
  */
 final class CreateTableAsExecute implements Statement

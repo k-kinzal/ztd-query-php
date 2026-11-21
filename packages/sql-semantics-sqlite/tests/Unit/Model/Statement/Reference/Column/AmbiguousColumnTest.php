@@ -19,8 +19,8 @@ final class AmbiguousColumnTest extends TestCase
     public function testMessageAndCandidatesOfANameTwoInputsShare(): void
     {
         $semantics = new Semantics();
-        $declarations = [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE u (a TEXT)')];
-        $query = $semantics->inspect('SELECT a FROM t, u', $declarations);
+        $declarations = [$semantics->diagnose('CREATE TABLE t (a INTEGER)'), $semantics->diagnose('CREATE TABLE u (a TEXT)')];
+        $query = $semantics->diagnose('SELECT a FROM t, u', $declarations);
 
         $resolution = $query->field('a')->resolution;
 
@@ -36,8 +36,8 @@ final class AmbiguousColumnTest extends TestCase
     public function testMessageIsNotReachedWithFewerThanTwoCandidates(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $resolution = $semantics->inspect('SELECT a FROM t', [$table])->field('a')->resolution;
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $resolution = $semantics->diagnose('SELECT a FROM t', [$table])->field('a')->resolution;
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         $this->expectExceptionMessage('An ambiguous column has at least two candidates.');

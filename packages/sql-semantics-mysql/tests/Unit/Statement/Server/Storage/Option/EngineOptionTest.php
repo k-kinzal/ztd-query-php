@@ -17,7 +17,7 @@ final class EngineOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame('DROP TABLESPACE ts ENGINE `ndb`', (new Semantics())->analyze('drop tablespace ts storage engine = ndb')->toString());
+        self::assertSame('DROP TABLESPACE ts ENGINE `ndb`', (new Semantics())->inspect('drop tablespace ts storage engine = ndb')->toString());
     }
 
     public function testKeywordNamesTheOption(): void

@@ -22,8 +22,8 @@ final class ForeignKeysTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE n (x int REFERENCES t (zz) MATCH PARTIAL)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE n (x int REFERENCES t (zz) MATCH PARTIAL)', $context);
         self::assertSame([
           0 => 'column "zz" referenced in foreign key constraint does not exist',
           1 => 'MATCH PARTIAL not yet implemented',
@@ -33,14 +33,14 @@ final class ForeignKeysTest extends TestCase
     public function testWriteTargetWritesTheReferencedSide(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE n (x int REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', []);
+        $statement = $semantics->diagnose('CREATE TABLE n (x int REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', []);
         self::assertSame('CREATE TABLE n (x INT REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', $statement->toString());
     }
 
     public function testDeriveReportsAReferencedView(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('CREATE TABLE c (a int REFERENCES v (zz))', $context)->facts->diagnostics));
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (a int REFERENCES v (zz))', $context)->facts->diagnostics));
     }
 }

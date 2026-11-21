@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Replacing a dictionary everywhere
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish');
  *     [$operation->statement->tokens, $operation->statement->replacement->last()->value] // => [[], 'swedish']
  */
 final class ReplaceTextSearchDictionary implements Statement

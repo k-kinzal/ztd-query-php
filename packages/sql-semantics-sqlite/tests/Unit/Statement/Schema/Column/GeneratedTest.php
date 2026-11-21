@@ -38,7 +38,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintResolvesColumnsOfTheTableBeingDefined(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (a))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a INT, b AS (a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -52,7 +52,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintDoesNotSeeTheRowIdentifier(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (rowid))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a INT, b AS (rowid))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -60,7 +60,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintReportsAnUnknownStorageWord(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (a) "stored")', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a INT, b AS (a) "stored")', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(UnknownStorage::class, $operation->facts->diagnostics[0]);
@@ -70,8 +70,8 @@ final class GeneratedTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('CREATE TABLE t (a INT, b INT NOT NULL AS (a + 1) stored)', $semantics->inspect('create table t (a INT, b INT not null generated always as (a + 1) stored)')->toString());
-        self::assertSame('CREATE TABLE t (a, b AS (a) "stored")', $semantics->inspect('CREATE TABLE t (a, b AS (a) "stored")')->toString());
-        self::assertSame('CREATE TABLE t (a, b AS (a))', $semantics->inspect('CREATE TABLE t (a, b AS (a))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, b INT NOT NULL AS (a + 1) stored)', $semantics->diagnose('create table t (a INT, b INT not null generated always as (a + 1) stored)')->toString());
+        self::assertSame('CREATE TABLE t (a, b AS (a) "stored")', $semantics->diagnose('CREATE TABLE t (a, b AS (a) "stored")')->toString());
+        self::assertSame('CREATE TABLE t (a, b AS (a))', $semantics->diagnose('CREATE TABLE t (a, b AS (a))')->toString());
     }
 }

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  *
  * @visibility public
  * @example Reading a movement
- *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('FETCH BACKWARD 5 FROM c');
+ *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('FETCH BACKWARD 5 FROM c');
  *     [$fetch->statement->movement, $fetch->statement->count->magnitude->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, '5']
  */
 enum FetchMovement

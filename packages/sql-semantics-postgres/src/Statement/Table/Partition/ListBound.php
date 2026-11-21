@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a list bound
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TABLE p1 PARTITION OF p FOR VALUES IN ('a', 'b')");
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE TABLE p1 PARTITION OF p FOR VALUES IN ('a', 'b')");
  *     count($create->statement->definition->bound->values) // => 2
  */
 final class ListBound implements PartitionBound

@@ -36,7 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Keeping the exact text of a number
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = 1.50');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = 1.50');
  *     [$query->statement->where->right->text, $query->statement->where->right->form] // => ['1.50', \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal]
  */
 final class NumberLiteral implements Scalar

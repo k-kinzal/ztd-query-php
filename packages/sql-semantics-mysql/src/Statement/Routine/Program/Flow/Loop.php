@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading a labeled loop
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP again');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP again');
  *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
  */
 final class Loop implements ProgramStatement

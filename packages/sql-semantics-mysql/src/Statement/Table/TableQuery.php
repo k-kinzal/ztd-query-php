@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
  *
  * @visibility public
  * @example Reading the query part
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t IGNORE AS SELECT 1 AS a');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t IGNORE AS SELECT 1 AS a');
  *     $create->statement->query->duplicate // => \SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Ignore
  */
 final class TableQuery implements Node

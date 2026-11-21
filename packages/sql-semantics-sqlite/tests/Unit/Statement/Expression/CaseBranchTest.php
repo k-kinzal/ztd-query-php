@@ -24,7 +24,7 @@ final class CaseBranchTest extends TestCase
 {
     public function testRenderKeepsTheConditionAndTheResultInOrder(): void
     {
-        $operation = (new Semantics())->analyze('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
+        $operation = (new Semantics())->inspect('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the clause of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
  *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate // => true
  */
 final class OnUpdate implements ColumnAttribute

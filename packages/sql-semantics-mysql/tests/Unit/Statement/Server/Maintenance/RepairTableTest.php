@@ -17,12 +17,12 @@ final class RepairTableTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame('REPAIR TABLE t EXTENDED', (new Semantics('mysql-5.7.44'))->inspect('repair table t extended')->toString());
+        self::assertSame('REPAIR TABLE t EXTENDED', (new Semantics('mysql-5.7.44'))->diagnose('repair table t extended')->toString());
     }
 
     public function testDeriveStatementReportsATableNamedTwice(): void
     {
-        $operation = (new Semantics())->inspect('REPAIR TABLE t, db.u, t');
+        $operation = (new Semantics())->diagnose('REPAIR TABLE t, db.u, t');
 
         self::assertInstanceOf(NonUniqueTable::class, $operation->facts->diagnostics[0]);
     }

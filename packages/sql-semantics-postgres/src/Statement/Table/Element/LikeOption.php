@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading whether an option includes or excludes
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (LIKE u EXCLUDING DEFAULTS)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (LIKE u EXCLUDING DEFAULTS)');
  *     $create->statement->definition->elements[0]->options[0]->including // => false
  */
 final class LikeOption implements Node

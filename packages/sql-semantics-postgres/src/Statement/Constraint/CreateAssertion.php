@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  *
  * @visibility public
  * @example Reading an assertion
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ASSERTION a CHECK (1 = 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: CREATE ASSERTION is not yet implemented
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ASSERTION a CHECK (1 = 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: CREATE ASSERTION is not yet implemented
  */
 final class CreateAssertion implements Statement
 {

@@ -16,12 +16,12 @@ final class ShutdownTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('SHUTDOWN', (new Semantics('mysql-5.7.44'))->analyze('shutdown')->toString());
+        self::assertSame('SHUTDOWN', (new Semantics('mysql-5.7.44'))->inspect('shutdown')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('SHUTDOWN');
+        $operation = (new Semantics())->inspect('SHUTDOWN');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

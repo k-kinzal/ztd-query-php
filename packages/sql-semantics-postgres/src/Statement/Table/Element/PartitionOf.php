@@ -21,8 +21,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionBound;
  * @visibility public
  * @example A partition has the columns of its parent
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $parent = $semantics->analyze('CREATE TABLE p (id int NOT NULL, day date) PARTITION BY RANGE (day)', []);
- *     $part = $semantics->analyze("CREATE TABLE p1 PARTITION OF p FOR VALUES FROM ('2024-01-01') TO (MAXVALUE)", $parent->declarations());
+ *     $parent = $semantics->inspect('CREATE TABLE p (id int NOT NULL, day date) PARTITION BY RANGE (day)', []);
+ *     $part = $semantics->inspect("CREATE TABLE p1 PARTITION OF p FOR VALUES FROM ('2024-01-01') TO (MAXVALUE)", $parent->declarations());
  *     array_map(static fn ($column) => $column->name->value, $part->declarations()[0]->columns) // => ['id', 'day']
  */
 final class PartitionOf implements TableForm

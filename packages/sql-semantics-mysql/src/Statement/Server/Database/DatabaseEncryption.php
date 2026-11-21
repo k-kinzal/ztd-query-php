@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the encryption
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE DATABASE d ENCRYPTION 'Y'");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE DATABASE d ENCRYPTION 'Y'");
  *     $create->statement->options[0]->encryption->value // => 'Y'
  */
 final class DatabaseEncryption implements DatabaseOption

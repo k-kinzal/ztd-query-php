@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  *
  * @visibility public
  * @example Reading an option written as an identifier
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d is_template = true');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d is_template = true');
  *     $operation->statement->options[0]->option() // => 'is_template'
  */
 final class DatabaseOption implements Clause

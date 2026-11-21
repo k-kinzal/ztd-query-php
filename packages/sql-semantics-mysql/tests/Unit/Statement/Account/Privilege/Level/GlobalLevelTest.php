@@ -21,6 +21,6 @@ final class GlobalLevelTest extends TestCase
 
     public function testRenderWritesStarDotStar(): void
     {
-        self::assertSame('REVOKE SELECT ON *.* FROM u', (new Semantics())->analyze('revoke select on * . * from u')->toString());
+        self::assertSame('REVOKE SELECT ON *.* FROM u', (new Semantics())->inspect('revoke select on * . * from u')->toString());
     }
 }

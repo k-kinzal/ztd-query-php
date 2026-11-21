@@ -17,14 +17,14 @@ final class LoadIndexTest extends TestCase
 {
     public function testRenderWritesTheTables(): void
     {
-        self::assertSame('LOAD INDEX INTO CACHE t, u', (new Semantics())->analyze('load index into cache t, u')->toString());
+        self::assertSame('LOAD INDEX INTO CACHE t, u', (new Semantics())->inspect('load index into cache t, u')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $operation = $semantics->analyze('LOAD INDEX INTO CACHE t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $operation = $semantics->inspect('LOAD INDEX INTO CACHE t', [$table]);
         self::assertInstanceOf(LoadIndex::class, $operation->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);

@@ -23,7 +23,7 @@ final class ExplainTest extends TestCase
 {
     public function testDeriveStatementReturnsTheRowsOfTheReportAndNotThoseOfTheQuery(): void
     {
-        $operation = (new Semantics())->inspect('EXPLAIN SELECT 1 AS one');
+        $operation = (new Semantics())->diagnose('EXPLAIN SELECT 1 AS one');
 
         self::assertCount(8, $operation->fields() ?? []);
         self::assertSame('opcode', $operation->field(1)->name?->value);
@@ -31,7 +31,7 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementDerivesTheWrappedStatement(): void
     {
-        $operation = (new Semantics())->inspect('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
+        $operation = (new Semantics())->diagnose('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
 
         self::assertCount(4, $operation->fields() ?? []);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -39,7 +39,7 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementReportsOnAStatementThatReturnsNoRows(): void
     {
-        $operation = (new Semantics())->inspect('EXPLAIN BEGIN');
+        $operation = (new Semantics())->diagnose('EXPLAIN BEGIN');
 
         self::assertCount(8, $operation->fields() ?? []);
     }
@@ -47,10 +47,10 @@ final class ExplainTest extends TestCase
     public function testDeriveStatementDiscardsTheRowsAndTheDeclarationOfTheInspectedStatement(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $returning = $semantics->inspect('EXPLAIN INSERT INTO t (a) VALUES (1) RETURNING a, b', [$table]);
-        $create = $semantics->inspect('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
-        $view = $semantics->inspect('EXPLAIN CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $returning = $semantics->diagnose('EXPLAIN INSERT INTO t (a) VALUES (1) RETURNING a, b', [$table]);
+        $create = $semantics->diagnose('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
+        $view = $semantics->diagnose('EXPLAIN CREATE VIEW v AS SELECT a FROM t', [$table]);
 
         $report = $returning->fields();
         self::assertNotNull($report);
@@ -75,8 +75,8 @@ final class ExplainTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('EXPLAIN SELECT 1', $semantics->inspect('explain select 1')->toString());
-        self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $semantics->inspect('explain query plan select 1')->toString());
+        self::assertSame('EXPLAIN SELECT 1', $semantics->diagnose('explain select 1')->toString());
+        self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $semantics->diagnose('explain query plan select 1')->toString());
     }
 
     public function testRenderWritesANewlyBuiltRequest(): void

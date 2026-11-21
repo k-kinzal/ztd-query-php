@@ -26,7 +26,7 @@ final class PublicationTest extends TestCase
     public function testEstablishDerivesTheFactsAndRendersCorrespondingSql(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $use = new ColumnUse(new Name('a'));
         $statement = new Select([new ResultColumn($use, new Name('order'))], new TableInput(new QualifiedName(new Name('t'))));
 
@@ -51,8 +51,8 @@ final class PublicationTest extends TestCase
     public function testRootIsTheOnlyStatementOrAScript(): void
     {
         $semantics = new Semantics();
-        $first = $semantics->analyze('SELECT 1')->statement;
-        $second = $semantics->analyze('SELECT 2')->statement;
+        $first = $semantics->inspect('SELECT 1')->statement;
+        $second = $semantics->inspect('SELECT 2')->statement;
 
         $publication = new Publication();
 

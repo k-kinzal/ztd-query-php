@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading a column rename
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t RENAME COLUMN a TO b');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t RENAME COLUMN a TO b');
  *     [$operation->statement->member?->name->value, $operation->statement->newName->value] // => ['a', 'b']
  */
 final class Rename implements Statement

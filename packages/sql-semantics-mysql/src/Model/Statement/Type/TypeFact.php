@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Type;
  *
  * @visibility public
  * @example Distinguishing a known type from missing information
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t');
  *     $operation->field('a')->type instanceof \SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent // => true
  */
 interface TypeFact

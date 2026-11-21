@@ -16,7 +16,7 @@ final class SetCharacterSetTest extends TestCase
 {
     public function testDeriveItemDerivesNothing(): void
     {
-        $set = (new Semantics())->analyze('SET CHARSET latin1');
+        $set = (new Semantics())->inspect('SET CHARSET latin1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         self::assertInstanceOf(SetCharacterSet::class, $set->statement->items[0]);
         self::assertSame('latin1', $set->statement->items[0]->charset->name?->value);
@@ -24,6 +24,6 @@ final class SetCharacterSetTest extends TestCase
 
     public function testRenderWritesCharset(): void
     {
-        self::assertSame('SET CHARSET `binary`', (new Semantics('mysql-5.7.44'))->analyze('set char set binary')->toString());
+        self::assertSame('SET CHARSET `binary`', (new Semantics('mysql-5.7.44'))->inspect('set char set binary')->toString());
     }
 }

@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Declaration;
  * @visibility public
  * @example Reading the kind of a declared view
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0]->kind // => \SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind::BaseTable
+ *     $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0]->kind // => \SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind::BaseTable
  */
 enum RelationKind
 {

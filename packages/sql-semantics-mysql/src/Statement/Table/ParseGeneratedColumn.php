@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the expression
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('PARSE_GCOL_EXPR(1 + 2)');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('PARSE_GCOL_EXPR(1 + 2)');
  *     $statement->statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn // => true
  */
 final class ParseGeneratedColumn implements Statement

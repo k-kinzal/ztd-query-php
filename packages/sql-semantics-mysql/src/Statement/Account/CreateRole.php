@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Creating roles
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, writer@`%`'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create role if not exists reader, 'writer'@'%'")->toString() // => 'CREATE ROLE IF NOT EXISTS reader, writer@`%`'
  */
 final class CreateRole implements Statement
 {

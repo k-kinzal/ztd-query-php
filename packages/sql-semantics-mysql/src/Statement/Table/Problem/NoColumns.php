@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t ENGINE = InnoDB') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A table must have at least 1 column.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t ENGINE = InnoDB') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A table must have at least 1 column.
  */
 final class NoColumns implements Diagnostic
 {

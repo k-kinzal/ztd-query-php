@@ -23,8 +23,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Telling a named constraint from a name the comma cuts off
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $named = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c CHECK (a > 0))');
- *     $cut = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
+ *     $named = $semantics->inspect('CREATE TABLE t (a, CONSTRAINT c CHECK (a > 0))');
+ *     $cut = $semantics->inspect('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
  *     [count($named->statement->constraints), count($cut->statement->constraints)] // => [1, 2]
  */
 final class ConstraintRun implements Node

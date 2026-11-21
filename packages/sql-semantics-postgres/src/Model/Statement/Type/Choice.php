@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Recording two possible types
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)')->declarations()[0];
  *     $choice = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Choice([$table->columns[0]->type, $table->columns[1]->type]);
  *     count($choice->alternatives) // => 2
  */

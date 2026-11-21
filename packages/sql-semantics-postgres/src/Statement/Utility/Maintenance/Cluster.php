@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Reading a CLUSTER in the old syntax
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CLUSTER i ON t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CLUSTER i ON t');
  *     [$operation->statement->table->name->value, $operation->statement->index->value, $operation->statement->indexFirst] // => ['t', 'i', true]
  * @example Refusing an index without a table
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Cluster([], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words, null, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('i')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

@@ -16,11 +16,11 @@ final class ValidationOptionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics())->analyze('ALTER TABLE t WITH VALIDATION')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('ALTER TABLE t WITH VALIDATION')->facts->diagnostics);
     }
 
     public function testRenderWritesWithOrWithout(): void
     {
-        self::assertSame('ALTER TABLE t WITHOUT VALIDATION, ADD COLUMN a INT', (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t WITHOUT VALIDATION, ADD a INT')->toString());
+        self::assertSame('ALTER TABLE t WITHOUT VALIDATION, ADD COLUMN a INT', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t WITHOUT VALIDATION, ADD a INT')->toString());
     }
 }

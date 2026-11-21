@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow;
  *
  * @visibility public
  * @example Reading the columns of a VALUES list
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("VALUES (1, 'a'), (2, NULL)");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("VALUES (1, 'a'), (2, NULL)");
  *     [$query->field(1)->name->value, $query->field(1)->type->descriptor->name(), $query->field(1)->nullability->name] // => ['column2', 'text', 'Nullable']
  */
 final class ValuesList implements Statement, Query, OutputNaming

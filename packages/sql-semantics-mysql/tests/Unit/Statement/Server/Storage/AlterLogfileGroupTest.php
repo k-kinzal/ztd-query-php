@@ -17,12 +17,12 @@ final class AlterLogfileGroupTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE `ndb`", (new Semantics())->inspect("alter logfile group g add undofile 'f' engine ndb")->toString());
+        self::assertSame("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE `ndb`", (new Semantics())->diagnose("alter logfile group g add undofile 'f' engine ndb")->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE a ENGINE b");
+        $operation = (new Semantics())->diagnose("ALTER LOGFILE GROUP g ADD UNDOFILE 'f' ENGINE a ENGINE b");
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

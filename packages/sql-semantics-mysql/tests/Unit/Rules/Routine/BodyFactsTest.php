@@ -25,7 +25,7 @@ final class BodyFactsTest extends TestCase
 {
     public function testStatementsDerivesEveryStatementInOrder(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
 
         self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -33,8 +33,8 @@ final class BodyFactsTest extends TestCase
     public function testStatementResolvesAVariableInANestedQuery(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -48,14 +48,14 @@ final class BodyFactsTest extends TestCase
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
     }
 
     public function testStatementResolvesAVariableInAnInspectedStatement(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $operation = $semantics->inspect('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $operation = $semantics->diagnose('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
         $create = $operation->statement;
         self::assertInstanceOf(CreateEvent::class, $create);
         $block = $create->body;
@@ -76,7 +76,7 @@ final class BodyFactsTest extends TestCase
     public function testStatementKeepsTheDiagnosticsOfAnSqlStatement(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -100,7 +100,7 @@ final class BodyFactsTest extends TestCase
     public function testStatementChecksTheRestrictionsOfTheProgramKind(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -124,7 +124,7 @@ final class BodyFactsTest extends TestCase
     public function testStatementChecksTheAssignmentsOfATrigger(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

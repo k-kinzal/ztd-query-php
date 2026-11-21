@@ -16,11 +16,11 @@ final class RevokeProxyTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('REVOKE PROXY ON a FROM b')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('REVOKE PROXY ON a FROM b')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE IF EXISTS PROXY ON a FROM b IGNORE UNKNOWN USER', (new Semantics())->analyze('revoke if exists proxy on a from b ignore unknown user')->toString());
+        self::assertSame('REVOKE IF EXISTS PROXY ON a FROM b IGNORE UNKNOWN USER', (new Semantics())->inspect('revoke if exists proxy on a from b ignore unknown user')->toString());
     }
 }

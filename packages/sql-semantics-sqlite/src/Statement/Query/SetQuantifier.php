@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
  *
  * @visibility public
  * @example Reading the quantifier of a selection
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT DISTINCT a FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT DISTINCT a FROM t');
  *     $query->statement->quantifier // => \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct
  */
 enum SetQuantifier: string

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Closing a cursor
- *     $close = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CLOSE c');
+ *     $close = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CLOSE c');
  *     $close->statement->cursor->value // => 'c'
  */
 final class Close implements Statement

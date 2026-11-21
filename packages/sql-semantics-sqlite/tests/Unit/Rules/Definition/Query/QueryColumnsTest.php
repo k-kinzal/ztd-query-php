@@ -23,7 +23,7 @@ final class QueryColumnsTest extends TestCase
 {
     public function testSettledStopsBeforeTheFirstUnexpandedStar(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1 AS a, *, 2 AS b FROM undeclared');
+        $query = (new Semantics())->diagnose('SELECT 1 AS a, *, 2 AS b FROM undeclared');
 
         self::assertNotNull($query->facts->output);
         self::assertCount(1, (new QueryColumns())->settled($query->facts->output));
@@ -65,8 +65,8 @@ final class QueryColumnsTest extends TestCase
     public function testTableColumnsRecordTheTypeOfTheExpressionAffinity(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n NUMERIC, r REAL, b BLOB)');
-        $query = $semantics->inspect('SELECT i, t, n, r, b, 1 AS one, CAST(i AS TEXT) AS c, (SELECT i FROM s) AS sq, * FROM s', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n NUMERIC, r REAL, b BLOB)');
+        $query = $semantics->diagnose('SELECT i, t, n, r, b, 1 AS one, CAST(i AS TEXT) AS c, (SELECT i FROM s) AS sq, * FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -80,8 +80,8 @@ final class QueryColumnsTest extends TestCase
     public function testTableColumnsRecordACompoundFromItsArms(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
-        $query = $semantics->inspect("SELECT t AS x, i AS y, CAST(i AS INT) AS c, 1 AS one FROM s UNION ALL SELECT 1, 'a', 2, 2 FROM s", [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->diagnose("SELECT t AS x, i AS y, CAST(i AS INT) AS c, 1 AS one FROM s UNION ALL SELECT 1, 'a', 2, 2 FROM s", [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
@@ -93,9 +93,9 @@ final class QueryColumnsTest extends TestCase
     public function testTableColumnsStopAtAFieldWithoutADeterminedNameOrAffinity(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
-        $unnamed = $semantics->inspect('SELECT i, i, i, i, i, i, t FROM s', [$table]);
-        $undeclared = $semantics->inspect('SELECT s.i, u.x, s.t FROM s, u', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER, t TEXT)');
+        $unnamed = $semantics->diagnose('SELECT i, i, i, i, i, i, t FROM s', [$table]);
+        $undeclared = $semantics->diagnose('SELECT s.i, u.x, s.t FROM s, u', [$table]);
         $columns = new QueryColumns();
 
         self::assertInstanceOf(Select::class, $unnamed->statement);
@@ -109,10 +109,10 @@ final class QueryColumnsTest extends TestCase
     public function testNamedGivesTheNamesSqliteGivesAfterResolution(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t TEXT)');
-        $query = $semantics->inspect('SELECT I COLLATE nocase, unlikely(T), 1+1, "zz", true, s.i AS x, * FROM s', [$table]);
-        $values = $semantics->inspect('VALUES (1, i) UNION SELECT 2, 3');
-        $conditional = $semantics->inspect('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->diagnose('SELECT I COLLATE nocase, unlikely(T), 1+1, "zz", true, s.i AS x, * FROM s', [$table]);
+        $values = $semantics->diagnose('VALUES (1, i) UNION SELECT 2, 3');
+        $conditional = $semantics->diagnose('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(Compound::class, $values->statement);
@@ -128,8 +128,8 @@ final class QueryColumnsTest extends TestCase
     public function testViewColumnsKeepTheDeclaredTypeAndTheNullFactOfAReferencedColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n)');
-        $query = $semantics->inspect('SELECT i, t, CAST(t AS INTEGER) AS c, 1 AS one, n FROM s', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n)');
+        $query = $semantics->diagnose('SELECT i, t, CAST(t AS INTEGER) AS c, 1 AS one, n FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -144,8 +144,8 @@ final class QueryColumnsTest extends TestCase
     public function testViewColumnsRecordACompoundFromItsArms(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER, t VARCHAR(5))');
-        $query = $semantics->inspect('SELECT t AS x, i AS y, t AS z FROM s UNION ALL SELECT 1, i, t FROM s', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER, t VARCHAR(5))');
+        $query = $semantics->diagnose('SELECT t AS x, i AS y, t AS z FROM s UNION ALL SELECT 1, i, t FROM s', [$table]);
         $compound = $query->statement;
 
         self::assertInstanceOf(Compound::class, $compound);
@@ -157,8 +157,8 @@ final class QueryColumnsTest extends TestCase
     public function testViewColumnsGiveNoTypesWhenTheColumnListDoesNotFitTheQuery(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE s (i INTEGER)');
-        $query = $semantics->inspect('SELECT i FROM s', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE s (i INTEGER)');
+        $query = $semantics->diagnose('SELECT i FROM s', [$table]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -173,7 +173,7 @@ final class QueryColumnsTest extends TestCase
     public function testViewColumnsTakeTheirNamesFromAColumnListAndStopAtANameWithoutAField(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT 1 AS a, 2 AS b');
+        $query = $semantics->diagnose('SELECT 1 AS a, 2 AS b');
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);

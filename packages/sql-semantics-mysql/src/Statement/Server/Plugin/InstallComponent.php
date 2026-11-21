@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Installing a component with a variable value
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("install component 'file://a', 'file://b' set global a.size = 2 * 8");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("install component 'file://a', 'file://b' set global a.size = 2 * 8");
  *     [$install->toString(), count($install->statement->components)] // => ["INSTALL COMPONENT 'file://a', 'file://b' SET GLOBAL a.size = 2 * 8", 2]
  */
 final class InstallComponent implements Statement

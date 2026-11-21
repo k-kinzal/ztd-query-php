@@ -32,15 +32,15 @@ final class QueryCommandsTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(Select::class, $semantics->analyze('SELECT 1')->statement);
-        self::assertInstanceOf(ValuesClause::class, $semantics->analyze('VALUES (1)')->statement);
-        self::assertInstanceOf(Compound::class, $semantics->analyze('SELECT 1 UNION SELECT 2')->statement);
-        self::assertInstanceOf(WithQuery::class, $semantics->analyze('WITH c AS (SELECT 1) SELECT * FROM c')->statement);
+        self::assertInstanceOf(Select::class, $semantics->inspect('SELECT 1')->statement);
+        self::assertInstanceOf(ValuesClause::class, $semantics->inspect('VALUES (1)')->statement);
+        self::assertInstanceOf(Compound::class, $semantics->inspect('SELECT 1 UNION SELECT 2')->statement);
+        self::assertInstanceOf(WithQuery::class, $semantics->inspect('WITH c AS (SELECT 1) SELECT * FROM c')->statement);
     }
 
     public function testCommandLowersACreateTriggerCommand(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END');
+        $operation = (new Semantics())->inspect('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         self::assertSame('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END', $operation->toString());
@@ -50,9 +50,9 @@ final class QueryCommandsTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(InsertRows::class, $semantics->analyze('INSERT INTO t VALUES (1)')->statement);
-        self::assertInstanceOf(Update::class, $semantics->analyze('UPDATE t SET a = 1')->statement);
-        self::assertInstanceOf(Delete::class, $semantics->analyze('DELETE FROM t')->statement);
+        self::assertInstanceOf(InsertRows::class, $semantics->inspect('INSERT INTO t VALUES (1)')->statement);
+        self::assertInstanceOf(Update::class, $semantics->inspect('UPDATE t SET a = 1')->statement);
+        self::assertInstanceOf(Delete::class, $semantics->inspect('DELETE FROM t')->statement);
     }
 
     public function testCommandAnswersNullForACommandOfAnotherFamily(): void

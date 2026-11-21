@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading the escape character
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE a LIKE 'x!%' ESCAPE '!'");
  *     $query->statement->where->escape->value() // => '!'
  */
 final class Like implements Scalar

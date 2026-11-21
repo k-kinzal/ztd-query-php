@@ -14,6 +14,6 @@ final class RollbackSpellingTest extends TestCase
 {
     public function testBothSpellingsAreKept(): void
     {
-        self::assertSame(['ROLLBACK', 'ABORT'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ROLLBACK WORK')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ABORT TRANSACTION')->toString()]);
+        self::assertSame(['ROLLBACK', 'ABORT'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ROLLBACK WORK')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ABORT TRANSACTION')->toString()]);
     }
 }

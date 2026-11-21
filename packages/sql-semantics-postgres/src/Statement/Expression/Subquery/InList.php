@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
  *
  * @visibility public
  * @example Reading the values of a list
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 IN (1, 2, NULL)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 IN (1, 2, NULL)');
  *     [count($query->field(0)->expression->values), $query->field(0)->nullability] // => [3, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable]
  */
 final class InList implements Scalar

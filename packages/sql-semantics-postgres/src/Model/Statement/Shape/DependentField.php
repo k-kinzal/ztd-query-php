@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Looking a name up in an open shape
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM t');
  *     $operation->lookupField('a') instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\DependentField // => true
  */
 final class DependentField implements FieldLookup

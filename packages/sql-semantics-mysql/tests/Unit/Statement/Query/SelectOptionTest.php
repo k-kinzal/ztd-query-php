@@ -22,7 +22,7 @@ final class SelectOptionTest extends TestCase
 
     public function testModifiersKeepTheirWrittenOrder(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT SQL_CACHE HIGH_PRIORITY DISTINCT a FROM t');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('SELECT SQL_CACHE HIGH_PRIORITY DISTINCT a FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([SelectOption::Cache, SelectOption::HighPriority, SelectOption::Distinct], $operation->statement->options);

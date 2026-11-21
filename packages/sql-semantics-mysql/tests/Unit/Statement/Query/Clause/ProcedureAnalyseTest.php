@@ -17,8 +17,8 @@ final class ProcedureAnalyseTest extends TestCase
 {
     public function testRenderWritesTheArguments(): void
     {
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE()', (new Semantics('mysql-5.6.51'))->analyze('select a from t procedure analyse ( )')->toString());
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)', (new Semantics('mysql-5.7.44'))->analyze('select a from t procedure analyse(10,2000)')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE()', (new Semantics('mysql-5.6.51'))->inspect('select a from t procedure analyse ( )')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)', (new Semantics('mysql-5.7.44'))->inspect('select a from t procedure analyse(10,2000)')->toString());
     }
 
     public function testADecimalArgumentIsRejected(): void

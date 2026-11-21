@@ -36,7 +36,7 @@ final class MagnitudesTest extends TestCase
 
     public function testIntegerReportsAFractionalNumber(): void
     {
-        $operation = (new Semantics())->inspect('DROP SPATIAL REFERENCE SYSTEM 1e2');
+        $operation = (new Semantics())->diagnose('DROP SPATIAL REFERENCE SYSTEM 1e2');
 
         self::assertInstanceOf(FractionalNumber::class, $operation->facts->diagnostics[0]);
     }

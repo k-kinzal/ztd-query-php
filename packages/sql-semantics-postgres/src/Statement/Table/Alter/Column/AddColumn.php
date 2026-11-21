@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
  *
  * @visibility public
  * @example Reading an added column
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD COLUMN IF NOT EXISTS c int NOT NULL');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ADD COLUMN IF NOT EXISTS c int NOT NULL');
  *     [$statement->statement->commands[0]->column->name->value, $statement->toString()] // => ['c', 'ALTER TABLE t ADD IF NOT EXISTS c INT NOT NULL']
  */
 final class AddColumn implements AlterCommand

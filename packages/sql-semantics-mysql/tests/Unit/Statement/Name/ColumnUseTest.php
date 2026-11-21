@@ -36,7 +36,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('SELECT t.a, b FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT t.a, b FROM t', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
@@ -63,7 +63,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
-        $operation = $semantics->inspect('SELECT A FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT A FROM t', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -77,7 +77,7 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarDependsOnTheDeclarationOfAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t');
+        $operation = (new Semantics())->diagnose('SELECT a FROM t');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -96,7 +96,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('SELECT c FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT c FROM t', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -113,7 +113,7 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarReportsAQualifierThatNamesNoRelationEvenInAnOpenContext(): void
     {
-        $operation = (new Semantics())->inspect('SELECT x.a FROM t');
+        $operation = (new Semantics())->diagnose('SELECT x.a FROM t');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -130,7 +130,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('a'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('SELECT a FROM t', [$table]);
+        $operation = $semantics->diagnose('SELECT a FROM t', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -147,7 +147,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
-        $operation = $semantics->inspect('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
+        $operation = $semantics->diagnose('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $having = $select->having;
@@ -162,7 +162,7 @@ final class ColumnUseTest extends TestCase
 
     public function testRenderWritesTheQualifiersAndTheNameAsWritten(): void
     {
-        $operation = (new Semantics())->inspect('select shop.T.A from shop.t');
+        $operation = (new Semantics())->diagnose('select shop.T.A from shop.t');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -174,7 +174,7 @@ final class ColumnUseTest extends TestCase
         self::assertSame('T', $use->qualifier?->name->value);
         self::assertSame('shop', $use->qualifier->schema?->value);
         self::assertSame('SELECT shop.T.A FROM shop.t', $operation->toString());
-        self::assertSame('SELECT `a b` FROM t', (new Semantics())->inspect('SELECT `a b` FROM t')->toString());
+        self::assertSame('SELECT `a b` FROM t', (new Semantics())->diagnose('SELECT `a b` FROM t')->toString());
     }
 
     public function testRejectsACatalogQualifier(): void

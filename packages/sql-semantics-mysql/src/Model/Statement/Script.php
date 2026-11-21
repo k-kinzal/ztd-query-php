@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
  * @visibility public
  * @example Collecting statements from a script
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $operations = $semantics->analyzeAll('SELECT 1; SELECT 2');
+ *     $operations = array_map($semantics->inspect(...), $semantics->split('SELECT 1; SELECT 2'));
  *     $script = new \SqlSemantics\Platform\MySql\Model\Statement\Script([$operations[0]->statement, $operations[1]->statement]);
  *     count($script->statements) // => 2
  */

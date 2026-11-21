@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
  *
  * @visibility public
  * @example Persisting a component variable
- *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
  *     [$install->statement->settings[0]->variable->scope, $install->statement->settings[0]->variable->instance?->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'c']
  */
 final class ComponentSetting implements Node

@@ -25,8 +25,8 @@ final class CreateViewTest extends TestCase
     public function testDeriveStatementDeclaresTheColumnsOfTheQueryOutput(): void
     {
         $semantics = new Semantics();
-        $source = $semantics->inspect('CREATE TABLE s (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('CREATE VIEW v AS SELECT a, b AS label FROM s', [$source]);
+        $source = $semantics->diagnose('CREATE TABLE s (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('CREATE VIEW v AS SELECT a, b AS label FROM s', [$source]);
         $view = $operation->declarations()[0];
 
         self::assertTrue($view->complete);
@@ -43,7 +43,7 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveStatementNamesTheColumnsByTheColumnList(): void
     {
-        $view = (new Semantics())->inspect('CREATE VIEW v (x, y) AS SELECT 1, 2')->declarations()[0];
+        $view = (new Semantics())->diagnose('CREATE VIEW v (x, y) AS SELECT 1, 2')->declarations()[0];
 
         self::assertTrue($view->complete);
         self::assertSame(['x', 'y'], array_map(static fn (object $column): string => $column->name->value, $view->columns));
@@ -51,7 +51,7 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveStatementReportsAColumnListOfAnotherLength(): void
     {
-        $operation = (new Semantics())->inspect('CREATE VIEW v (x) AS SELECT 1, 2');
+        $operation = (new Semantics())->diagnose('CREATE VIEW v (x) AS SELECT 1, 2');
 
         self::assertInstanceOf(ColumnCountMismatch::class, $operation->facts->diagnostics[0]);
         self::assertFalse($operation->declarations()[0]->complete);
@@ -59,14 +59,14 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveStatementReportsADecoratedNameInTheColumnList(): void
     {
-        $operation = (new Semantics())->inspect('CREATE VIEW v (x DESC) AS SELECT 1');
+        $operation = (new Semantics())->diagnose('CREATE VIEW v (x DESC) AS SELECT 1');
 
         self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
     }
 
     public function testDeriveStatementMarksTheDeclarationIncompleteWhenTheQueryShapeIsOpen(): void
     {
-        $view = (new Semantics())->inspect('CREATE VIEW v AS SELECT * FROM undeclared')->declarations()[0];
+        $view = (new Semantics())->diagnose('CREATE VIEW v AS SELECT * FROM undeclared')->declarations()[0];
 
         self::assertFalse($view->complete);
         self::assertSame([], $view->columns);
@@ -74,7 +74,7 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveStatementDeclaresATemporaryViewInTheTempSchema(): void
     {
-        $view = (new Semantics())->inspect('CREATE TEMPORARY VIEW v AS SELECT 1 AS one')->declarations()[0];
+        $view = (new Semantics())->diagnose('CREATE TEMPORARY VIEW v AS SELECT 1 AS one')->declarations()[0];
 
         self::assertSame('temp', $view->name->schema?->value);
     }
@@ -86,7 +86,7 @@ final class CreateViewTest extends TestCase
     public function testDeriveStatementNamesTheColumnsAsSqliteDoes(string $sql): void
     {
         $semantics = new Semantics();
-        $view = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)')]);
+        $view = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INTEGER, b TEXT)')]);
         $source = new PDO('sqlite::memory:');
         $rendered = new PDO('sqlite::memory:');
         $source->exec('CREATE TABLE t (a INTEGER, b TEXT); ' . $sql);
@@ -103,7 +103,7 @@ final class CreateViewTest extends TestCase
 
     public function testRenderWritesTheColumnListAndTheQuery(): void
     {
-        $operation = (new Semantics())->inspect('create view if not exists main.v (x, y) as select 1, 2');
+        $operation = (new Semantics())->diagnose('create view if not exists main.v (x, y) as select 1, 2');
 
         self::assertInstanceOf(CreateView::class, $operation->statement);
         self::assertCount(2, $operation->statement->columns ?? []);

@@ -17,18 +17,18 @@ final class FlushRuleTest extends TestCase
 {
     public function testStatementLowersTheItems(): void
     {
-        self::assertSame('FLUSH LOGS, STATUS', (new Semantics())->analyze('flush logs, status')->toString());
+        self::assertSame('FLUSH LOGS, STATUS', (new Semantics())->inspect('flush logs, status')->toString());
     }
 
     public function testTablesRejectsForExportWithoutTables(): void
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics())->analyze('FLUSH TABLES FOR EXPORT');
+        (new Semantics())->inspect('FLUSH TABLES FOR EXPORT');
     }
 
     public function testItemsLowersEveryOption(): void
     {
-        self::assertSame('FLUSH HOSTS, QUERY CACHE, DES_KEY_FILE, USER_RESOURCES', (new Semantics('mysql-5.6.51'))->analyze('flush hosts, query cache, des_key_file, user_resources')->toString());
+        self::assertSame('FLUSH HOSTS, QUERY CACHE, DES_KEY_FILE, USER_RESOURCES', (new Semantics('mysql-5.6.51'))->inspect('flush hosts, query cache, des_key_file, user_resources')->toString());
     }
 }

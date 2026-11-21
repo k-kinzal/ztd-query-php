@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  *
  * @visibility public
  * @example Reading SET SESSION AUTHORIZATION DEFAULT
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION AUTHORIZATION DEFAULT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET SESSION AUTHORIZATION DEFAULT');
  *     [$operation->statement->setting, $operation->statement->default, $operation->statement->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::SessionAuthorization, true, null]
  * @example Refusing a schema that is not a string
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecialSetting(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::Schema, null) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

@@ -21,7 +21,7 @@ final class NameOperandTest extends TestCase
 {
     public function testDeriveScalarIsATextConstantAndNoColumnReference(): void
     {
-        $operation = (new Semantics())->analyze("ATTACH 'file.db' AS aux", []);
+        $operation = (new Semantics())->inspect("ATTACH 'file.db' AS aux", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Attach::class, $statement);
@@ -36,8 +36,8 @@ final class NameOperandTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('DETACH aux', $semantics->analyze('DETACH aux')->toString());
-        self::assertSame('DETACH `my db`', $semantics->analyze('DETACH [my db]')->toString());
+        self::assertSame('DETACH aux', $semantics->inspect('DETACH aux')->toString());
+        self::assertSame('DETACH `my db`', $semantics->inspect('DETACH [my db]')->toString());
         self::assertSame('aux', (new NameOperand(new Name('aux')))->name->value);
     }
 }

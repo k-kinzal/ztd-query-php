@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the type of an integer constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1');
  *     [$query->field(0)->type->descriptor, $query->field(0)->type->descriptor->name()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, 'integer']
  */
 enum Builtin: string implements TypeDescriptor

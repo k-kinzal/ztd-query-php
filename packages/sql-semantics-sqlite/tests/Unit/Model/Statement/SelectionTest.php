@@ -18,8 +18,8 @@ final class SelectionTest extends TestCase
     public function testInputAnswersTheRelationStructureOrNull(): void
     {
         $semantics = new Semantics();
-        $withInput = $semantics->analyze('SELECT a FROM t')->statement;
-        $withoutInput = $semantics->analyze('SELECT 1')->statement;
+        $withInput = $semantics->inspect('SELECT a FROM t')->statement;
+        $withoutInput = $semantics->inspect('SELECT 1')->statement;
 
         self::assertInstanceOf(Selection::class, $withInput);
         self::assertInstanceOf(Selection::class, $withoutInput);

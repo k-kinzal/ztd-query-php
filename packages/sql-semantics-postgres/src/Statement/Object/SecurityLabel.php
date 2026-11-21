@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  *
  * @visibility public
  * @example Reading the provider
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SECURITY LABEL FOR selinux ON SCHEMA app IS 'x'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SECURITY LABEL FOR selinux ON SCHEMA app IS 'x'");
  *     $operation->statement->provider?->word->value // => 'selinux'
  */
 final class SecurityLabel implements Statement

@@ -16,7 +16,7 @@ final class PurgeLogsBeforeTest extends TestCase
 {
     public function testDeriveStatementDerivesTheMoment(): void
     {
-        $purge = (new Semantics())->analyze("PURGE BINARY LOGS BEFORE '2024-01-01'");
+        $purge = (new Semantics())->inspect("PURGE BINARY LOGS BEFORE '2024-01-01'");
 
         self::assertInstanceOf(PurgeLogsBefore::class, $purge->statement);
         self::assertSame([], $purge->facts->diagnostics);
@@ -24,6 +24,6 @@ final class PurgeLogsBeforeTest extends TestCase
 
     public function testRenderWritesTheMoment(): void
     {
-        self::assertSame("PURGE BINARY LOGS BEFORE '2024-01-01'", (new Semantics('mysql-5.6.51'))->analyze("purge master logs before '2024-01-01'")->toString());
+        self::assertSame("PURGE BINARY LOGS BEFORE '2024-01-01'", (new Semantics('mysql-5.6.51'))->inspect("purge master logs before '2024-01-01'")->toString());
     }
 }

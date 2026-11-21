@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * @visibility public
  * @example Telling which option of the server a clause fills
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES FOR USER joe GRANT SELECT ON TABLES TO ann');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES FOR USER joe GRANT SELECT ON TABLES TO ann');
  *     $operation->statement->scopes[0]->option() // => 'roles'
  */
 interface DefaultScope extends Node

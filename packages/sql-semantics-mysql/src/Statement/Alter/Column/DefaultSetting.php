@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  *
  * @visibility public
  * @example Setting a literal default
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ALTER a SET DEFAULT 1');
  *     [$alter->statement->commands[0]->expression, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
  */
 final class DefaultSetting implements AlterCommand

@@ -16,7 +16,7 @@ final class TypeDescriptorTest extends TestCase
 {
     public function testNameIsTheNameTheDatabaseReports(): void
     {
-        $table = (new Semantics())->analyze('CREATE TABLE t (a INTEGER, b VARCHAR(10), c)')->declarations()[0];
+        $table = (new Semantics())->inspect('CREATE TABLE t (a INTEGER, b VARCHAR(10), c)')->declarations()[0];
 
         self::assertSame('INTEGER', $table->columns[0]->type->name());
         self::assertSame('VARCHAR(10)', $table->columns[1]->type->name());

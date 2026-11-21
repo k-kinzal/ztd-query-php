@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  *
  * @visibility public
  * @example Reading the attributes of an added check
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NOT VALID');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NOT VALID');
  *     $operation->statement->constraint->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]
  */
 final class DomainCheck implements Clause

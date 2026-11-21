@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading the connection
- *     $explain = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
+ *     $explain = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('EXPLAIN FORMAT = JSON FOR CONNECTION 42');
  *     [$explain->statement->connection->text, $explain->field(0)->name?->value, $explain->toString()] // => ['42', 'EXPLAIN', 'EXPLAIN FORMAT = `JSON` FOR CONNECTION 42']
  */
 final class ExplainConnection implements Statement

@@ -38,7 +38,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading a qualified column reference
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT t.a FROM t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT t.a FROM t');
  *     [count($query->statement->targets[0]->expression->parts), $query->field(0)->name->value] // => [2, 'a']
  */
 final class ColumnReference implements Scalar, OutputNaming

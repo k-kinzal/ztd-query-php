@@ -32,7 +32,7 @@ final class DefaultWordTest extends TestCase
 
     public function testDeriveConstraintNeverReadsTheWordAsAColumn(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a, b DEFAULT a)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b DEFAULT a)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -40,8 +40,8 @@ final class DefaultWordTest extends TestCase
     public function testRenderKeepsTheQuotingThatDecidesTheMeaning(): void
     {
         $semantics = new Semantics();
-        $truth = $semantics->analyze('create table t (a default true)');
-        $text = $semantics->analyze('create table t (a default "true")');
+        $truth = $semantics->inspect('create table t (a default true)');
+        $text = $semantics->inspect('create table t (a default "true")');
         $statement = $truth->statement;
         $other = $text->statement;
 

@@ -17,7 +17,7 @@ final class DatabaseOptionTest extends TestCase
 {
     public function testOptionsAreDatabaseOptions(): void
     {
-        $create = (new Semantics())->analyze('CREATE DATABASE d COLLATE utf8mb4_bin');
+        $create = (new Semantics())->inspect('CREATE DATABASE d COLLATE utf8mb4_bin');
         self::assertInstanceOf(CreateDatabase::class, $create->statement);
 
         self::assertContainsOnlyInstancesOf(DatabaseOption::class, $create->statement->options);

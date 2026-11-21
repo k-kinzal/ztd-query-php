@@ -51,8 +51,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * @visibility public
  * @example Resolving the indexed table and an indexed column
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC) WHERE a IS NOT NULL', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a, b)');
+ *     $index = $semantics->inspect('CREATE UNIQUE INDEX i ON t (b DESC) WHERE a IS NOT NULL', [$table]);
  *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->scalar($index->statement->terms[0]->expression)->resolution->slot->column === $table->declarations()[0]->columns[1]] // => [true, true]
  */
 final class CreateIndex implements Statement, Relation

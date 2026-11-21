@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Looking up an absent name
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 AS a');
  *     $operation->lookupField('b')->name // => 'b'
  */
 final class AbsentField implements FieldLookup

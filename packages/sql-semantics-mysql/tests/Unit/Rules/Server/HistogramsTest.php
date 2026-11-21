@@ -19,8 +19,8 @@ final class HistogramsTest extends TestCase
     public function testDeriveReportsAnUnknownColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $analyze = $semantics->inspect('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $analyze = $semantics->diagnose('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
 
         self::assertCount(1, $analyze->facts->diagnostics);
         self::assertInstanceOf(UnknownHistogramColumn::class, $analyze->facts->diagnostics[0]);
@@ -28,7 +28,7 @@ final class HistogramsTest extends TestCase
 
     public function testDeriveAcceptsAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics())->inspect('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
     }
 
     public function testBucketsTellsWhetherTheCountIsInRange(): void
@@ -40,6 +40,6 @@ final class HistogramsTest extends TestCase
 
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON `a b`, c', (new Semantics())->inspect('analyze table t drop histogram on `a b`, c')->toString());
+        self::assertSame('ANALYZE TABLE t DROP HISTOGRAM ON `a b`, c', (new Semantics())->diagnose('analyze table t drop histogram on `a b`, c')->toString());
     }
 }

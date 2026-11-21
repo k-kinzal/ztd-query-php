@@ -25,6 +25,6 @@ final class DialectTest extends TestCase
         $semantics = new Semantics();
 
         self::assertSame('sqlite', $semantics->profile()->grammar->database());
-        self::assertSame('SELECT 42', $semantics->analyze('select   42')->toString());
+        self::assertSame('SELECT 42', $semantics->inspect('select   42')->toString());
     }
 }

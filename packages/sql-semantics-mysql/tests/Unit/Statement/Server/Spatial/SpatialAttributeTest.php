@@ -16,6 +16,6 @@ final class SpatialAttributeTest extends TestCase
 {
     public function testRenderWritesTheOrganizationIdentifier(): void
     {
-        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n' DEFINITION 'd' ORGANIZATION 'o' IDENTIFIED BY 9 DESCRIPTION 'x'", (new Semantics())->analyze("create spatial reference system 9 name 'n' definition 'd' organization 'o' identified by 9 description 'x'")->toString());
+        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 9 NAME 'n' DEFINITION 'd' ORGANIZATION 'o' IDENTIFIED BY 9 DESCRIPTION 'x'", (new Semantics())->inspect("create spatial reference system 9 name 'n' definition 'd' organization 'o' identified by 9 description 'x'")->toString());
     }
 }

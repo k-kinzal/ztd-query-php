@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
  *     $column = $create->statement->definition->elements[0];
  *     [$column->name->value, $column->storage->method->value, $column->compression->method->value, count($column->qualifiers)] // => ['a', 'external', 'lz4', 2]
  */

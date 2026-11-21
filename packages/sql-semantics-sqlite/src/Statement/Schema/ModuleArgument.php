@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ModuleArguments;
  *
  * @visibility public
  * @example Reading the arguments a module receives
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE VIRTUAL TABLE docs USING fts5(title,  body , , tokenize = 'porter ascii')");
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("CREATE VIRTUAL TABLE docs USING fts5(title,  body , , tokenize = 'porter ascii')");
  *     [$create->statement->arguments[1]->text, $create->statement->arguments[2]->passed(), $create->statement->arguments[3]->text] // => ['body', false, "tokenize = 'porter ascii'"]
  */
 final class ModuleArgument implements Node

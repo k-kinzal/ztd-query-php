@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an added UNIQUE column
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t ADD COLUMN code TEXT UNIQUE') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A UNIQUE column cannot be added.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t ADD COLUMN code TEXT UNIQUE') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A UNIQUE column cannot be added.
  */
 final class AlterationRefused implements Diagnostic
 {

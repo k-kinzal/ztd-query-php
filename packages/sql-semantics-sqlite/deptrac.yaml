@@ -6,7 +6,7 @@ deptrac:
     - name: Core
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\(AnalysisContext|AnalysisException|Analyzer|IrAnalyzer|Query|SemanticsIR|Contract\\(Dialect|Mode))$'
+          value: '^SqlSemantics\\(AnalysisContext|AnalysisException|Analyzer|Query|SemanticsIR|Contract\\(Dialect|Mode))$'
     - name: DatabaseModel
       collectors:
         - type: classLike

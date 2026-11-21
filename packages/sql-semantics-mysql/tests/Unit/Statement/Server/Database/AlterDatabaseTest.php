@@ -16,12 +16,12 @@ final class AlterDatabaseTest extends TestCase
 {
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('ALTER DATABASE d COLLATE utf8mb4_bin', (new Semantics('mysql-5.7.44'))->analyze('alter schema d collate utf8mb4_bin')->toString());
+        self::assertSame('ALTER DATABASE d COLLATE utf8mb4_bin', (new Semantics('mysql-5.7.44'))->inspect('alter schema d collate utf8mb4_bin')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
+        $operation = (new Semantics())->inspect('ALTER DATABASE d COLLATE utf8mb4_bin');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

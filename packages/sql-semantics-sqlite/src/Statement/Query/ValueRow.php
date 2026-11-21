@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a row of values
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VALUES (1, 'a')");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("VALUES (1, 'a')");
  *     $query->statement->rows[0]->values[1]->value // => 'a'
  */
 final class ValueRow implements Node

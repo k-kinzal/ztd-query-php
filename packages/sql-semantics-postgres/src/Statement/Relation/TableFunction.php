@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  *
  * @visibility public
  * @example Reading the function of a FROM item
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM ROWS FROM (f() AS (a integer))');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM ROWS FROM (f() AS (a integer))');
  *     $query->statement->from->functions[0]->definitions[0]->name->value // => 'a'
  */
 final class TableFunction implements Node

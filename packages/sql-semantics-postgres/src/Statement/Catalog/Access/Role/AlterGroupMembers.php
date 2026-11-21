@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
  *
  * @visibility public
  * @example Reading the members removed from a group
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER GROUP staff DROP USER joe, ann');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER GROUP staff DROP USER joe, ann');
  *     [$operation->statement->action->value, count($operation->statement->members)] // => ['DROP', 2]
  */
 final class AlterGroupMembers implements Statement

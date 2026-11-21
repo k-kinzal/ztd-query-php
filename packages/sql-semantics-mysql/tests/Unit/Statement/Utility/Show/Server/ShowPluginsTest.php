@@ -16,13 +16,13 @@ final class ShowPluginsTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW PLUGINS');
+        $show = (new Semantics())->inspect('SHOW PLUGINS');
         self::assertInstanceOf(ShowPlugins::class, $show->statement);
         self::assertSame('Name', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PLUGINS', (new Semantics())->analyze('SHOW PLUGINS')->toString());
+        self::assertSame('SHOW PLUGINS', (new Semantics())->inspect('SHOW PLUGINS')->toString());
     }
 }

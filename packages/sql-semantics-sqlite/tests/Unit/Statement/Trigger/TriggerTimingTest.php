@@ -24,9 +24,9 @@ final class TriggerTimingTest extends TestCase
     public function testCasesAreReadFromTheTimingWordsOrAbsent(): void
     {
         $semantics = new Semantics();
-        $instead = $semantics->analyze('create trigger tr instead of insert on v begin select 1; end');
-        $before = $semantics->analyze('create trigger tr Before delete on t begin select 1; end');
-        $none = $semantics->analyze('create trigger tr delete on t begin select 1; end');
+        $instead = $semantics->inspect('create trigger tr instead of insert on v begin select 1; end');
+        $before = $semantics->inspect('create trigger tr Before delete on t begin select 1; end');
+        $none = $semantics->inspect('create trigger tr delete on t begin select 1; end');
 
         self::assertInstanceOf(CreateTrigger::class, $instead->statement);
         self::assertSame(TriggerTiming::InsteadOf, $instead->statement->timing);

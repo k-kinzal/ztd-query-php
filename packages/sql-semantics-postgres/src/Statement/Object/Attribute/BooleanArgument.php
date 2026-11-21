@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading an attribute given alone
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = f, hashes, merges = off)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = f, hashes, merges = off)');
  *     [$operation->statement->definition[2]->value->value(), $operation->statement->definition[3]->value->value()] // => [true, false]
  * @example Rejecting a value that is not a Boolean
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('yes')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

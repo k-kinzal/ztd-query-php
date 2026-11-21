@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW COUNT(*) WARNINGS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW COUNT(*) WARNINGS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['@@session.warning_count', 'SHOW COUNT(*) WARNINGS']
  */
 final class ShowWarningCount implements Statement

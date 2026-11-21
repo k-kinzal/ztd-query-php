@@ -16,13 +16,13 @@ final class CallTest extends TestCase
 {
     public function testDeriveStatementLeavesTheRowOpenOnTheProcedure(): void
     {
-        $operation = (new Semantics())->analyze('CALL app.p(1, b => 2)');
+        $operation = (new Semantics())->inspect('CALL app.p(1, b => 2)');
         self::assertSame([false, ['the signature of routine p']], [$operation->shape()?->complete(), array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\MissingInput $missing): string => $missing->describe(), $operation->shape()->missing ?? [])]);
     }
 
     public function testDeriveStatementDerivesTheArguments(): void
     {
-        $operation = (new Semantics())->analyze("CALL p('a' || 1)");
+        $operation = (new Semantics())->inspect("CALL p('a' || 1)");
         self::assertInstanceOf(Call::class, $operation->statement);
         self::assertTrue($operation->facts->covers($operation->statement->call));
         self::assertSame([], $operation->facts->diagnostics);
@@ -30,6 +30,6 @@ final class CallTest extends TestCase
 
     public function testRenderWritesTheCall(): void
     {
-        self::assertSame('CALL s.p(1, x => 2)', (new Semantics())->analyze('call S.p(1, x => 2)')->toString());
+        self::assertSame('CALL s.p(1, x => 2)', (new Semantics())->inspect('call S.p(1, x => 2)')->toString());
     }
 }

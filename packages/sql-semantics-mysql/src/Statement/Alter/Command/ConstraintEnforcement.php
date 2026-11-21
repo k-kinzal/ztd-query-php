@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  *
  * @visibility public
  * @example Suspending a check constraint
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
  *     [$alter->statement->commands[0]->enforced, $alter->toString()] // => [false, 'ALTER TABLE t ALTER CHECK c NOT ENFORCED']
  */
 final class ConstraintEnforcement implements AlterCommand

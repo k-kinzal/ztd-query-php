@@ -17,8 +17,8 @@ final class DeclaredTableTest extends TestCase
     public function testTableIsTheDeclarationObjectOfTheContext(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
         $resolution = $query->facts->relation($query->singleNamedInput())->table;
 
@@ -29,8 +29,8 @@ final class DeclaredTableTest extends TestCase
     public function testTableIsFoundThroughAQualifiedName(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM main.t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM main.t', [$table]);
 
         self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }

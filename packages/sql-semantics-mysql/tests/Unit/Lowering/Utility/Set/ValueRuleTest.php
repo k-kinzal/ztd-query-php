@@ -19,13 +19,13 @@ final class ValueRuleTest extends TestCase
 {
     public function testValueLowersTheKeywords(): void
     {
-        self::assertSame('SET a = ON, b = ALL, c = BINARY', (new Semantics('mysql-5.6.51'))->inspect('set a = on, b = all, c = binary')->toString());
-        self::assertSame('SET a = ROW, b = SYSTEM', (new Semantics())->inspect('set a = row, b = system')->toString());
+        self::assertSame('SET a = ON, b = ALL, c = BINARY', (new Semantics('mysql-5.6.51'))->diagnose('set a = on, b = all, c = binary')->toString());
+        self::assertSame('SET a = ROW, b = SYSTEM', (new Semantics())->diagnose('set a = row, b = system')->toString());
     }
 
     public function testWordLowersABareName(): void
     {
-        $set = (new Semantics())->inspect('SET @@a = b, @@c = (d)');
+        $set = (new Semantics())->diagnose('SET @@a = b, @@c = (d)');
         self::assertInstanceOf(SetVariables::class, $set->statement);
         self::assertInstanceOf(SystemAssignment::class, $set->statement->items[1]);
         self::assertNotInstanceOf(BareName::class, $set->statement->items[1]->value);

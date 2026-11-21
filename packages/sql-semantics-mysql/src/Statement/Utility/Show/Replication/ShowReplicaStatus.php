@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW REPLICA STATUS FOR CHANNEL 'c'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW REPLICA STATUS FOR CHANNEL 'c'");
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Replica_IO_State', "SHOW REPLICA STATUS FOR CHANNEL 'c'"]
  */
 final class ShowReplicaStatus implements Statement

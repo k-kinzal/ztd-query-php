@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Multiple primary key defined.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Multiple primary key defined.
  */
 final class MultiplePrimaryKeys implements Diagnostic
 {

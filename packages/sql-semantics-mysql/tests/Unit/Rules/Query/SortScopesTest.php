@@ -46,7 +46,7 @@ final class SortScopesTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT b AS a FROM t ORDER BY a, 1, b', [$t]);
+        $operation = $semantics->inspect('SELECT b AS a FROM t ORDER BY a, 1, b', [$t]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($operation->statement->orderBy[0]->expression)->resolution);

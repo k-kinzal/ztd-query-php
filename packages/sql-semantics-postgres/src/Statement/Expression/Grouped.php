@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Keeping the parentheses written
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
  */
 final class Grouped implements Scalar, OutputNaming
 {

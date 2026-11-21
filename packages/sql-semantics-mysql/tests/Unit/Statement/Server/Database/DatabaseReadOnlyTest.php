@@ -17,7 +17,7 @@ final class DatabaseReadOnlyTest extends TestCase
 {
     public function testRenderWritesTheValue(): void
     {
-        self::assertSame('ALTER DATABASE d READ ONLY 0', (new Semantics())->analyze('alter database d read only 0')->toString());
+        self::assertSame('ALTER DATABASE d READ ONLY 0', (new Semantics())->inspect('alter database d read only 0')->toString());
     }
 
     public function testReadOnlyTellsWhetherTheNumberIsNotZero(): void

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping an offset written before the limit
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 OFFSET 1 LIMIT 2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 OFFSET 1 LIMIT 2');
  *     [$query->statement->options->limit->offsetFirst, $query->toString()] // => [true, 'SELECT 1 OFFSET 1 LIMIT 2']
  * @example Refusing an empty limit
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit() // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

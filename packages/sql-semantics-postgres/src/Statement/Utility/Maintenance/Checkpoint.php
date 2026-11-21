@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Writing a checkpoint request
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('checkpoint')->toString() // => 'CHECKPOINT'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('checkpoint')->toString() // => 'CHECKPOINT'
  */
 final class Checkpoint implements Statement
 {

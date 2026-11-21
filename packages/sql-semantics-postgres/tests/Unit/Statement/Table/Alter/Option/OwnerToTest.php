@@ -15,7 +15,7 @@ final class OwnerToTest extends TestCase
     public function testDeriveClauseHasNoOperand(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t OWNER TO bob', []);
+        $statement = $semantics->diagnose('ALTER TABLE t OWNER TO bob', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class OwnerToTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER VIEW v OWNER TO SESSION_USER', []);
+        $statement = $semantics->diagnose('ALTER VIEW v OWNER TO SESSION_USER', []);
         self::assertSame('ALTER VIEW v OWNER TO SESSION_USER', $statement->toString());
     }
 }

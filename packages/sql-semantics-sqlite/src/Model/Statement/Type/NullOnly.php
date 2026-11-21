@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Typing a bare NULL
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT NULL');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT NULL');
  *     $operation->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly // => true
  */
 final class NullOnly implements TypeFact

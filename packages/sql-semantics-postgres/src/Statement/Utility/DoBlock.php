@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  *
  * @visibility public
  * @example Reading the code of an anonymous block
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DO $$BEGIN NULL; END$$ LANGUAGE plpgsql');
  *     [$operation->statement->code()?->value, $operation->statement->language()?->name()] // => ['BEGIN NULL; END', 'plpgsql']
  * @example Refusing a block without items
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

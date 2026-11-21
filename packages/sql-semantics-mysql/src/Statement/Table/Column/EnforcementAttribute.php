@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT CHECK (a > 0) NOT ENFORCED)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT CHECK (a > 0) NOT ENFORCED)');
  *     $create->statement->elements[0]->specification->attributes[1]->enforced // => false
  */
 final class EnforcementAttribute implements ColumnAttribute

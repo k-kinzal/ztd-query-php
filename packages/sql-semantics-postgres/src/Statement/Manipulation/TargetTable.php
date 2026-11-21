@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  *
  * @visibility public
  * @example Reading the table a statement writes to
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE ONLY app.t AS x SET a = 1');
+ *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('UPDATE ONLY app.t AS x SET a = 1');
  *     [$update->statement->target->name()->schema?->value, $update->statement->target->table->only, $update->statement->target->alias()?->value] // => ['app', true, 'x']
  */
 final class TargetTable implements NamedRelation

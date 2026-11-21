@@ -16,11 +16,11 @@ final class CreateRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('CREATE ROLE r')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('CREATE ROLE r')->facts->diagnostics);
     }
 
     public function testRenderWritesTheRoles(): void
     {
-        self::assertSame('CREATE ROLE IF NOT EXISTS r1, r2@h', (new Semantics())->analyze('create role if not exists r1, r2@h')->toString());
+        self::assertSame('CREATE ROLE IF NOT EXISTS r1, r2@h', (new Semantics())->inspect('create role if not exists r1, r2@h')->toString());
     }
 }

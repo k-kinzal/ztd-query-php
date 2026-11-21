@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an insert of the defaults
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT DEFAULT VALUES');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT DEFAULT VALUES');
  *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsertDefaults // => true
  */
 final class MergeInsertDefaults implements Node

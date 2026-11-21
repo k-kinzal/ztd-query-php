@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading the type of an integer constant too large for 32 bits
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 3000000000');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 3000000000');
  *     $query->field(0)->type->descriptor->name() // => 'bigint'
  */
 final class Constant implements Scalar, OutputNaming, IntegerValued

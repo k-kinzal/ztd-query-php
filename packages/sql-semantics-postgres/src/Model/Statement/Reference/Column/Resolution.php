@@ -12,8 +12,8 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column;
  * @visibility public
  * @example Reading the resolution of a column use
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->resolution instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn // => true
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->resolution instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn // => true
  */
 interface Resolution
 {

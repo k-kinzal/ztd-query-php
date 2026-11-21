@@ -16,8 +16,8 @@ final class AlterTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -27,8 +27,8 @@ final class AlterTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t DROP b', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t DROP b', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $statement->facts->relation($n1)->table;
@@ -39,7 +39,7 @@ final class AlterTableTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE IF EXISTS ONLY s.t ADD COLUMN d int, DROP COLUMN e', []);
+        $statement = $semantics->diagnose('ALTER TABLE IF EXISTS ONLY s.t ADD COLUMN d int, DROP COLUMN e', []);
         self::assertSame('ALTER TABLE IF EXISTS ONLY s.t ADD d INT, DROP e', $statement->toString());
     }
 

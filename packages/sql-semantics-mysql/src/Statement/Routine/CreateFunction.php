@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a function definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE FUNCTION twice(a INT) RETURNS BIGINT DETERMINISTIC RETURN a * 2');
  *     [$create->statement->returns->name(), $create->facts->diagnostics] // => ['BIGINT', []]
  */
 final class CreateFunction implements Statement

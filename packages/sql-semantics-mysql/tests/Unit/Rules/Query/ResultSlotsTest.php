@@ -53,7 +53,7 @@ final class ResultSlotsTest extends TestCase
 
     public function testValuesReportsARowAsAValue(): void
     {
-        $operation = (new Semantics())->inspect('VALUES ROW((1, 2))');
+        $operation = (new Semantics())->diagnose('VALUES ROW((1, 2))');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -70,7 +70,7 @@ final class ResultSlotsTest extends TestCase
 
     public function testCombineKeepsTheInputsAnUnnamedLeftColumnDependsOn(): void
     {
-        $operation = (new Semantics())->inspect("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
+        $operation = (new Semantics())->diagnose("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Dependent::class, $operation->field(0)->type);

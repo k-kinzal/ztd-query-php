@@ -31,10 +31,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
  *
  * @visibility public
  * @example Reading the query of an INSERT
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT INTO t (a) SELECT b FROM u');
+ *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('INSERT INTO t (a) SELECT b FROM u');
  *     [$insert->statement->query->from->name->name->value, $insert->toString()] // => ['u', 'INSERT INTO t (a) SELECT b FROM u']
  * @example Refusing a bare VALUES clause as the query
- *     $rows = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('VALUES (1)')->statement;
+ *     $rows = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('VALUES (1)')->statement;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t')))), $rows) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class InsertSelect implements Statement

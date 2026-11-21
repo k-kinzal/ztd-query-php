@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading the targets
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a, b FROM t INTO @x, y');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a, b FROM t INTO @x, y');
  *     [$query->statement->into->targets[0]->name->value, $query->statement->into->targets[1]->name->value] // => ['x', 'y']
  */
 final class IntoVariables implements IntoDestination

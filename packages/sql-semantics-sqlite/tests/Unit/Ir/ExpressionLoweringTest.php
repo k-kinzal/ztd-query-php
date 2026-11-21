@@ -21,7 +21,7 @@ final class ExpressionLoweringTest extends TestCase
 {
     public function testLowerPreservesArithmeticOperation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT (2 - 3)');
+        $operation = (new Semantics())->inspect('SELECT (2 - 3)');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $result = $select->columns[0];

@@ -20,7 +20,7 @@ final class StatementBench
     public function benchSelect(): void
     {
         $semantics = new Semantics();
-        $semantics->analyze('SELECT t.a, count(*) AS n FROM t LEFT JOIN u USING (id) WHERE t.b > 1 GROUP BY t.a ORDER BY n DESC LIMIT 10');
+        $semantics->inspect('SELECT t.a, count(*) AS n FROM t LEFT JOIN u USING (id) WHERE t.b > 1 GROUP BY t.a ORDER BY n DESC LIMIT 10');
     }
 
     /**
@@ -29,6 +29,6 @@ final class StatementBench
     public function benchInsert(): void
     {
         $semantics = new Semantics();
-        $semantics->analyze("INSERT INTO items (id, name) VALUES (1, 'example') ON CONFLICT (id) DO UPDATE SET name = excluded.name RETURNING id");
+        $semantics->inspect("INSERT INTO items (id, name) VALUES (1, 'example') ON CONFLICT (id) DO UPDATE SET name = excluded.name RETURNING id");
     }
 }

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Reading the target of SELECT INTO
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a INTO TEMP TABLE t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS a INTO TEMP TABLE t');
  *     [$query->statement->into->table->name->value, $query->statement->into->persistence->value, $query->toString()] // => ['t', 'TEMP', 'SELECT 1 AS a INTO TEMP t']
  */
 final class IntoClause implements Node

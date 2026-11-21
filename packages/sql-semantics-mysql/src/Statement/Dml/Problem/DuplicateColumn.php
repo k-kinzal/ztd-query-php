@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the column written twice
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column 'a' specified twice
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column 'a' specified twice
  */
 final class DuplicateColumn implements Diagnostic
 {

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
  *
  * @visibility public
  * @example Reading the terms of a unique constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b, UNIQUE (a, b))');
  *     count($create->statement->constraints[0]->items[0]->terms) // => 2
  */
 final class TableUnique implements TableConstraint

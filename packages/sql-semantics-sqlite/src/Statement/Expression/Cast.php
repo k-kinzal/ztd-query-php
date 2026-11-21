@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the type of a CAST
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(a AS VARCHAR(10)) FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT CAST(a AS VARCHAR(10)) FROM t');
  *     [$query->statement->columns[0]->expression->target->text(), $query->field(0)->type->descriptor] // => ['VARCHAR', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
  */
 final class Cast implements Scalar

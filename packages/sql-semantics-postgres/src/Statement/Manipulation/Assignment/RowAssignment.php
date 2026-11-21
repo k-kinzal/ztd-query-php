@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a multiple-column assignment
- *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t SET (a, b) = (1, 2)');
+ *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('UPDATE t SET (a, b) = (1, 2)');
  *     count($update->statement->assignments[0]->columns) // => 2
  * @example Refusing an empty column list
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment([], new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

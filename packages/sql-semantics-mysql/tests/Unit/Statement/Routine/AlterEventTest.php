@@ -31,8 +31,8 @@ final class AlterEventTest extends TestCase
     public function testDeriveStatementResolvesTheLocalVariablesOfTheBody(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->inspect('ALTER EVENT e ON SCHEDULE EVERY 1 HOUR DO BEGIN DECLARE v INT DEFAULT 1; UPDATE t SET b = v WHERE a = v; END', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->diagnose('ALTER EVENT e ON SCHEDULE EVERY 1 HOUR DO BEGIN DECLARE v INT DEFAULT 1; UPDATE t SET b = v WHERE a = v; END', [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
@@ -40,15 +40,15 @@ final class AlterEventTest extends TestCase
     public function testDeriveStatementReportsUnknownNamesOfTheScheduleAndTheBody(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->inspect('ALTER EVENT e ON SCHEDULE AT a DO DELETE FROM t WHERE zz = 1', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->diagnose('ALTER EVENT e ON SCHEDULE AT a DO DELETE FROM t WHERE zz = 1', [$table]);
 
         self::assertSame(['Column a does not exist.', 'Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsAnAlterationWithoutClauses(): void
     {
-        $alter = (new Semantics())->inspect('ALTER EVENT e');
+        $alter = (new Semantics())->diagnose('ALTER EVENT e');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterEvent::class, $statement);
 
@@ -69,14 +69,14 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $alter = (new Semantics())->inspect('ALTER EVENT e DO ' . $body);
+        $alter = (new Semantics())->diagnose('ALTER EVENT e DO ' . $body);
 
         self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void
     {
-        self::assertSame([], (new Semantics())->inspect('ALTER EVENT e DO ALTER EVENT f ENABLE')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose('ALTER EVENT e DO ALTER EVENT f ENABLE')->facts->diagnostics);
     }
 
     /**
@@ -98,7 +98,7 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerRenderWritesTheChanges')]
     public function testRenderWritesTheChanges(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedAlteration(): void
@@ -108,7 +108,7 @@ final class AlterEventTest extends TestCase
         (new AlterEvent(new QualifiedName(new Name('e')), null, null, null, EventStatus::Disable))->render($out);
 
         self::assertSame('ALTER EVENT e DISABLE', (new Lexical())->join($out->pieces()));
-        self::assertSame('ALTER EVENT e', $semantics->inspect('ALTER EVENT e')->toString());
+        self::assertSame('ALTER EVENT e', $semantics->diagnose('ALTER EVENT e')->toString());
     }
 
     public function testANewNameWithACatalogIsRejected(): void

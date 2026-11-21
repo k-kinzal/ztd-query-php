@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  *
  * @visibility public
  * @example Clearing the version of a server
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SERVER s VERSION NULL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SERVER s VERSION NULL');
  *     $operation->toString() // => 'ALTER SERVER s VERSION NULL'
  */
 final class AlterForeignServer implements Statement

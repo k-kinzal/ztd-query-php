@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Reading a unique constraint
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int, UNIQUE NULLS DISTINCT (a) INCLUDE (b) DEFERRABLE)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int, b int, UNIQUE NULLS DISTINCT (a) INCLUDE (b) DEFERRABLE)');
  *     $create->toString() // => 'CREATE TABLE t (a INT, b INT, UNIQUE NULLS DISTINCT (a) INCLUDE (b) DEFERRABLE)'
  */
 final class TableUnique implements Constraint

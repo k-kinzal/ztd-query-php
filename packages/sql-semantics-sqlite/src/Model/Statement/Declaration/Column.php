@@ -17,8 +17,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  * @visibility public
  * @example Reaching the declared column from a query field
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
- *     $semantics->analyze('SELECT a FROM t', [$table])->field('a')->column() === $table->columns[0] // => true
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
+ *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->column() === $table->columns[0] // => true
  */
 final class Column
 {

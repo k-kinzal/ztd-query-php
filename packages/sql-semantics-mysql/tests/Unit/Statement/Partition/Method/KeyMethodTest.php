@@ -18,13 +18,13 @@ final class KeyMethodTest extends TestCase
     public function testDeriveMethodReportsAColumnTheTableDoesNotHave(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
 
-        self::assertSame(['Column q does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('ALTER TABLE t PARTITION BY KEY (a, q)', [$table])->facts->diagnostics));
+        self::assertSame(['Column q does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t PARTITION BY KEY (a, q)', [$table])->facts->diagnostics));
     }
 
     public function testRenderWritesLinearAndTheAlgorithm(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY LINEAR KEY ALGORITHM = 2 ()', (new Semantics())->inspect('alter table t partition by linear key algorithm=2 ()')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY LINEAR KEY ALGORITHM = 2 ()', (new Semantics())->diagnose('alter table t partition by linear key algorithm=2 ()')->toString());
     }
 }

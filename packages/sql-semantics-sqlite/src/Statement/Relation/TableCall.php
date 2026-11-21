@@ -34,7 +34,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
  *
  * @visibility public
  * @example Reading a table-valued function call
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT * FROM json_each('[1]') AS j", []);
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT * FROM json_each('[1]') AS j", []);
  *     [$query->statement->from->name->name->value, count($query->statement->from->arguments), $query->shape()->missing[0]->describe()] // => ['json_each', 1, 'the signature of routine json_each']
  */
 final class TableCall implements Relation

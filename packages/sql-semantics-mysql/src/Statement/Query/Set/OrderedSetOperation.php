@@ -43,7 +43,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
  *
  * @visibility public
  * @example Reading the ordering of a 5.6 union written after the locking clause of its last SELECT
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->inspect('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1)');
  *     $union = $query->statement->items[0]->expression->query;
  *     [count($union->right->locking), count($union->orderBy)] // => [1, 1]
  * @example Refusing a last SELECT without clauses of its own

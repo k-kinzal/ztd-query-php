@@ -19,14 +19,14 @@ final class LockTablesTest extends TestCase
 {
     public function testRenderWritesTheLocks(): void
     {
-        self::assertSame('LOCK TABLES t READ, u WRITE', (new Semantics())->inspect('lock table t read, u write')->toString());
+        self::assertSame('LOCK TABLES t READ, u WRITE', (new Semantics())->diagnose('lock table t read, u write')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $lock = $semantics->inspect('LOCK TABLES t READ, u WRITE', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $lock = $semantics->diagnose('LOCK TABLES t READ, u WRITE', [$table]);
         self::assertInstanceOf(LockTables::class, $lock->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $lock->facts->relation($lock->statement->locks[0])->table);
@@ -35,7 +35,7 @@ final class LockTablesTest extends TestCase
 
     public function testDeriveStatementReportsARepeatedAlias(): void
     {
-        $lock = (new Semantics())->inspect('LOCK TABLES t READ, u AS t WRITE');
+        $lock = (new Semantics())->diagnose('LOCK TABLES t READ, u AS t WRITE');
 
         self::assertInstanceOf(NonUniqueTable::class, $lock->facts->diagnostics[0]);
     }

@@ -16,13 +16,13 @@ final class ShowProcedureCodeTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->inspect('SHOW PROCEDURE CODE db.x');
+        $show = (new Semantics())->diagnose('SHOW PROCEDURE CODE db.x');
         self::assertInstanceOf(ShowProcedureCode::class, $show->statement);
         self::assertSame('Pos', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PROCEDURE CODE db.x', (new Semantics())->inspect('SHOW PROCEDURE CODE db.x')->toString());
+        self::assertSame('SHOW PROCEDURE CODE db.x', (new Semantics())->diagnose('SHOW PROCEDURE CODE db.x')->toString());
     }
 }

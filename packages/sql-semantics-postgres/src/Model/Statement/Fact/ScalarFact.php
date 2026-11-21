@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
  *
  * @visibility public
  * @example Reading the facts of an expression
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT NULL');
  *     $query->facts->scalar($query->field(0)->expression)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
  */
 final class ScalarFact

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW FULL PROCESSLIST');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW FULL PROCESSLIST');
  *     [$show->statement->full, $show->toString()] // => [true, 'SHOW FULL PROCESSLIST']
  */
 final class ShowProcesslist implements Statement

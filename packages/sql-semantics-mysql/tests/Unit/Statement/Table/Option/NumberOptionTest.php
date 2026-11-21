@@ -17,7 +17,7 @@ final class NumberOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) STATS_PERSISTENT = DEFAULT MAX_ROWS 10');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) STATS_PERSISTENT = DEFAULT MAX_ROWS 10');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

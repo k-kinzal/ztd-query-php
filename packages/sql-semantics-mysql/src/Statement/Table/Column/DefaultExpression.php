@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the clause of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TIMESTAMP DEFAULT (NOW()))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a TIMESTAMP DEFAULT (NOW()))');
  *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression // => true
  */
 final class DefaultExpression implements ColumnAttribute

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
  *
  * @visibility public
  * @example Inserting the defaults
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('insert into t default values returning *');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('insert into t default values returning *');
  *     $insert->toString() // => 'INSERT INTO t DEFAULT VALUES RETURNING *'
  */
 final class InsertDefaults implements Modification

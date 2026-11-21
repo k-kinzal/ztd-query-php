@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('repair table t quick use_frm');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('repair table t quick use_frm');
  *     [$statement->toString(), $statement->statement->options[1] === \SqlSemantics\Platform\MySql\Statement\Server\RepairOption::UseFrm] // => ['REPAIR TABLE t QUICK USE_FRM', true]
  */
 final class RepairTable implements Statement

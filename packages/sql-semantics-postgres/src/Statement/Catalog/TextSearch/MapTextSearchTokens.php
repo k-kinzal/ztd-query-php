@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Adding a mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple');
  *     [count($operation->statement->tokens), $operation->toString()] // => [2, 'ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple']
  */
 final class MapTextSearchTokens implements Statement

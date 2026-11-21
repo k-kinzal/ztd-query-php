@@ -24,7 +24,7 @@ final class OperationTest extends TestCase
 {
     public function testToStringRendersFromTheStructureAndNotFromTheInput(): void
     {
-        $operation = (new Semantics())->analyze('select   a  ,b from   t where a>1 /* c */');
+        $operation = (new Semantics())->inspect('select   a  ,b from   t where a>1 /* c */');
 
         self::assertSame('SELECT a, b FROM t WHERE a > 1', $operation->toString());
     }
@@ -56,7 +56,7 @@ final class OperationTest extends TestCase
     {
         $semantics = new Semantics();
 
-        $operation = $semantics->analyze('SELECT 1');
+        $operation = $semantics->inspect('SELECT 1');
 
         self::assertSame($semantics->profile(), $operation->profile());
         self::assertSame($operation->context->profile, $operation->profile());
@@ -64,22 +64,22 @@ final class OperationTest extends TestCase
 
     public function testDeclarationsAnswerTheTablesAStatementProvides(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
 
         self::assertCount(1, $operation->declarations());
         self::assertSame('t', $operation->declarations()[0]->name->name->value);
         self::assertSame(['a', 'b'], array_map(static fn ($column): string => $column->name->value, $operation->declarations()[0]->columns));
-        self::assertSame([], (new Semantics())->analyze('SELECT 1')->declarations());
+        self::assertSame([], (new Semantics())->inspect('SELECT 1')->declarations());
     }
 
     public function testShapeIsNullWhenTheStatementReturnsNoRows(): void
     {
-        self::assertNull((new Semantics())->analyze('CREATE TABLE t (a INTEGER)')->shape());
+        self::assertNull((new Semantics())->inspect('CREATE TABLE t (a INTEGER)')->shape());
     }
 
     public function testShapeStaysOpenWhileAStarCannotBeExpanded(): void
     {
-        $shape = (new Semantics())->analyze('SELECT *, 1 FROM t')->shape();
+        $shape = (new Semantics())->inspect('SELECT *, 1 FROM t')->shape();
 
         self::assertNotNull($shape);
         self::assertFalse($shape->complete());
@@ -90,14 +90,14 @@ final class OperationTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertNull($semantics->analyze('SELECT * FROM t')->fields());
-        self::assertNull($semantics->analyze('DELETE FROM t')->fields());
-        self::assertCount(2, $semantics->analyze('SELECT 1, 2')->fields() ?? []);
+        self::assertNull($semantics->inspect('SELECT * FROM t')->fields());
+        self::assertNull($semantics->inspect('DELETE FROM t')->fields());
+        self::assertCount(2, $semantics->inspect('SELECT 1, 2')->fields() ?? []);
     }
 
     public function testFieldFindsByPositionAndByUniqueName(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 AS a, 2 AS b');
+        $operation = (new Semantics())->inspect('SELECT 1 AS a, 2 AS b');
 
         self::assertSame(1, $operation->field('b')->position);
         self::assertSame('a', $operation->field(0)->name?->value);
@@ -105,7 +105,7 @@ final class OperationTest extends TestCase
 
     public function testFieldRefusesANameSeveralFieldsShare(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1 AS a, 2 AS a');
+        $operation = (new Semantics())->inspect('SELECT 1 AS a, 2 AS a');
 
         $this->expectExceptionMessage('The name does not denote exactly one output field.');
 
@@ -114,7 +114,7 @@ final class OperationTest extends TestCase
 
     public function testFieldRefusesAPositionOfAnOpenShape(): void
     {
-        $operation = (new Semantics())->analyze('SELECT * FROM t');
+        $operation = (new Semantics())->inspect('SELECT * FROM t');
 
         $this->expectExceptionMessage('The statement has no complete field list.');
 
@@ -124,17 +124,17 @@ final class OperationTest extends TestCase
     public function testLookupFieldTellsTheOutcomesApart(): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->analyze('SELECT 1 AS a, 2 AS a, 3 AS b');
+        $operation = $semantics->inspect('SELECT 1 AS a, 2 AS a, 3 AS b');
 
         self::assertInstanceOf(UniqueField::class, $operation->lookupField('b'));
         self::assertInstanceOf(AmbiguousFields::class, $operation->lookupField('a'));
         self::assertInstanceOf(AbsentField::class, $operation->lookupField('c'));
-        self::assertInstanceOf(DependentField::class, $semantics->analyze('SELECT * FROM t')->lookupField('a'));
+        self::assertInstanceOf(DependentField::class, $semantics->inspect('SELECT * FROM t')->lookupField('a'));
     }
 
     public function testLookupFieldRefusesAStatementWithoutRows(): void
     {
-        $operation = (new Semantics())->analyze('DELETE FROM t');
+        $operation = (new Semantics())->inspect('DELETE FROM t');
 
         $this->expectExceptionMessage('The statement returns no rows.');
 
@@ -145,14 +145,14 @@ final class OperationTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(JoinChain::class, $semantics->analyze('SELECT a FROM t JOIN u ON t.a = u.a')->inputRelation());
-        self::assertNull($semantics->analyze('SELECT 1')->inputRelation());
-        self::assertNull($semantics->analyze('DELETE FROM t')->inputRelation());
+        self::assertInstanceOf(JoinChain::class, $semantics->inspect('SELECT a FROM t JOIN u ON t.a = u.a')->inputRelation());
+        self::assertNull($semantics->inspect('SELECT 1')->inputRelation());
+        self::assertNull($semantics->inspect('DELETE FROM t')->inputRelation());
     }
 
     public function testSingleNamedInputAnswersTheOnlyNamedRelation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t AS x');
+        $operation = (new Semantics())->inspect('SELECT a FROM t AS x');
 
         self::assertSame('t', $operation->singleNamedInput()->name()->name->value);
         self::assertSame('x', $operation->singleNamedInput()->alias()?->value);
@@ -160,7 +160,7 @@ final class OperationTest extends TestCase
 
     public function testSingleNamedInputRefusesAJoin(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t, u');
+        $operation = (new Semantics())->inspect('SELECT a FROM t, u');
 
         $this->expectExceptionMessage('The statement does not read from exactly one named relation.');
 
@@ -169,7 +169,7 @@ final class OperationTest extends TestCase
 
     public function testSingleNamedInputRefusesADerivedRelation(): void
     {
-        $operation = (new Semantics())->analyze('SELECT x FROM (SELECT 1 AS x)');
+        $operation = (new Semantics())->inspect('SELECT x FROM (SELECT 1 AS x)');
 
         $this->expectExceptionMessage('The statement does not read from exactly one named relation.');
 

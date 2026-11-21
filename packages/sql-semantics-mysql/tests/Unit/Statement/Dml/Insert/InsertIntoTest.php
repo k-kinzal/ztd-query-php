@@ -19,8 +19,8 @@ final class InsertIntoTest extends TestCase
 {
     public function testRenderWritesVerbModifiersAndTable(): void
     {
-        self::assertSame('INSERT HIGH_PRIORITY IGNORE INTO t PARTITION (p) (a) VALUES (1)', (new Semantics())->analyze('insert high_priority ignore t partition (p) (a) values (1)')->toString());
-        self::assertSame('REPLACE DELAYED INTO t VALUES (1)', (new Semantics('mysql-5.6.51'))->analyze('replace delayed t value (1)')->toString());
+        self::assertSame('INSERT HIGH_PRIORITY IGNORE INTO t PARTITION (p) (a) VALUES (1)', (new Semantics())->inspect('insert high_priority ignore t partition (p) (a) values (1)')->toString());
+        self::assertSame('REPLACE DELAYED INTO t VALUES (1)', (new Semantics('mysql-5.6.51'))->inspect('replace delayed t value (1)')->toString());
     }
 
     public function testRenderRejectsReplaceWithIgnore(): void

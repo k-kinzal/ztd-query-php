@@ -19,7 +19,7 @@ final class ConditionalColumnTest extends TestCase
 {
     public function testRelationsAndMissingNameTheUndeclaredOccurrence(): void
     {
-        $query = (new Semantics())->analyze('SELECT a FROM t');
+        $query = (new Semantics())->inspect('SELECT a FROM t');
 
         $resolution = $query->field('a')->resolution;
 
@@ -35,8 +35,8 @@ final class ConditionalColumnTest extends TestCase
     public function testCandidatesKeepAKnownSlotWhileANearerOccurrenceIsUnknown(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TEMP TABLE t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t, u', $semantics->context([$table], false));
+        $table = $semantics->inspect('CREATE TEMP TABLE t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t, u', $semantics->context([$table], false));
         $join = $query->inputRelation();
 
         $resolution = $query->field('a')->resolution;

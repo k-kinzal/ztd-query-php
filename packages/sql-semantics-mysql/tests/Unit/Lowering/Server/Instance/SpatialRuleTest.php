@@ -16,11 +16,11 @@ final class SpatialRuleTest extends TestCase
 {
     public function testStatementLowersOrReplace(): void
     {
-        self::assertSame("CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 7 NAME 'n' DEFINITION 'd'", (new Semantics())->analyze("create or replace spatial reference system 7 name 'n' definition 'd'")->toString());
+        self::assertSame("CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 7 NAME 'n' DEFINITION 'd'", (new Semantics())->inspect("create or replace spatial reference system 7 name 'n' definition 'd'")->toString());
     }
 
     public function testAttributesKeepsTheWrittenOrder(): void
     {
-        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 7 DESCRIPTION 'x' DEFINITION 'd' NAME 'n'", (new Semantics('mysql-8.0.44'))->analyze("create spatial reference system 7 description 'x' definition 'd' name 'n'")->toString());
+        self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 7 DESCRIPTION 'x' DEFINITION 'd' NAME 'n'", (new Semantics('mysql-8.0.44'))->inspect("create spatial reference system 7 description 'x' definition 'd' name 'n'")->toString());
     }
 }

@@ -17,14 +17,14 @@ final class ReorderTest extends TestCase
     public function testDeriveCommandResolvesTheColumnsInTheChangedTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->inspect('ALTER TABLE t ORDER BY a, x', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->diagnose('ALTER TABLE t ORDER BY a, x', [$table]);
 
         self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheDirections(): void
     {
-        self::assertSame('ALTER TABLE t ORDER BY a ASC, b DESC', (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t ORDER BY a ASC, b DESC')->toString());
+        self::assertSame('ALTER TABLE t ORDER BY a ASC, b DESC', (new Semantics('mysql-5.6.51'))->diagnose('ALTER TABLE t ORDER BY a ASC, b DESC')->toString());
     }
 }

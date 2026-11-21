@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\FetchCounts;
  *
  * @visibility public
  * @example Reading FETCH FIRST WITH TIES
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
  *     [$query->statement->options->limit->count->withTies, $query->toString()] // => [true, 'SELECT 1 ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES']
  * @example Refusing a count that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));

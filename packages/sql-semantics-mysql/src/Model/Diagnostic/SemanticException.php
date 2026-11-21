@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
  *
  * @visibility public
  * @example Rejecting a query that names a missing relation
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT * FROM t', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT * FROM t', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the domain of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT USAGE ON DOMAIN app.email TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT USAGE ON DOMAIN app.email TO joe');
  *     $operation->statement->target->names[0]->last()->value // => 'email'
  */
 final class TypesTarget implements PrivilegeTarget

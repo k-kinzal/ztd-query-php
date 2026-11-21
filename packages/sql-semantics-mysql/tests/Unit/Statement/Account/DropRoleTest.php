@@ -16,11 +16,11 @@ final class DropRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('DROP ROLE r')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('DROP ROLE r')->facts->diagnostics);
     }
 
     public function testRenderWritesTheRoles(): void
     {
-        self::assertSame('DROP ROLE IF EXISTS r1, r2', (new Semantics())->analyze('drop role if exists r1, r2')->toString());
+        self::assertSame('DROP ROLE IF EXISTS r1, r2', (new Semantics())->inspect('drop role if exists r1, r2')->toString());
     }
 }

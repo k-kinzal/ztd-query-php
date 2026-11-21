@@ -107,7 +107,7 @@ final class PlatformTest extends TestCase
 
         self::assertSame('`order`', $codec->name(new Name('order'), NameUse::Column));
         self::assertSame('t', $codec->name(new Name('t'), NameUse::Relation));
-        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics('mysql-8.4.7'))->analyze('SELECT `rank`, `order` FROM t')->toString());
+        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics('mysql-8.4.7'))->inspect('SELECT `rank`, `order` FROM t')->toString());
     }
 
     public function testLeafKeysReadTokensUnderTheLexicalSettings(): void

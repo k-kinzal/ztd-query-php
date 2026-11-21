@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example A primary key column is never NULL
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int PRIMARY KEY)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int PRIMARY KEY)');
  *     $create->declarations()[0]->columns[0]->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 final class ColumnPrimaryKey implements Constraint

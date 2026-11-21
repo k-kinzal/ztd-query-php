@@ -64,7 +64,7 @@ final class OptionRuleTest extends TestCase
     public function testAnalyzeNamesTheAnalyzeOption(): void
     {
         $rule = new OptionRule(new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172));
-        $option = $rule->analyze((new PostgreSqlParser('pg-17.2'))->parse('VACUUM ANALYSE')->find('analyze_keyword')[0]);
+        $option = $rule->inspect((new PostgreSqlParser('pg-17.2'))->parse('VACUUM ANALYSE')->find('analyze_keyword')[0]);
         self::assertSame([OptionKeyword::Analyse, null], [$option->name, $option->argument]);
     }
 
@@ -77,6 +77,6 @@ final class OptionRuleTest extends TestCase
     public function testWordsLowersOnlyTheWordsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        self::assertSame(['VACUUM FREEZE ANALYZE', 'VACUUM FULL VERBOSE'], [$semantics->analyze('VACUUM FREEZE ANALYZE')->toString(), $semantics->analyze('VACUUM FULL VERBOSE')->toString()]);
+        self::assertSame(['VACUUM FREEZE ANALYZE', 'VACUUM FULL VERBOSE'], [$semantics->inspect('VACUUM FREEZE ANALYZE')->toString(), $semantics->inspect('VACUUM FULL VERBOSE')->toString()]);
     }
 }

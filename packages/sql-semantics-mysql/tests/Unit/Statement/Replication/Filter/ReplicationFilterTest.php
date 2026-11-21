@@ -19,7 +19,7 @@ final class ReplicationFilterTest extends TestCase
 {
     public function testRenderWritesTablesAndTheEmptyList(): void
     {
-        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (a.b, c.d), REPLICATE_IGNORE_DB = ()', (new Semantics())->analyze('change replication filter replicate_do_table = (a.b, c.d), replicate_ignore_db = ()')->toString());
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (a.b, c.d), REPLICATE_IGNORE_DB = ()', (new Semantics())->inspect('change replication filter replicate_do_table = (a.b, c.d), replicate_ignore_db = ()')->toString());
     }
 
     public function testValuesRejectAnUnqualifiedTable(): void

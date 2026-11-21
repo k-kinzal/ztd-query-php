@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
  *
  * @visibility public
  * @example Reading the ignored identifier
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe SYSID 100');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE joe SYSID 100');
  *     [$operation->statement->options[0]->identifier->digits, $operation->statement->options[0]->option()] // => ['100', null]
  */
 final class RoleSystemId implements RoleOption

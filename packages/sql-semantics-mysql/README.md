@@ -37,20 +37,22 @@ composer require k-kinzal/sql-semantics-mysql
 
 ## Usage
 
+Call `Semantics::analyze()` for complete IR and `Semantics::inspect()` for diagnostic operations and declarations. The examples use inspection to show facts from the broader grammar. See the [complete IR scope](../sql-semantics/docs/semantics-ir.md).
+
 ```php
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INT NOT NULL PRIMARY KEY, name VARCHAR(40))');
-$query = $semantics->analyze('select id, upper(name) as label from users where id > 10', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INT NOT NULL PRIMARY KEY, name VARCHAR(40))');
+$query = $semantics->inspect('select id, upper(name) as label from users where id > 10', [$users]);
 
 $query->toString(); // => 'SELECT id, upper(`name`) AS label FROM users WHERE id > 10'
 $query->field('label')->type instanceof Known; // => true
 $query->field('label')->type->descriptor->name(); // => 'VARCHAR'
 $query->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('SELECT missing FROM users', [$users]); // throws SemanticException with message 'Column missing does not exist.'
+$semantics->inspect('SELECT missing FROM users', [$users]); // throws SemanticException with message 'Column missing does not exist.'
 ```
 
 See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md) for operations, facts, contexts, rendering and guarantees.
@@ -63,8 +65,8 @@ Each release is read with its own grammar and keywords, and version comments are
 use SqlSemantics\Platform\MySql\Semantics;
 
 (new Semantics('8.0.44'))->profile()->grammar->value; // => 'mysql-8.0.44'
-(new Semantics('mysql-8.4.7'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 1 + 2 AS n'
-(new Semantics('mysql-5.7.44'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 2 AS n'
+(new Semantics('mysql-8.4.7'))->inspect('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 1 + 2 AS n'
+(new Semantics('mysql-5.7.44'))->inspect('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 2 AS n'
 ```
 
 ### Session modes
@@ -81,8 +83,8 @@ Mode::fromString('ANSI')->toString(); // => 'ANSI_QUOTES,PIPES_AS_CONCAT,IGNORE_
 $default = new Semantics();
 $ansi = new Semantics(null, Mode::fromString('ANSI_QUOTES,PIPES_AS_CONCAT'));
 
-$default->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => "SELECT a FROM users WHERE 'name' = a OR b"
-$ansi->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => 'SELECT a FROM users WHERE `name` = a || b'
+$default->inspect('SELECT a FROM users WHERE "name" = a || b')->toString(); // => "SELECT a FROM users WHERE 'name' = a OR b"
+$ansi->inspect('SELECT a FROM users WHERE "name" = a || b')->toString(); // => 'SELECT a FROM users WHERE `name` = a || b'
 ```
 
 The mode is part of the language profile. A declaration analyzed under one mode cannot be used in a context of another mode. Rendered SQL is meant to be read under the mode it was rendered for.
@@ -98,11 +100,11 @@ use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 
 $semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('shop'));
-$users = $semantics->analyze('CREATE TABLE users (id INT)');
-$query = $semantics->analyze('SELECT id FROM shop.users', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id INT)');
+$query = $semantics->inspect('SELECT id FROM shop.users', [$users]);
 
 $query->facts->relation($query->inputRelation())->table instanceof DeclaredTable; // => true
-(new Semantics())->analyze('SHOW TABLES')->shape()->missing[0]->describe(); // => 'the session state: the current database'
+(new Semantics())->inspect('SHOW TABLES')->shape()->missing[0]->describe(); // => 'the session state: the current database'
 new Semantics(null, null, ParameterStyle::Native, new SearchPath('shop', 'other')); // throws InvalidArgumentException
 ```
 
@@ -116,8 +118,8 @@ use SqlSemantics\Platform\MySql\Semantics;
 
 $named = new Semantics(null, null, ParameterStyle::Named);
 
-$named->analyze('SELECT :id, ?')->field(0)->type->missing[0]->describe(); // => 'the value bound to parameter :id'
-(new Semantics())->analyze('SELECT :id'); // throws AnalysisException
+$named->inspect('SELECT :id, ?')->field(0)->type->missing[0]->describe(); // => 'the value bound to parameter :id'
+(new Semantics())->inspect('SELECT :id'); // throws AnalysisException
 ```
 
 ### Names
@@ -131,11 +133,11 @@ use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INT)');
+$users = $semantics->inspect('CREATE TABLE users (id INT)');
 
-$semantics->analyze('SELECT ID FROM users', [$users])->field(0)->resolution instanceof ResolvedColumn; // => true
-$semantics->analyze('SELECT id FROM USERS', [$users]); // throws SemanticException
-$semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); // => 'the session state: user variable @total'
+$semantics->inspect('SELECT ID FROM users', [$users])->field(0)->resolution instanceof ResolvedColumn; // => true
+$semantics->inspect('SELECT id FROM USERS', [$users]); // throws SemanticException
+$semantics->inspect('SELECT @total')->field(0)->type->missing[0]->describe(); // => 'the session state: user variable @total'
 ```
 
 ### Result column names
@@ -155,11 +157,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Shape\DependentField;
 
 $semantics = new Semantics();
 
-$query = $semantics->analyze('SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users', []);
+$query = $semantics->inspect('SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users', []);
 [$query->field(0)->name?->value, $query->field(3)->name?->value, $query->toString()]; // => ['1+1', 'NOW( )', 'SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users']
-$semantics->analyze('SELECT `1+1` FROM (SELECT 1+1) AS d', [])->field(0)->resolution instanceof ResolvedColumn; // => true
-$semantics->analyze("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof DependentField; // => true
-$semantics->analyze("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
+$semantics->inspect('SELECT `1+1` FROM (SELECT 1+1) AS d', [])->field(0)->resolution instanceof ResolvedColumn; // => true
+$semantics->inspect("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof DependentField; // => true
+$semantics->inspect("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
 ```
 
 ### Tables and views
@@ -170,11 +172,11 @@ A `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration 
 use SqlSemantics\Platform\MySql\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INT)');
-$view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+$table = $semantics->inspect('CREATE TABLE t (a INT)');
+$view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-$semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->value; // => 'Create View'
-$semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view]); // throws SemanticException with message 'v is not BASE TABLE.'
+$semantics->inspect('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->value; // => 'Create View'
+$semantics->inspect('ALTER TABLE v ADD COLUMN b INT', [$table, $view]); // throws SemanticException with message 'v is not BASE TABLE.'
 ```
 
 ### Generated columns
@@ -185,11 +187,11 @@ A column defined with `AS (expr)`, `VIRTUAL` or `STORED`, is declared generated 
 use SqlSemantics\Platform\MySql\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a INT, total INT AS (a * 2) STORED)');
+$table = $semantics->inspect('CREATE TABLE t (a INT, total INT AS (a * 2) STORED)');
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table]); // Returns a query
-$semantics->analyze('UPDATE t SET total = 3', [$table]); // throws SemanticException with message "The value specified for generated column 'total' in table 't' is not allowed."
+$semantics->inspect('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table]); // Returns a query
+$semantics->inspect('UPDATE t SET total = 3', [$table]); // throws SemanticException with message "The value specified for generated column 'total' in table 't' is not allowed."
 ```
 
 ## Limitations

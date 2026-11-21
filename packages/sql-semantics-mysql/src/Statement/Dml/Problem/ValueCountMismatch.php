@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a row with too many values
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a) VALUES (1), (2, 3)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t (a) VALUES (1), (2, 3)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column count doesn't match value count at row 2
  */
 final class ValueCountMismatch implements Diagnostic
 {

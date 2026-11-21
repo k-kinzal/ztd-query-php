@@ -17,7 +17,7 @@ final class KeyBlockSizeTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, KEY (a) KEY_BLOCK_SIZE = 8)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

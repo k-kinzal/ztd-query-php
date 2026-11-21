@@ -19,9 +19,9 @@ final class ExchangePartitionTest extends TestCase
     public function testDeriveCommandResolvesTheOtherTable(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (a INT)');
-        $u = $semantics->analyze('CREATE TABLE u (a INT)');
-        $alter = $semantics->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE u', [$t, $u]);
+        $t = $semantics->inspect('CREATE TABLE t (a INT)');
+        $u = $semantics->inspect('CREATE TABLE u (a INT)');
+        $alter = $semantics->inspect('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE u', [$t, $u]);
 
         self::assertInstanceOf(AlterTable::class, $alter->statement);
         self::assertEquals(new DeclaredTable($u->declarations()[0]), $alter->facts->relation($alter->statement->commands[0])->table);
@@ -29,6 +29,6 @@ final class ExchangePartitionTest extends TestCase
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE db.u WITHOUT VALIDATION', (new Semantics())->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE db.u WITHOUT VALIDATION')->toString());
+        self::assertSame('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE db.u WITHOUT VALIDATION', (new Semantics())->inspect('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE db.u WITHOUT VALIDATION')->toString());
     }
 }

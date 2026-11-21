@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a procedure call
- *     $call = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CALL shop.refresh(1, @x)');
+ *     $call = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CALL shop.refresh(1, @x)');
  *     [$call->statement->procedure->name->value, count($call->statement->arguments), $call->toString()] // => ['refresh', 2, 'CALL shop.refresh(1, @x)']
  */
 final class ProcedureCall implements Statement

@@ -27,7 +27,7 @@ final class WithClauseTest extends TestCase
     public function testBindAnswersTheScopeWithTheCommonTables(): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
+        $operation = $semantics->inspect('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
         $with = $operation->statement instanceof QueryExpression ? $operation->statement->with : null;
         $derivation = new Derivation($semantics->context());
 

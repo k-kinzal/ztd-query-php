@@ -23,7 +23,7 @@ final class SourceOptionTest extends TestCase
 
         self::assertSame(
             'CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = a@b, REQUIRE_TABLE_PRIMARY_KEY_CHECK = GENERATE, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_TLS_CIPHERSUITES = NULL, SOURCE_HEARTBEAT_PERIOD = 1.5',
-            (new Semantics())->analyze($sql)->toString(),
+            (new Semantics())->inspect($sql)->toString(),
         );
     }
 

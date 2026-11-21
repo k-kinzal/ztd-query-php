@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa recover convert xid");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa recover convert xid");
  *     [$xa->toString(), $xa->statement->convertXid] // => ["XA RECOVER CONVERT XID", true]
  */
 final class XaRecover implements Statement

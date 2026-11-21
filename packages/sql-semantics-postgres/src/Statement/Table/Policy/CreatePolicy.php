@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading a policy
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE POLICY p ON t AS RESTRICTIVE FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE POLICY p ON t AS RESTRICTIVE FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)');
  *     $statement->toString() // => 'CREATE POLICY p ON t AS restrictive FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)'
  */
 final class CreatePolicy implements Statement, Relation

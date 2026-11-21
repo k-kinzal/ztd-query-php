@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Typing WEIGHT_STRING()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT WEIGHT_STRING('ab' AS CHAR(4))");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT WEIGHT_STRING('ab' AS CHAR(4))");
  *     $query->field(0)->type->descriptor->name() // => 'VARBINARY'
  * @example Refusing levels after a binary cast
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast::Binary, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'), [new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction

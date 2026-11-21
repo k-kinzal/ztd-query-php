@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Assigning two threads
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set resource group batch for 14 15')->toString() // => 'SET RESOURCE GROUP batch FOR 14, 15'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('set resource group batch for 14 15')->toString() // => 'SET RESOURCE GROUP batch FOR 14, 15'
  */
 final class SetResourceGroup implements Statement
 {

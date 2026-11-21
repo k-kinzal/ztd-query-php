@@ -16,12 +16,12 @@ final class CheckpointTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CHECKPOINT');
+        $operation = (new Semantics())->inspect('CHECKPOINT');
         self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
     }
 
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('CHECKPOINT', (new Semantics())->analyze('checkpoint')->toString());
+        self::assertSame('CHECKPOINT', (new Semantics())->inspect('checkpoint')->toString());
     }
 }

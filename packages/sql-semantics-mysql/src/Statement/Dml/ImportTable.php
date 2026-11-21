@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the files of IMPORT TABLE
- *     $import = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("IMPORT TABLE FROM '/tmp/t1_*.sdi', '/tmp/t2.sdi'");
+ *     $import = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("IMPORT TABLE FROM '/tmp/t1_*.sdi', '/tmp/t2.sdi'");
  *     [count($import->statement->files), $import->toString()] // => [2, "IMPORT TABLE FROM '/tmp/t1_*.sdi', '/tmp/t2.sdi'"]
  */
 final class ImportTable implements Statement

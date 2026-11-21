@@ -18,8 +18,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Keeping a declaration that an unknown earlier schema could shadow
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE public.t (a INTEGER)')], false);
- *     $query = $semantics->analyze('SELECT a FROM t', $declarations);
+ *     $declarations = $semantics->context([$semantics->inspect('CREATE TABLE public.t (a INTEGER)')], false);
+ *     $query = $semantics->inspect('SELECT a FROM t', $declarations);
  *     count($query->facts->relation($query->inputRelation())->table->candidates) // => 1
  */
 final class ConditionalTable implements TableResolution

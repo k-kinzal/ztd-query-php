@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  *
  * @visibility public
  * @example Reading a comment on a column
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COMMENT ON COLUMN t.a IS 'key'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("COMMENT ON COLUMN t.a IS 'key'");
  *     [$operation->statement->kind->value, $operation->statement->comment?->value] // => ['COLUMN', 'key']
  */
 final class Comment implements Statement

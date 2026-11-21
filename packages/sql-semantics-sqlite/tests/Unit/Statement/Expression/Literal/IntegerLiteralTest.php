@@ -36,7 +36,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testDeriveScalarGivesIntegerWhenTheValueFits(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 1_000, 9223372036854775807', []);
+        $operation = (new Semantics())->inspect('SELECT 1_000, 9223372036854775807', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -53,7 +53,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testDeriveScalarGivesRealForALargerValue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT 9223372036854775808', []);
+        $operation = (new Semantics())->inspect('SELECT 9223372036854775808', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -66,7 +66,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsWithoutSeparators(): void
     {
-        self::assertSame('SELECT 1000 AS c1, 007 AS c2, 9223372036854775808 AS c3', (new Semantics())->analyze('select 1_000 AS c1, 007 AS c2, 9223372036854775808 AS c3')->toString());
+        self::assertSame('SELECT 1000 AS c1, 007 AS c2, 9223372036854775808 AS c3', (new Semantics())->inspect('select 1_000 AS c1, 007 AS c2, 9223372036854775808 AS c3')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

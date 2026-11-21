@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a column privilege
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT UPDATE (price) ON items TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT UPDATE (price) ON items TO joe');
  *     [$operation->statement->privileges[0]->privilege(), $operation->statement->privileges[0]->columns[0]->value] // => ['update', 'price']
  * @example Rejecting ALL without a column list as a privilege of its own
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::All) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

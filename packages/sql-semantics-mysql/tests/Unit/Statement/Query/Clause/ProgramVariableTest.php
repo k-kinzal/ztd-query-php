@@ -19,7 +19,7 @@ final class ProgramVariableTest extends TestCase
 {
     public function testDeriveScalarDependsOnTheStoredProgram(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a FROM t LIMIT n');
+        $operation = (new Semantics())->diagnose('SELECT a FROM t LIMIT n');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
@@ -30,6 +30,6 @@ final class ProgramVariableTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics())->inspect("SELECT a FROM t INTO x, 'select'")->toString());
+        self::assertSame('SELECT a FROM t INTO x, `select`', (new Semantics())->diagnose("SELECT a FROM t INTO x, 'select'")->toString());
     }
 }

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  *
  * @visibility public
  * @example Dropping a foreign key
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DROP FOREIGN KEY fk');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t DROP FOREIGN KEY fk');
  *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::ForeignKey, 'ALTER TABLE t DROP FOREIGN KEY fk']
  */
 final class DropElement implements AlterCommand

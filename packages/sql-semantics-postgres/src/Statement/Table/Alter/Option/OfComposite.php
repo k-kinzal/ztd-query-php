@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Making a table typed
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t OF person');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t OF person');
  *     $statement->statement->commands[0]->type->last()->value // => 'person'
  */
 final class OfComposite implements AlterCommand

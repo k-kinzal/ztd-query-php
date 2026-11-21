@@ -31,7 +31,7 @@ final class NullTestTest extends TestCase
     public function testDeriveScalarIsAnIntegerThatIsNeverNull(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->analyze('SELECT a ISNULL, b NOTNULL, b NOT NULL, NULL ISNULL, ? NOTNULL FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->inspect('SELECT a ISNULL, b NOTNULL, b NOT NULL, NULL ISNULL, ? NOTNULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $nullability = array_map(static fn (Field $field): Nullability => $field->nullability, $query->fields()->items ?? []);
 
         self::assertSame([Nullability::NotNull, Nullability::NotNull, Nullability::NotNull, Nullability::NotNull, Nullability::NotNull], $nullability);
@@ -44,7 +44,7 @@ final class NullTestTest extends TestCase
     public function testDeriveScalarRecordsTheFactOfTheOperand(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->analyze('SELECT b ISNULL FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->inspect('SELECT b ISNULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(NullTest::class, $test);
@@ -54,7 +54,7 @@ final class NullTestTest extends TestCase
 
     public function testRenderWritesEachForm(): void
     {
-        $query = (new Semantics())->analyze('select a isnull AS c1, a notnull AS c2, a not null AS c3 from t');
+        $query = (new Semantics())->inspect('select a isnull AS c1, a notnull AS c2, a not null AS c3 from t');
 
         self::assertSame('SELECT a ISNULL AS c1, a NOTNULL AS c2, a NOT NULL AS c3 FROM t', $query->toString());
     }
@@ -62,8 +62,8 @@ final class NullTestTest extends TestCase
     public function testRenderAppliesToAnOperandOfTheEqualityGroup(): void
     {
         $semantics = new Semantics();
-        $membership = $semantics->analyze('SELECT 1 IN (2) ISNULL');
-        $repeated = $semantics->analyze('SELECT 1 ISNULL ISNULL');
+        $membership = $semantics->inspect('SELECT 1 IN (2) ISNULL');
+        $repeated = $semantics->inspect('SELECT 1 ISNULL ISNULL');
         $outer = $repeated->field(0)->expression;
 
         self::assertInstanceOf(NullTest::class, $membership->field(0)->expression);

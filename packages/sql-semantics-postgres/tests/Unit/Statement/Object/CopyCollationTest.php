@@ -16,13 +16,13 @@ final class CopyCollationTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE COLLATION c FROM d', []);
+        $operation = (new Semantics())->inspect('CREATE COLLATION c FROM d', []);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesIfNotExists(): void
     {
-        $operation = (new Semantics())->analyze('CREATE COLLATION IF NOT EXISTS s.c FROM "C"');
+        $operation = (new Semantics())->inspect('CREATE COLLATION IF NOT EXISTS s.c FROM "C"');
         self::assertSame('CREATE COLLATION IF NOT EXISTS s.c FROM "C"', $operation->toString());
     }
 }

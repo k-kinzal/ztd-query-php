@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an offset
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 OFFSET 3 ROWS');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 OFFSET 3 ROWS');
  *     $query->toString() // => 'SELECT 1 OFFSET 3'
  */
 final class Offset implements Node

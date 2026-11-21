@@ -16,12 +16,12 @@ final class CloneLocalTest extends TestCase
 {
     public function testRenderWritesTheDirectory(): void
     {
-        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new Semantics())->analyze("clone local data directory '/d'")->toString());
+        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new Semantics())->inspect("clone local data directory '/d'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("CLONE LOCAL DATA DIRECTORY = '/d'");
+        $operation = (new Semantics())->inspect("CLONE LOCAL DATA DIRECTORY = '/d'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

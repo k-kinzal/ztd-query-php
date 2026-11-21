@@ -16,21 +16,21 @@ final class AlterRuleTest extends TestCase
 {
     public function testStatementLowersEveryGeneration(): void
     {
-        self::assertSame('ALTER IGNORE TABLE t FORCE', (new Semantics('mysql-5.6.51'))->analyze('alter ignore table t force')->toString());
+        self::assertSame('ALTER IGNORE TABLE t FORCE', (new Semantics('mysql-5.6.51'))->inspect('alter ignore table t force')->toString());
     }
 
     public function testCommandsFlattensModifiersItemsAndPartitioning(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = `NONE`, ADD COLUMN a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics())->analyze('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
+        self::assertSame('ALTER TABLE t LOCK = `NONE`, ADD COLUMN a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics())->inspect('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
     }
 
     public function testOthersLowersRemovePartitioning(): void
     {
-        self::assertSame('ALTER TABLE t FORCE REMOVE PARTITIONING', (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t FORCE REMOVE PARTITIONING')->toString());
+        self::assertSame('ALTER TABLE t FORCE REMOVE PARTITIONING', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t FORCE REMOVE PARTITIONING')->toString());
     }
 
     public function testItemsKeepsRunsOfTableOptionsApart(): void
     {
-        self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics())->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
+        self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics())->inspect('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
     }
 }

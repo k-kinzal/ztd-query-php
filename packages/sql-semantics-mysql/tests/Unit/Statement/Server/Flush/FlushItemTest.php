@@ -17,7 +17,7 @@ final class FlushItemTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame('FLUSH ERROR LOGS, ENGINE LOGS, GENERAL LOGS, SLOW LOGS, LOGS, STATUS', (new Semantics('mysql-5.6.51'))->analyze('flush error logs, engine logs, general logs, slow logs, logs, status')->toString());
+        self::assertSame('FLUSH ERROR LOGS, ENGINE LOGS, GENERAL LOGS, SLOW LOGS, LOGS, STATUS', (new Semantics('mysql-5.6.51'))->inspect('flush error logs, engine logs, general logs, slow logs, logs, status')->toString());
     }
 
     public function testChannelIsNullByDefault(): void

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
  *
  * @visibility public
  * @example Reading a composite foreign key
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (a, b, FOREIGN KEY (a, b) REFERENCES parent (x, y) DEFERRABLE INITIALLY DEFERRED)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (a, b, FOREIGN KEY (a, b) REFERENCES parent (x, y) DEFERRABLE INITIALLY DEFERRED)');
  *     $key = $create->statement->constraints[0]->items[0];
  *     [count($key->columns), $key->clause->table->value, $key->deferrability?->deferred()] // => [2, 'parent', true]
  */

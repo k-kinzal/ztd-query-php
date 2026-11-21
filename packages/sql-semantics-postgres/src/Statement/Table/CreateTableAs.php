@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  *
  * @visibility public
  * @example Declaring the table of a query
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE TEMP TABLE t (n) AS SELECT 1, 'x' AS s WITH NO DATA");
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE TEMP TABLE t (n) AS SELECT 1, 'x' AS s WITH NO DATA");
  *     $table = $create->declarations()[0];
  *     [$table->name->schema->value, array_map(static fn ($column) => $column->name->value . ' ' . $column->type->name(), $table->columns)] // => ['pg_temp', ['n integer', 's text']]
  */

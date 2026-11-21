@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a selection from DUAL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM DUAL');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 FROM DUAL');
  *     $query->statement->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
  */
 final class Dual implements \SqlSemantics\Platform\MySql\Model\Statement\Relation

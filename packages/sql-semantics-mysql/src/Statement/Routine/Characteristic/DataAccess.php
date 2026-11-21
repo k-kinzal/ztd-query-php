@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the data access of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER PROCEDURE p READS SQL DATA');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER PROCEDURE p READS SQL DATA');
  *     $alter->statement->characteristics[0]->level // => \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel::ReadsSqlData
  */
 final class DataAccess implements Characteristic

@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
  *
  * @visibility public
  * @example Reading the new query of a view
- *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER VIEW v AS SELECT 1 AS a');
+ *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER VIEW v AS SELECT 1 AS a');
  *     [$view->statement->definition->name->name->value, $view->declarations()] // => ['v', []]
  */
 final class AlterView implements Statement

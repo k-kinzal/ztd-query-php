@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
  *
  * @visibility public
  * @example Reading how an alias is written
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a total FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a total FROM t');
  *     $query->statement->items[0]->mark // => \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Bare
  */
 enum AliasMark

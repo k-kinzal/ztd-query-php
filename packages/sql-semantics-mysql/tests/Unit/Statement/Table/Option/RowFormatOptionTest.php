@@ -17,7 +17,7 @@ final class RowFormatOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) ROW_FORMAT = COMPRESSED');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) ROW_FORMAT = COMPRESSED');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

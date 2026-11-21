@@ -16,11 +16,11 @@ final class UpgradePartitioningTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t UPGRADE PARTITIONING')->facts->diagnostics);
+        self::assertSame([], (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t UPGRADE PARTITIONING')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t UPGRADE PARTITIONING', (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t UPGRADE PARTITIONING')->toString());
+        self::assertSame('ALTER TABLE t UPGRADE PARTITIONING', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t UPGRADE PARTITIONING')->toString());
     }
 }

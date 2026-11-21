@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading an event definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO DELETE FROM log");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO DELETE FROM log");
  *     [$create->statement->completion, $create->statement->status, $create->statement->comment->value] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion::Preserve, \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Disable, 'nightly']
  */
 final class CreateEvent implements Statement

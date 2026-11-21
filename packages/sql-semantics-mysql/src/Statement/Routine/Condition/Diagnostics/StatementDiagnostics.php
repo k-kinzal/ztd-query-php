@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Counting the items read
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET DIAGNOSTICS @n = NUMBER');
+ *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GET DIAGNOSTICS @n = NUMBER');
  *     count($get->statement->information->items) // => 1
  */
 final class StatementDiagnostics implements Node

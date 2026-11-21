@@ -21,8 +21,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading a field
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $field = $semantics->analyze('SELECT a AS x FROM t', [$table])->field('x');
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $field = $semantics->inspect('SELECT a AS x FROM t', [$table])->field('x');
  *     [$field->position, $field->name?->value, $field->column()?->name->value] // => [0, 'x', 'a']
  */
 final class Field

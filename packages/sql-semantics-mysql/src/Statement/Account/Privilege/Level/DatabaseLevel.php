@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the database
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT ON shop.* TO u')->statement->level->database->value // => 'shop'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT SELECT ON shop.* TO u')->statement->level->database->value // => 'shop'
  */
 final class DatabaseLevel implements PrivilegeLevel
 {

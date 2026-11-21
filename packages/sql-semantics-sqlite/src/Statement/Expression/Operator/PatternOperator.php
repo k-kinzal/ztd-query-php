@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  *
  * @visibility public
  * @example Reading the operator of a pattern match
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT a GLOB 'x*' FROM t");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT a GLOB 'x*' FROM t");
  *     $query->statement->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator::Glob
  */
 enum PatternOperator: string

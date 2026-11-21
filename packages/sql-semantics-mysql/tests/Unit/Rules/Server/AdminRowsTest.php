@@ -17,7 +17,7 @@ final class AdminRowsTest extends TestCase
 {
     public function testAdminRecordsTheMaintenanceResult(): void
     {
-        $check = (new Semantics())->analyze('CHECK TABLE t');
+        $check = (new Semantics())->inspect('CHECK TABLE t');
 
         self::assertSame(4, $check->fields()?->count());
         self::assertSame(Nullability::Nullable, $check->field('Msg_text')->slot->nullability);
@@ -25,21 +25,21 @@ final class AdminRowsTest extends TestCase
 
     public function testChecksumRecordsTableAndChecksum(): void
     {
-        $checksum = (new Semantics())->analyze('CHECKSUM TABLE t');
+        $checksum = (new Semantics())->inspect('CHECKSUM TABLE t');
 
         self::assertSame(Nullability::Nullable, $checksum->field('Checksum')->slot->nullability);
     }
 
     public function testRecoverRecordsThePreparedTransactions(): void
     {
-        $recover = (new Semantics())->analyze('XA RECOVER');
+        $recover = (new Semantics())->inspect('XA RECOVER');
 
         self::assertSame(Nullability::NotNull, $recover->field('data')->slot->nullability);
     }
 
     public function testRecordRecordsTheLayout(): void
     {
-        $cache = (new Semantics())->analyze('LOAD INDEX INTO CACHE t');
+        $cache = (new Semantics())->inspect('LOAD INDEX INTO CACHE t');
 
         self::assertSame('Op', $cache->field(1)->slot->name?->value);
     }

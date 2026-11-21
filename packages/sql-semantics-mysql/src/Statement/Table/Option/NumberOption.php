@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  *
  * @visibility public
  * @example Reading a table option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) AUTO_INCREMENT = 100');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT) AUTO_INCREMENT = 100');
  *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption // => true
  */
 final class NumberOption implements TableOption

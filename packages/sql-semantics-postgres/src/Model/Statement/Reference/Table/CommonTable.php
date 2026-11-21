@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving a name to the common table that defines it
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
  *     $query->facts->relation($query->statement->body->input())->table instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\CommonTable // => true
  */
 final class CommonTable implements TableResolution

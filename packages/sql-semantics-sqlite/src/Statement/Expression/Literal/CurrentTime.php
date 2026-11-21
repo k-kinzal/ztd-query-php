@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the type of the current timestamp
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CURRENT_TIMESTAMP');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT CURRENT_TIMESTAMP');
  *     $query->field(0)->type->descriptor // => \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text
  */
 final class CurrentTime implements Scalar

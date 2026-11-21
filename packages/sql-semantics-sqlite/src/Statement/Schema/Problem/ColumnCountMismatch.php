@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a column list that is too short
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (a) AS SELECT 1, 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The column list names 1 columns but the query returns 2.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE VIEW v (a) AS SELECT 1, 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: The column list names 1 columns but the query returns 2.
  */
 final class ColumnCountMismatch implements Diagnostic
 {

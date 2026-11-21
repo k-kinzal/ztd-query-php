@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Writing a release without the optional keyword
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('RELEASE SAVEPOINT s1')->toString() // => 'RELEASE s1'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('RELEASE SAVEPOINT s1')->toString() // => 'RELEASE s1'
  */
 final class Release implements Statement
 {

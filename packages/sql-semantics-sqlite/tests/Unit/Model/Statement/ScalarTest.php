@@ -19,7 +19,7 @@ final class ScalarTest extends TestCase
 {
     public function testDeriveScalarRecordsAFactForEveryOperand(): void
     {
-        $operation = (new Semantics())->analyze("SELECT 1 + 'a'");
+        $operation = (new Semantics())->inspect("SELECT 1 + 'a'");
         $expression = $operation->field(0)->expression;
 
         self::assertInstanceOf(Binary::class, $expression);

@@ -28,8 +28,8 @@ final class AlterAddColumnTest extends TestCase
     public function testDeriveStatementResolvesTheTableAndProvidesNoDeclaration(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $operation = $semantics->inspect('ALTER TABLE t ADD COLUMN b TEXT', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $operation = $semantics->diagnose('ALTER TABLE t ADD COLUMN b TEXT', [$table]);
         $resolution = $operation->facts->relation($operation->statement)->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
@@ -42,8 +42,8 @@ final class AlterAddColumnTest extends TestCase
     public function testDeriveStatementDerivesTheConstraintsAgainstTheTableWithTheNewColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $operation = $semantics->inspect('ALTER TABLE t ADD b TEXT CHECK (b <> a)', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $operation = $semantics->diagnose('ALTER TABLE t ADD b TEXT CHECK (b <> a)', [$table]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
@@ -64,10 +64,10 @@ final class AlterAddColumnTest extends TestCase
     public function testDeriveStatementReportsWhatRulesTheAdditionOut(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $duplicate = $semantics->inspect('ALTER TABLE t ADD A TEXT', [$table]);
-        $key = $semantics->inspect('ALTER TABLE t ADD b INTEGER PRIMARY KEY', [$table]);
-        $missing = $semantics->inspect('ALTER TABLE u ADD b', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $duplicate = $semantics->diagnose('ALTER TABLE t ADD A TEXT', [$table]);
+        $key = $semantics->diagnose('ALTER TABLE t ADD b INTEGER PRIMARY KEY', [$table]);
+        $missing = $semantics->diagnose('ALTER TABLE u ADD b', [$table]);
 
         self::assertInstanceOf(DuplicateColumn::class, $duplicate->facts->diagnostics[0]);
         self::assertInstanceOf(AlterationRefused::class, $key->facts->diagnostics[0]);
@@ -78,8 +78,8 @@ final class AlterAddColumnTest extends TestCase
     public function testDeriveRelationAppendsTheNewColumnToTheShapeOfTheTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $statement = $semantics->inspect('ALTER TABLE t ADD b TEXT NOT NULL DEFAULT 0')->statement;
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $statement = $semantics->diagnose('ALTER TABLE t ADD b TEXT NOT NULL DEFAULT 0')->statement;
         $derivation = new Derivation($semantics->context([$table]));
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
@@ -91,7 +91,7 @@ final class AlterAddColumnTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->inspect('alter table main.t add column b text default 0');
+        $operation = (new Semantics())->diagnose('alter table main.t add column b text default 0');
 
         self::assertSame('ALTER TABLE main.t ADD b text DEFAULT 0', $operation->toString());
     }

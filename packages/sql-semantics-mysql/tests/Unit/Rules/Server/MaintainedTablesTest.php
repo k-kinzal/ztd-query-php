@@ -27,18 +27,18 @@ final class MaintainedTablesTest extends TestCase
 
     public function testDeriveReportsATableNamedTwiceInOneDatabase(): void
     {
-        $operation = (new Semantics())->inspect('CHECKSUM TABLE db.t, db.t');
+        $operation = (new Semantics())->diagnose('CHECKSUM TABLE db.t, db.t');
 
         self::assertInstanceOf(NonUniqueTable::class, $operation->facts->diagnostics[0]);
     }
 
     public function testDeriveAcceptsOneNameInTwoDatabases(): void
     {
-        self::assertSame([], (new Semantics())->inspect('CHECKSUM TABLE a.t, b.t')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose('CHECKSUM TABLE a.t, b.t')->facts->diagnostics);
     }
 
     public function testRenderWritesKeywordsOptionAndTables(): void
     {
-        self::assertSame('OPTIMIZE NO_WRITE_TO_BINLOG TABLE a.t, t', (new Semantics())->inspect('optimize local table a.t, t')->toString());
+        self::assertSame('OPTIMIZE NO_WRITE_TO_BINLOG TABLE a.t, t', (new Semantics())->diagnose('optimize local table a.t, t')->toString());
     }
 }

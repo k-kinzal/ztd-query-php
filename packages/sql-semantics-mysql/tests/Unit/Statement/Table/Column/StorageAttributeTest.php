@@ -19,7 +19,7 @@ final class StorageAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT STORAGE MEMORY)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT STORAGE MEMORY)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +34,6 @@ final class StorageAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT STORAGE MEMORY)', (new Semantics())->analyze('CREATE TABLE t (a INT STORAGE MEMORY)')->toString());
+        self::assertSame('CREATE TABLE t (a INT STORAGE MEMORY)', (new Semantics())->inspect('CREATE TABLE t (a INT STORAGE MEMORY)')->toString());
     }
 }

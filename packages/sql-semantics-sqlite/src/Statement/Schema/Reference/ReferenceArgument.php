@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
  *
  * @visibility public
  * @example Reading the clauses of a foreign key in written order
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL ON DELETE CASCADE)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p REFERENCES parent MATCH FULL ON DELETE CASCADE)');
  *     count($create->statement->columns[0]->constraints[0]->arguments) // => 2
  */
 interface ReferenceArgument extends Node

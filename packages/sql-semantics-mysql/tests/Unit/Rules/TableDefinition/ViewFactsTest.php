@@ -20,7 +20,7 @@ final class ViewFactsTest extends TestCase
 {
     public function testDeriveAnswersTheDeclarationOfTheView(): void
     {
-        $create = (new Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS a');
+        $create = (new Semantics())->inspect('CREATE VIEW v AS SELECT 1 AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
         $platform = new Platform();

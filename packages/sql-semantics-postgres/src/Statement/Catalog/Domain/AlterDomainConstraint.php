@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Adding a check that depends on the domain's type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN posint ADD CONSTRAINT positive CHECK (VALUE > 0) NOT VALID');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN posint ADD CONSTRAINT positive CHECK (VALUE > 0) NOT VALID');
  *     $operation->toString() // => 'ALTER DOMAIN posint ADD CONSTRAINT positive CHECK (value > 0) NOT VALID'
  */
 final class AlterDomainConstraint implements Statement, Relation

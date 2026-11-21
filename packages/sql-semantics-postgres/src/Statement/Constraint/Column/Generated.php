@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  *
  * @visibility public
  * @example A generated column refers to other columns
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)');
  *     $generated = $create->statement->definition->elements[1]->qualifiers[0];
  *     $create->facts->scalar($generated->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
  */

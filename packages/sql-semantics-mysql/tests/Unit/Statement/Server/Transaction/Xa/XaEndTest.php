@@ -20,17 +20,17 @@ final class XaEndTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("XA END 'g' SUSPEND", (new Semantics())->analyze("xa end 'g' suspend")->toString());
+        self::assertSame("XA END 'g' SUSPEND", (new Semantics())->inspect("xa end 'g' suspend")->toString());
     }
 
     public function testRenderWritesForMigrateOf56(): void
     {
-        self::assertSame("XA END 'g' SUSPEND FOR MIGRATE", (new Semantics('mysql-5.6.51'))->analyze("xa end 'g' suspend for migrate")->toString());
+        self::assertSame("XA END 'g' SUSPEND FOR MIGRATE", (new Semantics('mysql-5.6.51'))->inspect("xa end 'g' suspend for migrate")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA END 'g'");
+        $operation = (new Semantics())->inspect("XA END 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

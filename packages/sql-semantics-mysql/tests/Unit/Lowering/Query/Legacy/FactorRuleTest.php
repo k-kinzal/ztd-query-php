@@ -22,25 +22,25 @@ final class FactorRuleTest extends TestCase
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics('mysql-5.7.44'))->analyze('SELECT 1 FROM t, SELECT 1');
+        (new Semantics('mysql-5.7.44'))->inspect('SELECT 1 FROM t, SELECT 1');
     }
 
     public function testParensLowersDerivedTablesAndNestedJoins(): void
     {
-        self::assertSame('SELECT 1 FROM (SELECT 1) d, (t, u), ((SELECT 2)) e', (new Semantics('mysql-5.6.51'))->analyze('select 1 from (select 1) d, (t, u), ((select 2)) e')->toString());
-        self::assertSame('SELECT 1 FROM (SELECT 1 UNION SELECT 2 ORDER BY 1) d', (new Semantics('mysql-5.7.44'))->analyze('select 1 from (select 1 union select 2 order by 1) d')->toString());
+        self::assertSame('SELECT 1 FROM (SELECT 1) d, (t, u), ((SELECT 2)) e', (new Semantics('mysql-5.6.51'))->inspect('select 1 from (select 1) d, (t, u), ((select 2)) e')->toString());
+        self::assertSame('SELECT 1 FROM (SELECT 1 UNION SELECT 2 ORDER BY 1) d', (new Semantics('mysql-5.7.44'))->inspect('select 1 from (select 1 union select 2 order by 1) d')->toString());
     }
 
     public function testParensRejectsAnAliasOnANestedJoin(): void
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics('mysql-5.6.51'))->analyze('SELECT 1 FROM (t, u) AS x');
+        (new Semantics('mysql-5.6.51'))->inspect('SELECT 1 FROM (t, u) AS x');
     }
 
     public function testContentAnswersTheBlockOfADerivedTable(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT 1 FROM ((SELECT 1)) AS d');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('SELECT 1 FROM ((SELECT 1)) AS d');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(DerivedTable::class, $operation->statement->from);
@@ -49,6 +49,6 @@ final class FactorRuleTest extends TestCase
 
     public function testSingleAnswersOnlyALoneParenthesizedOrSelectFactor(): void
     {
-        self::assertSame('SELECT 1 FROM ((t))', (new Semantics('mysql-5.7.44'))->analyze('select 1 from ((t))')->toString());
+        self::assertSame('SELECT 1 FROM ((t))', (new Semantics('mysql-5.7.44'))->inspect('select 1 from ((t))')->toString());
     }
 }

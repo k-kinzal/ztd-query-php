@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * @visibility public
  * @example Reading a FETCH
- *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('FETCH ABSOLUTE 3 IN c');
+ *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('FETCH ABSOLUTE 3 IN c');
  *     [$fetch->statement->count->magnitude->digits, $fetch->shape()->complete(), $fetch->toString()] // => ['3', false, 'FETCH ABSOLUTE 3 c']
  * @example Refusing a count where the movement takes none
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch(false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::Next, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

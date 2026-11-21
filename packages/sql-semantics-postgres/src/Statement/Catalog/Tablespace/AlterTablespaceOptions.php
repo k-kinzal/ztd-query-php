@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Resetting a parameter
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLESPACE fast RESET (seq_page_cost)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLESPACE fast RESET (seq_page_cost)');
  *     [$operation->statement->reset, $operation->facts->diagnostics] // => [true, []]
  */
 final class AlterTablespaceOptions implements Statement

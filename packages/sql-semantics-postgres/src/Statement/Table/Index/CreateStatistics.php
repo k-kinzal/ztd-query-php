@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Creating statistics
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t');
  *     $statement->toString() // => 'CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t'
  */
 final class CreateStatistics implements Statement

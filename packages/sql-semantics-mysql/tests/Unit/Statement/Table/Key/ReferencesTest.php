@@ -21,7 +21,7 @@ final class ReferencesTest extends TestCase
 {
     public function testDeriveReferencesResolvesTheTableBeingDefined(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
+        $create = (new Semantics())->inspect('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -39,8 +39,8 @@ final class ReferencesTest extends TestCase
     public function testDeriveReferencesResolvesAnotherTable(): void
     {
         $semantics = new Semantics();
-        $parent = $semantics->analyze('CREATE TABLE p (id INT)');
-        $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id))', [$parent]);
+        $parent = $semantics->inspect('CREATE TABLE p (id INT)');
+        $child = $semantics->inspect('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id))', [$parent]);
         $childStatement = $child->statement;
         self::assertInstanceOf(CreateTable::class, $childStatement);
         $element1 = $childStatement->elements[1];
@@ -53,6 +53,6 @@ final class ReferencesTest extends TestCase
 
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Semantics())->analyze('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
+        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Semantics())->inspect('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
     }
 }

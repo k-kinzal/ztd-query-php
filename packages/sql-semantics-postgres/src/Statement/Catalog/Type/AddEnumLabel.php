@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Adding a label before another
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood ADD VALUE IF NOT EXISTS 'calm' BEFORE 'happy'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER TYPE mood ADD VALUE IF NOT EXISTS 'calm' BEFORE 'happy'");
  *     [$operation->statement->label->value, $operation->statement->position?->after] // => ['calm', false]
  */
 final class AddEnumLabel implements Statement

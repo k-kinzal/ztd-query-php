@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
  *
  * @visibility public
  * @example Writing every field of a parameter
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ($1).*')->toString() // => 'SELECT ($1).*'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ($1).*')->toString() // => 'SELECT ($1).*'
  */
 final class AllFields implements IndirectionStep
 {

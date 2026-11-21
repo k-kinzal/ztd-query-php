@@ -20,7 +20,7 @@ final class CreateVirtualTableTest extends TestCase
 {
     public function testDeriveStatementDeclaresTheTableWithoutColumns(): void
     {
-        $operation = (new Semantics())->analyze('CREATE VIRTUAL TABLE aux.docs USING fts5(title, body)', []);
+        $operation = (new Semantics())->inspect('CREATE VIRTUAL TABLE aux.docs USING fts5(title, body)', []);
         $table = $operation->declarations()[0];
 
         self::assertSame('docs', $table->name->name->value);
@@ -33,7 +33,7 @@ final class CreateVirtualTableTest extends TestCase
 
     public function testRenderKeepsEveryArgumentTextExactly(): void
     {
-        $operation = (new Semantics())->analyze("create virtual table if not exists docs using fts5( title ,body  TEXT,, tokenize = 'porter ascii', f(x , y) )");
+        $operation = (new Semantics())->inspect("create virtual table if not exists docs using fts5( title ,body  TEXT,, tokenize = 'porter ascii', f(x , y) )");
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
@@ -44,8 +44,8 @@ final class CreateVirtualTableTest extends TestCase
     public function testRenderTellsAbsentParenthesesFromEmptyOnes(): void
     {
         $semantics = new Semantics();
-        $absent = $semantics->analyze('CREATE VIRTUAL TABLE t USING m');
-        $empty = $semantics->analyze('CREATE VIRTUAL TABLE t USING m()');
+        $absent = $semantics->inspect('CREATE VIRTUAL TABLE t USING m');
+        $empty = $semantics->inspect('CREATE VIRTUAL TABLE t USING m()');
 
         self::assertInstanceOf(CreateVirtualTable::class, $absent->statement);
         self::assertInstanceOf(CreateVirtualTable::class, $empty->statement);

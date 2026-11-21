@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Making a database read-only
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d READ ONLY = 1');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER DATABASE d READ ONLY = 1');
  *     [$alter->toString(), $alter->statement->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY 1', true]
  */
 final class DatabaseReadOnly implements DatabaseOption

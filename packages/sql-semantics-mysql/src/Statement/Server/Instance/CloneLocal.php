@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Cloning into a directory
- *     $clone = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("clone local data directory = '/srv/copy'");
+ *     $clone = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("clone local data directory = '/srv/copy'");
  *     [$clone->toString(), $clone->statement->directory->value] // => ["CLONE LOCAL DATA DIRECTORY '/srv/copy'", '/srv/copy']
  */
 final class CloneLocal implements Statement

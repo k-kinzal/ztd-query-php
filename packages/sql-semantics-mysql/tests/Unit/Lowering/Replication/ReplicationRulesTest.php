@@ -21,8 +21,8 @@ final class ReplicationRulesTest extends TestCase
 {
     public function testStatementHandsEveryStatementToItsRule(): void
     {
-        self::assertSame('BINLOG \'x\'', (new Semantics())->analyze("binlog 'x'")->toString());
-        self::assertSame('STOP GROUP_REPLICATION', (new Semantics())->analyze('stop group_replication')->toString());
+        self::assertSame('BINLOG \'x\'', (new Semantics())->inspect("binlog 'x'")->toString());
+        self::assertSame('STOP GROUP_REPLICATION', (new Semantics())->inspect('stop group_replication')->toString());
     }
 
     public function testStatementReportsANodeOfAnotherRule(): void
@@ -38,12 +38,12 @@ final class ReplicationRulesTest extends TestCase
 
     public function testChannelLowersTheName(): void
     {
-        self::assertSame("STOP REPLICA FOR CHANNEL 'c'", (new Semantics())->analyze("stop replica for channel 'c'")->toString());
+        self::assertSame("STOP REPLICA FOR CHANNEL 'c'", (new Semantics())->inspect("stop replica for channel 'c'")->toString());
     }
 
     public function testTerminologyAnswersTheWrittenSpelling(): void
     {
-        self::assertSame('STOP SLAVE', (new Semantics('mysql-8.3.0'))->analyze('stop slave')->toString());
-        self::assertSame('STOP REPLICA', (new Semantics('mysql-8.3.0'))->analyze('stop replica')->toString());
+        self::assertSame('STOP SLAVE', (new Semantics('mysql-8.3.0'))->inspect('stop slave')->toString());
+        self::assertSame('STOP REPLICA', (new Semantics('mysql-8.3.0'))->inspect('stop replica')->toString());
     }
 }

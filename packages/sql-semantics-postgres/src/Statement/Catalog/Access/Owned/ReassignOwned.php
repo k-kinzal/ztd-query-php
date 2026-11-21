@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading the new owner
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REASSIGN OWNED BY joe, ann TO boss');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REASSIGN OWNED BY joe, ann TO boss');
  *     [count($operation->statement->owners), $operation->statement->newOwner->name?->value] // => [2, 'boss']
  */
 final class ReassignOwned implements Statement

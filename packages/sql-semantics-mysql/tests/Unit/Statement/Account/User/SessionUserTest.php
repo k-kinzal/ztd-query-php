@@ -16,6 +16,6 @@ final class SessionUserTest extends TestCase
 {
     public function testRenderWritesTheFunction(): void
     {
-        self::assertSame("ALTER USER USER() IDENTIFIED BY 'x'", (new Semantics())->analyze("alter user user ( ) identified by 'x'")->toString());
+        self::assertSame("ALTER USER USER() IDENTIFIED BY 'x'", (new Semantics())->inspect("alter user user ( ) identified by 'x'")->toString());
     }
 }

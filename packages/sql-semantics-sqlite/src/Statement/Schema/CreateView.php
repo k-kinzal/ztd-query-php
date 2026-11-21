@@ -38,7 +38,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
  *
  * @visibility public
  * @example Declaring a view with a column list
- *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (one, two) AS SELECT 1, 2');
+ *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE VIEW v (one, two) AS SELECT 1, 2');
  *     [$view->declarations()[0]->columns[1]->name->value, $view->declarations()[0]->implicit] // => ['two', []]
  */
 final class CreateView implements Statement

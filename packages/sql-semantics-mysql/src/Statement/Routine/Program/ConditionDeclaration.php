@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
  *
  * @visibility public
  * @example Reading a named condition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
  *     $declaration = $create->statement->body->declarations[0];
  *     [$declaration->name->value, $declaration->value->state->value] // => ['gone', '42S02']
  */

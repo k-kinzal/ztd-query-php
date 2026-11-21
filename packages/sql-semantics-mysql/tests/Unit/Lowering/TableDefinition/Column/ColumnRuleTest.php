@@ -75,7 +75,7 @@ final class ColumnRuleTest extends TestCase
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
 
-        $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
     }
 
     public function testRefuseNamesTheTypeSerial(): void
@@ -83,12 +83,12 @@ final class ColumnRuleTest extends TestCase
         $this->expectException(AnalysisException::class);
         $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
 
-        (new Semantics())->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        (new Semantics())->inspect('ALTER TABLE t ADD g SERIAL AS (1)');
     }
 
     public function testRefuseAcceptsTheOtherAttributes(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 
         self::assertSame([], $create->facts->diagnostics);
     }

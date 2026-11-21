@@ -17,7 +17,7 @@ final class IntoDumpfileTest extends TestCase
 {
     public function testRenderWritesTheFile(): void
     {
-        $operation = (new Semantics())->analyze("select a from t into dumpfile 'a.bin'");
+        $operation = (new Semantics())->inspect("select a from t into dumpfile 'a.bin'");
 
         self::assertSame("SELECT a FROM t INTO DUMPFILE 'a.bin'", $operation->toString());
         self::assertInstanceOf(Select::class, $operation->statement);

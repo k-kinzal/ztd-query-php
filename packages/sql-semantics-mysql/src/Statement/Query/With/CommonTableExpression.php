@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a common table expression
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('WITH c (x) AS (SELECT 1) SELECT x FROM c');
  *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->value] // => ['c', 'x']
  */
 final class CommonTableExpression implements Node

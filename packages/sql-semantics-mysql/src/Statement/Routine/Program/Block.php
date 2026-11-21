@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
  *
  * @visibility public
  * @example Reading a labeled block
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() work: BEGIN DECLARE a INT; SELECT a; END work');
  *     $block = $create->statement->body;
  *     [$block->label->value, count($block->declarations), count($block->statements)] // => ['work', 1, 1]
  */

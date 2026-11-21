@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the message of an unrecognized operator attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
  *     [$operation->facts->diagnostics[0]->message(), $operation->facts->diagnostics[0]->warning()] // => ['operator attribute "colour" not recognized', true]
  */
 final class AttributeProblem implements Diagnostic

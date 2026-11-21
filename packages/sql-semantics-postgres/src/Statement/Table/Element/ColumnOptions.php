@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Adding a constraint to a column of a partition
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p (a WITH OPTIONS NOT NULL) DEFAULT');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE p1 PARTITION OF p (a WITH OPTIONS NOT NULL) DEFAULT');
  *     $create->toString() // => 'CREATE TABLE p1 PARTITION OF p (a NOT NULL) DEFAULT'
  */
 final class ColumnOptions implements Clause

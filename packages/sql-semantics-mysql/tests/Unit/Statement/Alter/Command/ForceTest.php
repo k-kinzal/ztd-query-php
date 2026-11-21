@@ -17,12 +17,12 @@ final class ForceTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t FORCE', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t FORCE', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesForce(): void
     {
-        self::assertSame('ALTER TABLE t FORCE', (new Semantics('mysql-5.6.51'))->analyze('ALTER TABLE t FORCE')->toString());
+        self::assertSame('ALTER TABLE t FORCE', (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t FORCE')->toString());
     }
 }

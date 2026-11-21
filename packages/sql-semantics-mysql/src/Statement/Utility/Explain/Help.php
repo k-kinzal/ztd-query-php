@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the topic
- *     $help = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("HELP 'contents'");
+ *     $help = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("HELP 'contents'");
  *     [$help->statement->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
  */
 final class Help implements Statement

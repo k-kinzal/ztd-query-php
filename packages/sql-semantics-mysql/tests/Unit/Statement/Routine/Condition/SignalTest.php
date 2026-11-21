@@ -26,7 +26,7 @@ final class SignalTest extends TestCase
 {
     public function testDeriveStatementAcceptsAnSqlStateValueAndItsItems(): void
     {
-        $signal = (new Semantics())->inspect("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
+        $signal = (new Semantics())->diagnose("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
         $statement = $signal->statement;
         self::assertInstanceOf(Signal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);
@@ -52,7 +52,7 @@ final class SignalTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsTheBrokenRule')]
     public function testDeriveStatementReportsTheBrokenRule(string $sql, ProgramRule $rule, string $message): void
     {
-        $signal = (new Semantics())->inspect($sql);
+        $signal = (new Semantics())->diagnose($sql);
         $problem = $signal->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -63,7 +63,7 @@ final class SignalTest extends TestCase
 
     public function testDeriveProgramResolvesADeclaredConditionAndTheVariablesOfTheItems(): void
     {
-        $create = (new Semantics())->inspect("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE v INT; DECLARE gone CONDITION FOR SQLSTATE '45000'; SIGNAL gone SET MESSAGE_TEXT = m, MYSQL_ERRNO = v; END");
+        $create = (new Semantics())->diagnose("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE v INT; DECLARE gone CONDITION FOR SQLSTATE '45000'; SIGNAL gone SET MESSAGE_TEXT = m, MYSQL_ERRNO = v; END");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
@@ -114,7 +114,7 @@ final class SignalTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsTheBrokenRule')]
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $create = (new Semantics())->inspect($sql);
+        $create = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
@@ -134,7 +134,7 @@ final class SignalTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        $signal = (new Semantics($release))->inspect($sql);
+        $signal = (new Semantics($release))->diagnose($sql);
 
         self::assertInstanceOf(Signal::class, $signal->statement);
         self::assertSame($expected, $signal->toString());
@@ -142,7 +142,7 @@ final class SignalTest extends TestCase
 
     public function testRenderWritesAConditionNameInAProgram(): void
     {
-        $create = (new Semantics('mysql-5.6.51'))->inspect("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE VALUE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END");
+        $create = (new Semantics('mysql-5.6.51'))->diagnose("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE VALUE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END");
 
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
     }

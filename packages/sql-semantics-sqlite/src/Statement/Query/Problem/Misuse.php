@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: no tables specified
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT *') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: no tables specified
  */
 final class Misuse implements Diagnostic
 {

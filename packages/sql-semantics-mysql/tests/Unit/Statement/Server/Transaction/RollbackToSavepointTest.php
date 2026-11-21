@@ -16,12 +16,12 @@ final class RollbackToSavepointTest extends TestCase
 {
     public function testRenderWritesTheSavepoint(): void
     {
-        self::assertSame('ROLLBACK TO SAVEPOINT `s 1`', (new Semantics())->analyze('rollback to `s 1`')->toString());
+        self::assertSame('ROLLBACK TO SAVEPOINT `s 1`', (new Semantics())->inspect('rollback to `s 1`')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('ROLLBACK WORK TO SAVEPOINT s');
+        $operation = (new Semantics())->inspect('ROLLBACK WORK TO SAVEPOINT s');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

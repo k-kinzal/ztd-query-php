@@ -17,7 +17,7 @@ final class DetachTest extends TestCase
 {
     public function testDeriveStatementDerivesTheOperand(): void
     {
-        $operation = (new Semantics())->analyze('DETACH aux', []);
+        $operation = (new Semantics())->inspect('DETACH aux', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Detach::class, $statement);
@@ -27,7 +27,7 @@ final class DetachTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->analyze('detach database aux');
+        $operation = (new Semantics())->inspect('detach database aux');
 
         self::assertInstanceOf(Detach::class, $operation->statement);
         self::assertInstanceOf(NameOperand::class, $operation->statement->schema);

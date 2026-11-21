@@ -52,7 +52,7 @@ final class ParameterListTest extends TestCase
 
     public function testDeriveRelationAnswersTheRowOfAnAnalyzedRoutine(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
+        $create = (new Semantics())->diagnose('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
@@ -64,14 +64,14 @@ final class ParameterListTest extends TestCase
 
     public function testDeriveRelationResolvesEveryDirectionInTheBody(): void
     {
-        $create = (new Semantics())->inspect('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
+        $create = (new Semantics())->diagnose('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
 
         self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
 
     public function testDeriveRelationLetsALocalVariableHideAParameter(): void
     {
-        self::assertSame([], (new Semantics())->inspect('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
     }
 
     /**
@@ -88,7 +88,7 @@ final class ParameterListTest extends TestCase
     #[DataProvider('providerRenderWritesTheParentheses')]
     public function testRenderWritesTheParentheses(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedList(): void

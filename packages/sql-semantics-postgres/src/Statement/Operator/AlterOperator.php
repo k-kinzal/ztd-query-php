@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignatu
  *
  * @visibility public
  * @example Reading the changed attributes
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
  *     $operation->statement->attributes[0]->attribute->name->value // => 'restrict'
  */
 final class AlterOperator implements Statement

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Deferring every constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET CONSTRAINTS ALL DEFERRED');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET CONSTRAINTS ALL DEFERRED');
  *     [$operation->statement->constraints, $operation->statement->deferred] // => [[], true]
  */
 final class SetConstraints implements Statement

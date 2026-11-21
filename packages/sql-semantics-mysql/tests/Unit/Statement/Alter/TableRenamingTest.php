@@ -16,6 +16,6 @@ final class TableRenamingTest extends TestCase
 {
     public function testRenderWritesBothNames(): void
     {
-        self::assertSame('RENAME TABLE db.t TO archive.t', (new Semantics())->analyze('RENAME TABLE db.t TO archive.t')->toString());
+        self::assertSame('RENAME TABLE db.t TO archive.t', (new Semantics())->inspect('RENAME TABLE db.t TO archive.t')->toString());
     }
 }

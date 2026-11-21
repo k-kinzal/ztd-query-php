@@ -16,7 +16,7 @@ final class ReindexTest extends TestCase
 {
     public function testDeriveStatementRecordsNoResolutionForTheName(): void
     {
-        $operation = (new Semantics())->analyze('REINDEX nocase', []);
+        $operation = (new Semantics())->inspect('REINDEX nocase', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertFalse($operation->facts->covers($operation->statement));
@@ -25,11 +25,11 @@ final class ReindexTest extends TestCase
     public function testRenderWritesTheOptionalTarget(): void
     {
         $semantics = new Semantics();
-        $qualified = $semantics->analyze('reindex main.users');
+        $qualified = $semantics->inspect('reindex main.users');
 
         self::assertInstanceOf(Reindex::class, $qualified->statement);
         self::assertSame('main', $qualified->statement->target?->schema?->value);
         self::assertSame('REINDEX main.users', $qualified->toString());
-        self::assertSame('REINDEX', $semantics->analyze('REINDEX')->toString());
+        self::assertSame('REINDEX', $semantics->inspect('REINDEX')->toString());
     }
 }

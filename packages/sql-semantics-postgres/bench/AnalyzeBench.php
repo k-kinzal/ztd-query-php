@@ -30,6 +30,6 @@ final class AnalyzeBench
     #[Benchmark\Iterations(5)]
     public function benchAnalyze(): void
     {
-        $this->semantics->analyze("SELECT a, x.b AS total, 0x1F, 1.50e3, timestamp(3) with time zone '2024-01-01' FROM app.t AS x WHERE a >= \$1");
+        $this->semantics->inspect("SELECT a, x.b AS total, 0x1F, 1.50e3, timestamp(3) with time zone '2024-01-01' FROM app.t AS x WHERE a >= \$1");
     }
 }

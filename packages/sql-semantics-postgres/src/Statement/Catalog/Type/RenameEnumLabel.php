@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Renaming a label
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'");
  *     $operation->toString() // => "ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'"
  */
 final class RenameEnumLabel implements Statement

@@ -19,7 +19,7 @@ final class OpenCursorTest extends TestCase
 {
     public function testDeriveProgramReportsAnUndefinedCursor(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() OPEN c');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p() OPEN c');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(OpenCursor::class, $create->body);
@@ -34,7 +34,7 @@ final class OpenCursorTest extends TestCase
     #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocks')]
     public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocks(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -55,7 +55,7 @@ final class OpenCursorTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     /**

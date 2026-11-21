@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Writing MASTER LOGS as its synonym
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
  */
 final class PurgeLogsTo implements Statement
 {

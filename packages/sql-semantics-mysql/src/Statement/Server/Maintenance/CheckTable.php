@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('check tables t for upgrade quick');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('check tables t for upgrade quick');
  *     [$statement->toString(), $statement->statement->options[0] === \SqlSemantics\Platform\MySql\Statement\Server\CheckOption::ForUpgrade] // => ['CHECK TABLE t FOR UPGRADE QUICK', true]
  */
 final class CheckTable implements Statement

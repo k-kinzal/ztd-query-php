@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading the facts of NULL
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT NULL');
  *     $query->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
  */
 final class NullLiteral implements Scalar, OutputNaming

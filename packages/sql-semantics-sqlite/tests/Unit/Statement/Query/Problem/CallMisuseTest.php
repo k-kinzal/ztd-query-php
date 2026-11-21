@@ -45,7 +45,7 @@ final class CallMisuseTest extends TestCase
 
     public function testMessageNamesTheFunctionAsWritten(): void
     {
-        $query = (new Semantics())->inspect('SELECT ABS(1) OVER ()');
+        $query = (new Semantics())->diagnose('SELECT ABS(1) OVER ()');
 
         self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
         self::assertSame('ABS() may not be used as a window function', $query->facts->diagnostics[0]->message());

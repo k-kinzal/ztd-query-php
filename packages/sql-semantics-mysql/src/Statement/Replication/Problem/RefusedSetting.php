@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the refused value of a statement
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).
  */
 final class RefusedSetting implements Diagnostic
 {

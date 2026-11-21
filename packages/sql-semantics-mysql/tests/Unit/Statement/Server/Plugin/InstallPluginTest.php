@@ -16,12 +16,12 @@ final class InstallPluginTest extends TestCase
 {
     public function testRenderWritesNameAndLibrary(): void
     {
-        self::assertSame("INSTALL PLUGIN p SONAME 'p.so'", (new Semantics('mysql-5.6.51'))->analyze("install plugin p soname 'p.so'")->toString());
+        self::assertSame("INSTALL PLUGIN p SONAME 'p.so'", (new Semantics('mysql-5.6.51'))->inspect("install plugin p soname 'p.so'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("INSTALL PLUGIN p SONAME 'p.so'");
+        $operation = (new Semantics())->inspect("INSTALL PLUGIN p SONAME 'p.so'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

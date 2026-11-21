@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading USE
- *     $use = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('use `my db`');
+ *     $use = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('use `my db`');
  *     [$use->statement->database->value, $use->toString()] // => ['my db', 'USE `my db`']
  */
 final class UseDatabase implements Statement

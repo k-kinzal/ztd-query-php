@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a type name with four parts
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT a.b.c.d '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Improper qualified name (too many dotted names): a.b.c.d.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT a.b.c.d '1'") // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Improper qualified name (too many dotted names): a.b.c.d.
  */
 final class ImproperName implements Diagnostic
 {

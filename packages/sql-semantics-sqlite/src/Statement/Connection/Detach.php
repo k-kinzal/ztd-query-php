@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the schema a detach request names
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DETACH DATABASE aux')->statement->schema->name->value // => 'aux'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('DETACH DATABASE aux')->statement->schema->name->value // => 'aux'
  */
 final class Detach implements Statement
 {

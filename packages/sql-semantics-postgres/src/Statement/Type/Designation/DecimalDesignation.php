@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading precision and scale
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT decimal(10, 2) '1.5'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT decimal(10, 2) '1.5'");
  *     $query->field(0)->type->descriptor->modifiers // => [10, 2]
  */
 final class DecimalDesignation implements TypeDesignation

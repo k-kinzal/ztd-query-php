@@ -25,7 +25,7 @@ final class HexLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesInteger(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 0x1f, 0xFFFFFFFFFFFFFFFF, 0x0000000000000000001', []);
+        $operation = (new Semantics())->diagnose('SELECT 0x1f, 0xFFFFFFFFFFFFFFFF, 0x0000000000000000001', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -42,7 +42,7 @@ final class HexLiteralTest extends TestCase
 
     public function testDeriveScalarReportsALiteralWiderThanSixtyFourBits(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 0x10000000000000000', []);
+        $operation = (new Semantics())->diagnose('SELECT 0x10000000000000000', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -57,7 +57,7 @@ final class HexLiteralTest extends TestCase
 
     public function testRenderWritesThePrefixAndUpperCaseDigits(): void
     {
-        self::assertSame('SELECT 0x1F AS c1, 0xABC AS c2', (new Semantics())->inspect('select 0X1f AS c1, 0xabc AS c2')->toString());
+        self::assertSame('SELECT 0x1F AS c1, 0xABC AS c2', (new Semantics())->diagnose('select 0X1f AS c1, 0xabc AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

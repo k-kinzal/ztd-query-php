@@ -16,6 +16,6 @@ final class TlsConditionTest extends TestCase
 {
     public function testRenderWritesThePropertyAndValue(): void
     {
-        self::assertSame("CREATE USER u REQUIRE CIPHER 'c'", (new Semantics())->analyze("create user u require cipher 'c'")->toString());
+        self::assertSame("CREATE USER u REQUIRE CIPHER 'c'", (new Semantics())->inspect("create user u require cipher 'c'")->toString());
     }
 }

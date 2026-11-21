@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Moving the tables of some owners
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT');
  *     $statement->toString() // => 'ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT'
  */
 final class MoveAll implements Statement

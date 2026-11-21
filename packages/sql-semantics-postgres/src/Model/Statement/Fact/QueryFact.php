@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the output of a query
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a, 2 AS b');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS a, 2 AS b');
  *     [count($query->facts->output->projection), $query->facts->output->shape->complete()] // => [2, true]
  */
 final class QueryFact

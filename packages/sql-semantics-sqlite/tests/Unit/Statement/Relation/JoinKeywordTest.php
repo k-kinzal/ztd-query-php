@@ -24,7 +24,7 @@ final class JoinKeywordTest extends TestCase
 
     public function testCasesAreReadFromTheWordsBeforeJoinWhateverTheirSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT * FROM t natural Left outer JOIN u');
+        $query = (new Semantics())->inspect('SELECT * FROM t natural Left outer JOIN u');
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);

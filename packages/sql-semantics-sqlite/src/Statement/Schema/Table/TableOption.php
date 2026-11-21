@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  *
  * @visibility public
  * @example Telling a known option from an unknown one
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Table option "rowid" is unknown.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Table option "rowid" is unknown.
  */
 final class TableOption implements Node
 {

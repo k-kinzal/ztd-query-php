@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the language of a transform
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plpython3u (FROM SQL WITH FUNCTION a(internal), TO SQL WITH FUNCTION b(internal))');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OR REPLACE TRANSFORM FOR hstore LANGUAGE plpython3u (FROM SQL WITH FUNCTION a(internal), TO SQL WITH FUNCTION b(internal))');
  *     [$operation->statement->language->value, count($operation->statement->functions)] // => ['plpython3u', 2]
  */
 final class CreateTransform implements Statement

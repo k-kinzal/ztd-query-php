@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Flushing logs and privileges
- *     $flush = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('flush local binary logs, privileges');
+ *     $flush = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('flush local binary logs, privileges');
  *     [$flush->toString(), $flush->statement->items[1]->option] // => ['FLUSH NO_WRITE_TO_BINLOG BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
  */
 final class Flush implements Statement

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a delete action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DELETE');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DELETE');
  *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeDelete // => true
  */
 final class MergeDelete implements Node

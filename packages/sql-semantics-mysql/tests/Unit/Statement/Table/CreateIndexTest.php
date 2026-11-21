@@ -20,8 +20,8 @@ final class CreateIndexTest extends TestCase
     public function testDeriveStatementResolvesTheKeyPartsInTheTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $index = $semantics->inspect('CREATE INDEX i ON t (c, (b * 2))', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $index = $semantics->diagnose('CREATE INDEX i ON t (c, (b * 2))', [$table]);
         $indexStatement = $index->statement;
         self::assertInstanceOf(CreateIndex::class, $indexStatement);
         $part = $indexStatement->parts[1];
@@ -37,8 +37,8 @@ final class CreateIndexTest extends TestCase
     public function testDeriveRelationResolvesTheIndexedTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $index = $semantics->inspect('CREATE FULLTEXT INDEX i ON t (a)', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $index = $semantics->diagnose('CREATE FULLTEXT INDEX i ON t (a)', [$table]);
         $indexStatement = $index->statement;
         self::assertInstanceOf(CreateIndex::class, $indexStatement);
         $fact = $index->facts->relation($indexStatement)->table;
@@ -49,15 +49,15 @@ final class CreateIndexTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics())->inspect('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
+        self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics())->diagnose('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
     }
 
     public function testDeriveStatementRefusesAView(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT a FROM t', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE INDEX i ON v (a)', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE INDEX i ON v (a)', [$table, $view])->facts->diagnostics));
     }
 }

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the primary key in an index hint
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t USE INDEX (PRIMARY, i)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t USE INDEX (PRIMARY, i)');
  *     $query->statement->from->indexHints[0]->indexes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex // => true
  */
 final class PrimaryIndex implements Node

@@ -19,8 +19,8 @@ final class IndexHintTest extends TestCase
 {
     public function testRenderWritesTheHints(): void
     {
-        self::assertSame('SELECT a FROM t USE INDEX () FORCE INDEX FOR JOIN (i) IGNORE INDEX FOR ORDER BY (j, k)', (new Semantics())->analyze('select a from t use index () force key for join (i) ignore index for order by (j, k)')->toString());
-        self::assertSame('SELECT a FROM t x USE INDEX FOR GROUP BY (i)', (new Semantics('mysql-5.6.51'))->analyze('select a from t x use index for group by (i)')->toString());
+        self::assertSame('SELECT a FROM t USE INDEX () FORCE INDEX FOR JOIN (i) IGNORE INDEX FOR ORDER BY (j, k)', (new Semantics())->inspect('select a from t use index () force key for join (i) ignore index for order by (j, k)')->toString());
+        self::assertSame('SELECT a FROM t x USE INDEX FOR GROUP BY (i)', (new Semantics('mysql-5.6.51'))->inspect('select a from t x use index for group by (i)')->toString());
     }
 
     public function testForceWithoutIndexIsRejected(): void

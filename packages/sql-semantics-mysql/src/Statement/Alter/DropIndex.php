@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
  *
  * @visibility public
  * @example Removing an index while allowing reads
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP INDEX i ON t LOCK SHARED');
+ *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DROP INDEX i ON t LOCK SHARED');
  *     [$drop->statement->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK = SHARED']
  */
 final class DropIndex implements Statement

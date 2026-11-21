@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
  *
  * @visibility public
  * @example Reading the output fields of a query
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS one');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 AS one');
  *     $operation->field('one')->position // => 0
  */
 interface Query extends Node

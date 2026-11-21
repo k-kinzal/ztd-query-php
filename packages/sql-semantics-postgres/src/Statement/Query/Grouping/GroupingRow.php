@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
  *
  * @visibility public
  * @example Reading the terms of a row in GROUP BY
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a GROUP BY (a, 1)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS a GROUP BY (a, 1)');
  *     [count($query->statement->groupBy[0]->members), $query->statement->groupBy[0]->members[1]::class] // => [2, \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class]
  * @example Refusing an integer constant that is not an output position
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

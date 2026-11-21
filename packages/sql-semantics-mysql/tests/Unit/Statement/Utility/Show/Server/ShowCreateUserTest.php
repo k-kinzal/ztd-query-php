@@ -16,13 +16,13 @@ final class ShowCreateUserTest extends TestCase
 {
     public function testDeriveStatementDependsOnTheCurrentUser(): void
     {
-        $show = (new Semantics('mysql-5.7.44'))->analyze('SHOW CREATE USER CURRENT_USER');
+        $show = (new Semantics('mysql-5.7.44'))->inspect('SHOW CREATE USER CURRENT_USER');
         self::assertInstanceOf(ShowCreateUser::class, $show->statement);
         self::assertFalse($show->shape()?->complete());
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE USER CURRENT_USER', (new Semantics('mysql-5.7.44'))->analyze('SHOW CREATE USER CURRENT_USER')->toString());
+        self::assertSame('SHOW CREATE USER CURRENT_USER', (new Semantics('mysql-5.7.44'))->inspect('SHOW CREATE USER CURRENT_USER')->toString());
     }
 }

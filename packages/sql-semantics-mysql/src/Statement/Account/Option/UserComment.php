@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading a comment
- *     $comment = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u COMMENT 'ops'")->statement->comment;
+ *     $comment = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE USER u COMMENT 'ops'")->statement->comment;
  *     [$comment?->kind, $comment?->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Comment, 'ops']
  */
 final class UserComment implements Node

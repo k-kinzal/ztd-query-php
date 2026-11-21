@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\AliasSpelling;
  *
  * @visibility public
  * @example Reading a USING clause with an alias
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM a JOIN b USING (id) AS j');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 FROM a JOIN b USING (id) AS j');
  *     [$query->statement->from->condition->columns[0]->value, $query->statement->from->condition->alias->value] // => ['id', 'j']
  */
 final class JoinUsing implements Node

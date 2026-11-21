@@ -45,7 +45,7 @@ final class UtilityOptionTest extends TestCase
 
     public function testDeriveClauseRecordsNoProblemForAValue(): void
     {
-        self::assertSame([], (new Semantics())->analyze("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->facts->diagnostics);
     }
 
     public function testRenderQuotesFormatOnlyBeforeJson(): void
@@ -53,7 +53,7 @@ final class UtilityOptionTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['EXPLAIN (FORMAT json) SELECT 1', 'EXPLAIN ("format" json) SELECT 1', 'EXPLAIN (format xml) SELECT 1', 'EXPLAIN (costs FALSE, "analyze") SELECT 1'],
-            [$semantics->analyze('EXPLAIN (FORMAT JSON) SELECT 1')->toString(), $semantics->analyze('EXPLAIN ("format" json) SELECT 1')->toString(), $semantics->analyze('EXPLAIN ("format" xml) SELECT 1')->toString(), $semantics->analyze('EXPLAIN (COSTS false, "analyze") SELECT 1')->toString()],
+            [$semantics->inspect('EXPLAIN (FORMAT JSON) SELECT 1')->toString(), $semantics->inspect('EXPLAIN ("format" json) SELECT 1')->toString(), $semantics->inspect('EXPLAIN ("format" xml) SELECT 1')->toString(), $semantics->inspect('EXPLAIN (COSTS false, "analyze") SELECT 1')->toString()],
         );
     }
 }

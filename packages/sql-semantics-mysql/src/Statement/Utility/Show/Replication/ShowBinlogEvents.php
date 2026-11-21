@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
  *     [$show->statement->file?->value, $show->toString()] // => ['binlog.000001', "SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2"]
  */
 final class ShowBinlogEvents implements Statement

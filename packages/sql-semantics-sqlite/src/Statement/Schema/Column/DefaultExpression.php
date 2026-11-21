@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
  *
  * @visibility public
  * @example Reporting a column reference in a default expression
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b DEFAULT (a))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a does not exist.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b DEFAULT (a))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column a does not exist.
  */
 final class DefaultExpression implements ColumnConstraint
 {

@@ -18,7 +18,7 @@ final class NullTestFormTest extends TestCase
 {
     public function testEachFormIsReadFromItsSpelling(): void
     {
-        $query = (new Semantics())->analyze('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
+        $query = (new Semantics())->inspect('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
         $forms = array_map(static fn (Field $field): ?NullTestForm => $field->expression instanceof NullTest ? $field->expression->form : null, $query->fields()->items ?? []);
 
         self::assertSame([NullTestForm::IsNull, NullTestForm::NotNull, NullTestForm::NotNullWords], $forms);

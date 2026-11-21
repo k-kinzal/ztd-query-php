@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Resetting the replica and the binary logs
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('reset replica, binary logs and gtids')->toString() // => 'RESET REPLICA, BINARY LOGS AND GTIDS'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('reset replica, binary logs and gtids')->toString() // => 'RESET REPLICA, BINARY LOGS AND GTIDS'
  */
 final class Reset implements Statement
 {

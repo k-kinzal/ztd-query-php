@@ -20,7 +20,7 @@ final class ConditionalBranchTest extends TestCase
 {
     public function testRenderWritesTheConditionAndTheStatements(): void
     {
-        $operation = (new Semantics())->analyze('CREATE PROCEDURE p(a INT) IF a = 1 THEN SELECT 1; ELSEIF a = 2 THEN SELECT 2; SELECT 3; END IF');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(a INT) IF a = 1 THEN SELECT 1; ELSEIF a = 2 THEN SELECT 2; SELECT 3; END IF');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $if = $create->body;
@@ -34,7 +34,7 @@ final class ConditionalBranchTest extends TestCase
     #[DataProvider('providerRenderWritesTheBranch')]
     public function testRenderWritesTheBranch(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

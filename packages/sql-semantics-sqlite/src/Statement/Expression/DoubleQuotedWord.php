@@ -35,8 +35,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * @visibility public
  * @example Reading a double-quoted word that is no column as text
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT "a", "b" FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $query = $semantics->inspect('SELECT "a", "b" FROM t', [$table]);
  *     [$query->field(0)->column() === $table->declarations()[0]->columns[0], $query->field(1)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text, 'SELECT "a", "b" FROM t']
  */
 final class DoubleQuotedWord implements Scalar

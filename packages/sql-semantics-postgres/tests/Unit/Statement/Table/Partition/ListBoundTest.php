@@ -15,7 +15,7 @@ final class ListBoundTest extends TestCase
     public function testDeriveClauseSeesNoColumn(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (a, 1)', []);
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (a, 1)', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
           1 => 'Column a does not exist.',
@@ -25,7 +25,7 @@ final class ListBoundTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (\'x\', NULL)', []);
+        $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (\'x\', NULL)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (\'x\', NULL)', $statement->toString());
     }
 }

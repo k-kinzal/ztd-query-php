@@ -18,9 +18,9 @@ final class AggregationTest extends TestCase
     public function testAggregatesFindsASetFunctionOutsideNestedQueries(): void
     {
         $semantics = new Semantics();
-        $aggregate = $semantics->analyze('SELECT COUNT(*) + 1 FROM t')->statement;
-        $windowed = $semantics->analyze('SELECT COUNT(*) OVER () FROM t')->statement;
-        $nested = $semantics->analyze('SELECT (SELECT COUNT(*) FROM u) FROM t')->statement;
+        $aggregate = $semantics->inspect('SELECT COUNT(*) + 1 FROM t')->statement;
+        $windowed = $semantics->inspect('SELECT COUNT(*) OVER () FROM t')->statement;
+        $nested = $semantics->inspect('SELECT (SELECT COUNT(*) FROM u) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $aggregate);
         self::assertInstanceOf(Select::class, $windowed);

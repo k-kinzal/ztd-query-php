@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
  *
  * @visibility public
  * @example Adding an identity
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)');
  *     $statement->toString() // => 'ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)'
  */
 final class AddIdentity implements AlterCommand

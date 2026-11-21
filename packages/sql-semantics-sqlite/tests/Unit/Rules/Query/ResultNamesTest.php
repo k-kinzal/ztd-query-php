@@ -49,15 +49,15 @@ final class ResultNamesTest extends TestCase
     public function testOutputNamesAColumnByItsAliasItsColumnOrItsText(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT (t.A), oid, b AS x, 1+1, "zz", true, nosuch, A COLLATE nocase, "a" FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT (t.A), oid, b AS x, 1+1, "zz", true, nosuch, A COLLATE nocase, "a" FROM t', [$create]);
 
         self::assertSame(['a', 'rowid', 'x', '1+1', '"zz"', 'true', 'nosuch', 'A COLLATE nocase', 'a'], array_map(static fn (int $position): ?string => $query->field($position)->name?->value, range(0, 8)));
     }
 
     public function testResolvedLeavesAWordConditionalOnAMissingDeclarationUnnamed(): void
     {
-        $query = (new Semantics())->inspect('SELECT "zz", nosuch, true FROM t');
+        $query = (new Semantics())->diagnose('SELECT "zz", nosuch, true FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $column = $query->statement->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);
@@ -73,7 +73,7 @@ final class ResultNamesTest extends TestCase
     public function testUnnamedAnswersTheInputsAnUndecidedNameDependsOn(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT "zz", nosuch, 1+1 FROM t');
+        $query = $semantics->diagnose('SELECT "zz", nosuch, 1+1 FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
@@ -83,7 +83,7 @@ final class ResultNamesTest extends TestCase
         self::assertSame([], (new ResultNames())->unnamed($columns[2], null));
         self::assertSame([], $query->field(1)->slot->unnamed);
         self::assertInstanceOf(DependentField::class, $query->fields()?->lookup('zz'));
-        self::assertInstanceOf(UniqueField::class, $semantics->inspect('SELECT "zz", 1+1 FROM t', [])->fields()?->lookup('"zz"'));
+        self::assertInstanceOf(UniqueField::class, $semantics->diagnose('SELECT "zz", 1+1 FROM t', [])->fields()?->lookup('"zz"'));
     }
 
     public function testWrittenAnswersTheOneWordAnExpressionConsistsOf(): void
@@ -110,8 +110,8 @@ final class ResultNamesTest extends TestCase
     public function testDeclaredLooksThroughCollateAndTheLikelihoodFunctions(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $view = $semantics->inspect('CREATE VIEW v AS SELECT A COLLATE nocase, likely(B), likelihood((a), 0.5), "zz", true, 1+1, a AS x FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $view = $semantics->diagnose('CREATE VIEW v AS SELECT A COLLATE nocase, likely(B), likelihood((a), 0.5), "zz", true, 1+1, a AS x FROM t', [$create]);
 
         self::assertSame(['a', 'b', 'a:1', '"zz"', 'column5', '1+1', 'x'], array_map(static fn (\SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column $column): string => $column->name->value, $view->declarations()[0]->columns));
     }
@@ -133,8 +133,8 @@ final class ResultNamesTest extends TestCase
     public function testLeftmostFindsTheArmThatNamesTheColumns(): void
     {
         $semantics = new Semantics();
-        $compound = $semantics->inspect('WITH c AS (SELECT 1) VALUES (1) UNION SELECT 2')->statement;
-        $select = $semantics->inspect('SELECT 1')->statement;
+        $compound = $semantics->diagnose('WITH c AS (SELECT 1) VALUES (1) UNION SELECT 2')->statement;
+        $select = $semantics->diagnose('SELECT 1')->statement;
 
         self::assertInstanceOf(WithQuery::class, $compound);
         self::assertInstanceOf(Compound::class, $compound->body);
@@ -147,8 +147,8 @@ final class ResultNamesTest extends TestCase
     public function testColumnFindsTheResultColumnOfAFieldAndNoneForAStar(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('SELECT a + 1, * FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('SELECT a + 1, * FROM t', [$create]);
         $select = $query->statement;
 
         self::assertInstanceOf(Select::class, $select);

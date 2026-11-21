@@ -16,12 +16,12 @@ final class CommitTest extends TestCase
 {
     public function testRenderWritesTheCompletionChoices(): void
     {
-        self::assertSame('COMMIT AND CHAIN NO RELEASE', (new Semantics('mysql-5.7.44'))->analyze('commit and chain no release')->toString());
+        self::assertSame('COMMIT AND CHAIN NO RELEASE', (new Semantics('mysql-5.7.44'))->inspect('commit and chain no release')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('COMMIT');
+        $operation = (new Semantics())->inspect('COMMIT');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

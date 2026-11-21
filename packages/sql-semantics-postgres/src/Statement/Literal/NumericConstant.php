@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
  *
  * @visibility public
  * @example Reading the text of a numeric constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1_0.50e-3');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1_0.50e-3');
  *     $query->statement->targets[0]->expression->value->text // => '1_0.50e-3'
  * @example Rejecting an integer the scanner reads as an integer constant
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('100') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

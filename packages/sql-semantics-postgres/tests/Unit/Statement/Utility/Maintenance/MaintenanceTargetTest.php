@@ -16,6 +16,6 @@ final class MaintenanceTargetTest extends TestCase
 {
     public function testRenderWritesTheTableAndItsColumns(): void
     {
-        self::assertSame('ANALYZE s.t (a, "B"), u', (new Semantics())->analyze('ANALYZE s.t(A, "B"), u')->toString());
+        self::assertSame('ANALYZE s.t (a, "B"), u', (new Semantics())->inspect('ANALYZE s.t(A, "B"), u')->toString());
     }
 }

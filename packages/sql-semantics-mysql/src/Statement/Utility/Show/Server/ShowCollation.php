@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW COLLATION LIKE 'utf8%'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW COLLATION LIKE 'utf8%'");
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Collation', "SHOW COLLATION LIKE 'utf8%'"]
  */
 final class ShowCollation implements Statement, Relation

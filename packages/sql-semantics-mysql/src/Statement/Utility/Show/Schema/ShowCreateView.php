@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE VIEW v');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW CREATE VIEW v');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['View', 'SHOW CREATE VIEW v']
  */
 final class ShowCreateView implements Statement

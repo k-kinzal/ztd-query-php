@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading the data type of a sequence
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s AS smallint');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SEQUENCE s AS smallint');
  *     $create->statement->options[0]->type->catalogName()->value // => 'int2'
  */
 final class SequenceAs implements SequenceOption

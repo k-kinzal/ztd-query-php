@@ -16,6 +16,6 @@ final class ReloadTlsTest extends TestCase
 {
     public function testRenderWritesNoRollbackOnError(): void
     {
-        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', (new Semantics())->analyze('alter instance reload tls no rollback on error')->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS NO ROLLBACK ON ERROR', (new Semantics())->inspect('alter instance reload tls no rollback on error')->toString());
     }
 }

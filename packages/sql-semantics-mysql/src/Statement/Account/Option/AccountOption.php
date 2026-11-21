@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Reading a password history option
- *     $option = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE USER u PASSWORD HISTORY 5')->statement->options[0];
+ *     $option = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE USER u PASSWORD HISTORY 5')->statement->options[0];
  *     [$option->kind, $option->number?->text] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, '5']
  */
 final class AccountOption implements Node

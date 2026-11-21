@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
  *
  * @visibility public
  * @example Renaming and retyping a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t CHANGE a b BIGINT FIRST');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t CHANGE a b BIGINT FIRST');
  *     [$alter->statement->commands[0]->column?->column->value, $alter->toString()] // => ['a', 'ALTER TABLE t CHANGE COLUMN a b BIGINT FIRST']
  */
 final class ChangeColumn implements AlterCommand

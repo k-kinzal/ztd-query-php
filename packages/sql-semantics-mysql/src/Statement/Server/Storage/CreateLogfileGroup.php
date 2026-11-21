@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Creating a log file group
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
  *     [$statement->toString(), $statement->statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE `8M` ENGINE `ndb`", 'u.log']
  */
 final class CreateLogfileGroup implements Statement

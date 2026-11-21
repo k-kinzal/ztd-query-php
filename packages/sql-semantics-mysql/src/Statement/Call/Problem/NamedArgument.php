@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a named argument
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT abs(1 AS x)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect parameters in the call to native function 'abs'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT abs(1 AS x)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect parameters in the call to native function 'abs'
  */
 final class NamedArgument implements Diagnostic
 {

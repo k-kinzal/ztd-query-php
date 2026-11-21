@@ -22,14 +22,14 @@ final class PreparedParametersTest extends TestCase
 {
     public function testInfersUndeclaredIsTrue(): void
     {
-        $prepare = (new Semantics())->analyze('PREPARE p (integer) AS SELECT $1')->statement;
+        $prepare = (new Semantics())->inspect('PREPARE p (integer) AS SELECT $1')->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertTrue($prepare->parameters?->infersUndeclared());
     }
 
     public function testDeriveRelationAnswersOneUnnamedSlotPerType(): void
     {
-        $operation = (new Semantics())->analyze('PREPARE p (integer, pg_catalog.text) AS SELECT 1');
+        $operation = (new Semantics())->inspect('PREPARE p (integer, pg_catalog.text) AS SELECT 1');
         $prepare = $operation->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertInstanceOf(PreparedParameters::class, $prepare->parameters);
@@ -42,7 +42,7 @@ final class PreparedParametersTest extends TestCase
 
     public function testDeriveRelationTypesTheParametersOfThePreparedStatement(): void
     {
-        $operation = (new Semantics())->analyze('PREPARE p (integer) AS SELECT $1, $2');
+        $operation = (new Semantics())->inspect('PREPARE p (integer) AS SELECT $1, $2');
         $prepare = $operation->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         $projection = $operation->facts->query($prepare->statement)->projection;
@@ -56,6 +56,6 @@ final class PreparedParametersTest extends TestCase
 
     public function testRenderWritesTheTypesInParentheses(): void
     {
-        self::assertSame('PREPARE p (INTEGER, text) AS SELECT $1', (new Semantics())->analyze('PREPARE p (integer, text) AS SELECT $1')->toString());
+        self::assertSame('PREPARE p (INTEGER, text) AS SELECT $1', (new Semantics())->inspect('PREPARE p (integer, text) AS SELECT $1')->toString());
     }
 }

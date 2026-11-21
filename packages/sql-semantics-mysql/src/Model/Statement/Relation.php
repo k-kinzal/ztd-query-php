@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
  *
  * @visibility public
  * @example Reading the input relation of a query
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t');
  *     $operation->inputRelation() instanceof \SqlSemantics\Platform\MySql\Model\Statement\Relation // => true
  */
 interface Relation extends Node

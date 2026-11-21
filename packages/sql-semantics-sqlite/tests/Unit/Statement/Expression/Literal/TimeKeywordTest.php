@@ -31,7 +31,7 @@ final class TimeKeywordTest extends TestCase
 
     public function testFromMatchesTheKeywordOfAnAnalyzedExpression(): void
     {
-        $statement = (new Semantics())->analyze('SELECT current_date, CURRENT_TIME')->statement;
+        $statement = (new Semantics())->inspect('SELECT current_date, CURRENT_TIME')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

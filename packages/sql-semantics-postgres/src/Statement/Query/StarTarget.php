@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\StarExpansion;
  *
  * @visibility public
  * @example Keeping an unexpandable star as a typed request
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM t');
  *     [$query->statement->targets[0] instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget, $query->facts->output->projection[0] instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar] // => [true, true]
  */
 final class StarTarget implements Target

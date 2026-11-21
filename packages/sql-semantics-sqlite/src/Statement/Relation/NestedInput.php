@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
  *
  * @visibility public
  * @example Reading a parenthesised join
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM a LEFT JOIN (b JOIN c) AS x');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 FROM a LEFT JOIN (b JOIN c) AS x');
  *     [$query->statement->from->steps[0]->relation->alias->value, count($query->statement->from->steps[0]->relation->relation->steps)] // => ['x', 1]
  */
 final class NestedInput implements Relation

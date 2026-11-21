@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
  *
  * @visibility public
  * @example Testing for rows
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE EXISTS (SELECT 1)');
  *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
  */
 final class Exists implements Scalar

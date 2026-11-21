@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the channel listened to
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LISTEN Jobs')->statement->channel->value // => 'jobs'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('LISTEN Jobs')->statement->channel->value // => 'jobs'
  */
 final class Listen implements Statement
 {

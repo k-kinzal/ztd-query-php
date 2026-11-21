@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
  *
  * @visibility public
  * @example Reading a default
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int DEFAULT 1 + 2)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int DEFAULT 1 + 2)');
  *     $create->toString() // => 'CREATE TABLE t (a INT DEFAULT 1 + 2)'
  */
 final class DefaultExpression implements Constraint

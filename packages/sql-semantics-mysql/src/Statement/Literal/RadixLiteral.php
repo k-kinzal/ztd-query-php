@@ -42,7 +42,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * @visibility public
  * @example Reading one literal from either spelling
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     [$semantics->analyze("SELECT a FROM t WHERE a = X'1F'")->statement->where->right->digits, $semantics->analyze('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
+ *     [$semantics->inspect("SELECT a FROM t WHERE a = X'1F'")->statement->where->right->digits, $semantics->inspect('SELECT a FROM t WHERE a = 0x1F')->toString()] // => ['1F', "SELECT a FROM t WHERE a = x'1F'"]
  */
 final class RadixLiteral implements Scalar
 {

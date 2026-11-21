@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * @visibility public
  * @example Copying to the client
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('COPY t TO STDOUT');
  *     $copy->statement->file // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout
  */
 enum CopyStream: string implements Node

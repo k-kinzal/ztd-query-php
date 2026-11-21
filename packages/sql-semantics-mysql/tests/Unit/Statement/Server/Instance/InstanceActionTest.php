@@ -18,7 +18,7 @@ final class InstanceActionTest extends TestCase
 {
     public function testActionIsTheActionOfAlterInstance(): void
     {
-        $alter = (new Semantics())->analyze('ALTER INSTANCE RELOAD TLS');
+        $alter = (new Semantics())->inspect('ALTER INSTANCE RELOAD TLS');
         self::assertInstanceOf(AlterInstance::class, $alter->statement);
 
         self::assertInstanceOf(ReloadTls::class, $alter->statement->action);

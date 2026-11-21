@@ -17,12 +17,12 @@ final class IndexVisibilityTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER INDEX i VISIBLE', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t ALTER INDEX i VISIBLE', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesTheVisibility(): void
     {
-        self::assertSame('ALTER TABLE t ALTER INDEX i VISIBLE', (new Semantics())->analyze('alter table t alter index i visible')->toString());
+        self::assertSame('ALTER TABLE t ALTER INDEX i VISIBLE', (new Semantics())->inspect('alter table t alter index i visible')->toString());
     }
 }

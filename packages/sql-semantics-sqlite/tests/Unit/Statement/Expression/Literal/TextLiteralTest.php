@@ -22,7 +22,7 @@ final class TextLiteralTest extends TestCase
 {
     public function testDeriveScalarGivesTextAndKeepsTheDecodedValue(): void
     {
-        $operation = (new Semantics())->analyze("SELECT 'it''s', ''", []);
+        $operation = (new Semantics())->inspect("SELECT 'it''s', ''", []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,7 +41,7 @@ final class TextLiteralTest extends TestCase
 
     public function testRenderDoublesEveryEmbeddedQuote(): void
     {
-        self::assertSame("SELECT 'it''s', '', ''''", (new Semantics())->analyze("select 'it''s', '', ''''")->toString());
+        self::assertSame("SELECT 'it''s', '', ''''", (new Semantics())->inspect("select 'it''s', '', ''''")->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

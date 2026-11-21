@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading both operands of POSITION()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT POSITION('b' IN 'abc')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT POSITION('b' IN 'abc')");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class Position implements Scalar

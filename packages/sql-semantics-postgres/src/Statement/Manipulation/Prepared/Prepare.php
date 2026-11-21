@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
  *
  * @visibility public
  * @example Reading a prepared statement
- *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('PREPARE p (integer) AS SELECT $1');
+ *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('PREPARE p (integer) AS SELECT $1');
  *     [$prepare->statement->name->value, count($prepare->statement->parameters->types), $prepare->toString()] // => ['p', 1, 'PREPARE p (INTEGER) AS SELECT $1']
  */
 final class Prepare implements Statement

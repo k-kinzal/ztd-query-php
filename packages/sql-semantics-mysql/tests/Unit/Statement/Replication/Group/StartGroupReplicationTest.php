@@ -19,7 +19,7 @@ final class StartGroupReplicationTest extends TestCase
 {
     public function testDeriveStatementReportsALongPassword(): void
     {
-        $start = (new Semantics())->inspect("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
+        $start = (new Semantics())->diagnose("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
 
         self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong)], $start->facts->diagnostics);
     }
@@ -33,6 +33,6 @@ final class StartGroupReplicationTest extends TestCase
 
     public function testRenderWritesTheBareStatement(): void
     {
-        self::assertSame('START GROUP_REPLICATION', (new Semantics('mysql-5.7.44'))->inspect('start group_replication')->toString());
+        self::assertSame('START GROUP_REPLICATION', (new Semantics('mysql-5.7.44'))->diagnose('start group_replication')->toString());
     }
 }

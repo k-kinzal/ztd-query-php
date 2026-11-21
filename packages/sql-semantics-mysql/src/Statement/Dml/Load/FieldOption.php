@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the field terminator of INTO OUTFILE
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT 1 INTO OUTFILE 'f' FIELDS TERMINATED BY ','");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT 1 INTO OUTFILE 'f' FIELDS TERMINATED BY ','");
  *     [$query->statement->into->format->fields[0]->kind, $query->statement->into->format->fields[0]->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, ',']
  */
 final class FieldOption implements Node

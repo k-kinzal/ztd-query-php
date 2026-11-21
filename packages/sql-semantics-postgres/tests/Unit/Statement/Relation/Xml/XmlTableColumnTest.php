@@ -20,7 +20,7 @@ final class XmlTableColumnTest extends TestCase
     public function testRenderWritesTheTypeAndOptions(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text NULL)");
+        $query = $semantics->inspect("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text NULL)");
         self::assertSame("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text NULL)", $query->toString());
     }
 }

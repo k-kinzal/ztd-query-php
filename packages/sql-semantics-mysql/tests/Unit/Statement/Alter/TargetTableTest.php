@@ -16,6 +16,6 @@ final class TargetTableTest extends TestCase
 {
     public function testRenderWritesTheQualifiedName(): void
     {
-        self::assertSame('DROP TABLE db.t', (new Semantics('mysql-5.7.44'))->analyze('DROP TABLE db.t')->toString());
+        self::assertSame('DROP TABLE db.t', (new Semantics('mysql-5.7.44'))->inspect('DROP TABLE db.t')->toString());
     }
 }

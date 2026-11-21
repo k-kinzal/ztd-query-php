@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
  *
  * @visibility public
  * @example Reading a column pattern
- *     $describe = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("DESC t 'a%'");
+ *     $describe = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("DESC t 'a%'");
  *     [$describe->statement->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESCRIBE t 'a%'"]
  */
 final class DescribeTable implements Statement

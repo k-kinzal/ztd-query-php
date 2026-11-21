@@ -16,7 +16,7 @@ final class RollbackTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics())->analyze('ROLLBACK', []);
+        $operation = (new Semantics())->inspect('ROLLBACK', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->facts->diagnostics);
@@ -26,8 +26,8 @@ final class RollbackTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(Rollback::class, $semantics->analyze('ROLLBACK')->statement);
-        self::assertSame('ROLLBACK', $semantics->analyze('rollback transaction')->toString());
-        self::assertSame('ROLLBACK TRANSACTION t1', $semantics->analyze('rollback transaction t1')->toString());
+        self::assertInstanceOf(Rollback::class, $semantics->inspect('ROLLBACK')->statement);
+        self::assertSame('ROLLBACK', $semantics->inspect('rollback transaction')->toString());
+        self::assertSame('ROLLBACK TRANSACTION t1', $semantics->inspect('rollback transaction t1')->toString());
     }
 }

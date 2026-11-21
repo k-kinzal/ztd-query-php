@@ -16,7 +16,7 @@ final class SetNamesTest extends TestCase
 {
     public function testDeriveItemDerivesNothing(): void
     {
-        $set = (new Semantics())->analyze('SET NAMES DEFAULT');
+        $set = (new Semantics())->inspect('SET NAMES DEFAULT');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         self::assertInstanceOf(SetNames::class, $set->statement->items[0]);
         self::assertNull($set->statement->items[0]->charset->name);
@@ -25,6 +25,6 @@ final class SetNamesTest extends TestCase
 
     public function testRenderWritesTheCollation(): void
     {
-        self::assertSame('SET NAMES utf8 COLLATE DEFAULT', (new Semantics('mysql-5.6.51'))->analyze("set names 'utf8' collate default")->toString());
+        self::assertSame('SET NAMES utf8 COLLATE DEFAULT', (new Semantics('mysql-5.6.51'))->inspect("set names 'utf8' collate default")->toString());
     }
 }

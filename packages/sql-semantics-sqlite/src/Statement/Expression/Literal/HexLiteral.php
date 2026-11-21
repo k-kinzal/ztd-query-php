@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the digits of a hexadecimal literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 0x1f AS h');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 0x1f AS h');
  *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F AS h']
  * @example Refusing lower-case digits, which are another spelling of the same value
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('1f') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

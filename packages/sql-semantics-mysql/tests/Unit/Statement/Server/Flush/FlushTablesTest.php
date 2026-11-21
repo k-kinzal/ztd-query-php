@@ -17,14 +17,14 @@ final class FlushTablesTest extends TestCase
 {
     public function testRenderWritesTheLock(): void
     {
-        self::assertSame('FLUSH TABLE WITH READ LOCK', (new Semantics())->analyze('flush tables with read lock')->toString());
+        self::assertSame('FLUSH TABLE WITH READ LOCK', (new Semantics())->inspect('flush tables with read lock')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $operation = $semantics->analyze('FLUSH TABLES t FOR EXPORT', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $operation = $semantics->inspect('FLUSH TABLES t FOR EXPORT', [$table]);
         self::assertInstanceOf(FlushTables::class, $operation->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);

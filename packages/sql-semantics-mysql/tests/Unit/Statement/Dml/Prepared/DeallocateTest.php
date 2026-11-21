@@ -16,13 +16,13 @@ final class DeallocateTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('DEALLOCATE PREPARE s');
+        $operation = (new Semantics())->inspect('DEALLOCATE PREPARE s');
 
         self::assertNull($operation->facts->output);
     }
 
     public function testRenderWritesDeallocate(): void
     {
-        self::assertSame('DEALLOCATE PREPARE s', (new Semantics('mysql-5.6.51'))->analyze('drop prepare s')->toString());
+        self::assertSame('DEALLOCATE PREPARE s', (new Semantics('mysql-5.6.51'))->inspect('drop prepare s')->toString());
     }
 }

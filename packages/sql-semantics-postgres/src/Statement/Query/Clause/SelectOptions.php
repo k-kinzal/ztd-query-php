@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
  *
  * @visibility public
  * @example Reading the options of a selection
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1');
  *     [count($query->statement->options->order), $query->statement->options->lockingFirst, $query->toString()] // => [1, true, 'SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1']
  * @example Refusing an integer constant that is not given as a position
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions([new \SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

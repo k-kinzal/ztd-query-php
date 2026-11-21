@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  *
  * @visibility public
  * @example Converting a table to utf8mb4
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t CONVERT TO CHARSET utf8mb4');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t CONVERT TO CHARSET utf8mb4');
  *     [$alter->statement->commands[0]->charset->name?->value, $alter->toString()] // => ['utf8mb4', 'ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4']
  */
 final class ConvertCharset implements AlterCommand

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
  *
  * @visibility public
  * @example Reading the name of a window
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WINDOW w AS (ORDER BY a)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WINDOW w AS (ORDER BY a)');
  *     $query->statement->windows[0]->name->value // => 'w'
  */
 final class WindowDefinition implements Node

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Naming the declaration a type depends on
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t');
  *     $operation->field('a')->type->missing[0] instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation // => true
  */
 final class Dependent implements TypeFact

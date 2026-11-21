@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Ending the statement of a connection
- *     $kill = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('kill query 42');
+ *     $kill = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('kill query 42');
  *     [$kill->toString(), $kill->statement->scope] // => ['KILL QUERY 42', \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]
  */
 final class Kill implements Statement

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a duplicated database option
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d OWNER a OWNER b') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: conflicting or redundant options
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DATABASE d OWNER a OWNER b') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: conflicting or redundant options
  */
 final class CatalogMisuse implements Diagnostic
 {

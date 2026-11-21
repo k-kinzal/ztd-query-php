@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Recording a conditional declaration
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (id INT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (id INT)')->declarations()[0];
  *     $missing = new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation($table->name);
  *     $conditional = new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConditionalTable([$table], $missing);
  *     $conditional->candidates[0] === $table // => true

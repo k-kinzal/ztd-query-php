@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\StringResult;
  * @visibility public
  * @example Concatenating under PIPES_AS_CONCAT
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics(null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
- *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
+ *     $semantics->inspect("SELECT a FROM t WHERE a || 'x'")->statement->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
  */
 final class Concatenation implements Scalar
 {

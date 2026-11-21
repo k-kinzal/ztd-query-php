@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Stopping the applier thread of a channel
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("stop slave sql_thread for channel 'c'")->toString() // => "STOP SLAVE SQL_THREAD FOR CHANNEL 'c'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect("stop slave sql_thread for channel 'c'")->toString() // => "STOP SLAVE SQL_THREAD FOR CHANNEL 'c'"
  */
 final class StopReplica implements Statement
 {

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Typing the internal form
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT WEIGHT_STRING('ab', 0, 4, 64)");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT WEIGHT_STRING('ab', 0, 4, 64)");
  *     $query->field(0)->type->descriptor->name() // => 'VARBINARY'
  */
 final class WeightStringParameters implements Scalar

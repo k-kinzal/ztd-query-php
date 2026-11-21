@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Dropping a group
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop resource group batch force')->statement->force // => true
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('drop resource group batch force')->statement->force // => true
  */
 final class DropResourceGroup implements Statement
 {

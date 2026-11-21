@@ -22,6 +22,6 @@ final class ThreadPriorityTest extends TestCase
 
     public function testRenderWritesTheSign(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = -5', (new Semantics())->analyze('alter resource group g thread_priority = -5')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = -5', (new Semantics())->inspect('alter resource group g thread_priority = -5')->toString());
     }
 }

@@ -29,7 +29,7 @@ final class ListedColumnTest extends TestCase
 {
     public function testRenderWritesTheNameTheCollationAndTheDirection(): void
     {
-        $query = (new Semantics())->inspect('with c(x, "y z" collate nocase desc, w asc) as (select 1, 2, 3) select * from c');
+        $query = (new Semantics())->diagnose('with c(x, "y z" collate nocase desc, w asc) as (select 1, 2, 3) select * from c');
 
         self::assertInstanceOf(WithQuery::class, $query->statement);
         $columns = $query->statement->with->tables[0]->columns;

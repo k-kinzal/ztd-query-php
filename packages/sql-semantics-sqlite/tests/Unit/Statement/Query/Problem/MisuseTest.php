@@ -26,7 +26,7 @@ final class MisuseTest extends TestCase
 
     public function testMessageIsReportedForAStarWithoutTables(): void
     {
-        $query = (new Semantics())->inspect('SELECT *');
+        $query = (new Semantics())->diagnose('SELECT *');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::StarWithoutTables, $query->facts->diagnostics[0]->rule);

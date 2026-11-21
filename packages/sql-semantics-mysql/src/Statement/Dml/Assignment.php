@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
  *
  * @visibility public
  * @example Reading an assignment of UPDATE
- *     $update = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('UPDATE t SET a = a + 1');
+ *     $update = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('UPDATE t SET a = a + 1');
  *     $update->statement->assignments[0]->column->name->value // => 'a'
  */
 final class Assignment implements Node

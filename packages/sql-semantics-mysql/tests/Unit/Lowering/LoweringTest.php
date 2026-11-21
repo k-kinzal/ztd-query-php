@@ -54,7 +54,7 @@ final class LoweringTest extends TestCase
 
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze('SET ROLE NONE');
+        $operation = (new Semantics('mysql-8.4.7'))->inspect('SET ROLE NONE');
 
         self::assertInstanceOf(SetRole::class, $operation->statement);
         self::assertSame('SET ROLE NONE', $operation->toString());
@@ -62,7 +62,7 @@ final class LoweringTest extends TestCase
 
     public function testStatementHandsBeginToTheServerFamily(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('BEGIN');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('BEGIN');
 
         self::assertInstanceOf(Begin::class, $operation->statement);
         self::assertSame('BEGIN', $operation->toString());
@@ -70,7 +70,7 @@ final class LoweringTest extends TestCase
 
     public function testDefinitionRoutesCreateAlterAndDrop(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('DROP TABLE t');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('DROP TABLE t');
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -78,7 +78,7 @@ final class LoweringTest extends TestCase
 
     public function testRoutedHandsAModernStatementToItsFamily(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze('DROP TABLE t');
+        $operation = (new Semantics('mysql-8.4.7'))->inspect('DROP TABLE t');
 
         self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
         self::assertSame('DROP TABLE t', $operation->toString());
@@ -88,9 +88,9 @@ final class LoweringTest extends TestCase
     {
         $semantics = new Semantics('mysql-8.4.7');
 
-        self::assertInstanceOf(CreateTablespace::class, $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'")->statement);
-        self::assertInstanceOf(CreateDatabase::class, $semantics->analyze('CREATE DATABASE d')->statement);
-        self::assertInstanceOf(CreateDatabase::class, (new Semantics('mysql-5.6.51'))->analyze('CREATE DATABASE d')->statement);
+        self::assertInstanceOf(CreateTablespace::class, $semantics->inspect("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'")->statement);
+        self::assertInstanceOf(CreateDatabase::class, $semantics->inspect('CREATE DATABASE d')->statement);
+        self::assertInstanceOf(CreateDatabase::class, (new Semantics('mysql-5.6.51'))->inspect('CREATE DATABASE d')->statement);
     }
 
     public function testFormAnswersTheProductionOfANode(): void

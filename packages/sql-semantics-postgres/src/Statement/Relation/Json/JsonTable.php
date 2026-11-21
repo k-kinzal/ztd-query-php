@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading the columns of JSON_TABLE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' AS p COLUMNS (n FOR ORDINALITY, e boolean EXISTS)) AS j");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->inspect("SELECT * FROM JSON_TABLE ('[]', '$[*]' AS p COLUMNS (n FOR ORDINALITY, e boolean EXISTS)) AS j");
  *     [$query->statement->from->pathName->value, $query->field(0)->type->descriptor->name(), $query->field(1)->name->value] // => ['p', 'integer', 'e']
  */
 final class JsonTable implements Relation

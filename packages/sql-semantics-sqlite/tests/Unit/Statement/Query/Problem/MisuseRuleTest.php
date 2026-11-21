@@ -36,7 +36,7 @@ final class MisuseRuleTest extends TestCase
     #[DataProvider('providerStatements')]
     public function testCasesAreReportedForTheStatementsThatBreakThem(string $sql, MisuseRule $rule): void
     {
-        $query = (new Semantics())->inspect($sql);
+        $query = (new Semantics())->diagnose($sql);
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame($rule, $query->facts->diagnostics[0]->rule);

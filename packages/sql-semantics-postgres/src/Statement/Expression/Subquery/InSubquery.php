@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Sublinks;
  *
  * @visibility public
  * @example Reading a negated membership test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 NOT IN (SELECT 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 NOT IN (SELECT 2)');
  *     [$query->field(0)->expression->negated, $query->field(0)->type->descriptor->name()] // => [true, 'boolean']
  */
 final class InSubquery implements Scalar

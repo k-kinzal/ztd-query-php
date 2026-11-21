@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
  *
  * @visibility public
  * @example Reading the action of an index hint
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t FORCE INDEX (i)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t FORCE INDEX (i)');
  *     $query->statement->from->indexHints[0]->action // => \SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction::Force
  */
 enum IndexHintAction: string

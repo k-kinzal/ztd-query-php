@@ -18,7 +18,7 @@ final class EnforcementAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class EnforcementAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)', (new Semantics())->analyze('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)')->toString());
+        self::assertSame('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)', (new Semantics())->inspect('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)')->toString());
     }
 }

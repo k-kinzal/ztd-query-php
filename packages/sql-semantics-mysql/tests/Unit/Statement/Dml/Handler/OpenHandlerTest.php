@@ -23,7 +23,7 @@ final class OpenHandlerTest extends TestCase
 {
     public function testDeriveRelationIsOpen(): void
     {
-        $operation = (new Semantics())->analyze('HANDLER h READ FIRST WHERE a');
+        $operation = (new Semantics())->inspect('HANDLER h READ FIRST WHERE a');
         self::assertInstanceOf(HandlerScan::class, $operation->statement);
 
         self::assertFalse($operation->facts->relation($operation->statement->handler)->shape->complete());

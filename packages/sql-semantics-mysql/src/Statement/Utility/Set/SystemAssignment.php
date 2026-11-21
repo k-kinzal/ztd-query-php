@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
  *
  * @visibility public
  * @example Reading a persisted assignment
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET @@PERSIST.max_connections = 10');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SET @@PERSIST.max_connections = 10');
  *     [$set->statement->items[0]->variable->scope, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'SET @@PERSIST.max_connections = 10']
  */
 final class SystemAssignment implements SetItem

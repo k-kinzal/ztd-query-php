@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the storage class of a literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1');
  *     $query->field(0)->type->descriptor // => \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer
  */
 enum Storage: string implements TypeDescriptor

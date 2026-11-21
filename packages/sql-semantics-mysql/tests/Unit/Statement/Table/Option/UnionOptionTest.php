@@ -17,7 +17,7 @@ final class UnionOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) UNION = (x, db.y)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) UNION = (x, db.y)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

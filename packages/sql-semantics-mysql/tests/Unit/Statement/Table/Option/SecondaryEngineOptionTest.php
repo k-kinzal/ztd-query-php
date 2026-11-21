@@ -17,7 +17,7 @@ final class SecondaryEngineOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) SECONDARY_ENGINE = NULL');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) SECONDARY_ENGINE = NULL');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

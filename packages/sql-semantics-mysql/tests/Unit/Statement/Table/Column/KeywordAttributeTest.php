@@ -19,7 +19,7 @@ final class KeywordAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT KEY)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT KEY)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +34,6 @@ final class KeywordAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT PRIMARY KEY)', (new Semantics())->analyze('CREATE TABLE t (a INT KEY)')->toString());
+        self::assertSame('CREATE TABLE t (a INT PRIMARY KEY)', (new Semantics())->inspect('CREATE TABLE t (a INT KEY)')->toString());
     }
 }

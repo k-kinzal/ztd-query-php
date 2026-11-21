@@ -37,8 +37,8 @@ final class EscapeRuleTest extends TestCase
 
     public function testUnderFollowsTheProfileOfAnAnalysis(): void
     {
-        $verbatim = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
-        $backslash = (new Semantics())->analyze("SELECT 'a\\nb'");
+        $verbatim = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->inspect("SELECT 'a\\nb'");
+        $backslash = (new Semantics())->inspect("SELECT 'a\\nb'");
         $verbatimSelect = $verbatim->statement;
         $backslashSelect = $backslash->statement;
         self::assertInstanceOf(Select::class, $verbatimSelect);

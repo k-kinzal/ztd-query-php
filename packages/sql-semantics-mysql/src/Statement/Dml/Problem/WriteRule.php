@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
  *
  * @visibility public
  * @example Reading which rule a statement breaks
- *     $values = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('VALUES ROW(DEFAULT)');
+ *     $values = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('VALUES ROW(DEFAULT)');
  *     $values->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::DefaultOutsideInsert
  */
 enum WriteRule: string

@@ -110,7 +110,7 @@ final class AnalysisContextTest extends TestCase
     public function testDeclaredFindsTheTableAStatementProvidedToTheFacade(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
         $context = $semantics->context([$table]);
 

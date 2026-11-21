@@ -16,7 +16,7 @@ final class MisuseTest extends TestCase
 {
     public function testMessageAnswersTheWordsOfTheServer(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM DUAL');
+        $operation = (new Semantics())->diagnose('SELECT * FROM DUAL');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertSame('No tables used', $operation->facts->diagnostics[0]->message());

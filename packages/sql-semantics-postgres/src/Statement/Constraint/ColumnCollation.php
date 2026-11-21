@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the collation of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text COLLATE "C")');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text COLLATE "C")');
  *     $create->statement->definition->elements[0]->qualifiers[0]->collation->last()->value // => 'C'
  */
 final class ColumnCollation implements Clause

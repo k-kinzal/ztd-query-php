@@ -24,8 +24,8 @@ final class TriggerEventTest extends TestCase
     public function testCasesAreReadFromTheEventWordWhateverItsSpelling(): void
     {
         $semantics = new Semantics();
-        $delete = $semantics->analyze('create trigger tr delete on t begin select 1; end');
-        $insert = $semantics->analyze('create trigger tr after Insert on t begin select 1; end');
+        $delete = $semantics->inspect('create trigger tr delete on t begin select 1; end');
+        $insert = $semantics->inspect('create trigger tr after Insert on t begin select 1; end');
 
         self::assertInstanceOf(CreateTrigger::class, $delete->statement);
         self::assertSame(TriggerEvent::Delete, $delete->statement->event);

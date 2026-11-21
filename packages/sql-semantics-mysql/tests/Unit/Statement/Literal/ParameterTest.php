@@ -22,7 +22,7 @@ final class ParameterTest extends TestCase
 {
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = ?');
+        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = ?');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -42,7 +42,7 @@ final class ParameterTest extends TestCase
 
     public function testDeriveScalarNamesANamedMarker(): void
     {
-        $operation = (new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id');
+        $operation = (new Semantics(null, null, ParameterStyle::Named))->inspect('SELECT a FROM t WHERE a = :id');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -57,8 +57,8 @@ final class ParameterTest extends TestCase
 
     public function testRenderWritesTheMarkerAsWritten(): void
     {
-        self::assertSame('SELECT ?', (new Semantics())->analyze('select ?')->toString());
-        self::assertSame('SELECT a FROM t WHERE a = :id', (new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id')->toString());
+        self::assertSame('SELECT ?', (new Semantics())->inspect('select ?')->toString());
+        self::assertSame('SELECT a FROM t WHERE a = :id', (new Semantics(null, null, ParameterStyle::Named))->inspect('SELECT a FROM t WHERE a = :id')->toString());
     }
 
     public function testRejectsAWordWithoutAColon(): void

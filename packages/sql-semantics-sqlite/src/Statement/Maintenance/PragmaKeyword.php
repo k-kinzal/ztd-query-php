@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Maintenance;
  *
  * @visibility public
  * @example Reading a keyword value
- *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('PRAGMA journal_mode = DELETE');
+ *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('PRAGMA journal_mode = DELETE');
  *     $pragma->statement->value // => \SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword::Delete
  */
 enum PragmaKeyword: string

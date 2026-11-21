@@ -35,7 +35,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
  *
  * @visibility public
  * @example Reading the parts of an UPDATE
- *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE OR FAIL t SET a = u.b FROM u WHERE t.id = u.id');
+ *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('UPDATE OR FAIL t SET a = u.b FROM u WHERE t.id = u.id');
  *     [$update->statement->resolution, count($update->statement->assignments), $update->statement->from->name->name->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Fail, 1, 'u']
  * @example Refusing an UPDATE that assigns nothing
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\Update(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

@@ -29,7 +29,7 @@ final class DefaultRequestTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         $fact = $operation->facts->scalar($operation->statement->rows[0]->values[1]);
 
@@ -40,7 +40,7 @@ final class DefaultRequestTest extends TestCase
 
     public function testDeriveScalarReportsDefaultOutsideAnAssignment(): void
     {
-        $operation = (new Semantics())->inspect('VALUES ROW(DEFAULT)');
+        $operation = (new Semantics())->diagnose('VALUES ROW(DEFAULT)');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(WriteMisuse::class, $operation->facts->diagnostics[0]);
@@ -49,6 +49,6 @@ final class DefaultRequestTest extends TestCase
 
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('UPDATE t SET a = DEFAULT', (new Semantics())->inspect('update t set a = default')->toString());
+        self::assertSame('UPDATE t SET a = DEFAULT', (new Semantics())->diagnose('update t set a = default')->toString());
     }
 }

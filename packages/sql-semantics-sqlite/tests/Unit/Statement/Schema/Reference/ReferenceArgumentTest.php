@@ -20,7 +20,7 @@ final class ReferenceArgumentTest extends TestCase
 {
     public function testRenderWritesEveryKindOfClauseInWrittenOrder(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE c (p REFERENCES parent ON UPDATE CASCADE MATCH simple ON DELETE RESTRICT)');
+        $operation = (new Semantics())->inspect('CREATE TABLE c (p REFERENCES parent ON UPDATE CASCADE MATCH simple ON DELETE RESTRICT)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

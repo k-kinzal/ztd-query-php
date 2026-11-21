@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Shape;
  *
  * @visibility public
  * @example Looking up a name no field has
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS a');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 AS a');
  *     $operation->lookupField('b') instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Shape\AbsentField // => true
  */
 interface FieldLookup

@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
  *
  * @visibility public
  * @example Reading a function in FROM
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT * FROM f() WITH ORDINALITY AS x (a integer)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM f() WITH ORDINALITY AS x (a integer)');
  *     [$query->statement->from->ordinality, $query->statement->from->definitions[0]->name->value, $query->toString()] // => [true, 'a', 'SELECT * FROM f() WITH ORDINALITY AS x (a INTEGER)']
  * @example Refusing several functions outside ROWS FROM
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableFunction(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());

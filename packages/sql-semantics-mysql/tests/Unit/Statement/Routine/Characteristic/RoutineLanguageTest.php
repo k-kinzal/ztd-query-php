@@ -35,7 +35,7 @@ final class RoutineLanguageTest extends TestCase
     #[DataProvider('providerRenderWritesTheKeywordSql')]
     public function testRenderWritesTheKeywordSql(string $release): void
     {
-        $alter = (new Semantics($release))->analyze('alter procedure p language sql');
+        $alter = (new Semantics($release))->inspect('alter procedure p language sql');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -57,7 +57,7 @@ final class RoutineLanguageTest extends TestCase
     #[DataProvider('providerRenderWritesTheNameOfAnExternalLanguage')]
     public function testRenderWritesTheNameOfAnExternalLanguage(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create function f() returns int language javascript as $$ return 1 $$');
+        $create = (new Semantics($release))->inspect('create function f() returns int language javascript as $$ return 1 $$');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -69,7 +69,7 @@ final class RoutineLanguageTest extends TestCase
 
     public function testRenderQuotesALanguageNameThatNeedsQuoting(): void
     {
-        $create = (new Semantics())->analyze("create procedure p() language `java script` as 'x'");
+        $create = (new Semantics())->inspect("create procedure p() language `java script` as 'x'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;

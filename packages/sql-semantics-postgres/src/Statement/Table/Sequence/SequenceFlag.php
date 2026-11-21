@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a flag
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s NO CYCLE');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SEQUENCE s NO CYCLE');
  *     $create->statement->options[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::NoCycle
  */
 final class SequenceFlag implements SequenceOption

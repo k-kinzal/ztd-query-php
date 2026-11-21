@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: SELECT * with no tables specified is not valid
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT *') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: SELECT * with no tables specified is not valid
  */
 final class QueryMisuse implements Diagnostic
 {

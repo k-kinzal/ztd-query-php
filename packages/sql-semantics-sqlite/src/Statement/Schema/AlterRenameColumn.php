@@ -31,7 +31,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  *
  * @visibility public
  * @example Reading a column rename
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t RENAME COLUMN a TO b');
+ *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t RENAME COLUMN a TO b');
  *     [$alter->statement->column->value, $alter->statement->newName->value, $alter->toString()] // => ['a', 'b', 'ALTER TABLE t RENAME a TO b']
  */
 final class AlterRenameColumn implements Statement

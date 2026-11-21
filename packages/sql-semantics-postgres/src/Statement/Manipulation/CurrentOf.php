@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading the cursor of a positioned DELETE
- *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DELETE FROM t WHERE CURRENT OF c');
+ *     $delete = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DELETE FROM t WHERE CURRENT OF c');
  *     $delete->statement->where->cursor->value // => 'c'
  */
 final class CurrentOf implements Clause

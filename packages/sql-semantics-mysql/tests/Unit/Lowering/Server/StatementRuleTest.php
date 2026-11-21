@@ -16,16 +16,16 @@ final class StatementRuleTest extends TestCase
 {
     public function testStatementHandsTheRuleToItsArea(): void
     {
-        self::assertSame('RESTART', (new Semantics())->analyze('restart')->toString());
+        self::assertSame('RESTART', (new Semantics())->inspect('restart')->toString());
     }
 
     public function testDefinitionHandsAlterInstanceOf57ToItsArea(): void
     {
-        self::assertSame('ALTER INSTANCE ROTATE innodb MASTER KEY', (new Semantics('mysql-5.7.44'))->analyze('alter instance rotate innodb master key')->toString());
+        self::assertSame('ALTER INSTANCE ROTATE innodb MASTER KEY', (new Semantics('mysql-5.7.44'))->inspect('alter instance rotate innodb master key')->toString());
     }
 
     public function testAreaLowersTablespacesAndLogfileGroups(): void
     {
-        self::assertSame('DROP LOGFILE GROUP g', (new Semantics('mysql-5.6.51'))->analyze('drop logfile group g')->toString());
+        self::assertSame('DROP LOGFILE GROUP g', (new Semantics('mysql-5.6.51'))->inspect('drop logfile group g')->toString());
     }
 }

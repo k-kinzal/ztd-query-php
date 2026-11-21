@@ -24,7 +24,7 @@ final class RandomColumnNameTest extends TestCase
 
     public function testDescribeIsTheMissingInputOfALookupThatOnlyARandomlyNamedColumnCouldAnswer(): void
     {
-        $query = (new Semantics())->analyze('SELECT x, "a:4", * FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)', []);
+        $query = (new Semantics())->inspect('SELECT x, "a:4", * FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)', []);
         $resolution = $query->field(0)->resolution;
 
         self::assertInstanceOf(ConditionalColumn::class, $resolution);

@@ -27,7 +27,7 @@ final class TriggerTableTest extends TestCase
 {
     public function testNameAnswersTheWatchedTable(): void
     {
-        $trigger = (new Semantics())->inspect('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
+        $trigger = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertSame('t', $trigger->statement->table->name()->name->value);
@@ -36,7 +36,7 @@ final class TriggerTableTest extends TestCase
 
     public function testAliasIsAlwaysNull(): void
     {
-        $trigger = (new Semantics())->inspect('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
+        $trigger = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertNull($trigger->statement->table->alias());
@@ -45,10 +45,10 @@ final class TriggerTableTest extends TestCase
     public function testDeriveRelationResolvesTheWatchedTableInTheContext(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $declared = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT new.a; END', [$t]);
-        $missing = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END', []);
-        $undeclared = $semantics->inspect('CREATE TRIGGER tr INSERT ON t BEGIN SELECT new.a; END');
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $declared = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT new.a; END', [$t]);
+        $missing = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END', []);
+        $undeclared = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT new.a; END');
 
         self::assertInstanceOf(CreateTrigger::class, $declared->statement);
         $fact = $declared->facts->relation($declared->statement->table);
@@ -69,6 +69,6 @@ final class TriggerTableTest extends TestCase
         $built = new Operation($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr')), TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('temp'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])]));
 
         self::assertSame('CREATE TRIGGER tr INSERT ON `temp`.t BEGIN SELECT 1; END', $built->toString());
-        self::assertSame('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END', $semantics->inspect('create trigger tr insert on main.t begin select 1; end')->toString());
+        self::assertSame('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END', $semantics->diagnose('create trigger tr insert on main.t begin select 1; end')->toString());
     }
 }

@@ -18,9 +18,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
  * @visibility public
  * @example Spelling a relation name read from one query for another statement
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $input = $semantics->analyze('SELECT a FROM "order items"')->singleNamedInput();
+ *     $input = $semantics->inspect('SELECT a FROM "order items"')->singleNamedInput();
  *     $table = \SqlSemantics\Platform\PostgreSql\SqlNames::table($input->name(), $semantics->profile());
- *     $semantics->analyze("SELECT * FROM {$table}")->singleNamedInput()->name()->name->value // => 'order items'
+ *     $semantics->inspect("SELECT * FROM {$table}")->singleNamedInput()->name()->name->value // => 'order items'
  */
 final class SqlNames
 {

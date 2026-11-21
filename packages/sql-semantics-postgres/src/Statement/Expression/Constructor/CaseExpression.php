@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Typing a CASE without ELSE
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 3.5 END');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 3.5 END');
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability, $query->field(0)->name->value] // => ['numeric', \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, 'case']
  */
 final class CaseExpression implements Scalar, OutputNaming

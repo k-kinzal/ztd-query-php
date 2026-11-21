@@ -17,7 +17,7 @@ final class AbsentTableTest extends TestCase
 {
     public function testAMissingTableUnderIfExistsIsAbsent(): void
     {
-        $drop = (new Semantics())->analyze('DROP TABLE IF EXISTS t', []);
+        $drop = (new Semantics())->inspect('DROP TABLE IF EXISTS t', []);
 
         self::assertInstanceOf(DropTable::class, $drop->statement);
         self::assertInstanceOf(AbsentTable::class, $drop->facts->relation($drop->statement->tables[0])->table);

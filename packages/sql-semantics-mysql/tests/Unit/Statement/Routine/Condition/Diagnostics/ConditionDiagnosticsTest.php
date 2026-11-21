@@ -38,7 +38,7 @@ final class ConditionDiagnosticsTest extends TestCase
 
     public function testRenderWritesTheAnalyzedInformation(): void
     {
-        $get = (new Semantics('mysql-8.0.44'))->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT, @c = CURSOR_NAME');
+        $get = (new Semantics('mysql-8.0.44'))->inspect('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT, @c = CURSOR_NAME');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);

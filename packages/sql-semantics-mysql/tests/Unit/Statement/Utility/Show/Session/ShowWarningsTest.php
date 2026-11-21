@@ -16,13 +16,13 @@ final class ShowWarningsTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW WARNINGS LIMIT 1');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW WARNINGS LIMIT 1');
         self::assertInstanceOf(ShowWarnings::class, $show->statement);
         self::assertSame('Level', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW WARNINGS LIMIT 1', (new Semantics('mysql-5.6.51'))->analyze('SHOW WARNINGS LIMIT 1')->toString());
+        self::assertSame('SHOW WARNINGS LIMIT 1', (new Semantics('mysql-5.6.51'))->inspect('SHOW WARNINGS LIMIT 1')->toString());
     }
 }

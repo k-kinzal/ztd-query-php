@@ -18,9 +18,9 @@ final class InvalidTest extends TestCase
     public function testCauseIsTheDiagnosticThatLeavesTheExpressionWithoutAType(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
-        $field = $semantics->inspect('SELECT b FROM t', [$table])->field('b');
+        $field = $semantics->diagnose('SELECT b FROM t', [$table])->field('b');
 
         self::assertInstanceOf(Invalid::class, $field->type);
         self::assertInstanceOf(MissingColumn::class, $field->type->cause);

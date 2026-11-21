@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
  *
  * @visibility public
  * @example Attaching a partition
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES IN (1)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES IN (1)');
  *     $statement->toString() // => 'ALTER TABLE p ATTACH PARTITION p1 FOR VALUES IN (1)'
  */
 final class AttachPartition implements AlterCommand

@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\PositionOutOfRange;
  *
  * @visibility public
  * @example Reading the field an ordering position denotes
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a ORDER BY 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS a ORDER BY 1');
  *     $query->facts->scalar($query->statement->options->order[0]->expression)->resolution->field->name->value // => 'a'
  * @example Refusing a position that is not an integer constant
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause::OrderBy) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

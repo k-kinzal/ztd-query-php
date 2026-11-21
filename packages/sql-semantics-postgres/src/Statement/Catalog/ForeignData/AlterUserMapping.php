@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
  *
  * @visibility public
  * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')");
  *     $operation->toString() // => "ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')"
  */
 final class AlterUserMapping implements Statement

@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Statement\Type;
  *
  * @visibility public
  * @example Reading the NULL fact of a literal
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1');
  *     $operation->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 enum Nullability

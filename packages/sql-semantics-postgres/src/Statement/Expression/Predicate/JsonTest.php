@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Testing a string for a JSON object
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '{}' IS NOT JSON OBJECT")->toString() // => "SELECT '{}' IS NOT JSON OBJECT"
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT '{}' IS NOT JSON OBJECT")->toString() // => "SELECT '{}' IS NOT JSON OBJECT"
  */
 final class JsonTest implements Scalar
 {

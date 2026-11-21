@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the message of a refused format
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXPLAIN FORMAT = yaml SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown EXPLAIN format name
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('EXPLAIN FORMAT = yaml SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown EXPLAIN format name
  */
 final class UtilityMisuse implements Diagnostic
 {

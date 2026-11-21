@@ -27,7 +27,7 @@ final class SourceSettingsTest extends TestCase
 {
     public function testOptionsDerivesTheHeartbeatPeriod(): void
     {
-        $change = (new Semantics())->inspect('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
+        $change = (new Semantics())->diagnose('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
 
         self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
         self::assertInstanceOf(NumberLiteral::class, $change->statement->options[0]->value);
@@ -73,6 +73,6 @@ final class SourceSettingsTest extends TestCase
 
     public function testLineFeedReportsALineFeed(): void
     {
-        self::assertCount(1, (new Semantics())->inspect("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
+        self::assertCount(1, (new Semantics())->diagnose("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
     }
 }

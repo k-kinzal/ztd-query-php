@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Type;
  *
  * @visibility public
  * @example Distinguishing a known type from missing information
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t');
  *     $operation->field('a')->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent // => true
  */
 interface TypeFact

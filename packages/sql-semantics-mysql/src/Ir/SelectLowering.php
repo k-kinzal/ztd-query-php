@@ -4,47 +4,31 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
-use SqlSemantics\AnalysisContext;
-use SqlSemantics\IrAnalyzer;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Operation;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression as ParsedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 
 /**
- * Publishes complete MySQL SELECT values in the supported projection domain.
+ * Resolves the supported SELECT projection and constructs its complete value.
  *
- * @visibility public
- * @example Analyzing a complete result
- *     (new \SqlSemantics\Platform\MySql\Ir\Analyzer())->analyze('SELECT 42 AS answer')->toString() // => 'SELECT 42 AS `answer`'
+ * @visibility SqlSemantics\Platform\MySql
  */
-final class Analyzer implements IrAnalyzer
+final class SelectLowering
 {
     /**
-     * Uses the supplied MySQL language and declaration settings.
+     * Converts the checked operation into a complete value.
+     * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function __construct(private readonly Semantics $semantics = new Semantics())
+    public function lower(Operation $operation): Select
     {
-    }
-
-    /**
-     * Resolves the source and result names before constructing a complete value.
-     *
-     * @param list<Table|Operation>|AnalysisContext|null $context
-     * @throws InvalidConstruction When the analysis cannot produce a complete SELECT in this domain
-     */
-    public function analyze(string $sql, array|AnalysisContext|null $context = null): Select
-    {
-        $profile = $this->semantics->profile();
+        $profile = $operation->profile();
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
         Check::input($profile->lexical->equals(new LexicalSettings()), 'This projection profile requires the default lexical settings.');
-        $operation = $this->semantics->analyze($sql, $context);
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');
         Check::input(

@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the savepoint a rollback returns to
- *     $rollback = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ROLLBACK TO SAVEPOINT before_import');
+ *     $rollback = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ROLLBACK TO SAVEPOINT before_import');
  *     [$rollback->statement->savepoint->value, $rollback->toString()] // => ['before_import', 'ROLLBACK TO before_import']
  */
 final class RollbackTo implements Statement

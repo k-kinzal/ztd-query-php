@@ -20,7 +20,7 @@ final class EscapedRelationTest extends TestCase
     public function testDeriveRelationDerivesTheEscapedReference(): void
     {
         $semantics = new Semantics('mysql-5.7.44');
-        $operation = $semantics->inspect('SELECT a FROM { oj t }', []);
+        $operation = $semantics->diagnose('SELECT a FROM { oj t }', []);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(EscapedRelation::class, $operation->statement->from);
@@ -30,6 +30,6 @@ final class EscapedRelationTest extends TestCase
 
     public function testRenderWritesTheEscape(): void
     {
-        self::assertSame('SELECT 1 FROM { oj t }', (new Semantics('mysql-5.6.51'))->inspect('select 1 from {oj t}')->toString());
+        self::assertSame('SELECT 1 FROM { oj t }', (new Semantics('mysql-5.6.51'))->diagnose('select 1 from {oj t}')->toString());
     }
 }

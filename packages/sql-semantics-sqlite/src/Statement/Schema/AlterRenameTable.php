@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  *
  * @visibility public
  * @example Reading a table rename
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE main.t RENAME TO u');
+ *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE main.t RENAME TO u');
  *     [$alter->statement->table->name->value, $alter->statement->newName->value, $alter->declarations()] // => ['t', 'u', []]
  */
 final class AlterRenameTable implements Statement

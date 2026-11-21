@@ -18,7 +18,7 @@ final class RoutineFactsTest extends TestCase
 {
     public function testCreateHidesParametersFromDefaults(): void
     {
-        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a int4, b int4 DEFAULT a) RETURNS int4 RETURN b', []);
+        $operation = (new Semantics())->diagnose('CREATE FUNCTION f(a int4, b int4 DEFAULT a) RETURNS int4 RETURN b', []);
         self::assertEquals([new MissingColumn(new Name('a'))], $operation->facts->diagnostics);
     }
 }

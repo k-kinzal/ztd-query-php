@@ -20,7 +20,7 @@ final class GrantableTest extends TestCase
 {
     public function testEveryItemImplementsTheInterface(): void
     {
-        $grant = (new Semantics())->inspect('GRANT SELECT, BACKUP_ADMIN, r@h ON *.* TO u');
+        $grant = (new Semantics())->diagnose('GRANT SELECT, BACKUP_ADMIN, r@h ON *.* TO u');
 
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertContainsOnlyInstancesOf(Grantable::class, $grant->statement->privileges);

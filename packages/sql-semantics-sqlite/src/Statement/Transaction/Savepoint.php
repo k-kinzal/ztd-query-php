@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a savepoint name
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SAVEPOINT "before import"')->statement->name->value // => 'before import'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SAVEPOINT "before import"')->statement->name->value // => 'before import'
  */
 final class Savepoint implements Statement
 {

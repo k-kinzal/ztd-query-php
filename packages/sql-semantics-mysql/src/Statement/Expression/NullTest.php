@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Testing a column for NULL
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a IS NOT NULL');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a IS NOT NULL');
  *     $query->statement->where->negated // => true
  */
 final class NullTest implements Scalar

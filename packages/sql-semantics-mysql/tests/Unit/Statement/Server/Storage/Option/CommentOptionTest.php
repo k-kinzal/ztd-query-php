@@ -17,7 +17,7 @@ final class CommentOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' COMMENT 'c'", (new Semantics())->analyze("create tablespace ts add datafile 'f' comment = 'c'")->toString());
+        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' COMMENT 'c'", (new Semantics())->inspect("create tablespace ts add datafile 'f' comment = 'c'")->toString());
     }
 
     public function testKeywordNamesTheOption(): void

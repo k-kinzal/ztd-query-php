@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\PredicateTyping;
  *
  * @visibility public
  * @example Reading a negated match with an escape character
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' NOT LIKE 'a!%' ESCAPE '!'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT 'a' NOT LIKE 'a!%' ESCAPE '!'");
  *     [$query->field(0)->expression->escape->value->value, $query->field(0)->type->descriptor->name()] // => ['!', 'boolean']
  */
 final class PatternMatch implements Scalar

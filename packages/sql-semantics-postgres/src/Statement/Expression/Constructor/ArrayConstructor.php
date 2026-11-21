@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Typing an array of mixed numbers
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ARRAY[1, 2.5]')->field(0)->type->descriptor->name() // => 'numeric[]'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ARRAY[1, 2.5]')->field(0)->type->descriptor->name() // => 'numeric[]'
  */
 final class ArrayConstructor implements Scalar, OutputNaming
 {

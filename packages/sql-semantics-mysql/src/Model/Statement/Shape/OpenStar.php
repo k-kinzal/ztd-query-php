@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping an unexpandable star as a typed request
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT * FROM t');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT * FROM t');
  *     $operation->facts->output?->projection[0] instanceof \SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar // => true
  */
 final class OpenStar

@@ -19,7 +19,7 @@ final class KnownTest extends TestCase
 {
     public function testDescriptorIsTheTypeTheRulesDetermine(): void
     {
-        $fields = (new Semantics())->analyze("SELECT 'a', 1, 1.5, x'ff'")->fields();
+        $fields = (new Semantics())->inspect("SELECT 'a', 1, 1.5, x'ff'")->fields();
 
         self::assertNotNull($fields);
         self::assertSame([Storage::Text, Storage::Integer, Storage::Real, Storage::Blob], array_map(static fn (Field $field): ?TypeDescriptor => $field->type instanceof Known ? $field->type->descriptor : null, $fields->items));
@@ -28,9 +28,9 @@ final class KnownTest extends TestCase
     public function testDescriptorOfADeclaredColumnIsItsDeclaredType(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
-        $type = $semantics->analyze('SELECT a FROM t', [$table])->field('a')->type;
+        $type = $semantics->inspect('SELECT a FROM t', [$table])->field('a')->type;
 
         self::assertInstanceOf(Known::class, $type);
         self::assertSame($table->columns[0]->type, $type->descriptor);

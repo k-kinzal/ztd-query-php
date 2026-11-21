@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Locking;
  *
  * @visibility public
  * @example Reading the action of a locking read
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t FOR UPDATE SKIP LOCKED');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t FOR UPDATE SKIP LOCKED');
  *     $query->statement->locking[0]->action // => \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction::SkipLocked
  */
 enum LockedRowAction

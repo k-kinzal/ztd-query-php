@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Revoking a role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
  */
 final class RevokeRoles implements Statement
 {

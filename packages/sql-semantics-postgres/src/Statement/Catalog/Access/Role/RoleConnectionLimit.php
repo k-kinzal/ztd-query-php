@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * @visibility public
  * @example Reading the limit
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe CONNECTION LIMIT 5');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE ROLE joe CONNECTION LIMIT 5');
  *     $operation->statement->options[0]->magnitude->digits // => '5'
  */
 final class RoleConnectionLimit implements RoleOption

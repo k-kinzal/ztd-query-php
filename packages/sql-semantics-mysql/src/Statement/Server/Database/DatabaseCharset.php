@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
  *
  * @visibility public
  * @example Reading the character set
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE DATABASE d DEFAULT CHARACTER SET = latin1');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE DATABASE d DEFAULT CHARACTER SET = latin1');
  *     [$create->toString(), $create->statement->options[0]->charset->name?->value] // => ['CREATE DATABASE d CHARACTER SET latin1', 'latin1']
  */
 final class DatabaseCharset implements DatabaseOption

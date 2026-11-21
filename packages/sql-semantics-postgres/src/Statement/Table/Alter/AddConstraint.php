@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
  *
  * @visibility public
  * @example Adding a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT VALID');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT VALID');
  *     $statement->toString() // => 'ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT VALID'
  */
 final class AddConstraint implements AlterCommand

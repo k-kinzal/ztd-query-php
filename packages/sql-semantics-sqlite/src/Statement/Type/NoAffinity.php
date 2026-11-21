@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the type of a view column computed by a literal
- *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS one');
+ *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE VIEW v AS SELECT 1 AS one');
  *     [$view->declarations()[0]->columns[0]->type instanceof \SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity, $view->declarations()[0]->columns[0]->type->name()] // => [true, '']
  */
 final class NoAffinity implements TypeDescriptor

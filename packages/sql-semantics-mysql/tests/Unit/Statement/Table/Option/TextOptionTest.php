@@ -17,7 +17,7 @@ final class TextOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) DATA DIRECTORY = \'/d\'');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) DATA DIRECTORY = \'/d\'');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

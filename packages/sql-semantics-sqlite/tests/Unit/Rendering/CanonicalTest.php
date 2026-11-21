@@ -31,7 +31,7 @@ final class CanonicalTest extends TestCase
 
     public function testLayoutKeepsTheLayoutsNestedInTheNode(): void
     {
-        $query = (new Semantics())->analyze('SELECT (SELECT 1+1)');
+        $query = (new Semantics())->inspect('SELECT (SELECT 1+1)');
         self::assertInstanceOf(Select::class, $query->statement);
         $column = $query->statement->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);

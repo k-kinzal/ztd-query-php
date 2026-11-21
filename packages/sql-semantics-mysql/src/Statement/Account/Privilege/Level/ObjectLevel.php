@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Resolving the table of a grant
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $grant = $semantics->analyze('GRANT SELECT ON t TO u', [$semantics->analyze('CREATE TABLE t (a INT)')]);
+ *     $grant = $semantics->inspect('GRANT SELECT ON t TO u', [$semantics->inspect('CREATE TABLE t (a INT)')]);
  *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable // => true
  */
 final class ObjectLevel implements PrivilegeLevel

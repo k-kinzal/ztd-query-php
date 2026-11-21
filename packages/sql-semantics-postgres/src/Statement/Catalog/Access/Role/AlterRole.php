@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  *
  * @visibility public
  * @example Reading the role and its changed attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER ROLE joe WITH NOSUPERUSER');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE joe WITH NOSUPERUSER');
  *     [$operation->statement->role->name?->value, $operation->statement->options[0]->flag()?->enabled()] // => ['joe', false]
  */
 final class AlterRole implements Statement

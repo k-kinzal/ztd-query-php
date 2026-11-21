@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  *
  * @visibility public
  * @example Reading SET NAMES
- *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SET NAMES 'utf8mb4' COLLATE utf8mb4_bin");
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SET NAMES 'utf8mb4' COLLATE utf8mb4_bin");
  *     [$set->statement->items[0]->charset->name?->value, $set->statement->items[0]->collation?->name?->value, $set->toString()] // => ['utf8mb4', 'utf8mb4_bin', 'SET NAMES utf8mb4 COLLATE utf8mb4_bin']
  */
 final class SetNames implements SetItem

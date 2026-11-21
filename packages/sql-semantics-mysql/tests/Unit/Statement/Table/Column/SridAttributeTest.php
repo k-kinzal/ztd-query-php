@@ -18,7 +18,7 @@ final class SridAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (g POINT SRID 4326)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (g POINT SRID 4326)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class SridAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics())->analyze('CREATE TABLE t (g POINT SRID 4326)')->toString());
+        self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics())->inspect('CREATE TABLE t (g POINT SRID 4326)')->toString());
     }
 }

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Setting storage parameters
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t SET (fillfactor = 70)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t SET (fillfactor = 70)');
  *     $statement->toString() // => 'ALTER TABLE t SET (fillfactor = 70)'
  */
 final class RelationOptions implements AlterCommand

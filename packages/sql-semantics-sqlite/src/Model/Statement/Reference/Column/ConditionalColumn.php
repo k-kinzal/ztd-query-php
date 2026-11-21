@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping the candidate occurrence of an undeclared table
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t');
  *     $resolution = $query->field('a')->resolution;
  *     [$resolution->relations[0] === $query->inputRelation(), $resolution->missing[0]->describe()] // => [true, 'the declaration of relation t']
  */

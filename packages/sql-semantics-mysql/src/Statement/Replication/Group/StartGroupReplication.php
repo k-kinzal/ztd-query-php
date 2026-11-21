@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
  *
  * @visibility public
  * @example Starting with credentials
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
  */
 final class StartGroupReplication implements Statement
 {

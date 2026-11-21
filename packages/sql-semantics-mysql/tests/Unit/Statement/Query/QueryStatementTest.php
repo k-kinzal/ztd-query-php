@@ -28,7 +28,7 @@ final class QueryStatementTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsOfTheQuery(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 UNION SELECT 2 FROM t INTO @x');
+        $operation = (new Semantics())->diagnose('SELECT 1 UNION SELECT 2 FROM t INTO @x');
 
         self::assertInstanceOf(QueryStatement::class, $operation->statement);
         self::assertSame($operation->facts->query($operation->statement->query), $operation->facts->output);
@@ -36,7 +36,7 @@ final class QueryStatementTest extends TestCase
 
     public function testDeriveQueryDerivesTheTargetsAndReportsTheirCount(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 UNION SELECT 2 FROM t FOR UPDATE INTO @x, @y');
+        $operation = (new Semantics())->diagnose('SELECT 1 UNION SELECT 2 FROM t FOR UPDATE INTO @x, @y');
 
         self::assertInstanceOf(QueryStatement::class, $operation->statement);
         self::assertSame(IntoPosition::AfterLocking, $operation->statement->intoPosition);
@@ -49,9 +49,9 @@ final class QueryStatementTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT 1 UNION SELECT 2 FROM t INTO @x FOR UPDATE', $semantics->inspect('select 1 union select 2 from t into @x for update')->toString());
-        self::assertInstanceOf(QueryStatement::class, $semantics->inspect('select 1 union select 2 from t into @x for update')->statement);
-        self::assertSame('(SELECT 1) FOR SHARE INTO @x', $semantics->inspect('(select 1) for share into @x')->toString());
+        self::assertSame('SELECT 1 UNION SELECT 2 FROM t INTO @x FOR UPDATE', $semantics->diagnose('select 1 union select 2 from t into @x for update')->toString());
+        self::assertInstanceOf(QueryStatement::class, $semantics->diagnose('select 1 union select 2 from t into @x for update')->statement);
+        self::assertSame('(SELECT 1) FOR SHARE INTO @x', $semantics->diagnose('(select 1) for share into @x')->toString());
     }
 
     public function testTheClausesOfASingleBlockAreRejected(): void

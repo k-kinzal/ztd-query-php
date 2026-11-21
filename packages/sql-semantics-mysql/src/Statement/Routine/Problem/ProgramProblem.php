@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a LEAVE without a label in scope
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() LEAVE missing') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: LEAVE with no matching label: missing
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() LEAVE missing') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: LEAVE with no matching label: missing
  */
 final class ProgramProblem implements Diagnostic
 {

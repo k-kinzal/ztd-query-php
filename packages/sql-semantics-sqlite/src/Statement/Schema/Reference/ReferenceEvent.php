@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Reference;
  *
  * @visibility public
  * @example Reading the event of a foreign key action
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent ON DELETE CASCADE)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p REFERENCES parent ON DELETE CASCADE)');
  *     $create->statement->columns[0]->constraints[0]->arguments[0]->event // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceEvent::Delete
  */
 enum ReferenceEvent: string

@@ -18,7 +18,7 @@ final class DependentTest extends TestCase
 {
     public function testMissingNamesTheDeclarationATypeWaitsFor(): void
     {
-        $type = (new Semantics())->analyze('SELECT a FROM t')->field('a')->type;
+        $type = (new Semantics())->inspect('SELECT a FROM t')->field('a')->type;
 
         self::assertInstanceOf(Dependent::class, $type);
         self::assertCount(1, $type->missing);
@@ -28,7 +28,7 @@ final class DependentTest extends TestCase
 
     public function testMissingNamesTheParameterATypeWaitsFor(): void
     {
-        $type = (new Semantics())->analyze('SELECT ?1')->field(0)->type;
+        $type = (new Semantics())->inspect('SELECT ?1')->field(0)->type;
 
         self::assertInstanceOf(Dependent::class, $type);
         self::assertInstanceOf(UnboundParameter::class, $type->missing[0]);

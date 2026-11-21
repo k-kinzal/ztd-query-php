@@ -16,6 +16,6 @@ final class FactorChangeTest extends TestCase
 {
     public function testRenderWritesEveryStep(): void
     {
-        self::assertSame('ALTER USER u DROP 2 FACTOR DROP 3 FACTOR', (new Semantics())->analyze('alter user u drop 2 factor drop 3 factor')->toString());
+        self::assertSame('ALTER USER u DROP 2 FACTOR DROP 3 FACTOR', (new Semantics())->inspect('alter user u drop 2 factor drop 3 factor')->toString());
     }
 }

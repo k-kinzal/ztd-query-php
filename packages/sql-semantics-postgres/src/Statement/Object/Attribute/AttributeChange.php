@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading an attribute set to NONE
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
  *     [$operation->statement->attributes[0]->none, $operation->statement->attributes[0]->attribute->value] // => [true, null]
  * @example Refusing NONE together with a value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange(new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

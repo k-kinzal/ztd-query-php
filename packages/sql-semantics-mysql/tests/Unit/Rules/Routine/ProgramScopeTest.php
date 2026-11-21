@@ -46,8 +46,8 @@ final class ProgramScopeTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame([], $semantics->inspect('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->inspect('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER')->facts->diagnostics));
+        self::assertSame([], $semantics->diagnose('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->facts->diagnostics);
+        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->diagnose('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER')->facts->diagnostics));
     }
 
     public function testConditionFindsTheInnermostDeclarationOfTheName(): void
@@ -63,8 +63,8 @@ final class ProgramScopeTest extends TestCase
     public function testConditionLetsAnInnerBlockHideAnOuterCondition(): void
     {
         $semantics = new Semantics();
-        $hidden = $semantics->inspect("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; END; END");
-        $hiding = $semantics->inspect("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
+        $hidden = $semantics->diagnose("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; END; END");
+        $hiding = $semantics->diagnose("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
 
         self::assertSame([], $hidden->facts->diagnostics);
         self::assertSame(['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $hiding->facts->diagnostics));
@@ -118,6 +118,6 @@ final class ProgramScopeTest extends TestCase
         self::assertSame([], $handler->loops);
         self::assertSame([$condition], $handler->conditions);
         self::assertEquals([new Name('cur')], $handler->cursors);
-        self::assertSame(['LEAVE with no matching label: l'], array_map(static fn (Diagnostic $problem): string => $problem->message(), (new Semantics())->inspect('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END')->facts->diagnostics));
+        self::assertSame(['LEAVE with no matching label: l'], array_map(static fn (Diagnostic $problem): string => $problem->message(), (new Semantics())->diagnose('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END')->facts->diagnostics));
     }
 }

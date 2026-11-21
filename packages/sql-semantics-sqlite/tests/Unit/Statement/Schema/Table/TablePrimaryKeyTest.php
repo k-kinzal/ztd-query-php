@@ -23,7 +23,7 @@ final class TablePrimaryKeyTest extends TestCase
 {
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -37,7 +37,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsAMissingKeyColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -45,7 +45,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveConstraintReportsATermThatIsNoColumnName(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(PrimaryKeyProblem::class, $operation->facts->diagnostics[0]);
@@ -54,7 +54,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testRenderWritesAutoincrementInsideTheParentheses(): void
     {
-        $operation = (new Semantics())->inspect('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
+        $operation = (new Semantics())->diagnose('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

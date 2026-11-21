@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  *     $number = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('5'));
  *     [$number->negative, $number->magnitude->digits] // => [true, '5']
  * @example Reading the text a command receives from a negative numeric constant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET application_name = -.5');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET application_name = -.5');
  *     [$operation->statement->values[0]->text(), $operation->toString()] // => ['-.5', 'SET application_name TO - .5']
  */
 final class SignedNumber implements OptionArgument

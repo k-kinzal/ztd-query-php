@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading a procedure definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');
  *     [$create->statement->name->name->value, count($create->statement->parameters->parameters), $create->toString()] // => ['p', 1, 'CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a']
  */
 final class CreateProcedure implements Statement

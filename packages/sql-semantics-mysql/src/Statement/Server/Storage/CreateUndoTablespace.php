@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Creating an undo tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create undo tablespace u add datafile 'u.ibu'");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create undo tablespace u add datafile 'u.ibu'");
  *     [$statement->toString(), $statement->statement->datafile->value] // => ["CREATE UNDO TABLESPACE u ADD DATAFILE 'u.ibu'", 'u.ibu']
  */
 final class CreateUndoTablespace implements Statement

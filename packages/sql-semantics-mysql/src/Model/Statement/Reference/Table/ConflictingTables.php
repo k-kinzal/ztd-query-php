@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Keeping conflicting declarations
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
- *     $semantics->analyze('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
+ *     $declarations = $semantics->context([$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE t (b TEXT)')]);
+ *     $semantics->inspect('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
  */
 final class ConflictingTables implements TableResolution, Diagnostic
 {

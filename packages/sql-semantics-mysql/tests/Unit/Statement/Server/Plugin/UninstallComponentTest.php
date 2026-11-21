@@ -16,12 +16,12 @@ final class UninstallComponentTest extends TestCase
 {
     public function testRenderWritesTheComponents(): void
     {
-        self::assertSame("UNINSTALL COMPONENT 'a'", (new Semantics())->analyze("uninstall component 'a'")->toString());
+        self::assertSame("UNINSTALL COMPONENT 'a'", (new Semantics())->inspect("uninstall component 'a'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("UNINSTALL COMPONENT 'a', 'b'");
+        $operation = (new Semantics())->inspect("UNINSTALL COMPONENT 'a', 'b'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

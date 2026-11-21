@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Creating an event trigger
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
  *     $statement->toString() // => 'CREATE EVENT TRIGGER e ON sql_drop EXECUTE FUNCTION f()'
  */
 final class CreateEventTrigger implements Statement

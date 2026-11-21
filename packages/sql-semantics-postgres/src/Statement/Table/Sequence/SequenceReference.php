@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Reading the owner of a sequence
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s OWNED BY t.id');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SEQUENCE s OWNED BY t.id');
  *     [$create->statement->options[0]->owned, $create->statement->options[0]->name->last()->value] // => [true, 'id']
  */
 final class SequenceReference implements SequenceOption

@@ -17,11 +17,11 @@ final class GrantRolesTest extends TestCase
 {
     public function testDeriveStatementReportsAPrivilegeInTheRoleList(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->inspect('GRANT r, UPDATE TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->diagnose('GRANT r, UPDATE TO u')->facts->diagnostics[0]);
     }
 
     public function testRenderWritesTheAdminOption(): void
     {
-        self::assertSame('GRANT r TO u WITH ADMIN OPTION', (new Semantics())->inspect('grant r to u with admin option')->toString());
+        self::assertSame('GRANT r TO u WITH ADMIN OPTION', (new Semantics())->diagnose('grant r to u with admin option')->toString());
     }
 }

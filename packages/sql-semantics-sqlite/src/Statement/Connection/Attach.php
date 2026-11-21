@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Writing an attach request without the optional keyword
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("ATTACH DATABASE 'file.db' AS aux")->toString() // => "ATTACH 'file.db' AS aux"
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("ATTACH DATABASE 'file.db' AS aux")->toString() // => "ATTACH 'file.db' AS aux"
  */
 final class Attach implements Statement
 {

@@ -36,7 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the variables of a declaration
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE a, b INT DEFAULT 0; END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE a, b INT DEFAULT 0; END');
  *     $declaration = $create->statement->body->declarations[0];
  *     [count($declaration->names), $declaration->type->name(), $declaration->default !== null] // => [2, 'INT', true]
  */

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading the bounds
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a BETWEEN 1 AND 9');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a BETWEEN 1 AND 9');
  *     [$query->statement->where->low->text, $query->statement->where->high->text] // => ['1', '9']
  */
 final class Between implements Scalar

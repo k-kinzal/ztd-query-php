@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Refreshing without copying data
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)');
  *     $operation->toString() // => 'ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = FALSE)'
  */
 final class RefreshSubscription implements Statement

@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule
  *
  * @visibility public
  * @example Installing an extension into a schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE');
  *     [$operation->statement->ifNotExists, $operation->toString()] // => [true, 'CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE']
  */
 final class CreateExtension implements Statement

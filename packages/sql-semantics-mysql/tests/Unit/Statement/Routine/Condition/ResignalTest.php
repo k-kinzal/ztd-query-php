@@ -27,7 +27,7 @@ final class ResignalTest extends TestCase
 {
     public function testDeriveStatementAcceptsTheBareStatement(): void
     {
-        $resignal = (new Semantics())->inspect('RESIGNAL');
+        $resignal = (new Semantics())->diagnose('RESIGNAL');
         $statement = $resignal->statement;
         self::assertInstanceOf(Resignal::class, $statement);
 
@@ -38,7 +38,7 @@ final class ResignalTest extends TestCase
 
     public function testDeriveStatementAcceptsAnSqlStateValueAndItsItems(): void
     {
-        $resignal = (new Semantics())->inspect("RESIGNAL SQLSTATE '01000' SET CLASS_ORIGIN = 'x', SUBCLASS_ORIGIN = 'y'");
+        $resignal = (new Semantics())->diagnose("RESIGNAL SQLSTATE '01000' SET CLASS_ORIGIN = 'x', SUBCLASS_ORIGIN = 'y'");
         $statement = $resignal->statement;
         self::assertInstanceOf(Resignal::class, $statement);
         self::assertInstanceOf(SqlState::class, $statement->condition);
@@ -62,7 +62,7 @@ final class ResignalTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsTheBrokenRule')]
     public function testDeriveStatementReportsTheBrokenRule(string $sql, ProgramRule $rule, string $message): void
     {
-        $resignal = (new Semantics())->inspect($sql);
+        $resignal = (new Semantics())->diagnose($sql);
         $problem = $resignal->facts->diagnostics[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
@@ -73,7 +73,7 @@ final class ResignalTest extends TestCase
 
     public function testDeriveProgramResolvesADeclaredConditionInAHandler(): void
     {
-        $create = (new Semantics())->inspect("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = m; END");
+        $create = (new Semantics())->diagnose("CREATE PROCEDURE p(m TEXT) BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = m; END");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
@@ -117,7 +117,7 @@ final class ResignalTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsTheBrokenRule')]
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $create = (new Semantics())->inspect($sql);
+        $create = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
     }
@@ -136,7 +136,7 @@ final class ResignalTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        $resignal = (new Semantics($release))->inspect($sql);
+        $resignal = (new Semantics($release))->diagnose($sql);
 
         self::assertInstanceOf(Resignal::class, $resignal->statement);
         self::assertSame($expected, $resignal->toString());
@@ -144,7 +144,7 @@ final class ResignalTest extends TestCase
 
     public function testRenderWritesAConditionNameInAProgram(): void
     {
-        $create = (new Semantics('mysql-5.7.44'))->inspect("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = 'x'; END");
+        $create = (new Semantics('mysql-5.7.44'))->diagnose("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = 'x'; END");
 
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL c SET MESSAGE_TEXT = 'x'; END", $create->toString());
     }

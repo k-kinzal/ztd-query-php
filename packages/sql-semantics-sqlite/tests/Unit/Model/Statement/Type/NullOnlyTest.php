@@ -17,7 +17,7 @@ final class NullOnlyTest extends TestCase
 {
     public function testABareNullAndAnExpressionThatIsAlwaysNullHaveNoOtherType(): void
     {
-        $operation = (new Semantics())->analyze('SELECT NULL, NULL + 1');
+        $operation = (new Semantics())->inspect('SELECT NULL, NULL + 1');
 
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
         self::assertInstanceOf(NullOnly::class, $operation->field(1)->type);

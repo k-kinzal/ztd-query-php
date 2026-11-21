@@ -16,6 +16,6 @@ final class LogFileTest extends TestCase
 {
     public function testRenderWritesKindAndFile(): void
     {
-        self::assertSame("ALTER LOGFILE GROUP g ADD REDOFILE 'r'", (new Semantics('mysql-5.6.51'))->analyze("alter logfile group g add redofile 'r'")->toString());
+        self::assertSame("ALTER LOGFILE GROUP g ADD REDOFILE 'r'", (new Semantics('mysql-5.6.51'))->inspect("alter logfile group g add redofile 'r'")->toString());
     }
 }

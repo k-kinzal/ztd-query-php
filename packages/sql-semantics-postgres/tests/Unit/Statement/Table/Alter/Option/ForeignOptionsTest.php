@@ -15,7 +15,7 @@ final class ForeignOptionsTest extends TestCase
     public function testDeriveClauseHasNoOperand(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER FOREIGN TABLE f OPTIONS (ADD x \'y\')', []);
+        $statement = $semantics->diagnose('ALTER FOREIGN TABLE f OPTIONS (ADD x \'y\')', []);
         self::assertSame([
           0 => 'Relation f does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class ForeignOptionsTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER FOREIGN TABLE f OPTIONS (x \'y\', DROP z)', []);
+        $statement = $semantics->diagnose('ALTER FOREIGN TABLE f OPTIONS (x \'y\', DROP z)', []);
         self::assertSame('ALTER FOREIGN TABLE f OPTIONS (ADD x \'y\', DROP z)', $statement->toString());
     }
 }

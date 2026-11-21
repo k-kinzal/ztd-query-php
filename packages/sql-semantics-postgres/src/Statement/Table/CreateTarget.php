@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Reading the target of CREATE TABLE AS
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (x) USING heap WITH (fillfactor = 50) TABLESPACE s AS SELECT 1');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (x) USING heap WITH (fillfactor = 50) TABLESPACE s AS SELECT 1');
  *     [$create->statement->target->columns[0]->value, $create->statement->target->method->value] // => ['x', 'heap']
  */
 final class CreateTarget implements Node

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Removing a tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("drop tablespace ts engine ndb");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("drop tablespace ts engine ndb");
  *     [$statement->toString(), $statement->statement->name->value] // => ["DROP TABLESPACE ts ENGINE `ndb`", 'ts']
  */
 final class DropTablespace implements Statement

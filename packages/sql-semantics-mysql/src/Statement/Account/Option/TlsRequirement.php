@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the conditions of a requirement
- *     $tls = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u REQUIRE SUBJECT 's' ISSUER 'i'")->statement->tls;
+ *     $tls = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE USER u REQUIRE SUBJECT 's' ISSUER 'i'")->statement->tls;
  *     [$tls?->kind, count($tls?->conditions ?? [])] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::Specified, 2]
  */
 final class TlsRequirement implements Node

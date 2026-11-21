@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the width of a row
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE (a, b) IS NULL') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE (a, b) IS NULL') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
  */
 final class Tuple implements TypeDescriptor
 {

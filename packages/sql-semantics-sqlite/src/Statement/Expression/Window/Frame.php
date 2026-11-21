@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading both ends of a frame
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM t');
  *     $query->statement->columns[0]->expression->over->frame->end->kind // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow
  * @example Refusing a start the grammar does not admit
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit::Rows, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedFollowing)) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

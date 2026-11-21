@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a privilege that does not apply to the object
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT EXECUTE ON SCHEMA s TO joe') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: invalid privilege type EXECUTE for schema
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT EXECUTE ON SCHEMA s TO joe') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: invalid privilege type EXECUTE for schema
  */
 final class AccessProblem implements Diagnostic
 {

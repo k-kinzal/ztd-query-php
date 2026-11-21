@@ -16,12 +16,12 @@ final class AlterInstanceTest extends TestCase
 {
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_main', (new Semantics())->analyze('alter instance reload tls for channel mysql_main')->toString());
+        self::assertSame('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_main', (new Semantics())->inspect('alter instance reload tls for channel mysql_main')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('ALTER INSTANCE RELOAD KEYRING');
+        $operation = (new Semantics())->inspect('ALTER INSTANCE RELOAD KEYRING');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

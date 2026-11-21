@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess
  *
  * @visibility public
  * @example Making a tablespace read-only
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('alter tablespace ts not accessible');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('alter tablespace ts not accessible');
  *     [$alter->toString(), $alter->statement->access] // => ['ALTER TABLESPACE ts NOT ACCESSIBLE', \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess::NotAccessible]
  */
 final class AlterTablespaceAccess implements Statement

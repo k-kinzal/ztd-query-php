@@ -18,7 +18,7 @@ final class StatementTest extends TestCase
     public function testDeriveStatementRecordsTheRowsAndDeclarationsOfTheRoot(): void
     {
         $semantics = new Semantics();
-        $statement = $semantics->analyze('CREATE TABLE t (a INTEGER)')->statement;
+        $statement = $semantics->inspect('CREATE TABLE t (a INTEGER)')->statement;
         $derivation = new Derivation($semantics->context([]));
 
         $statement->deriveStatement($derivation);

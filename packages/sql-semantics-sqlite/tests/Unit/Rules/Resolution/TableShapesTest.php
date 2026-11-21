@@ -37,7 +37,7 @@ final class TableShapesTest extends TestCase
     public function testFactAnswersTheDeclaredShapeWithItsColumns(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $fact = (new TableShapes())->fact($derivation, new QualifiedName(new Name('T')), $derivation->environment());
 
@@ -55,8 +55,8 @@ final class TableShapesTest extends TestCase
     public function testFactCopiesTheShapeOfACommonTableAndLinksItsSlots(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $with = $semantics->analyze('WITH w AS (SELECT a FROM t) SELECT 1', [$t])->statement;
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $with = $semantics->inspect('WITH w AS (SELECT a FROM t) SELECT 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
         $slot = new OutputSlot(new Name('q'), new Known(Storage::Integer), Nullability::NotNull);
 
@@ -108,9 +108,9 @@ final class TableShapesTest extends TestCase
     public function testImplicitListsTheRowIdentifierOfADeclaredTableOnly(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $plain = $semantics->analyze('CREATE TABLE p (a)');
-        $without = $semantics->analyze('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $plain = $semantics->inspect('CREATE TABLE p (a)');
+        $without = $semantics->inspect('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');
         $derivation = new Derivation($semantics->context([$t, $plain, $without]));
         $shapes = new TableShapes();
         $aliased = $shapes->implicit($shapes->fact($derivation, new QualifiedName(new Name('t')), $derivation->environment()));

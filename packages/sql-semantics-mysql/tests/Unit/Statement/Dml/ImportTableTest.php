@@ -16,7 +16,7 @@ final class ImportTableTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze("IMPORT TABLE FROM 'a.sdi'");
+        $operation = (new Semantics())->inspect("IMPORT TABLE FROM 'a.sdi'");
 
         self::assertNull($operation->facts->output);
         self::assertSame([], $operation->declarations());
@@ -24,6 +24,6 @@ final class ImportTableTest extends TestCase
 
     public function testRenderWritesTheFiles(): void
     {
-        self::assertSame("IMPORT TABLE FROM 'a.sdi', 'b.sdi'", (new Semantics('mysql-8.0.44'))->analyze("import table from 'a.sdi', 'b.sdi'")->toString());
+        self::assertSame("IMPORT TABLE FROM 'a.sdi', 'b.sdi'", (new Semantics('mysql-8.0.44'))->inspect("import table from 'a.sdi', 'b.sdi'")->toString());
     }
 }

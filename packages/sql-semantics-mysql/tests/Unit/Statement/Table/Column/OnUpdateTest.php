@@ -19,7 +19,7 @@ final class OnUpdateTest extends TestCase
 {
     public function testDeriveAttributeDerivesTheValue(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +34,6 @@ final class OnUpdateTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)', (new Semantics())->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)')->toString());
+        self::assertSame('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)', (new Semantics())->inspect('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)')->toString());
     }
 }

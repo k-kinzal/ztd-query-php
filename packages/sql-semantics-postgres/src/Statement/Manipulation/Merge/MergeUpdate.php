@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssign
  *
  * @visibility public
  * @example Reading an update action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = DEFAULT');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = DEFAULT');
  *     count($merge->statement->clauses[0]->action->assignments) // => 1
  * @example Refusing an update without assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeUpdate([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

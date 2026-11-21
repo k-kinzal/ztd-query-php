@@ -22,7 +22,7 @@ final class LabelFactsTest extends TestCase
     #[DataProvider('providerEnterReportsALabelAnEnclosingStatementUses')]
     public function testEnterReportsALabelAnEnclosingStatementUses(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Semantics($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -45,7 +45,7 @@ final class LabelFactsTest extends TestCase
     #[DataProvider('providerEnterReportsAnEndLabelWithoutMatch')]
     public function testEnterReportsAnEndLabelWithoutMatch(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Semantics($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

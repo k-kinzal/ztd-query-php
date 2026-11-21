@@ -16,13 +16,13 @@ final class ShowBinaryLogStatusTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-8.2.0'))->analyze('SHOW MASTER STATUS');
+        $show = (new Semantics('mysql-8.2.0'))->inspect('SHOW MASTER STATUS');
         self::assertInstanceOf(ShowBinaryLogStatus::class, $show->statement);
         self::assertSame('Executed_Gtid_Set', $show->field(4)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW MASTER STATUS', (new Semantics('mysql-8.2.0'))->analyze('SHOW MASTER STATUS')->toString());
+        self::assertSame('SHOW MASTER STATUS', (new Semantics('mysql-8.2.0'))->inspect('SHOW MASTER STATUS')->toString());
     }
 }

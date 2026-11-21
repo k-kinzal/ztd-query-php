@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Dropping a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t DROP CONSTRAINT IF EXISTS c RESTRICT');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t DROP CONSTRAINT IF EXISTS c RESTRICT');
  *     $statement->toString() // => 'ALTER TABLE t DROP CONSTRAINT IF EXISTS c RESTRICT'
  */
 final class DropConstraint implements AlterCommand

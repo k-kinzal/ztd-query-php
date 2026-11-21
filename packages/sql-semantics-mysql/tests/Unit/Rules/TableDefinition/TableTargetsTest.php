@@ -24,14 +24,14 @@ final class TableTargetsTest extends TestCase
 {
     public function testShapeHasOneSlotPerDeclaredColumn(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT INVISIBLE)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT INVISIBLE)');
 
         self::assertCount(1, (new TableTargets())->shape($create->declarations()[0])->slots);
     }
 
     public function testImplicitFindsTheInvisibleColumns(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT INVISIBLE)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT INVISIBLE)');
 
         self::assertSame('b', (new TableTargets())->implicit($create->declarations()[0])[0]->names[0]->value);
     }
@@ -46,7 +46,7 @@ final class TableTargetsTest extends TestCase
 
     public function testParentResolvesTheTableBeingDefined(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT)');
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = (new TableTargets())->parent($derivation, new QualifiedName(new Name('t')), $create->declarations()[0], new QualifiedName(new Name('t')));
@@ -56,7 +56,7 @@ final class TableTargetsTest extends TestCase
 
     public function testScopeSeesTheTableOnly(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();

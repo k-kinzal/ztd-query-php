@@ -39,7 +39,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueChecksTheFormOfAnSqlState')]
     public function testValueChecksTheFormOfAnSqlState(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Semantics($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -64,7 +64,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueReportsAConditionNameDeclaredNowhereAround')]
     public function testValueReportsAConditionNameDeclaredNowhereAround(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -87,7 +87,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerSignalReportsTheBrokenRule')]
     public function testSignalReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -108,7 +108,7 @@ final class ConditionFactsTest extends TestCase
 
     public function testSignalResolvesTheValueOfAnItemToAParameter(): void
     {
-        $operation = (new Semantics())->inspect("CREATE PROCEDURE p(z TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z, MYSQL_ERRNO = 1");
+        $operation = (new Semantics())->diagnose("CREATE PROCEDURE p(z TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = z, MYSQL_ERRNO = 1");
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $signal = $create->body;
@@ -126,7 +126,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerTargetsReportsATargetThatIsNoVariable')]
     public function testTargetsReportsATargetThatIsNoVariable(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -149,7 +149,7 @@ final class ConditionFactsTest extends TestCase
     #[DataProvider('providerValueReportsTheErrorCodeZero')]
     public function testValueReportsTheErrorCodeZero(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics($release))->inspect($sql);
+        $operation = (new Semantics($release))->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

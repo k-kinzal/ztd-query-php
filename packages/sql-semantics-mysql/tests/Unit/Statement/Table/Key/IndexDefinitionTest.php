@@ -19,7 +19,7 @@ final class IndexDefinitionTest extends TestCase
 {
     public function testDeriveElementDerivesTheKeyParts(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, UNIQUE KEY u USING HASH ((a * 2)) COMMENT \'x\')');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, UNIQUE KEY u USING HASH ((a * 2)) COMMENT \'x\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
@@ -33,6 +33,6 @@ final class IndexDefinitionTest extends TestCase
 
     public function testRenderWritesKindNameAlgorithmPartsAndOptions(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)', (new Semantics())->analyze('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)')->toString());
+        self::assertSame('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)', (new Semantics())->inspect('CREATE TABLE t (a INT, CONSTRAINT pk PRIMARY KEY USING BTREE (a), SPATIAL INDEX s (a), FULLTEXT f (a) INVISIBLE)')->toString());
     }
 }

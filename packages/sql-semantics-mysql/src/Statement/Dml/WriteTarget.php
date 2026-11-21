@@ -33,7 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  *
  * @visibility public
  * @example Reading the table a DELETE writes
- *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
+ *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
  *     [$delete->statement->table->name()->schema?->value, $delete->statement->table->alias()?->value, count($delete->statement->table->partitions)] // => ['shop', 'x', 1]
  */
 final class WriteTarget implements NamedRelation

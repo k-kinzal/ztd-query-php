@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
  *
  * @visibility public
  * @example Reading a named input
- *     $input = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM app.t AS x')->singleNamedInput();
+ *     $input = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT a FROM app.t AS x')->singleNamedInput();
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['app', 't', 'x']
  * @example Refusing column names without a correlation name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))), null, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

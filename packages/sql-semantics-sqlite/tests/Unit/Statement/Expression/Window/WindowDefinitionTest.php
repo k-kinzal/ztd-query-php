@@ -24,8 +24,8 @@ final class WindowDefinitionTest extends TestCase
     public function testReadsTheNameAndTheSpecification(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (w PARTITION BY b)', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (w PARTITION BY b)', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,7 +41,7 @@ final class WindowDefinitionTest extends TestCase
 
     public function testRenderWritesTheNameAndTheParenthesizedSpecification(): void
     {
-        $operation = (new Semantics())->analyze('select rank() over w AS c1 from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
+        $operation = (new Semantics())->inspect('select rank() over w AS c1 from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
 
         self::assertSame('SELECT rank() OVER w AS c1 FROM t WINDOW w AS (ORDER BY a), v AS (), u AS (w PARTITION BY b ROWS UNBOUNDED PRECEDING)', $operation->toString());
     }

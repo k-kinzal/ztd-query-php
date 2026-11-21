@@ -28,10 +28,10 @@ final class SqlNamesTest extends TestCase
     public function testTableSpellingDecodesToTheSameNameWhenAnalyzed(): void
     {
         $semantics = new Semantics();
-        $input = $semantics->analyze('SELECT a FROM main."select"')->singleNamedInput();
+        $input = $semantics->inspect('SELECT a FROM main."select"')->singleNamedInput();
 
         $spelling = SqlNames::table($input->name(), $semantics->profile());
-        $again = $semantics->analyze('SELECT a FROM ' . $spelling)->singleNamedInput();
+        $again = $semantics->inspect('SELECT a FROM ' . $spelling)->singleNamedInput();
 
         self::assertSame('main.`select`', $spelling);
         self::assertSame('select', $again->name()->name->value);

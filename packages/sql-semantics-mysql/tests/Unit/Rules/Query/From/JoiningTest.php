@@ -41,14 +41,14 @@ final class JoiningTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT * FROM t JOIN u USING (a)', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT * FROM t JOIN u USING (a)', [$t, $u]);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
 
     public function testNamesAnswersNothingForANaturalJoinOverUndeclaredColumns(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t NATURAL JOIN u');
+        $operation = (new Semantics())->diagnose('SELECT * FROM t NATURAL JOIN u');
 
         self::assertNull($operation->fields());
         self::assertSame([], $operation->facts->diagnostics);
@@ -58,7 +58,7 @@ final class JoiningTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
-        $operation = $semantics->inspect('SELECT 1 FROM (t AS x, t AS y) JOIN t USING (a)', [$t]);
+        $operation = $semantics->diagnose('SELECT 1 FROM (t AS x, t AS y) JOIN t USING (a)', [$t]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -93,6 +93,6 @@ final class JoiningTest extends TestCase
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
 
-        self::assertSame([], $semantics->inspect("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);
     }
 }

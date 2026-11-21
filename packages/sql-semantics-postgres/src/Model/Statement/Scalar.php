@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
  *
  * @visibility public
  * @example Reading the facts an operation derived for an expression
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1');
  *     $operation->facts->scalar($operation->field(0)->expression)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 interface Scalar extends Node

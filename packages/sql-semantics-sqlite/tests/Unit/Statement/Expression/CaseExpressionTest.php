@@ -30,8 +30,8 @@ final class CaseExpressionTest extends TestCase
     public function testDeriveScalarChoosesAmongTheResultTypesAndIsNotNullWithElse(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t", [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t", [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -50,8 +50,8 @@ final class CaseExpressionTest extends TestCase
     public function testDeriveScalarIsNullableWithoutElse(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT CASE WHEN a > 1 THEN 1 END FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT CASE WHEN a > 1 THEN 1 END FROM t', [$create]);
 
         self::assertEquals(new Known(Storage::Integer), $operation->field(0)->type);
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
@@ -60,9 +60,9 @@ final class CaseExpressionTest extends TestCase
     public function testDeriveScalarIsNullableWhenAResultCanBeNull(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $withNullResult = $semantics->inspect('SELECT CASE WHEN a THEN 1 ELSE NULL END FROM t', [$create]);
-        $withNullableColumn = $semantics->inspect('SELECT CASE WHEN 1 THEN b ELSE b END FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $withNullResult = $semantics->diagnose('SELECT CASE WHEN a THEN 1 ELSE NULL END FROM t', [$create]);
+        $withNullableColumn = $semantics->diagnose('SELECT CASE WHEN 1 THEN b ELSE b END FROM t', [$create]);
 
         self::assertEquals(new Known(Storage::Integer), $withNullResult->field(0)->type);
         self::assertSame(Nullability::Nullable, $withNullResult->field(0)->nullability);
@@ -72,7 +72,7 @@ final class CaseExpressionTest extends TestCase
 
     public function testDeriveScalarMergesEqualResultTypesIntoOne(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE 1 WHEN 1 THEN 1 WHEN 2 THEN 2 ELSE 3 END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE 1 WHEN 1 THEN 1 WHEN 2 THEN 2 ELSE 3 END', []);
 
         self::assertEquals(new Known(Storage::Integer), $operation->field(0)->type);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
@@ -80,7 +80,7 @@ final class CaseExpressionTest extends TestCase
 
     public function testDeriveScalarDependsOnAParameterResult(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE WHEN 1 THEN ? END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE WHEN 1 THEN ? END', []);
 
         self::assertEquals(new Dependent([new UnboundParameter('?')]), $operation->field(0)->type);
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
@@ -88,7 +88,7 @@ final class CaseExpressionTest extends TestCase
 
     public function testDeriveScalarReportsARowValueCondition(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE WHEN (1, 2) THEN 1 END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE WHEN (1, 2) THEN 1 END', []);
 
         self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
         self::assertSame('row value misused', $operation->facts->diagnostics[0]->message());
@@ -97,21 +97,21 @@ final class CaseExpressionTest extends TestCase
 
     public function testDeriveScalarReportsARowValueResult(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE WHEN 1 THEN (1, 2) END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE WHEN 1 THEN (1, 2) END', []);
 
         self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
     }
 
     public function testDeriveScalarReportsARowValueComparedWithASingleBase(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE 1 WHEN (1, 2) THEN 1 END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE 1 WHEN (1, 2) THEN 1 END', []);
 
         self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
     }
 
     public function testDeriveScalarAcceptsRowValuesOfTheSameWidthAroundABase(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 END', []);
+        $operation = (new Semantics())->diagnose('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 END', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertEquals(new Known(Storage::Integer), $operation->field(0)->type);
@@ -119,7 +119,7 @@ final class CaseExpressionTest extends TestCase
 
     public function testRenderWritesEveryPartInOrder(): void
     {
-        $operation = (new Semantics())->inspect('select case a when 1 then \'x\' when 2 then \'y\' else \'z\' end AS c1, case when a then 1 end AS c2 from t');
+        $operation = (new Semantics())->diagnose('select case a when 1 then \'x\' when 2 then \'y\' else \'z\' end AS c1, case when a then 1 end AS c2 from t');
 
         self::assertSame('SELECT CASE a WHEN 1 THEN \'x\' WHEN 2 THEN \'y\' ELSE \'z\' END AS c1, CASE WHEN a THEN 1 END AS c2 FROM t', $operation->toString());
     }

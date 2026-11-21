@@ -4,44 +4,28 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
-use SqlSemantics\AnalysisContext;
-use SqlSemantics\IrAnalyzer;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Operation;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
- * Publishes complete PostgreSQL SELECT values in the supported projection domain.
+ * Resolves the supported SELECT projection and constructs its complete value.
  *
- * @visibility public
- * @example Analyzing a complete result
- *     (new \SqlSemantics\Platform\PostgreSql\Ir\Analyzer())->analyze('SELECT 42 AS answer')->toString() // => 'SELECT CAST(42 AS pg_catalog.int4) AS "answer"'
+ * @visibility SqlSemantics\Platform\PostgreSql
  */
-final class Analyzer implements IrAnalyzer
+final class SelectLowering
 {
     /**
-     * Uses the supplied PostgreSQL language and declaration settings.
+     * Converts the checked operation into a complete value.
+     * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function __construct(private readonly Semantics $semantics = new Semantics())
+    public function lower(Operation $operation): Select
     {
-    }
-
-    /**
-     * Resolves the source and result names before constructing a complete value.
-     *
-     * @param list<Table|Operation>|AnalysisContext|null $context
-     * @throws InvalidConstruction When the analysis cannot produce a complete SELECT in this domain
-     */
-    public function analyze(string $sql, array|AnalysisContext|null $context = null): Select
-    {
-        $profile = $this->semantics->profile();
+        $profile = $operation->profile();
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
-        $operation = $this->semantics->analyze($sql, $context);
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
         Check::input(

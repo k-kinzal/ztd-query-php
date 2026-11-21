@@ -16,8 +16,8 @@ final class AlterIdentityTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('ALTER TABLE t ALTER zz RESTART', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER zz RESTART', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -26,7 +26,7 @@ final class AlterIdentityTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ALTER a SET GENERATED ALWAYS RESTART WITH 3 SET NO CYCLE', []);
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER a SET GENERATED ALWAYS RESTART WITH 3 SET NO CYCLE', []);
         self::assertSame('ALTER TABLE t ALTER a SET GENERATED ALWAYS RESTART 3 SET NO CYCLE', $statement->toString());
     }
 

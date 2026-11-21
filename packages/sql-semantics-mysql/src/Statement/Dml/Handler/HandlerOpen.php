@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  *
  * @visibility public
  * @example Reading a HANDLER ... OPEN
- *     $open = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER shop.t OPEN AS h');
+ *     $open = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('HANDLER shop.t OPEN AS h');
  *     [$open->statement->table->name->value, $open->statement->alias?->value, $open->toString()] // => ['t', 'h', 'HANDLER shop.t OPEN AS h']
  */
 final class HandlerOpen implements Statement

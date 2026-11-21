@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks;
  *
  * @visibility public
  * @example Reading a VACUUM written with words
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM FULL ANALYZE t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('VACUUM FULL ANALYZE t');
  *     [$operation->statement->options[1]->option(), $operation->statement->targets[0]->table->name->value, $operation->toString()] // => ['analyze', 't', 'VACUUM FULL ANALYZE t']
  * @example Refusing words in another order than the grammar reads
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum([

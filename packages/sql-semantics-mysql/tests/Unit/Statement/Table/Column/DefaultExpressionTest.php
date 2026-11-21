@@ -20,7 +20,7 @@ final class DefaultExpressionTest extends TestCase
 {
     public function testDeriveAttributeResolvesColumnsOfTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -36,6 +36,6 @@ final class DefaultExpressionTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))', (new Semantics())->analyze('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))', (new Semantics())->inspect('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))')->toString());
     }
 }

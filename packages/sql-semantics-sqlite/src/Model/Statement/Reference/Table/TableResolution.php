@@ -10,8 +10,8 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table;
  * @visibility public
  * @example Reading the resolution of a named input
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $query = $semantics->inspect('SELECT a FROM t', [$table]);
  *     $query->facts->relation($query->inputRelation())->table instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable // => true
  */
 interface TableResolution

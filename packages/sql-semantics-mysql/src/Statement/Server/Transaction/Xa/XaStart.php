@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa begin 'g', 'b' resume");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa begin 'g', 'b' resume");
  *     [$xa->toString(), $xa->statement->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume] // => ["XA START 'g', 'b' RESUME", true]
  */
 final class XaStart implements Statement

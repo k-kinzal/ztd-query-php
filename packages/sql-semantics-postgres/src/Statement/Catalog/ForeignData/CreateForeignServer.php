@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  *
  * @visibility public
  * @example Reading the wrapper of a new server
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE SERVER IF NOT EXISTS s TYPE 'pg' VERSION '17' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'db')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE SERVER IF NOT EXISTS s TYPE 'pg' VERSION '17' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'db')");
  *     [$operation->statement->wrapper->value, $operation->statement->version?->version?->value] // => ['postgres_fdw', '17']
  */
 final class CreateForeignServer implements Statement

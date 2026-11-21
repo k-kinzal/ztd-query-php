@@ -16,11 +16,11 @@ final class DropUserTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('DROP USER u')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('DROP USER u')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAccounts(): void
     {
-        self::assertSame('DROP USER a, CURRENT_USER()', (new Semantics('mysql-5.6.51'))->analyze('drop user a, current_user()')->toString());
+        self::assertSame('DROP USER a, CURRENT_USER()', (new Semantics('mysql-5.6.51'))->inspect('drop user a, current_user()')->toString());
     }
 }

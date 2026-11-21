@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Model\Statement\Type;
  * @visibility public
  * @example Reading the type of a declared column
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
  *     $table->columns[0]->type->name() // => 'INTEGER'
  */
 interface TypeDescriptor

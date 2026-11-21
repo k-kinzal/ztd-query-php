@@ -32,7 +32,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
  *
  * @visibility public
  * @example Declaring a virtual table without knowing its columns
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIRTUAL TABLE docs USING fts5(title, body)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE VIRTUAL TABLE docs USING fts5(title, body)');
  *     [$create->statement->module->value, count($create->statement->arguments), $create->declarations()[0]->complete] // => ['fts5', 2, false]
  */
 final class CreateVirtualTable implements Statement

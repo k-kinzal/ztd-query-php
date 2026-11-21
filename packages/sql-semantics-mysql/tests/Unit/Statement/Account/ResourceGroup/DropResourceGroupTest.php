@@ -16,11 +16,11 @@ final class DropResourceGroupTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('DROP RESOURCE GROUP g')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('DROP RESOURCE GROUP g')->facts->diagnostics);
     }
 
     public function testRenderWritesForce(): void
     {
-        self::assertSame('DROP RESOURCE GROUP g FORCE', (new Semantics())->analyze('drop resource group g force')->toString());
+        self::assertSame('DROP RESOURCE GROUP g FORCE', (new Semantics())->inspect('drop resource group g force')->toString());
     }
 }

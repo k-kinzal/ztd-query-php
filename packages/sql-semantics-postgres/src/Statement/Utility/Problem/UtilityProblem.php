@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of an unknown EXPLAIN option
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('EXPLAIN (fast) SELECT 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: unrecognized EXPLAIN option "fast"
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('EXPLAIN (fast) SELECT 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: unrecognized EXPLAIN option "fast"
  */
 final class UtilityProblem implements Diagnostic
 {

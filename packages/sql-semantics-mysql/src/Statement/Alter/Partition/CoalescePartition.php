@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Removing two hash partitions
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t COALESCE PARTITION 2')->statement->commands[0]->count->text // => '2'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t COALESCE PARTITION 2')->statement->commands[0]->count->text // => '2'
  */
 final class CoalescePartition implements StandaloneCommand
 {

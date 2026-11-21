@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * @visibility public
  * @example Reading an option of the old syntax
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT WITH CSV HEADER');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('COPY t TO STDOUT WITH CSV HEADER');
  *     [$copy->statement->legacy[1]->option(), $copy->toString()] // => ['header', 'COPY t TO STDOUT CSV HEADER']
  */
 enum CopyFlag: string implements Node

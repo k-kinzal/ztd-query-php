@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Changing column options
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER FOREIGN TABLE f ALTER a OPTIONS (ADD x 'y')");
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER FOREIGN TABLE f ALTER a OPTIONS (ADD x 'y')");
  *     $statement->toString() // => "ALTER FOREIGN TABLE f ALTER a OPTIONS (ADD x 'y')"
  */
 final class ColumnForeignOptions implements AlterCommand

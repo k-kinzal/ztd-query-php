@@ -56,7 +56,7 @@ final class TokenCorrespondenceTest extends TestCase
         $source = 'select a, count(*) from t where a is not null group by a having count(*) > 1 order by 2 desc limit 3';
 
         $sourceKeys = $correspondence->keys($platform->parser($profile)->parse($source), $platform->productions($profile), $platform->leafKeys($profile));
-        $renderedKeys = $correspondence->keys($platform->parser($profile)->parse($semantics->analyze($source)->toString()), $platform->productions($profile), $platform->leafKeys($profile));
+        $renderedKeys = $correspondence->keys($platform->parser($profile)->parse($semantics->inspect($source)->toString()), $platform->productions($profile), $platform->leafKeys($profile));
 
         self::assertNull($correspondence->difference($sourceKeys, $renderedKeys));
         self::assertNotNull($correspondence->difference($sourceKeys, $correspondence->keys($platform->parser($profile)->parse('SELECT a FROM t'), $platform->productions($profile), $platform->leafKeys($profile))));

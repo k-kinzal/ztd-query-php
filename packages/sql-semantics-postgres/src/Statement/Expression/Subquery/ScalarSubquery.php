@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example A scalar subquery can be NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT (SELECT 1)')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT (SELECT 1)')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable
  */
 final class ScalarSubquery implements Scalar, OutputNaming
 {

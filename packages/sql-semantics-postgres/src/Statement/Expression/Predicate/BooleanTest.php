@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example A truth-value test is never NULL
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL IS TRUE')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT NULL IS TRUE')->field(0)->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
  */
 final class BooleanTest implements Scalar
 {

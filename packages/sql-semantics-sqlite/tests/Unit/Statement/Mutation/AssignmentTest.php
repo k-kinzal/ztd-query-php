@@ -28,7 +28,7 @@ final class AssignmentTest extends TestCase
         $semantics = new Semantics();
         $target = new MutationTarget(new QualifiedName(new Name('t')));
         $built = new Operation($semantics->context(), new Update($target, [new Assignment(new Name('a'), new IntegerLiteral('1')), new Assignment(new Name('b'), new TextLiteral('x'))]));
-        $query = $semantics->analyze("update t set a = 1, b = 'x'");
+        $query = $semantics->inspect("update t set a = 1, b = 'x'");
 
         self::assertSame("UPDATE t SET a = 1, b = 'x'", $built->toString());
         self::assertSame("UPDATE t SET a = 1, b = 'x'", $query->toString());
@@ -41,8 +41,8 @@ final class AssignmentTest extends TestCase
     public function testValueSeesTheRowOfTheTarget(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('UPDATE t SET a = a + 1', [$t]);
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('UPDATE t SET a = a + 1', [$t]);
 
         self::assertInstanceOf(Update::class, $query->statement);
         self::assertInstanceOf(Assignment::class, $query->statement->assignments[0]);

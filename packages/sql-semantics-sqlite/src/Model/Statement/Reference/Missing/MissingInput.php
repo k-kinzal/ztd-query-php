@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing;
  *
  * @visibility public
  * @example Naming the undeclared relation behind a dependent fact
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM t');
  *     $operation->field('a')->type->missing[0]->describe() // => 'the declaration of relation t'
  */
 interface MissingInput

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Stopping group replication
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('stop group_replication')->toString() // => 'STOP GROUP_REPLICATION'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('stop group_replication')->toString() // => 'STOP GROUP_REPLICATION'
  */
 final class StopGroupReplication implements Statement
 {

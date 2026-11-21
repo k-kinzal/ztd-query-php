@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Defining a server
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create server s foreign data wrapper mysql options (host 'db', port 3307)");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create server s foreign data wrapper mysql options (host 'db', port 3307)");
  *     [$create->toString(), $create->statement->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
  */
 final class CreateServer implements Statement

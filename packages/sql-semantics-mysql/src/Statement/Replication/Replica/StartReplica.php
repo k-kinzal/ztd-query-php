@@ -36,7 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Starting the receiver thread with credentials
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
  */
 final class StartReplica implements Statement
 {

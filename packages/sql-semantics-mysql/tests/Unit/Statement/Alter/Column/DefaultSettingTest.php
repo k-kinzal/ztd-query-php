@@ -18,14 +18,14 @@ final class DefaultSettingTest extends TestCase
     public function testDeriveCommandDerivesTheValueInTheChangedTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->inspect('ALTER TABLE t ALTER a SET DEFAULT (b + x)', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->diagnose('ALTER TABLE t ALTER a SET DEFAULT (b + x)', [$table]);
 
         self::assertSame(['Column x does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
     public function testRenderWritesEveryForm(): void
     {
-        self::assertSame("ALTER TABLE t ALTER COLUMN a SET DEFAULT 'x', ALTER COLUMN b SET DEFAULT (1), ALTER COLUMN c DROP DEFAULT", (new Semantics())->inspect("ALTER TABLE t ALTER a SET DEFAULT 'x', ALTER b SET DEFAULT (1), ALTER c DROP DEFAULT")->toString());
+        self::assertSame("ALTER TABLE t ALTER COLUMN a SET DEFAULT 'x', ALTER COLUMN b SET DEFAULT (1), ALTER COLUMN c DROP DEFAULT", (new Semantics())->diagnose("ALTER TABLE t ALTER a SET DEFAULT 'x', ALTER b SET DEFAULT (1), ALTER c DROP DEFAULT")->toString());
     }
 }

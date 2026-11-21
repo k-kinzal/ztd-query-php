@@ -26,6 +26,6 @@ final class ResetReplicaTest extends TestCase
 
     public function testRenderWritesTheLegacySpellingWithChannel(): void
     {
-        self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics('mysql-5.7.44'))->analyze("reset slave all for channel 'c'")->toString());
+        self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics('mysql-5.7.44'))->inspect("reset slave all for channel 'c'")->toString());
     }
 }

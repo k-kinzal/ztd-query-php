@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Removing the password of a role
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER ROLE joe PASSWORD NULL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER ROLE joe PASSWORD NULL');
  *     $operation->statement->options[0]->password // => null
  */
 final class RolePassword implements RoleOption

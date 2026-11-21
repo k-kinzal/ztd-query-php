@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
  *
  * @visibility public
  * @example Reading the arguments
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
  *     count($query->statement->procedure->arguments) // => 2
  * @example Refusing a third argument
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');

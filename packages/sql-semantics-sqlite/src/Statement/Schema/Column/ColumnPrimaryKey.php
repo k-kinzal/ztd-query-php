@@ -26,7 +26,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
  *
  * @visibility public
  * @example Reading a primary key column constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT)');
  *     $key = $create->statement->columns[0]->constraints[0];
  *     [$key->direction?->value, $key->conflict?->value, $key->autoincrement] // => ['ASC', 'FAIL', true]
  */

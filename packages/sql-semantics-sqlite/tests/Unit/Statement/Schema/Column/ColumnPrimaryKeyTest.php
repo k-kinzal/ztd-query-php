@@ -19,14 +19,14 @@ final class ColumnPrimaryKeyTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a PRIMARY KEY)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheSortOrderTheConflictResolutionAndAutoincrement(): void
     {
-        $operation = (new Semantics())->analyze('create table t (id integer primary key asc on conflict abort autoincrement)');
+        $operation = (new Semantics())->inspect('create table t (id integer primary key asc on conflict abort autoincrement)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -40,7 +40,7 @@ final class ColumnPrimaryKeyTest extends TestCase
 
     public function testRenderWritesABareKey(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (id PRIMARY KEY)');
+        $operation = (new Semantics())->inspect('CREATE TABLE t (id PRIMARY KEY)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

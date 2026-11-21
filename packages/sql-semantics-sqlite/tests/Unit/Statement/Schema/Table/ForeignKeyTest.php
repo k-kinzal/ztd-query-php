@@ -19,14 +19,14 @@ final class ForeignKeyTest extends TestCase
 {
     public function testDeriveConstraintAcceptsChildColumnsOfTheTable(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, b, FOREIGN KEY (a, B) REFERENCES parent)', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE c (a, b, FOREIGN KEY (a, B) REFERENCES parent)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testDeriveConstraintReportsAChildColumnTheTableDoesNotHave(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, FOREIGN KEY (rowid) REFERENCES parent)', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE c (a, FOREIGN KEY (rowid) REFERENCES parent)', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(UnknownColumn::class, $operation->facts->diagnostics[0]);
@@ -35,7 +35,7 @@ final class ForeignKeyTest extends TestCase
 
     public function testDeriveConstraintReportsDecoratedColumnsOnBothSides(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE c (a, FOREIGN KEY (a DESC) REFERENCES parent (id ASC))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE c (a, FOREIGN KEY (a DESC) REFERENCES parent (id ASC))', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
@@ -44,7 +44,7 @@ final class ForeignKeyTest extends TestCase
 
     public function testRenderWritesTheColumnsTheParentAndTheDeferrability(): void
     {
-        $operation = (new Semantics())->inspect('create table c (a, b, foreign key (a, b) references parent (x, y) on delete cascade deferrable initially deferred)');
+        $operation = (new Semantics())->diagnose('create table c (a, b, foreign key (a, b) references parent (x, y) on delete cascade deferrable initially deferred)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

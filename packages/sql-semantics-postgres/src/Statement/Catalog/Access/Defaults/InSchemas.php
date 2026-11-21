@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the schemas
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA app, audit GRANT SELECT ON TABLES TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES IN SCHEMA app, audit GRANT SELECT ON TABLES TO joe');
  *     $operation->statement->scopes[0]->schemas[1]->value // => 'audit'
  */
 final class InSchemas implements DefaultScope

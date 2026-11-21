@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
  *
  * @visibility public
  * @example Removing one persisted setting
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
  */
 final class ResetPersist implements Statement
 {

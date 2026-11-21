@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  *
  * @visibility public
  * @example Changing the storage engine and the comment
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
  *     count($alter->statement->commands[0]->options) // => 2
  */
 final class SetTableOptions implements AlterCommand

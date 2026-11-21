@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
  *
  * @visibility public
  * @example Reading the column
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE VALUES(a)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE VALUES(a)');
  *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
  */
 final class InsertedColumn implements Scalar

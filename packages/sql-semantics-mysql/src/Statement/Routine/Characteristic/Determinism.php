@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading whether a function is declared deterministic
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION f() RETURNS INT NOT DETERMINISTIC RETURN 1');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE FUNCTION f() RETURNS INT NOT DETERMINISTIC RETURN 1');
  *     $create->statement->characteristics[0]->deterministic // => false
  */
 final class Determinism implements Characteristic

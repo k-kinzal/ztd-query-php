@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the type of a typed constant with modifiers
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT numeric(10, 2) '1.5'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT numeric(10, 2) '1.5'");
  *     $query->field(0)->type->descriptor->name() // => 'numeric(10,2)'
  */
 final class Parameterized implements TypeDescriptor

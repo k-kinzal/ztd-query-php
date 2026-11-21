@@ -16,6 +16,6 @@ final class PreloadedTableTest extends TestCase
 {
     public function testRenderWritesIgnoreLeaves(): void
     {
-        self::assertSame('LOAD INDEX INTO CACHE t INDEX (PRIMARY) IGNORE LEAVES', (new Semantics('mysql-5.6.51'))->analyze('load index into cache t key (primary) ignore leaves')->toString());
+        self::assertSame('LOAD INDEX INTO CACHE t INDEX (PRIMARY) IGNORE LEAVES', (new Semantics('mysql-5.6.51'))->inspect('load index into cache t key (primary) ignore leaves')->toString());
     }
 }

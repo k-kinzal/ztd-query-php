@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Altering the current database
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter schema character set latin1 read only default');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter schema character set latin1 read only default');
  *     [$alter->toString(), $alter->statement->name] // => ['ALTER DATABASE CHARACTER SET latin1 READ ONLY DEFAULT', null]
  */
 final class AlterDatabase implements Statement

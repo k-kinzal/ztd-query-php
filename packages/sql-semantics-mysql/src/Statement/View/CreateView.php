@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
  *
  * @visibility public
  * @example Declaring a view with a column list
- *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE OR REPLACE VIEW v (one, two) AS SELECT 1, 2');
+ *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE OR REPLACE VIEW v (one, two) AS SELECT 1, 2');
  *     [$view->statement->orReplace, $view->declarations()[0]->columns[1]->name->value] // => [true, 'two']
  */
 final class CreateView implements Statement

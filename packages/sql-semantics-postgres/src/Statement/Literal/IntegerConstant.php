@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
  *
  * @visibility public
  * @example Reading a hexadecimal integer
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 0x1_F');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 0x1_F');
  *     $query->statement->targets[0]->expression->value->digits // => '31'
  * @example Rejecting digits that are not canonical
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('007') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

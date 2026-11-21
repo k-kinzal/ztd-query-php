@@ -25,7 +25,7 @@ final class EquivalenceTest extends TestCase
     {
         $semantics = new Semantics();
 
-        $difference = (new Equivalence())->difference($semantics->analyze('select a, b from t where a > 1')->statement, $semantics->analyze('SELECT a, b FROM t WHERE a > 1')->statement);
+        $difference = (new Equivalence())->difference($semantics->inspect('select a, b from t where a > 1')->statement, $semantics->inspect('SELECT a, b FROM t WHERE a > 1')->statement);
 
         self::assertNull($difference);
     }

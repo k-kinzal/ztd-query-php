@@ -24,7 +24,7 @@ final class ProgramOnlyTest extends TestCase
     public function testOutsideProgramReportsARaiseFunction(): void
     {
         $semantics = new Semantics();
-        $statement = $semantics->inspect('SELECT (SELECT RAISE(IGNORE))')->statement;
+        $statement = $semantics->diagnose('SELECT (SELECT RAISE(IGNORE))')->statement;
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
@@ -38,7 +38,7 @@ final class ProgramOnlyTest extends TestCase
     public function testOutsideProgramReportsNothingWithoutRaise(): void
     {
         $semantics = new Semantics();
-        $statement = $semantics->inspect('SELECT ?, abs(1)')->statement;
+        $statement = $semantics->diagnose('SELECT ?, abs(1)')->statement;
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
 
@@ -48,8 +48,8 @@ final class ProgramOnlyTest extends TestCase
     public function testOutsideProgramIsAppliedToAQueryAndNotToATriggerProgram(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT RAISE(IGNORE)');
-        $trigger = $semantics->inspect("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'x'); END");
+        $query = $semantics->diagnose('SELECT RAISE(IGNORE)');
+        $trigger = $semantics->diagnose("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'x'); END");
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -83,8 +83,8 @@ final class ProgramOnlyTest extends TestCase
     public function testInsideProgramIsAppliedToTheConditionAndTheStatementsOfATrigger(): void
     {
         $semantics = new Semantics();
-        $body = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT ?; SELECT ?2; END');
-        $condition = $semantics->inspect('CREATE TRIGGER tr AFTER INSERT ON t WHEN ?1 = 1 BEGIN SELECT 1; END');
+        $body = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT ?; SELECT ?2; END');
+        $condition = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t WHEN ?1 = 1 BEGIN SELECT 1; END');
 
         self::assertCount(1, $body->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $body->facts->diagnostics[0]);
@@ -96,7 +96,7 @@ final class ProgramOnlyTest extends TestCase
 
     public function testHoldsFindsANodeOfAClassAnywhereInTheStructure(): void
     {
-        $statement = (new Semantics())->inspect('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)')->statement;
+        $statement = (new Semantics())->diagnose('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)')->statement;
         $rules = new ProgramOnly();
 
         self::assertTrue($rules->holds($statement, Raise::class));

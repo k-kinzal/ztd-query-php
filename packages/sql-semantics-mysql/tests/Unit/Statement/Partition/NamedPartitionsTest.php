@@ -16,6 +16,6 @@ final class NamedPartitionsTest extends TestCase
 {
     public function testRenderWritesTheNames(): void
     {
-        self::assertSame('ALTER TABLE t TRUNCATE PARTITION p0, p1', (new Semantics())->analyze('ALTER TABLE t TRUNCATE PARTITION p0, p1')->toString());
+        self::assertSame('ALTER TABLE t TRUNCATE PARTITION p0, p1', (new Semantics())->inspect('ALTER TABLE t TRUNCATE PARTITION p0, p1')->toString());
     }
 }

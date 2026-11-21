@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting parameter zero
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $0') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: There is no parameter $0.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT $0') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: There is no parameter $0.
  */
 final class NoSuchParameter implements Diagnostic
 {

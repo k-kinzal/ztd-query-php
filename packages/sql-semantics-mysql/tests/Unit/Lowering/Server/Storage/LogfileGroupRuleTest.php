@@ -16,11 +16,11 @@ final class LogfileGroupRuleTest extends TestCase
 {
     public function testStatementLowersAlterOf5x(): void
     {
-        self::assertSame("ALTER LOGFILE GROUP g ADD REDOFILE 'r' INITIAL_SIZE 1", (new Semantics('mysql-5.7.44'))->analyze("alter logfile group g add redofile 'r' initial_size 1")->toString());
+        self::assertSame("ALTER LOGFILE GROUP g ADD REDOFILE 'r' INITIAL_SIZE 1", (new Semantics('mysql-5.7.44'))->inspect("alter logfile group g add redofile 'r' initial_size 1")->toString());
     }
 
     public function testFileLowersAnUndoFile(): void
     {
-        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'u'", (new Semantics())->analyze("create logfile group g add undofile 'u'")->toString());
+        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'u'", (new Semantics())->inspect("create logfile group g add undofile 'u'")->toString());
     }
 }

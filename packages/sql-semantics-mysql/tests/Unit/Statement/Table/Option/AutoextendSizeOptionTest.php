@@ -17,7 +17,7 @@ final class AutoextendSizeOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) AUTOEXTEND_SIZE = 4M');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) AUTOEXTEND_SIZE = 4M');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
  *
  * @visibility public
  * @example Swapping two tables through a third name
- *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('RENAME TABLES a TO tmp, b TO a, tmp TO b');
+ *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('RENAME TABLES a TO tmp, b TO a, tmp TO b');
  *     [count($rename->statement->renamings), $rename->toString()] // => [3, 'RENAME TABLE a TO tmp, b TO a, tmp TO b']
  */
 final class RenameTable implements Statement

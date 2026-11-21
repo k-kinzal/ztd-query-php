@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('lock instance for backup')->toString() // => 'LOCK INSTANCE FOR BACKUP'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('lock instance for backup')->toString() // => 'LOCK INSTANCE FOR BACKUP'
  */
 final class LockInstance implements Statement
 {

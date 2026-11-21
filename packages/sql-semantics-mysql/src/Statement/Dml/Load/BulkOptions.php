@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Reading the options of a bulk load
- *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
+ *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
  *     [$load->statement->bulk->parallel->text, $load->statement->bulk->bulk] // => ['4', true]
  */
 final class BulkOptions implements Node

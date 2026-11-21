@@ -34,7 +34,7 @@ final class NullTestTest extends TestCase
 
     public function testDeriveScalarReportsARowOperand(): void
     {
-        $operation = (new Semantics())->inspect('SELECT (1, 2) IS NULL');
+        $operation = (new Semantics())->diagnose('SELECT (1, 2) IS NULL');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }

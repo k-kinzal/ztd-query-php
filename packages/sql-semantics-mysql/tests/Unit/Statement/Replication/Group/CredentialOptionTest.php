@@ -16,6 +16,6 @@ final class CredentialOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("START GROUP_REPLICATION DEFAULT_AUTH = 'a'", (new Semantics())->analyze("start group_replication default_auth = 'a'")->toString());
+        self::assertSame("START GROUP_REPLICATION DEFAULT_AUTH = 'a'", (new Semantics())->inspect("start group_replication default_auth = 'a'")->toString());
     }
 }

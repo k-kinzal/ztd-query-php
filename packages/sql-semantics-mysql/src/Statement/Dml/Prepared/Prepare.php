@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading a PREPARE
- *     $prepare = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("PREPARE stmt FROM 'SELECT ?'");
+ *     $prepare = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("PREPARE stmt FROM 'SELECT ?'");
  *     [$prepare->statement->name->value, $prepare->statement->source->value, $prepare->toString()] // => ['stmt', 'SELECT ?', "PREPARE stmt FROM 'SELECT ?'"]
  */
 final class Prepare implements Statement

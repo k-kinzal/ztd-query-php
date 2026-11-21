@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
  *
  * @visibility public
  * @example Reading the assignments of an INSERT ... SET
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t SET a = 1, b = a + 1');
+ *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t SET a = 1, b = a + 1');
  *     [count($insert->statement->assignments), $insert->toString()] // => [2, 'INSERT INTO t SET a = 1, b = a + 1']
  */
 final class InsertSet implements Statement

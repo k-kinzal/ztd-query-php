@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a skip action
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DO NOTHING');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN DO NOTHING');
  *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeNothing // => true
  */
 final class MergeNothing implements Node

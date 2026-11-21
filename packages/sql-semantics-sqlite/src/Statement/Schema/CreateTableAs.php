@@ -33,8 +33,8 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
  * @visibility public
  * @example Declaring a table from a query
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE s (a INTEGER, b TEXT)');
- *     $table = $semantics->analyze('CREATE TABLE t AS SELECT a, b AS label FROM s', [$source])->declarations()[0];
+ *     $source = $semantics->inspect('CREATE TABLE s (a INTEGER, b TEXT)');
+ *     $table = $semantics->inspect('CREATE TABLE t AS SELECT a, b AS label FROM s', [$source])->declarations()[0];
  *     [$table->columns[0]->type->name(), $table->columns[1]->name->value, $table->complete] // => ['INT', 'label', true]
  */
 final class CreateTableAs implements Statement

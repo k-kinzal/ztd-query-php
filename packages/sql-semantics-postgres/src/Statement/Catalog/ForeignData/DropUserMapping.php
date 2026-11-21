@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s');
  *     $operation->toString() // => 'DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s'
  */
 final class DropUserMapping implements Statement

@@ -20,7 +20,7 @@ final class TableConstraintTest extends TestCase
 {
     public function testDeriveConstraintDerivesTheOperandsOfEachConstraint(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a, PRIMARY KEY (a), CHECK (b > 0))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a, PRIMARY KEY (a), CHECK (b > 0))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

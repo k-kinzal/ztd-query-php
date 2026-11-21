@@ -17,16 +17,16 @@ final class NotifyTest extends TestCase
 {
     public function testDeriveStatementAcceptsAPayloadBelowTheLimit(): void
     {
-        self::assertSame([], (new Semantics())->inspect("NOTIFY c, '" . str_repeat('x', 7999) . "'")->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose("NOTIFY c, '" . str_repeat('x', 7999) . "'")->facts->diagnostics);
     }
 
     public function testDeriveStatementReportsAPayloadAtTheLimit(): void
     {
-        self::assertSame(['payload string too long'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->inspect("NOTIFY c, '" . str_repeat('é', 4000) . "'")->facts->diagnostics));
+        self::assertSame(['payload string too long'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->diagnose("NOTIFY c, '" . str_repeat('é', 4000) . "'")->facts->diagnostics));
     }
 
     public function testRenderWritesThePayloadAfterAComma(): void
     {
-        self::assertSame(["NOTIFY c, ''", 'NOTIFY "C"'], [(new Semantics())->inspect("NOTIFY c, ''")->toString(), (new Semantics())->inspect('NOTIFY "C"')->toString()]);
+        self::assertSame(["NOTIFY c, ''", 'NOTIFY "C"'], [(new Semantics())->diagnose("NOTIFY c, ''")->toString(), (new Semantics())->diagnose('NOTIFY "C"')->toString()]);
     }
 }

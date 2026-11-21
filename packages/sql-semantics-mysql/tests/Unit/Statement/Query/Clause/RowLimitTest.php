@@ -23,14 +23,14 @@ final class RowLimitTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT a FROM t LIMIT 5, 10', $semantics->analyze('select a from t limit 5,10')->toString());
-        self::assertSame('SELECT a FROM t LIMIT 10 OFFSET 5', $semantics->analyze('select a from t limit 10 offset 5')->toString());
-        self::assertSame('SELECT a FROM t LIMIT ?', $semantics->analyze('select a from t limit ?')->toString());
+        self::assertSame('SELECT a FROM t LIMIT 5, 10', $semantics->inspect('select a from t limit 5,10')->toString());
+        self::assertSame('SELECT a FROM t LIMIT 10 OFFSET 5', $semantics->inspect('select a from t limit 10 offset 5')->toString());
+        self::assertSame('SELECT a FROM t LIMIT ?', $semantics->inspect('select a from t limit ?')->toString());
     }
 
     public function testOperandsAreTheCountAndTheOffset(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t LIMIT 5, 10');
+        $operation = (new Semantics())->inspect('SELECT a FROM t LIMIT 5, 10');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);

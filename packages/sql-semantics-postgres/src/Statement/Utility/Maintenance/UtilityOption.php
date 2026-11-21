@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  *
  * @visibility public
  * @example Reading an option and its value
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM (PARALLEL 2, ANALYSE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('VACUUM (PARALLEL 2, ANALYSE)');
  *     [$operation->statement->options[0]->option(), $operation->statement->options[0]->argument->magnitude->digits, $operation->statement->options[1]->option()] // => ['parallel', '2', 'analyze']
  * @example Refusing the FORMAT keyword before another value than json
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

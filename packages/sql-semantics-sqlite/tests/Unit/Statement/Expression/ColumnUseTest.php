@@ -30,8 +30,8 @@ final class ColumnUseTest extends TestCase
     public function testDeriveScalarResolvesADeclaredColumnWithItsFacts(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT a, t.b, main.t.a FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT a, t.b, main.t.a FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -53,8 +53,8 @@ final class ColumnUseTest extends TestCase
     public function testDeriveScalarReportsAMissingColumn(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT nope, t.nope FROM t', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT nope, t.nope FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -69,7 +69,7 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a, u.a FROM u');
+        $operation = (new Semantics())->diagnose('SELECT a, u.a FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -85,8 +85,8 @@ final class ColumnUseTest extends TestCase
     public function testDeriveScalarResolvesAResultAliasInTheOrdering(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect('SELECT b AS c FROM t ORDER BY c', [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose('SELECT b AS c FROM t ORDER BY c', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -98,7 +98,7 @@ final class ColumnUseTest extends TestCase
 
     public function testRenderWritesTheQualifierPartsAndTheName(): void
     {
-        $operation = (new Semantics())->inspect('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
+        $operation = (new Semantics())->diagnose('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
 
         self::assertSame('SELECT a AS c1, t.b AS c2, main.t.a AS c3, c AS c4, d AS c5 FROM t', $operation->toString());
     }

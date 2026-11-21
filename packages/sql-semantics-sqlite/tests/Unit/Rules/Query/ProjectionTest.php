@@ -38,8 +38,8 @@ final class ProjectionTest extends TestCase
     public function testItemsNamesEveryKindOfResultColumn(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->inspect('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $select = $semantics->diagnose('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
         self::assertInstanceOf(Select::class, $select);
         $from = $select->from;
         self::assertNotNull($from);
@@ -81,7 +81,7 @@ final class ProjectionTest extends TestCase
     public function testItemsReportsARowValueResultColumn(): void
     {
         $semantics = new Semantics();
-        $select = $semantics->inspect('SELECT (1, 2)')->statement;
+        $select = $semantics->diagnose('SELECT (1, 2)')->statement;
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([]));
 

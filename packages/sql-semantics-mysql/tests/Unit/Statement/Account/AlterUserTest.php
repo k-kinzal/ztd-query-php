@@ -18,8 +18,8 @@ final class AlterUserTest extends TestCase
 {
     public function testDeriveStatementReportsFactorAndPasswordHashProblems(): void
     {
-        $factors = (new Semantics())->inspect('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
-        $hash = (new Semantics('mysql-5.7.44'))->inspect("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
+        $factors = (new Semantics())->diagnose('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
+        $hash = (new Semantics('mysql-5.7.44'))->diagnose("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
 
         self::assertInstanceOf(InvalidFactorPair::class, $factors->facts->diagnostics[0]);
         self::assertInstanceOf(RejectedPasswordHash::class, $hash->facts->diagnostics[0]);
@@ -27,6 +27,6 @@ final class AlterUserTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("ALTER USER IF EXISTS u DISCARD OLD PASSWORD, v REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 1 PASSWORD REQUIRE CURRENT OPTIONAL ATTRIBUTE '{}'", (new Semantics())->inspect("alter user if exists u discard old password, v require none with max_queries_per_hour 1 password require current optional attribute '{}'")->toString());
+        self::assertSame("ALTER USER IF EXISTS u DISCARD OLD PASSWORD, v REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 1 PASSWORD REQUIRE CURRENT OPTIONAL ATTRIBUTE '{}'", (new Semantics())->diagnose("alter user if exists u discard old password, v require none with max_queries_per_hour 1 password require current optional attribute '{}'")->toString());
     }
 }

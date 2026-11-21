@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading the time
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE ROLE joe VALID UNTIL 'infinity'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE ROLE joe VALID UNTIL 'infinity'");
  *     $operation->statement->options[0]->until->value // => 'infinity'
  */
 final class RoleValidity implements RoleOption

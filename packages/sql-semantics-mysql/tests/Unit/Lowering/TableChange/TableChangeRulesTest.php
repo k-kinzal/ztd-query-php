@@ -16,26 +16,26 @@ final class TableChangeRulesTest extends TestCase
 {
     public function testStatementLowersAStatementNode(): void
     {
-        self::assertSame('TRUNCATE TABLE t', (new Semantics())->analyze('TRUNCATE t')->toString());
+        self::assertSame('TRUNCATE TABLE t', (new Semantics())->inspect('TRUNCATE t')->toString());
     }
 
     public function testDefinitionLowersARoutedProduction(): void
     {
-        self::assertSame('ALTER TABLE t FORCE', (new Semantics('mysql-5.7.44'))->analyze('alter table t force')->toString());
+        self::assertSame('ALTER TABLE t FORCE', (new Semantics('mysql-5.7.44'))->inspect('alter table t force')->toString());
     }
 
     public function testPartitioningLowersTheClauseOfCreateTable(): void
     {
-        self::assertSame('CREATE TABLE t (a INT) PARTITION BY KEY (a)', (new Semantics('mysql-5.7.44'))->analyze('CREATE TABLE t (a INT) PARTITION BY KEY (a)')->toString());
+        self::assertSame('CREATE TABLE t (a INT) PARTITION BY KEY (a)', (new Semantics('mysql-5.7.44'))->inspect('CREATE TABLE t (a INT) PARTITION BY KEY (a)')->toString());
     }
 
     public function testAlterOptionsLowersTheOptionsOfDropIndex(): void
     {
-        self::assertSame('DROP INDEX i ON t ALGORITHM = inplace', (new Semantics())->analyze('drop index i on t algorithm = inplace')->toString());
+        self::assertSame('DROP INDEX i ON t ALGORITHM = inplace', (new Semantics())->inspect('drop index i on t algorithm = inplace')->toString());
     }
 
     public function testPartitionNamesLowersAllOrNames(): void
     {
-        self::assertSame('ALTER TABLE t ANALYZE PARTITION p, q', (new Semantics())->analyze('alter table t analyze partition p, q')->toString());
+        self::assertSame('ALTER TABLE t ANALYZE PARTITION p, q', (new Semantics())->inspect('alter table t analyze partition p, q')->toString());
     }
 }

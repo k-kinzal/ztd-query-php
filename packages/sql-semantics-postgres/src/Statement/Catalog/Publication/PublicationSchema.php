@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Publishing the tables of the current schema
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
  *     [$operation->statement->objects[0]->schema, $operation->statement->objects[1]->schema?->value] // => [null, 's']
  */
 final class PublicationSchema implements PublicationMember

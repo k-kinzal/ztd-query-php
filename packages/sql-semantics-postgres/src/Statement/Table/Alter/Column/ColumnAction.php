@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Reading a column action
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER COLUMN a DROP NOT NULL');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER COLUMN a DROP NOT NULL');
  *     $statement->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnActionKind::DropNotNull
  */
 final class ColumnAction implements AlterCommand

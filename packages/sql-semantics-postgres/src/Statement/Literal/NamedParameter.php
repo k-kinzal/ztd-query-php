@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * @visibility public
  * @example Reading a named placeholder
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics(null, null, \SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle::Named);
- *     $semantics->analyze('SELECT :id')->statement->targets[0]->expression->name // => 'id'
+ *     $semantics->inspect('SELECT :id')->statement->targets[0]->expression->name // => 'id'
  */
 final class NamedParameter implements Scalar, OutputNaming
 {

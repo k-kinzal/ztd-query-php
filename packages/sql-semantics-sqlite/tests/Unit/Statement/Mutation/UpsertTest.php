@@ -22,8 +22,8 @@ final class UpsertTest extends TestCase
     public function testRenderWritesDoNothingOrDoUpdateWithItsPredicate(): void
     {
         $semantics = new Semantics();
-        $nothing = $semantics->analyze('insert into t values (1) on conflict do nothing');
-        $update = $semantics->analyze('insert into t values (1) on conflict (id) do update set a = 1, (b, a) = (2, 3) where a > 0');
+        $nothing = $semantics->inspect('insert into t values (1) on conflict do nothing');
+        $update = $semantics->inspect('insert into t values (1) on conflict (id) do update set a = 1, (b, a) = (2, 3) where a > 0');
 
         self::assertSame('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING', $nothing->toString());
         self::assertInstanceOf(InsertRows::class, $nothing->statement);
@@ -40,8 +40,8 @@ final class UpsertTest extends TestCase
     public function testAssignmentsAndPredicateSeeTheTableAndExcluded(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a WHERE b > excluded.b', [$t]);
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a WHERE b > excluded.b', [$t]);
 
         self::assertInstanceOf(InsertRows::class, $query->statement);
         $upsert = $query->statement->upserts[0];

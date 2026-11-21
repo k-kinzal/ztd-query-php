@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
  *
  * @visibility public
  * @example Reading the table of a TABLE statement
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('TABLE shop.t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('TABLE shop.t');
  *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
  */
 final class ExplicitTable implements Statement, Query, NamedRelation

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  *
  * @visibility public
  * @example Reading the target type of a CAST
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT CAST(1 AS UNSIGNED BIG INT(10))');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT CAST(1 AS UNSIGNED BIG INT(10))');
  *     $target = $query->statement->columns[0]->expression->target;
  *     [count($target->words), $target->text(), $target->affinity()] // => [3, 'UNSIGNED BIG INT', \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Integer]
  */

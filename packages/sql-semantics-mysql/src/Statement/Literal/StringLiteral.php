@@ -42,7 +42,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  *
  * @visibility public
  * @example Reading the value of adjacent strings
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a = 'x' \"y\"");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE a = 'x' \"y\"");
  *     [$query->statement->where->right->segments, $query->statement->where->right->value()] // => [['x', 'y'], 'xy']
  */
 final class StringLiteral implements Scalar

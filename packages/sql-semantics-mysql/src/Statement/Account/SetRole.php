@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
  *
  * @visibility public
  * @example Activating named roles
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('set role r1, r2')->toString() // => 'SET ROLE r1, r2'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('set role r1, r2')->toString() // => 'SET ROLE r1, r2'
  */
 final class SetRole implements Statement
 {

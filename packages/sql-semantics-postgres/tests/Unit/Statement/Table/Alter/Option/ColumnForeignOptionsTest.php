@@ -16,8 +16,8 @@ final class ColumnForeignOptionsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE FOREIGN TABLE t (a int NOT NULL, b int, c text) SERVER x')->declarations());
-        $statement = $semantics->inspect('ALTER FOREIGN TABLE t ALTER zz OPTIONS (ADD x \'y\')', $context);
+        array_push($context, ...$semantics->diagnose('CREATE FOREIGN TABLE t (a int NOT NULL, b int, c text) SERVER x')->declarations());
+        $statement = $semantics->diagnose('ALTER FOREIGN TABLE t ALTER zz OPTIONS (ADD x \'y\')', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -26,7 +26,7 @@ final class ColumnForeignOptionsTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER FOREIGN TABLE f ALTER a OPTIONS (SET x \'y\', DROP z)', []);
+        $statement = $semantics->diagnose('ALTER FOREIGN TABLE f ALTER a OPTIONS (SET x \'y\', DROP z)', []);
         self::assertSame('ALTER FOREIGN TABLE f ALTER a OPTIONS (SET x \'y\', DROP z)', $statement->toString());
     }
 }

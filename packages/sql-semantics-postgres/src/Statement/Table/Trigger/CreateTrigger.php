@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  *
  * @visibility public
  * @example Resolving a row trigger condition
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR ROW WHEN (old.a <> new.a) EXECUTE PROCEDURE f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR ROW WHEN (old.a <> new.a) EXECUTE PROCEDURE f()');
  *     $statement->toString() // => 'CREATE OR REPLACE TRIGGER g BEFORE UPDATE OR DELETE ON t FOR EACH ROW WHEN (old.a <> new.a) EXECUTE FUNCTION f()'
  */
 final class CreateTrigger implements SchemaElement, Relation

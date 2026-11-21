@@ -16,11 +16,11 @@ final class CoalescePartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics())->analyze('ALTER TABLE t COALESCE PARTITION 1')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('ALTER TABLE t COALESCE PARTITION 1')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t COALESCE PARTITION NO_WRITE_TO_BINLOG 3', (new Semantics())->analyze('ALTER TABLE t COALESCE PARTITION LOCAL 3')->toString());
+        self::assertSame('ALTER TABLE t COALESCE PARTITION NO_WRITE_TO_BINLOG 3', (new Semantics())->inspect('ALTER TABLE t COALESCE PARTITION LOCAL 3')->toString());
     }
 }

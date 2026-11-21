@@ -23,28 +23,28 @@ final class CommandRuleTest extends TestCase
         $semantics = new Semantics();
         self::assertSame(
             ['NOTIFY c', 'LISTEN c', 'UNLISTEN c', 'UNLISTEN *', "LOAD 'x'"],
-            [$semantics->inspect('NOTIFY c')->toString(), $semantics->inspect('LISTEN c')->toString(), $semantics->inspect('UNLISTEN c')->toString(), $semantics->inspect('UNLISTEN *')->toString(), $semantics->inspect("LOAD 'x'")->toString()],
+            [$semantics->diagnose('NOTIFY c')->toString(), $semantics->diagnose('LISTEN c')->toString(), $semantics->diagnose('UNLISTEN c')->toString(), $semantics->diagnose('UNLISTEN *')->toString(), $semantics->diagnose("LOAD 'x'")->toString()],
         );
     }
 
     public function testCallLowersTheProcedureCall(): void
     {
-        $statement = (new Semantics())->inspect('CALL s.p(VARIADIC ARRAY[1])')->statement;
+        $statement = (new Semantics())->diagnose('CALL s.p(VARIADIC ARRAY[1])')->statement;
         self::assertInstanceOf(Call::class, $statement);
         self::assertSame('p', $statement->call->name->last()->value);
     }
 
     public function testItemsKeepsTheOrderWritten(): void
     {
-        $statement = (new Semantics())->inspect("DO LANGUAGE sql 'a' LANGUAGE plpgsql")->statement;
+        $statement = (new Semantics())->diagnose("DO LANGUAGE sql 'a' LANGUAGE plpgsql")->statement;
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertSame([DoLanguage::class, \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant::class, DoLanguage::class], array_map(static fn (object $item): string => $item::class, $statement->items));
     }
 
     public function testPayloadIsNullWithoutAPayload(): void
     {
-        $with = (new Semantics())->inspect("NOTIFY c, 'p'")->statement;
-        $without = (new Semantics())->inspect('NOTIFY c')->statement;
+        $with = (new Semantics())->diagnose("NOTIFY c, 'p'")->statement;
+        $without = (new Semantics())->diagnose('NOTIFY c')->statement;
         self::assertInstanceOf(Notify::class, $with);
         self::assertInstanceOf(Notify::class, $without);
         self::assertSame(['p', null], [$with->payload?->value, $without->payload]);

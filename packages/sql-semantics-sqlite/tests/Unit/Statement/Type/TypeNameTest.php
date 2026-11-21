@@ -94,8 +94,8 @@ final class TypeNameTest extends TestCase
     public function testRenderWritesTheWordsAndTheArgumentsWithoutSpaces(): void
     {
         $semantics = new Semantics();
-        $spaced = $semantics->analyze('select cast(a as decimal ( + 10 , -2 )) AS c1 from t');
-        $quoted = $semantics->analyze('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t');
+        $spaced = $semantics->inspect('select cast(a as decimal ( + 10 , -2 )) AS c1 from t');
+        $quoted = $semantics->inspect('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t');
         $cast = $spaced->field(0)->expression;
 
         self::assertInstanceOf(Cast::class, $cast);

@@ -21,9 +21,9 @@ final class TypeFactTest extends TestCase
     public function testTheClosedAlternativesTellKnownledgeFromMissingInputsAndFromWrongRequests(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $declared = $semantics->inspect('SELECT a, b, NULL FROM t', [$table]);
-        $open = $semantics->inspect('SELECT a FROM t');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $declared = $semantics->diagnose('SELECT a, b, NULL FROM t', [$table]);
+        $open = $semantics->diagnose('SELECT a FROM t');
 
         self::assertInstanceOf(Known::class, $declared->field(0)->type);
         self::assertInstanceOf(Invalid::class, $declared->field(1)->type);

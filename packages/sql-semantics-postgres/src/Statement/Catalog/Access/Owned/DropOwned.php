@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading the roles and the behavior
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP OWNED BY joe, CURRENT_USER CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP OWNED BY joe, CURRENT_USER CASCADE');
  *     [count($operation->statement->roles), $operation->statement->behavior?->value] // => [2, 'CASCADE']
  */
 final class DropOwned implements Statement

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading a membership grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT staff TO joe WITH ADMIN OPTION GRANTED BY boss');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT staff TO joe WITH ADMIN OPTION GRANTED BY boss');
  *     [$operation->statement->roles[0]->privilege(), $operation->statement->options[0]->setting->value, $operation->statement->grantor?->name?->value] // => ['staff', 'OPTION', 'boss']
  */
 final class GrantRole implements Statement

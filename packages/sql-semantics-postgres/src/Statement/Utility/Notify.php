@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  *
  * @visibility public
  * @example Reading a notification with a payload
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("NOTIFY jobs, 'ready'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("NOTIFY jobs, 'ready'");
  *     [$operation->statement->channel->value, $operation->statement->payload->value] // => ['jobs', 'ready']
  */
 final class Notify implements Statement

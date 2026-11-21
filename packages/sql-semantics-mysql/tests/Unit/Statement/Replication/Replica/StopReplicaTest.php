@@ -26,6 +26,6 @@ final class StopReplicaTest extends TestCase
 
     public function testRenderWritesTheThreads(): void
     {
-        self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', (new Semantics())->analyze('stop replica sql_thread, relay_thread')->toString());
+        self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', (new Semantics())->inspect('stop replica sql_thread, relay_thread')->toString());
     }
 }

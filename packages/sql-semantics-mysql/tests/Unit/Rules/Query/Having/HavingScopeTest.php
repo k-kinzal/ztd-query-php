@@ -41,9 +41,9 @@ final class HavingScopeTest extends TestCase
     public function testGroupingAnswersTheColumnsAsTheHavingPositionSeesThem(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
-        $plain = $semantics->inspect('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
-        $rollup = $semantics->inspect('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL)');
+        $plain = $semantics->diagnose('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
+        $rollup = $semantics->diagnose('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
         $plainSelect = $plain->statement;
         $rollupSelect = $rollup->statement;
         self::assertInstanceOf(Select::class, $plainSelect);
@@ -63,9 +63,9 @@ final class HavingScopeTest extends TestCase
     public function testUndecidedAnswersTheColumnsOfIncompletelyKnownOccurrences(): void
     {
         $semantics = new Semantics();
-        $grouped = $semantics->inspect('SELECT 1 FROM u GROUP BY c HAVING c > 0');
-        $selected = $semantics->inspect('SELECT a AS x FROM u HAVING a > 0');
-        $missing = $semantics->inspect('SELECT a AS x FROM u HAVING b > 0');
+        $grouped = $semantics->diagnose('SELECT 1 FROM u GROUP BY c HAVING c > 0');
+        $selected = $semantics->diagnose('SELECT a AS x FROM u HAVING a > 0');
+        $missing = $semantics->diagnose('SELECT a AS x FROM u HAVING b > 0');
         $groupedSelect = $grouped->statement;
         $selectedSelect = $selected->statement;
         self::assertInstanceOf(Select::class, $groupedSelect);
@@ -83,7 +83,7 @@ final class HavingScopeTest extends TestCase
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->inspect('CREATE TABLE t (a INT, c INT)')]);
+        $operation = $semantics->diagnose('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->diagnose('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);

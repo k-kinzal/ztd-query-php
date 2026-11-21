@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\RangeDatums;
  *
  * @visibility public
  * @example Writing a range bound
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, MINVALUE) TO (10, maxvalue)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, minvalue) TO (10, maxvalue)'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, MINVALUE) TO (10, maxvalue)')->toString() // => 'CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (1, minvalue) TO (10, maxvalue)'
  */
 final class RangeBound implements PartitionBound
 {

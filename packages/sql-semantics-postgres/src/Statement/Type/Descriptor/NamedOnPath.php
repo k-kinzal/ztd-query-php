@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  * @visibility public
  * @example Reading the declared type of a column of a user type
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $column = $semantics->analyze('CREATE TABLE person (current_mood mood)', [])->declarations()[0]->columns[0];
+ *     $column = $semantics->inspect('CREATE TABLE person (current_mood mood)', [])->declarations()[0]->columns[0];
  *     [$column->type->name(), $column->type->missing[0]->describe()] // => ['mood', 'the definition of data type mood']
  */
 final class NamedOnPath implements TypeDescriptor

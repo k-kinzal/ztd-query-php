@@ -19,7 +19,7 @@ final class CommonTableTest extends TestCase
 {
     public function testDefinitionIsTheCommonTableNodeOfTheStatement(): void
     {
-        $query = (new Semantics())->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+        $query = (new Semantics())->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
         $statement = $query->statement;
 
         self::assertInstanceOf(WithQuery::class, $statement);
@@ -35,8 +35,8 @@ final class CommonTableTest extends TestCase
     public function testDefinitionShadowsADeclaredTableOfTheSameName(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE c (b INTEGER)');
-        $query = $semantics->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c', [$table]);
+        $table = $semantics->inspect('CREATE TABLE c (b INTEGER)');
+        $query = $semantics->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c', [$table]);
         $statement = $query->statement;
 
         self::assertInstanceOf(WithQuery::class, $statement);

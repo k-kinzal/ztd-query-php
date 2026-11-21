@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa rollback X'0f', 'b', 3");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa rollback X'0f', 'b', 3");
  *     [$xa->toString(), $xa->statement->xid->format?->text === '3'] // => ["XA ROLLBACK x'0f', 'b', 3", true]
  */
 final class XaRollback implements Statement

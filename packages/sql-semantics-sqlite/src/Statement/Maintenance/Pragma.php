@@ -32,7 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
  *
  * @visibility public
  * @example Reading a pragma with a schema and a value
- *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('PRAGMA main.cache_size(4000)');
+ *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('PRAGMA main.cache_size(4000)');
  *     [$pragma->statement->name->schema?->value, $pragma->statement->name->name->value, $pragma->statement->value->number->digits, $pragma->toString()] // => ['main', 'cache_size', '4000', 'PRAGMA main.cache_size = 4000']
  */
 final class Pragma implements Statement

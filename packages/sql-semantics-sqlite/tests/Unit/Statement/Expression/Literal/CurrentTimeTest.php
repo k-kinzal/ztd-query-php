@@ -23,7 +23,7 @@ final class CurrentTimeTest extends TestCase
 {
     public function testDeriveScalarGivesTextThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze('SELECT CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP', []);
+        $operation = (new Semantics())->inspect('SELECT CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,7 +41,7 @@ final class CurrentTimeTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        self::assertSame('SELECT CURRENT_TIME AS c1, CURRENT_DATE AS c2, CURRENT_TIMESTAMP AS c3', (new Semantics())->analyze('select current_time AS c1, Current_Date AS c2, current_timestamp AS c3')->toString());
+        self::assertSame('SELECT CURRENT_TIME AS c1, CURRENT_DATE AS c2, CURRENT_TIMESTAMP AS c3', (new Semantics())->inspect('select current_time AS c1, Current_Date AS c2, current_timestamp AS c3')->toString());
     }
 
     public function testRenderWritesANewlyBuiltKeyword(): void

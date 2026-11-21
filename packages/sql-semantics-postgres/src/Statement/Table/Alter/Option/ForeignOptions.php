@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Changing foreign table options
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER FOREIGN TABLE f OPTIONS (SET a 'b', DROP c)");
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER FOREIGN TABLE f OPTIONS (SET a 'b', DROP c)");
  *     $statement->toString() // => "ALTER FOREIGN TABLE f OPTIONS (SET a 'b', DROP c)"
  */
 final class ForeignOptions implements AlterCommand

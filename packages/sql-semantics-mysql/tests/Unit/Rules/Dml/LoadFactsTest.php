@@ -26,7 +26,7 @@ final class LoadFactsTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect("LOAD DATA INFILE 'f' INTO TABLE t (a, z)", [$t]);
+        $operation = $semantics->diagnose("LOAD DATA INFILE 'f' INTO TABLE t (a, z)", [$t]);
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }

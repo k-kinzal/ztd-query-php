@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Disabling a group by force
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter resource group batch disable force')->toString() // => 'ALTER RESOURCE GROUP batch DISABLE FORCE'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter resource group batch disable force')->toString() // => 'ALTER RESOURCE GROUP batch DISABLE FORCE'
  */
 final class AlterResourceGroup implements Statement
 {

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: All parts of a PRIMARY KEY must be NOT NULL; column a is declared NULL.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT PRIMARY KEY NULL)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: All parts of a PRIMARY KEY must be NOT NULL; column a is declared NULL.
  */
 final class NullablePrimaryKey implements Diagnostic
 {

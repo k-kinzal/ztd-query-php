@@ -26,7 +26,7 @@ final class IndexChoiceTest extends TestCase
     {
         $semantics = new Semantics();
         $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t')), null, new IndexChoice(new Name('i')))));
-        $query = $semantics->analyze('select * from t indexed by i');
+        $query = $semantics->inspect('select * from t indexed by i');
 
         self::assertSame('SELECT * FROM t INDEXED BY i', $built->toString());
         self::assertSame('SELECT * FROM t INDEXED BY i', $query->toString());
@@ -38,7 +38,7 @@ final class IndexChoiceTest extends TestCase
     {
         $semantics = new Semantics();
         $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t')), null, new IndexChoice())));
-        $query = $semantics->analyze('SELECT * FROM t NOT INDEXED');
+        $query = $semantics->inspect('SELECT * FROM t NOT INDEXED');
 
         self::assertSame('DELETE FROM t NOT INDEXED', $built->toString());
         self::assertSame('SELECT * FROM t NOT INDEXED', $query->toString());

@@ -36,7 +36,7 @@ final class SelectFactsTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT a AS x FROM t WHERE b = 1 GROUP BY a HAVING x > 1 ORDER BY x', [$t]);
+        $operation = $semantics->diagnose('SELECT a AS x FROM t WHERE b = 1 GROUP BY a HAVING x > 1 ORDER BY x', [$t]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([], $operation->facts->diagnostics);
@@ -48,11 +48,11 @@ final class SelectFactsTest extends TestCase
     {
         $semantics = new Semantics();
         $messages = array_map(static fn ($diagnostic): string => $diagnostic->message(), [
-            ...$semantics->inspect('SELECT (1, 2)')->facts->diagnostics,
-            ...$semantics->inspect('SELECT 1 FROM DUAL WHERE (1, 2)')->facts->diagnostics,
-            ...$semantics->inspect('SELECT 1 HAVING (SELECT 1, 2)')->facts->diagnostics,
-            ...$semantics->inspect('SELECT 1 ORDER BY (1, 2)')->facts->diagnostics,
-            ...$semantics->inspect('SELECT 1 GROUP BY ROW(1, 2, 3)')->facts->diagnostics,
+            ...$semantics->diagnose('SELECT (1, 2)')->facts->diagnostics,
+            ...$semantics->diagnose('SELECT 1 FROM DUAL WHERE (1, 2)')->facts->diagnostics,
+            ...$semantics->diagnose('SELECT 1 HAVING (SELECT 1, 2)')->facts->diagnostics,
+            ...$semantics->diagnose('SELECT 1 ORDER BY (1, 2)')->facts->diagnostics,
+            ...$semantics->diagnose('SELECT 1 GROUP BY ROW(1, 2, 3)')->facts->diagnostics,
         ]);
 
         self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 3.'], $messages);
@@ -60,7 +60,7 @@ final class SelectFactsTest extends TestCase
 
     public function testWindowsReportsANameDefinedTwice(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 FROM t WINDOW w AS (), w AS ()');
+        $operation = (new Semantics())->diagnose('SELECT 1 FROM t WINDOW w AS (), w AS ()');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
@@ -68,7 +68,7 @@ final class SelectFactsTest extends TestCase
 
     public function testAliasesAnswersTheFieldsNamedByAnAliasOrAfterTheirText(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
+        $operation = (new Semantics())->diagnose('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -77,7 +77,7 @@ final class SelectFactsTest extends TestCase
 
     public function testDeriveResolvesAnOrderingByTheTextAnItemIsNamedAfter(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1+1 FROM t ORDER BY `1+1`', []);
+        $operation = (new Semantics())->diagnose('SELECT 1+1 FROM t ORDER BY `1+1`', []);
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);

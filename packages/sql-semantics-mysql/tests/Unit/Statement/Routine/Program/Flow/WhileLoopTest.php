@@ -25,7 +25,7 @@ final class WhileLoopTest extends TestCase
     #[DataProvider('providerDeriveProgramDerivesTheLabelsTheConditionAndTheStatements')]
     public function testDeriveProgramDerivesTheLabelsTheConditionAndTheStatements(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -45,7 +45,7 @@ final class WhileLoopTest extends TestCase
     #[DataProvider('providerRenderWritesTheLoop')]
     public function testRenderWritesTheLoop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     /**

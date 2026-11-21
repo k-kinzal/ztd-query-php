@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
  *
  * @visibility public
  * @example Reading an INSERT of default values
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT INTO t DEFAULT VALUES RETURNING *');
+ *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('INSERT INTO t DEFAULT VALUES RETURNING *');
  *     [$insert->statement->into->target->name->name->value, count($insert->statement->returning), $insert->toString()] // => ['t', 1, 'INSERT INTO t DEFAULT VALUES RETURNING *']
  */
 final class InsertDefaults implements Statement

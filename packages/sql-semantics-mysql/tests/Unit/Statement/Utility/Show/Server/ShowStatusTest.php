@@ -16,7 +16,7 @@ final class ShowStatusTest extends TestCase
 {
     public function testDeriveStatementResolvesTheCondition(): void
     {
-        $show = (new Semantics('mysql-5.7.44'))->analyze('SHOW GLOBAL STATUS WHERE Value IS NULL');
+        $show = (new Semantics('mysql-5.7.44'))->inspect('SHOW GLOBAL STATUS WHERE Value IS NULL');
         self::assertInstanceOf(ShowStatus::class, $show->statement);
         self::assertSame([], $show->facts->diagnostics);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, $show->statement->scope);
@@ -24,13 +24,13 @@ final class ShowStatusTest extends TestCase
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
-        $show = (new Semantics('mysql-5.7.44'))->analyze('SHOW GLOBAL STATUS WHERE Value IS NULL');
+        $show = (new Semantics('mysql-5.7.44'))->inspect('SHOW GLOBAL STATUS WHERE Value IS NULL');
         self::assertInstanceOf(ShowStatus::class, $show->statement);
         self::assertSame('Value', $show->facts->relation($show->statement)->shape->slots[1]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW GLOBAL STATUS WHERE `Value` IS NULL', (new Semantics('mysql-5.7.44'))->analyze('SHOW GLOBAL STATUS WHERE Value IS NULL')->toString());
+        self::assertSame('SHOW GLOBAL STATUS WHERE `Value` IS NULL', (new Semantics('mysql-5.7.44'))->inspect('SHOW GLOBAL STATUS WHERE Value IS NULL')->toString());
     }
 }

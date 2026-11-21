@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT *') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: No tables used
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT *') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: No tables used
  */
 final class Misuse implements Diagnostic
 {

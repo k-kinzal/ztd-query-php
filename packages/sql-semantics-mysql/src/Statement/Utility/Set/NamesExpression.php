@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
  *
  * @visibility public
  * @example Reading the refusal
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("SET NAMES = 'utf8'") // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SET NAMES takes a character set name, not an expression
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect("SET NAMES = 'utf8'") // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SET NAMES takes a character set name, not an expression
  */
 final class NamesExpression implements SetItem
 {

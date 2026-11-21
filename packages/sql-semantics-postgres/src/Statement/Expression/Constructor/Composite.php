@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the fields of a row constructor
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ROW(1, 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ROW(1, 2)');
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->type->descriptor->fields[1]->name->value] // => ['record', 'f2']
  */
 final class Composite implements TypeDescriptor

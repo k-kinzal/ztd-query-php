@@ -17,7 +17,7 @@ final class AssignmentTest extends TestCase
 {
     public function testRenderWritesColumnAndValue(): void
     {
-        $operation = (new Semantics())->analyze('UPDATE t SET t.a := 1');
+        $operation = (new Semantics())->inspect('UPDATE t SET t.a := 1');
         self::assertInstanceOf(Update::class, $operation->statement);
 
         self::assertSame('a', $operation->statement->assignments[0]->column->name->value);

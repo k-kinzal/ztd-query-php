@@ -28,8 +28,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * @visibility public
  * @example Reading the table a privilege is granted on
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE items (id int4, price int4)');
- *     $operation = $semantics->analyze('GRANT SELECT ON items TO joe', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE items (id int4, price int4)');
+ *     $operation = $semantics->inspect('GRANT SELECT ON items TO joe', [$table]);
  *     $operation->facts->relation($operation->statement->target->relations[0])->table->table === $table->declarations()[0] // => true
  */
 final class RelationsTarget implements PrivilegeTarget

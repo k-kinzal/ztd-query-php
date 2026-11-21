@@ -32,7 +32,7 @@ final class InsertSetTest extends TestCase
     {
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->inspect('INSERT INTO t SET a = 1, b = a, a = 2', [$t]);
+        $operation = $semantics->diagnose('INSERT INTO t SET a = 1, b = a, a = 2', [$t]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(DuplicateColumn::class, $operation->facts->diagnostics[0]);
@@ -40,7 +40,7 @@ final class InsertSetTest extends TestCase
 
     public function testRenderWritesTheAssignments(): void
     {
-        self::assertSame('REPLACE INTO t SET a = 1', (new Semantics('mysql-5.6.51'))->inspect('replace t set a = 1')->toString());
+        self::assertSame('REPLACE INTO t SET a = 1', (new Semantics('mysql-5.6.51'))->diagnose('replace t set a = 1')->toString());
     }
 
     public function testRenderRejectsAColumnList(): void

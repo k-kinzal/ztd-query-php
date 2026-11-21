@@ -29,7 +29,7 @@ final class InListTest extends TestCase
     public function testDeriveScalarIsIntegerAndNotNullWhenNoOperandCanBeNull(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a IN (1, 2), a NOT IN (1) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT a IN (1, 2), a NOT IN (1) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -41,7 +41,7 @@ final class InListTest extends TestCase
     public function testDeriveScalarCanBeNullWhenTheOperandOrAValueCan(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT a IN (1, NULL), b IN (1), NULL IN (1), 1 NOT IN (NULL) FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT a IN (1, NULL), b IN (1), NULL IN (1), 1 NOT IN (NULL) FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $nullability = array_map(static fn (Field $field): Nullability => $field->nullability, $query->fields()->items ?? []);
 
         self::assertSame([Nullability::Nullable, Nullability::Nullable, Nullability::Nullable, Nullability::Nullable], $nullability);
@@ -52,7 +52,7 @@ final class InListTest extends TestCase
     public function testDeriveScalarIsNeverNullWithAnEmptyList(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT NULL IN (), b NOT IN () FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT NULL IN (), b NOT IN () FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
         self::assertSame(Nullability::NotNull, $query->field(1)->nullability);
@@ -60,7 +60,7 @@ final class InListTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredColumn(): void
     {
-        $query = (new Semantics())->inspect('SELECT c IN (1) FROM x');
+        $query = (new Semantics())->diagnose('SELECT c IN (1) FROM x');
 
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
         self::assertSame([], $query->facts->diagnostics);
@@ -68,7 +68,7 @@ final class InListTest extends TestCase
 
     public function testDeriveScalarAdmitsRowsOfTheWidthOfTheOperand(): void
     {
-        $query = (new Semantics())->inspect('SELECT (1, 2) IN ((1, 2), (3, 4))', []);
+        $query = (new Semantics())->diagnose('SELECT (1, 2) IN ((1, 2), (3, 4))', []);
 
         self::assertSame([], $query->facts->diagnostics);
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
@@ -77,8 +77,8 @@ final class InListTest extends TestCase
     public function testDeriveScalarReportsTheFirstValueOfAnotherWidth(): void
     {
         $semantics = new Semantics();
-        $single = $semantics->inspect('SELECT (1, 2) IN (1)', []);
-        $several = $semantics->inspect('SELECT (1, 2) IN ((1, 2), 3, 4)', []);
+        $single = $semantics->diagnose('SELECT (1, 2) IN (1)', []);
+        $several = $semantics->diagnose('SELECT (1, 2) IN ((1, 2), 3, 4)', []);
 
         self::assertCount(1, $single->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $single->facts->diagnostics[0]);
@@ -91,7 +91,7 @@ final class InListTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheValues(): void
     {
-        $query = (new Semantics())->inspect('select a not in (1, 2) AS c1 from t');
+        $query = (new Semantics())->diagnose('select a not in (1, 2) AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InList::class, $test);
@@ -102,7 +102,7 @@ final class InListTest extends TestCase
 
     public function testRenderWritesAnEmptyList(): void
     {
-        $query = (new Semantics())->inspect('SELECT a IN () FROM t');
+        $query = (new Semantics())->diagnose('SELECT a IN () FROM t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InList::class, $test);

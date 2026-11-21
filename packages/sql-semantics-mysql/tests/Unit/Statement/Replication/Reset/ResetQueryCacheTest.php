@@ -25,6 +25,6 @@ final class ResetQueryCacheTest extends TestCase
 
     public function testRenderWritesTheItem(): void
     {
-        self::assertSame('RESET QUERY CACHE, MASTER', (new Semantics('mysql-5.6.51'))->analyze('reset query cache, master')->toString());
+        self::assertSame('RESET QUERY CACHE, MASTER', (new Semantics('mysql-5.6.51'))->inspect('reset query cache, master')->toString());
     }
 }

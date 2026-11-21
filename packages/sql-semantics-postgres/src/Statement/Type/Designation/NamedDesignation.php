@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading a user type as a missing declaration
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT app.money_amount '1'", []);
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT app.money_amount '1'", []);
  *     $query->field(0)->type->missing[0]->describe() // => 'the definition of data type money_amount'
  */
 final class NamedDesignation implements TypeDesignation

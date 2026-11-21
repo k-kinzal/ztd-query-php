@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Granting every privilege of a database
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT ALL PRIVILEGES ON db.* TO u')->toString() // => 'GRANT ALL ON db.* TO u'
  */
 final class AllPrivileges implements Grantable
 {

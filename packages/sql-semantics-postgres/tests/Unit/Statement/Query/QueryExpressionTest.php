@@ -15,7 +15,7 @@ final class QueryExpressionTest extends TestCase
     public function testOutputNameIsThatOfTheBody(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('VALUES (1) ORDER BY 1');
+        $query = $semantics->diagnose('VALUES (1) ORDER BY 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression::class, $statement);
         self::assertSame('column1', $statement->outputName()?->value);
@@ -24,7 +24,7 @@ final class QueryExpressionTest extends TestCase
     public function testDeriveStatementRecordsTheRowsOfTheBody(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('SELECT 1 AS a UNION SELECT 2 ORDER BY a');
+        $query = $semantics->diagnose('SELECT 1 AS a UNION SELECT 2 ORDER BY a');
         self::assertSame('a', $query->field(0)->name?->value);
     }
 
@@ -34,21 +34,21 @@ final class QueryExpressionTest extends TestCase
         $t = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('(SELECT a FROM t) ORDER BY b', [$t, $u]);
+        $query = $semantics->diagnose('(SELECT a FROM t) ORDER BY b', [$t, $u]);
         self::assertSame([], $query->facts->diagnostics);
     }
 
     public function testDeriveQueryReportsASecondOrderBy(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('(SELECT 1 ORDER BY 1) ORDER BY 1');
+        $query = $semantics->diagnose('(SELECT 1 ORDER BY 1) ORDER BY 1');
         self::assertSame('multiple ORDER BY clauses not allowed', $query->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheBodyAndTheOptions(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $query = $semantics->inspect('(SELECT 1) FOR READ ONLY OFFSET 2');
+        $query = $semantics->diagnose('(SELECT 1) FOR READ ONLY OFFSET 2');
         self::assertSame('(SELECT 1) FOR READ ONLY OFFSET 2', $query->toString());
     }
 }

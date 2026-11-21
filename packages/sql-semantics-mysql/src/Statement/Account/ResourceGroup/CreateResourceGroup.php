@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
  *
  * @visibility public
  * @example Creating a group bound to two CPUs
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('create resource group batch type user vcpu 2-3 thread_priority 10 disable')->toString() // => 'CREATE RESOURCE GROUP batch TYPE = USER VCPU = 2 - 3 THREAD_PRIORITY = 10 DISABLE'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('create resource group batch type user vcpu 2-3 thread_priority 10 disable')->toString() // => 'CREATE RESOURCE GROUP batch TYPE = USER VCPU = 2 - 3 THREAD_PRIORITY = 10 DISABLE'
  */
 final class CreateResourceGroup implements Statement
 {

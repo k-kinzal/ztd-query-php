@@ -38,7 +38,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
  *
  * @visibility public
  * @example Reading the alias of the new row
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, b) VALUES (1, 2) AS new (m, n) ON DUPLICATE KEY UPDATE a = m + n');
+ *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t (a, b) VALUES (1, 2) AS new (m, n) ON DUPLICATE KEY UPDATE a = m + n');
  *     [$insert->statement->alias->name->value, count($insert->statement->alias->columns)] // => ['new', 2]
  */
 final class RowAlias implements Relation

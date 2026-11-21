@@ -24,7 +24,7 @@ final class ValuesClauseTest extends TestCase
 {
     public function testDeriveStatementNamesTheColumnsByPosition(): void
     {
-        $query = (new Semantics())->inspect("VALUES (1, 'a', NULL)");
+        $query = (new Semantics())->diagnose("VALUES (1, 'a', NULL)");
 
         self::assertSame(['column1', 'column2', 'column3'], array_map(static fn (object $field): ?string => $field->name?->value, [...$query->fields() ?? []]));
         self::assertSame([], $query->facts->diagnostics);
@@ -34,7 +34,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQueryChoosesTheTypeOverTheRowsAndTheirNullability(): void
     {
-        $query = (new Semantics())->inspect("VALUES (1, 'a'), ('x', NULL)");
+        $query = (new Semantics())->diagnose("VALUES (1, 'a'), ('x', NULL)");
         $first = $query->field(0)->type;
         $second = $query->field(1)->type;
 
@@ -49,7 +49,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQueryReportsARowOfAnotherWidthOnce(): void
     {
-        $query = (new Semantics())->inspect('VALUES (1, 2), (3), (4, 5, 6)');
+        $query = (new Semantics())->diagnose('VALUES (1, 2), (3), (4, 5, 6)');
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
@@ -60,7 +60,7 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveQuerySeesNoRelationOfItsOwn(): void
     {
-        $query = (new Semantics())->inspect('VALUES (a)');
+        $query = (new Semantics())->diagnose('VALUES (a)');
 
         self::assertInstanceOf(ValuesClause::class, $query->statement);
         self::assertInstanceOf(MissingColumn::class, $query->facts->scalar($query->statement->rows[0]->values[0])->resolution);
@@ -69,14 +69,14 @@ final class ValuesClauseTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics())->inspect('VALUES (RAISE(IGNORE))');
+        $query = (new Semantics())->diagnose('VALUES (RAISE(IGNORE))');
 
         self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheRows(): void
     {
-        $query = (new Semantics())->inspect('values(1),(2)');
+        $query = (new Semantics())->diagnose('values(1),(2)');
 
         self::assertSame('VALUES (1), (2)', $query->toString());
     }

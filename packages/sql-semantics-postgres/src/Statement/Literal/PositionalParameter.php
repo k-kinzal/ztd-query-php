@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading the missing input of a parameter
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT $1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT $1');
  *     [$query->statement->targets[0]->expression->number, $query->field(0)->type->missing[0]->describe()] // => ['1', 'the value bound to parameter $1']
  */
 final class PositionalParameter implements Scalar, OutputNaming

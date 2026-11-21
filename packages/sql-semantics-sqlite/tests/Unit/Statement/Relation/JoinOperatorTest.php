@@ -69,7 +69,7 @@ final class JoinOperatorTest extends TestCase
 
     public function testRenderWritesACommaOrTheWordsBeforeJoin(): void
     {
-        $query = (new Semantics())->inspect('select * from t, u left wrong join t as t2 inner join u as u2');
+        $query = (new Semantics())->diagnose('select * from t, u left wrong join t as t2 inner join u as u2');
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);

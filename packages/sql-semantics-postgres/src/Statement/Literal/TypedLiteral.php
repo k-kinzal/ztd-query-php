@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a typed constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT date '2024-01-01'", []);
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT date '2024-01-01'", []);
  *     [$query->statement->targets[0]->expression->value->value, $query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['2024-01-01', 'date', 'date']
  * @example Rejecting a set-returning type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(

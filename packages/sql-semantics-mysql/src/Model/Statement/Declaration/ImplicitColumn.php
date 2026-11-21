@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Giving a column an implicit name
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (id INT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE t (id INT)')->declarations()[0];
  *     $implicit = new \SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn([new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('rowid')], $table->columns[0]);
  *     $implicit->names[0]->value // => 'rowid'
  */

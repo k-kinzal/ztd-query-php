@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  *
  * @visibility public
  * @example Reading the removed roles
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP ROLE IF EXISTS joe, ann');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP ROLE IF EXISTS joe, ann');
  *     [$operation->statement->ifExists, $operation->statement->roles[1]->name?->value] // => [true, 'ann']
  */
 final class DropRole implements Statement

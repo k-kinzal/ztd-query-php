@@ -19,7 +19,7 @@ final class NotNullTest extends TestCase
 {
     public function testDeriveConstraintMakesTheDeclaredColumnNotNull(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a INT NOT NULL, b INT)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL, b INT)', []);
 
         self::assertSame(Nullability::NotNull, $operation->declarations()[0]->columns[0]->nullability);
         self::assertSame(Nullability::Nullable, $operation->declarations()[0]->columns[1]->nullability);
@@ -28,7 +28,7 @@ final class NotNullTest extends TestCase
 
     public function testRenderKeepsTheConflictResolution(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a not null on conflict ignore, b not null)');
+        $operation = (new Semantics())->inspect('create table t (a not null on conflict ignore, b not null)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

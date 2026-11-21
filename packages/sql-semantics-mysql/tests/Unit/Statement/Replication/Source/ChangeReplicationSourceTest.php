@@ -24,7 +24,7 @@ final class ChangeReplicationSourceTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedSettings(): void
     {
-        $change = (new Semantics())->inspect("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, REQUIRE_ROW_FORMAT = 2, SOURCE_CONNECTION_AUTO_FAILOVER = 1.5, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a\\nb'");
+        $change = (new Semantics())->diagnose("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, REQUIRE_ROW_FORMAT = 2, SOURCE_CONNECTION_AUTO_FAILOVER = 1.5, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a\\nb'");
 
         self::assertEquals([
             new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange), new RefusedSetting(ReplicationError::HeartbeatOutOfRange),
@@ -55,11 +55,11 @@ final class ChangeReplicationSourceTest extends TestCase
 
     public function testRenderWritesTheLegacyVocabulary(): void
     {
-        self::assertSame("CHANGE MASTER TO MASTER_HOST = 'h', RELAY_LOG_POS = 4 FOR CHANNEL 'c'", (new Semantics('mysql-5.7.44'))->inspect("change master to master_host='h', relay_log_pos=4 for channel 'c'")->toString());
+        self::assertSame("CHANGE MASTER TO MASTER_HOST = 'h', RELAY_LOG_POS = 4 FOR CHANNEL 'c'", (new Semantics('mysql-5.7.44'))->diagnose("change master to master_host='h', relay_log_pos=4 for channel 'c'")->toString());
     }
 
     public function testRenderWritesTheCurrentVocabulary(): void
     {
-        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4", (new Semantics('mysql-8.3.0'))->inspect("change replication source to master_log_file='f', source_log_pos=4")->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4", (new Semantics('mysql-8.3.0'))->diagnose("change replication source to master_log_file='f', source_log_pos=4")->toString());
     }
 }

@@ -23,8 +23,8 @@ final class ResolutionTest extends TestCase
     public function testTheFiveOutcomesAreTheOnlyResolutions(): void
     {
         $semantics = new Semantics();
-        $declarations = [$semantics->inspect('CREATE TABLE t (a INTEGER, b INTEGER)'), $semantics->inspect('CREATE TABLE u (a INTEGER)')];
-        $query = $semantics->inspect('SELECT t.b AS x, a, c FROM t, u ORDER BY x', $declarations);
+        $declarations = [$semantics->diagnose('CREATE TABLE t (a INTEGER, b INTEGER)'), $semantics->diagnose('CREATE TABLE u (a INTEGER)')];
+        $query = $semantics->diagnose('SELECT t.b AS x, a, c FROM t, u ORDER BY x', $declarations);
         $statement = $query->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -32,6 +32,6 @@ final class ResolutionTest extends TestCase
         self::assertInstanceOf(AmbiguousColumn::class, $query->field('a')->resolution);
         self::assertInstanceOf(MissingColumn::class, $query->field('c')->resolution);
         self::assertInstanceOf(AliasTarget::class, $query->facts->scalar($statement->orderBy[0]->expression)->resolution);
-        self::assertInstanceOf(ConditionalColumn::class, $semantics->inspect('SELECT a FROM t')->field('a')->resolution);
+        self::assertInstanceOf(ConditionalColumn::class, $semantics->diagnose('SELECT a FROM t')->field('a')->resolution);
     }
 }

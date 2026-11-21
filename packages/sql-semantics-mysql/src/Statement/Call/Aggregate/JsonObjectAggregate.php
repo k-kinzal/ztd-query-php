@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
  *
  * @visibility public
  * @example Typing JSON_OBJECTAGG()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT JSON_OBJECTAGG('a', 1)");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT JSON_OBJECTAGG('a', 1)");
  *     $query->field(0)->type->descriptor->name() // => 'JSON'
  */
 final class JsonObjectAggregate implements SetFunction

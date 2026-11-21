@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Ending a transaction with explicit completion choices
- *     $end = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('commit work and no chain release');
+ *     $end = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('commit work and no chain release');
  *     [$end->toString(), $end->statement->chain, $end->statement->release] // => ['COMMIT AND NO CHAIN RELEASE', false, true]
  */
 final class Commit implements Statement

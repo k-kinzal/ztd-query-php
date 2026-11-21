@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading the identifier of a prepared transaction
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("PREPARE TRANSACTION 'tx-1'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("PREPARE TRANSACTION 'tx-1'");
  *     [$operation->statement->identifier->value, $operation->toString()] // => ['tx-1', "PREPARE TRANSACTION 'tx-1'"]
  */
 final class PreparedTransaction implements Statement

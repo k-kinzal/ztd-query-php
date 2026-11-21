@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
  *
  * @visibility public
  * @example Finalizing a detach
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE p DETACH PARTITION p1 FINALIZE');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE p DETACH PARTITION p1 FINALIZE');
  *     $statement->statement->commands[0]->mode // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachMode::Finalize
  */
 final class DetachPartition implements AlterCommand

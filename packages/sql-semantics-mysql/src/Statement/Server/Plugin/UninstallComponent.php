@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Removing a component
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
  */
 final class UninstallComponent implements Statement
 {

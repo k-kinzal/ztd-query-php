@@ -24,7 +24,7 @@ final class JsonArrayQueryTest extends TestCase
 {
     public function testOutputNameIsJsonArray(): void
     {
-        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->diagnose('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
@@ -36,7 +36,7 @@ final class JsonArrayQueryTest extends TestCase
 
     public function testDeriveScalarReportsAQueryOfSeveralColumns(): void
     {
-        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->diagnose('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
@@ -49,7 +49,7 @@ final class JsonArrayQueryTest extends TestCase
 
     public function testRenderWritesTheQueryWithoutParentheses(): void
     {
-        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->diagnose('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];

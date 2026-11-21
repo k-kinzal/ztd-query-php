@@ -35,7 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
  *
  * @visibility public
  * @example Reading the operands of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t UNION SELECT b FROM u');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t UNION SELECT b FROM u');
  *     [$query->statement->left->from->name->name->value, $query->statement->right->from->name->name->value] // => ['t', 'u']
  * @example Refusing a right operand that would associate differently without parentheses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);

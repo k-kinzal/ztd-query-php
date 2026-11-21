@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Setting a statistics target
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER INDEX i ALTER COLUMN 1 SET STATISTICS 100');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER INDEX i ALTER COLUMN 1 SET STATISTICS 100');
  *     $statement->statement->commands[0]->column->digits // => '1'
  */
 final class ColumnStatistics implements AlterCommand

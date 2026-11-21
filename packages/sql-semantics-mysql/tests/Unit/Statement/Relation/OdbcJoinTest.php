@@ -32,7 +32,7 @@ final class OdbcJoinTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT c FROM { OJ t LEFT JOIN u ON t.a = u.a }', [$t, $u]);
+        $operation = $semantics->inspect('SELECT c FROM { OJ t LEFT JOIN u ON t.a = u.a }', [$t, $u]);
 
         self::assertSame(Nullability::Nullable, $operation->field('c')->nullability);
         self::assertSame([], $operation->facts->diagnostics);
@@ -40,6 +40,6 @@ final class OdbcJoinTest extends TestCase
 
     public function testRenderWritesTheEscape(): void
     {
-        self::assertSame('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }', (new Semantics())->analyze('select 1 from {oj t left join u on t.a=u.a}')->toString());
+        self::assertSame('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }', (new Semantics())->inspect('select 1 from {oj t left join u on t.a=u.a}')->toString());
     }
 }

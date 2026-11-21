@@ -40,7 +40,7 @@ final class ConditionNameTest extends TestCase
 
     public function testRenderWritesTheNameASignalRaises(): void
     {
-        $create = (new Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END");
+        $create = (new Semantics())->inspect("CREATE PROCEDURE p() BEGIN DECLARE `select` CONDITION FOR SQLSTATE '45000'; SIGNAL `select`; END");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

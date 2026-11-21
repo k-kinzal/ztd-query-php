@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Changing what is published
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER PUBLICATION p SET (publish = 'update')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER PUBLICATION p SET (publish = 'update')");
  *     $operation->statement->options[0]->name->value // => 'publish'
  */
 final class AlterPublicationOptions implements Statement

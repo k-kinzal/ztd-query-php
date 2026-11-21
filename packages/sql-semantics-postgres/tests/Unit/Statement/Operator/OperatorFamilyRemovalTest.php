@@ -18,13 +18,13 @@ final class OperatorFamilyRemovalTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8)', []);
+        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8)', []);
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheMembers(): void
     {
-        $operation = (new Semantics())->analyze('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8), FUNCTION 2 (int4)');
+        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8), FUNCTION 2 (int4)');
         self::assertSame('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8), FUNCTION 2 (int4)', $operation->toString());
     }
 

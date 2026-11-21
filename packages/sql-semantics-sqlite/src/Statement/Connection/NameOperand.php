@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading a schema name written as an identifier
- *     $attach = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("ATTACH 'file.db' AS aux");
+ *     $attach = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("ATTACH 'file.db' AS aux");
  *     [$attach->statement->schema->name->value, $attach->facts->scalar($attach->statement->schema)->type->descriptor] // => ['aux', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
  */
 final class NameOperand implements Scalar

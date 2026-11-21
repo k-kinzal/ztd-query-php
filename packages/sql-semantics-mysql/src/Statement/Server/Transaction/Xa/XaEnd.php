@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa end 'g' suspend for migrate");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("xa end 'g' suspend for migrate");
  *     [$xa->toString(), $xa->statement->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEndOption::SuspendForMigrate] // => ["XA END 'g' SUSPEND FOR MIGRATE", true]
  */
 final class XaEnd implements Statement

@@ -17,14 +17,14 @@ final class ColumnVisibilityTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->analyze('ALTER TABLE t ALTER a SET VISIBLE', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->inspect('ALTER TABLE t ALTER a SET VISIBLE', [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheVisibility(): void
     {
-        self::assertSame('ALTER TABLE t ALTER COLUMN a SET VISIBLE', (new Semantics())->analyze('ALTER TABLE t ALTER a SET VISIBLE')->toString());
+        self::assertSame('ALTER TABLE t ALTER COLUMN a SET VISIBLE', (new Semantics())->inspect('ALTER TABLE t ALTER a SET VISIBLE')->toString());
     }
 }

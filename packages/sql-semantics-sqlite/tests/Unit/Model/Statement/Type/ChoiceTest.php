@@ -25,7 +25,7 @@ final class ChoiceTest extends TestCase
 
     public function testAlternativesOfAnExpressionTheRulesCannotDecideStatically(): void
     {
-        $type = (new Semantics())->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
+        $type = (new Semantics())->inspect("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
 
         self::assertInstanceOf(Choice::class, $type);
         self::assertSame(['INTEGER', 'TEXT'], array_map(static fn (TypeDescriptor $descriptor): string => $descriptor->name(), $type->alternatives));

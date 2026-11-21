@@ -16,6 +16,6 @@ final class AllPartitionsTest extends TestCase
 {
     public function testRenderWritesAll(): void
     {
-        self::assertSame('ALTER TABLE t ANALYZE PARTITION ALL', (new Semantics())->analyze('ALTER TABLE t ANALYZE PARTITION all')->toString());
+        self::assertSame('ALTER TABLE t ANALYZE PARTITION ALL', (new Semantics())->inspect('ALTER TABLE t ANALYZE PARTITION all')->toString());
     }
 }

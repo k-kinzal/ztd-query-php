@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Restoring a default
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET work_mem = DEFAULT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET work_mem = DEFAULT');
  *     [$operation->statement->source, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, 'SET work_mem TO DEFAULT']
  */
 final class SetParameterFrom implements Statement

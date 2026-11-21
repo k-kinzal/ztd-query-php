@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
  *
  * @visibility public
  * @example Reading the object added to an extension
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EXTENSION hstore ADD SCHEMA s');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION hstore ADD SCHEMA s');
  *     [$operation->statement->action, $operation->statement->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Add, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema]
  */
 final class AlterExtensionContents implements Statement

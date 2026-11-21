@@ -37,7 +37,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  *
  * @visibility public
  * @example Changing a password and keeping the old one
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter user if exists u identified by 'new' replace 'old' retain current password")->toString() // => "ALTER USER IF EXISTS u IDENTIFIED BY 'new' REPLACE 'old' RETAIN CURRENT PASSWORD"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("alter user if exists u identified by 'new' replace 'old' retain current password")->toString() // => "ALTER USER IF EXISTS u IDENTIFIED BY 'new' REPLACE 'old' RETAIN CURRENT PASSWORD"
  */
 final class AlterUser implements Statement
 {

@@ -16,12 +16,12 @@ final class LockInstanceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('LOCK INSTANCE FOR BACKUP', (new Semantics())->analyze('lock instance for backup')->toString());
+        self::assertSame('LOCK INSTANCE FOR BACKUP', (new Semantics())->inspect('lock instance for backup')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('LOCK INSTANCE FOR BACKUP');
+        $operation = (new Semantics())->inspect('LOCK INSTANCE FOR BACKUP');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

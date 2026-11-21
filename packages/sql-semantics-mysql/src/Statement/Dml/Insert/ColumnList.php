@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
  *
  * @visibility public
  * @example Reading the columns of an INSERT
- *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('INSERT INTO t (a, b) VALUES (1, 2)');
+ *     $insert = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('INSERT INTO t (a, b) VALUES (1, 2)');
  *     count($insert->statement->into->columns->columns) // => 2
  */
 final class ColumnList implements Node

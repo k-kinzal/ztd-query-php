@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the parameter of a grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SET ON PARAMETER work_mem TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SET ON PARAMETER work_mem TO joe');
  *     $operation->statement->target->parameters[0]->parameter() // => 'work_mem'
  */
 final class ParametersTarget implements PrivilegeTarget

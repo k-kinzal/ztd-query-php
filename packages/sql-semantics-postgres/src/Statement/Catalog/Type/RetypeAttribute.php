@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Changing the type of an attribute
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ALTER ATTRIBUTE a SET DATA TYPE int8');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE pair ALTER ATTRIBUTE a SET DATA TYPE int8');
  *     $operation->toString() // => 'ALTER TYPE pair ALTER ATTRIBUTE a TYPE int8'
  */
 final class RetypeAttribute implements AttributeChange

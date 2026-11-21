@@ -29,7 +29,7 @@ final class CommonTableTest extends TestCase
 {
     public function testRenderWritesTheColumnListAndTheHint(): void
     {
-        $query = (new Semantics())->analyze('with c(x, y) as materialized (select 1, 2), d as not materialized (values (3)), e as (select 4) select * from c');
+        $query = (new Semantics())->inspect('with c(x, y) as materialized (select 1, 2), d as not materialized (values (3)), e as (select 4) select * from c');
 
         self::assertInstanceOf(WithQuery::class, $query->statement);
         $tables = $query->statement->with->tables;

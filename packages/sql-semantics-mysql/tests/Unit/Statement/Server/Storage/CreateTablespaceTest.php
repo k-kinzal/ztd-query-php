@@ -17,12 +17,12 @@ final class CreateTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' USE LOGFILE GROUP g", (new Semantics('mysql-5.7.44'))->inspect("create tablespace ts add datafile 'f' use logfile group g")->toString());
+        self::assertSame("CREATE TABLESPACE ts ADD DATAFILE 'f' USE LOGFILE GROUP g", (new Semantics('mysql-5.7.44'))->diagnose("create tablespace ts add datafile 'f' use logfile group g")->toString());
     }
 
     public function testDeriveStatementReportsRejectedOptions(): void
     {
-        $operation = (new Semantics())->inspect("CREATE TABLESPACE ts ADD DATAFILE 'f' NODEGROUP 1 NODEGROUP 2");
+        $operation = (new Semantics())->diagnose("CREATE TABLESPACE ts ADD DATAFILE 'f' NODEGROUP 1 NODEGROUP 2");
 
         self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
     }

@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
  *
  * @visibility public
  * @example Reading the head of a REPLACE
- *     $replace = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('REPLACE LOW_PRIORITY t VALUES (1)');
+ *     $replace = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('REPLACE LOW_PRIORITY t VALUES (1)');
  *     [$replace->statement->into->replace, $replace->statement->into->priority, $replace->toString()] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low, 'REPLACE LOW_PRIORITY INTO t VALUES (1)']
  */
 final class InsertInto implements Node

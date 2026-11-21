@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Naming an EXISTS column
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT EXISTS (SELECT 1)')->field(0)->name->value // => 'exists'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT EXISTS (SELECT 1)')->field(0)->name->value // => 'exists'
  */
 final class Exists implements Scalar, OutputNaming
 {

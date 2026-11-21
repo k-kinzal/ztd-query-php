@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  *
  * @visibility public
  * @example Comparing with every row
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 < ALL (SELECT 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 < ALL (SELECT 2)');
  *     [$query->field(0)->expression->comparator->name->value, $query->field(0)->type->descriptor->name()] // => ['<', 'boolean']
  */
 final class QuantifiedSubquery implements Scalar

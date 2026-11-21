@@ -17,7 +17,7 @@ final class InsertMethodOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) INSERT_METHOD = FIRST');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT) INSERT_METHOD = FIRST');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

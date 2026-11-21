@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading a table sample
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM t TABLESAMPLE bernoulli (10) REPEATABLE (1)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 FROM t TABLESAMPLE bernoulli (10) REPEATABLE (1)');
  *     [$query->statement->from->sample->method->parts[0]->value, $query->statement->from->sample->seed !== null] // => ['bernoulli', true]
  */
 final class TableSample implements Clause

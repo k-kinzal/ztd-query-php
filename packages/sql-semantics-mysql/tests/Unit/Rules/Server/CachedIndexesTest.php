@@ -27,6 +27,6 @@ final class CachedIndexesTest extends TestCase
 
     public function testRenderWritesTablePartitionsAndIndexes(): void
     {
-        self::assertSame('CACHE INDEX db.t PARTITION (ALL) INDEX (PRIMARY, i) IN c', (new Semantics())->analyze('cache index db.t partition (all) index (primary, i) in c')->toString());
+        self::assertSame('CACHE INDEX db.t PARTITION (ALL) INDEX (PRIMARY, i) IN c', (new Semantics())->inspect('cache index db.t partition (all) index (primary, i) in c')->toString());
     }
 }

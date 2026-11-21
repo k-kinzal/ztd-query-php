@@ -33,7 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
  *
  * @visibility public
  * @example Reading the views to drop
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP VIEW IF EXISTS v, shop.w');
+ *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DROP VIEW IF EXISTS v, shop.w');
  *     [count($drop->statement->views), $drop->statement->ifExists] // => [2, true]
  */
 final class DropView implements Statement

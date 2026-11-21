@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a reserved function
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Access to native function 'internal_table_rows' is rejected
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Access to native function 'internal_table_rows' is rejected
  */
 final class ReservedFunction implements Diagnostic
 {

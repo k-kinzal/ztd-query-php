@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading the type a float precision selects
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT float(24) '1'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT float(24) '1'");
  *     $query->field(0)->type->descriptor->name() // => 'real'
  * @example Rejecting a precision the grammar does not accept
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\FloatDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('54')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

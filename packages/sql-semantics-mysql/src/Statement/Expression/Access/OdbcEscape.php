@@ -33,7 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
  *
  * @visibility public
  * @example Typing an ODBC date
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a = { d '2024-01-31' }");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE a = { d '2024-01-31' }");
  *     $query->facts->scalar($query->statement->where->right)->type->descriptor->name() // => 'DATE'
  */
 final class OdbcEscape implements Scalar

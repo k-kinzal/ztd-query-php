@@ -15,7 +15,7 @@ final class OfCompositeTest extends TestCase
     public function testDeriveClauseHasNoOperand(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t OF ty', []);
+        $statement = $semantics->diagnose('ALTER TABLE t OF ty', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class OfCompositeTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t OF s.ty', []);
+        $statement = $semantics->diagnose('ALTER TABLE t OF s.ty', []);
         self::assertSame('ALTER TABLE t OF s.ty', $statement->toString());
     }
 }

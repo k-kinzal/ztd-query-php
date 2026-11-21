@@ -31,8 +31,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  * @visibility public
  * @example Copying the columns of a declared table
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $source = $semantics->analyze('CREATE TABLE u (id int NOT NULL, name text)', []);
- *     $copy = $semantics->analyze('CREATE TABLE t (LIKE u INCLUDING DEFAULTS, extra boolean)', $source->declarations());
+ *     $source = $semantics->inspect('CREATE TABLE u (id int NOT NULL, name text)', []);
+ *     $copy = $semantics->inspect('CREATE TABLE t (LIKE u INCLUDING DEFAULTS, extra boolean)', $source->declarations());
  *     array_map(static fn ($column) => $column->name->value, $copy->declarations()[0]->columns) // => ['id', 'name', 'extra']
  */
 final class LikeClause implements Clause

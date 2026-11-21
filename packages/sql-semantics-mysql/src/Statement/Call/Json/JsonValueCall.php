@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
  *
  * @visibility public
  * @example Typing JSON_VALUE() with RETURNING
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
  *     $query->field(0)->type->descriptor->name() // => 'SIGNED'
  */
 final class JsonValueCall implements Scalar

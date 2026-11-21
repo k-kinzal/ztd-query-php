@@ -26,7 +26,7 @@ final class ExplainFactsTest extends TestCase
 
     public function testRowsAnswersOneColumnForADocument(): void
     {
-        self::assertCount(1, (new Semantics())->inspect('EXPLAIN ANALYZE SELECT 1')->fields() ?? []);
+        self::assertCount(1, (new Semantics())->diagnose('EXPLAIN ANALYZE SELECT 1')->fields() ?? []);
     }
 
     public function testLegacyTellsTheReleasesWithoutTree(): void
@@ -37,10 +37,10 @@ final class ExplainFactsTest extends TestCase
 
     public function testDeriveAnswersTheLayoutOfTheFormat(): void
     {
-        self::assertCount(10, (new Semantics('mysql-5.6.51'))->inspect('EXPLAIN SELECT 1')->fields() ?? []);
-        self::assertCount(12, (new Semantics())->inspect('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
-        self::assertFalse((new Semantics())->inspect('EXPLAIN SELECT 1')->shape()?->complete());
-        self::assertSame('Unknown EXPLAIN format name', (new Semantics('mysql-5.7.44'))->inspect('EXPLAIN FORMAT = TREE SELECT 1')->facts->diagnostics[0]->message());
-        self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics())->inspect('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
+        self::assertCount(10, (new Semantics('mysql-5.6.51'))->diagnose('EXPLAIN SELECT 1')->fields() ?? []);
+        self::assertCount(12, (new Semantics())->diagnose('EXPLAIN FORMAT = TRADITIONAL SELECT 1')->fields() ?? []);
+        self::assertFalse((new Semantics())->diagnose('EXPLAIN SELECT 1')->shape()?->complete());
+        self::assertSame('Unknown EXPLAIN format name', (new Semantics('mysql-5.7.44'))->diagnose('EXPLAIN FORMAT = TREE SELECT 1')->facts->diagnostics[0]->message());
+        self::assertSame('EXPLAIN INTO requires FORMAT=JSON', (new Semantics())->diagnose('EXPLAIN INTO @v SELECT 1')->facts->diagnostics[0]->message());
     }
 }

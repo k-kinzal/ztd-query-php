@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the sub-arrays of a two-dimensional array
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ARRAY[[1, 2], [3, 4]]');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT ARRAY[[1, 2], [3, 4]]');
  *     [count($query->field(0)->expression->items->nested), $query->field(0)->type->descriptor->name()] // => [2, 'integer[]']
  */
 final class ArrayItems implements Node

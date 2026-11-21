@@ -20,8 +20,8 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
 
-$semantics->analyze("select a,b from t where (a+1)*2 > b -- comment\n order by a")->toString(); // => 'SELECT a, b FROM t WHERE (a + 1) * 2 > b ORDER BY a'
-$semantics->analyze('SELECT 1 + (2 * 3)')->toString(); // => 'SELECT 1 + (2 * 3)'
+$semantics->inspect("select a,b from t where (a+1)*2 > b -- comment\n order by a")->toString(); // => 'SELECT a, b FROM t WHERE (a + 1) * 2 > b ORDER BY a'
+$semantics->inspect('SELECT 1 + (2 * 3)')->toString(); // => 'SELECT 1 + (2 * 3)'
 ```
 
 The result is deterministic: the same structure always gives the same text. It is not a formatter; use [SQL Formatter](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-formatter/README.md) for layout.
@@ -43,8 +43,8 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
-(new Semantics(PostgreSql::PostgreSql))->analyze('SELECT "Name", "name", Name FROM "Users"')->toString(); // => 'SELECT "Name", name, name FROM "Users"'
-(new Semantics(Sqlite::Sqlite))->analyze('SELECT a AS [weird name] FROM `select`')->toString(); // => 'SELECT a AS `weird name` FROM `select`'
+(new Semantics(PostgreSql::PostgreSql))->inspect('SELECT "Name", "name", Name FROM "Users"')->toString(); // => 'SELECT "Name", name, name FROM "Users"'
+(new Semantics(Sqlite::Sqlite))->inspect('SELECT a AS [weird name] FROM `select`')->toString(); // => 'SELECT a AS `weird name` FROM `select`'
 ```
 
 ### Literals
@@ -56,22 +56,22 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
-(new Semantics(Sqlite::Sqlite))->analyze("VALUES (1_000, 0X1f, 1.50, X'ab', 'it''s')")->toString(); // => "VALUES (1000, 0x1F, 1.50, x'AB', 'it''s')"
-(new Semantics(PostgreSql::PostgreSql))->analyze("SELECT \$\$x\$\$, U&'d\\0061t'")->toString(); // => "SELECT 'x', 'dat'"
+(new Semantics(Sqlite::Sqlite))->inspect("VALUES (1_000, 0X1f, 1.50, X'ab', 'it''s')")->toString(); // => "VALUES (1000, 0x1F, 1.50, x'AB', 'it''s')"
+(new Semantics(PostgreSql::PostgreSql))->inspect("SELECT \$\$x\$\$, U&'d\\0061t'")->toString(); // => "SELECT 'x', 'dat'"
 ```
 
 ## Checks before publication
 
 An operation is returned only after the following checks pass. They run on every analysis and every construction, independently of PHP assertion settings. A failure throws `InvariantViolation` (or `InvalidConstruction` for an input outside the closed value domain), and the candidate is discarded; it is never returned in a degraded form.
 
-Every construction, `new Operation(...)` and `analyze()` alike:
+Every construction, `new Operation(...)` and `inspect()` alike:
 
 1. **Value audit.** Every value reachable from the structure, and from the facts, is an enum case or an instance of a final class of the closed semantic namespaces that uses the `SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot` trait (which refuses cloning, dynamic properties and serialization), with initialised readonly properties only, holding no float, closure, resource or PHP reference. A node may occur at one position only.
 2. **Fact completeness.** Every expression, relation and query of the structure received exactly one fact. A rule cannot silently skip a region.
 3. **Spellings.** When the structure holds [layouts](#spelled-regions), the text as the layouts spell it and the text as the structure renders it without them are read by the lexer of the profile, and must have the same tokens: as many, and each written token an equivalent spelling of the rendered one.
 4. **Structure equivalence.** The rendered text is parsed with the same grammar release and lowered by the same rules, and the result must equal the structure operand by operand: the same classes, the same scalar values and enum cases, layouts included, and lists of the same length and order, recursively. This compares actual operands, not a fingerprint or text.
 
-`analyze()` additionally checks the model against the input:
+`inspect()` additionally checks the model against the input:
 
 5. **Leaf embedding.** Every operand leaf lowered from the input (identifiers, literals, parameter markers, operators) must be reachable, by object identity, in the published structure. A rule cannot read an operand and then drop it.
 6. **Token correspondence.** The significant tokens of the input and of the rendered text must be equal, in order. Tokens are compared by key: keywords and punctuation by their terminal, names by their decoded value, literals by their exact decoded value. Whitespace and comments are not tokens.
@@ -101,10 +101,10 @@ use SqlSemantics\Platform\MySql\Dialect as MySql;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
-(new Semantics(MySql::MySql))->analyze('select a from t where a = 1 && b = 2 # comment')->toString(); // => 'SELECT a FROM t WHERE a = 1 AND b = 2'
-(new Semantics(MySql::MySql))->analyze('INSERT INTO t VALUE (1)')->toString(); // => 'INSERT INTO t VALUES (1)'
-(new Semantics(PostgreSql::PostgreSql))->analyze('BEGIN WORK')->toString(); // => 'BEGIN'
-(new Semantics(Sqlite::Sqlite))->analyze('create temporary table x (y)')->toString(); // => 'CREATE TEMP TABLE x (y)'
+(new Semantics(MySql::MySql))->inspect('select a from t where a = 1 && b = 2 # comment')->toString(); // => 'SELECT a FROM t WHERE a = 1 AND b = 2'
+(new Semantics(MySql::MySql))->inspect('INSERT INTO t VALUE (1)')->toString(); // => 'INSERT INTO t VALUES (1)'
+(new Semantics(PostgreSql::PostgreSql))->inspect('BEGIN WORK')->toString(); // => 'BEGIN'
+(new Semantics(Sqlite::Sqlite))->inspect('create temporary table x (y)')->toString(); // => 'CREATE TEMP TABLE x (y)'
 ```
 
 Where a spelling carries meaning, the model keeps the distinction as a bounded value and renders it. In SQLite, for example, `=` and `==` are kept apart, `<>` and `!=` too, and a double-quoted word stays a double-quoted word, because SQLite reads it as a string when no column has that name; the bare words `TRUE` and `FALSE` stay boolean words for the same reason. In SQLite and MySQL, whether `AS` introduces an alias is kept too, because the text these databases name a result column after can include it.
@@ -114,8 +114,8 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
 
-$semantics->analyze('SELECT a FROM t WHERE a == 1 AND a != 2')->toString(); // => 'SELECT a FROM t WHERE a == 1 AND a != 2'
-$semantics->analyze('select "a" from t')->toString(); // => 'SELECT "a" FROM t'
+$semantics->inspect('SELECT a FROM t WHERE a == 1 AND a != 2')->toString(); // => 'SELECT a FROM t WHERE a == 1 AND a != 2'
+$semantics->inspect('select "a" from t')->toString(); // => 'SELECT "a" FROM t'
 ```
 
 The rendered text targets the selected release and profile. It is not translated to another release or database, and text rendered under one MySQL mode is meant to be read under the same mode.
@@ -130,7 +130,7 @@ A `SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout` holds one `Spel
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$query = $semantics->analyze('select 1+1 /* sum */, 2 as two from t where a+1 > 2');
+$query = $semantics->inspect('select 1+1 /* sum */, 2 as two from t where a+1 > 2');
 $layout = $query->statement->columns[0]->layout;
 
 $layout->text(); // => '1+1'

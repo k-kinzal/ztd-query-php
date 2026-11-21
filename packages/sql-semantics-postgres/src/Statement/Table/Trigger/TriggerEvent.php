@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
  *
  * @visibility public
  * @example Reading an UPDATE OF event
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRIGGER g AFTER UPDATE OF a, b ON t EXECUTE FUNCTION f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TRIGGER g AFTER UPDATE OF a, b ON t EXECUTE FUNCTION f()');
  *     count($statement->statement->events[0]->columns) // => 2
  */
 final class TriggerEvent implements Node

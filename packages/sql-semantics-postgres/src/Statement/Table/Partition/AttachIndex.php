@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Attaching an index
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER INDEX pi ATTACH PARTITION pi1');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER INDEX pi ATTACH PARTITION pi1');
  *     $statement->toString() // => 'ALTER INDEX pi ATTACH PARTITION pi1'
  */
 final class AttachIndex implements AlterCommand

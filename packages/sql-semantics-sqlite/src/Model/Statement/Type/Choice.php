@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Holding two possible types
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $type = $semantics->analyze("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
+ *     $type = $semantics->inspect("SELECT CASE WHEN 1 THEN 1 ELSE 'a' END")->field(0)->type;
  *     $type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice // => true
  */
 final class Choice implements TypeFact

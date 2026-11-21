@@ -20,7 +20,7 @@ final class ConditionDeclarationTest extends TestCase
 {
     public function testRenderWritesTheNameAndTheErrorCode(): void
     {
-        $operation = (new Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
@@ -36,7 +36,7 @@ final class ConditionDeclarationTest extends TestCase
     #[DataProvider('providerRenderWritesTheDeclaration')]
     public function testRenderWritesTheDeclaration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

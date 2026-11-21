@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * @visibility public
  * @example Defining a spatial reference system
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create or replace spatial reference system 4120 name 'Greek' organization 'EPSG' identified by 4120 definition 'GEOGCS[]'");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create or replace spatial reference system 4120 name 'Greek' organization 'EPSG' identified by 4120 definition 'GEOGCS[]'");
  *     [$create->toString(), $create->facts->diagnostics] // => ["CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' ORGANIZATION 'EPSG' IDENTIFIED BY 4120 DEFINITION 'GEOGCS[]'", []]
  */
 final class CreateSpatialReference implements Statement

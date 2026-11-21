@@ -22,15 +22,15 @@ final class TableResolutionTest extends TestCase
     public function testTheOutcomesDependOnTheDeclarationsAndTheCompletenessOfTheContext(): void
     {
         $semantics = new Semantics();
-        $first = $semantics->inspect('CREATE TABLE t (a INTEGER)');
-        $second = $semantics->inspect('CREATE TABLE t (b TEXT)');
-        $qualified = $semantics->inspect('CREATE TABLE main.u (a INTEGER)');
+        $first = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
+        $second = $semantics->diagnose('CREATE TABLE t (b TEXT)');
+        $qualified = $semantics->diagnose('CREATE TABLE main.u (a INTEGER)');
 
-        $declared = $semantics->inspect('SELECT a FROM t', [$first]);
-        $conflicting = $semantics->inspect('SELECT a FROM t', [$first, $second]);
-        $missing = $semantics->inspect('SELECT a FROM t', []);
-        $undeclared = $semantics->inspect('SELECT a FROM t');
-        $conditional = $semantics->inspect('SELECT a FROM u', $semantics->context([$qualified], false));
+        $declared = $semantics->diagnose('SELECT a FROM t', [$first]);
+        $conflicting = $semantics->diagnose('SELECT a FROM t', [$first, $second]);
+        $missing = $semantics->diagnose('SELECT a FROM t', []);
+        $undeclared = $semantics->diagnose('SELECT a FROM t');
+        $conditional = $semantics->diagnose('SELECT a FROM u', $semantics->context([$qualified], false));
 
         self::assertInstanceOf(DeclaredTable::class, $declared->facts->relation($declared->singleNamedInput())->table);
         self::assertInstanceOf(ConflictingTables::class, $conflicting->facts->relation($conflicting->singleNamedInput())->table);

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a named window
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a)');
  *     [$query->statement->windows[0]->name->value, count($query->statement->windows[0]->window->order)] // => ['w', 1]
  */
 final class WindowDefinition implements Node

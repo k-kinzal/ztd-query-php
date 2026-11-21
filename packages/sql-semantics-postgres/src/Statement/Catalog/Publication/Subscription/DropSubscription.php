@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Dropping a subscription if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP SUBSCRIPTION IF EXISTS s CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP SUBSCRIPTION IF EXISTS s CASCADE');
  *     $operation->toString() // => 'DROP SUBSCRIPTION IF EXISTS s CASCADE'
  */
 final class DropSubscription implements Statement

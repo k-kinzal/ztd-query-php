@@ -16,8 +16,8 @@ final class ConditionsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE n (a int CHECK (a), b bool CHECK (b), c text CHECK (\'t\'))', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE n (a int CHECK (a), b bool CHECK (b), c text CHECK (\'t\'))', $context);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));

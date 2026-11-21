@@ -29,8 +29,8 @@ final class VariableRuleTest extends TestCase
 {
     public function testVariableLowersUserAndSystemVariablesOfEveryGeneration(): void
     {
-        $modern = (new Semantics('mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
-        $legacy = (new Semantics('mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
+        $modern = (new Semantics('mysql-8.4.7'))->inspect('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
+        $legacy = (new Semantics('mysql-5.6.51'))->inspect('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
 
         self::assertInstanceOf(Select::class, $modern->statement);
         self::assertInstanceOf(Select::class, $legacy->statement);
@@ -51,7 +51,7 @@ final class VariableRuleTest extends TestCase
 
     public function testUserLowersEverySpellingOfAUserVariableName(): void
     {
-        $operation = (new Semantics('mysql-8.4.7'))->analyze("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
+        $operation = (new Semantics('mysql-8.4.7'))->inspect("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item1 = $operation->statement->items[1];
@@ -63,8 +63,8 @@ final class VariableRuleTest extends TestCase
 
     public function testAssignmentLowersAnAssignmentInsideAnExpression(): void
     {
-        $modern = (new Semantics('mysql-8.4.7'))->analyze('SELECT @v := 1');
-        $legacy = (new Semantics('mysql-5.6.51'))->analyze('SELECT @v := 1');
+        $modern = (new Semantics('mysql-8.4.7'))->inspect('SELECT @v := 1');
+        $legacy = (new Semantics('mysql-5.6.51'))->inspect('SELECT @v := 1');
 
         self::assertInstanceOf(Select::class, $modern->statement);
         $item0 = $modern->statement->items[0];
@@ -78,7 +78,7 @@ final class VariableRuleTest extends TestCase
 
     public function testLegacySystemLowersTheScopeAndComponentOfMySql5(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];

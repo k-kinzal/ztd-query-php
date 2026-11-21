@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
  *
  * @visibility public
  * @example Reading the options of a new database
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE DATABASE d WITH OWNER = app ENCODING 'UTF8'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE DATABASE d WITH OWNER = app ENCODING 'UTF8'");
  *     [$operation->statement->name->value, $operation->statement->options[1]->option(), $operation->toString()] // => ['d', 'encoding', "CREATE DATABASE d WITH OWNER = app ENCODING = 'UTF8'"]
  */
 final class CreateDatabase implements Statement

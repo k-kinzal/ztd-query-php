@@ -25,40 +25,40 @@ final class PrivilegeChecksTest extends TestCase
 {
     public function testGrantRequiresTheTableWithoutCreate(): void
     {
-        self::assertInstanceOf(MissingTable::class, (new Semantics())->inspect('GRANT SELECT ON t TO u', [])->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTable::class, (new Semantics())->diagnose('GRANT SELECT ON t TO u', [])->facts->diagnostics[0]);
     }
 
     public function testRevokeAcceptsAnAbsentTable(): void
     {
-        self::assertSame([], (new Semantics())->inspect('REVOKE SELECT ON t FROM u', [])->facts->diagnostics);
+        self::assertSame([], (new Semantics())->diagnose('REVOKE SELECT ON t FROM u', [])->facts->diagnostics);
     }
 
     public function testLevelReportsADynamicPrivilegeOutsideTheGlobalLevel(): void
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->inspect('GRANT BACKUP_ADMIN ON db.* TO u')->facts->diagnostics[0]);
-        self::assertSame([], $semantics->inspect('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->diagnose('GRANT BACKUP_ADMIN ON db.* TO u')->facts->diagnostics[0]);
+        self::assertSame([], $semantics->diagnose('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->facts->diagnostics);
     }
 
     public function testFitReportsAPrivilegeOutsideItsLevel(): void
     {
         $semantics = new Semantics();
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->inspect('GRANT EXECUTE ON t TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->inspect('GRANT SELECT ON PROCEDURE p TO u')->facts->diagnostics[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->inspect('GRANT SELECT (a) ON PROCEDURE p TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->diagnose('GRANT EXECUTE ON t TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->diagnose('GRANT SELECT ON PROCEDURE p TO u')->facts->diagnostics[0]);
+        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->diagnose('GRANT SELECT (a) ON PROCEDURE p TO u')->facts->diagnostics[0]);
     }
 
     public function testRolesReportsAPrivilegeInARoleList(): void
     {
-        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->inspect('REVOKE CREATE ROLE FROM u')->facts->diagnostics[0]);
+        self::assertInstanceOf(RoleOrPrivilegeMismatch::class, (new Semantics())->diagnose('REVOKE CREATE ROLE FROM u')->facts->diagnostics[0]);
     }
 
     public function testTargetResolvesTheTable(): void
     {
         $semantics = new Semantics();
-        $grant = $semantics->inspect('GRANT SELECT ON t TO u', [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $grant = $semantics->diagnose('GRANT SELECT ON t TO u', [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertCount(2, $grant->facts->relation($grant->statement->level)->shape->slots);

@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Testing a comparison
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = 1 IS NOT TRUE');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = 1 IS NOT TRUE');
  *     [$query->statement->where->negated, $query->statement->where->truth->value] // => [true, 'TRUE']
  */
 final class TruthTest implements Scalar

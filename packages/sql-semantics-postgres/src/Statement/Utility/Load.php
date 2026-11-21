@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading the library file
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
  */
 final class Load implements Statement
 {

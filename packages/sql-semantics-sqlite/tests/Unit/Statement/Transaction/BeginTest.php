@@ -29,7 +29,7 @@ final class BeginTest extends TestCase
 
     public function testDeriveStatementRecordsNoFact(): void
     {
-        $operation = (new Semantics())->analyze('BEGIN IMMEDIATE', []);
+        $operation = (new Semantics())->inspect('BEGIN IMMEDIATE', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
@@ -40,9 +40,9 @@ final class BeginTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('BEGIN', $semantics->analyze('begin transaction')->toString());
-        self::assertSame('BEGIN DEFERRED', $semantics->analyze('begin deferred')->toString());
-        self::assertSame('BEGIN IMMEDIATE TRANSACTION `my tx`', $semantics->analyze('BEGIN IMMEDIATE TRANSACTION "my tx"')->toString());
+        self::assertSame('BEGIN', $semantics->inspect('begin transaction')->toString());
+        self::assertSame('BEGIN DEFERRED', $semantics->inspect('begin deferred')->toString());
+        self::assertSame('BEGIN IMMEDIATE TRANSACTION `my tx`', $semantics->inspect('BEGIN IMMEDIATE TRANSACTION "my tx"')->toString());
     }
 
     public function testRenderWritesANewlyBuiltStart(): void

@@ -29,8 +29,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialA
  * @visibility public
  * @example Resolving the referenced table
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $parent = $semantics->analyze('CREATE TABLE p (id int PRIMARY KEY)');
- *     $child = $semantics->analyze('CREATE TABLE c (p int REFERENCES p (id) ON DELETE CASCADE)', $parent->declarations());
+ *     $parent = $semantics->inspect('CREATE TABLE p (id int PRIMARY KEY)');
+ *     $child = $semantics->inspect('CREATE TABLE c (p int REFERENCES p (id) ON DELETE CASCADE)', $parent->declarations());
  *     $child->facts->relation($child->statement->definition->elements[0]->qualifiers[0])->table->table === $parent->declarations()[0] // => true
  */
 final class References implements Constraint

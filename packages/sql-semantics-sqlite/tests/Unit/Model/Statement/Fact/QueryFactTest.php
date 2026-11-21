@@ -54,7 +54,7 @@ final class QueryFactTest extends TestCase
 
     public function testFieldsOfAnAnalyzedOpenStarStayNull(): void
     {
-        $fact = (new Semantics())->analyze('SELECT *, 1 AS one FROM t')->facts->output;
+        $fact = (new Semantics())->inspect('SELECT *, 1 AS one FROM t')->facts->output;
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);

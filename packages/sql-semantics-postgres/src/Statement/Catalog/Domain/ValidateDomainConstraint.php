@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the validated constraint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d VALIDATE CONSTRAINT c');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d VALIDATE CONSTRAINT c');
  *     $operation->statement->constraint->value // => 'c'
  */
 final class ValidateDomainConstraint implements Statement

@@ -17,7 +17,7 @@ final class ChangeColumnTest extends TestCase
 {
     public function testChangedAnswersTheRedefinedColumn(): void
     {
-        $alter = (new Semantics())->inspect('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
+        $alter = (new Semantics())->diagnose('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
 
         self::assertInstanceOf(AlterTable::class, $alter->statement);
         [$modify, $change] = $alter->statement->commands;
@@ -29,14 +29,14 @@ final class ChangeColumnTest extends TestCase
     public function testDeriveCommandDerivesTheDefinition(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
-        $alter = $semantics->inspect('ALTER TABLE t MODIFY a INT DEFAULT (x)', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
+        $alter = $semantics->diagnose('ALTER TABLE t MODIFY a INT DEFAULT (x)', [$table]);
 
         self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesChangeOrModify(): void
     {
-        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics())->inspect('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
+        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics())->diagnose('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
     }
 }

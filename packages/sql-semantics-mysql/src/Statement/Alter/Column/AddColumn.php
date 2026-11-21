@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
  *
  * @visibility public
  * @example Adding a column after the first one
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD b INT AFTER a');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ADD b INT AFTER a');
  *     [$alter->statement->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD COLUMN b INT AFTER a']
  */
 final class AddColumn implements AlterCommand

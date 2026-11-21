@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
  *
  * @visibility public
  * @example Moving a table to another database
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t RENAME AS archive.t');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t RENAME AS archive.t');
  *     $alter->toString() // => 'ALTER TABLE t RENAME TO archive.t'
  */
 final class RenameTo implements AlterCommand

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of an unsupported frame unit
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'GROUPS'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'GROUPS'
  */
 final class UnsupportedWindowing implements Diagnostic
 {

@@ -25,8 +25,8 @@ final class ConflictResolutionTest extends TestCase
     public function testCasesAreReadAfterOrInInsertAndUpdate(): void
     {
         $semantics = new Semantics();
-        $insert = $semantics->analyze('insert or replace into t values (1)');
-        $update = $semantics->analyze('update or fail t set a = 1');
+        $insert = $semantics->inspect('insert or replace into t values (1)');
+        $update = $semantics->inspect('update or fail t set a = 1');
 
         self::assertInstanceOf(InsertRows::class, $insert->statement);
         self::assertSame(ConflictResolution::Replace, $insert->statement->into->resolution);

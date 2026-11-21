@@ -39,7 +39,7 @@ final class UserSpecificationTest extends TestCase
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("CREATE USER u IDENTIFIED WITH p INITIAL AUTHENTICATION IDENTIFIED WITH q AS 'h'", (new Semantics())->analyze("create user u identified with p initial authentication identified with q as 'h'")->toString());
-        self::assertSame("ALTER USER u IDENTIFIED BY RANDOM PASSWORD REPLACE 'c' RETAIN CURRENT PASSWORD", (new Semantics())->analyze("alter user u identified by random password replace 'c' retain current password")->toString());
+        self::assertSame("CREATE USER u IDENTIFIED WITH p INITIAL AUTHENTICATION IDENTIFIED WITH q AS 'h'", (new Semantics())->inspect("create user u identified with p initial authentication identified with q as 'h'")->toString());
+        self::assertSame("ALTER USER u IDENTIFIED BY RANDOM PASSWORD REPLACE 'c' RETAIN CURRENT PASSWORD", (new Semantics())->inspect("alter user u identified by random password replace 'c' retain current password")->toString());
     }
 }

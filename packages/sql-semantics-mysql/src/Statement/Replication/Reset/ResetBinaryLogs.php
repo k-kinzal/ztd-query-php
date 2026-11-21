@@ -31,7 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Reading RESET MASTER as its synonym
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.3.0'))->inspect('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
  */
 final class ResetBinaryLogs implements ResetTarget
 {

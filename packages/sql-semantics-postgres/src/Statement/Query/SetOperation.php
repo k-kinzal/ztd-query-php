@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  *
  * @visibility public
  * @example Reading a set operation
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a UNION ALL SELECT 2');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 AS a UNION ALL SELECT 2');
  *     [$query->statement->operator->value, $query->statement->quantifier->value, $query->field(0)->name->value] // => ['UNION', 'ALL', 'a']
  * @example Refusing a right operand that would re-associate
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])]);

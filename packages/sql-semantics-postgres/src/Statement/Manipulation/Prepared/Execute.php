@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Placement;
  *
  * @visibility public
  * @example Reading a run of a prepared statement
- *     $execute = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("EXECUTE p (1, 'x')");
+ *     $execute = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("EXECUTE p (1, 'x')");
  *     [count($execute->statement->parameters), $execute->shape()->complete()] // => [2, false]
  */
 final class Execute implements Statement

@@ -28,7 +28,7 @@ final class KeyTermRuleTest extends TestCase
 {
     public function testKeyTermsWrapAStringUnderAnyParenthesesAndCollations(): void
     {
-        $statement = (new Semantics())->analyze("CREATE TABLE t (a, b, PRIMARY KEY ((('a') COLLATE nocase) COLLATE binary), UNIQUE (b, 'b' DESC))")->statement;
+        $statement = (new Semantics())->inspect("CREATE TABLE t (a, b, PRIMARY KEY ((('a') COLLATE nocase) COLLATE binary), UNIQUE (b, 'b' DESC))")->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->constraints[0]->items[0];
@@ -48,7 +48,7 @@ final class KeyTermRuleTest extends TestCase
 
     public function testIndexTermsWrapAStringUnderAtMostOneCollation(): void
     {
-        $statement = (new Semantics())->analyze("CREATE INDEX i ON t ('a', 'a' COLLATE nocase, 'a' COLLATE nocase COLLATE binary, ('a'))")->statement;
+        $statement = (new Semantics())->inspect("CREATE INDEX i ON t ('a', 'a' COLLATE nocase, 'a' COLLATE nocase COLLATE binary, ('a'))")->statement;
 
         self::assertInstanceOf(CreateIndex::class, $statement);
         self::assertInstanceOf(LiteralColumn::class, $statement->terms[0]->expression);

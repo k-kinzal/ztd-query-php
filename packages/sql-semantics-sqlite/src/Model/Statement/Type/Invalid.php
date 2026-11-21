@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Typing a reference to a column that the complete context does not declare
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $semantics->analyze('SELECT b FROM t', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column b does not exist.
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $semantics->inspect('SELECT b FROM t', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column b does not exist.
  */
 final class Invalid implements TypeFact
 {

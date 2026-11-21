@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Testing an XML constant
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '<a/>' IS DOCUMENT")->field(0)->type->descriptor->name() // => 'boolean'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT '<a/>' IS DOCUMENT")->field(0)->type->descriptor->name() // => 'boolean'
  */
 final class DocumentTest implements Scalar
 {

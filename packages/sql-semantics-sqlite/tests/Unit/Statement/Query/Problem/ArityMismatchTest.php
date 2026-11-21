@@ -47,7 +47,7 @@ final class ArityMismatchTest extends TestCase
 
     public function testMessageIsReportedForArmsOfDifferentWidth(): void
     {
-        $query = (new Semantics())->inspect('SELECT 1, 2 UNION SELECT 3');
+        $query = (new Semantics())->diagnose('SELECT 1, 2 UNION SELECT 3');
 
         self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
         self::assertSame(2, $query->facts->diagnostics[0]->expected);

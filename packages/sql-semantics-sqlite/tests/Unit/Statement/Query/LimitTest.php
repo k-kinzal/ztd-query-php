@@ -20,7 +20,7 @@ final class LimitTest extends TestCase
 {
     public function testRenderKeepsTheCommaSpelling(): void
     {
-        $query = (new Semantics())->analyze('select a from t limit 5, 10');
+        $query = (new Semantics())->inspect('select a from t limit 5, 10');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $limit = $query->statement->limit;
@@ -35,7 +35,7 @@ final class LimitTest extends TestCase
 
     public function testRenderKeepsTheOffsetSpelling(): void
     {
-        $query = (new Semantics())->analyze('select a from t limit 10 offset 5');
+        $query = (new Semantics())->inspect('select a from t limit 10 offset 5');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $limit = $query->statement->limit;

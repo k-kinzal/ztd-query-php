@@ -27,7 +27,7 @@ final class BooleanLiteralTest extends TestCase
 {
     public function testDeriveScalarAnswersBigIntThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = TRUE');
+        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = TRUE');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -45,7 +45,7 @@ final class BooleanLiteralTest extends TestCase
 
     public function testDeriveScalarTypesFalseLikeTrue(): void
     {
-        $operation = (new Semantics())->analyze('SELECT FALSE');
+        $operation = (new Semantics())->inspect('SELECT FALSE');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -63,7 +63,7 @@ final class BooleanLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        $operation = (new Semantics())->analyze('select a from t where a = false');
+        $operation = (new Semantics())->inspect('select a from t where a = false');
 
         self::assertSame('SELECT a FROM t WHERE a = FALSE', $operation->toString());
     }

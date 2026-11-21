@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the schemas whose tables are granted
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe');
  *     [$operation->statement->target->object()->value, $operation->statement->target->schemas[0]->value] // => ['TABLE', 'app']
  */
 final class SchemaContentsTarget implements PrivilegeTarget

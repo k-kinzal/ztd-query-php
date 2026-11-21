@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Looking fields up by position and by name
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS a, 2 AS a, 3 AS b');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 AS a, 2 AS a, 3 AS b');
  *     $fields = $operation->fields();
  *     [count($fields), $fields->at(2)->name?->value, $fields->lookup('a') instanceof \SqlSemantics\Platform\MySql\Model\Statement\Shape\AmbiguousFields] // => [3, 'b', true]
  * @implements IteratorAggregate<int, Field>

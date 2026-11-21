@@ -16,11 +16,11 @@ final class AddPartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (x))')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION NO_WRITE_TO_BINLOG PARTITIONS 2', (new Semantics('mysql-5.6.51'))->inspect('ALTER TABLE t ADD PARTITION LOCAL PARTITIONS 2')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION NO_WRITE_TO_BINLOG PARTITIONS 2', (new Semantics('mysql-5.6.51'))->diagnose('ALTER TABLE t ADD PARTITION LOCAL PARTITIONS 2')->toString());
     }
 }

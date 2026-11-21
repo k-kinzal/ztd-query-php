@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
  *
  * @visibility public
  * @example Keeping the statements of one input apart
- *     $script = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1; SELECT 2');
+ *     $script = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1; SELECT 2');
  *     [count($script->statement->statements), $script->toString()] // => [2, 'SELECT 1; SELECT 2']
  */
 final class Script implements Statement

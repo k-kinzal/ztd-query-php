@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
  *
  * @visibility public
  * @example Reading a symmetric range test
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1');
  *     [$query->field(0)->expression->negated, $query->field(0)->expression->symmetric, $query->toString()] // => [true, true, 'SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1']
  */
 final class Between implements Scalar

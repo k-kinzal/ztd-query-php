@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  *
  * @visibility public
  * @example Reading the options of COPY
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("COPY t TO STDOUT (FORMAT csv, FORCE_QUOTE *, HEADER)");
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("COPY t TO STDOUT (FORMAT csv, FORCE_QUOTE *, HEADER)");
  *     [$copy->statement->options[0]->name->value, $copy->statement->options[2]->argument, $copy->toString()] // => ['format', null, 'COPY t TO STDOUT (format csv, force_quote *, header)']
  */
 final class CopyOption implements Node

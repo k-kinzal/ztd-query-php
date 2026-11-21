@@ -16,6 +16,6 @@ final class StaticPrivilegeTest extends TestCase
 {
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('GRANT INSERT (a, `b c`), REFERENCES ON t TO u', (new Semantics())->analyze('grant insert (a, `b c`), references on t to u')->toString());
+        self::assertSame('GRANT INSERT (a, `b c`), REFERENCES ON t TO u', (new Semantics())->inspect('grant insert (a, `b c`), references on t to u')->toString());
     }
 }

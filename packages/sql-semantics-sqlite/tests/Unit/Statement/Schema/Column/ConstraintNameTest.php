@@ -17,14 +17,14 @@ final class ConstraintNameTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a CONSTRAINT lonely)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a CONSTRAINT lonely)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheNameAtItsPlaceInAColumn(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a constraint one constraint "two" not null constraint three)');
+        $operation = (new Semantics())->inspect('create table t (a constraint one constraint "two" not null constraint three)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -37,7 +37,7 @@ final class ConstraintNameTest extends TestCase
 
     public function testRenderKeepsTheNameAtItsPlaceAmongTableConstraints(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a, CONSTRAINT k UNIQUE (a))');
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a, CONSTRAINT k UNIQUE (a))');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

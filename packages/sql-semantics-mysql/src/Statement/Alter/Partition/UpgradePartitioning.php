@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  *
  * @visibility public
  * @example Upgrading the partitioning of a 5.7 table
- *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t UPGRADE PARTITIONING')->toString() // => 'ALTER TABLE t UPGRADE PARTITIONING'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t UPGRADE PARTITIONING')->toString() // => 'ALTER TABLE t UPGRADE PARTITIONING'
  */
 final class UpgradePartitioning implements AlterCommand
 {

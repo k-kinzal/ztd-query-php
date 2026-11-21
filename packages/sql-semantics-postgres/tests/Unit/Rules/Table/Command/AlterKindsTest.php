@@ -25,40 +25,40 @@ final class AlterKindsTest extends TestCase
     public function testCheckReportsEachActionTheKindDoesNotAccept(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')];
+        $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
         self::assertSame([
             'ALTER action ADD COLUMN cannot be performed on relation "v"',
             'ALTER action ALTER COLUMN ... SET NOT NULL cannot be performed on relation "v"',
-        ], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE v ADD COLUMN b int, ALTER a SET DEFAULT 1, ALTER a SET NOT NULL, OWNER TO r', $context)->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE v ADD COLUMN b int, ALTER a SET DEFAULT 1, ALTER a SET NOT NULL, OWNER TO r', $context)->facts->diagnostics));
     }
 
     public function testCheckReportsTheTargetKindFirst(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)')];
-        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER VIEW t ALTER a SET NOT NULL', $context)->facts->diagnostics));
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)')];
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER VIEW t ALTER a SET NOT NULL', $context)->facts->diagnostics));
     }
 
     public function testParentReportsAParentThatCannotBeInherited(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE TABLE t (a int)'), $semantics->inspect('CREATE SEQUENCE s')];
-        self::assertSame(['ALTER action INHERIT cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE t INHERIT s', $context)->facts->diagnostics));
+        $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE SEQUENCE s')];
+        self::assertSame(['ALTER action INHERIT cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE t INHERIT s', $context)->facts->diagnostics));
     }
 
     public function testForeignReportsKeysAddedToAForeignTable(): void
     {
         $semantics = new Semantics();
-        $context = [$semantics->inspect('CREATE FOREIGN TABLE f (a int) SERVER x')];
+        $context = [$semantics->diagnose('CREATE FOREIGN TABLE f (a int) SERVER x')];
         self::assertSame([
             'unique constraints are not supported on foreign tables',
             'primary key constraints are not supported on foreign tables',
-        ], array_map(static fn ($problem): string => $problem->message(), $semantics->inspect('ALTER TABLE f ADD COLUMN b int UNIQUE, ADD PRIMARY KEY (a), ADD CHECK (a > 0)', $context)->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('ALTER TABLE f ADD COLUMN b int UNIQUE, ADD PRIMARY KEY (a), ADD CHECK (a > 0)', $context)->facts->diagnostics));
     }
 
     public function testAcceptedAnswersNullForOwnerTo(): void
     {
-        $statement = (new Semantics())->inspect('ALTER TABLE t OWNER TO r')->statement;
+        $statement = (new Semantics())->diagnose('ALTER TABLE t OWNER TO r')->statement;
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertInstanceOf(OwnerTo::class, $statement->commands[0]);
         self::assertNull((new AlterKinds())->accepted($statement->commands[0]));
@@ -67,7 +67,7 @@ final class AlterKindsTest extends TestCase
     public function testOtherAnswersTheActionOfAColumnChange(): void
     {
         $semantics = new Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ALTER a SET STORAGE plain, ALTER a SET COMPRESSION pglz')->statement;
+        $statement = $semantics->diagnose('ALTER TABLE t ALTER a SET STORAGE plain, ALTER a SET COMPRESSION pglz')->statement;
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertSame([
             [AlterAction::SetStorage, [RelationKind::BaseTable, RelationKind::MaterializedView, RelationKind::ForeignTable]],
@@ -78,7 +78,7 @@ final class AlterKindsTest extends TestCase
     public function testRelationWideAnswersTheActionOfARelationOption(): void
     {
         $semantics = new Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t RESET (fillfactor)')->statement;
+        $statement = $semantics->diagnose('ALTER TABLE t RESET (fillfactor)')->statement;
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertSame([AlterAction::ResetRelationOptions, [RelationKind::BaseTable, RelationKind::View, RelationKind::MaterializedView]], (new AlterKinds())->relationWide($statement->commands[0]));
     }

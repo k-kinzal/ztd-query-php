@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Holding the encoded events
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("binlog 'AAAA'")->statement->events->value // => 'AAAA'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("binlog 'AAAA'")->statement->events->value // => 'AAAA'
  */
 final class BinlogEvent implements Statement
 {

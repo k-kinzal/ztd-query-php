@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Disabling a subscription
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER SUBSCRIPTION s DISABLE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER SUBSCRIPTION s DISABLE');
  *     $operation->statement->enable // => false
  */
 final class EnableSubscription implements Statement

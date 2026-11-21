@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a hexadecimal bit string
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT X'1F'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT X'1F'");
  *     $value = $query->statement->targets[0]->expression->value;
  *     [$value->radix, $value->digits] // => [\SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringRadix::Hexadecimal, '1F']
  */

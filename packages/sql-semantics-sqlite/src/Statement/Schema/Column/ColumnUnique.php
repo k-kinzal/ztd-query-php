@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
  *
  * @visibility public
  * @example Reading a UNIQUE column constraint
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT REPLACE)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a UNIQUE ON CONFLICT REPLACE)');
  *     $create->statement->columns[0]->constraints[0]->conflict?->value // => 'REPLACE'
  */
 final class ColumnUnique implements ColumnConstraint

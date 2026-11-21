@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  *
  * @visibility public
  * @example Reading a time zone set by an interval
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
  *     [$operation->statement->zone->value->value, $operation->toString()] // => ['-08:00', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"]
  * @example Refusing a constant of another type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(

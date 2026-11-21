@@ -16,11 +16,11 @@ final class RevokeAllTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->analyze('REVOKE ALL, GRANT OPTION FROM u')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('REVOKE ALL, GRANT OPTION FROM u')->facts->diagnostics);
     }
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame('REVOKE IF EXISTS ALL, GRANT OPTION FROM u IGNORE UNKNOWN USER', (new Semantics())->analyze('revoke if exists all privileges, grant option from u ignore unknown user')->toString());
+        self::assertSame('REVOKE IF EXISTS ALL, GRANT OPTION FROM u IGNORE UNKNOWN USER', (new Semantics())->inspect('revoke if exists all privileges, grant option from u ignore unknown user')->toString());
     }
 }

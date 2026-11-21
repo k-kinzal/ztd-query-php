@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Reading the items of GET DIAGNOSTICS
- *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
+ *     $get = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
  *     [$get->statement->information->items[1]->target->name->value, $get->statement->information->items[1]->item->value] // => ['r', 'ROW_COUNT']
  */
 final class InformationItem implements Node

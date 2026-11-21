@@ -19,13 +19,13 @@ final class SecurityLabelTest extends TestCase
 {
     public function testDeriveStatementResolvesALabelledTable(): void
     {
-        $operation = (new Semantics())->inspect('SECURITY LABEL ON TABLE t IS NULL', []);
+        $operation = (new Semantics())->diagnose('SECURITY LABEL ON TABLE t IS NULL', []);
         self::assertSame(['Relation t does not exist.'], [$operation->facts->diagnostics[0]->message()]);
     }
 
     public function testRenderWritesTheProvider(): void
     {
-        $operation = (new Semantics())->inspect("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f(int4) IS 'l'");
+        $operation = (new Semantics())->diagnose("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f(int4) IS 'l'");
         self::assertSame("SECURITY LABEL FOR 'sepgsql' ON FUNCTION f (int4) IS 'l'", $operation->toString());
     }
 

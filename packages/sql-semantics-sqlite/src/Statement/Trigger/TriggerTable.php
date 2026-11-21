@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
  *
  * @visibility public
  * @example Reading the table of a trigger
- *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TRIGGER r AFTER DELETE ON main.t BEGIN SELECT 1; END');
+ *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TRIGGER r AFTER DELETE ON main.t BEGIN SELECT 1; END');
  *     [$trigger->statement->table->name()->schema->value, $trigger->statement->table->name()->name->value] // => ['main', 't']
  */
 final class TriggerTable implements NamedRelation

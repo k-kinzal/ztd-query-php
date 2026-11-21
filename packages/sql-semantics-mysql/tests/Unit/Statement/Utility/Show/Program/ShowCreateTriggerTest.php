@@ -16,13 +16,13 @@ final class ShowCreateTriggerTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW CREATE TRIGGER db.x');
+        $show = (new Semantics())->inspect('SHOW CREATE TRIGGER db.x');
         self::assertInstanceOf(ShowCreateTrigger::class, $show->statement);
         self::assertSame('Trigger', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE TRIGGER db.x', (new Semantics())->analyze('SHOW CREATE TRIGGER db.x')->toString());
+        self::assertSame('SHOW CREATE TRIGGER db.x', (new Semantics())->inspect('SHOW CREATE TRIGGER db.x')->toString());
     }
 }

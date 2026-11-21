@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Forbidding NULL values
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DOMAIN d SET NOT NULL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DOMAIN d SET NOT NULL');
  *     $operation->statement->notNull // => true
  */
 final class AlterDomainNotNull implements Statement

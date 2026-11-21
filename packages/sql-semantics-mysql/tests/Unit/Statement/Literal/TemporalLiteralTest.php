@@ -52,7 +52,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheTemporalTypeThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
+        $operation = (new Semantics())->inspect("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -72,7 +72,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersDateForADateLiteral(): void
     {
-        $operation = (new Semantics())->analyze("SELECT DATE '2024-01-02'");
+        $operation = (new Semantics())->inspect("SELECT DATE '2024-01-02'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -99,9 +99,9 @@ final class TemporalLiteralTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame("SELECT DATE '2024-01-02' AS v", $semantics->analyze("select date '2024-01-02' as v")->toString());
-        self::assertSame("SELECT TIME 'a''b' AS v", $semantics->analyze("SELECT TIME 'a\\'b' AS v")->toString());
-        self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05' AS v", $semantics->analyze('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v')->toString());
-        self::assertSame("SELECT date '2024-01-02'", $semantics->analyze("SELECT date '2024-01-02'")->toString());
+        self::assertSame("SELECT DATE '2024-01-02' AS v", $semantics->inspect("select date '2024-01-02' as v")->toString());
+        self::assertSame("SELECT TIME 'a''b' AS v", $semantics->inspect("SELECT TIME 'a\\'b' AS v")->toString());
+        self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05' AS v", $semantics->inspect('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v')->toString());
+        self::assertSame("SELECT date '2024-01-02'", $semantics->inspect("SELECT date '2024-01-02'")->toString());
     }
 }

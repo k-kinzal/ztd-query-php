@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssign
  *
  * @visibility public
  * @example Reading the assignments of an upsert
- *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0');
  *     [count($insert->statement->conflict->assignments), $insert->toString()] // => [1, 'INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0']
  * @example Refusing DO UPDATE without an assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoUpdate(null, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

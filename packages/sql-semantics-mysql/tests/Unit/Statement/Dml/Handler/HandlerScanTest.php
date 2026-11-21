@@ -16,7 +16,7 @@ final class HandlerScanTest extends TestCase
 {
     public function testDeriveStatementRecordsOpenRows(): void
     {
-        $operation = (new Semantics())->analyze('HANDLER h READ NEXT LIMIT 2');
+        $operation = (new Semantics())->inspect('HANDLER h READ NEXT LIMIT 2');
 
         self::assertNotNull($operation->facts->output);
         self::assertFalse($operation->facts->output->shape->complete());
@@ -24,6 +24,6 @@ final class HandlerScanTest extends TestCase
 
     public function testRenderWritesTheRead(): void
     {
-        self::assertSame('HANDLER h READ NEXT WHERE a > 1 LIMIT 1', (new Semantics('mysql-5.6.51'))->analyze('handler h read next where a > 1 limit 1')->toString());
+        self::assertSame('HANDLER h READ NEXT WHERE a > 1 LIMIT 1', (new Semantics('mysql-5.6.51'))->inspect('handler h read next where a > 1 limit 1')->toString());
     }
 }

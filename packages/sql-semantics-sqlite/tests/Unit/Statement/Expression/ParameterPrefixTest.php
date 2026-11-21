@@ -32,7 +32,7 @@ final class ParameterPrefixTest extends TestCase
 
     public function testFromMatchesThePrefixOfAnAnalyzedParameter(): void
     {
-        $statement = (new Semantics())->analyze('SELECT $id')->statement;
+        $statement = (new Semantics())->inspect('SELECT $id')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

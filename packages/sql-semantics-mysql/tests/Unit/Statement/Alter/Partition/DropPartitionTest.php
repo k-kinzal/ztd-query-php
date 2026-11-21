@@ -16,11 +16,11 @@ final class DropPartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics())->analyze('ALTER TABLE t DROP PARTITION p')->facts->diagnostics);
+        self::assertSame([], (new Semantics())->inspect('ALTER TABLE t DROP PARTITION p')->facts->diagnostics);
     }
 
     public function testRenderWritesTheAction(): void
     {
-        self::assertSame('ALTER TABLE t DROP PARTITION p0, p1', (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t DROP PARTITION p0, p1')->toString());
+        self::assertSame('ALTER TABLE t DROP PARTITION p0, p1', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t DROP PARTITION p0, p1')->toString());
     }
 }

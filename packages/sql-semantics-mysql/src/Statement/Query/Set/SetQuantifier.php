@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
  *
  * @visibility public
  * @example Reading the quantifier of a union
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION ALL SELECT 2');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 UNION ALL SELECT 2');
  *     $query->statement->quantifier // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier::All
  */
 enum SetQuantifier: string

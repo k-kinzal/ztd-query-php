@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a row where a single value is required
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE (a, b) + 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE (a, b) + 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Operand should contain 1 column(s), not 2.
  */
 final class OperandColumns implements Diagnostic
 {

@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Naming the unbound parameter a fact depends on
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = ?');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = ?');
  *     $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe() // => 'the value bound to parameter ?'
  */
 final class Parameter implements Scalar

@@ -30,19 +30,21 @@ composer require k-kinzal/sql-semantics-postgres
 
 ## Usage
 
+Call `Semantics::analyze()` for complete IR and `Semantics::inspect()` for diagnostic operations and declarations. The examples use inspection to show facts from the broader grammar. See the [complete IR scope](../sql-semantics/docs/semantics-ir.md).
+
 ```php
 use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id integer NOT NULL PRIMARY KEY, name text)', []);
-$query = $semantics->analyze('select ID, upper(name) as label from Users where id > $1', [$users]);
+$users = $semantics->inspect('CREATE TABLE users (id integer NOT NULL PRIMARY KEY, name text)', []);
+$query = $semantics->inspect('select ID, upper(name) as label from Users where id > $1', [$users]);
 
 $query->toString(); // => 'SELECT id, upper(name) AS label FROM users WHERE id > $1'
 $query->field('id')->type->descriptor->name(); // => 'integer'
 $query->field('id')->nullability; // => Nullability::NotNull
 $query->field('label')->type->descriptor->name(); // => 'text'
-$semantics->analyze('SELECT "ID" FROM users', [$users]); // throws SemanticException with message 'Column ID does not exist.'
+$semantics->inspect('SELECT "ID" FROM users', [$users]); // throws SemanticException with message 'Column ID does not exist.'
 ```
 
 The CREATE TABLE above is analyzed in a complete, empty context (`[]`) so that `integer` and `text` denote the built-in types; see [Type names in open contexts](#type-names-in-open-contexts).
@@ -72,8 +74,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\AbsentField;
 
 $semantics = new Semantics();
 
-$semantics->analyze('SELECT "Name", Name FROM t')->toString(); // => 'SELECT "Name", name FROM t'
-$semantics->analyze('SELECT 1 AS Total')->lookupField('Total') instanceof AbsentField; // => true
+$semantics->inspect('SELECT "Name", Name FROM t')->toString(); // => 'SELECT "Name", name FROM t'
+$semantics->inspect('SELECT 1 AS Total')->lookupField('Total') instanceof AbsentField; // => true
 SqlNames::table(new QualifiedName(new Name('Users'), new Name('app')), $semantics->profile()); // => 'app."Users"'
 SqlNames::table(new QualifiedName(new Name('user')), $semantics->profile()); // => '"user"'
 ```
@@ -97,8 +99,8 @@ array_map(static fn ($schema) => $schema->value, $default->context()->searchPath
 array_map(static fn ($schema) => $schema->value, $app->context()->searchPath); // => ['pg_temp', 'pg_catalog', 'app', 'public']
 $app->context()->declarationSchema->value; // => 'app'
 
-$users = $app->analyze('CREATE TABLE users (id integer)', []);
-$query = $app->analyze('SELECT id FROM app.users', [$users]);
+$users = $app->inspect('CREATE TABLE users (id integer)', []);
+$query = $app->inspect('SELECT id FROM app.users', [$users]);
 $query->facts->relation($query->inputRelation())->table instanceof DeclaredTable; // => true
 ```
 
@@ -113,12 +115,12 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
 $semantics = new Semantics();
-$query = $semantics->analyze('SELECT $1::int, $2');
+$query = $semantics->inspect('SELECT $1::int, $2');
 
 $query->field(0)->type->descriptor->name(); // => 'integer'
 $query->field(1)->type->missing[0]->describe(); // => 'the value bound to parameter $2'
-(new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT :id')->toString(); // => 'SELECT :id'
-$semantics->analyze('SELECT :id'); // throws AnalysisException
+(new Semantics(null, null, ParameterStyle::Named))->inspect('SELECT :id')->toString(); // => 'SELECT :id'
+$semantics->inspect('SELECT :id'); // throws AnalysisException
 ```
 
 ### Strings
@@ -128,7 +130,7 @@ The profile reads SQL with `standard_conforming_strings = on` and a UTF-8 server
 ```php
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
-(new Semantics())->analyze("SELECT \$\$it's\$\$, U&'d\\0061t', 'a\\b'")->toString(); // => "SELECT 'it''s', 'dat', 'a\\b'"
+(new Semantics())->inspect("SELECT \$\$it's\$\$, U&'d\\0061t', 'a\\b'")->toString(); // => "SELECT 'it''s', 'dat', 'a\\b'"
 ```
 
 ### Type names in open contexts
@@ -143,9 +145,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 
 $semantics = new Semantics();
 
-$semantics->analyze("SELECT 'a'::text")->field(0)->type instanceof Dependent; // => true
-$semantics->analyze("SELECT 'a'::text", [])->field(0)->type instanceof Known; // => true
-$semantics->analyze('CREATE TABLE t (name text)')->declarations()[0]->columns[0]->type instanceof NamedOnPath; // => true
+$semantics->inspect("SELECT 'a'::text")->field(0)->type instanceof Dependent; // => true
+$semantics->inspect("SELECT 'a'::text", [])->field(0)->type instanceof Known; // => true
+$semantics->inspect('CREATE TABLE t (name text)')->declarations()[0]->columns[0]->type instanceof NamedOnPath; // => true
 ```
 
 A user-defined type is always `Dependent` on its definition, because version 1 contexts cannot declare types.
@@ -159,12 +161,12 @@ use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 
 $semantics = new Semantics();
-$view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a', []);
-$sequence = $semantics->analyze('CREATE SEQUENCE s', []);
+$view = $semantics->inspect('CREATE VIEW v AS SELECT 1 AS a', []);
+$sequence = $semantics->inspect('CREATE SEQUENCE s', []);
 
 $view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view]); // throws SemanticException with message '"v" is not a table'
-$semantics->analyze('SELECT * FROM s FOR UPDATE', [$sequence]); // throws SemanticException with message 'cannot lock rows in sequence "s"'
+$semantics->inspect('DROP TABLE v', [$view]); // throws SemanticException with message '"v" is not a table'
+$semantics->inspect('SELECT * FROM s FOR UPDATE', [$sequence]); // throws SemanticException with message 'cannot lock rows in sequence "s"'
 ```
 
 ### Generated columns
@@ -175,11 +177,11 @@ A column with `GENERATED ALWAYS AS (expression) STORED` is declared as generated
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
 $semantics = new Semantics();
-$table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+$table = $semantics->inspect('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('INSERT INTO t VALUES (1, 2)', [$table]); // throws SemanticException with message 'cannot insert a non-DEFAULT value into column "b"'
-$semantics->analyze('UPDATE t SET a = 1, b = DEFAULT', [$table]); // Returns a query
+$semantics->inspect('INSERT INTO t VALUES (1, 2)', [$table]); // throws SemanticException with message 'cannot insert a non-DEFAULT value into column "b"'
+$semantics->inspect('UPDATE t SET a = 1, b = DEFAULT', [$table]); // Returns a query
 ```
 
 ## Limitations

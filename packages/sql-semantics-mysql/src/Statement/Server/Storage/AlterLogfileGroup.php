@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Adding an undo file
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter logfile group lg add undofile 'v.log' wait");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("alter logfile group lg add undofile 'v.log' wait");
  *     [$statement->toString(), $statement->statement->file->kind] // => ["ALTER LOGFILE GROUP lg ADD UNDOFILE 'v.log' WAIT", \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Undo]
  */
 final class AlterLogfileGroup implements Statement

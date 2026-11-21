@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Comparing how two names sound
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE a SOUNDS LIKE 'Smith'");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM t WHERE a SOUNDS LIKE 'Smith'");
  *     $query->statement->where->pattern->value() // => 'Smith'
  */
 final class SoundsLike implements Scalar

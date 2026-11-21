@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an infinite bound
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (10)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (10)');
  *     $create->statement->definition->bound->from[0]->maximum() // => false
  */
 final class RangeLimit implements Node

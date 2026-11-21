@@ -24,7 +24,7 @@ final class TableDeclarationTest extends TestCase
 {
     public function testColumnDeclaresOneColumnDefinition(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT NOT NULL)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT NOT NULL)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -36,14 +36,14 @@ final class TableDeclarationTest extends TestCase
 
     public function testColumnDeclaresGeneratedColumnsGenerated(): void
     {
-        $columns = (new Semantics())->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), s INT GENERATED ALWAYS AS (a) STORED)')->declarations()[0]->columns;
+        $columns = (new Semantics())->inspect('CREATE TABLE t (a INT, g INT AS (a + 1), s INT GENERATED ALWAYS AS (a) STORED)')->declarations()[0]->columns;
 
         self::assertSame([false, true, true], [$columns[0]->generated, $columns[1]->generated, $columns[2]->generated]);
     }
 
     public function testPrimaryColumnsNamesTheTableLevelKeyColumns(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT, PRIMARY KEY (b, a))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT, PRIMARY KEY (b, a))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -52,7 +52,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testTableOrdersTheColumnsOfCreateTableSelect(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT NOT NULL) SELECT 1 AS b, 2 AS c');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT NOT NULL) SELECT 1 AS b, 2 AS c');
         $columns = $create->declarations()[0]->columns;
 
         self::assertSame(['a', 'b', 'c'], [$columns[0]->name->value, $columns[1]->name->value, $columns[2]->name->value]);
@@ -60,7 +60,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testRenamedNamesADefinedColumnAfterTheSelectedField(): void
     {
-        $columns = (new Semantics())->analyze('CREATE TABLE t (A INT NOT NULL, B INT) SELECT 1 AS a')->declarations()[0]->columns;
+        $columns = (new Semantics())->inspect('CREATE TABLE t (A INT NOT NULL, B INT) SELECT 1 AS a')->declarations()[0]->columns;
 
         self::assertSame(['B', 'a'], [$columns[0]->name->value, $columns[1]->name->value]);
         self::assertSame(Nullability::NotNull, $columns[1]->nullability);
@@ -68,7 +68,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testSplitKeepsInvisibleColumnsImplicit(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT INVISIBLE)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT INVISIBLE)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
@@ -81,16 +81,16 @@ final class TableDeclarationTest extends TestCase
 
     public function testViewNamesTheColumnsByTheList(): void
     {
-        $create = (new Semantics())->analyze('CREATE VIEW v (x) AS SELECT 1 AS a');
+        $create = (new Semantics())->inspect('CREATE VIEW v (x) AS SELECT 1 AS a');
 
         self::assertSame('x', $create->declarations()[0]->columns[0]->name->value);
         self::assertSame(RelationKind::View, $create->declarations()[0]->kind);
-        self::assertSame(RelationKind::BaseTable, (new Semantics())->analyze('CREATE TABLE t AS SELECT 1 AS a')->declarations()[0]->kind);
+        self::assertSame(RelationKind::BaseTable, (new Semantics())->inspect('CREATE TABLE t AS SELECT 1 AS a')->declarations()[0]->kind);
     }
 
     public function testLikeLeavesAnUndeclaredSourceIncomplete(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT)');
 
         self::assertFalse((new TableDeclaration())->like(new QualifiedName(new Name('c')), null, $create->profile())->complete);
         self::assertCount(1, (new TableDeclaration())->like(new QualifiedName(new Name('c')), $create->declarations()[0], $create->profile())->columns);
@@ -99,8 +99,8 @@ final class TableDeclarationTest extends TestCase
     public function testLikeKeepsGeneratedColumns(): void
     {
         $semantics = new Semantics();
-        $source = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), h INT AS (a) INVISIBLE)')->declarations();
-        $copy = $semantics->analyze('CREATE TABLE c LIKE t', $source)->declarations()[0];
+        $source = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1), h INT AS (a) INVISIBLE)')->declarations();
+        $copy = $semantics->inspect('CREATE TABLE c LIKE t', $source)->declarations()[0];
 
         self::assertSame([false, true, true], [$copy->columns[0]->generated, $copy->columns[1]->generated, $copy->implicit[0]->column->generated]);
     }
@@ -108,16 +108,16 @@ final class TableDeclarationTest extends TestCase
     public function testTableDeclaresSelectedColumnsNotGenerated(): void
     {
         $semantics = new Semantics();
-        $source = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
-        $columns = $semantics->analyze('CREATE TABLE c SELECT * FROM t', $source)->declarations()[0]->columns;
-        $view = $semantics->analyze('CREATE VIEW v AS SELECT * FROM t', $source)->declarations()[0]->columns;
+        $source = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $columns = $semantics->inspect('CREATE TABLE c SELECT * FROM t', $source)->declarations()[0]->columns;
+        $view = $semantics->inspect('CREATE VIEW v AS SELECT * FROM t', $source)->declarations()[0]->columns;
 
         self::assertSame([false, false, false, false], [$columns[0]->generated, $columns[1]->generated, $view[0]->generated, $view[1]->generated]);
     }
 
     public function testSettledStopsAtAnOpenStar(): void
     {
-        $create = (new Semantics())->analyze('CREATE VIEW v AS SELECT 1 AS a, t.* FROM t');
+        $create = (new Semantics())->inspect('CREATE VIEW v AS SELECT 1 AS a, t.* FROM t');
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
 
@@ -126,7 +126,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testFieldColumnNeedsAKnownType(): void
     {
-        $create = (new Semantics())->analyze('CREATE VIEW v AS SELECT NULL AS a');
+        $create = (new Semantics())->inspect('CREATE VIEW v AS SELECT NULL AS a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateView::class, $statement);
         $field = (new TableDeclaration())->settled($create->facts->query($statement->definition->query))[0];
@@ -136,7 +136,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testFindAnswersThePositionOfADefinedColumn(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, b INT)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 

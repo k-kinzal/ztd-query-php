@@ -19,7 +19,7 @@ final class WithOptionTest extends TestCase
 {
     public function testBothOptionsImplementTheInterface(): void
     {
-        $grant = (new Semantics('mysql-5.7.44'))->analyze('GRANT SELECT ON *.* TO u WITH GRANT OPTION MAX_QUERIES_PER_HOUR 1');
+        $grant = (new Semantics('mysql-5.7.44'))->inspect('GRANT SELECT ON *.* TO u WITH GRANT OPTION MAX_QUERIES_PER_HOUR 1');
 
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertContainsOnlyInstancesOf(WithOption::class, $grant->statement->options);

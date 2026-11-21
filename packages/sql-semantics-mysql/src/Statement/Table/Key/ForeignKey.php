@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  *
  * @visibility public
  * @example Reading a foreign key
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE c (p INT, CONSTRAINT fk FOREIGN KEY (p) REFERENCES p (id))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE c (p INT, CONSTRAINT fk FOREIGN KEY (p) REFERENCES p (id))');
  *     [$create->statement->elements[1]->constraint->name->column->value, $create->statement->elements[1]->references->table->name->value] // => ['fk', 'p']
  */
 final class ForeignKey implements TableElement

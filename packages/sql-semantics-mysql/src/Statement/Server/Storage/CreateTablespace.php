@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
  *
  * @visibility public
  * @example Creating a tablespace
- *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create tablespace ts add datafile 'ts.ibd' engine = InnoDB");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("create tablespace ts add datafile 'ts.ibd' engine = InnoDB");
  *     [$statement->toString(), $statement->statement->datafile?->value] // => ["CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' ENGINE InnoDB", 'ts.ibd']
  */
 final class CreateTablespace implements Statement

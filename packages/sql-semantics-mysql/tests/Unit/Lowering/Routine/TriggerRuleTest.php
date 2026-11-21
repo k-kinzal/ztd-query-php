@@ -41,7 +41,7 @@ final class TriggerRuleTest extends TestCase
     #[DataProvider('providerCreateLowersATriggerOfEveryLayout')]
     public function testCreateLowersATriggerOfEveryLayout(string $release, string $sql, TriggerTime $time, TriggerEvent $event, string $expected): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Semantics($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame('tr', $statement->name->name->value);
@@ -69,7 +69,7 @@ final class TriggerRuleTest extends TestCase
     #[DataProvider('providerCreateReadsIfNotExists')]
     public function testCreateReadsIfNotExists(string $release): void
     {
-        $create = (new Semantics($release))->analyze('create trigger if not exists tr after insert on t for each row begin end');
+        $create = (new Semantics($release))->inspect('create trigger if not exists tr after insert on t for each row begin end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertTrue($statement->ifNotExists);
@@ -103,7 +103,7 @@ final class TriggerRuleTest extends TestCase
     #[DataProvider('providerOrderLowersFollowsAndPrecedes')]
     public function testOrderLowersFollowsAndPrecedes(string $release, string $sql, OrderPlacement $placement, string $expected): void
     {
-        $create = (new Semantics($release))->analyze($sql);
+        $create = (new Semantics($release))->inspect($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame($placement, $statement->order?->placement);

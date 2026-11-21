@@ -27,8 +27,8 @@ final class RaiseTest extends TestCase
     public function testDeriveScalarYieldsNoValueInsideATrigger(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->inspect("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END", [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->diagnose("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END", [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
@@ -48,7 +48,7 @@ final class RaiseTest extends TestCase
 
     public function testDeriveScalarOutsideATriggerIsReportedByTheStatement(): void
     {
-        $operation = (new Semantics())->inspect('SELECT RAISE(IGNORE)', []);
+        $operation = (new Semantics())->diagnose('SELECT RAISE(IGNORE)', []);
 
         self::assertEquals([new Misuse(MisuseRule::RaiseOutsideTrigger)], $operation->facts->diagnostics);
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
@@ -56,7 +56,7 @@ final class RaiseTest extends TestCase
 
     public function testRenderWritesTheActionAndTheMessage(): void
     {
-        $operation = (new Semantics())->inspect('create trigger r before delete on t begin select raise(ignore) AS c1; select raise(rollback, \'r\') AS c2, raise(abort, \'a\') AS c3, raise(fail, \'f\') AS c4; end');
+        $operation = (new Semantics())->diagnose('create trigger r before delete on t begin select raise(ignore) AS c1; select raise(rollback, \'r\') AS c2, raise(abort, \'a\') AS c3, raise(fail, \'f\') AS c4; end');
 
         self::assertSame('CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(IGNORE) AS c1; SELECT RAISE(ROLLBACK, \'r\') AS c2, RAISE(ABORT, \'a\') AS c3, RAISE(FAIL, \'f\') AS c4; END', $operation->toString());
     }

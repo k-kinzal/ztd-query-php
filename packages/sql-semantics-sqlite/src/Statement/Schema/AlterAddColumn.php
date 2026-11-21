@@ -42,8 +42,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * @visibility public
  * @example Deriving the shape the new column definition sees
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $alter = $semantics->analyze('ALTER TABLE t ADD COLUMN b TEXT CHECK (b <> a)', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+ *     $alter = $semantics->inspect('ALTER TABLE t ADD COLUMN b TEXT CHECK (b <> a)', [$table]);
  *     [count($alter->facts->relation($alter->statement)->shape->slots), $alter->toString()] // => [2, 'ALTER TABLE t ADD b TEXT CHECK (b <> a)']
  */
 final class AlterAddColumn implements Statement, Relation

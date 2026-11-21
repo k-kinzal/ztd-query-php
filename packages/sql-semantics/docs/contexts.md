@@ -13,7 +13,7 @@ Facts such as resolutions, shapes and types depend on what is known about the da
 | `declarationSchema` | The schema an unqualified declaration belongs to. |
 | `relationNames`, `columnNames` | How relation and schema names, and column names, are compared (`Comparison::Sensitive` or `Comparison::AsciiInsensitive`). |
 
-Create contexts with `Semantics::context()`, which applies the search path and the name rules of the database, or let `analyze()` and `analyzeAll()` create one from their second argument:
+Create contexts with `Semantics::context()`, which applies the search path and the name rules of the database, or let `inspect()`, `analyze()` and `analyzeAll()` create one from their second argument:
 
 | Argument | Context |
 |----------|---------|
@@ -26,13 +26,13 @@ Create contexts with `Semantics::context()`, which applies the search path and t
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $context = $semantics->context([$users]);
 
 $semantics->context()->complete; // => false
 $semantics->context([])->complete; // => true
 $semantics->context([$users], false)->complete; // => false
-$semantics->analyze('SELECT name FROM users', $context)->context === $context; // => true
+$semantics->inspect('SELECT name FROM users', $context)->context === $context; // => true
 count($context->tables); // => 1
 ```
 
@@ -64,11 +64,11 @@ $users = new Table(
         new Column(new Name('name'), new ColumnDomain('TEXT')),
     ],
 );
-$query = $semantics->analyze('SELECT name FROM users', [$users]);
+$query = $semantics->inspect('SELECT name FROM users', [$users]);
 
 $query->field('name')->column() === $users->columns[1]; // => true
 $query->field('name')->type->descriptor->name(); // => 'TEXT'
-$semantics->analyze('SELECT rowid FROM users', [$users]); // throws SemanticException with message 'Column rowid does not exist.'
+$semantics->inspect('SELECT rowid FROM users', [$users]); // throws SemanticException with message 'Column rowid does not exist.'
 ```
 
 A declaration belongs to one language profile; a declaration of another profile is refused with `InvalidConstruction`.
@@ -88,9 +88,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 $semantics = new Semantics();
 $events = new Table(new QualifiedName(new Name('events')), $semantics->profile(), [new Column(new Name('id'), new ColumnDomain('INTEGER'))], complete: false);
 
-$semantics->analyze('SELECT id FROM events', [$events])->field('id')->resolution instanceof ResolvedColumn; // => true
-$semantics->analyze('SELECT kind FROM events', [$events])->field('kind')->resolution instanceof ConditionalColumn; // => true
-$semantics->analyze('SELECT * FROM events', [$events])->shape()->missing[0]->describe(); // => 'the complete column list of relation events'
+$semantics->inspect('SELECT id FROM events', [$events])->field('id')->resolution instanceof ResolvedColumn; // => true
+$semantics->inspect('SELECT kind FROM events', [$events])->field('kind')->resolution instanceof ConditionalColumn; // => true
+$semantics->inspect('SELECT * FROM events', [$events])->shape()->missing[0]->describe(); // => 'the complete column list of relation events'
 ```
 
 ### Relation kinds
@@ -117,10 +117,10 @@ $orders = new Table(new QualifiedName(new Name('orders')), $semantics->profile()
     new Column(new Name('total'), new ColumnDomain('INTEGER'), generated: true),
 ]);
 
-$semantics->analyze('DROP TABLE active_users', [$view]); // throws SemanticException with message 'Relation active_users is a view: DROP TABLE removes only a table.'
-$semantics->analyze('UPDATE orders SET total = 2', [$orders]); // throws SemanticException with message 'cannot UPDATE generated column "total"'
-$semantics->analyze('SELECT total FROM orders', [$orders])->field('total')->column()->generated; // => true
-$semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
+$semantics->inspect('DROP TABLE active_users', [$view]); // throws SemanticException with message 'Relation active_users is a view: DROP TABLE removes only a table.'
+$semantics->inspect('UPDATE orders SET total = 2', [$orders]); // throws SemanticException with message 'cannot UPDATE generated column "total"'
+$semantics->inspect('SELECT total FROM orders', [$orders])->field('total')->column()->generated; // => true
+$semantics->inspect('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
 ```
 
 A declaration keeps neither the query of a view nor the expression of a generated column. Checks that need them are not made; the database packages list them among their limitations.
@@ -133,11 +133,11 @@ The declaration object is the identity of a declaration. A resolved reference re
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$first = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-$second = $semantics->analyze('CREATE TABLE t (b TEXT)');
+$first = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+$second = $semantics->inspect('CREATE TABLE t (b TEXT)');
 
 count($semantics->context([$first, $first, $first->declarations()[0]])->tables); // => 1
-$semantics->analyze('SELECT 1 FROM t', [$first, $second]); // throws SemanticException
+$semantics->inspect('SELECT 1 FROM t', [$first, $second]); // throws SemanticException
 ```
 
 ## Completeness
@@ -158,12 +158,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\ConditionalTabl
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 
 $semantics = new Semantics();
-$users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+$users = $semantics->inspect('CREATE TABLE users (id INTEGER PRIMARY KEY)');
 $partial = $semantics->context([$users], false);
 
-$unqualified = $semantics->analyze('SELECT id FROM users', $partial);
+$unqualified = $semantics->inspect('SELECT id FROM users', $partial);
 $unqualified->facts->relation($unqualified->inputRelation())->table instanceof ConditionalTable; // => true
-$qualified = $semantics->analyze('SELECT id FROM main.users', $partial);
+$qualified = $semantics->inspect('SELECT id FROM main.users', $partial);
 $qualified->facts->relation($qualified->inputRelation())->table instanceof DeclaredTable; // => true
 ```
 
@@ -216,13 +216,13 @@ A context is a snapshot, not a database. Only statements that create relations c
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $semantics = new Semantics();
-$create = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-$alter = $semantics->analyze('ALTER TABLE t ADD COLUMN d INTEGER', [$create]);
+$create = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+$alter = $semantics->inspect('ALTER TABLE t ADD COLUMN d INTEGER', [$create]);
 
 $alter->declarations(); // => []
-$semantics->analyze('SELECT d FROM t', [$create, $alter]); // throws SemanticException with message 'Column d does not exist.'
+$semantics->inspect('SELECT d FROM t', [$create, $alter]); // throws SemanticException with message 'Column d does not exist.'
 ```
 
-In the same way, `analyze()` of a script and `analyzeAll()` pass the same context to every statement; a CREATE earlier in the script is not applied for the statements after it. Context order is not execution order.
+Inspection of a script and `analyzeAll()` pass the same context to every statement; a CREATE earlier in the script is not applied for the statements after it. Context order is not execution order.
 
 To describe the database after a change, provide the declarations of the new state, for example by analyzing the CREATE statement the changed table would have. To analyze a statement against different declarations, analyze its SQL again with the other context. An existing operation is never re-resolved; its facts stay those of its own context. Because a statement structure holds no bindings, `new Operation($otherContext, $operation->statement)` is also possible: it is a new root whose facts are derived from scratch, with the checks of a construction but without the checks against an input text.

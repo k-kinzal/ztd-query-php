@@ -16,13 +16,13 @@ final class ShowProfilesTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW PROFILES');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW PROFILES');
         self::assertInstanceOf(ShowProfiles::class, $show->statement);
         self::assertSame('Query_ID', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PROFILES', (new Semantics('mysql-5.6.51'))->analyze('SHOW PROFILES')->toString());
+        self::assertSame('SHOW PROFILES', (new Semantics('mysql-5.6.51'))->inspect('SHOW PROFILES')->toString());
     }
 }

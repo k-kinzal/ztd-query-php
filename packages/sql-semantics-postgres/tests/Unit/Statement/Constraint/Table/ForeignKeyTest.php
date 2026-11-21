@@ -15,7 +15,7 @@ final class ForeignKeyTest extends TestCase
     public function testKindIsForeignKey(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,8 +29,8 @@ final class ForeignKeyTest extends TestCase
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->inspect('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
-        $statement = $semantics->inspect('CREATE TABLE t (a int, FOREIGN KEY (zz) REFERENCES p (nope) NO INHERIT)', $context);
+        array_push($context, ...$semantics->diagnose('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, FOREIGN KEY (zz) REFERENCES p (nope) NO INHERIT)', $context);
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
           1 => 'column "nope" referenced in foreign key constraint does not exist',
@@ -41,7 +41,7 @@ final class ForeignKeyTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, CONSTRAINT f FOREIGN KEY (a) REFERENCES p (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE SET NULL NOT VALID)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, CONSTRAINT f FOREIGN KEY (a) REFERENCES p (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE SET NULL NOT VALID)', []);
         self::assertSame('CREATE TABLE t (a INT, CONSTRAINT f FOREIGN KEY (a) REFERENCES p (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE SET NULL NOT VALID)', $statement->toString());
     }
 }

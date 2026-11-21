@@ -16,11 +16,11 @@ final class PartitionRowTest extends TestCase
 {
     public function testDeriveRowDerivesTheValuesWithoutColumns(): void
     {
-        self::assertSame('Column a does not exist.', (new Semantics())->inspect('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (a))')->facts->diagnostics[0]->message());
+        self::assertSame('Column a does not exist.', (new Semantics())->diagnose('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (a))')->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheValues(): void
     {
-        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (1, MAXVALUE))', (new Semantics())->inspect('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (1, MAXVALUE))')->toString());
+        self::assertSame('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (1, MAXVALUE))', (new Semantics())->diagnose('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (1, MAXVALUE))')->toString());
     }
 }

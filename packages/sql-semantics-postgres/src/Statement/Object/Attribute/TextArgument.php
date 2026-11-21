@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the locale of a collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE COLLATION german (locale = 'de_DE')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE COLLATION german (locale = 'de_DE')");
  *     $operation->statement->definition[0]->value->text->value // => 'de_DE'
  */
 final class TextArgument implements AttributeArgument

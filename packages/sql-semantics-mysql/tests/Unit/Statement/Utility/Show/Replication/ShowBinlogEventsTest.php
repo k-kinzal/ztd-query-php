@@ -16,13 +16,13 @@ final class ShowBinlogEventsTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW BINLOG EVENTS FROM 4');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW BINLOG EVENTS FROM 4');
         self::assertInstanceOf(ShowBinlogEvents::class, $show->statement);
         self::assertSame('Pos', $show->field(1)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW BINLOG EVENTS FROM 4', (new Semantics('mysql-5.6.51'))->analyze('SHOW BINLOG EVENTS FROM 4')->toString());
+        self::assertSame('SHOW BINLOG EVENTS FROM 4', (new Semantics('mysql-5.6.51'))->inspect('SHOW BINLOG EVENTS FROM 4')->toString());
     }
 }

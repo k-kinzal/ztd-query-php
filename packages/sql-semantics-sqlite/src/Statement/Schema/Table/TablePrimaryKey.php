@@ -33,7 +33,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
  *
  * @visibility public
  * @example Reading the terms of a primary key
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, PRIMARY KEY (a, b DESC) ON CONFLICT ROLLBACK)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b, PRIMARY KEY (a, b DESC) ON CONFLICT ROLLBACK)');
  *     $key = $create->statement->constraints[0]->items[0];
  *     [count($key->terms), $key->terms[1]->direction?->value, $key->conflict?->value] // => [2, 'DESC', 'ROLLBACK']
  */

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  *
  * @visibility public
  * @example Reading the language of an anonymous block
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("DO LANGUAGE plpgsql 'BEGIN END'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("DO LANGUAGE plpgsql 'BEGIN END'");
  *     $operation->statement->items[0]->name() // => 'plpgsql'
  */
 final class DoLanguage implements Node

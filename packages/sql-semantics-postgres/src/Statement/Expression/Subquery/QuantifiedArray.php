@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  *
  * @visibility public
  * @example Comparing with the elements of an array
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 = ANY (ARRAY[1, 2])')->field(0)->type->descriptor->name() // => 'boolean'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 = ANY (ARRAY[1, 2])')->field(0)->type->descriptor->name() // => 'boolean'
  */
 final class QuantifiedArray implements Scalar
 {

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
  *
  * @visibility public
  * @example Changing the owner
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t OWNER TO CURRENT_USER');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t OWNER TO CURRENT_USER');
  *     $statement->toString() // => 'ALTER TABLE t OWNER TO CURRENT_USER'
  */
 final class OwnerTo implements AlterCommand

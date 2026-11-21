@@ -26,8 +26,8 @@ final class CreateLoadableFunctionTest extends TestCase
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $create = $semantics->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'", [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $create = $semantics->inspect("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'", [$table]);
 
         self::assertSame([], $create->facts->diagnostics);
         self::assertSame([], $create->facts->declarations);
@@ -36,7 +36,7 @@ final class CreateLoadableFunctionTest extends TestCase
 
     public function testDeriveStatementReadsTheRegistration(): void
     {
-        $create = (new Semantics())->analyze("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
+        $create = (new Semantics())->inspect("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
 
@@ -66,7 +66,7 @@ final class CreateLoadableFunctionTest extends TestCase
     #[DataProvider('providerRenderWritesTheRegistration')]
     public function testRenderWritesTheRegistration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedRegistration(): void

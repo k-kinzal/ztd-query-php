@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the copied collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE COLLATION german FROM "de_DE"');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE COLLATION german FROM "de_DE"');
  *     $operation->statement->source->last()->value // => 'de_DE'
  */
 final class CopyCollation implements Statement

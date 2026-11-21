@@ -39,7 +39,7 @@ final class JoinedTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT a, t.a, u.a, c FROM t RIGHT JOIN u USING (a)', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT a, t.a, u.a, c FROM t RIGHT JOIN u USING (a)', [$t, $u]);
 
         self::assertSame($u->columns[0], $operation->field(0)->column());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
@@ -59,7 +59,7 @@ final class JoinedTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT * FROM t NATURAL JOIN u', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT * FROM t NATURAL JOIN u', [$t, $u]);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
         self::assertSame([], $operation->facts->diagnostics);
@@ -76,7 +76,7 @@ final class JoinedTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->inspect('SELECT 1 FROM t JOIN u USING (c)', [$t, $u]);
+        $operation = $semantics->diagnose('SELECT 1 FROM t JOIN u USING (c)', [$t, $u]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -93,8 +93,8 @@ final class JoinedTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $modern = $semantics->inspect('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
-        $legacy = (new Semantics('mysql-5.7.44'))->inspect('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
+        $modern = $semantics->diagnose('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
+        $legacy = (new Semantics('mysql-5.7.44'))->diagnose('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
         self::assertInstanceOf(Select::class, $modern->statement);
         self::assertInstanceOf(JoinedTable::class, $modern->statement->from);
@@ -109,9 +109,9 @@ final class JoinedTableTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u ON t.a = u.a NATURAL RIGHT OUTER JOIN v CROSS JOIN w STRAIGHT_JOIN x INNER JOIN y USING (a, b)', $semantics->inspect('select 1 from t left outer join u on t.a = u.a natural right outer join v cross join w straight_join x inner join y using (a, b)')->toString());
-        self::assertSame('SELECT 1 FROM t NATURAL INNER JOIN u', $semantics->inspect('select 1 from t natural inner join u')->toString());
-        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u USING (a)', (new Semantics('mysql-5.6.51'))->inspect('select 1 from t left outer join u using (a)')->toString());
+        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u ON t.a = u.a NATURAL RIGHT OUTER JOIN v CROSS JOIN w STRAIGHT_JOIN x INNER JOIN y USING (a, b)', $semantics->diagnose('select 1 from t left outer join u on t.a = u.a natural right outer join v cross join w straight_join x inner join y using (a, b)')->toString());
+        self::assertSame('SELECT 1 FROM t NATURAL INNER JOIN u', $semantics->diagnose('select 1 from t natural inner join u')->toString());
+        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u USING (a)', (new Semantics('mysql-5.6.51'))->diagnose('select 1 from t left outer join u using (a)')->toString());
     }
 
     public function testAConditionOnANaturalJoinIsRejected(): void

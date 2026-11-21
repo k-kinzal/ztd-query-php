@@ -18,14 +18,14 @@ final class ColumnUniqueTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('CREATE TABLE t (a UNIQUE)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a UNIQUE)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheConflictResolution(): void
     {
-        $operation = (new Semantics())->analyze('create table t (a unique on conflict rollback)');
+        $operation = (new Semantics())->inspect('create table t (a unique on conflict rollback)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

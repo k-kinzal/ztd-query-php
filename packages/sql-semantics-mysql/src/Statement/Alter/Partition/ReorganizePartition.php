@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
  *
  * @visibility public
  * @example Splitting a partition
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REORGANIZE PARTITION p0 INTO (PARTITION a VALUES LESS THAN (5), PARTITION b VALUES LESS THAN (10))');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t REORGANIZE PARTITION p0 INTO (PARTITION a VALUES LESS THAN (5), PARTITION b VALUES LESS THAN (10))');
  *     count($alter->statement->commands[0]->definitions) // => 2
  */
 final class ReorganizePartition implements StandaloneCommand

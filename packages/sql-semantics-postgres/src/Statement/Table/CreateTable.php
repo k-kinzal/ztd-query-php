@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec;
  * @visibility public
  * @example Providing a declaration to a context
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $create = $semantics->analyze('CREATE TABLE app.t (id serial PRIMARY KEY, name varchar(20) NOT NULL, note text)', []);
+ *     $create = $semantics->inspect('CREATE TABLE app.t (id serial PRIMARY KEY, name varchar(20) NOT NULL, note text)', []);
  *     $table = $create->declarations()[0];
  *     [array_map(static fn ($column) => $column->type->name(), $table->columns), $table->columns[2]->nullability, $table->implicit[0]->names[0]->value] // => [['integer', 'character varying(20)', 'text'], \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, 'tableoid']
  */

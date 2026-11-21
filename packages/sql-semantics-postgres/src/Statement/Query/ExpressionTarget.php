@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading the field of an unnamed constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT 'a'");
  *     [$query->field(0)->name->value, $query->field(0)->type->descriptor->name()] // => ['?column?', 'text']
  */
 final class ExpressionTarget implements Target

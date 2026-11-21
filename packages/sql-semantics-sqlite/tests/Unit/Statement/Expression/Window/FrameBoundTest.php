@@ -29,8 +29,8 @@ final class FrameBoundTest extends TestCase
     public function testReadsTheOffsetOfAnAnalyzedBoundary(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT sum(a) OVER (ROWS BETWEEN 2 PRECEDING AND ? FOLLOWING) FROM t', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT sum(a) OVER (ROWS BETWEEN 2 PRECEDING AND ? FOLLOWING) FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -49,7 +49,7 @@ final class FrameBoundTest extends TestCase
 
     public function testRenderWritesEveryKindOfBoundary(): void
     {
-        $operation = (new Semantics())->analyze('select sum(a) over (rows between unbounded preceding and 1 preceding) AS c1, sum(a) over (rows between current row and 1 following) AS c2, sum(a) over (rows between 1 following and unbounded following) AS c3 from t');
+        $operation = (new Semantics())->inspect('select sum(a) over (rows between unbounded preceding and 1 preceding) AS c1, sum(a) over (rows between current row and 1 following) AS c2, sum(a) over (rows between 1 following and unbounded following) AS c3 from t');
 
         self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) AS c1, sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) AS c2, sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) AS c3 FROM t', $operation->toString());
     }

@@ -15,7 +15,7 @@ final class IndexConstraintTest extends TestCase
     public function testKindIsUniqueOrPrimaryKey(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ADD UNIQUE USING INDEX i', []);
+        $statement = $semantics->diagnose('ALTER TABLE t ADD UNIQUE USING INDEX i', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $n1->commands[0];
@@ -28,7 +28,7 @@ final class IndexConstraintTest extends TestCase
     public function testDeriveClauseChecksTheAttributes(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ADD PRIMARY KEY USING INDEX i NOT VALID', []);
+        $statement = $semantics->diagnose('ALTER TABLE t ADD PRIMARY KEY USING INDEX i NOT VALID', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
           1 => 'PRIMARY KEY constraints cannot be marked NOT VALID',
@@ -38,7 +38,7 @@ final class IndexConstraintTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i DEFERRABLE', []);
+        $statement = $semantics->diagnose('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i DEFERRABLE', []);
         self::assertSame('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i DEFERRABLE', $statement->toString());
     }
 }

@@ -20,12 +20,12 @@ final class OnWordTest extends TestCase
 {
     public function testRenderWritesOn(): void
     {
-        self::assertSame("INSTALL COMPONENT 'c' SET c.v = ON", (new Semantics())->analyze("install component 'c' set c.v = on")->toString());
+        self::assertSame("INSTALL COMPONENT 'c' SET c.v = ON", (new Semantics())->inspect("install component 'c' set c.v = on")->toString());
     }
 
     public function testDeriveScalarIsAString(): void
     {
-        $install = (new Semantics())->analyze("INSTALL COMPONENT 'c' SET c.v = ON");
+        $install = (new Semantics())->inspect("INSTALL COMPONENT 'c' SET c.v = ON");
         self::assertInstanceOf(InstallComponent::class, $install->statement);
 
         self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $install->facts->scalar($install->statement->settings[0]->value)->type);

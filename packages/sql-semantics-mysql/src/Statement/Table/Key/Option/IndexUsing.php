@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
  *
  * @visibility public
  * @example Reading an index option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) USING HASH)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT, KEY (a) USING HASH)');
  *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing // => true
  */
 final class IndexUsing implements IndexOption

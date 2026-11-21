@@ -17,14 +17,14 @@ final class HashMethodTest extends TestCase
     public function testDeriveMethodResolvesTheExpressionInTheTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $alter = $semantics->analyze('ALTER TABLE t PARTITION BY HASH (a)', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT)');
+        $alter = $semantics->inspect('ALTER TABLE t PARTITION BY HASH (a)', [$table]);
 
         self::assertSame([], $alter->facts->diagnostics);
     }
 
     public function testRenderWritesTheExpression(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY LINEAR HASH (a + 1)', (new Semantics())->analyze('ALTER TABLE t PARTITION BY LINEAR HASH (a+1)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY LINEAR HASH (a + 1)', (new Semantics())->inspect('ALTER TABLE t PARTITION BY LINEAR HASH (a+1)')->toString());
     }
 }

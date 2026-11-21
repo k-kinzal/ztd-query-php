@@ -30,7 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading TRUE as the integer constant
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT true AS t', []);
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT true AS t', []);
  *     [$query->statement->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE AS t']
  */
 final class TruthWord implements Scalar

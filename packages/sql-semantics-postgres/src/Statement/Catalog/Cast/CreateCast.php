@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a binary-coercible implicit cast
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE CAST (int4 AS myint) WITHOUT FUNCTION AS IMPLICIT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE CAST (int4 AS myint) WITHOUT FUNCTION AS IMPLICIT');
  *     [$operation->statement->method, $operation->statement->context] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext::Implicit]
  */
 final class CreateCast implements Statement

@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
  *
  * @visibility public
  * @example Reading the rows of an INSERT
- *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a");
+ *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a");
  *     [count($insert->statement->rows->rows), count($insert->statement->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a"]
  */
 final class InsertRows implements Statement

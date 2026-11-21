@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * @visibility public
  * @example Reading the declarations of a block
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT; END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE a INT; END');
  *     $create->statement->body->declarations[0] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration // => true
  */
 interface Declaration extends Node

@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Reading a default grant
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
  *     [$operation->statement->action->objects->value, $operation->statement->action->grantOption] // => ['TABLES', true]
  */
 final class DefaultGrant implements Node

@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
  *
  * @visibility public
  * @example Reading the label of the statement
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() again: LOOP ITERATE again; END LOOP');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() again: LOOP ITERATE again; END LOOP');
  *     [$create->statement->body->statements[0]->label->value, $create->facts->diagnostics] // => ['again', []]
  */
 final class Iterate implements ProgramStatement

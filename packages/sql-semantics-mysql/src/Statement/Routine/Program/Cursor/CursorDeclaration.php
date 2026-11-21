@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
  *
  * @visibility public
  * @example Reading a cursor declaration
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT a FROM t; END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT a FROM t; END');
  *     $create->statement->body->declarations[0]->name->value // => 'c'
  */
 final class CursorDeclaration implements Declaration

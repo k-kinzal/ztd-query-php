@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Renaming a tablespace
- *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter tablespace a rename to b');
+ *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('alter tablespace a rename to b');
  *     [$rename->toString(), $rename->statement->target->value] // => ['ALTER TABLESPACE a RENAME TO b', 'b']
  */
 final class RenameTablespace implements Statement

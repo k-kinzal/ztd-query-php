@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the parts of a floating point literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1.50E-3 AS r');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1.50E-3 AS r');
  *     $literal = $query->statement->columns[0]->expression;
  *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
  * @example Refusing a literal with neither a decimal point nor an exponent

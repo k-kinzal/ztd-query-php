@@ -22,8 +22,8 @@ final class UpsertRuleTest extends TestCase
     public function testTailLowersAnEmptyTailAndAReturningOnlyTail(): void
     {
         $semantics = new Semantics();
-        $bare = $semantics->analyze('INSERT INTO t VALUES (1)')->statement;
-        $returning = $semantics->analyze('INSERT INTO t VALUES (1) RETURNING a, b')->statement;
+        $bare = $semantics->inspect('INSERT INTO t VALUES (1)')->statement;
+        $returning = $semantics->inspect('INSERT INTO t VALUES (1) RETURNING a, b')->statement;
 
         self::assertInstanceOf(InsertRows::class, $bare);
         self::assertInstanceOf(InsertRows::class, $returning);
@@ -36,7 +36,7 @@ final class UpsertRuleTest extends TestCase
 
     public function testTailLowersTargetedDoUpdateAndDoNothingClausesInWrittenOrder(): void
     {
-        $operation = (new Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) WHERE a > 0 DO UPDATE SET b = 1 WHERE c = 2 ON CONFLICT (b COLLATE nocase DESC, c) DO NOTHING');
+        $operation = (new Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT (a) WHERE a > 0 DO UPDATE SET b = 1 WHERE c = 2 ON CONFLICT (b COLLATE nocase DESC, c) DO NOTHING');
 
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         self::assertCount(2, $operation->statement->upserts);
@@ -63,8 +63,8 @@ final class UpsertRuleTest extends TestCase
     public function testTailLowersTheUntargetedClausesThatEndTheTailWithTheirReturning(): void
     {
         $semantics = new Semantics();
-        $nothing = $semantics->analyze('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING RETURNING a');
-        $update = $semantics->analyze('INSERT INTO t VALUES (1) ON CONFLICT DO UPDATE SET a = 1 WHERE b');
+        $nothing = $semantics->inspect('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING RETURNING a');
+        $update = $semantics->inspect('INSERT INTO t VALUES (1) ON CONFLICT DO UPDATE SET a = 1 WHERE b');
 
         self::assertInstanceOf(InsertRows::class, $nothing->statement);
         self::assertInstanceOf(InsertRows::class, $update->statement);
@@ -83,7 +83,7 @@ final class UpsertRuleTest extends TestCase
 
     public function testTailKeepsATargetedClauseBeforeTheUntargetedLastOne(): void
     {
-        $operation = (new Semantics())->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO NOTHING ON CONFLICT DO UPDATE SET c = excluded.c RETURNING *');
+        $operation = (new Semantics())->inspect('INSERT INTO t VALUES (1) ON CONFLICT (a) DO NOTHING ON CONFLICT DO UPDATE SET c = excluded.c RETURNING *');
 
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         self::assertCount(2, $operation->statement->upserts);

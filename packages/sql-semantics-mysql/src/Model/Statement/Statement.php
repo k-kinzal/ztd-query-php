@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
  *
  * @visibility public
  * @example Telling the analyzed statement apart from the operation that binds it
- *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1');
  *     $operation->statement instanceof \SqlSemantics\Platform\MySql\Model\Statement\Statement // => true
  */
 interface Statement extends Node

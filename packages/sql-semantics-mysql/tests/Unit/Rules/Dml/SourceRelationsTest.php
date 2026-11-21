@@ -28,7 +28,7 @@ final class SourceRelationsTest extends TestCase
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('INSERT INTO t (a) SELECT x FROM u GROUP BY x ON DUPLICATE KEY UPDATE b = y', [$t, $u]);
+        $operation = $semantics->diagnose('INSERT INTO t (a) SELECT x FROM u GROUP BY x ON DUPLICATE KEY UPDATE b = y', [$t, $u]);
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
@@ -38,7 +38,7 @@ final class SourceRelationsTest extends TestCase
         $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->inspect('INSERT INTO t (a) SELECT u.x FROM u JOIN (SELECT 1 AS z) AS d ON TRUE ON DUPLICATE KEY UPDATE b = z + u.y', [$t, $u]);
+        $operation = $semantics->diagnose('INSERT INTO t (a) SELECT u.x FROM u JOIN (SELECT 1 AS z) AS d ON TRUE ON DUPLICATE KEY UPDATE b = z + u.y', [$t, $u]);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull((new SourceRelations())->members(new WriteTarget(new QualifiedName(new Name('t')))));

@@ -16,6 +16,6 @@ final class CpuRangeTest extends TestCase
 {
     public function testRenderWritesNumbersAndRanges(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 0, 2 - 5', (new Semantics())->analyze('alter resource group g vcpu 0 2-5')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU = 0, 2 - 5', (new Semantics())->inspect('alter resource group g vcpu 0 2-5')->toString());
     }
 }

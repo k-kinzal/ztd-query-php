@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
  *
  * @visibility public
  * @example Reporting an unknown storage word
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (a) PERSISTED)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Generated column storage PERSISTED is neither VIRTUAL nor STORED.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b AS (a) PERSISTED)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Generated column storage PERSISTED is neither VIRTUAL nor STORED.
  */
 final class UnknownStorage implements Diagnostic
 {

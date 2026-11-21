@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('unlock table')->toString() // => 'UNLOCK TABLES'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('unlock table')->toString() // => 'UNLOCK TABLES'
  */
 final class UnlockTables implements Statement
 {

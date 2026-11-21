@@ -16,13 +16,13 @@ final class ShowPrivilegesTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW PRIVILEGES');
+        $show = (new Semantics())->inspect('SHOW PRIVILEGES');
         self::assertInstanceOf(ShowPrivileges::class, $show->statement);
         self::assertSame('Privilege', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PRIVILEGES', (new Semantics())->analyze('SHOW PRIVILEGES')->toString());
+        self::assertSame('SHOW PRIVILEGES', (new Semantics())->inspect('SHOW PRIVILEGES')->toString());
     }
 }

@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialA
  *
  * @visibility public
  * @example Reading a foreign key
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
  *     $create->toString() // => 'CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)'
  */
 final class ForeignKey implements Constraint

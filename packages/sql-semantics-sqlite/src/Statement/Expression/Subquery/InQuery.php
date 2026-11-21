@@ -32,7 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading a membership test against a query
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 IN (SELECT 2)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 IN (SELECT 2)');
  *     [$query->statement->columns[0]->expression->negated, $query->field(0)->nullability] // => [false, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  */
 final class InQuery implements Scalar

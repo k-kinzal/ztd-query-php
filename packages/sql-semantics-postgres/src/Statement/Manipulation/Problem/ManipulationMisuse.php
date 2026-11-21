@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a column written twice
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: column "a" specified more than once
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('INSERT INTO t (a, a) VALUES (1, 2)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: column "a" specified more than once
  * @example Refusing a message without its subjects
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

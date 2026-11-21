@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
  *
  * @visibility public
  * @example Keeping the rejected form
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATE)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATE)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
  */
 final class CastAtLocal implements Scalar
 {

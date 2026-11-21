@@ -19,9 +19,9 @@ final class AggregateChecksTest extends TestCase
     public function testArgumentsChecksTheVariadicOrderedSet(): void
     {
         $semantics = new Semantics();
-        $accepted = $semantics->inspect('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC int4[])', []);
-        $rejected = $semantics->inspect('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC text[])', []);
-        $counted = $semantics->inspect('DROP AGGREGATE a(VARIADIC int4[] ORDER BY int4, int4)', []);
+        $accepted = $semantics->diagnose('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC int4[])', []);
+        $rejected = $semantics->diagnose('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC text[])', []);
+        $counted = $semantics->diagnose('DROP AGGREGATE a(VARIADIC int4[] ORDER BY int4, int4)', []);
         self::assertSame([], $accepted->facts->diagnostics);
         self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $rejected->facts->diagnostics);
         self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $counted->facts->diagnostics);

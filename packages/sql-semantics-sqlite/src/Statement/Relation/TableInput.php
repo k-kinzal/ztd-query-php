@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
  *
  * @visibility public
  * @example Reading a named input
- *     $input = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM main.t AS x')->singleNamedInput();
+ *     $input = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a FROM main.t AS x')->singleNamedInput();
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['main', 't', 'x']
  */
 final class TableInput implements NamedRelation

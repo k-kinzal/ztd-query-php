@@ -19,27 +19,27 @@ final class ChoicesTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame(['SLOW is not an ALGORITHM the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('ALTER TABLE t ALGORITHM = COPY, ALGORITHM = SLOW')->facts->diagnostics));
+        self::assertSame(['SLOW is not an ALGORITHM the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t ALGORITHM = COPY, ALGORITHM = SLOW')->facts->diagnostics));
     }
 
     public function testLockChecksTheLock(): void
     {
         $semantics = new Semantics();
 
-        self::assertSame(['FULL is not a LOCK the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('ALTER TABLE t LOCK = none, LOCK = FULL')->facts->diagnostics));
+        self::assertSame(['FULL is not a LOCK the server knows.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t LOCK = none, LOCK = FULL')->facts->diagnostics));
     }
 
     public function testLegacyAcceptsDefaultAsANameIn57(): void
     {
         $semantics = new Semantics('mysql-5.7.44');
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('ALTER TABLE t ALGORITHM = `DEFAULT`, LOCK = `DEFAULT`')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t ALGORITHM = `DEFAULT`, LOCK = `DEFAULT`')->facts->diagnostics));
     }
 
     public function testCheckIgnoresTheKeywordDefault(): void
     {
         $semantics = new Semantics();
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('ALTER TABLE t ALGORITHM = DEFAULT, LOCK = DEFAULT')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t ALGORITHM = DEFAULT, LOCK = DEFAULT')->facts->diagnostics));
     }
 }

@@ -20,7 +20,7 @@ final class ScalarFactTest extends TestCase
 {
     public function testResolutionIsNullForAnExpressionThatIsNoNameUse(): void
     {
-        $query = (new Semantics())->analyze("SELECT 'a'");
+        $query = (new Semantics())->inspect("SELECT 'a'");
         $expression = $query->field(0)->expression;
 
         self::assertNotNull($expression);
@@ -34,8 +34,8 @@ final class ScalarFactTest extends TestCase
     public function testResolutionIsKeptForANameUse(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $query = $semantics->analyze('SELECT a FROM t WHERE a > 1', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $query = $semantics->inspect('SELECT a FROM t WHERE a > 1', [$table]);
         $expression = $query->field('a')->expression;
 
         self::assertNotNull($expression);

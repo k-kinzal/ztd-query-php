@@ -20,7 +20,7 @@ final class AggregationTest extends TestCase
 {
     public function testAggregatesFindsABuiltInAggregateCallAmongTheResultColumns(): void
     {
-        $statement = (new Semantics())->analyze('SELECT a, max(b) FROM t')->statement;
+        $statement = (new Semantics())->inspect('SELECT a, max(b) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertTrue((new Aggregation())->aggregates($statement->columns));
@@ -29,7 +29,7 @@ final class AggregationTest extends TestCase
 
     public function testAggregatesIgnoresWindowedAndScalarCalls(): void
     {
-        $statement = (new Semantics())->analyze('SELECT count(*) OVER (), abs(a), nosuch(a) FROM t')->statement;
+        $statement = (new Semantics())->inspect('SELECT count(*) OVER (), abs(a), nosuch(a) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertFalse((new Aggregation())->aggregates($statement->columns));
@@ -37,7 +37,7 @@ final class AggregationTest extends TestCase
 
     public function testAggregatesLooksIntoNestedQueriesAndOrderingTerms(): void
     {
-        $statement = (new Semantics())->analyze('SELECT (SELECT count(*) FROM u) FROM t ORDER BY sum(a)')->statement;
+        $statement = (new Semantics())->inspect('SELECT (SELECT count(*) FROM u) FROM t ORDER BY sum(a)')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertTrue((new Aggregation())->aggregates([$statement->columns[0]]));

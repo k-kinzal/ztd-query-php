@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Reading a schema-qualified type name
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT pg_catalog.int4 '1'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT pg_catalog.int4 '1'");
  *     $name = $query->statement->targets[0]->expression->type->designation->name;
  *     [$name->qualified()?->schema?->value, $name->last()->value] // => ['pg_catalog', 'int4']
  */

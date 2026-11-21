@@ -32,6 +32,10 @@ The host owns the case generation, comparator, SQLite database, and evidence pat
 
 Use `--verify-distribution "$evidence/distribution.json"` with the same arguments to compare a checkout with the captured files. The manifest covers source, resources and locked dependencies of the four Semantics packages and SQL Parser. It does not pin the contents of a downstream Composer installation. Use the library and tool digests recorded in the evidence when comparing runs.
 
+## Publication contract
+
+The [direct publication record](publication-v2.json) supersedes the opt-in entry points in the original criteria. The shared analyzer and each database façade publish complete IR from `analyze()`. The source audit checks the façade's call to the checked lowering path and the `analyzeAll()` loop. The workers exercise the façade directly. The earlier criteria retain their semantic domains, observations, budgets and mandatory fault cases.
+
 ## Read the evidence
 
 - `index.json` identifies the candidate commit, contract, tool files, SQLite build, supported scope, executed checks and fault records.

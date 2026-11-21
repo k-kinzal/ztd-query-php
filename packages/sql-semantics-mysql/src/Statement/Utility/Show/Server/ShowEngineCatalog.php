@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW STORAGE ENGINES');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW STORAGE ENGINES');
  *     [$show->field(1)->name?->value, $show->toString()] // => ['Support', 'SHOW ENGINES']
  */
 final class ShowEngineCatalog implements Statement

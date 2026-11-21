@@ -21,8 +21,8 @@ final class CreateTableTest extends TestCase
 {
     public function testTemporaryTellsWhetherTemporaryIsWritten(): void
     {
-        $twice = (new Semantics('5.7.44'))->inspect('CREATE TEMPORARY TEMPORARY TABLE t (a INT)')->statement;
-        $never = (new Semantics())->inspect('CREATE TABLE t (a INT)')->statement;
+        $twice = (new Semantics('5.7.44'))->diagnose('CREATE TEMPORARY TEMPORARY TABLE t (a INT)')->statement;
+        $never = (new Semantics())->diagnose('CREATE TABLE t (a INT)')->statement;
         self::assertInstanceOf(CreateTable::class, $twice);
         self::assertInstanceOf(CreateTable::class, $never);
 
@@ -33,7 +33,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementDerivesTheElementsInTheTable(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, b INT, CHECK (a < b))');
+        $create = (new Semantics())->diagnose('CREATE TABLE t (a INT, b INT, CHECK (a < b))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $check = $statement->elements[2];
@@ -47,8 +47,8 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t ENGINE = InnoDB');
-        $keys = (new Semantics())->inspect('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
+        $create = (new Semantics())->diagnose('CREATE TABLE t ENGINE = InnoDB');
+        $keys = (new Semantics())->diagnose('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
 
         self::assertInstanceOf(NoColumns::class, $create->facts->diagnostics[0]);
         self::assertInstanceOf(MultiplePrimaryKeys::class, $keys->facts->diagnostics[0]);
@@ -56,7 +56,7 @@ final class CreateTableTest extends TestCase
 
     public function testDeriveRelationProvidesTheDeclaration(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE t (b INT NOT NULL, c TEXT) SELECT 1 AS a, 2 AS b');
+        $create = (new Semantics())->diagnose('CREATE TABLE t (b INT NOT NULL, c TEXT) SELECT 1 AS a, 2 AS b');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $table = $create->declarations()[0];
@@ -70,6 +70,6 @@ final class CreateTableTest extends TestCase
 
     public function testRenderWritesTheDefinition(): void
     {
-        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics())->inspect('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
+        self::assertSame('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE InnoDB COMMENT \'x\' REPLACE AS SELECT 1 AS a', (new Semantics())->diagnose('CREATE TEMPORARY TABLE IF NOT EXISTS db.t (a INT) ENGINE = InnoDB COMMENT = \'x\' REPLACE AS SELECT 1 AS a')->toString());
     }
 }

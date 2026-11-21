@@ -32,7 +32,7 @@ final class UnaryTest extends TestCase
     public function testDeriveScalarMinusFollowsTheArithmeticRule(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT -a, -b, -1.5, -NULL, -? FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT -a, -b, -1.5, -NULL, -? FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Choice::class, $query->field(0)->type);
         self::assertSame([Storage::Integer, Storage::Real], $query->field(0)->type->alternatives);
@@ -49,8 +49,8 @@ final class UnaryTest extends TestCase
     public function testDeriveScalarPlusChangesNothing(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect("SELECT +b, +a, +'x' FROM t", [$create]);
+        $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose("SELECT +b, +a, +'x' FROM t", [$create]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame($create->declarations()[0]->columns[1]->type, $query->field(0)->type->descriptor);
@@ -63,7 +63,7 @@ final class UnaryTest extends TestCase
     public function testDeriveScalarNotAndBitNotAreIntegerUnlessTheOperandIsNull(): void
     {
         $semantics = new Semantics();
-        $query = $semantics->inspect('SELECT NOT b, ~b, NOT a, NOT NULL, ~NULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $query = $semantics->diagnose('SELECT NOT b, ~b, NOT a, NOT NULL, ~NULL FROM t', [$semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -77,7 +77,7 @@ final class UnaryTest extends TestCase
 
     public function testDeriveScalarReportsARowValueOperand(): void
     {
-        $query = (new Semantics())->inspect('SELECT -(1, 2)', []);
+        $query = (new Semantics())->diagnose('SELECT -(1, 2)', []);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -86,7 +86,7 @@ final class UnaryTest extends TestCase
 
     public function testRenderWritesNotAsAKeywordAndTheOthersAsSymbols(): void
     {
-        $query = (new Semantics())->inspect('select not a AS c1, -a AS c2, +a AS c3, ~a AS c4 from t');
+        $query = (new Semantics())->diagnose('select not a AS c1, -a AS c2, +a AS c3, ~a AS c4 from t');
 
         self::assertSame('SELECT NOT a AS c1, - a AS c2, + a AS c3, ~ a AS c4 FROM t', $query->toString());
     }
@@ -94,8 +94,8 @@ final class UnaryTest extends TestCase
     public function testRenderCoversTheTighterOperatorsThatFollowThePrefix(): void
     {
         $semantics = new Semantics();
-        $negation = $semantics->inspect('SELECT NOT a = b AS c1 FROM t');
-        $collated = $semantics->inspect('SELECT -a COLLATE nocase AS c1 FROM t');
+        $negation = $semantics->diagnose('SELECT NOT a = b AS c1 FROM t');
+        $collated = $semantics->diagnose('SELECT -a COLLATE nocase AS c1 FROM t');
         $operand = $negation->field(0)->expression;
 
         self::assertInstanceOf(Unary::class, $operand);

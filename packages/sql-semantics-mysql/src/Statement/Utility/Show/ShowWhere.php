@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving a condition against the result columns
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW VARIABLES WHERE Variable_name = 'port'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SHOW VARIABLES WHERE Variable_name = 'port'");
  *     $show->facts->scalar($show->statement->filter->condition->left)->resolution->slot->name?->value // => 'Variable_name'
  */
 final class ShowWhere implements Node

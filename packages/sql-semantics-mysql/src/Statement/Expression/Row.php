@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Comparing two rows
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
  *     [count($query->statement->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
  */
 final class Row implements Scalar

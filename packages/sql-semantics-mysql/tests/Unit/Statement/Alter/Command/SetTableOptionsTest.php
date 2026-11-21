@@ -18,13 +18,13 @@ final class SetTableOptionsTest extends TestCase
     public function testDeriveCommandDerivesTheOptions(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ENGINE = InnoDB', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t ENGINE = InnoDB', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesTheRunsApart(): void
     {
-        $alter = (new Semantics())->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x', AUTO_INCREMENT = 5");
+        $alter = (new Semantics())->inspect("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x', AUTO_INCREMENT = 5");
 
         self::assertInstanceOf(AlterTable::class, $alter->statement);
         self::assertCount(2, $alter->statement->commands);

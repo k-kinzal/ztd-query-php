@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
  *
  * @visibility public
  * @example Hiding an index
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER INDEX i INVISIBLE');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ALTER INDEX i INVISIBLE');
  *     $alter->statement->commands[0]->visible // => false
  */
 final class IndexVisibility implements AlterCommand

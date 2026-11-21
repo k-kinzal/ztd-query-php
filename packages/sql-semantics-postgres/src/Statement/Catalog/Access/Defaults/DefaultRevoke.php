@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading a default revoke
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON FUNCTIONS FROM joe RESTRICT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES REVOKE GRANT OPTION FOR ALL ON FUNCTIONS FROM joe RESTRICT');
  *     [$operation->statement->action->grantOptionOnly, $operation->statement->action->behavior?->value] // => [true, 'RESTRICT']
  */
 final class DefaultRevoke implements Node

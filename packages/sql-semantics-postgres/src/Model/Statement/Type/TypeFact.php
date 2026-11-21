@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Statement\Type;
  *
  * @visibility public
  * @example Distinguishing a known type from missing information
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT a FROM t');
  *     $operation->field('a')->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent // => true
  */
 interface TypeFact

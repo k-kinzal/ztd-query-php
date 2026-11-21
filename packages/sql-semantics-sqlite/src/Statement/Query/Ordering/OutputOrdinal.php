@@ -34,7 +34,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\OrdinalOutOfRange;
  *
  * @visibility public
  * @example Reading the result column an ordinal denotes
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT 'x' AS a, 2 AS b ORDER BY 2");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("SELECT 'x' AS a, 2 AS b ORDER BY 2");
  *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field->name->value // => 'b'
  * @example Refusing an expression that is no integer constant
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('1')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction

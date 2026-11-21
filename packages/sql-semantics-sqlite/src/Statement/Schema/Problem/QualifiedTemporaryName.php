@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a temporary table in the main schema
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TEMP TABLE main.t (a)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Temporary object t must not be qualified with schema main.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TEMP TABLE main.t (a)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Temporary object t must not be qualified with schema main.
  */
 final class QualifiedTemporaryName implements Diagnostic
 {

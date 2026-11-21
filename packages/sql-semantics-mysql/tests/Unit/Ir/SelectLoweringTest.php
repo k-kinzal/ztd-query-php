@@ -7,19 +7,19 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Ir\Analyzer;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Semantics;
 
-#[CoversClass(Analyzer::class)]
+#[CoversClass(SelectLowering::class)]
 #[Small]
-final class AnalyzerTest extends TestCase
+final class SelectLoweringTest extends TestCase
 {
-    public function testAnalyzeSharesTheResolvedSlot(): void
+    public function testLowerSharesTheResolvedSlot(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE ir_fixture.accounts (Id INTEGER, unused INTEGER)');
-        $value = (new Analyzer($semantics))->analyze('SELECT id, accounts.id FROM ir_fixture.accounts', [$table]);
+        $table = $semantics->inspect('CREATE TABLE ir_fixture.accounts (Id INTEGER, unused INTEGER)');
+        $value = (new SelectLowering())->lower($semantics->inspect('SELECT id, accounts.id FROM ir_fixture.accounts', [$table]));
         $unqualified = $value->columns[0]->expression;
         $qualified = $value->columns[1]->expression;
 
@@ -31,10 +31,10 @@ final class AnalyzerTest extends TestCase
         self::assertCount(1, $value->source->columns);
     }
 
-    public function testAnalyzeRefusesAnUnresolvedSource(): void
+    public function testLowerRefusesAnUnresolvedSource(): void
     {
         $this->expectExceptionMessage('resolved, complete base table');
 
-        (new Analyzer())->analyze('SELECT id FROM ir_fixture.accounts');
+        (new SelectLowering())->lower((new Semantics())->inspect('SELECT id FROM ir_fixture.accounts'));
     }
 }

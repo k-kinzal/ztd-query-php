@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
  *
  * @visibility public
  * @example Reading the attribute of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a TEXT NOT NULL COLLATE utf8mb4_bin)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a TEXT NOT NULL COLLATE utf8mb4_bin)');
  *     $create->statement->elements[0]->specification->attributes[1] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute // => true
  */
 final class CollateAttribute implements ColumnAttribute

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the parallel mode of an aggregate
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
  *     $operation->statement->definition[2]->value->choice // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Safe
  * @example Rejecting a member the text does not name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\ChoiceArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('safe'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Unsafe) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

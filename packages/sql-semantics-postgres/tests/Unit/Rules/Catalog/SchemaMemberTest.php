@@ -23,7 +23,7 @@ final class SchemaMemberTest extends TestCase
     public function testContextSearchesTheSchemaBeforeTheWrittenPath(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a int4)', []);
+        $create = $semantics->inspect('CREATE TABLE t (a int4)', []);
         $context = (new SchemaMember($create->statement, new Name('s')))->context($semantics->context([]));
         self::assertSame(['pg_temp', 'pg_catalog', 's', 'public'], array_map(static fn (Name $name): string => $name->value, $context->searchPath));
         self::assertSame('public', $context->declarationSchema->value);
@@ -32,7 +32,7 @@ final class SchemaMemberTest extends TestCase
     public function testContextAddsTheRelationsTheStatementProvided(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a int4)', []);
+        $create = $semantics->inspect('CREATE TABLE t (a int4)', []);
         $context = (new SchemaMember($create->statement, new Name('s')))->context($semantics->context([]), $create->declarations());
         self::assertSame($create->declarations(), $context->tables);
     }
@@ -40,9 +40,9 @@ final class SchemaMemberTest extends TestCase
     public function testStepRunsSequencesBeforeTablesAndGrantsLast(): void
     {
         $semantics = new Semantics();
-        $sequence = new SchemaMember($semantics->analyze('CREATE SEQUENCE q', [])->statement, new Name('s'));
-        $table = new SchemaMember($semantics->analyze('CREATE TABLE t (a int4)', [])->statement, new Name('s'));
-        $grant = new SchemaMember($semantics->analyze('GRANT SELECT ON t TO joe', [])->statement, new Name('s'));
+        $sequence = new SchemaMember($semantics->inspect('CREATE SEQUENCE q', [])->statement, new Name('s'));
+        $table = new SchemaMember($semantics->inspect('CREATE TABLE t (a int4)', [])->statement, new Name('s'));
+        $grant = new SchemaMember($semantics->inspect('GRANT SELECT ON t TO joe', [])->statement, new Name('s'));
         self::assertSame([0, 1, 5], [$sequence->step(), $table->step(), $grant->step()]);
     }
 
@@ -50,7 +50,7 @@ final class SchemaMemberTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
-        (new SchemaMember($semantics->analyze('CREATE TABLE t (a int4)', [])->statement, new Name('s')))->deriveStatement($derivation);
+        (new SchemaMember($semantics->inspect('CREATE TABLE t (a int4)', [])->statement, new Name('s')))->deriveStatement($derivation);
         self::assertSame('s', $derivation->facts()->declarations[0]->name->schema?->value);
     }
 
@@ -58,14 +58,14 @@ final class SchemaMemberTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
-        (new SchemaMember($semantics->analyze('SELECT 1', [])->statement, new Name('s')))->deriveStatement($derivation);
+        (new SchemaMember($semantics->inspect('SELECT 1', [])->statement, new Name('s')))->deriveStatement($derivation);
         self::assertSame([], $derivation->facts()->declarations);
     }
 
     public function testRenderWritesTheElement(): void
     {
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new SchemaMember((new Semantics())->analyze('CREATE TABLE t (a int4)', [])->statement, new Name('s')))->render($out);
+        (new SchemaMember((new Semantics())->inspect('CREATE TABLE t (a int4)', [])->statement, new Name('s')))->render($out);
         self::assertSame('CREATE TABLE t (a int4)', (new Lexical())->join($out->pieces()));
     }
 }

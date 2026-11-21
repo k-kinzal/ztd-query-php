@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
  *
  * @visibility public
  * @example Reading the parents of a table
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t () INHERITS (a, s.b)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t () INHERITS (a, s.b)');
  *     [count($create->statement->definition->elements), $create->statement->definition->parents[1]->name->schema->value] // => [0, 's']
  */
 final class ListedColumns implements TableForm

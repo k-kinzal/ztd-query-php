@@ -20,8 +20,8 @@ final class LoadInputTest extends TestCase
 {
     public function testRenderWritesTheInput(): void
     {
-        self::assertSame("LOAD DATA LOCAL INFILE 'f' `count` 2 IN PRIMARY KEY ORDER INTO TABLE t", (new Semantics('mysql-8.0.44'))->analyze("load data local infile 'f' count 2 in primary key order into table t")->toString());
-        self::assertSame("LOAD DATA INFILE 'f' `count` 2 INTO TABLE t", (new Semantics())->analyze("load data from infile 'f' count 2 into table t")->toString());
+        self::assertSame("LOAD DATA LOCAL INFILE 'f' `count` 2 IN PRIMARY KEY ORDER INTO TABLE t", (new Semantics('mysql-8.0.44'))->inspect("load data local infile 'f' count 2 in primary key order into table t")->toString());
+        self::assertSame("LOAD DATA INFILE 'f' `count` 2 INTO TABLE t", (new Semantics())->inspect("load data from infile 'f' count 2 into table t")->toString());
     }
 
     public function testRenderRejectsAnotherWord(): void

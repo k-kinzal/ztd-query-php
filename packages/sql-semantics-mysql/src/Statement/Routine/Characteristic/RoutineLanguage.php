@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the language of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER FUNCTION f LANGUAGE SQL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER FUNCTION f LANGUAGE SQL');
  *     $alter->statement->characteristics[0]->external // => null
  */
 final class RoutineLanguage implements Characteristic

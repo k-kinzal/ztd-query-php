@@ -25,7 +25,7 @@ final class ExternalBodyTest extends TestCase
 {
     public function testRenderKeepsAQuotedCode(): void
     {
-        $create = (new Semantics())->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
+        $create = (new Semantics())->inspect("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
@@ -55,7 +55,7 @@ final class ExternalBodyTest extends TestCase
     #[DataProvider('providerRenderWritesAsAndTheCode')]
     public function testRenderWritesAsAndTheCode(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedBody(): void

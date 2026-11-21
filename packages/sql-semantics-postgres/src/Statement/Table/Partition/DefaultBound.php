@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing a default partition
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('create table p0 partition of p default')->toString() // => 'CREATE TABLE p0 PARTITION OF p DEFAULT'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('create table p0 partition of p default')->toString() // => 'CREATE TABLE p0 PARTITION OF p DEFAULT'
  */
 final class DefaultBound implements PartitionBound
 {

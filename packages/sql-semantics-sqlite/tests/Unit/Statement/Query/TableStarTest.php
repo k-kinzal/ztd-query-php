@@ -23,8 +23,8 @@ final class TableStarTest extends TestCase
     public function testRenderWritesTheQualifierAndSelectsTheColumnsOfThatRelation(): void
     {
         $semantics = new Semantics();
-        $tables = [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)'), $semantics->analyze('CREATE TABLE u (c TEXT)')];
-        $query = $semantics->analyze('select u.*, "t".* from t join u', $tables);
+        $tables = [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)'), $semantics->inspect('CREATE TABLE u (c TEXT)')];
+        $query = $semantics->inspect('select u.*, "t".* from t join u', $tables);
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(TableStar::class, $query->statement->columns[0]);

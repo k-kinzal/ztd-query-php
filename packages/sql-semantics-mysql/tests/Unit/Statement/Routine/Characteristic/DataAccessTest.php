@@ -34,7 +34,7 @@ final class DataAccessTest extends TestCase
     #[DataProvider('providerRenderWritesTheKeywordsOfTheLevel')]
     public function testRenderWritesTheKeywordsOfTheLevel(string $release, string $sql, string $expected, AccessLevel $level): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Semantics($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -48,7 +48,7 @@ final class DataAccessTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() NO SQL MODIFIES SQL DATA CONTAINS SQL SELECT 1';
 
-        self::assertSame($sql, (new Semantics())->analyze(strtolower($sql))->toString());
+        self::assertSame($sql, (new Semantics())->inspect(strtolower($sql))->toString());
     }
 
     public function testRenderWritesAConstructedCharacteristic(): void

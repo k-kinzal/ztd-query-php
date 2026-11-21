@@ -16,12 +16,12 @@ final class LoadTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze("LOAD 'x'");
+        $operation = (new Semantics())->inspect("LOAD 'x'");
         self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
     }
 
     public function testRenderWritesTheFileString(): void
     {
-        self::assertSame("LOAD '\$libdir/plugins/a''b'", (new Semantics())->analyze("LOAD E'\$libdir/plugins/a\\'b'")->toString());
+        self::assertSame("LOAD '\$libdir/plugins/a''b'", (new Semantics())->inspect("LOAD E'\$libdir/plugins/a\\'b'")->toString());
     }
 }

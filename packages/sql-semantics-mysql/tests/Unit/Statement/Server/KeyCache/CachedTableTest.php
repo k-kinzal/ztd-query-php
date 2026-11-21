@@ -16,6 +16,6 @@ final class CachedTableTest extends TestCase
 {
     public function testRenderWritesPartitionsAndIndexes(): void
     {
-        self::assertSame('CACHE INDEX t PARTITION (p) INDEX () IN c', (new Semantics())->analyze('cache index t partition (p) key () in c')->toString());
+        self::assertSame('CACHE INDEX t PARTITION (p) INDEX () IN c', (new Semantics())->inspect('cache index t partition (p) key () in c')->toString());
     }
 }

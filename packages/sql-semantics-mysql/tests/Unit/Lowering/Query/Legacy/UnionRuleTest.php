@@ -25,7 +25,7 @@ final class UnionRuleTest extends TestCase
 {
     public function testStatementLiftsTheOrderingOfTheLastSelect(): void
     {
-        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
+        $operation = (new Semantics('mysql-5.7.44'))->inspect('SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 2');
 
         self::assertInstanceOf(QueryExpression::class, $operation->statement);
         self::assertInstanceOf(SetOperation::class, $operation->statement->body);
@@ -34,26 +34,26 @@ final class UnionRuleTest extends TestCase
 
     public function testOperandLowersEveryOperandForm(): void
     {
-        self::assertSame('SELECT 1 UNION (SELECT 2) UNION ALL SELECT 3', (new Semantics('mysql-5.6.51'))->analyze('select 1 union (select 2) union all select 3')->toString());
-        self::assertSame('(SELECT 1) UNION DISTINCT SELECT 2', (new Semantics('mysql-5.7.44'))->analyze('(select 1) union distinct select 2')->toString());
+        self::assertSame('SELECT 1 UNION (SELECT 2) UNION ALL SELECT 3', (new Semantics('mysql-5.6.51'))->inspect('select 1 union (select 2) union all select 3')->toString());
+        self::assertSame('(SELECT 1) UNION DISTINCT SELECT 2', (new Semantics('mysql-5.7.44'))->inspect('(select 1) union distinct select 2')->toString());
     }
 
     public function testParenLowersNestedParentheses(): void
     {
-        self::assertSame('((SELECT 1))', (new Semantics('mysql-5.6.51'))->analyze('((select 1))')->toString());
+        self::assertSame('((SELECT 1))', (new Semantics('mysql-5.6.51'))->inspect('((select 1))')->toString());
     }
 
     public function testChainRejectsAnOrderingBeforeTheLastSelect(): void
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics('mysql-5.7.44'))->analyze('SELECT 1 ORDER BY 1 UNION SELECT 2');
+        (new Semantics('mysql-5.7.44'))->inspect('SELECT 1 ORDER BY 1 UNION SELECT 2');
     }
 
     public function testOrderingLowersTheClausesAfterAParenthesizedOperand(): void
     {
-        self::assertSame('(SELECT 1) UNION (SELECT 2) ORDER BY 1 LIMIT 1', (new Semantics('mysql-5.6.51'))->analyze('(select 1) union (select 2) order by 1 limit 1')->toString());
-        self::assertSame('(SELECT 1) LIMIT 1', (new Semantics('mysql-5.7.44'))->analyze('(select 1) limit 1')->toString());
+        self::assertSame('(SELECT 1) UNION (SELECT 2) ORDER BY 1 LIMIT 1', (new Semantics('mysql-5.6.51'))->inspect('(select 1) union (select 2) order by 1 limit 1')->toString());
+        self::assertSame('(SELECT 1) LIMIT 1', (new Semantics('mysql-5.7.44'))->inspect('(select 1) limit 1')->toString());
     }
 
     public function testViewQueryLowersTheQueryOfAView(): void

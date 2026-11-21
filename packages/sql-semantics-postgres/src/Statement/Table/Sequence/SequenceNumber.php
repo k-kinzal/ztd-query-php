@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * @visibility public
  * @example Reading a numeric option
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE SEQUENCE s START WITH -5');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SEQUENCE s START WITH -5');
  *     [$create->statement->options[0]->kind, $create->statement->options[0]->value->negative, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceNumberKind::Start, true, 'CREATE SEQUENCE s START - 5']
  */
 final class SequenceNumber implements SequenceOption

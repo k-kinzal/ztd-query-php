@@ -25,7 +25,7 @@ final class NodeTest extends TestCase
         $semantics = new Semantics();
         $output = new Output(Platform::shared()->codec($semantics->profile()));
 
-        $semantics->analyze("select a, 'x' from t")->statement->render($output);
+        $semantics->inspect("select a, 'x' from t")->statement->render($output);
 
         self::assertSame([PieceKind::Keyword, PieceKind::Name, PieceKind::Symbol, PieceKind::Literal, PieceKind::Keyword, PieceKind::Name], array_map(static fn (Piece $piece): PieceKind => $piece->kind, $output->pieces()));
         self::assertSame("SELECT a, 'x' FROM t", (new Lexical())->join($output->pieces()));
@@ -36,7 +36,7 @@ final class NodeTest extends TestCase
         $semantics = new Semantics();
         $output = new Output(Platform::shared()->codec($semantics->profile()));
 
-        $statement = $semantics->analyze('SELECT a FROM t WHERE a > 1')->statement;
+        $statement = $semantics->inspect('SELECT a FROM t WHERE a > 1')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $output->node($statement->where);

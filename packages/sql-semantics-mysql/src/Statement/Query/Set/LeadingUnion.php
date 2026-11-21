@@ -38,7 +38,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
  *
  * @visibility public
  * @example Reading the LIMIT a 5.6 SELECT keeps before a later UNION
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->analyze('SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51'))->inspect('SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v');
  *     [$query->statement->left::class, $query->statement->left->right->limit !== null] // => [\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion::class, true]
  * @example Refusing a last operand without clauses of its own
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);

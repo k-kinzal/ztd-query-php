@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a repeated column name
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, A)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column A is defined more than once.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, A)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column A is defined more than once.
  */
 final class DuplicateColumn implements Diagnostic
 {

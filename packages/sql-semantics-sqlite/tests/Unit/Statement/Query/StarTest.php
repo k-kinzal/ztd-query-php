@@ -20,8 +20,8 @@ final class StarTest extends TestCase
     public function testRenderWritesTheStarAmongOtherColumns(): void
     {
         $semantics = new Semantics();
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('select *, a, * from t', [$create]);
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('select *, a, * from t', [$create]);
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(Star::class, $query->statement->columns[0]);

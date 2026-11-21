@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Dropping a mapping if it exists
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word');
  *     $operation->statement->ifExists // => true
  */
 final class DropTextSearchMapping implements Statement

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the compression of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text COMPRESSION DEFAULT)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text COMPRESSION DEFAULT)');
  *     $create->statement->definition->elements[0]->compression->method // => null
  */
 final class ColumnCompression implements Node

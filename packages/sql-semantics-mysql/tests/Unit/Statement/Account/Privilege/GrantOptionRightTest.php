@@ -16,6 +16,6 @@ final class GrantOptionRightTest extends TestCase
 {
     public function testRenderWritesGrantOption(): void
     {
-        self::assertSame('GRANT ALL ON db.* TO u WITH GRANT OPTION', (new Semantics())->analyze('grant all on db.* to u with grant option')->toString());
+        self::assertSame('GRANT ALL ON db.* TO u WITH GRANT OPTION', (new Semantics())->inspect('grant all on db.* to u with grant option')->toString());
     }
 }

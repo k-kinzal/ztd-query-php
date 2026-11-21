@@ -23,8 +23,8 @@ final class ValueKindsTest extends TestCase
     public function testOfClassifiesEachKindOfExpression(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT, b INTEGER, c)');
-        $query = $semantics->inspect("SELECT NULL, 'x', x'00', a || b, ?, abs(1), CURRENT_TIME, CASE WHEN 1 THEN 'x' ELSE 1 END, CASE WHEN 1 THEN NULL END, a, b, c, CAST(1 AS TEXT), (SELECT b FROM t), (a, b), \"zz\", +(a), a COLLATE nocase, (b), 1, TRUE, EXISTS (SELECT 1), -1, zz FROM t", [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER, c)');
+        $query = $semantics->diagnose("SELECT NULL, 'x', x'00', a || b, ?, abs(1), CURRENT_TIME, CASE WHEN 1 THEN 'x' ELSE 1 END, CASE WHEN 1 THEN NULL END, a, b, c, CAST(1 AS TEXT), (SELECT b FROM t), (a, b), \"zz\", +(a), a COLLATE nocase, (b), 1, TRUE, EXISTS (SELECT 1), -1, zz FROM t", [$table]);
         $select = $query->statement;
         $rule = new ValueKinds();
 
@@ -36,8 +36,8 @@ final class ValueKindsTest extends TestCase
     public function testResultsUnitesTheKindsOfEveryResultOfACase(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect("SELECT CASE a WHEN 1 THEN x'00' WHEN 2 THEN 1 ELSE a END, CASE WHEN 1 THEN zz END FROM t", [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose("SELECT CASE a WHEN 1 THEN x'00' WHEN 2 THEN 1 ELSE a END, CASE WHEN 1 THEN zz END FROM t", [$table]);
         $select = $query->statement;
         $rule = new ValueKinds();
 
@@ -67,9 +67,9 @@ final class ValueKindsTest extends TestCase
     public function testArmReadsAnExpandedStarAndAnAbsentPosition(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a TEXT)');
-        $query = $semantics->inspect('SELECT * FROM t', [$table]);
-        $rows = $semantics->inspect("VALUES (1, 'a')");
+        $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
+        $query = $semantics->diagnose('SELECT * FROM t', [$table]);
+        $rows = $semantics->diagnose("VALUES (1, 'a')");
         $values = $rows->statement;
         $select = $query->statement;
         $rule = new ValueKinds();

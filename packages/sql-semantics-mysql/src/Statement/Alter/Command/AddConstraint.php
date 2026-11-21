@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  *
  * @visibility public
  * @example Adding an index
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ADD INDEX i (a)');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ADD INDEX i (a)');
  *     $alter->toString() // => 'ALTER TABLE t ADD INDEX i (a)'
  */
 final class AddConstraint implements AlterCommand

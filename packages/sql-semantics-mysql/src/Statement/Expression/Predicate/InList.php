@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Reading the elements of a list
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a NOT IN (1, 2)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a NOT IN (1, 2)');
  *     [$query->statement->where->negated, count($query->statement->where->elements)] // => [true, 2]
  */
 final class InList implements Scalar

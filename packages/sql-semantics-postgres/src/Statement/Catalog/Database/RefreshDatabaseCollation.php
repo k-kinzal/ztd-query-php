@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the database
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DATABASE d REFRESH COLLATION VERSION');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DATABASE d REFRESH COLLATION VERSION');
  *     $operation->statement->name->value // => 'd'
  */
 final class RefreshDatabaseCollation implements Statement

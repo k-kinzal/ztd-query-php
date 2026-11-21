@@ -16,12 +16,12 @@ final class FlushTest extends TestCase
 {
     public function testRenderWritesTheItems(): void
     {
-        self::assertSame('FLUSH NO_WRITE_TO_BINLOG PRIVILEGES, RELAY LOGS', (new Semantics())->analyze('flush no_write_to_binlog privileges, relay logs')->toString());
+        self::assertSame('FLUSH NO_WRITE_TO_BINLOG PRIVILEGES, RELAY LOGS', (new Semantics())->inspect('flush no_write_to_binlog privileges, relay logs')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('FLUSH LOGS');
+        $operation = (new Semantics())->inspect('FLUSH LOGS');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

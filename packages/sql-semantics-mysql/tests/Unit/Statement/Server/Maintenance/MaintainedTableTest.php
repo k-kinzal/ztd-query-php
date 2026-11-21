@@ -16,6 +16,6 @@ final class MaintainedTableTest extends TestCase
 {
     public function testRenderWritesTheQualifiedName(): void
     {
-        self::assertSame('OPTIMIZE TABLE db.t', (new Semantics())->analyze('optimize table db.t')->toString());
+        self::assertSame('OPTIMIZE TABLE db.t', (new Semantics())->inspect('optimize table db.t')->toString());
     }
 }

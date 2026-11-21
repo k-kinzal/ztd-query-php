@@ -20,13 +20,13 @@ final class OperatorFamilyAdditionTest extends TestCase
 {
     public function testDeriveStatementReportsAStorageType(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree ADD STORAGE int4');
+        $operation = (new Semantics())->diagnose('ALTER OPERATOR FAMILY f USING btree ADD STORAGE int4');
         self::assertEquals([new ObjectProblem(ObjectProblemKind::StorageInFamily)], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheItems(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f(int4, int8)');
+        $operation = (new Semantics())->diagnose('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f(int4, int8)');
         self::assertSame('ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int4, int8), FUNCTION 1 f (int4, int8)', $operation->toString());
     }
 

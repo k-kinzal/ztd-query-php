@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the option of a grant
- *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT SELECT ON *.* TO u WITH GRANT OPTION')->statement;
+ *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('GRANT SELECT ON *.* TO u WITH GRANT OPTION')->statement;
  *     $grant->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight // => true
  */
 final class GrantOptionRight implements WithOption

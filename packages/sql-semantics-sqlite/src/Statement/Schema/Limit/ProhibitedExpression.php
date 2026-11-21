@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a subquery in a partial index condition
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE INDEX i ON t (a) WHERE a IN (SELECT 1)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Subqueries are prohibited in partial index WHERE clauses.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE INDEX i ON t (a) WHERE a IN (SELECT 1)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Subqueries are prohibited in partial index WHERE clauses.
  */
 final class ProhibitedExpression implements Diagnostic
 {

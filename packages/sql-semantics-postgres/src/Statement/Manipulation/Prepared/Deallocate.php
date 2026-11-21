@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Removing every prepared statement
- *     $deallocate = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DEALLOCATE PREPARE ALL');
+ *     $deallocate = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DEALLOCATE PREPARE ALL');
  *     [$deallocate->statement->name, $deallocate->toString()] // => [null, 'DEALLOCATE ALL']
  */
 final class Deallocate implements Statement

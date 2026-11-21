@@ -30,7 +30,7 @@ final class LateOrderingTest extends TestCase
     {
         $semantics = new Semantics('mysql-5.6.51');
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->analyze('select (select a from t for update order by b limit 1) as v', [$table]);
+        $operation = $semantics->inspect('select (select a from t for update order by b limit 1) as v', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -53,7 +53,7 @@ final class LateOrderingTest extends TestCase
 
     public function testRenderWritesALimitThatReplacesTheLimitOfTheBlock(): void
     {
-        $operation = (new Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', []);
+        $operation = (new Semantics('mysql-5.6.51'))->inspect('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', []);
 
         self::assertSame('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', $operation->toString());
         self::assertNotNull((new LateOrdering([], new RowLimit(new NumberLiteral('2'))))->limit);

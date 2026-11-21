@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
  *
  * @visibility public
  * @example Reading a nested join
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM t LEFT JOIN (u, v) ON t.a = u.a');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 FROM t LEFT JOIN (u, v) ON t.a = u.a');
  *     $query->statement->from->right->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList // => true
  */
 final class NestedRelation implements Relation

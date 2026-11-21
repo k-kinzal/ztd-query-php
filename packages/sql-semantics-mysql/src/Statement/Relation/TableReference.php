@@ -34,10 +34,10 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
  *
  * @visibility public
  * @example Reading a named input
- *     $input = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM shop.t AS x')->singleNamedInput();
+ *     $input = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM shop.t AS x')->singleNamedInput();
  *     [$input->name()->schema?->value, $input->name()->name->value, $input->alias()?->value] // => ['shop', 't', 'x']
  * @example Reading the partitions of a table
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t PARTITION (p0, p1)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t PARTITION (p0, p1)');
  *     count($query->statement->from->partitions) // => 2
  */
 final class TableReference implements NamedRelation

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving a name to the common table that defines it
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('WITH c AS (SELECT 1 AS a) SELECT a FROM c');
  *     $query->facts->relation($query->statement->body->input())->table instanceof \SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\CommonTable // => true
  */
 final class CommonTable implements TableResolution

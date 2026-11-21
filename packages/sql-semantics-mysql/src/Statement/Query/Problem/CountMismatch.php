@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the lengths of a set operation that disagree
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION SELECT 1, 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The used SELECT statements have a different number of columns (1 and 2).
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1 UNION SELECT 1, 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The used SELECT statements have a different number of columns (1 and 2).
  */
 final class CountMismatch implements Diagnostic
 {

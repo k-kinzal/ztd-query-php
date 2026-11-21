@@ -15,7 +15,7 @@ final class CreateAssertionTest extends TestCase
     public function testDeriveStatementReportsTheUnimplementedStatement(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE ASSERTION a CHECK (1 = 1)', []);
+        $statement = $semantics->diagnose('CREATE ASSERTION a CHECK (1 = 1)', []);
         self::assertSame([
           0 => 'CREATE ASSERTION is not yet implemented',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class CreateAssertionTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE ASSERTION s.a CHECK (1 = 1) DEFERRABLE', []);
+        $statement = $semantics->diagnose('CREATE ASSERTION s.a CHECK (1 = 1) DEFERRABLE', []);
         self::assertSame('CREATE ASSERTION s.a CHECK (1 = 1) DEFERRABLE', $statement->toString());
     }
 }

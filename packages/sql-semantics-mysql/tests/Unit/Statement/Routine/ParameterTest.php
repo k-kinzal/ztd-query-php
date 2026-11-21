@@ -28,7 +28,7 @@ final class ParameterTest extends TestCase
 {
     public function testRenderKeepsTheDirectionTheNameTheTypeAndTheCollation(): void
     {
-        $statement = (new Semantics())->analyze('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin) SELECT 1')->statement;
+        $statement = (new Semantics())->inspect('CREATE PROCEDURE p(a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin) SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
         self::assertEquals([
@@ -59,7 +59,7 @@ final class ParameterTest extends TestCase
     #[DataProvider('providerRenderWritesTheParameter')]
     public function testRenderWritesTheParameter(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedParameter(): void

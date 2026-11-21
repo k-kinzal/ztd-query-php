@@ -19,12 +19,17 @@ CONTRACTS = {
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
     "sqlite-relational-v1.json": "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d",
 }
+PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
 
 def constructor_scope(by_class):
     definitions = {}
-    prefixes = ("SqlSemantics\\Platform\\MySql", "SqlSemantics\\Platform\\PostgreSql", "SqlSemantics\\Platform\\Sqlite")
-    routes = {"SqlSemantics\\IrAnalyzer::analyze": ["SqlSemantics\\SemanticsIR"]}
+    publication = (TOOL / "publication-v2.json").read_bytes()
+    if hashlib.sha256(publication).hexdigest() != PUBLICATION:
+        raise ValueError("Publication contract differs from its recorded revision")
+    publication = json.loads(publication)
+    prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
+    routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
     for name, sha256 in CONTRACTS.items():
         raw = (TOOL / name).read_bytes()
         if hashlib.sha256(raw).hexdigest() != sha256:
@@ -35,13 +40,14 @@ def constructor_scope(by_class):
                 clas = platform + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
     for platform in prefixes:
-        routes[platform + "\\Semantics::ir"] = [platform + "\\Ir\\Analyzer"]
-        routes[platform + "\\Ir\\Analyzer::analyze"] = [platform + "\\Ir\\Select"]
+        routes[platform + "\\" + publication["single"]["method"]] = [platform + "\\" + publication["single"]["result"]]
+    batch_routes = {
+        platform + "\\" + publication["batch"]["method"]: ["array"] for platform in prefixes
+    }
     published = {
         clas for clas, record in by_class.items()
         if record["visibility"] == "public" and record["kind"] in ("Stmt_Class", "Stmt_Enum")
         and clas.startswith(tuple(prefix + "\\Ir\\" for prefix in prefixes))
-        and not clas.endswith("\\Analyzer")
     }
     publication_types = set(definitions) | {kind for cases in routes.values() for kind in cases}
     found = {}
@@ -52,6 +58,11 @@ def constructor_scope(by_class):
             matched = sorted(set(returns) & publication_types)
             if matched:
                 found[f"{clas}::{method}"] = matched
+        for method in record["public_array_returns"]:
+            route = f"{clas}::{method}"
+            if route in batch_routes:
+                found[route] = ["array"]
+    routes.update(batch_routes)
     return {
         "registeredConstructors": {name: {
             "contracts": definitions[name], "source": by_class[name]["file"],
@@ -60,6 +71,7 @@ def constructor_scope(by_class):
         "unregisteredConstructors": sorted(published - set(definitions)),
         "missingConstructors": sorted(set(definitions) - published),
         "publicationRoutes": found,
+        "publicationContract": PUBLICATION,
         "unexpectedPublicationRoutes": {
             name: found.get(name) for name in sorted(set(routes) | set(found)) if routes.get(name) != found.get(name)
         },

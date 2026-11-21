@@ -20,7 +20,7 @@ final class ConflictTargetTest extends TestCase
 {
     public function testRenderWritesTheTermsAndThePredicate(): void
     {
-        $query = (new Semantics())->inspect('insert into t values (1) on conflict (id collate nocase asc, a) where id > 0 do nothing');
+        $query = (new Semantics())->diagnose('insert into t values (1) on conflict (id collate nocase asc, a) where id > 0 do nothing');
 
         self::assertSame('INSERT INTO t VALUES (1) ON CONFLICT (id COLLATE nocase ASC, a) WHERE id > 0 DO NOTHING', $query->toString());
         self::assertInstanceOf(InsertRows::class, $query->statement);
@@ -32,8 +32,8 @@ final class ConflictTargetTest extends TestCase
     public function testTermsAndPredicateSeeTheTargetTableOnly(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) WHERE excluded.id > 0 DO NOTHING', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) WHERE excluded.id > 0 DO NOTHING', [$t]);
 
         self::assertInstanceOf(InsertRows::class, $query->statement);
         $target = $query->statement->upserts[0]->target;

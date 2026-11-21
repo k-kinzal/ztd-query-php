@@ -26,7 +26,7 @@ final class WrongArgumentCountTest extends TestCase
 
     public function testMessageIsReportedForACallWithTooManyArguments(): void
     {
-        $query = (new Semantics())->inspect('SELECT abs(1, 2)');
+        $query = (new Semantics())->diagnose('SELECT abs(1, 2)');
 
         self::assertInstanceOf(WrongArgumentCount::class, $query->facts->diagnostics[0]);
         self::assertSame(2, $query->facts->diagnostics[0]->arguments);

@@ -49,7 +49,7 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
 
-        $derivation->statement($semantics->inspect('SELECT 1 AS a')->statement);
+        $derivation->statement($semantics->diagnose('SELECT 1 AS a')->statement);
 
         $output = $derivation->facts()->output;
         self::assertNotNull($output);
@@ -59,9 +59,9 @@ final class DerivationTest extends TestCase
     public function testInspectedDiscardsDeclarationsAndRowsButKeepsFactsAndDiagnostics(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $create = $table->statement;
-        $select = $semantics->inspect('SELECT b FROM t', [$table])->statement;
+        $select = $semantics->diagnose('SELECT b FROM t', [$table])->statement;
         $derivation = new Derivation($semantics->context([$table]));
 
         $derivation->inspected($create);
@@ -82,9 +82,9 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
-        $derivation->statement($semantics->inspect('SELECT 1 AS first')->statement);
+        $derivation->statement($semantics->diagnose('SELECT 1 AS first')->statement);
 
-        $derivation->inspected($semantics->inspect('SELECT 2 AS second')->statement);
+        $derivation->inspected($semantics->diagnose('SELECT 2 AS second')->statement);
 
         self::assertSame('first', $derivation->facts()->output?->fields()?->at(0)->name?->value);
     }
@@ -130,7 +130,7 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
-        $query = $semantics->inspect('SELECT 1, 2')->statement;
+        $query = $semantics->diagnose('SELECT 1, 2')->statement;
 
         self::assertInstanceOf(Select::class, $query);
         $fact = $derivation->query($query, $derivation->environment());
@@ -143,7 +143,7 @@ final class DerivationTest extends TestCase
     public function testTableResolvesTheNearestCommonTableBeforeTheContext(): void
     {
         $semantics = new Semantics();
-        $declared = $semantics->inspect('CREATE TABLE c (a INTEGER)');
+        $declared = $semantics->diagnose('CREATE TABLE c (a INTEGER)');
         $derivation = new Derivation($semantics->context([$declared]));
         $definition = new Star();
         $environment = new Environment($derivation->context, null, [], [new CommonBinding(new Name('c'), $definition, new RowShape([]))]);
@@ -160,7 +160,7 @@ final class DerivationTest extends TestCase
     public function testDeclareRecordsADeclarationTheStatementProvides(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)')->declarations()[0];
         $derivation = new Derivation($semantics->context([]));
 
         $derivation->declare($table);
@@ -202,7 +202,7 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
-        $derivation->statement($semantics->inspect('SELECT a FROM t WHERE a > 1')->statement);
+        $derivation->statement($semantics->diagnose('SELECT a FROM t WHERE a > 1')->statement);
 
         $facts = $derivation->facts();
 
@@ -214,9 +214,9 @@ final class DerivationTest extends TestCase
     public function testWithinReadsANestedStatementUnderOtherSearchSettings(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE aux.t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE aux.t (a INTEGER)');
         $context = $semantics->context([$table]);
-        $select = $semantics->inspect('SELECT a FROM t', $context)->statement;
+        $select = $semantics->diagnose('SELECT a FROM t', $context)->statement;
         self::assertInstanceOf(Select::class, $select);
         $nested = new AnalysisContext($context->profile, [new Name('aux')], $context->tables, true, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive);
         $derivation = new Derivation($context);
@@ -231,11 +231,11 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics();
         $context = $semantics->context([]);
-        $foreign = new AnalysisContext($context->profile, $context->searchPath, $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations());
+        $foreign = new AnalysisContext($context->profile, $context->searchPath, $semantics->diagnose('CREATE TABLE t (a INTEGER)')->declarations());
 
         $this->expectExceptionMessage('A nested statement sees only the declarations of the enclosing context and of the statement itself.');
 
-        (new Derivation($context))->within($foreign, $semantics->inspect('SELECT 1')->statement);
+        (new Derivation($context))->within($foreign, $semantics->diagnose('SELECT 1')->statement);
     }
 
     public function testAdmitAcceptsTheDeclarationsTheStatementProvided(): void
@@ -243,7 +243,7 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics();
         $context = $semantics->context([]);
         $derivation = new Derivation($context);
-        $derivation->statement($semantics->inspect('CREATE TABLE t (a INTEGER)')->statement);
+        $derivation->statement($semantics->diagnose('CREATE TABLE t (a INTEGER)')->statement);
         $own = new AnalysisContext($context->profile, $context->searchPath, $derivation->facts()->declarations, true, $context->relationNames, $context->columnNames);
 
         $derivation->admit($own);
@@ -254,7 +254,7 @@ final class DerivationTest extends TestCase
     public function testAdmitRefusesAContextThatDropsAnEnclosingDeclaration(): void
     {
         $semantics = new Semantics();
-        $context = $semantics->context([$semantics->inspect('CREATE TABLE t (a INTEGER)')]);
+        $context = $semantics->context([$semantics->diagnose('CREATE TABLE t (a INTEGER)')]);
         $empty = new AnalysisContext($context->profile, $context->searchPath, [], true);
 
         $this->expectExceptionMessage('A nested statement sees every declaration of the enclosing context.');
@@ -267,8 +267,8 @@ final class DerivationTest extends TestCase
         $semantics = new Semantics();
         $derivation = new Derivation($semantics->context([]));
 
-        $derivation->member($semantics->inspect('SELECT 1 AS a')->statement);
-        $derivation->member($semantics->inspect('CREATE TABLE t (a INTEGER)')->statement);
+        $derivation->member($semantics->diagnose('SELECT 1 AS a')->statement);
+        $derivation->member($semantics->diagnose('CREATE TABLE t (a INTEGER)')->statement);
 
         self::assertNull($derivation->facts()->output);
         self::assertCount(1, $derivation->facts()->declarations);
@@ -278,7 +278,7 @@ final class DerivationTest extends TestCase
     {
         $semantics = new Semantics();
         $context = $semantics->context([]);
-        $select = $semantics->inspect('SELECT 1 AS a')->statement;
+        $select = $semantics->diagnose('SELECT 1 AS a')->statement;
         $environment = new Environment($context);
         $derivation = new Derivation($context);
 

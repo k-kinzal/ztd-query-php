@@ -35,9 +35,9 @@ final class ColumnTest extends TestCase
     public function testAResolvedReferenceReachesTheDeclarationObjectItself(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')->declarations()[0];
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')->declarations()[0];
 
-        $query = $semantics->analyze('SELECT b, a FROM t', [$table]);
+        $query = $semantics->inspect('SELECT b, a FROM t', [$table]);
 
         self::assertSame($table->columns[1], $query->field('b')->column());
         self::assertSame($table->columns[0], $query->field('a')->column());

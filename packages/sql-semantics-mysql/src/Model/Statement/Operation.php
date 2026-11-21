@@ -29,13 +29,13 @@ use SqlSemantics\Platform\MySql\Model\Validation\Publication;
  * @visibility public
  * @example Analyzing against the declaration another statement provides
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $bar = $semantics->analyze('CREATE TABLE bar (foo INTEGER, baz TEXT)');
- *     $query = $semantics->analyze('SELECT foo FROM bar', [$bar]);
+ *     $bar = $semantics->inspect('CREATE TABLE bar (foo INTEGER, baz TEXT)');
+ *     $query = $semantics->inspect('SELECT foo FROM bar', [$bar]);
  *     [$query->field('foo')->column() === $bar->declarations()[0]->columns[0], $query->toString()] // => [true, 'SELECT foo FROM bar']
  * @example Building a new root from explicit structure
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $query = $semantics->analyze('SELECT foo FROM bar WHERE foo > 1');
- *     $other = new \SqlSemantics\Platform\MySql\Model\Statement\Operation($query->context, $semantics->analyze('SELECT baz FROM bar')->statement);
+ *     $query = $semantics->inspect('SELECT foo FROM bar WHERE foo > 1');
+ *     $other = new \SqlSemantics\Platform\MySql\Model\Statement\Operation($query->context, $semantics->inspect('SELECT baz FROM bar')->statement);
  *     $other->toString() // => 'SELECT baz FROM bar'
  */
 final class Operation implements \SqlSemantics\Query

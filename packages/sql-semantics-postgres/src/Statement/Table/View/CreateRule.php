@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
  *
  * @visibility public
  * @example Reading a rule
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)');
  *     [count($statement->statement->actions), $statement->toString()] // => [2, 'CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)']
  */
 final class CreateRule implements Statement, Relation

@@ -27,10 +27,10 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  *
  * @visibility public
  * @example Reading a projected expression and its alias
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a AS total FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a AS total FROM t');
  *     [$query->statement->items[0]->expression->name->value, $query->statement->items[0]->alias?->value] // => ['a', 'total']
  * @example Reading the text an unaliased item is written as
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1+1');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT 1+1');
  *     [$query->statement->items[0]->layout?->text(), $query->field(0)->name?->value, $query->toString()] // => ['1+1', '1+1', 'SELECT 1+1']
  */
 final class SelectExpression implements SelectItem

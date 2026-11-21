@@ -16,6 +16,6 @@ final class RedoLogSwitchTest extends TestCase
 {
     public function testRenderWritesTheNamesAsWritten(): void
     {
-        self::assertSame('ALTER INSTANCE ENABLE InnoDB REDO_LOG', (new Semantics())->analyze('alter instance enable InnoDB REDO_LOG')->toString());
+        self::assertSame('ALTER INSTANCE ENABLE InnoDB REDO_LOG', (new Semantics())->inspect('alter instance enable InnoDB REDO_LOG')->toString());
     }
 }

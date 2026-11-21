@@ -25,7 +25,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementNoStoredProgramMayContain(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -65,7 +65,7 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame([], $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
     }
 
     /**
@@ -90,7 +90,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementAStoredFunctionOrTriggerMayNotContain(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -135,7 +135,7 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame([], $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        self::assertSame([], $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
     }
 
     /**
@@ -168,7 +168,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementWhereverItIsNested(string $sql, array $messages): void
     {
         $semantics = new Semantics();
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -194,7 +194,7 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementInEveryRelease(string $release, string $sql, array $messages): void
     {
         $semantics = new Semantics($release);
-        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INT, b INT)')]);
+        $operation = $semantics->diagnose($sql, [$semantics->diagnose('CREATE TABLE t (a INT, b INT)')]);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -217,7 +217,7 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerAnywhereAnswersTheProblemOfTheStatement')]
     public function testAnywhereAnswersTheProblemOfTheStatement(string $sql, ?string $message): void
     {
-        $statement = (new Semantics())->inspect($sql)->statement;
+        $statement = (new Semantics())->diagnose($sql)->statement;
 
         self::assertSame($message, (new ProgramRestrictions())->anywhere($statement)?->message());
     }
@@ -252,7 +252,7 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerFunctionAnswersTheProblemOfTheStatement')]
     public function testFunctionAnswersTheProblemOfTheStatement(string $sql, ProgramKind $kind, ?string $message): void
     {
-        $statement = (new Semantics())->inspect($sql)->statement;
+        $statement = (new Semantics())->diagnose($sql)->statement;
 
         self::assertSame($message, (new ProgramRestrictions())->function($statement, $kind)?->message());
     }
@@ -283,7 +283,7 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerResultsTellsWhetherTheStatementReturnsRows')]
     public function testResultsTellsWhetherTheStatementReturnsRows(string $sql, bool $expected): void
     {
-        $statement = (new Semantics())->inspect($sql)->statement;
+        $statement = (new Semantics())->diagnose($sql)->statement;
 
         self::assertSame($expected, (new ProgramRestrictions())->results($statement));
     }
@@ -315,7 +315,7 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerIntoTellsWhetherTheQueryWritesItsRows')]
     public function testIntoTellsWhetherTheQueryWritesItsRows(string $sql, bool $expected): void
     {
-        $query = (new Semantics())->inspect($sql)->statement;
+        $query = (new Semantics())->diagnose($sql)->statement;
         self::assertInstanceOf(Query::class, $query);
 
         self::assertSame($expected, (new ProgramRestrictions())->into($query));

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
  *
  * @visibility public
  * @example Reading a qualified column use
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT t.a FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT t.a FROM t');
  *     [$query->statement->columns[0]->expression->qualifier?->name->value, $query->statement->columns[0]->expression->name->value] // => ['t', 'a']
  */
 final class ColumnUse implements Scalar

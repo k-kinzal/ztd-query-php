@@ -16,13 +16,13 @@ final class ShowCreateProcedureTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW CREATE PROCEDURE db.x');
+        $show = (new Semantics())->inspect('SHOW CREATE PROCEDURE db.x');
         self::assertInstanceOf(ShowCreateProcedure::class, $show->statement);
         self::assertSame('Procedure', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE PROCEDURE db.x', (new Semantics())->analyze('SHOW CREATE PROCEDURE db.x')->toString());
+        self::assertSame('SHOW CREATE PROCEDURE db.x', (new Semantics())->inspect('SHOW CREATE PROCEDURE db.x')->toString());
     }
 }

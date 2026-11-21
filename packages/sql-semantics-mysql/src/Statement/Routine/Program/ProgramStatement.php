@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
  *
  * @visibility public
  * @example Telling a program statement from other statements
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE PROCEDURE p() BEGIN END');
  *     $create->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement // => true
  */
 interface ProgramStatement extends Node

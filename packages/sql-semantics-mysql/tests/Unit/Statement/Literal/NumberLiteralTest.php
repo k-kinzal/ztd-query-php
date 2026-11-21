@@ -89,7 +89,7 @@ final class NumberLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheTypeOfTheTextThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = 18446744073709551615');
+        $operation = (new Semantics())->inspect('SELECT a FROM t WHERE a = 18446744073709551615');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -107,7 +107,7 @@ final class NumberLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersDecimalForAnExactNumberWithAPoint(): void
     {
-        $operation = (new Semantics())->analyze('SELECT .5');
+        $operation = (new Semantics())->inspect('SELECT .5');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -123,10 +123,10 @@ final class NumberLiteralTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT 007', $semantics->analyze('SELECT 007')->toString());
-        self::assertSame('SELECT 1.50', $semantics->analyze('SELECT 1.50')->toString());
-        self::assertSame('SELECT 1.5E-3', $semantics->analyze('SELECT 1.5E-3')->toString());
-        self::assertSame('SELECT .5', $semantics->analyze('SELECT .5')->toString());
+        self::assertSame('SELECT 007', $semantics->inspect('SELECT 007')->toString());
+        self::assertSame('SELECT 1.50', $semantics->inspect('SELECT 1.50')->toString());
+        self::assertSame('SELECT 1.5E-3', $semantics->inspect('SELECT 1.5E-3')->toString());
+        self::assertSame('SELECT .5', $semantics->inspect('SELECT .5')->toString());
     }
 
     public function testRejectsASignedNumber(): void

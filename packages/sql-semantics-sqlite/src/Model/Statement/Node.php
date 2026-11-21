@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
  *
  * @visibility public
  * @example Reading the structure of an analyzed statement
- *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1');
  *     $operation->statement instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Node // => true
  */
 interface Node

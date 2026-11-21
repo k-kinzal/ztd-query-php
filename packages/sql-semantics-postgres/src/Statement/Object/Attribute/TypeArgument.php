@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the state type of an aggregate in a complete context
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4)', []);
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4)', []);
  *     $state = $operation->statement->definition[1]->value;
  *     $state->typeFact($operation->context)->descriptor->name() // => 'integer'
  */

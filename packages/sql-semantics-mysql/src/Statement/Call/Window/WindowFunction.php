@@ -35,7 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
  *
  * @visibility public
  * @example Typing a ranking function
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT RANK() OVER w') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Window name is not defined
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT RANK() OVER w') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Window name is not defined
  * @example Refusing an offset that is not a stable integer
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Tile, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()], new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('w')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */

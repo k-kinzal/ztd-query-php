@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Changing a statistics target
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER STATISTICS IF EXISTS s SET STATISTICS 100');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER STATISTICS IF EXISTS s SET STATISTICS 100');
  *     $statement->toString() // => 'ALTER STATISTICS IF EXISTS s SET STATISTICS 100'
  */
 final class AlterStatistics implements Statement

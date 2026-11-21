@@ -22,7 +22,7 @@ final class ColumnConstraintTest extends TestCase
 {
     public function testDeriveConstraintDerivesEachKindOfOperandInItsOwnScope(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a CHECK (rowid > 0), b AS (rowid), c DEFAULT (a))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a CHECK (rowid > 0), b AS (rowid), c DEFAULT (a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

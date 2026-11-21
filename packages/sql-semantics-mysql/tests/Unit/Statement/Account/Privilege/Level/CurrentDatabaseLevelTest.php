@@ -21,6 +21,6 @@ final class CurrentDatabaseLevelTest extends TestCase
 
     public function testRenderWritesStar(): void
     {
-        self::assertSame('GRANT SELECT ON * TO u', (new Semantics())->analyze('grant select on * to u')->toString());
+        self::assertSame('GRANT SELECT ON * TO u', (new Semantics())->inspect('grant select on * to u')->toString());
     }
 }

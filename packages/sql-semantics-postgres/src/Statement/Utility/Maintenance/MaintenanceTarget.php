@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  *
  * @visibility public
  * @example Reading the columns of an analyzed table
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ANALYZE app.t (a, b)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ANALYZE app.t (a, b)');
  *     [$operation->statement->targets[0]->table->schema->value, count($operation->statement->targets[0]->columns)] // => ['app', 2]
  */
 final class MaintenanceTarget implements Node

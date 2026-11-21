@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * @visibility public
  * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
+ *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
  *     [$analyze->toString(), $analyze->statement->histogram->data->value === '{}'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", true]
  */
 final class LoadHistogram implements Histogram

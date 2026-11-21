@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading the declaration a CREATE TABLE provides
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE users (id INTEGER, name TEXT)')->declarations()[0];
+ *     $table = $semantics->inspect('CREATE TABLE users (id INTEGER, name TEXT)')->declarations()[0];
  *     [$table->name->name->value, count($table->columns)] // => ['users', 2]
  */
 final class Table

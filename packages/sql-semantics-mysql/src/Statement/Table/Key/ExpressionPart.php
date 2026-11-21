@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
  *
  * @visibility public
  * @example Reading a functional key part
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a + 1)))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT, KEY ((a + 1)))');
  *     $create->statement->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
  */
 final class ExpressionPart implements KeyPart

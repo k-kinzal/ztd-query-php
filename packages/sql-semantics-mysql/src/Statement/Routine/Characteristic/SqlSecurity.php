@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the security context of a routine
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER PROCEDURE p SQL SECURITY INVOKER');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER PROCEDURE p SQL SECURITY INVOKER');
  *     $alter->statement->characteristics[0]->context->value // => 'INVOKER'
  */
 final class SqlSecurity implements Characteristic

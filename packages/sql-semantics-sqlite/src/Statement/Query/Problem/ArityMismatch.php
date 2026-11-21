@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading the counts of an INSERT that supplies too few values
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $semantics->analyze('INSERT INTO t VALUES (1)', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: 1 values for 2 columns.
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+ *     $semantics->inspect('INSERT INTO t VALUES (1)', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: 1 values for 2 columns.
  */
 final class ArityMismatch implements Diagnostic
 {

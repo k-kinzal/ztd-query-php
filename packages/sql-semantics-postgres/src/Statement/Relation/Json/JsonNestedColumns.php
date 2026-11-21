@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading nested columns
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED '$.b[*]' COLUMNS (b text)))");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->inspect("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED '$.b[*]' COLUMNS (b text)))");
  *     [$query->field(0)->name->value, $query->toString()] // => ['b', "SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED PATH '$.b[*]' COLUMNS (b text)))"]
  */
 final class JsonNestedColumns implements JsonTableColumn

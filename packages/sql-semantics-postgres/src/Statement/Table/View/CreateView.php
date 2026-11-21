@@ -37,8 +37,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  * @visibility public
  * @example Declaring a view
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a int NOT NULL, b text)', []);
- *     $view = $semantics->analyze('CREATE OR REPLACE VIEW v (x) AS SELECT a, b FROM t', $table->declarations());
+ *     $table = $semantics->inspect('CREATE TABLE t (a int NOT NULL, b text)', []);
+ *     $view = $semantics->inspect('CREATE OR REPLACE VIEW v (x) AS SELECT a, b FROM t', $table->declarations());
  *     array_map(static fn ($column) => [$column->name->value, $column->nullability->name], $view->declarations()[0]->columns) // => [['x', 'NotNull'], ['b', 'Nullable']]
  */
 final class CreateView implements SchemaElement, RecursiveDefinition

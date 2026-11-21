@@ -34,7 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
  *
  * @visibility public
  * @example Reading an index
- *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0');
+ *     $index = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0');
  *     [$index->statement->unique, $index->statement->table->only, $index->toString()] // => [true, true, 'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0']
  */
 final class CreateIndex implements SchemaElement, Relation

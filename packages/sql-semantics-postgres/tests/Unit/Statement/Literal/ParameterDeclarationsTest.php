@@ -19,8 +19,8 @@ final class ParameterDeclarationsTest extends TestCase
     public function testInfersUndeclaredInPrepareOnly(): void
     {
         $semantics = new Semantics();
-        $prepare = $semantics->analyze('PREPARE p (integer) AS SELECT $1')->statement;
-        $function = $semantics->analyze('CREATE FUNCTION f(a integer) RETURNS integer RETURN $1')->statement;
+        $prepare = $semantics->inspect('PREPARE p (integer) AS SELECT $1')->statement;
+        $function = $semantics->inspect('CREATE FUNCTION f(a integer) RETURNS integer RETURN $1')->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertInstanceOf(CreateFunction::class, $function);
         self::assertInstanceOf(ParameterDeclarations::class, $prepare->parameters);

@@ -17,8 +17,8 @@ final class OptionSyntaxTest extends TestCase
 {
     public function testCasesTellTheTwoSyntaxesApart(): void
     {
-        $words = (new Semantics())->analyze('CLUSTER VERBOSE t')->statement;
-        $list = (new Semantics())->analyze('CLUSTER (VERBOSE) t')->statement;
+        $words = (new Semantics())->inspect('CLUSTER VERBOSE t')->statement;
+        $list = (new Semantics())->inspect('CLUSTER (VERBOSE) t')->statement;
         self::assertInstanceOf(Cluster::class, $words);
         self::assertInstanceOf(Cluster::class, $list);
         self::assertSame([OptionSyntax::Words, OptionSyntax::Parenthesized], [$words->syntax, $list->syntax]);

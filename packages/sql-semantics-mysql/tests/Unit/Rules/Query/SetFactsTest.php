@@ -26,7 +26,7 @@ final class SetFactsTest extends TestCase
 {
     public function testDeriveSeesARecursiveTableWithTheColumnsOfItsAnchor(): void
     {
-        $operation = (new Semantics())->analyze("WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT CONCAT(n, 'x') FROM c) SELECT n FROM c", []);
+        $operation = (new Semantics())->inspect("WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT CONCAT(n, 'x') FROM c) SELECT n FROM c", []);
         $type = $operation->field('n')->type;
 
         self::assertSame([], $operation->facts->diagnostics);
@@ -38,8 +38,8 @@ final class SetFactsTest extends TestCase
     public function testOperandsCombinesTheColumnsOfBothOperands(): void
     {
         $semantics = new Semantics('mysql-5.6.51');
-        $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
-        $operation = $semantics->analyze('SELECT * FROM (SELECT a AS x FROM t UNION SELECT NULL FROM DUAL LIMIT 1 ORDER BY x) AS d', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
+        $operation = $semantics->inspect('SELECT * FROM (SELECT a AS x FROM t UNION SELECT NULL FROM DUAL LIMIT 1 ORDER BY x) AS d', [$table]);
         $type = $operation->field('x')->type;
 
         self::assertSame([], $operation->facts->diagnostics);
@@ -51,8 +51,8 @@ final class SetFactsTest extends TestCase
     public function testLeadingCombinesTheOperandsBeforeALaterUnion(): void
     {
         $semantics = new Semantics('mysql-5.6.51');
-        $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
-        $operation = $semantics->analyze('SELECT a AS x FROM t UNION SELECT NULL LIMIT 1 UNION SELECT 2', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
+        $operation = $semantics->inspect('SELECT a AS x FROM t UNION SELECT NULL LIMIT 1 UNION SELECT 2', [$table]);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame(Nullability::Nullable, $operation->field('x')->nullability);

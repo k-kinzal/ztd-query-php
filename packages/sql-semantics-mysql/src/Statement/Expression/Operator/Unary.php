@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
  *
  * @visibility public
  * @example Writing the tight negation
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE !a = 1')->toString() // => 'SELECT a FROM t WHERE ! a = 1'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE !a = 1')->toString() // => 'SELECT a FROM t WHERE ! a = 1'
  */
 final class Unary implements Scalar
 {

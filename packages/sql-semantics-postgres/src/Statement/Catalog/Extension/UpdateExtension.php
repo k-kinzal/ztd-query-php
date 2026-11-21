@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
  *
  * @visibility public
  * @example Updating to a version
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("ALTER EXTENSION hstore UPDATE TO '2.0'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ALTER EXTENSION hstore UPDATE TO '2.0'");
  *     $operation->statement->versions[0]->value // => '2.0'
  */
 final class UpdateExtension implements Statement

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
  *
  * @visibility public
  * @example Reading a projected expression, its alias and its spelling
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS one, 1+1');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1 AS one, 1+1');
  *     [$query->statement->columns[0]->alias?->value, $query->statement->columns[1]->layout?->text(), $query->toString()] // => ['one', '1+1', 'SELECT 1 AS one, 1+1']
  */
 final class ResultColumn implements Node

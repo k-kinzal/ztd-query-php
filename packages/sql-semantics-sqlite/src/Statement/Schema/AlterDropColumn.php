@@ -33,7 +33,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  *
  * @visibility public
  * @example Reading a column removal
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ALTER TABLE t DROP COLUMN b');
+ *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t DROP COLUMN b');
  *     [$alter->statement->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t DROP b']
  */
 final class AlterDropColumn implements Statement

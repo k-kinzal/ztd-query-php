@@ -28,13 +28,13 @@ final class AlterOperatorTest extends TestCase
 {
     public function testDeriveStatementReportsAPostfixOperator(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR ! (int4, NONE) SET (restrict = NONE)');
+        $operation = (new Semantics())->diagnose('ALTER OPERATOR ! (int4, NONE) SET (restrict = NONE)');
         self::assertEquals([new RoutineProblem(RoutineProblemKind::PostfixOperator)], $operation->facts->diagnostics);
     }
 
     public function testRenderWritesTheAttributes(): void
     {
-        $operation = (new Semantics())->inspect('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)');
+        $operation = (new Semantics())->diagnose('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)');
         self::assertSame('ALTER OPERATOR = (int4, int4) SET (restrict = NONE, join = eqjoinsel, hashes)', $operation->toString());
     }
 
@@ -52,7 +52,7 @@ final class AlterOperatorTest extends TestCase
 
     public function testDeriveStatementReportsTheAttributesTheCommandRefuses(): void
     {
-        $operation = (new Semantics('pg-16.6'))->inspect('ALTER OPERATOR = (int4, int4) SET (commutator = =, leftarg = int4, sort1 = <)');
+        $operation = (new Semantics('pg-16.6'))->diagnose('ALTER OPERATOR = (int4, int4) SET (commutator = =, leftarg = int4, sort1 = <)');
         self::assertSame([
             'operator attribute "commutator" cannot be changed',
             'operator attribute "leftarg" cannot be changed',

@@ -16,6 +16,6 @@ final class AllPrivilegesTest extends TestCase
 {
     public function testRenderWritesAll(): void
     {
-        self::assertSame('GRANT ALL ON *.* TO u', (new Semantics())->analyze('grant all privileges on *.* to u')->toString());
+        self::assertSame('GRANT ALL ON *.* TO u', (new Semantics())->inspect('grant all privileges on *.* to u')->toString());
     }
 }

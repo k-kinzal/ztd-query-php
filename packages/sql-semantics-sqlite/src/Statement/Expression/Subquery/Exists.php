@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  *
  * @visibility public
  * @example Reading the facts of EXISTS
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT EXISTS (SELECT 1 FROM t)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT EXISTS (SELECT 1 FROM t)');
  *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  */
 final class Exists implements Scalar

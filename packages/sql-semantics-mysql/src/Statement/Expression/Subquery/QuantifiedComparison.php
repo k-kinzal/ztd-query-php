@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
  *
  * @visibility public
  * @example Comparing with every row
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a >= ALL (SELECT 1)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a >= ALL (SELECT 1)');
  *     [$query->statement->where->operator->value, $query->statement->where->quantifier->value] // => ['>=', 'ALL']
  */
 final class QuantifiedComparison implements Scalar

@@ -15,7 +15,7 @@ final class ExclusionElementTest extends TestCase
     public function testDeriveClauseResolvesTheKey(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, EXCLUDE (zz WITH =))', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, EXCLUDE (zz WITH =))', []);
         self::assertSame([
           0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -24,7 +24,7 @@ final class ExclusionElementTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, EXCLUDE (a DESC WITH &&))', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, EXCLUDE (a DESC WITH &&))', []);
         self::assertSame('CREATE TABLE t (a INT, EXCLUDE (a DESC WITH &&))', $statement->toString());
     }
 }

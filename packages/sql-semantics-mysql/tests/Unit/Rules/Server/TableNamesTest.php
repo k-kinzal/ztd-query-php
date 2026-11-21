@@ -20,8 +20,8 @@ final class TableNamesTest extends TestCase
     public function testRecordResolvesAndReportsARepeatedName(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT)');
-        $lock = $semantics->inspect('LOCK TABLES t READ, t AS u WRITE, t AS u READ', [$table]);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT)');
+        $lock = $semantics->diagnose('LOCK TABLES t READ, t AS u WRITE, t AS u READ', [$table]);
         self::assertInstanceOf(LockTables::class, $lock->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $lock->facts->relation($lock->statement->locks[1])->table);

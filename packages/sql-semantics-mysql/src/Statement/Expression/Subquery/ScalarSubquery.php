@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
  *
  * @visibility public
  * @example Comparing with a scalar subquery
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = (SELECT 1)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a = (SELECT 1)');
  *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery // => true
  */
 final class ScalarSubquery implements Scalar

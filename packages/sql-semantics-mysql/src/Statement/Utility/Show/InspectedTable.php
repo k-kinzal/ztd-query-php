@@ -20,8 +20,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Resolving the inspected table
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
- *     $show = $semantics->analyze('SHOW CREATE TABLE t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INT)');
+ *     $show = $semantics->inspect('SHOW CREATE TABLE t', [$table]);
  *     $show->facts->relation($show->statement->table)->table->table === $table->declarations()[0] // => true
  */
 final class InspectedTable implements Node

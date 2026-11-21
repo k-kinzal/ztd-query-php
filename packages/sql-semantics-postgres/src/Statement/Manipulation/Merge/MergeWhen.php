@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the condition of a WHEN clause
- *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED AND u.c THEN DELETE');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED AND u.c THEN DELETE');
  *     $merge->statement->clauses[0]->condition !== null // => true
  * @example Refusing an insert for rows that have a target row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeWhen(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::Matched, null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsertDefaults()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

@@ -33,7 +33,7 @@ final class FrameExclusionTest extends TestCase
 
     public function testFromMatchesTheExclusionOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics())->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING) FROM t')->statement;
+        $statement = (new Semantics())->inspect('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING) FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         $frames = array_map(static function (object $column): ?FrameExclusion {

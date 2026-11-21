@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the changes
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a');
  *     count($operation->statement->changes) // => 2
  */
 final class AlterComposite implements Statement

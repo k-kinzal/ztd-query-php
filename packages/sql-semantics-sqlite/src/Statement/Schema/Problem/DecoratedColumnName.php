@@ -18,7 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a sort order in a foreign key column list
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column name p of a column list is written with a collation or a sort order.
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column name p of a column list is written with a collation or a sort order.
  */
 final class DecoratedColumnName implements Diagnostic
 {

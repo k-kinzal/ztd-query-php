@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Changing a dictionary option
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)');
  *     $operation->statement->options[0]->name->value // => 'stopwords'
  */
 final class AlterTextSearchDictionary implements Statement

@@ -22,8 +22,8 @@ final class WrongRelationKindTest extends TestCase
     public function testMessageNamesTheRelationItsKindAndTheRequest(): void
     {
         $semantics = new Semantics();
-        $view = $semantics->analyze('CREATE VIEW v AS SELECT 1')->declarations()[0];
-        $table = $semantics->analyze('CREATE TABLE t (a)')->declarations()[0];
+        $view = $semantics->inspect('CREATE VIEW v AS SELECT 1')->declarations()[0];
+        $table = $semantics->inspect('CREATE TABLE t (a)')->declarations()[0];
         $profile = $semantics->context()->profile;
 
         self::assertSame('Relation v is a view: CREATE INDEX indexes only a table.', (new WrongRelationKind($view, KindRefusal::CreateIndex))->message());
@@ -33,7 +33,7 @@ final class WrongRelationKindTest extends TestCase
 
     public function testMessageIsNeverAboutARelationOfTheKindTheRequestNeeds(): void
     {
-        $table = (new Semantics())->analyze('CREATE TABLE t (a)')->declarations()[0];
+        $table = (new Semantics())->inspect('CREATE TABLE t (a)')->declarations()[0];
         $this->expectExceptionMessage('A relation of the kind a request needs is not refused.');
 
         new WrongRelationKind($table, KindRefusal::DropTable);

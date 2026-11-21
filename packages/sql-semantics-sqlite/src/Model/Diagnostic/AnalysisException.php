@@ -12,7 +12,7 @@ use RuntimeException;
  *
  * @visibility public
  * @example Rejecting text outside the grammar
- *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELEC 1') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELEC 1') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException
  */
 final class AnalysisException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

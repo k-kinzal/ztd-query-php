@@ -17,41 +17,41 @@ final class XaRuleTest extends TestCase
 {
     public function testStatementLowersEveryXaStatement(): void
     {
-        self::assertSame("XA PREPARE 'a'", (new Semantics('mysql-5.6.51'))->analyze("xa prepare 'a'")->toString());
+        self::assertSame("XA PREPARE 'a'", (new Semantics('mysql-5.6.51'))->inspect("xa prepare 'a'")->toString());
     }
 
     public function testStartLowersBeginAndResume(): void
     {
-        self::assertSame("XA START 'a' RESUME", (new Semantics())->analyze("xa begin 'a' resume")->toString());
+        self::assertSame("XA START 'a' RESUME", (new Semantics())->inspect("xa begin 'a' resume")->toString());
     }
 
     public function testEndOptionLowersThe56Migrate(): void
     {
-        self::assertSame("XA END 'a' SUSPEND FOR MIGRATE", (new Semantics('mysql-5.6.51'))->analyze("xa end 'a' suspend for migrate")->toString());
+        self::assertSame("XA END 'a' SUSPEND FOR MIGRATE", (new Semantics('mysql-5.6.51'))->inspect("xa end 'a' suspend for migrate")->toString());
     }
 
     public function testOptionLowersJoin(): void
     {
-        self::assertSame("XA START 'a' JOIN", (new Semantics('mysql-5.7.44'))->analyze("xa start 'a' join")->toString());
+        self::assertSame("XA START 'a' JOIN", (new Semantics('mysql-5.7.44'))->inspect("xa start 'a' join")->toString());
     }
 
     public function testFlagLowersOnePhase(): void
     {
-        self::assertSame("XA COMMIT 'a' ONE PHASE", (new Semantics())->analyze("xa commit 'a' one phase")->toString());
+        self::assertSame("XA COMMIT 'a' ONE PHASE", (new Semantics())->inspect("xa commit 'a' one phase")->toString());
     }
 
     public function testXidLowersTheThreeParts(): void
     {
-        self::assertSame("XA ROLLBACK 'a', 'b', 7", (new Semantics())->analyze("xa rollback 'a', 'b', 7")->toString());
+        self::assertSame("XA ROLLBACK 'a', 'b', 7", (new Semantics())->inspect("xa rollback 'a', 'b', 7")->toString());
     }
 
     public function testLimitsRejectsAFormatAboveTheSignedRange(): void
     {
-        self::assertSame("XA COMMIT 'a', 'b', 9223372036854775808", (new Semantics('mysql-5.6.51'))->analyze("XA COMMIT 'a', 'b', 9223372036854775808")->toString());
-        self::assertSame("XA COMMIT 'a', 'b', x'8000000000000000'", (new Semantics())->analyze("XA COMMIT 'a', 'b', 0x8000000000000000")->toString());
+        self::assertSame("XA COMMIT 'a', 'b', 9223372036854775808", (new Semantics('mysql-5.6.51'))->inspect("XA COMMIT 'a', 'b', 9223372036854775808")->toString());
+        self::assertSame("XA COMMIT 'a', 'b', x'8000000000000000'", (new Semantics())->inspect("XA COMMIT 'a', 'b', 0x8000000000000000")->toString());
 
         $this->expectException(AnalysisException::class);
 
-        (new Semantics())->analyze("XA COMMIT 'a', 'b', 9223372036854775808");
+        (new Semantics())->inspect("XA COMMIT 'a', 'b', 9223372036854775808");
     }
 }

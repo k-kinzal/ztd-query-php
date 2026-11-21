@@ -14,8 +14,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns a star selects
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $query = $semantics->analyze('SELECT * FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+ *     $query = $semantics->inspect('SELECT * FROM t', [$table]);
  *     [$query->statement->columns[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Query\Star, count($query->fields())] // => [true, 2]
  */
 final class Star implements Node

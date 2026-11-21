@@ -16,12 +16,12 @@ final class RollbackTest extends TestCase
 {
     public function testRenderWritesTheCompletionChoices(): void
     {
-        self::assertSame('ROLLBACK AND NO CHAIN RELEASE', (new Semantics())->analyze('rollback work and no chain release')->toString());
+        self::assertSame('ROLLBACK AND NO CHAIN RELEASE', (new Semantics())->inspect('rollback work and no chain release')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics('mysql-9.1.0'))->analyze('ROLLBACK');
+        $operation = (new Semantics('mysql-9.1.0'))->inspect('ROLLBACK');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\Account;
  *
  * @visibility public
  * @example Reading the password of an account
- *     $user = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
+ *     $user = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
  *     $user->identification?->secret?->value // => 'secret'
  */
 final class UserSpecification implements UserAlteration

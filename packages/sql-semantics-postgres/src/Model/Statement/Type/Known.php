@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a known type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT 'a'");
  *     $operation->field(0)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known // => true
  */
 final class Known implements TypeFact

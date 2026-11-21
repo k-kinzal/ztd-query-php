@@ -17,28 +17,28 @@ final class DoBlockTest extends TestCase
 {
     public function testCodeAnswersTheOnlyCodeString(): void
     {
-        $statement = (new Semantics())->inspect("DO LANGUAGE plpgsql 'BEGIN END'")->statement;
+        $statement = (new Semantics())->diagnose("DO LANGUAGE plpgsql 'BEGIN END'")->statement;
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertSame('BEGIN END', $statement->code()?->value);
     }
 
     public function testCodeAnswersNullForTwoCodeStrings(): void
     {
-        $statement = (new Semantics())->inspect("DO 'a' 'b'")->statement;
+        $statement = (new Semantics())->diagnose("DO 'a' 'b'")->statement;
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertNull($statement->code());
     }
 
     public function testLanguageAnswersTheOnlyLanguage(): void
     {
-        $statement = (new Semantics())->inspect("DO 'x' LANGUAGE 'sql'")->statement;
+        $statement = (new Semantics())->diagnose("DO 'x' LANGUAGE 'sql'")->statement;
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertSame('sql', $statement->language()?->name());
     }
 
     public function testLanguageAnswersNullWithoutALanguage(): void
     {
-        $statement = (new Semantics())->inspect("DO 'x'")->statement;
+        $statement = (new Semantics())->diagnose("DO 'x'")->statement;
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertNull($statement->language());
     }
@@ -49,16 +49,16 @@ final class DoBlockTest extends TestCase
         self::assertSame(
             [['no inline code specified'], ['conflicting or redundant options'], ['conflicting or redundant options'], []],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('DO LANGUAGE plpgsql')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect("DO 'a' 'b'")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect("DO 'a' LANGUAGE sql LANGUAGE plpgsql")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect("DO 'a' LANGUAGE sql")->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('DO LANGUAGE plpgsql')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose("DO 'a' 'b'")->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose("DO 'a' LANGUAGE sql LANGUAGE plpgsql")->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose("DO 'a' LANGUAGE sql")->facts->diagnostics),
             ],
         );
     }
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame("DO LANGUAGE plpgsql 'BEGIN END'", (new Semantics())->inspect('DO LANGUAGE plpgsql $$BEGIN END$$')->toString());
+        self::assertSame("DO LANGUAGE plpgsql 'BEGIN END'", (new Semantics())->diagnose('DO LANGUAGE plpgsql $$BEGIN END$$')->toString());
     }
 }

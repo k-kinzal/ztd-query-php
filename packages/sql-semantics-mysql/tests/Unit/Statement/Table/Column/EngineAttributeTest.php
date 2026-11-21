@@ -18,7 +18,7 @@ final class EngineAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -33,6 +33,6 @@ final class EngineAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE \'{}\')', (new Semantics())->analyze('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
+        self::assertSame('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE \'{}\')', (new Semantics())->inspect('CREATE TABLE t (a INT SECONDARY_ENGINE_ATTRIBUTE = \'{}\')')->toString());
     }
 }

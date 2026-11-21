@@ -22,7 +22,7 @@ final class LeaveTest extends TestCase
     #[DataProvider('providerDeriveProgramLooksTheLabelUp')]
     public function testDeriveProgramLooksTheLabelUp(string $sql, array $messages): void
     {
-        $operation = (new Semantics())->inspect($sql);
+        $operation = (new Semantics())->diagnose($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -44,7 +44,7 @@ final class LeaveTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     /**

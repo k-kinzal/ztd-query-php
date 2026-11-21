@@ -33,7 +33,7 @@ final class SqlSecurityTest extends TestCase
     #[DataProvider('providerRenderWritesTheContextKeyword')]
     public function testRenderWritesTheContextKeyword(string $release, string $sql, string $expected, SecurityContext $context): void
     {
-        $alter = (new Semantics($release))->analyze($sql);
+        $alter = (new Semantics($release))->inspect($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;

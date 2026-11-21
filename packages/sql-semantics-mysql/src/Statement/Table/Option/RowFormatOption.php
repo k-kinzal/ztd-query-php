@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
  *
  * @visibility public
  * @example Reading a table option
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) ROW_FORMAT = DYNAMIC');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT) ROW_FORMAT = DYNAMIC');
  *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption // => true
  */
 final class RowFormatOption implements TableOption

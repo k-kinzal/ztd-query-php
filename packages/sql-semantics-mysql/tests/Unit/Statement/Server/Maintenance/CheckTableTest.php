@@ -17,14 +17,14 @@ final class CheckTableTest extends TestCase
 {
     public function testRenderWritesTheOptions(): void
     {
-        self::assertSame('CHECK TABLE t CHANGED MEDIUM', (new Semantics('mysql-5.6.51'))->analyze('check table t changed medium')->toString());
+        self::assertSame('CHECK TABLE t CHANGED MEDIUM', (new Semantics('mysql-5.6.51'))->inspect('check table t changed medium')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        $operation = $semantics->analyze('CHECK TABLE t', [$table]);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        $operation = $semantics->inspect('CHECK TABLE t', [$table]);
         self::assertInstanceOf(CheckTable::class, $operation->statement);
 
         self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);

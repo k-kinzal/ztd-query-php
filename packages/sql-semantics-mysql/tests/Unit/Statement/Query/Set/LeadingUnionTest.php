@@ -28,7 +28,7 @@ final class LeadingUnionTest extends TestCase
 {
     public function testRenderKeepsTheOwnClausesOfAnEarlierSelect(): void
     {
-        $operation = (new Semantics('mysql-5.6.51'))->analyze('select 1 union all select a from t for update union select 3 limit 1 union select 4');
+        $operation = (new Semantics('mysql-5.6.51'))->inspect('select 1 union all select a from t for update union select 3 limit 1 union select 4');
         $union = $operation->statement;
         self::assertInstanceOf(SetOperation::class, $union);
         $leading = $union->left;
@@ -68,7 +68,7 @@ final class LeadingUnionTest extends TestCase
     {
         $semantics = new Semantics('mysql-5.7.44');
 
-        self::assertSame('SELECT 1 FROM t FOR UPDATE UNION DISTINCT SELECT 2 FROM t LOCK IN SHARE MODE UNION SELECT 3', $semantics->analyze('SELECT 1 FROM t FOR UPDATE UNION DISTINCT SELECT 2 FROM t LOCK IN SHARE MODE UNION SELECT 3')->toString());
+        self::assertSame('SELECT 1 FROM t FOR UPDATE UNION DISTINCT SELECT 2 FROM t LOCK IN SHARE MODE UNION SELECT 3', $semantics->inspect('SELECT 1 FROM t FOR UPDATE UNION DISTINCT SELECT 2 FROM t LOCK IN SHARE MODE UNION SELECT 3')->toString());
     }
 
     public function testRenderNeedsMySql5ForTheFormAndMySql56ForAnOwnLimit(): void

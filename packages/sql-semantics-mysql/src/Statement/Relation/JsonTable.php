@@ -34,7 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
  *
  * @visibility public
  * @example Reading the alias of a JSON table
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$')) AS j");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT a FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$')) AS j");
  *     $query->statement->from->alias?->value // => 'j'
  */
 final class JsonTable implements Relation

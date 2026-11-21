@@ -19,7 +19,7 @@ final class ExpressionPartTest extends TestCase
 {
     public function testDeriveKeyPartResolvesTheExpressionInTheTable(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a)))');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, KEY ((a)))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -34,6 +34,6 @@ final class ExpressionPartTest extends TestCase
 
     public function testRenderWritesTheParenthesizedExpression(): void
     {
-        self::assertSame('CREATE TABLE t (a INT, INDEX ((a + 1) DESC))', (new Semantics())->analyze('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, INDEX ((a + 1) DESC))', (new Semantics())->inspect('CREATE TABLE t (a INT, KEY ((a + 1) DESC))')->toString());
     }
 }

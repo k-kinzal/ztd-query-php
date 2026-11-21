@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading the modes of SET TRANSACTION
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TRANSACTION READ ONLY, DEFERRABLE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET TRANSACTION READ ONLY, DEFERRABLE');
  *     [$operation->statement->modes[1], $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::Deferrable, 'SET TRANSACTION READ ONLY DEFERRABLE']
  * @example Refusing a SET TRANSACTION without modes
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

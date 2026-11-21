@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW COUNT(*) ERRORS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW COUNT(*) ERRORS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['@@session.error_count', 'SHOW COUNT(*) ERRORS']
  */
 final class ShowErrorCount implements Statement

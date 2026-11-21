@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
  *
  * @visibility public
  * @example Changing the deferral of a constraint
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED');
  *     $statement->toString() // => 'ALTER TABLE t ALTER CONSTRAINT fk DEFERRABLE INITIALLY DEFERRED'
  */
 final class AlterConstraint implements AlterCommand

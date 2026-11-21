@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Dropping a role
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('drop role if exists reader')->toString() // => 'DROP ROLE IF EXISTS reader'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('drop role if exists reader')->toString() // => 'DROP ROLE IF EXISTS reader'
  */
 final class DropRole implements Statement
 {

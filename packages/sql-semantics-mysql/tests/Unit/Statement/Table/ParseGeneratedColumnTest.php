@@ -16,7 +16,7 @@ final class ParseGeneratedColumnTest extends TestCase
 {
     public function testDeriveStatementSeesNoTable(): void
     {
-        $statement = (new Semantics('5.7.44'))->inspect('PARSE_GCOL_EXPR(a + 1)');
+        $statement = (new Semantics('5.7.44'))->diagnose('PARSE_GCOL_EXPR(a + 1)');
 
         self::assertInstanceOf(ParseGeneratedColumn::class, $statement->statement);
         self::assertSame('Column a does not exist.', $statement->facts->diagnostics[0]->message());
@@ -24,6 +24,6 @@ final class ParseGeneratedColumnTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('PARSE_GCOL_EXPR(1)', (new Semantics('5.7.44'))->inspect('PARSE_GCOL_EXPR (1)')->toString());
+        self::assertSame('PARSE_GCOL_EXPR(1)', (new Semantics('5.7.44'))->diagnose('PARSE_GCOL_EXPR (1)')->toString());
     }
 }

@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
  *
  * @visibility public
  * @example Reading the facts of NULL
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT NULL');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT NULL');
  *     [$query->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly, $query->field(0)->nullability] // => [true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class NullLiteral implements Scalar

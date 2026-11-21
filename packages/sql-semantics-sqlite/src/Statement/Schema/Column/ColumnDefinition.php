@@ -34,7 +34,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL DEFAULT 0)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL DEFAULT 0)');
  *     $column = $create->statement->columns[0];
  *     [$column->name->value, $column->type?->text(), count($column->constraints), $column->notNull()] // => ['price', 'DECIMAL', 2, true]
  */

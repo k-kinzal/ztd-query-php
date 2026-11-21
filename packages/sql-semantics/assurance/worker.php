@@ -100,10 +100,10 @@ function analyzed(array $input): Select
     $semantics = new Semantics();
     $tables = [];
     foreach ($input['declarations'] as $ddl) {
-        $tables[] = $semantics->analyze($ddl);
+        $tables[] = $semantics->inspect($ddl);
     }
 
-    return $semantics->ir()->analyze($input['sql'], $tables === [] ? null : $tables);
+    return $semantics->analyze($input['sql'], $tables === [] ? null : $tables);
 }
 
 function runCase(array $input): array

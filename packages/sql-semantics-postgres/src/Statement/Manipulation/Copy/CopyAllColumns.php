@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
  *
  * @visibility public
  * @example Reading the star argument
- *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT (force_quote *)');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('COPY t TO STDOUT (force_quote *)');
  *     $copy->statement->options[0]->argument instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyAllColumns // => true
  */
 final class CopyAllColumns implements OptionArgument

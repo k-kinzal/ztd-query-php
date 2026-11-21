@@ -32,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
  *
  * @visibility public
  * @example Typing TIMESTAMPDIFF()
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT TIMESTAMPDIFF(MONTH, '2024-01-01', '2024-03-01')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SELECT TIMESTAMPDIFF(MONTH, '2024-01-01', '2024-03-01')");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class TimestampCall implements Scalar

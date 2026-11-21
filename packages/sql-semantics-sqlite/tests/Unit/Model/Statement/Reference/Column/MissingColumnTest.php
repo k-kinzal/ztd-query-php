@@ -17,9 +17,9 @@ final class MissingColumnTest extends TestCase
     public function testMessageNamesTheUnqualifiedColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
-        $resolution = $semantics->inspect('SELECT b FROM t', [$table])->field('b')->resolution;
+        $resolution = $semantics->diagnose('SELECT b FROM t', [$table])->field('b')->resolution;
 
         self::assertInstanceOf(MissingColumn::class, $resolution);
         self::assertSame('Column b does not exist.', $resolution->message());
@@ -30,9 +30,9 @@ final class MissingColumnTest extends TestCase
     public function testMessageNamesTheQualifierTheUseWrote(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
-        $resolution = $semantics->inspect('SELECT t.b FROM t', [$table])->field('b')->resolution;
+        $resolution = $semantics->diagnose('SELECT t.b FROM t', [$table])->field('b')->resolution;
 
         self::assertInstanceOf(MissingColumn::class, $resolution);
         self::assertSame('Column t.b does not exist.', $resolution->message());
@@ -42,9 +42,9 @@ final class MissingColumnTest extends TestCase
     public function testMessageIsAlsoADiagnosticOfTheOperation(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
-        $query = $semantics->inspect('SELECT b FROM t', [$table]);
+        $query = $semantics->diagnose('SELECT b FROM t', [$table]);
 
         self::assertSame([$query->field('b')->resolution], $query->facts->diagnostics);
     }

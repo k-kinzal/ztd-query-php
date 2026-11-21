@@ -37,7 +37,7 @@ final class StatementDiagnosticsTest extends TestCase
 
     public function testRenderWritesTheAnalyzedInformation(): void
     {
-        $get = (new Semantics('mysql-5.6.51'))->analyze('get diagnostics @r = row_count, @n = number');
+        $get = (new Semantics('mysql-5.6.51'))->inspect('get diagnostics @r = row_count, @n = number');
         $statement = $get->statement;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(StatementDiagnostics::class, $statement->information);

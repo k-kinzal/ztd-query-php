@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  *
  * @visibility public
  * @example Reading a scan of a handler
- *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
+ *     $read = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('HANDLER h READ NEXT WHERE a > 1 LIMIT 5');
  *     [$read->statement->direction, $read->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next, 'HANDLER h READ NEXT WHERE a > 1 LIMIT 5']
  */
 final class HandlerScan implements Statement

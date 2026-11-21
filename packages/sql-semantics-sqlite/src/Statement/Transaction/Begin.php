@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a transaction start
- *     $begin = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('BEGIN EXCLUSIVE TRANSACTION');
+ *     $begin = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('BEGIN EXCLUSIVE TRANSACTION');
  *     [$begin->statement->behavior?->value, $begin->toString()] // => ['EXCLUSIVE', 'BEGIN EXCLUSIVE']
  */
 final class Begin implements Statement

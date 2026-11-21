@@ -17,7 +17,7 @@ final class MissingInputTest extends TestCase
 {
     public function testDescribeNamesWhatADependentFactWaitsFor(): void
     {
-        $operation = (new Semantics())->analyze('SELECT a, ?2 FROM t');
+        $operation = (new Semantics())->inspect('SELECT a, ?2 FROM t');
 
         $first = $operation->field('a')->type;
         $second = $operation->field(1)->type;

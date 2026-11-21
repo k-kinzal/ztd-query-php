@@ -16,12 +16,12 @@ final class UnlistenTest extends TestCase
 {
     public function testDeriveStatementRecordsNothing(): void
     {
-        $operation = (new Semantics())->analyze('UNLISTEN c');
+        $operation = (new Semantics())->inspect('UNLISTEN c');
         self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
     }
 
     public function testRenderWritesTheChannelOrTheStar(): void
     {
-        self::assertSame(['UNLISTEN c', 'UNLISTEN *'], [(new Semantics())->analyze('UNLISTEN C')->toString(), (new Semantics())->analyze('UNLISTEN *')->toString()]);
+        self::assertSame(['UNLISTEN c', 'UNLISTEN *'], [(new Semantics())->inspect('UNLISTEN C')->toString(), (new Semantics())->inspect('UNLISTEN *')->toString()]);
     }
 }

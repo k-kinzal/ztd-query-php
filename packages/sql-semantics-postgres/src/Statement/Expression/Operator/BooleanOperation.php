@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility public
  * @example Reading a disjunction
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT true OR false AND false');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT true OR false AND false');
  *     $query->field(0)->expression->right->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\BooleanOperator::And
  */
 final class BooleanOperation implements Scalar

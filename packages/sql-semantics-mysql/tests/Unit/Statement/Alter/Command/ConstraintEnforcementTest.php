@@ -17,12 +17,12 @@ final class ConstraintEnforcementTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesTheEnforcement(): void
     {
-        self::assertSame('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', (new Semantics())->analyze('ALTER TABLE t ALTER CONSTRAINT c ENFORCED')->toString());
+        self::assertSame('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', (new Semantics())->inspect('ALTER TABLE t ALTER CONSTRAINT c ENFORCED')->toString());
     }
 }

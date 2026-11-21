@@ -18,8 +18,8 @@ final class EnclosedQueryTest extends TestCase
 {
     public function testAcceptsNeedsAParenthesizedFirstOperand(): void
     {
-        $enclosed = (new Semantics('5.7.44'))->analyze('CREATE TABLE t (SELECT 1 AS a) UNION SELECT 2')->statement;
-        $plain = (new Semantics('5.7.44'))->analyze('CREATE TABLE t SELECT 1 AS a UNION SELECT 2')->statement;
+        $enclosed = (new Semantics('5.7.44'))->inspect('CREATE TABLE t (SELECT 1 AS a) UNION SELECT 2')->statement;
+        $plain = (new Semantics('5.7.44'))->inspect('CREATE TABLE t SELECT 1 AS a UNION SELECT 2')->statement;
         self::assertInstanceOf(CreateTable::class, $enclosed);
         self::assertInstanceOf(CreateTable::class, $plain);
 
@@ -32,7 +32,7 @@ final class EnclosedQueryTest extends TestCase
 
     public function testWriteWritesThePartitioningInsideTheFirstParenthesis(): void
     {
-        $create = (new Semantics('5.6.51'))->analyze('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 ORDER BY 1');
+        $create = (new Semantics('5.6.51'))->inspect('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 ORDER BY 1');
         self::assertInstanceOf(CreateTable::class, $create->statement);
 
         self::assertTrue($create->statement->enclosed);
@@ -41,7 +41,7 @@ final class EnclosedQueryTest extends TestCase
 
     public function testWriteWritesTheOperandsOfALeadingUnion(): void
     {
-        $create = (new Semantics('5.6.51'))->analyze('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 FROM DUAL FOR UPDATE UNION SELECT 3');
+        $create = (new Semantics('5.6.51'))->inspect('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 FROM DUAL FOR UPDATE UNION SELECT 3');
         self::assertInstanceOf(CreateTable::class, $create->statement);
         self::assertInstanceOf(TableQuery::class, $create->statement->query);
 

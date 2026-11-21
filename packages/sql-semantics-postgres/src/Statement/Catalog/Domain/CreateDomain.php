@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Resolving VALUE in a domain constraint to the base type
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DOMAIN posint AS int4 CHECK (VALUE > 0)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE DOMAIN posint AS int4 CHECK (VALUE > 0)');
  *     [$operation->facts->diagnostics, $operation->toString()] // => [[], 'CREATE DOMAIN posint int4 CHECK (value > 0)']
  */
 final class CreateDomain implements Statement, Relation

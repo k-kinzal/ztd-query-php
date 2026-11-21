@@ -22,7 +22,7 @@ final class UserVariableTest extends TestCase
 {
     public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @total');
+        $operation = (new Semantics())->inspect('SELECT @total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -38,7 +38,7 @@ final class UserVariableTest extends TestCase
 
     public function testDeriveScalarKeepsTheNameAsWritten(): void
     {
-        $operation = (new Semantics())->analyze('SELECT @Total');
+        $operation = (new Semantics())->inspect('SELECT @Total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -54,17 +54,17 @@ final class UserVariableTest extends TestCase
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT @Total', $semantics->analyze('select @Total')->toString());
-        self::assertSame('SELECT a FROM t WHERE a = @total', $semantics->analyze('SELECT a FROM t WHERE a = @total')->toString());
+        self::assertSame('SELECT @Total', $semantics->inspect('select @Total')->toString());
+        self::assertSame('SELECT a FROM t WHERE a = @total', $semantics->inspect('SELECT a FROM t WHERE a = @total')->toString());
     }
 
     public function testRenderQuotesANameThatNeedsIt(): void
     {
         $semantics = new Semantics();
 
-        self::assertSame('SELECT @`my var` AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
-        self::assertSame('SELECT @x AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
-        self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
+        self::assertSame('SELECT @`my var` AS v', $semantics->inspect("SELECT @'my var' AS v")->toString());
+        self::assertSame('SELECT @x AS v', $semantics->inspect('SELECT @`x` AS v')->toString());
+        self::assertSame("SELECT @'my var'", $semantics->inspect("SELECT @'my var'")->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void

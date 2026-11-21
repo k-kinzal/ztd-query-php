@@ -20,7 +20,7 @@ final class ValueRowTest extends TestCase
 {
     public function testRenderWritesTheValuesInParentheses(): void
     {
-        $query = (new Semantics())->analyze("values (1, 'a', null), (2, 'b', 3.5)");
+        $query = (new Semantics())->inspect("values (1, 'a', null), (2, 'b', 3.5)");
 
         self::assertInstanceOf(ValuesClause::class, $query->statement);
         self::assertCount(3, $query->statement->rows[1]->values);

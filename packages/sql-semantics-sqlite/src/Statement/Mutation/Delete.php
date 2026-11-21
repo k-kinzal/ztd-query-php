@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
  *
  * @visibility public
  * @example Reading the parts of a DELETE
- *     $delete = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('DELETE FROM t WHERE a = 1 RETURNING a');
+ *     $delete = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('DELETE FROM t WHERE a = 1 RETURNING a');
  *     [$delete->statement->target->name->name->value, $delete->statement->where !== null, $delete->field(0)->name->value] // => ['t', true, 'a']
  */
 final class Delete implements Statement

@@ -17,8 +17,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * @visibility public
  * @example Reading a complete shape
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $operation = $semantics->analyze('SELECT * FROM t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
+ *     $operation = $semantics->inspect('SELECT * FROM t', [$table]);
  *     [$operation->shape()->complete(), count($operation->shape()->slots)] // => [true, 2]
  */
 final class RowShape

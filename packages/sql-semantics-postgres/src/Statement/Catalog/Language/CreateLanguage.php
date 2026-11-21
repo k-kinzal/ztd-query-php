@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the handler of a new language
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR');
  *     [$operation->statement->handler->last()->value, $operation->toString()] // => ['plsample_call_handler', 'CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR']
  */
 final class CreateLanguage implements Statement

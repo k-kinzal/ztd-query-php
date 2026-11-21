@@ -87,7 +87,7 @@ final class PrecedenceTest extends TestCase
 
     public function testOpeningIsTheWeakestLevelOnTheLeftEdgeAndClosedBeforeAPrefixOperator(): void
     {
-        $query = (new Semantics())->analyze("SELECT 1 + 2 * 3, NOT a = b, 1 = 2 + 3, (1 + 2) * 3, -a + 1, a COLLATE nocase, 1 ISNULL, -a, 1, a LIKE b ESCAPE 'x', 1 + -2, NOT 1 + 2 FROM t");
+        $query = (new Semantics())->inspect("SELECT 1 + 2 * 3, NOT a = b, 1 = 2 + 3, (1 + 2) * 3, -a + 1, a COLLATE nocase, 1 ISNULL, -a, 1, a LIKE b ESCAPE 'x', 1 + -2, NOT 1 + 2 FROM t");
         $precedence = new Precedence();
         $levels = array_map(static fn (Field $field): ?int => $field->expression === null ? null : $precedence->opening($field->expression), $query->fields()->items ?? []);
 
@@ -99,7 +99,7 @@ final class PrecedenceTest extends TestCase
 
     public function testClosingIsTheWeakestLevelOnTheRightEdgeAndClosedAfterAPostfixOperator(): void
     {
-        $query = (new Semantics())->analyze("SELECT 1 + 2 * 3, NOT a = b, 1 = 2 + 3, (1 + 2) * 3, -a + 1, a COLLATE nocase, 1 ISNULL, -a, 1, a LIKE b ESCAPE 'x', 1 + -2, NOT 1 + 2, 1 * 2 + 3 FROM t");
+        $query = (new Semantics())->inspect("SELECT 1 + 2 * 3, NOT a = b, 1 = 2 + 3, (1 + 2) * 3, -a + 1, a COLLATE nocase, 1 ISNULL, -a, 1, a LIKE b ESCAPE 'x', 1 + -2, NOT 1 + 2, 1 * 2 + 3 FROM t");
         $precedence = new Precedence();
         $levels = array_map(static fn (Field $field): ?int => $field->expression === null ? null : $precedence->closing($field->expression), $query->fields()->items ?? []);
 
@@ -111,7 +111,7 @@ final class PrecedenceTest extends TestCase
 
     public function testTakesEscapeFindsAPatternMatchWithoutEscapeOnTheRightEdge(): void
     {
-        $query = (new Semantics())->analyze("SELECT a LIKE b, a LIKE b ESCAPE 'x', NOT a LIKE b, a AND b LIKE 1, a LIKE b AND 1, 1, a LIKE b ESCAPE 'x' AND c GLOB d, (a LIKE b) FROM t");
+        $query = (new Semantics())->inspect("SELECT a LIKE b, a LIKE b ESCAPE 'x', NOT a LIKE b, a AND b LIKE 1, a LIKE b AND 1, 1, a LIKE b ESCAPE 'x' AND c GLOB d, (a LIKE b) FROM t");
         $precedence = new Precedence();
         $takes = array_map(static fn (Field $field): ?bool => $field->expression === null ? null : $precedence->takesEscape($field->expression), $query->fields()->items ?? []);
 

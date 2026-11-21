@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a RESET of a keyword form
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET TIME ZONE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('RESET TIME ZONE');
  *     [$operation->statement->parameter->parameter(), $operation->toString()] // => ['timezone', 'RESET TIME ZONE']
  */
 final class Reset implements Statement

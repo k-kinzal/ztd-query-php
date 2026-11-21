@@ -16,17 +16,17 @@ final class AlgorithmOptionTest extends TestCase
 {
     public function testDeriveOptionReportsAnAlgorithmTheReleaseDoesNotKnow(): void
     {
-        self::assertSame('INSTANT is not an ALGORITHM the server knows.', (new Semantics('mysql-5.7.44'))->inspect('DROP INDEX i ON t ALGORITHM = INSTANT')->facts->diagnostics[0]->message());
-        self::assertSame([], (new Semantics())->inspect('DROP INDEX i ON t ALGORITHM = instant')->facts->diagnostics);
+        self::assertSame('INSTANT is not an ALGORITHM the server knows.', (new Semantics('mysql-5.7.44'))->diagnose('DROP INDEX i ON t ALGORITHM = INSTANT')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics())->diagnose('DROP INDEX i ON t ALGORITHM = instant')->facts->diagnostics);
     }
 
     public function testDeriveCommandChecksTheAlgorithm(): void
     {
-        self::assertSame('NOCOPY is not an ALGORITHM the server knows.', (new Semantics())->inspect('ALTER TABLE t ALGORITHM = NOCOPY')->facts->diagnostics[0]->message());
+        self::assertSame('NOCOPY is not an ALGORITHM the server knows.', (new Semantics())->diagnose('ALTER TABLE t ALGORITHM = NOCOPY')->facts->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheAlgorithmOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t ALGORITHM = DEFAULT, ALGORITHM = INPLACE', (new Semantics())->inspect('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
+        self::assertSame('ALTER TABLE t ALGORITHM = DEFAULT, ALGORITHM = INPLACE', (new Semantics())->diagnose('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
     }
 }

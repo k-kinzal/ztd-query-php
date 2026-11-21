@@ -16,12 +16,12 @@ final class UnlockInstanceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('UNLOCK INSTANCE', (new Semantics())->analyze('unlock instance')->toString());
+        self::assertSame('UNLOCK INSTANCE', (new Semantics())->inspect('unlock instance')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze('UNLOCK INSTANCE');
+        $operation = (new Semantics())->inspect('UNLOCK INSTANCE');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

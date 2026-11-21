@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
  *
  * @visibility public
  * @example Reading the strategy
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int) PARTITION BY HASH (a)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int) PARTITION BY HASH (a)');
  *     $create->statement->partitioning->strategy->value // => 'hash'
  */
 final class PartitionSpec implements Clause

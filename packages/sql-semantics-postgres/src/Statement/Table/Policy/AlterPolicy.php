@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
  *
  * @visibility public
  * @example Changing a policy
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER POLICY p ON t TO PUBLIC USING (true)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER POLICY p ON t TO PUBLIC USING (true)');
  *     $statement->toString() // => 'ALTER POLICY p ON t TO public USING (TRUE)'
  */
 final class AlterPolicy implements Statement, Relation

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the items of a SIGNAL
- *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
+ *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->inspect("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
  *     $signal->statement->items[1]->name // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno
  */
 final class SignalItem implements \SqlSemantics\Platform\MySql\Model\Statement\Node

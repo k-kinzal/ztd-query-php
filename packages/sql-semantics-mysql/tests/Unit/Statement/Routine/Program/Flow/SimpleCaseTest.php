@@ -21,7 +21,7 @@ final class SimpleCaseTest extends TestCase
 {
     public function testDeriveProgramDerivesTheOperandAndEveryBranch(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p(a INT) CASE b WHEN c THEN SELECT d; WHEN 1 THEN SELECT a; ELSE SELECT e; END CASE');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p(a INT) CASE b WHEN c THEN SELECT d; WHEN 1 THEN SELECT a; ELSE SELECT e; END CASE');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $case = $create->body;
@@ -35,7 +35,7 @@ final class SimpleCaseTest extends TestCase
 
     public function testDeriveProgramResolvesAVariableAsTheOperand(): void
     {
-        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; CASE x WHEN 1 THEN SET x = 2; ELSE BEGIN END; END CASE; END');
+        $operation = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; CASE x WHEN 1 THEN SET x = 2; ELSE BEGIN END; END CASE; END');
 
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -43,7 +43,7 @@ final class SimpleCaseTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
     }
 
     /**

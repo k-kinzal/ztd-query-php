@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
  *
  * @visibility public
  * @example Typing a parameter of a prepared statement from its declared type
- *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('PREPARE p (integer) AS SELECT $1');
+ *     $prepare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('PREPARE p (integer) AS SELECT $1');
  *     $prepare->statement->parameters?->infersUndeclared() // => true
  */
 interface ParameterDeclarations extends Relation

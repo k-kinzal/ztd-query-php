@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
  *
  * @visibility public
  * @example Dropping two partitions
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t DROP PARTITION p0, p1');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t DROP PARTITION p0, p1');
  *     count($alter->statement->commands[0]->partitions->names) // => 2
  */
 final class DropPartition implements StandaloneCommand

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
  *
  * @visibility public
  * @example Resolving the refreshed view
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation m does not exist.
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation m does not exist.
  */
 final class RefreshMaterializedView implements Statement, Relation
 {

@@ -15,8 +15,8 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * @visibility public
  * @example Keeping every candidate of an ambiguous column
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE u (a INTEGER)')]);
- *     $semantics->analyze('SELECT a FROM t, u', $declarations) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Column a is ambiguous.
+ *     $declarations = $semantics->context([$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE u (a INTEGER)')]);
+ *     $semantics->inspect('SELECT a FROM t, u', $declarations) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Column a is ambiguous.
  */
 final class AmbiguousColumn implements Resolution, Diagnostic
 {

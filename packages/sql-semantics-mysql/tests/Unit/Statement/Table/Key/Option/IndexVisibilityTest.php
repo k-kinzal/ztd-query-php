@@ -17,7 +17,7 @@ final class IndexVisibilityTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, KEY (a) VISIBLE)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT, KEY (a) VISIBLE)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;

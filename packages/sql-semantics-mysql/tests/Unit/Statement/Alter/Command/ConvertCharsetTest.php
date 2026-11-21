@@ -17,12 +17,12 @@ final class ConvertCharsetTest extends TestCase
     public function testDeriveCommandDerivesNothing(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->facts->diagnostics);
+        $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+        self::assertSame([], $semantics->inspect('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->facts->diagnostics);
     }
 
     public function testRenderWritesTheCharsetAndTheCollation(): void
     {
-        self::assertSame('ALTER TABLE t CONVERT TO CHARACTER SET DEFAULT COLLATE latin1_bin', (new Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t CONVERT TO CHAR SET DEFAULT COLLATE latin1_bin')->toString());
+        self::assertSame('ALTER TABLE t CONVERT TO CHARACTER SET DEFAULT COLLATE latin1_bin', (new Semantics('mysql-5.7.44'))->inspect('ALTER TABLE t CONVERT TO CHAR SET DEFAULT COLLATE latin1_bin')->toString());
     }
 }

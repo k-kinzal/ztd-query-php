@@ -32,7 +32,7 @@ final class AlterationProblemsTest extends TestCase
     public function testOccurrencesCountsTheColumnsWithANameWithoutRegardToCase(): void
     {
         $semantics = new Semantics();
-        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a, b)')]));
+        $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
 
         self::assertSame(1, (new AlterationProblems())->occurrences($fact, new Name('A'), $derivation));
@@ -52,8 +52,8 @@ final class AlterationProblemsTest extends TestCase
     public function testStrictIsReadFromTheDeclaredColumns(): void
     {
         $semantics = new Semantics();
-        $strict = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a INT) STRICT')]));
-        $plain = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a INT)')]));
+        $strict = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a INT) STRICT')]));
+        $plain = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a INT)')]));
 
         self::assertTrue((new AlterationProblems())->strict((new TableShapes())->target($strict, new QualifiedName(new Name('t')))));
         self::assertFalse((new AlterationProblems())->strict((new TableShapes())->target($plain, new QualifiedName(new Name('t')))));
@@ -62,8 +62,8 @@ final class AlterationProblemsTest extends TestCase
     public function testSlotHasTheRecordedTypeAndTheNullFactOfTheNewColumn(): void
     {
         $semantics = new Semantics();
-        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a)')]));
-        $statement = $semantics->inspect('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
+        $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a)')]));
+        $statement = $semantics->diagnose('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         $slot = (new AlterationProblems())->slot((new TableShapes())->target($derivation, new QualifiedName(new Name('t'))), $statement->column);
@@ -76,8 +76,8 @@ final class AlterationProblemsTest extends TestCase
     public function testAddedReportsEveryObstacleOfTheNewColumn(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INT) STRICT');
-        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->inspect($sql, [$table])->facts->diagnostics);
+        $table = $semantics->diagnose('CREATE TABLE t (a INT) STRICT');
+        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->diagnose($sql, [$table])->facts->diagnostics);
 
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT NOT NULL DEFAULT 0'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT AS (a) VIRTUAL NOT NULL'));
@@ -102,7 +102,7 @@ final class AlterationProblemsTest extends TestCase
     public function testDroppedReportsAnUnknownColumnAndTheOnlyColumn(): void
     {
         $semantics = new Semantics();
-        $one = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a)')]));
+        $one = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a)')]));
         $fact = (new TableShapes())->target($one, new QualifiedName(new Name('t')));
         (new AlterationProblems())->dropped($fact, new Name('zz'), $one);
         (new AlterationProblems())->dropped($fact, new Name('a'), $one);
@@ -116,7 +116,7 @@ final class AlterationProblemsTest extends TestCase
     public function testRenamedReportsAnUnknownOldNameAndATakenNewName(): void
     {
         $semantics = new Semantics();
-        $derivation = new Derivation($semantics->context([$semantics->inspect('CREATE TABLE t (a, b)')]));
+        $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
         (new AlterationProblems())->renamed($fact, new Name('zz'), new Name('c'), $derivation);
         (new AlterationProblems())->renamed($fact, new Name('a'), new Name('b'), $derivation);

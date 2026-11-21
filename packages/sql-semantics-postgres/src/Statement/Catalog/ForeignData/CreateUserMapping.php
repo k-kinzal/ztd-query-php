@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
  *
  * @visibility public
  * @example Reading a user mapping
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE USER MAPPING FOR USER SERVER s OPTIONS (user 'bob')");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE USER MAPPING FOR USER SERVER s OPTIONS (user 'bob')");
  *     [$operation->statement->user, $operation->statement->options[0]->value->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User, 'bob']
  */
 final class CreateUserMapping implements Statement

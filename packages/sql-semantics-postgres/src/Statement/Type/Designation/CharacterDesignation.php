@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading the type of a national character constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT N'abc'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT N'abc'");
  *     [$query->statement->targets[0]->expression->type->designation->keyword->value, $query->field(0)->type->descriptor->name()] // => ['NCHAR', 'character']
  * @example Rejecting VARYING after VARCHAR
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterKeyword::Varchar, true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

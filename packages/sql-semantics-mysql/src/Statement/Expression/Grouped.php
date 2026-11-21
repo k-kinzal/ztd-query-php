@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping a grouping that changes the association
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a AND (b OR c)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT a FROM t WHERE a AND (b OR c)');
  *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // => true
  */
 final class Grouped implements Scalar

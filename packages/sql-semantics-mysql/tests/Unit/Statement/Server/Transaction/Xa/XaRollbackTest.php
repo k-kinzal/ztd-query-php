@@ -20,12 +20,12 @@ final class XaRollbackTest extends TestCase
 {
     public function testRenderWritesTheIdentifier(): void
     {
-        self::assertSame("XA ROLLBACK 'g'", (new Semantics())->analyze("xa rollback 'g'")->toString());
+        self::assertSame("XA ROLLBACK 'g'", (new Semantics())->inspect("xa rollback 'g'")->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics())->analyze("XA ROLLBACK 'g'");
+        $operation = (new Semantics())->inspect("XA ROLLBACK 'g'");
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

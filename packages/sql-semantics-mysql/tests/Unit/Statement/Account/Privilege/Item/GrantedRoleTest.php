@@ -16,6 +16,6 @@ final class GrantedRoleTest extends TestCase
 {
     public function testRenderWritesTheRole(): void
     {
-        self::assertSame('REVOKE r@h FROM u', (new Semantics())->analyze("revoke 'r'@'h' from u")->toString());
+        self::assertSame('REVOKE r@h FROM u', (new Semantics())->inspect("revoke 'r'@'h' from u")->toString());
     }
 }

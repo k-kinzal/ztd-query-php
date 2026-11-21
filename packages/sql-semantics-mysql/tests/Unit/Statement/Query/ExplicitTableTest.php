@@ -25,7 +25,7 @@ final class ExplicitTableTest extends TestCase
 {
     public function testNameAnswersTheTable(): void
     {
-        $operation = (new Semantics())->analyze('TABLE shop.t');
+        $operation = (new Semantics())->inspect('TABLE shop.t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertSame('t', $operation->statement->name()->name->value);
@@ -34,7 +34,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testAliasAnswersNoCorrelationName(): void
     {
-        $operation = (new Semantics())->analyze('TABLE t');
+        $operation = (new Semantics())->inspect('TABLE t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertNull($operation->statement->alias());
@@ -51,7 +51,7 @@ final class ExplicitTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('TABLE t', [$t]);
+        $operation = $semantics->inspect('TABLE t', [$t]);
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertSame($operation->facts->query($operation->statement), $operation->facts->output);
@@ -69,7 +69,7 @@ final class ExplicitTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('TABLE t', [$t]);
+        $operation = $semantics->inspect('TABLE t', [$t]);
 
         self::assertSame(['a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
         self::assertSame(Nullability::Nullable, $operation->field('b')->nullability);
@@ -77,7 +77,7 @@ final class ExplicitTableTest extends TestCase
 
     public function testDeriveRelationDependsOnAnUndeclaredTable(): void
     {
-        $operation = (new Semantics())->analyze('TABLE t');
+        $operation = (new Semantics())->inspect('TABLE t');
 
         self::assertInstanceOf(ExplicitTable::class, $operation->statement);
         self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
@@ -86,6 +86,6 @@ final class ExplicitTableTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('TABLE shop.t', (new Semantics())->analyze('table shop.t')->toString());
+        self::assertSame('TABLE shop.t', (new Semantics())->inspect('table shop.t')->toString());
     }
 }

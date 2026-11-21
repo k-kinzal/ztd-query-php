@@ -36,7 +36,7 @@ final class ErrorCodeTest extends TestCase
 
     public function testRenderWritesTheCodesOfADeclarationAndAHandler(): void
     {
-        $create = (new Semantics('mysql-5.7.44'))->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END');
+        $create = (new Semantics('mysql-5.7.44'))->diagnose('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
@@ -120,7 +120,7 @@ final class ErrorCodeTest extends TestCase
 
     public function testValidLetsTheProgramReportTheCodeZero(): void
     {
-        $create = (new Semantics('mysql-5.6.51'))->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
+        $create = (new Semantics('mysql-5.6.51'))->diagnose('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
 
         self::assertSame(["Incorrect CONDITION value: '0'"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END', $create->toString());

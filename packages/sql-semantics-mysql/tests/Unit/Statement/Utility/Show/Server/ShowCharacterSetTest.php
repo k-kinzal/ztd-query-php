@@ -16,20 +16,20 @@ final class ShowCharacterSetTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW CHARSET');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW CHARSET');
         self::assertInstanceOf(ShowCharacterSet::class, $show->statement);
         self::assertSame('Maxlen', $show->field(3)->name?->value);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->analyze('SHOW CHARSET');
+        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW CHARSET');
         self::assertInstanceOf(ShowCharacterSet::class, $show->statement);
         self::assertSame('Charset', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CHARSET', (new Semantics('mysql-5.6.51'))->analyze('SHOW CHARSET')->toString());
+        self::assertSame('SHOW CHARSET', (new Semantics('mysql-5.6.51'))->inspect('SHOW CHARSET')->toString());
     }
 }

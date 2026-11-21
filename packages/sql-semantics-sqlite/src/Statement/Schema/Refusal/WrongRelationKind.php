@@ -18,8 +18,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  * @visibility public
  * @example Reporting DROP TABLE of a view
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1');
- *     $semantics->analyze('DROP TABLE v', [$view]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Relation v is a view: DROP TABLE removes only a table.
+ *     $view = $semantics->inspect('CREATE VIEW v AS SELECT 1');
+ *     $semantics->inspect('DROP TABLE v', [$view]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Relation v is a view: DROP TABLE removes only a table.
  */
 final class WrongRelationKind implements Diagnostic
 {

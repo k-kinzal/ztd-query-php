@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a release of a savepoint
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RELEASE SAVEPOINT s');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('RELEASE SAVEPOINT s');
  *     [$operation->statement->name->value, $operation->toString()] // => ['s', 'RELEASE s']
  */
 final class SavepointCommand implements Statement

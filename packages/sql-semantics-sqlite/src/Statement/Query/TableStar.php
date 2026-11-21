@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the relation a qualified star names
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT u.* FROM t JOIN u');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT u.* FROM t JOIN u');
  *     $query->statement->columns[0]->table->value // => 'u'
  */
 final class TableStar implements Node

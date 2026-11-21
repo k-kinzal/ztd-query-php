@@ -29,7 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttri
  *
  * @visibility public
  * @example Defining a range type without its subtype
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: type attribute "subtype" is required
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: type attribute "subtype" is required
  */
 final class CreateRange implements Statement
 {

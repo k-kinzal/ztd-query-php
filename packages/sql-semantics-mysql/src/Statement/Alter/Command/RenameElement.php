@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
  *
  * @visibility public
  * @example Renaming a column
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t RENAME COLUMN a TO b');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t RENAME COLUMN a TO b');
  *     [$alter->statement->commands[0]->to->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t RENAME COLUMN a TO b']
  */
 final class RenameElement implements AlterCommand

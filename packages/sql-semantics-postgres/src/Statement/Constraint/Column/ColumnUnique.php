@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *
  * @visibility public
  * @example Reading how NULL values count
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int UNIQUE NULLS NOT DISTINCT)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a int UNIQUE NULLS NOT DISTINCT)');
  *     $create->statement->definition->elements[0]->qualifiers[0]->nullsDistinct // => false
  */
 final class ColumnUnique implements Constraint

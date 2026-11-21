@@ -24,9 +24,9 @@ final class InsertIntoTest extends TestCase
     public function testRenderWritesTheVerbTheResolutionTheTargetAndTheColumns(): void
     {
         $semantics = new Semantics();
-        $replace = $semantics->analyze('replace into t (a, b) values (1, 2)');
-        $insert = $semantics->analyze('insert or abort into main.t as x (a) values (1)');
-        $with = $semantics->analyze('with w as (select 1 as q) insert into t select q from w');
+        $replace = $semantics->inspect('replace into t (a, b) values (1, 2)');
+        $insert = $semantics->inspect('insert or abort into main.t as x (a) values (1)');
+        $with = $semantics->inspect('with w as (select 1 as q) insert into t select q from w');
 
         self::assertSame('REPLACE INTO t (a, b) VALUES (1, 2)', $replace->toString());
         self::assertInstanceOf(InsertRows::class, $replace->statement);

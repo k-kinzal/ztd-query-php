@@ -19,7 +19,7 @@ final class FormatAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics())->analyze('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)');
+        $create = (new Semantics())->inspect('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +34,6 @@ final class FormatAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)', (new Semantics())->analyze('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)')->toString());
+        self::assertSame('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)', (new Semantics())->inspect('CREATE TABLE t (a INT COLUMN_FORMAT DYNAMIC)')->toString());
     }
 }

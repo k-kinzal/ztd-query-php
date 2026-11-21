@@ -15,7 +15,7 @@ final class TableUniqueTest extends TestCase
     public function testKindIsUnique(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, UNIQUE (a))', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, UNIQUE (a))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -28,7 +28,7 @@ final class TableUniqueTest extends TestCase
     public function testDeriveClauseReportsAMissingKeyColumnAndAnAttribute(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, UNIQUE (zz) NO INHERIT)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, UNIQUE (zz) NO INHERIT)', []);
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
           1 => 'UNIQUE constraints cannot be marked NO INHERIT',
@@ -38,7 +38,7 @@ final class TableUniqueTest extends TestCase
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
-        $statement = $semantics->inspect('CREATE TABLE t (a int, b int, UNIQUE NULLS NOT DISTINCT (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE s DEFERRABLE)', []);
+        $statement = $semantics->diagnose('CREATE TABLE t (a int, b int, UNIQUE NULLS NOT DISTINCT (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE s DEFERRABLE)', []);
         self::assertSame('CREATE TABLE t (a INT, b INT, UNIQUE NULLS NOT DISTINCT (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE s DEFERRABLE)', $statement->toString());
     }
 }

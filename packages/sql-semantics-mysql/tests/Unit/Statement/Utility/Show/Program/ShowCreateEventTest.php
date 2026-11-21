@@ -16,13 +16,13 @@ final class ShowCreateEventTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->analyze('SHOW CREATE EVENT db.x');
+        $show = (new Semantics())->inspect('SHOW CREATE EVENT db.x');
         self::assertInstanceOf(ShowCreateEvent::class, $show->statement);
         self::assertSame('Event', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE EVENT db.x', (new Semantics())->analyze('SHOW CREATE EVENT db.x')->toString());
+        self::assertSame('SHOW CREATE EVENT db.x', (new Semantics())->inspect('SHOW CREATE EVENT db.x')->toString());
     }
 }

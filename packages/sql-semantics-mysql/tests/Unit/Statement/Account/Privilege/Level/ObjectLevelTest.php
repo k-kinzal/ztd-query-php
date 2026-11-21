@@ -23,6 +23,6 @@ final class ObjectLevelTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        self::assertSame('GRANT SELECT ON shop.t TO u', (new Semantics())->analyze('grant select on shop . t to u')->toString());
+        self::assertSame('GRANT SELECT ON shop.t TO u', (new Semantics())->inspect('grant select on shop . t to u')->toString());
     }
 }

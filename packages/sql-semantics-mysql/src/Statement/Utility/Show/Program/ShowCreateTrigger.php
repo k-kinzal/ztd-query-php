@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE TRIGGER shop.p');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW CREATE TRIGGER shop.p');
  *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE TRIGGER shop.p']
  */
 final class ShowCreateTrigger implements Statement

@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  *
  * @visibility public
  * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (id BIGINT UNSIGNED NOT NULL)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (id BIGINT UNSIGNED NOT NULL)');
  *     [$create->statement->elements[0]->name->column->value, $create->statement->elements[0]->specification->dataType()->name()] // => ['id', 'BIGINT']
  */
 final class ColumnDefinition implements TableElement

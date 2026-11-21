@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a named action
- *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t DISABLE TRIGGER audit');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TABLE t DISABLE TRIGGER audit');
  *     [$statement->statement->commands[0]->kind, $statement->statement->commands[0]->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\NamedActionKind::DisableTrigger, 'audit']
  */
 final class NamedAction implements AlterCommand

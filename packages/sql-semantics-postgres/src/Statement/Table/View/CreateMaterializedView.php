@@ -33,7 +33,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
  *
  * @visibility public
  * @example Declaring a materialized view
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m (n) USING heap WITH (fillfactor = 70) TABLESPACE s AS SELECT 1 WITH NO DATA');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m (n) USING heap WITH (fillfactor = 70) TABLESPACE s AS SELECT 1 WITH NO DATA');
  *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, 'CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m (n) USING heap WITH (fillfactor = 70) TABLESPACE s AS SELECT 1 WITH NO DATA']
  */
 final class CreateMaterializedView implements Statement

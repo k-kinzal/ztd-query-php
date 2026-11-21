@@ -43,8 +43,8 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
  * @visibility public
  * @example Resolving the indexed table
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
- *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
+ *     $index = $semantics->inspect('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
  *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->diagnostics] // => [true, []]
  */
 final class CreateIndex implements Statement, Relation

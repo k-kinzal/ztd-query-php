@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  *
  * @visibility public
  * @example Reading the collation
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER COLLATION "de_DE" REFRESH VERSION');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER COLLATION "de_DE" REFRESH VERSION');
  *     $operation->statement->name->last()->value // => 'de_DE'
  */
 final class RefreshCollationVersion implements Statement

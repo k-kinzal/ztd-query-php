@@ -19,7 +19,7 @@ final class UserAlterationTest extends TestCase
 {
     public function testBothKindsOfEntryImplementTheInterface(): void
     {
-        $alter = (new Semantics())->analyze('ALTER USER u, v DROP 2 FACTOR');
+        $alter = (new Semantics())->inspect('ALTER USER u, v DROP 2 FACTOR');
 
         self::assertInstanceOf(AlterUser::class, $alter->statement);
         self::assertContainsOnlyInstancesOf(UserAlteration::class, $alter->statement->users);

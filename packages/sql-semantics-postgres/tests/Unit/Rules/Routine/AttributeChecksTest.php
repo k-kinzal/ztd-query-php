@@ -34,9 +34,9 @@ final class AttributeChecksTest extends TestCase
         self::assertSame(
             [['operator attribute "colour" not recognized', 'argument of function must be a name'], ['type attribute "foo" not recognized', 'conflicting or redundant options'], []],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE OPERATOR === (rightarg = int4, colour = red, function = 1)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE TYPE t (input = i, output = o, foo, analyze = a, analyse = b)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('CREATE TEXT SEARCH DICTIONARY d (template = simple, stopwords = english, accept = false)')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE OPERATOR === (rightarg = int4, colour = red, function = 1)')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE TYPE t (input = i, output = o, foo, analyze = a, analyse = b)')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('CREATE TEXT SEARCH DICTIONARY d (template = simple, stopwords = english, accept = false)')->facts->diagnostics),
             ],
         );
     }
@@ -56,7 +56,7 @@ final class AttributeChecksTest extends TestCase
 
     public function testValueReportsSetofInAnOperatorArgument(): void
     {
-        self::assertSame('SETOF type not allowed for operator argument', (new Semantics())->inspect('CREATE OPERATOR === (leftarg = SETOF int4, rightarg = int4, function = f)')->facts->diagnostics[0]->message());
+        self::assertSame('SETOF type not allowed for operator argument', (new Semantics())->diagnose('CREATE OPERATOR === (leftarg = SETOF int4, rightarg = int4, function = f)')->facts->diagnostics[0]->message());
     }
 
     public function testRejectedAnswersTheMessageOfEachReading(): void
@@ -91,8 +91,8 @@ final class AttributeChecksTest extends TestCase
 
     public function testDeriveIgnoresTheValueOfAnObsoleteOperatorAttribute(): void
     {
-        self::assertSame([], (new Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1, ltcmp)')->facts->diagnostics);
-        $define = (new Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1)')->statement;
+        self::assertSame([], (new Semantics())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1, ltcmp)')->facts->diagnostics);
+        $define = (new Semantics())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1)')->statement;
         self::assertInstanceOf(Define::class, $define);
         self::assertSame(OperatorAttribute::Sort1, ($define->definition ?? [])[2]->known);
     }

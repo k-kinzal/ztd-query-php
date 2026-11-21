@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Limit;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW ERRORS LIMIT 1, 2');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW ERRORS LIMIT 1, 2');
  *     [$show->field(2)->name?->value, $show->toString()] // => ['Message', 'SHOW ERRORS LIMIT 1, 2']
  */
 final class ShowErrors implements Statement

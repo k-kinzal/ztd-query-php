@@ -31,8 +31,8 @@ final class FromRuleTest extends TestCase
     public function testFromIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics();
-        $bare = $semantics->inspect('SELECT 1')->statement;
-        $read = $semantics->inspect('SELECT 1 FROM t')->statement;
+        $bare = $semantics->diagnose('SELECT 1')->statement;
+        $read = $semantics->diagnose('SELECT 1 FROM t')->statement;
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $read);
@@ -44,9 +44,9 @@ final class FromRuleTest extends TestCase
     public function testTermsAnswersOneTermWithoutAConstraintAndAChainOtherwise(): void
     {
         $semantics = new Semantics();
-        $single = $semantics->inspect('SELECT * FROM t')->statement;
-        $pair = $semantics->inspect('SELECT * FROM t, u')->statement;
-        $leading = $semantics->inspect('SELECT * FROM t ON 1');
+        $single = $semantics->diagnose('SELECT * FROM t')->statement;
+        $pair = $semantics->diagnose('SELECT * FROM t, u')->statement;
+        $leading = $semantics->diagnose('SELECT * FROM t ON 1');
 
         self::assertInstanceOf(Select::class, $single);
         self::assertInstanceOf(Select::class, $pair);
@@ -67,7 +67,7 @@ final class FromRuleTest extends TestCase
 
     public function testTermLowersEachKindOfTermWithItsAlias(): void
     {
-        $operation = (new Semantics())->inspect("SELECT * FROM t AS x, main.u INDEXED BY i, json_each('[1]') AS j, (SELECT 1) AS d, (t JOIN u) AS n");
+        $operation = (new Semantics())->diagnose("SELECT * FROM t AS x, main.u INDEXED BY i, json_each('[1]') AS j, (SELECT 1) AS d, (t JOIN u) AS n");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -94,7 +94,7 @@ final class FromRuleTest extends TestCase
 
     public function testOperatorLowersTheCommaTheBareJoinAndTheKeywordJoins(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q');
+        $operation = (new Semantics())->diagnose('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -104,7 +104,7 @@ final class FromRuleTest extends TestCase
 
     public function testWordLowersAWordBeforeJoinAsAKeywordWhenWrittenAsOneAndAsANameOtherwise(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t LEFT bogus JOIN u');
+        $operation = (new Semantics())->diagnose('SELECT * FROM t LEFT bogus JOIN u');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -120,7 +120,7 @@ final class FromRuleTest extends TestCase
 
     public function testConstraintLowersOnUsingAndNone(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t JOIN u ON t.a = u.a JOIN v USING (a, b) JOIN w');
+        $operation = (new Semantics())->diagnose('SELECT * FROM t JOIN u ON t.a = u.a JOIN v USING (a, b) JOIN w');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -134,7 +134,7 @@ final class FromRuleTest extends TestCase
 
     public function testIndexedLowersIndexedByAndNotIndexed(): void
     {
-        $operation = (new Semantics())->inspect('SELECT * FROM t INDEXED BY i, u NOT INDEXED');
+        $operation = (new Semantics())->diagnose('SELECT * FROM t INDEXED BY i, u NOT INDEXED');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(JoinChain::class, $operation->statement->from);
@@ -151,9 +151,9 @@ final class FromRuleTest extends TestCase
     public function testOptionalIndexedIsNullWithoutAClause(): void
     {
         $semantics = new Semantics();
-        $bare = $semantics->inspect('DELETE FROM t')->statement;
-        $chosen = $semantics->inspect('DELETE FROM t INDEXED BY i')->statement;
-        $refused = $semantics->inspect('DELETE FROM t NOT INDEXED')->statement;
+        $bare = $semantics->diagnose('DELETE FROM t')->statement;
+        $chosen = $semantics->diagnose('DELETE FROM t INDEXED BY i')->statement;
+        $refused = $semantics->diagnose('DELETE FROM t NOT INDEXED')->statement;
 
         self::assertInstanceOf(Delete::class, $bare);
         self::assertInstanceOf(Delete::class, $chosen);

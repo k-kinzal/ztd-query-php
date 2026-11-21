@@ -48,7 +48,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * @visibility public
  * @example Reading the language and the text of a routine definition
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$");
  *     $source = $operation->statement->options[1]->source;
  *     [$source->language?->value, $source->text->value] // => ['sql', ' SELECT 1 ']
  */

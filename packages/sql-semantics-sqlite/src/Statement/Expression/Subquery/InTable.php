@@ -43,8 +43,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * @visibility public
  * @example Reading the relation of a membership test
  *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $query = $semantics->analyze('SELECT 1 IN t', [$table]);
+ *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
+ *     $query = $semantics->inspect('SELECT 1 IN t', [$table]);
  *     [$query->statement->columns[0]->expression->table->name->value, $query->facts->relation($query->statement->columns[0]->expression)->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  */
 final class InTable implements Scalar

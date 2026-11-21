@@ -19,7 +19,7 @@ final class DefaultExpressionTest extends TestCase
 {
     public function testDeriveConstraintSeesNoColumn(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b DEFAULT (a + 1))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a INT, b DEFAULT (a + 1))', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -29,7 +29,7 @@ final class DefaultExpressionTest extends TestCase
 
     public function testDeriveConstraintAcceptsAConstantExpression(): void
     {
-        $operation = (new Semantics())->inspect('CREATE TABLE t (a DEFAULT (1 + 2))', []);
+        $operation = (new Semantics())->diagnose('CREATE TABLE t (a DEFAULT (1 + 2))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -41,6 +41,6 @@ final class DefaultExpressionTest extends TestCase
 
     public function testRenderWritesTheExpressionInParentheses(): void
     {
-        self::assertSame('CREATE TABLE t (a DEFAULT (1 + 2))', (new Semantics())->inspect('create table t (a default(1+2))')->toString());
+        self::assertSame('CREATE TABLE t (a DEFAULT (1 + 2))', (new Semantics())->diagnose('create table t (a default(1+2))')->toString());
     }
 }

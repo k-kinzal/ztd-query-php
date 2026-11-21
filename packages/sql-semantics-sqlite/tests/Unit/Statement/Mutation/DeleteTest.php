@@ -31,9 +31,9 @@ final class DeleteTest extends TestCase
     public function testDeriveStatementResolvesTheTargetAmongDeclaredTablesOnly(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $table = $semantics->inspect('DELETE FROM t', [$t]);
-        $common = $semantics->inspect('WITH w AS (SELECT 1 AS q) DELETE FROM w', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $table = $semantics->diagnose('DELETE FROM t', [$t]);
+        $common = $semantics->diagnose('WITH w AS (SELECT 1 AS q) DELETE FROM w', [$t]);
 
         self::assertInstanceOf(Delete::class, $table->statement);
         self::assertInstanceOf(DeclaredTable::class, $table->facts->relation($table->statement->target)->table);
@@ -48,8 +48,8 @@ final class DeleteTest extends TestCase
     public function testDeriveWithinSeesTheTargetAndTheCommonTablesInTheWhereClause(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->inspect('WITH w AS (SELECT 1 AS q) DELETE FROM t WHERE a IN (SELECT q FROM w) AND b = 1', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->diagnose('WITH w AS (SELECT 1 AS q) DELETE FROM t WHERE a IN (SELECT q FROM w) AND b = 1', [$t]);
 
         self::assertInstanceOf(Delete::class, $query->statement);
         self::assertInstanceOf(Binary::class, $query->statement->where);
@@ -64,9 +64,9 @@ final class DeleteTest extends TestCase
     public function testDeriveStatementMakesReturningTheOutputOfTheTargetRow(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $star = $semantics->inspect('DELETE FROM t WHERE a = 1 RETURNING *', [$t]);
-        $named = $semantics->inspect('WITH w AS (SELECT 1 AS q) DELETE FROM t RETURNING b, q', [$t]);
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $star = $semantics->diagnose('DELETE FROM t WHERE a = 1 RETURNING *', [$t]);
+        $named = $semantics->diagnose('WITH w AS (SELECT 1 AS q) DELETE FROM t RETURNING b, q', [$t]);
         $fields = $star->fields();
 
         self::assertNotNull($fields);
@@ -79,9 +79,9 @@ final class DeleteTest extends TestCase
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
         $semantics = new Semantics();
-        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->inspect('DELETE FROM t WHERE a = 1', [$t])->statement;
-        $returning = $semantics->inspect('DELETE FROM t RETURNING a', [$t])->statement;
+        $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->diagnose('DELETE FROM t WHERE a = 1', [$t])->statement;
+        $returning = $semantics->diagnose('DELETE FROM t RETURNING a', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(Delete::class, $statement);
@@ -93,7 +93,7 @@ final class DeleteTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics())->inspect('DELETE FROM t WHERE RAISE(IGNORE)');
+        $query = (new Semantics())->diagnose('DELETE FROM t WHERE RAISE(IGNORE)');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
@@ -105,6 +105,6 @@ final class DeleteTest extends TestCase
         $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t'))), null, [new Star()]));
 
         self::assertSame('DELETE FROM t RETURNING *', $built->toString());
-        self::assertSame('WITH w AS (SELECT 1 AS q) DELETE FROM main.t AS x NOT INDEXED WHERE a IN (SELECT q FROM w) RETURNING a, 1', $semantics->inspect('with w as (select 1 as q) delete from main.t as x not indexed where a in (select q from w) returning a, 1')->toString());
+        self::assertSame('WITH w AS (SELECT 1 AS q) DELETE FROM main.t AS x NOT INDEXED WHERE a IN (SELECT q FROM w) RETURNING a, 1', $semantics->diagnose('with w as (select 1 as q) delete from main.t as x not indexed where a in (select q from w) returning a, 1')->toString());
     }
 }

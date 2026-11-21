@@ -27,8 +27,8 @@ final class GeneratedColumnWriteTest extends TestCase
     public function testMessageNamesTheColumnAsDeclared(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a, Total AS (a * 2) STORED)');
-        $problem = $semantics->inspect('UPDATE t SET total = 1', [$table])->facts->diagnostics[0] ?? null;
+        $table = $semantics->diagnose('CREATE TABLE t (a, Total AS (a * 2) STORED)');
+        $problem = $semantics->diagnose('UPDATE t SET total = 1', [$table])->facts->diagnostics[0] ?? null;
 
         self::assertInstanceOf(GeneratedColumnWrite::class, $problem);
         self::assertSame(WriteKind::Update, $problem->write);

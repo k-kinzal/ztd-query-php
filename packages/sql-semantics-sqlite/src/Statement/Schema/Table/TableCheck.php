@@ -28,7 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
  *
  * @visibility public
  * @example Reading a table check
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b, CHECK (a < b))');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a, b, CHECK (a < b))');
  *     $create->facts->scalar($create->statement->constraints[0]->items[0]->expression->right)->resolution->slot->name->value // => 'b'
  */
 final class TableCheck implements TableConstraint

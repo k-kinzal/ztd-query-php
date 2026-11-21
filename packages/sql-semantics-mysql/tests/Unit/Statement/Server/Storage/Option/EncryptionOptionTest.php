@@ -17,7 +17,7 @@ final class EncryptionOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("ALTER TABLESPACE ts ENCRYPTION 'Y'", (new Semantics())->analyze("alter tablespace ts encryption 'Y'")->toString());
+        self::assertSame("ALTER TABLESPACE ts ENCRYPTION 'Y'", (new Semantics())->inspect("alter tablespace ts encryption 'Y'")->toString());
     }
 
     public function testKeywordNamesTheOption(): void

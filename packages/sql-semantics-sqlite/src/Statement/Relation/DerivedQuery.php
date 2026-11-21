@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Query\RelationNames;
  *
  * @visibility public
  * @example Reading a derived query
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT x FROM (SELECT 1 AS x) AS d');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT x FROM (SELECT 1 AS x) AS d');
  *     [$query->statement->from->alias->value, $query->field('x')->type->descriptor] // => ['d', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
  */
 final class DerivedQuery implements Relation

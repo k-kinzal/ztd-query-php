@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  *
  * @visibility public
  * @example Reading the attributes of a column
- *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT NOT NULL DEFAULT 0)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('CREATE TABLE t (a INT NOT NULL DEFAULT 0)');
  *     count($create->statement->elements[0]->specification->attributes) // => 2
  */
 final class OrdinaryColumn implements ColumnSpecification

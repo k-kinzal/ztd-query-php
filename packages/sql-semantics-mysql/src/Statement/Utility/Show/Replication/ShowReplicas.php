@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->analyze('SHOW SLAVE HOSTS');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->inspect('SHOW SLAVE HOSTS');
  *     [$show->field(4)->name?->value, $show->toString()] // => ['Slave_UUID', 'SHOW SLAVE HOSTS']
  */
 final class ShowReplicas implements Statement

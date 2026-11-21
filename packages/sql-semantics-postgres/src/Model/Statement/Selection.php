@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Model\Statement;
  *
  * @visibility public
  * @example Reading the input relation of a selection
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t JOIN u');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT a FROM t JOIN u');
  *     $query->statement instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Selection // => true
  */
 interface Selection extends Node

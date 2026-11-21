@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
  *
  * @visibility public
  * @example Reading the column named after the account
- *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE USER u');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SHOW CREATE USER u');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['CREATE USER for u@%', 'SHOW CREATE USER u']
  */
 final class ShowCreateUser implements Statement

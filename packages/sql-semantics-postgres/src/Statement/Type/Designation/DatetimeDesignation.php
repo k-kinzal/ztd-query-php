@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  *
  * @visibility public
  * @example Reading the type of a timestamp constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT timestamp(3) with time zone '2024-01-01'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("SELECT timestamp(3) with time zone '2024-01-01'");
  *     $query->field(0)->type->descriptor->name() // => 'timestamp(3) with time zone'
  */
 final class DatetimeDesignation implements TypeDesignation

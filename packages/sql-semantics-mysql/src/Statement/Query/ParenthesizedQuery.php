@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Reading a parenthesized operand
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
  *     $query->statement->left->query->limit !== null // => true
  */
 final class ParenthesizedQuery implements Statement, Query

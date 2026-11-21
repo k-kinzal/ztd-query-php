@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
  *
  * @visibility public
  * @example Reading a ROLLUP
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 GROUP BY ROLLUP (1), ()');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1 GROUP BY ROLLUP (1), ()');
  *     [$query->statement->groupBy[0]->kind->value, count($query->statement->groupBy[1]->members)] // => ['ROLLUP', 0]
  * @example Refusing an empty ROLLUP
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind::Rollup) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction

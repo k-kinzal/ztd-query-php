@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  *
  * @visibility public
  * @example Reading the dropped tables
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLE IF EXISTS a, b CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP TABLE IF EXISTS a, b CASCADE');
  *     [$operation->statement->kind->value, count($operation->statement->objects), $operation->statement->ifExists] // => ['TABLE', 2, true]
  */
 final class Drop implements Statement

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Statement;
  *
  * @visibility public
  * @example Changing the user of a server
- *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter server s options (user 'u')")->toString() // => "ALTER SERVER s OPTIONS (USER 'u')"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect("alter server s options (user 'u')")->toString() // => "ALTER SERVER s OPTIONS (USER 'u')"
  */
 final class AlterServer implements Statement
 {
