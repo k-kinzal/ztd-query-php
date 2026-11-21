@@ -1,0 +1,16 @@
+{
+  "revision": "SemanticsIR/server-projection-transport-1",
+  "approval": "pending-human-review",
+  "extends": "server-projection-v1.json",
+  "purpose": "Run the same native projection cases with fewer crossings of the worker and database observer pipes.",
+  "maximumBatch": 16,
+  "requirements": [
+    "Record each attempted input, constructed response, and individual checked observation in their scheduled order.",
+    "Match every batch response to its request by position. Reject missing or excess responses as a failure.",
+    "Send the rendered SQL of every constructed case to the native database. Reuse the same fixture and comparison contract.",
+    "Keep the original timeout, seeds, exploration budgets, expected identities, observations and exclusions.",
+    "The replay uses the same request orders and must consume every recorded worker and database response."
+  ],
+  "controls": ["healthy batch", "truncated candidate response batch", "oversized observer response batch"],
+  "trust": "The observer prepares and executes each SQL request separately on the disposable native database. The Python controller decides the outcome of every comparison."
+}
