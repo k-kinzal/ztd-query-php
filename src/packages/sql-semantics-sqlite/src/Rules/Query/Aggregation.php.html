@@ -42,10 +42,10 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Query</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Typing\Functions</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Validation\ValueGraph</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Typing\Functions</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * Finds the aggregate function calls among the parts of a selection.</span></span>
@@ -71,7 +71,7 @@
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">aggregates</span>(<span class="tok-kw">array</span> <span class="tok-var">$nodes</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-var">$graph</span> = <span class="tok-kw">new</span> <span class="tok-id">ValueGraph</span>([<span class="tok-str">&#039;SqlSemantics\\Statement\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Contract\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Platform\\Sqlite\\Statement\\&#039;</span>]);</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-var">$graph</span> = <span class="tok-kw">new</span> <span class="tok-id">ValueGraph</span>([<span class="tok-str">&#039;SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\&#039;</span>, <span class="tok-str">&#039;SqlSemantics\\Platform\\Sqlite\\Statement\\&#039;</span>]);</span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-var">$functions</span> = <span class="tok-kw">new</span> <span class="tok-id">Functions</span>();</span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$nodes</span> <span class="tok-kw">as</span> <span class="tok-var">$node</span>) {</span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$graph</span>-&gt;<span class="tok-id">objects</span>(<span class="tok-var">$node</span>) <span class="tok-kw">as</span> <span class="tok-var">$object</span>) {</span>

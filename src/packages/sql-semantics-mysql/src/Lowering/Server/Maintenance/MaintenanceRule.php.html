@@ -43,26 +43,26 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Server\Maintenance</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\ImplementationGap</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Lowering\Form</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Lowering\Lists</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Lowering</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\CheckOption</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\Histogram</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\HistogramUpdate</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\LoadHistogram</span>;</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable</span>;</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable</span>;</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable</span>;</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram</span>;</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\RepairOption</span>;</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Lowering</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Lowering\Form</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Lowering\Lists</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\CheckOption</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\Histogram</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\HistogramUpdate</span>;</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\LoadHistogram</span>;</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable</span>;</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable</span>;</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable</span>;</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram</span>;</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Server\RepairOption</span>;</span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> * Lowers the table maintenance statements and their options.</span></span>
@@ -263,7 +263,7 @@
 <span class="src-line" id="L225"><a class="ln" href="#L225">225</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L226"><a class="ln" href="#L226">226</a><span class="tok-com">     * Lowers UPDATE HISTOGRAM from its columns and its parameters: a node of `opt_histogram_update_param`.</span></span>
 <span class="src-line" id="L227"><a class="ln" href="#L227">227</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L228"><a class="ln" href="#L228">228</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Statement\Identifier\Name&gt; $columns</span></span>
+<span class="src-line" id="L228"><a class="ln" href="#L228">228</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name&gt; $columns</span></span>
 <span class="src-line" id="L229"><a class="ln" href="#L229">229</a><span class="tok-com">     * @throws ImplementationGap When a production has no rule</span></span>
 <span class="src-line" id="L230"><a class="ln" href="#L230">230</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L231"><a class="ln" href="#L231">231</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">update</span>(<span class="tok-kw">array</span> <span class="tok-var">$columns</span>, <span class="tok-id">Node</span> <span class="tok-var">$parameters</span>): <span class="tok-id">UpdateHistogram</span>|<span class="tok-id">LoadHistogram</span></span>

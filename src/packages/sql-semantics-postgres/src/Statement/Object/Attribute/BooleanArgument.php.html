@@ -42,17 +42,17 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeReader</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeReader</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName</span>;</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> * An attribute value read as a Boolean, such as `hashes` of an operator.</span></span>
@@ -64,10 +64,10 @@
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Reading an attribute given alone</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;CREATE OPERATOR === (rightarg = int4, function = f, hashes, merges = off)&#039;);</span></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE OPERATOR === (rightarg = int4, function = f, hashes, merges = off)&#039;);</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> *     [$operation-&gt;statement-&gt;definition[2]-&gt;value-&gt;value(), $operation-&gt;statement-&gt;definition[3]-&gt;value-&gt;value()] // =&gt; [true, false]</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> * @example Rejecting a value that is not a Boolean</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant(&#039;yes&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant(&#039;yes&#039;)) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">BooleanArgument</span> <span class="tok-kw">implements</span> <span class="tok-id">AttributeArgument</span></span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>{</span>

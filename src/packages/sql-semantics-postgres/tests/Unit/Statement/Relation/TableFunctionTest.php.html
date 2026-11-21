@@ -52,7 +52,7 @@
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a>{</span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheDefinitions</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a>    {</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>);</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>        <span class="tok-var">$query</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT * FROM ROWS FROM (f() AS (a integer, b text), g())&#039;</span>);</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT * FROM ROWS FROM (f() AS (a INTEGER, b text), g())&#039;</span>, <span class="tok-var">$query</span>-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    }</span>

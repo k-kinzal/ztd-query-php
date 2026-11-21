@@ -46,56 +46,55 @@
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\DataProvider</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Medium</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Dialect</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\Diagnostic</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a></span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">Leave</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>#[<span class="tok-id">Medium</span>]</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LeaveTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>{</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     * @param list&lt;string&gt; $messages</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerDeriveProgramLooksTheLabelUp&#039;</span>)]</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveProgramLooksTheLabelUp</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-kw">array</span> <span class="tok-var">$messages</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    {</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$messages</span>, <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">message</span>(), <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>));</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    }</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * @return iterable&lt;string, array{string, list&lt;string&gt;}&gt;</span></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerDeriveProgramLooksTheLabelUp</span>(): <span class="tok-id">iterable</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of the loop&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() l: LOOP LEAVE l; END LOOP&#039;</span>, []];</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of an outer block&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() b: BEGIN l: LOOP LEAVE b; END LOOP; END&#039;</span>, []];</span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a label in another case&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() L: LOOP LEAVE l; END LOOP l&#039;</span>, []];</span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;no label&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN LEAVE zz; END&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: zz&#039;</span>]];</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of a closed loop&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN l: LOOP LEAVE l; END LOOP; LEAVE l; END&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: l&#039;</span>]];</span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a label outside a handler&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() a: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE a; END a&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: a&#039;</span>]];</span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of a handler block&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION h: BEGIN LEAVE h; END; END&#039;</span>, []];</span>
-<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a></span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerRenderWritesTheStatement&#039;</span>)]</span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheStatement</span>(<span class="tok-id">string</span> <span class="tok-var">$release</span>, <span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-var">$release</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a></span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-com">     * @return iterable&lt;string, array{string, string, string}&gt;</span></span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerRenderWritesTheStatement</span>(): <span class="tok-id">iterable</span></span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>    {</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;5.6&#039;</span> =&gt; [<span class="tok-str">&#039;mysql-5.6.51&#039;</span>, <span class="tok-str">&#039;create procedure p() l: loop leave l; end loop l&#039;</span>, <span class="tok-str">&#039;CREATE PROCEDURE p() l: LOOP LEAVE l; END LOOP l&#039;</span>];</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a quoted label in 8.4&#039;</span> =&gt; [<span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-str">&#039;create procedure p() `my label`: begin leave `my label`; end&#039;</span>, <span class="tok-str">&#039;CREATE PROCEDURE p() `my label`: BEGIN LEAVE `my label`; END&#039;</span>];</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>    }</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>}</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">Leave</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>#[<span class="tok-id">Medium</span>]</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LeaveTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>{</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com">     * @param list&lt;string&gt; $messages</span></span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerDeriveProgramLooksTheLabelUp&#039;</span>)]</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveProgramLooksTheLabelUp</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-kw">array</span> <span class="tok-var">$messages</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    {</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$messages</span>, <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Diagnostic</span> <span class="tok-var">$diagnostic</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$diagnostic</span>-&gt;<span class="tok-id">message</span>(), <span class="tok-var">$operation</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>));</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * @return iterable&lt;string, array{string, list&lt;string&gt;}&gt;</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerDeriveProgramLooksTheLabelUp</span>(): <span class="tok-id">iterable</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    {</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of the loop&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() l: LOOP LEAVE l; END LOOP&#039;</span>, []];</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of an outer block&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() b: BEGIN l: LOOP LEAVE b; END LOOP; END&#039;</span>, []];</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a label in another case&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() L: LOOP LEAVE l; END LOOP l&#039;</span>, []];</span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;no label&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN LEAVE zz; END&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: zz&#039;</span>]];</span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of a closed loop&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN l: LOOP LEAVE l; END LOOP; LEAVE l; END&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: l&#039;</span>]];</span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a label outside a handler&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() a: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE a; END a&#039;</span>, [<span class="tok-str">&#039;LEAVE with no matching label: a&#039;</span>]];</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;the label of a handler block&#039;</span> =&gt; [<span class="tok-str">&#039;CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION h: BEGIN LEAVE h; END; END&#039;</span>, []];</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerRenderWritesTheStatement&#039;</span>)]</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheStatement</span>(<span class="tok-id">string</span> <span class="tok-var">$release</span>, <span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>    {</span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-var">$release</span>))-&gt;<span class="tok-id">inspect</span>(<span class="tok-var">$sql</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a><span class="tok-com">     * @return iterable&lt;string, array{string, string, string}&gt;</span></span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerRenderWritesTheStatement</span>(): <span class="tok-id">iterable</span></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    {</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;5.6&#039;</span> =&gt; [<span class="tok-str">&#039;mysql-5.6.51&#039;</span>, <span class="tok-str">&#039;create procedure p() l: loop leave l; end loop l&#039;</span>, <span class="tok-str">&#039;CREATE PROCEDURE p() l: LOOP LEAVE l; END LOOP l&#039;</span>];</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;a quoted label in 8.4&#039;</span> =&gt; [<span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-str">&#039;create procedure p() `my label`: begin leave `my label`; end&#039;</span>, <span class="tok-str">&#039;CREATE PROCEDURE p() `my label`: BEGIN LEAVE `my label`; END&#039;</span>];</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    }</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>}</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -44,7 +44,7 @@
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Lexer\Token</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">WeakMap</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
@@ -95,7 +95,7 @@
 <span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L58"><a class="ln" href="#L58">58</a><span class="tok-com">     * Answers the trivia written between the last token of a region and the next token of its command.</span></span>
 <span class="src-line" id="L59"><a class="ln" href="#L59">59</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a><span class="tok-com">     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the region is empty or its command was not indexed</span></span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a><span class="tok-com">     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvariantViolation When the region is empty or its command was not indexed</span></span>
 <span class="src-line" id="L61"><a class="ln" href="#L61">61</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">after</span>(<span class="tok-id">Node</span> <span class="tok-var">$region</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    {</span>

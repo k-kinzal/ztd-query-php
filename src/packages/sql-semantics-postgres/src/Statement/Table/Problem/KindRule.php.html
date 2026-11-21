@@ -53,7 +53,7 @@
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Reading the rule a DROP VIEW of a table breaks</span></span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();</span></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;DROP VIEW t&#039;, [$semantics-&gt;analyze(&#039;CREATE TABLE t (a int)&#039;)])-&gt;facts-&gt;diagnostics[0]-&gt;rule // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">enum</span> <span class="tok-id">KindRule</span>: <span class="tok-id">string</span></span>

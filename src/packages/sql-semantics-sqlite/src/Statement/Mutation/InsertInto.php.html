@@ -42,13 +42,13 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Contract\NameUse</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause</span>;</span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * The head of an INSERT statement: the verb, the conflict resolution, the written table and the column list.</span></span>
@@ -59,10 +59,10 @@
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> * @example Reading the head of an INSERT</span></span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))-&gt;analyze(&#039;INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)&#039;);</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())-&gt;analyze(&#039;INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)&#039;);</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> *     [$insert-&gt;statement-&gt;into-&gt;resolution, $insert-&gt;statement-&gt;into-&gt;target-&gt;name-&gt;name-&gt;value, count($insert-&gt;statement-&gt;into-&gt;columns)] // =&gt; [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore, &#039;t&#039;, 2]</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing a conflict resolution next to REPLACE</span></span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name(&#039;t&#039;))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name(&#039;t&#039;))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InsertInto</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>{</span>

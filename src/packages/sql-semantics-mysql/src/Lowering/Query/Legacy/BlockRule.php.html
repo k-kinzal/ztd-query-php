@@ -43,15 +43,15 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Legacy</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\AnalysisException</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\ImplementationGap</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Lowering</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Lowering</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap</span>;</span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition</span>;</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Relation\Dual</span>;</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
@@ -115,7 +115,7 @@
 <span class="src-line" id="L77"><a class="ln" href="#L77">77</a><span class="tok-com">     * @throws ImplementationGap When a production has no rule</span></span>
 <span class="src-line" id="L78"><a class="ln" href="#L78">78</a><span class="tok-com">     * @throws AnalysisException When PROCEDURE ANALYSE and INTO are both written (ER_WRONG_USAGE &quot;PROCEDURE and INTO&quot; of the 5.7 `select_part2` action, raised while parsing)</span></span>
 <span class="src-line" id="L79"><a class="ln" href="#L79">79</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">full</span>(<span class="tok-id">\SqlSemantics\Lowering\Form</span> <span class="tok-var">$form</span>): <span class="tok-id">Block</span></span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">full</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Model\Lowering\Form</span> <span class="tok-var">$form</span>): <span class="tok-id">Block</span></span>
 <span class="src-line" id="L81"><a class="ln" href="#L81">81</a>    {</span>
 <span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        [<span class="tok-var">$options</span>, <span class="tok-var">$list</span>] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">head</span>(<span class="tok-var">$form</span>-&gt;<span class="tok-id">node</span>(<span class="tok-num">0</span>));</span>
 <span class="src-line" id="L83"><a class="ln" href="#L83">83</a>        <span class="tok-var">$clauses</span> = <span class="tok-kw">new</span> <span class="tok-id">ClauseRule</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>);</span>

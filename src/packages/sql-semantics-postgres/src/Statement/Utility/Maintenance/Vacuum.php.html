@@ -42,14 +42,14 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks</span>;</span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> * `VACUUM`: a request to reclaim storage and optionally analyze tables.</span></span>
@@ -66,13 +66,13 @@
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Reading a VACUUM written with words</span></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;VACUUM FULL ANALYZE t&#039;);</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;VACUUM FULL ANALYZE t&#039;);</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     [$operation-&gt;statement-&gt;options[1]-&gt;option(), $operation-&gt;statement-&gt;targets[0]-&gt;table-&gt;name-&gt;value, $operation-&gt;toString()] // =&gt; [&#039;analyze&#039;, &#039;t&#039;, &#039;VACUUM FULL ANALYZE t&#039;]</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> * @example Refusing words in another order than the grammar reads</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum([</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name(&#039;verbose&#039;)),</span></span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name(&#039;full&#039;)),</span></span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> *     ], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name(&#039;verbose&#039;)),</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name(&#039;full&#039;)),</span></span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> *     ], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Vacuum</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>
 <span class="src-line" id="L40"><a class="ln" href="#L40">40</a>{</span>

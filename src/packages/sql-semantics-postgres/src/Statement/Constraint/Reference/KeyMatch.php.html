@@ -52,7 +52,7 @@
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * @example Reading the match type of a foreign key</span></span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;CREATE TABLE t (a int REFERENCES u MATCH FULL)&#039;);</span></span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE TABLE t (a int REFERENCES u MATCH FULL)&#039;);</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $create-&gt;statement-&gt;definition-&gt;elements[0]-&gt;qualifiers[0]-&gt;match // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch::Full</span></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">enum</span> <span class="tok-id">KeyMatch</span>: <span class="tok-id">string</span></span>

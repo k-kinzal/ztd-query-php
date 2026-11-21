@@ -42,13 +42,13 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Query\Positions</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Query\Positions</span>;</span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a></span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> * A parenthesized list of grouping terms in GROUP BY, ROLLUP, CUBE or GROUPING SETS: `(a, 1)`.</span></span>
@@ -64,10 +64,10 @@
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Reading the terms of a row in GROUP BY</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;SELECT 1 AS a GROUP BY (a, 1)&#039;);</span></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;SELECT 1 AS a GROUP BY (a, 1)&#039;);</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> *     [count($query-&gt;statement-&gt;groupBy[0]-&gt;members), $query-&gt;statement-&gt;groupBy[0]-&gt;members[1]::class] // =&gt; [2, \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class]</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> * @example Refusing an integer constant that is not an output position</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;1&#039;)), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;2&#039;))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;1&#039;)), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;2&#039;))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">GroupingRow</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>{</span>

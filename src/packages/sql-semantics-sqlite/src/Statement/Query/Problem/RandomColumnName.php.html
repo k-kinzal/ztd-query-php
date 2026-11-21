@@ -42,8 +42,8 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Query\Problem</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Missing\MissingInput</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\MissingInput</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a></span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com"> * The name SQLite picks at random for a column of a subquery whose name repeats earlier names too often.</span></span>
@@ -58,7 +58,7 @@
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> * @example Reading why a column of a derived table cannot be decided by name</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))-&gt;analyze(&#039;SELECT x FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)&#039;, []);</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())-&gt;analyze(&#039;SELECT x FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)&#039;, []);</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $query-&gt;facts-&gt;scalar($query-&gt;statement-&gt;columns[0]-&gt;expression)-&gt;resolution-&gt;missing[0]-&gt;describe() // =&gt; &#039;the name SQLite picks at random for a column whose name repeats five earlier names&#039;</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RandomColumnName</span> <span class="tok-kw">implements</span> <span class="tok-id">MissingInput</span></span>

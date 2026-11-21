@@ -42,23 +42,23 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Partition\Partitioning</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\RelationFact</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\DeclaredTable</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\NameUse</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Relation</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems</span>;</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets</span>;</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Partition\Partitioning</span>;</span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> * A request to create a table from column, index and constraint definitions, a query, or both.</span></span>
@@ -85,11 +85,11 @@
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a><span class="tok-com"> * @example Providing a declaration to a context</span></span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20), note TEXT NULL)&#039;);</span></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20), note TEXT NULL)&#039;);</span></span>
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a><span class="tok-com"> *     $table = $create-&gt;declarations()[0];</span></span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-com"> *     [count($table-&gt;columns), $table-&gt;columns[0]-&gt;nullability, $table-&gt;columns[2]-&gt;nullability] // =&gt; [3, \SqlSemantics\Statement\Type\Nullability::NotNull, \SqlSemantics\Statement\Type\Nullability::Nullable]</span></span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-com"> *     [count($table-&gt;columns), $table-&gt;columns[0]-&gt;nullability, $table-&gt;columns[2]-&gt;nullability] // =&gt; [3, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable]</span></span>
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a><span class="tok-com"> * @example The relation fact of the statement resolves to the declaration it provides</span></span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE TABLE t (a INT, CHECK (a &gt; 0))&#039;);</span></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;CREATE TABLE t (a INT, CHECK (a &gt; 0))&#039;);</span></span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a><span class="tok-com"> *     $create-&gt;facts-&gt;scalar($create-&gt;statement-&gt;elements[1]-&gt;condition-&gt;left)-&gt;resolution-&gt;slot-&gt;column === $create-&gt;declarations()[0]-&gt;columns[0] // =&gt; true</span></span>
 <span class="src-line" id="L56"><a class="ln" href="#L56">56</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L57"><a class="ln" href="#L57">57</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CreateTable</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span>, <span class="tok-id">Relation</span></span>

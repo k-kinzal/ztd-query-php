@@ -42,7 +42,7 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Table\Command</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
@@ -66,7 +66,7 @@
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">checked</span>(<span class="tok-kw">array</span> <span class="tok-var">$terms</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    {</span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-var">$checked</span> = [];</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$terms</span>, <span class="tok-id">\SqlSemantics\Statement\Node</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;Key terms are an ordered list.&#039;</span>) <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">Check</span>::<span class="tok-id">listOf</span>(<span class="tok-var">$terms</span>, <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Model\Statement\Node</span>::<span class="tok-kw">class</span>, <span class="tok-str">&#039;Key terms are an ordered list.&#039;</span>) <span class="tok-kw">as</span> <span class="tok-var">$term</span>) {</span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a>            <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$term</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnKey</span> || <span class="tok-var">$term</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ExpressionKey</span>, <span class="tok-str">&#039;A key term is a column or an expression.&#039;</span>);</span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>            <span class="tok-var">$checked</span>[] = <span class="tok-var">$term</span>;</span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        }</span>

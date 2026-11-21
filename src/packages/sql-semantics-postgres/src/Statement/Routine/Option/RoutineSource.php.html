@@ -42,11 +42,11 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * The definition of a routine written as a string constant: unanalysed text in the routine&#039;s language.</span></span>
@@ -86,7 +86,7 @@
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L50"><a class="ln" href="#L50">50</a><span class="tok-com"> * @example Reading the language and the text of a routine definition</span></span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&quot;CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$&quot;);</span></span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&quot;CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$&quot;);</span></span>
 <span class="src-line" id="L52"><a class="ln" href="#L52">52</a><span class="tok-com"> *     $source = $operation-&gt;statement-&gt;options[1]-&gt;source;</span></span>
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a><span class="tok-com"> *     [$source-&gt;language?-&gt;value, $source-&gt;text-&gt;value] // =&gt; [&#039;sql&#039;, &#039; SELECT 1 &#039;]</span></span>
 <span class="src-line" id="L54"><a class="ln" href="#L54">54</a><span class="tok-com"> */</span></span>

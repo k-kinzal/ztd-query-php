@@ -54,7 +54,7 @@
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the kind of a bound</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;CREATE TABLE p1 PARTITION OF p FOR VALUES IN (1, 2)&#039;);</span></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE TABLE p1 PARTITION OF p FOR VALUES IN (1, 2)&#039;);</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $create-&gt;statement-&gt;definition-&gt;bound instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\ListBound // =&gt; true</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">interface</span> <span class="tok-id">PartitionBound</span> <span class="tok-kw">extends</span> <span class="tok-id">Clause</span></span>

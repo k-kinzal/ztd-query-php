@@ -45,35 +45,34 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Medium</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Dialect</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Legacy\FactorRule</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a></span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">FactorRule</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>#[<span class="tok-id">Medium</span>]</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">FactorRuleTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>{</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testFactorLowersEveryFactor</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>    {</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM t, (SELECT 1) d, JSON_TABLE(\&#039;[]\&#039;, \&#039;$\&#039; COLUMNS (a INT PATH \&#039;$\&#039;)) j, (t)&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from t, (select 1) d, json_table(\&#039;[]\&#039;, \&#039;$\&#039; columns (a int path \&#039;$\&#039;)) j, (t)&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    }</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParensLowersEveryParenthesizedForm</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    {</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u))&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from ((t)), ((t join u)), ((t, u))&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    }</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a></span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDerivedLowersLateral</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>    {</span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM t, LATERAL (SELECT 1) AS d&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-8.0.44&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from t, lateral (select 1) as d&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testFunctionLowersJsonTable</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM JSON_TABLE(@j, \&#039;$\&#039; COLUMNS (a INT PATH \&#039;$\&#039;)) AS j&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, <span class="tok-str">&#039;mysql-9.1.0&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from json_table(@j, \&#039;$\&#039; columns (a int path \&#039;$\&#039;)) as j&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    }</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>}</span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a></span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Lowering\Query\Legacy\FactorRule</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">FactorRule</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>#[<span class="tok-id">Medium</span>]</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">FactorRuleTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testFactorLowersEveryFactor</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    {</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM t, (SELECT 1) d, JSON_TABLE(\&#039;[]\&#039;, \&#039;$\&#039; COLUMNS (a INT PATH \&#039;$\&#039;)) j, (t)&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from t, (select 1) d, json_table(\&#039;[]\&#039;, \&#039;$\&#039; columns (a int path \&#039;$\&#039;)) j, (t)&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    }</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParensLowersEveryParenthesizedForm</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    {</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM ((t)), ((t JOIN u)), ((t, u))&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from ((t)), ((t join u)), ((t, u))&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    }</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a></span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDerivedLowersLateral</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    {</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM t, LATERAL (SELECT 1) AS d&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-8.0.44&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from t, lateral (select 1) as d&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>    }</span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testFunctionLowersJsonTable</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    {</span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 FROM JSON_TABLE(@j, \&#039;$\&#039; COLUMNS (a INT PATH \&#039;$\&#039;)) AS j&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-9.1.0&#039;</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;select 1 from json_table(@j, \&#039;$\&#039; columns (a int path \&#039;$\&#039;)) as j&#039;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>}</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

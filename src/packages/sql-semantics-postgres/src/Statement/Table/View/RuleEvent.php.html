@@ -50,7 +50,7 @@
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading the event of a rule</span></span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;CREATE RULE r AS ON DELETE TO t DO INSTEAD NOTHING&#039;)-&gt;statement-&gt;event // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Delete</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-com"> *     (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE RULE r AS ON DELETE TO t DO INSTEAD NOTHING&#039;)-&gt;statement-&gt;event // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Delete</span></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">enum</span> <span class="tok-id">RuleEvent</span>: <span class="tok-id">string</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>{</span>

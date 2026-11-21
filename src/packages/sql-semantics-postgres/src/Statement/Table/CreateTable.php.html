@@ -42,21 +42,21 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rendering\Spelling</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Table\Writing</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Option\Definition</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\RelationFact</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Relation</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rendering\Spelling</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Table\Writing</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Option\Definition</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec</span>;</span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> * A request to create a table.</span></span>
@@ -74,10 +74,10 @@
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-com"> * @example Providing a declaration to a context</span></span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);</span></span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();</span></span>
 <span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-com"> *     $create = $semantics-&gt;analyze(&#039;CREATE TABLE app.t (id serial PRIMARY KEY, name varchar(20) NOT NULL, note text)&#039;, []);</span></span>
 <span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-com"> *     $table = $create-&gt;declarations()[0];</span></span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a><span class="tok-com"> *     [array_map(static fn ($column) =&gt; $column-&gt;type-&gt;name(), $table-&gt;columns), $table-&gt;columns[2]-&gt;nullability, $table-&gt;implicit[0]-&gt;names[0]-&gt;value] // =&gt; [[&#039;integer&#039;, &#039;character varying(20)&#039;, &#039;text&#039;], \SqlSemantics\Statement\Type\Nullability::Nullable, &#039;tableoid&#039;]</span></span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a><span class="tok-com"> *     [array_map(static fn ($column) =&gt; $column-&gt;type-&gt;name(), $table-&gt;columns), $table-&gt;columns[2]-&gt;nullability, $table-&gt;implicit[0]-&gt;names[0]-&gt;value] // =&gt; [[&#039;integer&#039;, &#039;character varying(20)&#039;, &#039;text&#039;], \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, &#039;tableoid&#039;]</span></span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CreateTable</span> <span class="tok-kw">implements</span> <span class="tok-id">SchemaElement</span>, <span class="tok-id">Relation</span></span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a>{</span>

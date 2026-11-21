@@ -45,21 +45,21 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Medium</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\ParameterStyle</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Mode</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Platform</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Binary</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Lexical</span>;</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Mode</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Lexical</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Known</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Platform</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator</span>;</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>;</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Binary</span>;</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind</span>;</span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">BinaryCast</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a>#[<span class="tok-id">Medium</span>]</span>

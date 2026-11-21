@@ -42,15 +42,15 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Set</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\QueryTails</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryExpression</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryStatement</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Query</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Query</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\QueryTails</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryExpression</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\QueryStatement</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Query\Select</span>;</span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * The operands of a 5.x union before a later UNION, when the last of them is a SELECT that keeps its own LIMIT or locking clauses.</span></span>
@@ -76,12 +76,12 @@
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-com"> * @example Reading the LIMIT a 5.6 SELECT keeps before a later UNION</span></span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, &#039;mysql-5.6.51&#039;))-&gt;analyze(&#039;SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v&#039;);</span></span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\MySql\Semantics(&#039;mysql-5.6.51&#039;))-&gt;analyze(&#039;SELECT a FROM t UNION SELECT b FROM u LIMIT 1 UNION SELECT c FROM v&#039;);</span></span>
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a><span class="tok-com"> *     [$query-&gt;statement-&gt;left::class, $query-&gt;statement-&gt;left-&gt;right-&gt;limit !== null] // =&gt; [\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion::class, true]</span></span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a><span class="tok-com"> * @example Refusing a last operand without clauses of its own</span></span>
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com"> *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;))]);</span></span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com"> *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;))]);</span></span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LeadingUnion</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a>{</span>
@@ -91,7 +91,7 @@
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a><span class="tok-com">     * @param Query|LeadingUnion $left The operands before the last one</span></span>
 <span class="src-line" id="L54"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param SetQuantifier|null $quantifier The written DISTINCT or ALL</span></span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a><span class="tok-com">     * @param Select $right The last operand, with its own LIMIT or locking clauses and nothing else after its items</span></span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a><span class="tok-com">     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, or the left operand is written in parentheses as a set operand</span></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a><span class="tok-com">     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, or the left operand is written in parentheses as a set operand</span></span>
 <span class="src-line" id="L57"><a class="ln" href="#L57">57</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L58"><a class="ln" href="#L58">58</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Query</span>|<span class="tok-id">LeadingUnion</span> <span class="tok-var">$left</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">SetQuantifier</span> <span class="tok-var">$quantifier</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Select</span> <span class="tok-var">$right</span>)</span>
 <span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    {</span>

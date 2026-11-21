@@ -42,9 +42,9 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Table\TableResolution</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\TableResolution</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com"> * The resolution of a table name a complete context does not declare, at a grant level where the table need not exist.</span></span>
@@ -57,7 +57,7 @@
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * @example Granting CREATE on a table that does not exist yet</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $grant = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;GRANT CREATE ON t TO u&#039;, []);</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;GRANT CREATE ON t TO u&#039;, []);</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $grant-&gt;facts-&gt;relation($grant-&gt;statement-&gt;level)-&gt;table instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable // =&gt; true</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AbsentGrantTable</span> <span class="tok-kw">implements</span> <span class="tok-id">TableResolution</span></span>

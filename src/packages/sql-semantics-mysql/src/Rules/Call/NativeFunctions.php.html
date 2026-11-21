@@ -42,7 +42,7 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Call</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\GrammarRelease</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a></span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * Looks up the native functions of a MySQL release: the functions a generic call `name(...)` reaches before a loadable or stored function.</span></span>
@@ -110,7 +110,7 @@
 <span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rows</span>(<span class="tok-id">GrammarRelease</span> <span class="tok-var">$release</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L73"><a class="ln" href="#L73">73</a>    {</span>
 <span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        <span class="tok-var">$key</span> = <span class="tok-id">strtoupper</span>(<span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        <span class="tok-var">$bit</span> = <span class="tok-id">self</span>::<span class="tok-id">BITS</span>[<span class="tok-var">$release</span>-&gt;<span class="tok-id">value</span>] ?? <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        <span class="tok-var">$bit</span> = <span class="tok-id">self</span>::<span class="tok-id">BITS</span>[<span class="tok-var">$release</span>-&gt;<span class="tok-id">value</span>];</span>
 <span class="src-line" id="L76"><a class="ln" href="#L76">76</a>        <span class="tok-var">$rows</span> = [];</span>
 <span class="src-line" id="L77"><a class="ln" href="#L77">77</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">NativeCatalog</span>::<span class="tok-id">ROWS</span>[<span class="tok-var">$key</span>] ?? <span class="tok-id">NativeSpatialCatalog</span>::<span class="tok-id">ROWS</span>[<span class="tok-var">$key</span>] ?? <span class="tok-id">NativeInternalCatalog</span>::<span class="tok-id">ROWS</span>[<span class="tok-var">$key</span>] ?? [] <span class="tok-kw">as</span> [<span class="tok-var">$mask</span>, <span class="tok-var">$minimum</span>, <span class="tok-var">$maximum</span>, <span class="tok-var">$code</span>]) {</span>
 <span class="src-line" id="L78"><a class="ln" href="#L78">78</a>            <span class="tok-kw">if</span> ((<span class="tok-var">$mask</span> &amp; <span class="tok-var">$bit</span>) !== <span class="tok-num">0</span>) {</span>

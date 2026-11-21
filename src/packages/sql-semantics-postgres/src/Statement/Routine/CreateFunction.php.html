@@ -42,17 +42,17 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineFacts</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineFacts</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName</span>;</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> * `CREATE [OR REPLACE] FUNCTION` or `PROCEDURE`: defines a routine.</span></span>
@@ -70,7 +70,7 @@
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com"> * @example Reading the parameters of a function</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b&#039;);</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b&#039;);</span></span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *     [$operation-&gt;statement-&gt;name-&gt;last()-&gt;value, count($operation-&gt;statement-&gt;parameters-&gt;parameters)] // =&gt; [&#039;add&#039;, 2]</span></span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CreateFunction</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>

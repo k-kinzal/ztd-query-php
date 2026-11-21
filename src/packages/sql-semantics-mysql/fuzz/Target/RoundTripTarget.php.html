@@ -43,8 +43,8 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Fuzz\Target</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Error</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Facade\Semantics</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Validation\Equivalence</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Validation\Equivalence</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Throwable</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
@@ -67,9 +67,9 @@
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        }</span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        <span class="tok-var">$rendered</span> = <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>            <span class="tok-var">$operation</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>            <span class="tok-var">$operation</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-var">$sql</span>);</span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>            <span class="tok-var">$rendered</span> = <span class="tok-var">$operation</span>-&gt;<span class="tok-id">toString</span>();</span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>            <span class="tok-var">$again</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-var">$rendered</span>);</span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>            <span class="tok-var">$again</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-var">$rendered</span>);</span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>            <span class="tok-var">$difference</span> = (<span class="tok-kw">new</span> <span class="tok-id">Equivalence</span>())-&gt;<span class="tok-id">difference</span>(<span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>, <span class="tok-var">$again</span>-&gt;<span class="tok-id">statement</span>);</span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a>            <span class="tok-kw">if</span> (<span class="tok-var">$difference</span> !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(<span class="tok-str">&#039;The structure of the rendered SQL differs from the structure of the input at &#039;</span> . <span class="tok-var">$difference</span>);</span>

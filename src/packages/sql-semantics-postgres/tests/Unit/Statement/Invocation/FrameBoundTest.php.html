@@ -45,17 +45,17 @@
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Small</span>;</span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\GrammarRelease</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\LanguageProfile</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Platform</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rendering\Codec</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Lexical</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Platform</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rendering\Codec</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant</span>;</span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">FrameBound</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a>#[<span class="tok-id">Small</span>]</span>
@@ -87,7 +87,7 @@
 <span class="src-line" id="L49"><a class="ln" href="#L49">49</a></span>
 <span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderQuotesABareUnboundedColumn</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    {</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-var">$query</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT count(*) OVER (ORDER BY 1 ROWS &quot;unbounded&quot; PRECEDING) FROM (SELECT 1 AS unbounded) AS s&#039;</span>, []);</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-var">$query</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>())-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT count(*) OVER (ORDER BY 1 ROWS &quot;unbounded&quot; PRECEDING) FROM (SELECT 1 AS unbounded) AS s&#039;</span>, []);</span>
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT count(*) OVER (ORDER BY 1 ROWS &quot;unbounded&quot; PRECEDING) FROM (SELECT 1 AS unbounded) AS s&#039;</span>, <span class="tok-var">$query</span>-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    }</span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a>}</span>

@@ -42,28 +42,28 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\GrammarRelease</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ExplainReports</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ReplicationReports</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\SchemaReports</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ServerReports</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Character</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Decimal</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Floating</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Integral</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind</span>;</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Temporal</span>;</span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Shape\OutputSlot</span>;</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\NullOnly</span>;</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\TypeFact</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Known</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ExplainReports</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ReplicationReports</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\SchemaReports</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\Columns\ServerReports</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Character</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Decimal</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Floating</span>;</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Integral</span>;</span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind</span>;</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind</span>;</span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind</span>;</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier</span>;</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind</span>;</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Temporal</span>;</span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> * The columns of the rows SHOW and EXPLAIN return.</span></span>
@@ -143,7 +143,7 @@
 <span class="src-line" id="L105"><a class="ln" href="#L105">105</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L106"><a class="ln" href="#L106">106</a><span class="tok-com">     * Answers the type of a code.</span></span>
 <span class="src-line" id="L107"><a class="ln" href="#L107">107</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L108"><a class="ln" href="#L108">108</a><span class="tok-com">     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the code is none of the codes of the tables</span></span>
+<span class="src-line" id="L108"><a class="ln" href="#L108">108</a><span class="tok-com">     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation When the code is none of the codes of the tables</span></span>
 <span class="src-line" id="L109"><a class="ln" href="#L109">109</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L110"><a class="ln" href="#L110">110</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">type</span>(<span class="tok-id">string</span> <span class="tok-var">$code</span>): <span class="tok-id">TypeFact</span></span>
 <span class="src-line" id="L111"><a class="ln" href="#L111">111</a>    {</span>
@@ -163,7 +163,7 @@
 <span class="src-line" id="L125"><a class="ln" href="#L125">125</a>            <span class="tok-str">&#039;D&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">Known</span>(<span class="tok-kw">new</span> <span class="tok-id">Temporal</span>(<span class="tok-id">TemporalKind</span>::<span class="tok-id">DateTime</span>)),</span>
 <span class="src-line" id="L126"><a class="ln" href="#L126">126</a>            <span class="tok-str">&#039;T&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">Known</span>(<span class="tok-kw">new</span> <span class="tok-id">Temporal</span>(<span class="tok-id">TemporalKind</span>::<span class="tok-id">Timestamp</span>)),</span>
 <span class="src-line" id="L127"><a class="ln" href="#L127">127</a>            <span class="tok-str">&#039;n&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">NullOnly</span>(),</span>
-<span class="src-line" id="L128"><a class="ln" href="#L128">128</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Diagnostic\InvariantViolation</span>(<span class="tok-str">&#039;Unknown column code &#039;</span> . <span class="tok-var">$code</span> . <span class="tok-str">&#039;.&#039;</span>),</span>
+<span class="src-line" id="L128"><a class="ln" href="#L128">128</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation</span>(<span class="tok-str">&#039;Unknown column code &#039;</span> . <span class="tok-var">$code</span> . <span class="tok-str">&#039;.&#039;</span>),</span>
 <span class="src-line" id="L129"><a class="ln" href="#L129">129</a>        };</span>
 <span class="src-line" id="L130"><a class="ln" href="#L130">130</a>    }</span>
 <span class="src-line" id="L131"><a class="ln" href="#L131">131</a>}</span>

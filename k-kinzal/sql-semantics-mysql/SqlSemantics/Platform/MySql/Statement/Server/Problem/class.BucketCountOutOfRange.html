@@ -37,8 +37,8 @@
 <main class="content" id="content">
 <div class="symbol-head"><h1><span class="chip chip-kind k-class">class</span>BucketCountOutOfRange</h1><div class="symbol-meta"><a class="source-link" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Server/Problem/BucketCountOutOfRange.php.html#L22">packages/sql-semantics-mysql/src/Statement/Server/Problem/BucketCountOutOfRange.php:22</a></div></div>
 <pre class="signature"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">BucketCountOutOfRange</span>
-    <span class="t-key">implements</span> <a class="t-name k-interface" href="../../../../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Fact/interface.Diagnostic.html" title="SqlSemantics\Statement\Fact\Diagnostic">Diagnostic</a>
-    <span class="t-key">uses</span> <a class="t-name k-trait" href="../../../../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/trait.Snapshot.html" title="SqlSemantics\Statement\Snapshot">Snapshot</a></code></pre>
+    <span class="t-key">implements</span> <a class="t-name k-interface" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Model/Statement/Fact/interface.Diagnostic.html" title="SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic">Diagnostic</a>
+    <span class="t-key">uses</span> <a class="t-name k-trait" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Model/Statement/trait.Snapshot.html" title="SqlSemantics\Platform\MySql\Model\Statement\Snapshot">Snapshot</a></code></pre>
 <div class="notice tone-ok"><strong>Public API</strong>: explicitly declared with <code>@visibility public</code>.</div>
 <p class="lede">A histogram bucket count outside 1 to 1024.</p>
 <div class="prose"><p>The server rejects the statement with ER_DATA_OUT_OF_RANGE while it parses it. Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.</p>

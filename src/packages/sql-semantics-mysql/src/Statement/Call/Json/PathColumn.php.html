@@ -42,21 +42,21 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Call\Json</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Call\Arguments</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\CollationName</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Shape\OutputSlot</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Known</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\NameUse</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Known</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Call\Arguments</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\CollationName</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\TypeName</span>;</span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> * A `name type PATH path` or `name type EXISTS PATH path` column of JSON_TABLE, with its ON EMPTY and ON ERROR responses.</span></span>
@@ -71,10 +71,10 @@
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> * @example Reading a path column</span></span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Statement\Identifier\Name(&#039;a&#039;), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([&#039;$.a&#039;]));</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name(&#039;a&#039;), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([&#039;$.a&#039;]));</span></span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> *     [$column-&gt;name-&gt;value, $column-&gt;type-&gt;name(), $column-&gt;exists] // =&gt; [&#039;a&#039;, &#039;INT&#039;, false]</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-com"> * @example Refusing the reversed order without both responses</span></span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Statement\Identifier\Name(&#039;a&#039;), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([&#039;$.a&#039;]), errorFirst: true) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name(&#039;a&#039;), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([&#039;$.a&#039;]), errorFirst: true) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PathColumn</span> <span class="tok-kw">implements</span> <span class="tok-id">JsonTableColumn</span></span>
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a>{</span>

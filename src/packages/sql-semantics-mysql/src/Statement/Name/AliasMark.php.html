@@ -42,7 +42,7 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
 <span class="src-line" id="L8"><a class="ln" href="#L8">8</a></span>
 <span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-com"> * What is written between an operand and its alias: `AS`, nothing, or in MySQL 5.6 and 5.7 `=` before a table alias.</span></span>
@@ -55,7 +55,7 @@
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Reading how an alias is written</span></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a total FROM t&#039;);</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;SELECT a total FROM t&#039;);</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $query-&gt;statement-&gt;items[0]-&gt;mark // =&gt; \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Bare</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-kw">enum</span> <span class="tok-id">AliasMark</span></span>
@@ -68,7 +68,7 @@
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com">     * Writes what precedes the alias.</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     * @example Writing the keyword of an alias</span></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     *     $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com">     *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com">     *     \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As-&gt;write($out);</span></span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com">     *     $out-&gt;pieces()[0]-&gt;text // =&gt; &#039;AS&#039;</span></span>
 <span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>

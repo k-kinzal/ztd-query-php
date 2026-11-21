@@ -42,15 +42,15 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Relation</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\From\FromScope</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\RelationFact</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\NameUse</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Relation</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Query\From\FromScope</span>;</span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * The ODBC escape `{ word table_reference }` of the 5.x grammars, where any identifier takes the place of OJ.</span></span>
@@ -61,7 +61,7 @@
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> * @example Reading a 5.x ODBC escape</span></span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, &#039;mysql-5.7.44&#039;))-&gt;analyze(&#039;SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }&#039;);</span></span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\MySql\Semantics(&#039;mysql-5.7.44&#039;))-&gt;analyze(&#039;SELECT 1 FROM { oj t LEFT JOIN u ON t.a = u.a }&#039;);</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *     $query-&gt;statement-&gt;from-&gt;word-&gt;value // =&gt; &#039;oj&#039;</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">EscapedRelation</span> <span class="tok-kw">implements</span> <span class="tok-id">Relation</span></span>

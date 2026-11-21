@@ -43,9 +43,9 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Lowering\Routine</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\ImplementationGap</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Lowering\Form</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Lowering\Lowering</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Lowering\Lowering</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Model\Lowering\Form</span>;</span>
 <span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference</span>;</span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Object\Drop</span>;</span>
@@ -159,7 +159,7 @@
 <span class="src-line" id="L121"><a class="ln" href="#L121">121</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L122"><a class="ln" href="#L122">122</a><span class="tok-com">     * Answers each name as an unqualified object name.</span></span>
 <span class="src-line" id="L123"><a class="ln" href="#L123">123</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L124"><a class="ln" href="#L124">124</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Statement\Identifier\Name&gt; $names</span></span>
+<span class="src-line" id="L124"><a class="ln" href="#L124">124</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name&gt; $names</span></span>
 <span class="src-line" id="L125"><a class="ln" href="#L125">125</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L126"><a class="ln" href="#L126">126</a><span class="tok-com">     * @return list&lt;UnqualifiedName&gt;</span></span>
 <span class="src-line" id="L127"><a class="ln" href="#L127">127</a><span class="tok-com">     */</span></span>

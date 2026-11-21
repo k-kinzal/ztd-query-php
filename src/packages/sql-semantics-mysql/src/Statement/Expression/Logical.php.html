@@ -42,15 +42,15 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Expression</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Expression\Operands</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Expression\Precedence</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\ScalarFact</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Scalar</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Expression\Operands</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Expression\Precedence</span>;</span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * A logical AND, OR or XOR of two operands, in the order written (`Item_cond_and`, `Item_cond_or`, `Item_func_xor`).</span></span>
@@ -67,11 +67,11 @@
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> * @example Reading both operands of a conjunction</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE a &amp;&amp; b&#039;);</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $query = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;SELECT a FROM t WHERE a &amp;&amp; b&#039;);</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-com"> *     [$query-&gt;statement-&gt;where-&gt;operator-&gt;value, $query-&gt;toString()] // =&gt; [&#039;AND&#039;, &#039;SELECT a FROM t WHERE a AND b&#039;]</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a><span class="tok-com"> * @example Refusing an operand that would associate differently</span></span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;SELECT a FROM t WHERE a OR b&#039;)-&gt;statement-&gt;where;</span></span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name(&#039;c&#039;))) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a><span class="tok-com"> *     $or = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;SELECT a FROM t WHERE a OR b&#039;)-&gt;statement-&gt;where;</span></span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name(&#039;c&#039;))) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction</span></span>
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Logical</span> <span class="tok-kw">implements</span> <span class="tok-id">Scalar</span></span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a>{</span>

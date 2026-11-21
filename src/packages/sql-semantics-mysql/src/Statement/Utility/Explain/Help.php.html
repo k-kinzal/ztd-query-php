@@ -42,14 +42,14 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Utility\Explain</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Contract\NameUse</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\Name</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Reference\Missing\SessionState</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Contract\NameUse</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts</span>;</span>
 <span class="src-line" id="L15"><a class="ln" href="#L15">15</a></span>
 <span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> * HELP: searches the help tables of the server for a topic.</span></span>
@@ -65,7 +65,7 @@
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com"> * @example Reading the topic</span></span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $help = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;HELP &#039;contents&#039;&quot;);</span></span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $help = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&quot;HELP &#039;contents&#039;&quot;);</span></span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com"> *     [$help-&gt;statement-&gt;topic-&gt;value, $help-&gt;shape()?-&gt;complete(), $help-&gt;toString()] // =&gt; [&#039;contents&#039;, false, &#039;HELP contents&#039;]</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Help</span> <span class="tok-kw">implements</span> <span class="tok-id">Statement</span></span>

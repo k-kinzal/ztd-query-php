@@ -42,22 +42,22 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds</span>;</span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes</span>;</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition</span>;</span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Resolution\Environment</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\RelationFact</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Identifier\QualifiedName</span>;</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Relation</span>;</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Shape\RowShape</span>;</span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Construction\Derivation</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Resolution\Environment</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact</span>;</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName</span>;</span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Relation</span>;</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Statement</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames</span>;</span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds</span>;</span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes</span>;</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition</span>;</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal</span>;</span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> * A request to add a column at the end of a table.</span></span>
@@ -79,7 +79,7 @@
 <span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a><span class="tok-com"> * @example Deriving the shape the new column definition sees</span></span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);</span></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();</span></span>
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com"> *     $table = $semantics-&gt;analyze(&#039;CREATE TABLE t (a INTEGER)&#039;);</span></span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-com"> *     $alter = $semantics-&gt;analyze(&#039;ALTER TABLE t ADD COLUMN b TEXT CHECK (b &lt;&gt; a)&#039;, [$table]);</span></span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a><span class="tok-com"> *     [count($alter-&gt;facts-&gt;relation($alter-&gt;statement)-&gt;shape-&gt;slots), $alter-&gt;toString()] // =&gt; [2, &#039;ALTER TABLE t ADD b TEXT CHECK (b &lt;&gt; a)&#039;]</span></span>

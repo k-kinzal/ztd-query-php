@@ -42,11 +42,11 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Dml</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\ColumnUse</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Rendering\Output</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Node</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Scalar</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Name\ColumnUse</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * One assignment `column = value` of SET, ON DUPLICATE KEY UPDATE, UPDATE or LOAD DATA.</span></span>
@@ -57,7 +57,7 @@
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * @example Reading an assignment of UPDATE</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;UPDATE t SET a = a + 1&#039;);</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $update = (new \SqlSemantics\Platform\MySql\Semantics())-&gt;analyze(&#039;UPDATE t SET a = a + 1&#039;);</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $update-&gt;statement-&gt;assignments[0]-&gt;column-&gt;name-&gt;value // =&gt; &#039;a&#039;</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Assignment</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>

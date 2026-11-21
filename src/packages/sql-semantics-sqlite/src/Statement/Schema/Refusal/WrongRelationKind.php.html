@@ -42,11 +42,11 @@
 <span class="src-line" id="L4"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Declaration\RelationKind</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Declaration\Table</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Fact\Diagnostic</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic</span>;</span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot</span>;</span>
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-com"> * A request SQLite refuses because the relation it names is of another kind.</span></span>
@@ -55,9 +55,9 @@
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Reporting DROP TABLE of a view</span></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();</span></span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $view = $semantics-&gt;analyze(&#039;CREATE VIEW v AS SELECT 1&#039;);</span></span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;DROP TABLE v&#039;, [$view])-&gt;facts-&gt;diagnostics[0]-&gt;message() // =&gt; &#039;Relation v is a view: DROP TABLE removes only a table.&#039;</span></span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;DROP TABLE v&#039;, [$view]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Relation v is a view: DROP TABLE removes only a table.</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WrongRelationKind</span> <span class="tok-kw">implements</span> <span class="tok-id">Diagnostic</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>{</span>
@@ -66,7 +66,7 @@
 <span class="src-line" id="L28"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param Table $relation The declaration the name resolved to</span></span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param KindRefusal $refusal The request and the kind it needs</span></span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the relation is of the kind the request needs</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the relation is of the kind the request needs</span></span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Table</span> <span class="tok-var">$relation</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">KindRefusal</span> <span class="tok-var">$refusal</span>)</span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    {</span>

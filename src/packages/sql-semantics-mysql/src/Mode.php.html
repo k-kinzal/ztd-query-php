@@ -59,7 +59,7 @@
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a><span class="tok-com"> * @example Reading the mode a session reports</span></span>
 <span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-com"> *     \SqlSemantics\Platform\MySql\Mode::fromString(&#039;STRICT_TRANS_TABLES,ansi_quotes,NO_BACKSLASH_ESCAPES&#039;)-&gt;toString() // =&gt; &#039;ANSI_QUOTES,NO_BACKSLASH_ESCAPES&#039;</span></span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a><span class="tok-com"> * @example Reading double quotes as identifiers</span></span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString(&#039;ANSI_QUOTES&#039;));</span></span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\MySql\Semantics(null, \SqlSemantics\Platform\MySql\Mode::fromString(&#039;ANSI_QUOTES&#039;));</span></span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;SELECT &quot;order&quot; FROM t&#039;)-&gt;toString() // =&gt; &#039;SELECT `order` FROM t&#039;</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Mode</span> <span class="tok-kw">implements</span> <span class="tok-id">\SqlSemantics\Contract\Mode</span></span>
