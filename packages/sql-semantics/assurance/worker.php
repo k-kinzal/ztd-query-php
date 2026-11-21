@@ -19,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -102,7 +104,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select|Delete
+function analyzed(array $input): Select|Delete|ValuesQuery
 {
     $semantics = new Semantics();
     $tables = [];
@@ -130,12 +132,29 @@ function observeDelete(Delete $value): array
     ];
 }
 
+function directValues(array $input): ValuesQuery
+{
+    return new ValuesQuery(array_map(static fn (array $row): ValueRow => new ValueRow(array_map(operand(...), $row)), $input['rows']));
+}
+
+function observeValues(ValuesQuery $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'values',
+        'profile' => $value->profileId(),
+        'rows' => array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows),
+        'sql' => $value->toString(),
+    ];
+}
+
 function runCase(array $input): array
 {
     try {
         $value = match (true) {
             isset($input['sql']) => analyzed($input),
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
+            ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
     } catch (InvalidConstruction $error) {
@@ -146,6 +165,9 @@ function runCase(array $input): array
 
     if ($value instanceof Delete) {
         return observeDelete($value);
+    }
+    if ($value instanceof ValuesQuery) {
+        return observeValues($value);
     }
 
     if (($input['probe'] ?? '') === 'snapshot') {

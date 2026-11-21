@@ -1,15 +1,11 @@
 """Test DISTINCT, ordering and row bounds through the isolated candidate worker."""
 
-import argparse
-import difflib
-import json
-import subprocess
 import time
 from collections import Counter
-from pathlib import Path
 
-from run import IMAGE, TOOL, Failure, Ledger, Worker, compare, digest, manifest, require, shape, verify_distribution, write_json
-from sqlite_engine import Database, typed
+from run import Failure, Ledger, Worker, compare, require, write_json
+from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
+from sqlite_engine import typed
 from sqlite_relational_cases import DECLARATIONS, SCHEMA, case
 from sqlite_result_cases import (
     GRAPH_FIELDS, LIMITS, ORDERS, PAGE, PAGE_DDL, PAGE_ROWS, PROJECTIONS,
@@ -159,102 +155,28 @@ def execute(args, specification, db):
                 result = worker.request(current)
                 require(result["status"] == "rejected" and message in result["message"], "result-negative-boundary-mismatch", result)
                 ledger.record(key, "rejected", response=result)
-            for key, path in ledger.events.items():
-                require(path in (["attempted", "constructed", "observed", "compared"], ["attempted", "rejected"]),
-                        "result-unbalanced-execution", {"id": key, "events": path})
+            counts = complete_observations(ledger, settings)
         except Exception as failure:
             write_json(args.out / "counterexample.json", {
                 "original": current, "failure": str(failure), "meta": getattr(failure, "detail", None), "shrunk": None,
             })
             raise
-        return {"counts": dict(ledger.counts), "finiteIds": sorted(seen), "coverage": dict(coverage), "php": worker.environment}
+        return {"counts": counts, "finiteIds": sorted(seen), "coverage": dict(coverage), "php": worker.environment}
 
 
 def check_mutations(args, db):
-    fixtures = [
-        ("distinct", "$select->distinct ? 'DISTINCT ' : ''", "$select->distinct ? '' : ''",
-         projection(True), "row-bound-mismatch"),
-        ("count-and-offset", "'LIMIT ' . $offset . ', ' . $count", "'LIMIT ' . $count . ', ' . $offset",
-         projection(order=ORDERS[2], limit=LIMITS[5]), "row-bound-mismatch"),
-        ("binding-order", "'LIMIT ' . $offset . ', ' . $count", "'LIMIT ' . $count . ' OFFSET ' . $offset",
-         projection(order=ORDERS[2], limit=[["parameter", "2"], ["parameter", "02"], True], bindings={"2": 2}),
-         "meaning-mismatch"),
-    ]
     path = "sql-semantics-sqlite/src/Ir/SelectSql.php"
-    original_file = args.candidate / "packages" / path
-    original = original_file.read_text()
-    root = args.out / "faults"
-    results = []
-    with Worker(args, time.monotonic() + 45) as worker:
-        for _, _, _, item, _ in fixtures:
-            probe(item, worker.request(item), db)
-    for name, before, after, item, signal in fixtures:
-        require(original.count(before) == 1, "result-mutation-anchor", name)
-        mutant = original.replace(before, after)
-        overlay = root / name
-        mutated = overlay / path
-        mutated.parent.mkdir(parents=True)
-        mutated.write_text(mutant)
-        require(digest(mutated) != digest(original_file), "result-mutation-absent", name)
-        (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
-            original.splitlines(keepends=True), mutant.splitlines(keepends=True), f"a/{path}", f"b/{path}")))
-        with Worker(args, time.monotonic() + 45, overlay) as worker:
-            try:
-                probe(item, worker.request(item), db)
-            except Failure as failure:
-                row = {"case": name, "file": path, "source": digest(original_file), "mutation": digest(mutated),
-                       "input": item, "control": "passed", "expected": signal, "observed": failure.signal, "detail": failure.detail}
-                write_json(overlay / "result.json", row)
-                require(failure.signal == signal, "wrong-result-mutation-signal", row)
-                results.append(row)
-            else:
-                raise Failure("undetected-result-mutation", name)
-    return results
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--candidate", required=True, type=Path)
-    parser.add_argument("--tool-autoload", required=True, type=Path)
-    parser.add_argument("--sqlite-library", required=True, type=Path)
-    parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--local", action="store_true")
-    args = parser.parse_args()
-    args.candidate = args.candidate.resolve()
-    args.tool_autoload = args.tool_autoload.resolve()
-    args.out = args.out.resolve()
-    require(args.out != args.candidate and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
-    args.out.mkdir(parents=True, exist_ok=False)
-    contract = TOOL / "sqlite-result-v1.json"
-    require(digest(contract) == CONTRACT, "result-contract-mismatch")
-    specification = json.loads(contract.read_text())
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
-    distribution = manifest(args.candidate)
-    write_json(args.out / "distribution.json", distribution)
-    db = Database(args.sqlite_library)
-    require(db.version == "3.47.2", "result-engine-version-mismatch", db.version)
-    db.execute(SCHEMA)
-    db.execute(PAGE_DDL + ";" + PAGE_ROWS)
-    scope = shape(args)
-    checked = execute(args, specification, db)
-    faults = check_mutations(args, db)
-    verify_distribution(distribution, manifest(args.candidate))
-    write_json(args.out / "index.json", {
-        "status": "provisional-sqlite-result-domain", "candidate": commit, "contract": CONTRACT,
-        "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,
-        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},
-        "tools": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in (".php", ".py", ".json")},
-        "shape": scope, "checks": checked, "faults": faults,
-    })
-    counts = checked["counts"]
-    (args.out / "summary.md").write_text(
-        f"# SQLite result evidence\n\nCandidate `{commit}`.\n\n"
-        f"All {len(checked['finiteIds'])} finite identities observed. The runner compared {counts['compared']} results, "
-        f"confirmed {counts['rejected']} specified construction rejections and detected all {len(faults)} injected faults.\n\n"
-        "[Evidence index](index.json) · [Events](events.jsonl)\n"
-    )
-    print(args.out)
+    fixtures = [
+        RenderFault("distinct", path, "$select->distinct ? 'DISTINCT ' : ''", "$select->distinct ? '' : ''",
+                    projection(True), "row-bound-mismatch"),
+        RenderFault("count-and-offset", path, "'LIMIT ' . $offset . ', ' . $count", "'LIMIT ' . $count . ', ' . $offset",
+                    projection(order=ORDERS[2], limit=LIMITS[5]), "row-bound-mismatch"),
+        RenderFault("binding-order", path, "'LIMIT ' . $offset . ', ' . $count", "'LIMIT ' . $count . ' OFFSET ' . $offset",
+                    projection(order=ORDERS[2], limit=[["parameter", "2"], ["parameter", "02"], True], bindings={"2": 2}),
+                    "meaning-mismatch"),
+    ]
+    return check_render_faults(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    main()
+    run_domain("result", "sqlite-result-v1.json", CONTRACT, SCHEMA + PAGE_DDL + ";" + PAGE_ROWS, execute, check_mutations)

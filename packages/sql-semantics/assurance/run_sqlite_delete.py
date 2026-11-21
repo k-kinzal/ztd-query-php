@@ -1,17 +1,13 @@
 """Check observed SQLite DELETE effects using an independent row selection model."""
 
-import argparse
-import difflib
 import itertools
-import json
 import random
-import subprocess
 import time
 from collections import Counter
-from pathlib import Path
 
-from run import IMAGE, TOOL, Failure, Ledger, Worker, compare, digest, manifest, require, shape, verify_distribution, write_json
-from sqlite_engine import Database, typed
+from run import Failure, Ledger, Worker, compare, require, write_json
+from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
+from sqlite_engine import typed
 from sqlite_relational_cases import children, evaluate, truth
 
 CONTRACT = "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b"
@@ -200,98 +196,26 @@ def execute(args, spec, db):
                 response = worker.request(current)
                 require(response["status"] == status and message in response["message"], "delete-negative-boundary-mismatch", response)
                 ledger.record(key, "rejected", response=response)
-            for key, events in ledger.events.items():
-                require(events in (["attempted", "constructed", "observed", "compared"], ["attempted", "rejected"]),
-                        "delete-unbalanced-execution", {"id": key, "events": events})
+            counts = complete_observations(ledger, settings)
         except Exception as error:
             write_json(args.out / "counterexample.json", {"original": current, "failure": str(error), "shrunk": None})
             raise
-        return {"counts": dict(ledger.counts), "finiteIds": sorted(observed), "operands": dict(graph), "php": worker.environment}
+        return {"counts": counts, "finiteIds": sorted(observed), "operands": dict(graph), "php": worker.environment}
 
 
 def check_mutations(args, db):
     delete = "sql-semantics-sqlite/src/Ir/Mutation/Delete.php"
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
-        ("schema", delete, "$renderer->source($this->target, 0)", "'\"temp\".\"ir_delete\" AS \"__ztd_source\"'",
-         item(predicate=PREDICATES[4], bindings={"2": 1})),
-        ("predicate", delete, "return 'DELETE FROM ' . $target . $where;", "return 'DELETE FROM ' . $target;",
-         item(predicate=["comparison", "=", ["column", 0], ["integer", "1"]])),
-        ("slot", renderer, "$source->columns[$expression->slot]->quoted()", "$source->columns[1 - $expression->slot]->quoted()",
-         item(predicate=["column", 0])),
+        RenderFault("schema", delete, "$renderer->source($this->target, 0)", "'\"temp\".\"ir_delete\" AS \"__ztd_source\"'",
+                    item(predicate=PREDICATES[4], bindings={"2": 1}), "meaning-mismatch"),
+        RenderFault("predicate", delete, "return 'DELETE FROM ' . $target . $where;", "return 'DELETE FROM ' . $target;",
+                    item(predicate=["comparison", "=", ["column", 0], ["integer", "1"]]), "meaning-mismatch"),
+        RenderFault("slot", renderer, "$source->columns[$expression->slot]->quoted()", "$source->columns[1 - $expression->slot]->quoted()",
+                    item(predicate=["column", 0]), "meaning-mismatch"),
     ]
-    with Worker(args, time.monotonic() + 45) as worker:
-        for _, _, _, _, request in fixtures:
-            probe(request, worker.request(request), db)
-    results = []
-    for name, path, before, replacement, request in fixtures:
-        original_file = args.candidate / "packages" / path
-        original = original_file.read_text()
-        require(original.count(before) == 1, "delete-mutation-anchor", name)
-        mutant = original.replace(before, replacement)
-        overlay = args.out / "faults" / name
-        file = overlay / path
-        file.parent.mkdir(parents=True)
-        file.write_text(mutant)
-        require(digest(file) != digest(original_file), "delete-mutation-absent", name)
-        (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
-            original.splitlines(keepends=True), mutant.splitlines(keepends=True), f"a/{path}", f"b/{path}")))
-        with Worker(args, time.monotonic() + 45, overlay) as worker:
-            try:
-                probe(request, worker.request(request), db)
-            except Failure as error:
-                result = {"case": name, "file": path, "source": digest(original_file), "mutation": digest(file),
-                          "input": request, "control": "passed", "expected": "meaning-mismatch", "observed": error.signal}
-                write_json(overlay / "result.json", result)
-                require(error.signal == "meaning-mismatch", "wrong-delete-fault-signal", result)
-                results.append(result)
-            else:
-                raise Failure("undetected-delete-mutation", name)
-    return results
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--candidate", required=True, type=Path)
-    parser.add_argument("--tool-autoload", required=True, type=Path)
-    parser.add_argument("--sqlite-library", required=True, type=Path)
-    parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--local", action="store_true")
-    args = parser.parse_args()
-    args.candidate = args.candidate.resolve()
-    args.tool_autoload = args.tool_autoload.resolve()
-    args.out = args.out.resolve()
-    require(args.out != args.candidate and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
-    args.out.mkdir(parents=True, exist_ok=False)
-    contract = TOOL / "sqlite-delete-v1.json"
-    require(digest(contract) == CONTRACT, "delete-contract-mismatch")
-    spec = json.loads(contract.read_text())
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
-    distribution = manifest(args.candidate)
-    write_json(args.out / "distribution.json", distribution)
-    db = Database(args.sqlite_library)
-    require(db.version == "3.47.2", "delete-engine-version-mismatch", db.version)
-    db.execute(SCHEMA)
-    source = shape(args)
-    checks = execute(args, spec, db)
-    faults = check_mutations(args, db)
-    verify_distribution(distribution, manifest(args.candidate))
-    write_json(args.out / "index.json", {
-        "status": "provisional-sqlite-delete-domain", "candidate": commit, "contract": CONTRACT,
-        "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,
-        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},
-        "tools": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in (".php", ".py", ".json")},
-        "shape": source, "checks": checks, "faults": faults,
-    })
-    counts = checks["counts"]
-    (args.out / "summary.md").write_text(
-        f"# SQLite DELETE evidence\n\nCandidate `{commit}`.\n\n"
-        f"All {len(checks['finiteIds'])} finite identities observed. The runner compared {counts['compared']} effects, "
-        f"confirmed {counts['rejected']} specified construction rejections, and detected all {len(faults)} injected faults.\n\n"
-        "[Evidence index](index.json) · [Events](events.jsonl)\n"
-    )
-    print(args.out)
+    return check_render_faults(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    main()
+    run_domain("DELETE", "sqlite-delete-v1.json", CONTRACT, SCHEMA, execute, check_mutations)

@@ -75,8 +75,10 @@ def write_json(path, value):
 
 
 class Worker:
-    def __init__(self, args, deadline, overlay=None, script="worker.php"):
+    def __init__(self, args, deadline, overlay=None, script="worker.php", startup_timeout=None):
         self.deadline = deadline
+        self.startup_timeout = startup_timeout
+        self.execution_budget = deadline - time.monotonic()
         if args.local:
             command = ["php", str(TOOL / script), str(args.candidate)]
             if overlay:
@@ -98,12 +100,18 @@ class Worker:
         self.buffer = b""
 
     def __enter__(self):
+        if self.startup_timeout is not None:
+            self.deadline = time.monotonic() + self.startup_timeout
         try:
             self.environment = self.receive()
             require("php" in self.environment, "worker-handshake", self.environment)
-        except BaseException:
+        except BaseException as failure:
             self.__exit__(None, None, None)
+            if self.startup_timeout is not None and isinstance(failure, Failure) and failure.signal == "timeout":
+                raise Failure("worker-startup-timeout", self.startup_timeout) from failure
             raise
+        if self.startup_timeout is not None:
+            self.deadline = time.monotonic() + self.execution_budget
         return self
 
     def __exit__(self, *_):

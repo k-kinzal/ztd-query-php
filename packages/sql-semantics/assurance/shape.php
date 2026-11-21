@@ -78,7 +78,12 @@ if ($dialect === 'sqlite') {
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
     $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates];
     $methods['Mutation\\Delete'] = $methods['Select'];
+    $properties['Rows\\ValueRow'] = ['values' => ['array']];
+    $properties['Rows\\ValuesQuery'] = ['rows' => ['array']];
+    $methods['Rows\\ValueRow'] = ['__construct', 'toString'];
+    $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $roots[] = 'Mutation\\Delete';
+    $roots[] = 'Rows\\ValuesQuery';
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
@@ -93,7 +98,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Predicate\\ExpressionScope');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
@@ -104,7 +109,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','strpbrk'];
+$pureFunctions = ['strlen','str_contains','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_is_list','strpbrk'];
 
 function requireShape(bool $condition, string $detail): void
 {
@@ -144,6 +149,7 @@ try {
         $analyze = '$operation = $this->inspect($sql, $context); $statement = $operation->statement; return match (true) {'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . 'default => throw new \\' . $platform . "\\Model\\Diagnostic\\InvalidConstruction('This SQLite statement has no complete IR representation.'), };";
     }
     sort($roots);

@@ -122,3 +122,20 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_de
 ```
 
 The independent evaluator partitions a fixed set of rows by the predicate's truth value. SQLite executes each observation inside a rolled-back savepoint and reports both target tables, the trigger log, change counts and native binding metadata. The main and temp tables share a name and have visibly different contents. Tests cover absence of a predicate, false and NULL conditions, duplicates, aliases and parameter labels. The runner injects changes to the target schema, predicate and column slot.
+
+## SQLite VALUES
+
+Run the [VALUES contract](sqlite-values-v1.json) against the same pinned engine:
+
+```sh
+values_evidence=$(mktemp -d)/sqlite-values-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_values.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$values_evidence"
+```
+
+The checker compares ordered column names and an unordered bag of typed rows. It records native labels in lexical order. Positive cases go through direct row constructors and through analysis. Negative controls exercise empty lists, width mismatch and a column hidden inside arithmetic. The renderer faults remove a row and change the positions within a row.
+
+The result, DELETE and VALUES suites share evidence setup, ledger checks and renderer fault execution. Their 240-second observation budgets are specified in their contracts. The renderer controls and mutations use a separate 180-second worker startup window followed by a 45-second probe budget. A startup or probe timeout yields a failure record and no successful index. Runtime fault detection requires the specified failure signal after the candidate executes.

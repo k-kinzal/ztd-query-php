@@ -1,0 +1,127 @@
+"""Shared runtime and fault evidence for independently specified SQLite domains."""
+
+import argparse
+import difflib
+import json
+import subprocess
+import time
+from pathlib import Path
+from typing import NamedTuple
+
+from run import IMAGE, TOOL, Failure, Worker, digest, manifest, require, shape, verify_distribution, write_json
+from sqlite_engine import Database
+
+FAULT_STARTUP_SECONDS = 180
+FAULT_EXECUTION_SECONDS = 45
+
+
+class RenderFault(NamedTuple):
+    name: str
+    path: str
+    before: str
+    replacement: str
+    item: dict
+    signal: str
+
+
+def check_render_faults(args, db, fixtures, probe):
+    with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+        for fault in fixtures:
+            probe(fault.item, worker.request(fault.item), db)
+    results = []
+    for fault in fixtures:
+        original_path = args.candidate / "packages" / fault.path
+        original = original_path.read_text()
+        require(original.count(fault.before) == 1, "render-fault-anchor", fault.name)
+        mutant = original.replace(fault.before, fault.replacement)
+        overlay = args.out / "faults" / fault.name
+        mutation = overlay / fault.path
+        mutation.parent.mkdir(parents=True)
+        mutation.write_text(mutant)
+        require(digest(mutation) != digest(original_path), "render-fault-not-applied", fault.name)
+        (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
+            original.splitlines(keepends=True), mutant.splitlines(keepends=True),
+            f"a/{fault.path}", f"b/{fault.path}",
+        )))
+        with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+            try:
+                probe(fault.item, worker.request(fault.item), db)
+            except Failure as failure:
+                result = {
+                    "case": fault.name, "file": fault.path, "source": digest(original_path), "mutation": digest(mutation),
+                    "input": fault.item, "control": "passed", "expected": fault.signal,
+                    "observed": failure.signal, "detail": failure.detail,
+                }
+                write_json(overlay / "result.json", result)
+                require(failure.signal == fault.signal, "wrong-render-fault-signal", result)
+                results.append(result)
+            else:
+                raise Failure("undetected-render-fault", fault.name)
+    return results
+
+
+def complete_observations(ledger, settings):
+    require(bool(ledger.events), "no-domain-execution")
+    for key, events in ledger.events.items():
+        require(events in (["attempted", "constructed", "observed", "compared"], ["attempted", "rejected"]),
+                "unbalanced-domain-execution", {"id": key, "events": events})
+    expected = {
+        f"seed/{seed}/{index}" for seed in settings["seeds"] for index in range(settings["casesPerSeed"])
+    }
+    compared = {key for key, events in ledger.events.items() if key.startswith("seed/") and events[-1] == "compared"}
+    require(compared == expected, "incomplete-domain-exploration", sorted(expected - compared))
+    return dict(ledger.counts)
+
+
+def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
+    parser = argparse.ArgumentParser(description=f"Collect SQLite {label} evidence")
+    parser.add_argument("--candidate", required=True, type=Path)
+    parser.add_argument("--tool-autoload", required=True, type=Path)
+    parser.add_argument("--sqlite-library", required=True, type=Path)
+    parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--local", action="store_true")
+    args = parser.parse_args()
+    args.candidate = args.candidate.resolve()
+    args.tool_autoload = args.tool_autoload.resolve()
+    args.out = args.out.resolve()
+    require(args.out != args.candidate and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
+    args.out.mkdir(parents=True, exist_ok=False)
+    contract = TOOL / contract_name
+    require(digest(contract) == sha256, "contract-mismatch", contract_name)
+    specification = json.loads(contract.read_text())
+    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
+    distribution = manifest(args.candidate)
+    write_json(args.out / "distribution.json", distribution)
+    db = Database(args.sqlite_library)
+    require(db.version == "3.47.2", "engine-version-mismatch", db.version)
+    if schema_sql:
+        db.execute(schema_sql)
+    try:
+        scope = shape(args)
+        checks = execute(args, specification, db)
+        require(checks["counts"].get("rejected", 0) == len(specification["negative"]), "incomplete-domain-rejections")
+        faults = check_faults(args, db)
+        require(len(faults) == len(specification["faults"]), "incomplete-domain-faults")
+    except Exception as failure:
+        write_json(args.out / "run-failure.json", {
+            "candidate": commit, "contract": sha256, "failure": str(failure),
+            "signal": failure.signal if isinstance(failure, Failure) else "unexpected-error",
+        })
+        raise
+    verify_distribution(distribution, manifest(args.candidate))
+    write_json(args.out / "index.json", {
+        "status": f"provisional-sqlite-{label.lower()}-domain", "candidate": commit, "contract": sha256,
+        "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,
+        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},
+        "tools": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in (".php", ".py", ".json")},
+        "shape": scope, "checks": checks, "faults": faults,
+        "faultBudgets": {"startupSeconds": FAULT_STARTUP_SECONDS, "executionSeconds": FAULT_EXECUTION_SECONDS},
+    })
+    counts = checks["counts"]
+    (args.out / "summary.md").write_text(
+        f"# SQLite {label} evidence\n\nCandidate `{commit}`.\n\n"
+        f"All {len(checks['finiteIds'])} finite identities observed. The runner recorded {counts['compared']} comparisons, "
+        f"{counts['rejected']} specified construction rejections, and all {len(faults)} expected fault detections.\n\n"
+        "[Evidence index](index.json) · [Events](events.jsonl)\n"
+    )
+    print(args.out)

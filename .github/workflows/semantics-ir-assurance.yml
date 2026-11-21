@@ -117,6 +117,16 @@ jobs:
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" \
             --out "$RUNNER_TEMP/semantics-ir-sqlite-delete-evidence"
+      - name: Collect SQLite VALUES observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_values.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" \
+            --out "$RUNNER_TEMP/semantics-ir-sqlite-values-evidence"
       - name: Collect MySQL and PostgreSQL projection observations
         if: ${{ !cancelled() }}
         env:
@@ -143,3 +153,4 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-relational-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-result-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-values-evidence/
