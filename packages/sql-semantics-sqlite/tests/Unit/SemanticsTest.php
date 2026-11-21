@@ -57,7 +57,7 @@ final class SemanticsTest extends TestCase
     {
         $this->expectExceptionMessage('This SQLite statement has no complete IR representation.');
 
-        (new Semantics())->analyze('CREATE TABLE t (id INTEGER)');
+        (new Semantics())->analyze('BEGIN');
     }
 
     public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void
