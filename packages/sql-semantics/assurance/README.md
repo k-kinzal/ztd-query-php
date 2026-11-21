@@ -154,3 +154,20 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_lo
 ```
 
 The evaluator supplies the definition's independently evaluated rows as the local input to the projection. The observed dimensions include width, height, typed multiplicity, result names, order, binding labels and read-only execution. The direct construction probes vary the operand graphs and exercise filtering, duplicate elimination and bounds. Analyzed statements run with a same-named physical table holding deliberately different rows. The mutations reverse the definition's column order and alter the first native parameter label.
+
+## SQLite INSERT effects
+
+Run the [INSERT effect contract](sqlite-insert-v1.json) with the same engine:
+
+```sh
+insert_evidence=$(mktemp -d)/sqlite-insert-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_insert.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$insert_evidence"
+```
+
+The fixture uses two same-named tables with different data and conflict behavior, one generated column, a default and an ordered insert-trigger log. The evaluator models the fixture's affinities and defaults, records which writes succeed, and checks the full state after the specific constraint error. Each observation runs inside a savepoint. Comparisons include the native parameter labels and check the statement change count independently of trigger effects.
+
+The acceptance workflow calls `combine_sqlite_evidence.py` after the domain runners. It checks that every domain index names the same candidate and compares its recorded tool and distribution digests, engine, finite counts and fault records. It links the individual indices and observation logs from a single generated summary. A local diagnostic bundle requires `--allow-local` and records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending.

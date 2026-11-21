@@ -10,6 +10,8 @@ use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
@@ -111,7 +113,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select|Delete|ValuesQuery
+function analyzed(array $input): Select|Delete|Insert|ValuesQuery
 {
     $semantics = new Semantics();
     $tables = [];
@@ -135,6 +137,24 @@ function observeDelete(Delete $value): array
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
         'where' => $value->where === null ? null : observeOperand($value->where),
+        'sql' => $value->toString(),
+    ];
+}
+
+function directInsert(array $input): Insert
+{
+    return new Insert(source($input['target']), directValues($input), InsertConflict::from($input['conflict']));
+}
+
+function observeInsert(Insert $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'insert',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'conflict' => $value->conflict->value,
+        'rows' => valueRows($value->input),
         'sql' => $value->toString(),
     ];
 }
@@ -166,6 +186,7 @@ function runCase(array $input): array
         $value = match (true) {
             isset($input['sql']) => analyzed($input),
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
+            ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
@@ -177,6 +198,9 @@ function runCase(array $input): array
 
     if ($value instanceof Delete) {
         return observeDelete($value);
+    }
+    if ($value instanceof Insert) {
+        return observeInsert($value);
     }
     if ($value instanceof ValuesQuery) {
         return observeValues($value);

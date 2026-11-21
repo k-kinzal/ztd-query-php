@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 #[CoversClass(SelectLowering::class)]
@@ -26,7 +27,8 @@ final class SelectLoweringTest extends TestCase
         self::assertInstanceOf(ColumnReference::class, $unqualified);
         self::assertInstanceOf(ColumnReference::class, $qualified);
         self::assertSame($unqualified->slot, $qualified->slot);
-        self::assertSame('main', $value->source?->schema->value);
+        self::assertInstanceOf(TableSource::class, $value->source);
+        self::assertSame('main', $value->source->schema->value);
         self::assertSame('Id', $value->columns[1]->name->value);
         self::assertCount(1, $value->source->columns);
     }

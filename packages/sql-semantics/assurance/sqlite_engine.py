@@ -37,7 +37,7 @@ class Database:
             ("column_type", i, [p, i]), ("column_int64", q, [p, i]),
             ("column_double", f, [p, i]), ("column_text", p, [p, i]),
             ("column_blob", p, [p, i]), ("column_bytes", i, [p, i]),
-            ("stmt_readonly", i, [p]), ("total_changes", i, [p]),
+            ("stmt_readonly", i, [p]), ("total_changes", i, [p]), ("changes", i, [p]),
         ]:
             function = getattr(self.lib, "sqlite3_" + name)
             function.argtypes, function.restype = args, result
@@ -70,7 +70,7 @@ class Database:
             return None
         raise RuntimeError(f"Unknown SQLite storage class {storage}")
 
-    def observe(self, sql, bindings, preserve_order=False):
+    def observe(self, sql, bindings, preserve_order=False, capture_evaluation_error=False):
         stmt, tail = c.c_void_p(), c.c_char_p()
         encoded = sql.encode()
         self.check(self.prepare_v2(self.db, encoded, len(encoded) + 1, c.byref(stmt), c.byref(tail)))
@@ -100,12 +100,18 @@ class Database:
             rows = []
             while (code := self.step(stmt)) == 100:
                 rows.append([typed(self.value(stmt, index)) for index in range(width)])
-            self.check(code, 101)
+            evaluation_error = None
+            if capture_evaluation_error:
+                if code != 101:
+                    evaluation_error = {"code": code, "message": self.errmsg(self.db).decode()}
+            else:
+                self.check(code, 101)
             return {
                 "names": [self.column_name(stmt, index).decode() for index in range(width)],
                 "parameters": parameters, "parameterCount": count,
                 "rows": rows if preserve_order else sorted(rows), "readOnly": readonly,
                 "changes": self.total_changes(self.db) - changes,
+                **({"evaluationError": evaluation_error} if capture_evaluation_error else {}),
             }
         finally:
             self.finalize(stmt)

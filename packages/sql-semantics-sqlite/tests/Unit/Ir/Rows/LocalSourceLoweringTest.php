@@ -8,8 +8,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering
@@ -20,13 +22,15 @@ final class LocalSourceLoweringTest extends TestCase
     {
         $semantics = new Semantics();
         $external = $semantics->inspect('CREATE TABLE c (a, b)');
-        $query = $semantics->analyze(
-            'WITH c(a, b) AS (VALUES (1, 9)) SELECT b AS first, v.b AS second FROM c AS v',
-            [$external],
-        );
+        $sql = 'WITH c(a, b) AS (VALUES (1, 9)) SELECT b AS first, v.b AS second FROM c AS v';
+        $checked = $semantics->inspect($sql, [$external]);
+        self::assertInstanceOf(WithQuery::class, $checked->statement);
+        $source = (new LocalSourceLowering())->lower($checked, $checked->statement);
+        $query = $semantics->analyze($sql, [$external]);
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(LocalSource::class, $query->source);
+        self::assertEquals($source, $query->source);
         self::assertEquals(new ColumnReference(1), $query->columns[0]->expression);
         self::assertEquals($query->columns[0]->expression, $query->columns[1]->expression);
         self::assertSame('b', $query->source->columns[1]->value);
