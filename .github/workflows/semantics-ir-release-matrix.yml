@@ -1,0 +1,136 @@
+name: SemanticsIR native projection release matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: Full candidate commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  comparison:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: mysql
+            release: '5.6.51'
+            port: 3306
+            image: mysql@sha256:20575ecebe6216036d25dab5903808211f1e9ba63dc7825ac20cb975e34cfcae
+          - engine: mysql
+            release: '5.7.44'
+            port: 3306
+            image: mysql@sha256:4bc6bc963e6d8443453676cae56536f4b8156d78bae03c0145cbe47c2aad73bb
+          - engine: mysql
+            release: '8.0.44'
+            port: 3306
+            image: mysql@sha256:9c3380eac945af0736031b200027f581925927c81e010056214a4bd6b6693714
+          - engine: mysql
+            release: '8.1.0'
+            port: 3306
+            image: mysql@sha256:f61944ff3f2961363a4d22913b2ac581523273679d7e14dd26e8db8c9f571a7e
+          - engine: mysql
+            release: '8.2.0'
+            port: 3306
+            image: mysql@sha256:212fe73edca5df6ff14826d5eb975c914bfb91f82a2e923f9050568f99525da1
+          - engine: mysql
+            release: '8.3.0'
+            port: 3306
+            image: mysql@sha256:9de9d54fecee6253130e65154b930978b1fcc336bcc86dfd06e89b72a2588ebe
+          - engine: mysql
+            release: '8.4.7'
+            port: 3306
+            image: mysql@sha256:0426ec38c7a10aa45ba383887df7878f74ee70e2fd589c7b69207f3577901903
+          - engine: mysql
+            release: '9.0.1'
+            port: 3306
+            image: mysql@sha256:92dc869678019f65d761155dacac660a904f6245bfe1b7997da0a73b2bfc68c9
+          - engine: mysql
+            release: '9.1.0'
+            port: 3306
+            image: container-registry.oracle.com/mysql/community-server@sha256:d41e2405f035982ef25911a3e21283cbbccd5e967bafffd3454031c050b37eac
+          - engine: postgres
+            release: '16.6'
+            port: 5432
+            image: postgres@sha256:557fea37a744d5f4c8faab304b0a90858b53ab119735a88c131fd19dab802f36
+          - engine: postgres
+            release: '17.2'
+            port: 5432
+            image: postgres@sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: ir_fixture
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: ir_fixture
+          POSTGRES_PASSWORD: ir_fixture
+          POSTGRES_DB: ir_fixture
+        ports:
+          - ${{ matrix.port }}/tcp
+        options: >-
+          --health-cmd "${{ matrix.engine == 'mysql' && 'mysqladmin ping -h 127.0.0.1 --silent' || 'pg_isready -h 127.0.0.1 -U postgres -d ir_fixture' }}"
+          --health-interval 10s
+          --health-start-period 40s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Validate the requested candidate identity
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: test "${#CANDIDATE}" -eq 40 && [[ "$CANDIDATE" =~ ^[0-9a-f]+$ ]]
+      - name: Check out the acceptance tools from the workflow revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Check out the candidate as input
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          path: candidate
+          persist-credentials: false
+      - name: Set up PHP for the observer
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, pdo_pgsql
+          coverage: none
+      - name: Install locked audit dependencies from the acceptance revision
+        working-directory: trusted/packages/sql-semantics-sqlite
+        env:
+          COMPOSER_ROOT_VERSION: dev-main
+        run: composer install --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+      - name: Load the isolated candidate runtime
+        run: docker pull php@sha256:f1ef73e865793418aac8cf6d8dbb44b33b527cdac62dbcf2e47061ed8f40b81a
+      - name: Run the observed release and verify the distribution
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-evidence"
+      - name: Preserve observations and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: semantics-ir-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-evidence/

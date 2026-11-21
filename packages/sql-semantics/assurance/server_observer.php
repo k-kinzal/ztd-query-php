@@ -34,6 +34,7 @@ if ($engine === 'mysql') {
 }
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
+$readOnly = false;
 while (($line = fgets(STDIN)) !== false) {
     $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     if (isset($input['fixture'])) {
@@ -44,7 +45,10 @@ while (($line = fgets(STDIN)) !== false) {
 
         continue;
     }
-    $pdo->exec('START TRANSACTION READ ONLY');
+    if (!$readOnly) {
+        $pdo->exec('START TRANSACTION READ ONLY');
+        $readOnly = true;
+    }
     try {
         $statement = $pdo->prepare($input['sql']);
         $statement->execute();
@@ -58,8 +62,8 @@ while (($line = fgets(STDIN)) !== false) {
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
-    } finally {
         $pdo->exec('ROLLBACK');
+        $readOnly = false;
     }
     echo json_encode($result, JSON_THROW_ON_ERROR) . "\n";
 }

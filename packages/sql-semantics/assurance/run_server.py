@@ -37,12 +37,14 @@ def same(expected_value, actual_value):
             "server-observation-mismatch", {"expected": expected_value, "actual": actual_value})
 
 
-def check_server(dialect, db):
+def check_server(dialect, release, db):
     settings = db.environment["database"]
     if dialect == "mysql":
-        require(settings == ["9.1.0", 0, "", "utf8mb4", "utf8mb4"], "mysql-profile-mismatch", settings)
+        require(settings == [release, 0, "", "utf8mb4", "utf8mb4"], "mysql-profile-mismatch", settings)
     else:
-        require(settings == ["170002", "UTF8", "UTF8", "on", "pg_catalog, public"], "postgres-profile-mismatch", settings)
+        major, minor = map(int, release.split("."))
+        require(settings == [str(major * 10000 + minor), "UTF8", "UTF8", "on", "pg_catalog, public"],
+                "postgres-profile-mismatch", settings)
     same({"status": "fixture"}, db.request({"fixture": fixtures(dialect)}))
 
 
@@ -61,7 +63,7 @@ def check_direct(dialect, item, key, worker, db, ledger, distribution):
     return result
 
 
-def check_analyzed(dialect, worker, db, ledger):
+def check_analyzed(dialect, tag, worker, db, ledger):
     table = SCHEMAS[dialect] + ".ir_evidence_accounts"
     inputs = [
         f"SELECT id, ir_evidence_accounts.id, (ir_evidence_accounts.id - delta) * 3 AS magnitude FROM {table}",
@@ -72,7 +74,7 @@ def check_analyzed(dialect, worker, db, ledger):
                if dialect == "postgres" else ["SELECT 1 AS ' alias ', 2 AS '', 007, +1, -0"])
     for index, sql in enumerate(inputs):
         key = f"analysis/{index}"
-        item = analyzed(dialect, sql)
+        item = analyzed(dialect, sql, version=tag)
         ledger.record(key, "attempted", input=item)
         result = worker.request(item)
         require(result["status"] == "constructed", "server-analysis-rejected", result)
@@ -108,16 +110,18 @@ def negatives(dialect):
     return invalid
 
 
-def run_dialect(dialect, args, settings, path):
+def run_dialect(dialect, release, args, settings, path):
+    tag = ("pg-" if dialect == "postgres" else "mysql-") + release
     deadline = time.monotonic() + settings["timeoutSeconds"]
     exported = collections.Counter()
     histogram = collections.Counter()
     with path.open("w") as stream, Observer(dialect, deadline) as db, Worker(args, deadline, script="server_worker.php") as worker:
         ledger = Ledger(stream)
-        check_server(dialect, db)
+        check_server(dialect, release, db)
         current_input = None
         try:
             for index, item in enumerate(direct_cases(dialect)):
+                item["release"] = tag
                 current_input = item
                 result = check_direct(dialect, item, f"finite/{index}", worker, db, ledger, histogram)
                 exported[(source_key(result["source"]), node_key(result["columns"][0][0]))] += 1
@@ -125,6 +129,7 @@ def run_dialect(dialect, args, settings, path):
                     {"missing": list(finite_ids(dialect) - set(exported)), "extra": list(set(exported) - finite_ids(dialect))})
             for seed in settings["seeds"]:
                 for index, item in enumerate(explore(dialect, seed, settings["attemptsPerSeed"], settings["maxDepth"], settings["maxWidth"])):
+                    item["release"] = tag
                     current_input = item
                     check_direct(dialect, item, f"seed/{seed}/{index}", worker, db, ledger, histogram)
                 actual = sum(1 for key, events in ledger.events.items() if key.startswith(f"seed/{seed}/") and events[-1] == "compared")
@@ -135,12 +140,14 @@ def run_dialect(dialect, args, settings, path):
                 case(dialect, None, [["null"]] * 1024),
                 case(dialect, None, [["integer", "1"]], ["a" * (256 if dialect == "mysql" else 63)]),
             ]):
+                item["release"] = tag
                 current_input = item
                 check_direct(dialect, item, f"boundary/{index}", worker, db, ledger, histogram)
             current_input = None
-            check_analyzed(dialect, worker, db, ledger)
+            check_analyzed(dialect, tag, worker, db, ledger)
             for index, (current_input, signal) in enumerate(negatives(dialect)):
                 key = f"negative/{index}"
+                current_input["release"] = tag
                 ledger.record(key, "attempted", input=current_input)
                 response = worker.request(current_input)
                 require(response["status"] == "rejected" and signal in response["message"], "server-negative-mismatch", response)
@@ -152,7 +159,7 @@ def run_dialect(dialect, args, settings, path):
         counts = ledger.verify()
         return {
             "finiteIds": sorted(exported), "distribution": dict(histogram), "execution": counts,
-            "engine": db.environment, "php": worker.environment,
+            "engine": db.environment, "release": release, "php": worker.environment,
         }
 
 
@@ -161,6 +168,8 @@ def main():
     parser.add_argument("--candidate", required=True, type=Path)
     parser.add_argument("--tool-autoload", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--engine", choices=DIALECTS, help="Run one engine rather than both fixture releases.")
+    parser.add_argument("--release", help="Select one required release of the selected engine.")
     parser.add_argument("--local", action="store_true")
     args = parser.parse_args()
     args.candidate = args.candidate.resolve()
@@ -170,13 +179,17 @@ def main():
     args.out.mkdir(parents=True, exist_ok=False)
     contract = TOOL / "server-projection-v1.json"
     require(digest(contract) == CONTRACT, "server-contract-mismatch")
-    settings = json.loads(contract.read_text())["exploration"]
+    specification = json.loads(contract.read_text())
+    settings = specification["exploration"]
+    require(not args.release or args.engine, "release-needs-engine")
     distribution = manifest(args.candidate)
     write_json(args.out / "distribution.json", distribution)
     results = {}
-    for dialect in DIALECTS:
+    for dialect in (args.engine,) if args.engine else DIALECTS:
+        release = args.release or VERSIONS[dialect].split("-", 1)[1]
+        require(release in specification["profiles"][dialect]["releases"], "unregistered-engine-release", release)
         code_shape = shape(args, dialect=dialect)
-        results[dialect] = run_dialect(dialect, args, settings, args.out / f"{dialect}.jsonl")
+        results[dialect] = run_dialect(dialect, release, args, settings, args.out / f"{dialect}.jsonl")
         results[dialect]["shape"] = code_shape
     verify_distribution(distribution, manifest(args.candidate))
     commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
@@ -190,7 +203,7 @@ def main():
     write_json(args.out / "index.json", index)
     summary = ["# Server projection evidence", "", f"Candidate `{commit}`.", "", "This run is provisional.", ""]
     for dialect, evidence in results.items():
-        summary.append(f"- {dialect} {VERSIONS[dialect]} observed all {len(evidence['finiteIds'])} finite IDs. "
+        summary.append(f"- {dialect} {evidence['release']} observed all {len(evidence['finiteIds'])} finite IDs. "
                        f"The ledger recorded {evidence['execution']['compared']} comparisons and "
                        f"{evidence['execution']['rejected']} specified rejections. [{dialect} events]({dialect}.jsonl)")
     (args.out / "summary.md").write_text("\n".join(summary + ["", "[Machine-readable evidence](index.json)", ""]))
