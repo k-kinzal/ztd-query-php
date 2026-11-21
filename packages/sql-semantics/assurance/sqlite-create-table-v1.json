@@ -6,6 +6,7 @@
   "additionalPublicRoots": ["Schema/CreateTable"],
   "constructors": {
     "Schema/ColumnType": {
+      "type": "Schema/DeclaredDatatypeName",
       "role": "Declared type of a column in an ordinary SQLite rowid table.",
       "structure": "Absent declared type, INTEGER, TEXT, REAL or BLOB.",
       "boundary": "Each alternative has a fixed native spelling and affinity.",
