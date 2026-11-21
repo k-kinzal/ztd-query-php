@@ -106,7 +106,8 @@ def exercise(args, db, distribution):
                 "readonly array $columns", "array $columns", "shape-mismatch",
                 "source column list can change", None, static=True)
     patch_model("F05", "Select",
-                "public readonly ?TableSource $source = null", "public readonly ?TableSource $source = null, private readonly string $originalSql = ''",
+                "public readonly TableSource|LocalSource|null $source = null",
+                "public readonly TableSource|LocalSource|null $source = null, private readonly string $originalSql = ''",
                 "shape-mismatch", "raw original SQL is retained in a root property", None, static=True)
     patch_model("F06", "Select",
                 "return (new SelectSql())->render($this);", 'return "SELECT 1 AS ignored";',
