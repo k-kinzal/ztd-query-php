@@ -37,6 +37,13 @@ final class SemanticsTest extends TestCase
         self::assertSame($context, $query->context);
     }
 
+    public function testIrPublishesACompleteProjection(): void
+    {
+        $ir = (new Semantics())->ir()->analyze('SELECT 42 AS answer');
+
+        self::assertSame('SELECT CAST(42 AS pg_catalog.int4) AS "answer"', $ir->toString());
+    }
+
     public function testLeavesMissingInputsInAnOpenContextAsFacts(): void
     {
         $query = (new Semantics())->analyze('SELECT id FROM t');

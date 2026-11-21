@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\PostgreSql\Ir;
+
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Operation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+
+/**
+ * Allocates local slots for the resolved columns of a projection.
+ *
+ * @visibility SqlSemantics\Platform\PostgreSql
+ */
+final class SourceBinding
+{
+    /**
+     * @var list<Identifier> Names of the consumed columns
+     */
+    private array $names = [];
+
+    /**
+     * @var array<int, int> Slot by analysis declaration identity
+     */
+    private array $slots = [];
+
+    private readonly ?Table $table;
+
+    /**
+     * Resolves the source from the analysis before any slots can be allocated.
+     */
+    public function __construct(private readonly Operation $operation, private readonly ?Relation $source)
+    {
+        $resolution = null;
+        if ($source !== null) {
+            Check::input($source instanceof TableInput && $source->sample === null, 'The projection source must be an ordinary table input.');
+            Check::input(
+                $operation->context->relationNames === Comparison::Sensitive
+                    && $operation->context->columnNames === Comparison::Sensitive,
+                'The declaration context must use PostgreSQL name comparison.',
+            );
+            $resolution = $operation->facts->relation($source)->table;
+            Check::input(
+                $resolution instanceof DeclaredTable && $resolution->table->complete
+                    && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->name->catalog === null,
+                'The projection requires a resolved, complete base table declaration.',
+            );
+        }
+        $this->table = $resolution?->table;
+    }
+
+    /**
+     * Allocates or reuses a local slot for the exact resolved column.
+     */
+    public function reference(Scalar $expression): ColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input(
+            $resolution instanceof ResolvedColumn && $resolution->relation === $this->source && $resolution->depth === 0,
+            'The column must resolve to the projection source.',
+        );
+        $column = $resolution->declaration();
+        Check::input(
+            $column !== null && $this->table !== null && in_array($column, $this->table->columns, true),
+            'The column must be an explicit member of the projection source.',
+        );
+        Check::input($column->type === Builtin::Int4, 'The bound column must have the signed 32-bit integer type.');
+        $key = spl_object_id($column);
+        if (!isset($this->slots[$key])) {
+            $this->slots[$key] = count($this->names);
+            $this->names[] = new Identifier($column->name->value);
+        }
+
+        return new ColumnReference($this->slots[$key]);
+    }
+
+    /**
+     * Exports the absolute external identity and consumed column names.
+     */
+    public function source(): ?TableSource
+    {
+        if ($this->table === null || !$this->source instanceof TableInput) {
+            return null;
+        }
+
+        return new TableSource(
+            new Identifier(($this->table->name->schema ?? $this->operation->context->declarationSchema)->value),
+            new Identifier($this->table->name->name->value),
+            $this->names,
+            $this->source->table->only,
+        );
+    }
+}

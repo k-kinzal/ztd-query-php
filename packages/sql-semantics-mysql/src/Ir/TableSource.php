@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Ir;
+
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+
+/**
+ * A schema-qualified external source and the named column slots it supplies.
+ *
+ * The slots identify inputs. Evaluation supplies the corresponding table
+ * and columns, with their MySQL row values.
+ *
+ * @visibility public
+ * @example Identifying a column of an external table
+ *     $source = new \SqlSemantics\Platform\MySql\Ir\TableSource(new \SqlSemantics\Platform\MySql\Ir\Identifier('main'), new \SqlSemantics\Platform\MySql\Ir\Identifier('accounts'), [new \SqlSemantics\Platform\MySql\Ir\Identifier('id')]);
+ *     $source->columns[0]->value // => 'id'
+ */
+final class TableSource
+{
+    use Snapshot;
+
+    /**
+     * @var list<Identifier> The named input slots
+     */
+    public readonly array $columns;
+
+    /**
+     * Establishes a fixed external table identity and an ordered list of unique column slots.
+     *
+     * @param list<Identifier> $columns The names at those slots
+     */
+    public function __construct(public readonly Identifier $schema, public readonly Identifier $table, array $columns)
+    {
+        $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
+        foreach ([$schema, $table] as $object) {
+            Check::input(strpbrk($object->value, '/\\.') === false, 'A database or table name excludes path and dot separators.');
+        }
+        foreach ([$schema, $table, ...$names] as $object) {
+            Check::input(
+                preg_match('/\A.{1,64}(?<! )\z/us', $object->value) === 1,
+                'A schema object name has 1 to 64 characters and no trailing space.',
+            );
+        }
+        $seen = [];
+        foreach ($names as $name) {
+            $key = $name->key();
+            Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');
+            $seen[$key] = true;
+        }
+        $this->columns = $names;
+    }
+}

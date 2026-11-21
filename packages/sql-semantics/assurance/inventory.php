@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Interface_;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -61,6 +62,11 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                 'abstract' => $type instanceof Class_ && $type->isAbstract(),
                 'visibility' => preg_match('/@visibility\s+([^\s*]+)/', $type->getDocComment()?->getText() ?? '', $match) === 1 ? $match[1] : null,
                 'roles' => isset($type->implements) ? array_map(static fn ($role) => $role->toString(), $type->implements) : [],
+                'parent_types' => match (true) {
+                    $type instanceof Interface_ => array_map(static fn ($parent) => $parent->toString(), $type->extends),
+                    $type instanceof Class_ && $type->extends !== null => [$type->extends->toString()],
+                    default => [],
+                },
                 'properties' => $properties,
                 'traits' => array_map($printer->prettyPrint(...), array_map(
                     static fn ($use) => [$use],

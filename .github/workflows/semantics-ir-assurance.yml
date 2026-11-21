@@ -16,6 +16,33 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      mysql:
+        image: container-registry.oracle.com/mysql/community-server@sha256:d41e2405f035982ef25911a3e21283cbbccd5e967bafffd3454031c050b37eac
+        env:
+          MYSQL_ROOT_PASSWORD: ir_fixture
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: ir_fixture
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost --silent"
+          --health-interval 10s
+          --health-start-period 40s
+          --health-timeout 5s
+          --health-retries 12
+      postgres:
+        image: postgres@sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3
+        env:
+          POSTGRES_PASSWORD: ir_fixture
+          POSTGRES_DB: ir_fixture
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ir_fixture"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
     steps:
       - name: Validate the requested candidate identity
         env:
@@ -37,6 +64,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.3'
+          extensions: pdo_mysql, pdo_pgsql
           coverage: none
       - name: Install locked audit dependencies from the acceptance revision
         working-directory: trusted/packages/sql-semantics-sqlite
@@ -59,9 +87,26 @@ jobs:
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" \
             --out "$RUNNER_TEMP/semantics-ir-evidence"
+      - name: Collect MySQL and PostgreSQL projection observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.mysql.ports[3306] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.postgres.ports[5432] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-server-evidence"
       - name: Preserve observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: semantics-ir-evidence
-          path: ${{ runner.temp }}/semantics-ir-evidence/
+          path: |
+            ${{ runner.temp }}/semantics-ir-evidence/
+            ${{ runner.temp }}/semantics-ir-server-evidence/

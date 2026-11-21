@@ -16,8 +16,14 @@ use PhpParser\ParserFactory;
 
 require $argv[1];
 $root = $argv[2];
-$overlay = $argv[3] ?? null;
-$prefix = 'SqlSemantics\\Platform\\Sqlite\\Ir\\';
+$overlay = $argv[3] ?? '';
+$dialect = $argv[4] ?? 'sqlite';
+$platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
+    'mysql' => 'MySql',
+    'postgres' => 'PostgreSql',
+    'sqlite' => 'Sqlite',
+};
+$prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 $properties = [
     'Arithmetic' => ['operator' => ['ArithmeticOperator'], 'left' => $operands, 'right' => $operands],
@@ -38,15 +44,28 @@ $methods = [
     'ResultColumn' => ['__construct'], 'Select' => ['__construct', 'profileId', 'toString'],
     'TableSource' => ['__construct'],
 ];
+if ($dialect !== 'sqlite') {
+    unset($properties['Parameter'], $methods['Parameter']);
+    $properties['BooleanLiteral'] = ['value' => ['bool']];
+    $methods['BooleanLiteral'] = ['__construct'];
+    $properties['Arithmetic']['left'] = $properties['Arithmetic']['right'] = ['Arithmetic', 'ColumnReference', 'IntegerLiteral'];
+    $properties['ResultColumn']['expression'] = ['Arithmetic', 'BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral'];
+    $properties['Select']['release'] = [$platform . '\\Model\\Contract\\GrammarRelease'];
+}
+if ($dialect === 'postgres') {
+    $methods['Identifier'] = ['__construct', 'quoted'];
+    $properties['TableSource']['only'] = ['bool'];
+}
 $internal = ['Analyzer', 'ExpressionLowering', 'SelectBounds', 'SelectSql', 'SourceBinding'];
-$snapshot = 'SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\Snapshot';
+$snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
     $snapshot, 'SqlSemantics\\SemanticsIR',
-    'SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\Check',
-    'SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\Identifier\\Comparison',
+    $platform . '\\Model\\Diagnostic\\Check',
+    $platform . '\\Model\\Statement\\Identifier\\Comparison',
+    $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), 'SelectBounds', 'SelectSql']),
 ];
-$pureFunctions = ['strlen','str_contains','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push'];
+$pureFunctions = ['strlen','str_contains','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','strpbrk'];
 
 function requireShape(bool $condition, string $detail): void
 {
@@ -70,12 +89,12 @@ $parser = (new ParserFactory())->createForNewestSupportedVersion();
 $traverser = new NodeTraverser(new NameResolver());
 $finder = new NodeFinder();
 try {
-    $base = 'sql-semantics-sqlite/src/Ir';
+    $base = 'sql-semantics-' . $dialect . '/src/Ir';
     $files = glob($root . '/packages/' . $base . '/*.php');
     $observed = [];
     foreach ($files as $file) {
         $short = basename($file, '.php');
-        $patched = $overlay === null ? '' : $overlay . '/' . $base . '/' . basename($file);
+        $patched = $overlay === '' ? '' : $overlay . '/' . $base . '/' . basename($file);
         $ast = $traverser->traverse($parser->parse(file_get_contents(is_file($patched) ? $patched : $file)));
         $classes = $finder->findInstanceOf($ast, ClassLike::class);
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");

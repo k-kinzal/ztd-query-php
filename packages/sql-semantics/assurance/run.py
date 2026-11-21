@@ -15,6 +15,7 @@ from cases import (
     MAIN, MAX, MIN, SCHEMA, TEMP, case, expected, expected_finite_ids, finite_cases,
     finite_identity, slots, structural_cases, walk,
 )
+from scope import public_scope
 from sqlite_engine import Database
 
 TOOL = Path(__file__).resolve().parent
@@ -74,10 +75,10 @@ def write_json(path, value):
 
 
 class Worker:
-    def __init__(self, args, deadline, overlay=None):
+    def __init__(self, args, deadline, overlay=None, script="worker.php"):
         self.deadline = deadline
         if args.local:
-            command = ["php", str(TOOL / "worker.php"), str(args.candidate)]
+            command = ["php", str(TOOL / script), str(args.candidate)]
             if overlay:
                 command.append(str(overlay))
         else:
@@ -85,7 +86,7 @@ class Worker:
                 "docker", "run", "--pull", "never", "--rm", "-i", "--network", "none",
                 "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                 "--user", "65534:65534", "--pids-limit", "64", "--memory", "256m",
-                "-v", f"{TOOL / 'worker.php'}:/worker.php:ro",
+                "-v", f"{TOOL / script}:/worker.php:ro",
                 "-v", f"{args.candidate / 'packages'}:/candidate/packages:ro",
             ]
             if overlay:
@@ -203,10 +204,9 @@ class Ledger:
         return dict(self.counts)
 
 
-def shape(args, overlay=None):
+def shape(args, overlay=None, dialect="sqlite"):
     command = ["php", str(TOOL / "shape.php"), str(args.tool_autoload), str(args.candidate)]
-    if overlay:
-        command.append(str(overlay))
+    command.extend([str(overlay) if overlay else "", dialect])
     result = subprocess.run(command, check=False, capture_output=True, text=True, timeout=60)
     event = json.loads(result.stdout)
     require(result.returncode == 0 and event["status"] == "verified", event["status"], event)
@@ -427,9 +427,10 @@ def main():
     with inventory.open("w") as stream:
         subprocess.run(["php", str(TOOL / "inventory.php"), str(args.candidate), str(args.tool_autoload)], stdout=stream, check=True, timeout=60)
     types = json.loads(inventory.read_text())
-    exported_roles = sorted(cls for package in types.values() for cls, data in package["classes"].items()
-                            if "SqlSemantics\\SemanticsIR" in data["roles"])
-    require(exported_roles == ["SqlSemantics\\Platform\\Sqlite\\Ir\\Select"], "unexpected-complete-root", exported_roles)
+    scope = public_scope(types, distribution)
+    write_json(args.out / "scope.json", scope)
+    require(not scope["unregisteredRootTypes"] and not scope["missingRootTypes"], "unexpected-complete-root", scope["completeRootTypes"])
+    require(not scope["changedGrammarArtifacts"], "required-grammar-set-changed", scope["changedGrammarArtifacts"])
     db = Database(args.sqlite_library)
     require(db.version == contract["initialExecutableDomain"]["profile"]["version"], "engine-version-mismatch", db.version)
     db.execute(SCHEMA)
@@ -455,8 +456,8 @@ def main():
         },
         "repositoryAcceptanceProtection": "unconfigured",
         "shape": code_shape, "checks": checks, "faults": faults,
-        "proof": "none", "open": ["full constructor ledger", "all other semantic families and profiles", "human review", "protected acceptance configuration"],
-        "files": ["summary.md", "distribution.json", "inventory.json", "events.jsonl", "faults/"],
+        "proof": "none", "open": ["full constructor ledger", "server projection evidence is recorded separately", "remaining semantic families and profiles", "human review", "protected acceptance configuration"],
+        "files": ["summary.md", "distribution.json", "scope.json", "inventory.json", "events.jsonl", "faults/"],
     }
     write_json(args.out / "index.json", index)
     write_summary(args.out / "summary.md", index)

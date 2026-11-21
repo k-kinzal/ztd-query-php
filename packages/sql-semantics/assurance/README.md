@@ -48,4 +48,22 @@ The checked domain supports a composition argument. Every leaf has one of the cl
 
 The proposed [manual evidence workflow](../../../.github/workflows/semantics-ir-assurance.yml) selects its checker from the workflow revision on `main` and reads an explicit candidate SHA. Keep it outside the candidate's pull-request checks and review the workflow, its action pins, locked dependencies, engine build, oracle, mutation fixtures and contract before using the evidence for acceptance. Require repository-owner control of changes to this workflow and its inputs, and an independently maintained decision keyed to the tested candidate SHA. Verify that the decision rejects missing or stale evidence. No repository-level control has been installed or verified in this change.
 
-The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. The legacy models, other SQLite constructs, MySQL and PostgreSQL, uncovered modes, and comparison of statement effects outside SELECT all remain open under the wider contract.
+The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. The legacy models, other SQLite constructs, uncovered server projection roles and modes, and comparison of statement effects outside SELECT all remain open under the wider contract.
+
+## MySQL and PostgreSQL evidence
+
+[Server projection criteria](server-projection-v1.json) add independently checked native domains for MySQL and PostgreSQL. [The MySQL label refinement](server-projection-errata.md) records an observed server rule about output names. The mandatory fixture releases are MySQL 9.1.0 and PostgreSQL 17.2. Other grammar releases and language modes remain distinct engine-test obligations.
+
+Use PHP with `pdo_mysql` and `pdo_pgsql`. Start disposable MySQL and PostgreSQL containers with an `ir_fixture` database. The manual workflow records the pinned image digests and settings. In a local run, configure the six variables `ZTD_IR_MYSQL_DSN`, `ZTD_IR_MYSQL_USER`, `ZTD_IR_MYSQL_PASSWORD`, `ZTD_IR_POSTGRES_DSN`, `ZTD_IR_POSTGRES_USER` and `ZTD_IR_POSTGRES_PASSWORD` for those disposable databases. The observer creates fresh test tables and uses read-only transactions for candidate SQL. The separate PHP candidate container has no database connection.
+
+```sh
+server_evidence=$(mktemp -d)/server-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_server.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --out "$server_evidence"
+```
+
+The finite verifier checks the observed case IDs by expression tree and source policy. The evaluator independently computes integer operations, NULL propagation, overflow, output types and names, duplicate rows, and PostgreSQL inheritance. Each analyzed case compares the original statement and its emitted SQL in the observed server settings.
+
+The SQLite evidence now also writes `scope.json`. It checks published root roles through inherited interfaces and compares the candidate's grammar artifacts to [the fixed baseline list](required-grammars.json). A matching list provides a fixed scope input. The report records the wider public model and grammar obligations as open.
