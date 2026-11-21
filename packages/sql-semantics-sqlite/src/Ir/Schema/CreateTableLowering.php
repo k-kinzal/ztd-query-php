@@ -39,7 +39,8 @@ final class CreateTableLowering
             $type = DeclaredDatatypeName::Untyped;
             if ($column->type !== null) {
                 Check::input(count($column->type->words) === 1 && $column->type->arguments === [], 'The declared type must be one supported type name.');
-                $type = DeclaredDatatypeName::tryFrom(strtoupper($column->type->text()));
+                $spelling = strtr($column->type->text(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+                $type = DeclaredDatatypeName::tryFrom($spelling);
                 Check::input($type !== null && $type !== DeclaredDatatypeName::Untyped, 'This declared type has no complete CREATE TABLE representation.');
             }
             $columns[] = new TableColumn(new Identifier($column->name->value), $type, $constraint !== null);
