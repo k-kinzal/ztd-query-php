@@ -40,6 +40,7 @@ The [direct publication record](publication-v2.json) supersedes the opt-in entry
 
 - `index.json` identifies the candidate commit, contract, tool files, SQLite build, supported scope, executed checks and fault records.
 - `inventory.json` identifies named types, visibility, properties, traits and constructor or factory signatures across all packages. The baseline inventory procedure and gaps are in [baseline.md](baseline.md).
+- `grammar-scope.json` enumerates the versioned grammar rules independently of the PHP model and generators. The original recorded counts cover nonempty alternatives. The new index gives both counts and preserves the empty alternatives. The links to partial domain records identify related checks. Every syntax alternative still needs semantic classification.
 - `events.jsonl` contains input, constructed shape, emitted SQL, storage-class-tagged results, binding metadata and reported rejections. Finite completion is checked against independently computed symbolic IDs.
 - `counterexample.json` is written on failure inside the main run. The original input and observed failure remain available even if a smaller reproducing input cannot be found. A shrink is accepted only when it constructs and still fails the independent comparison.
 - `faults/` contains F01–F12 patches, original and mutated digests, fixture inputs, the healthy control and the observed rejection signals. The fault results establish detection of these particular faults.
@@ -216,3 +217,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_dr
 ```
 
 The fixture enables foreign keys before construction and compares object identity, removal of owned indexes and triggers, cascade effects and immediate restrictions. Its trigger log detects any invocation of the removed table's trigger. The outer runner compares the complete user catalog in both schemas and checks the prepare-time error for a missing unguarded target. The structural explorer generates distinct decoded names, including names containing quotes and non-ASCII characters.
+
+## SQLite CREATE TABLE effects
+
+Run the [CREATE TABLE effect contract](sqlite-create-table-v1.json) with the same engine:
+
+```sh
+create_table_evidence=$(mktemp -d)/sqlite-create-table-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_create_table.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$create_table_evidence"
+```
+
+The observer compares ordered native column metadata, implicit rowids and data writes through the created table. It checks typed affinity conversions, NOT NULL violations and the existing rows preserved by IF NOT EXISTS. Both main and temp catalogs contain a same-named sentinel table. The structural explorer varies type, column count, target identifiers, nullability and collision handling.

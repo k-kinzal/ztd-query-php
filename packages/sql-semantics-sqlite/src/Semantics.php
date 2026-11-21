@@ -18,6 +18,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -44,6 +46,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 
 /**
@@ -151,7 +154,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Select|Delete|Insert|Update|ValuesQuery|DropTable
+    public function analyze(string $sql, array|Context|null $context = null): Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
     {
         $operation = $this->inspect($sql, $context);
         $statement = $operation->statement;
@@ -163,6 +166,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
             $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
             $statement instanceof Drop => (new DropTableLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             default => throw new InvalidConstruction('This SQLite statement has no complete IR representation.'),
         };
     }
@@ -224,7 +228,7 @@ final class Semantics implements Analyzer
      * No statement is executed for the ones after it.
      *
      * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Select|Delete|Insert|Update|ValuesQuery|DropTable>
+     * @return list<Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

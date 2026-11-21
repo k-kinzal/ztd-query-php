@@ -15,6 +15,7 @@ from cases import (
     MAIN, MAX, MIN, SCHEMA, TEMP, case, expected, expected_finite_ids, finite_cases,
     finite_identity, slots, structural_cases, walk,
 )
+from grammar_scope import inventory as grammar_inventory
 from scope import public_scope
 from sqlite_engine import Database
 
@@ -442,6 +443,9 @@ def main():
     write_json(args.out / "scope.json", scope)
     require(not scope["unregisteredRootTypes"] and not scope["missingRootTypes"], "unexpected-complete-root", scope["completeRootTypes"])
     require(not scope["changedGrammarArtifacts"], "required-grammar-set-changed", scope["changedGrammarArtifacts"])
+    grammar_scope = grammar_inventory(args.candidate)
+    grammar_path = args.out / "grammar-scope.json"
+    write_json(grammar_path, grammar_scope)
     for field in ("unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes"):
         require(not scope[field], "ir-constructor-ledger-mismatch", {"field": field, "detail": scope[field]})
     db = Database(args.sqlite_library)
@@ -458,6 +462,8 @@ def main():
         "contract": CONTRACT_DIGEST, "distribution": digest(args.out / "distribution.json"),
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".py", ".php", ".json"}},
         "scope": contract["requiredScope"], "profile": contract["initialExecutableDomain"]["profile"],
+        "grammarScope": {"record": grammar_path.name, "sha256": digest(grammar_path),
+                         "totalAlternatives": grammar_scope["totalAlternatives"], "emptyAlternatives": grammar_scope["emptyAlternatives"]},
         "engine": {
             "version": db.version, "source": db.source, "libraryDigest": db.digest,
             "compileOptions": db.observe("PRAGMA compile_options", {})["rows"],
@@ -470,7 +476,7 @@ def main():
         "repositoryAcceptanceProtection": "unconfigured",
         "shape": code_shape, "checks": checks, "faults": faults,
         "proof": "none", "open": ["full constructor ledger", "server projection evidence is recorded separately", "remaining semantic families and profiles", "human review", "protected acceptance configuration"],
-        "files": ["summary.md", "distribution.json", "scope.json", "inventory.json", "events.jsonl", "faults/"],
+        "files": ["summary.md", "distribution.json", "scope.json", "grammar-scope.json", "inventory.json", "events.jsonl", "faults/"],
     }
     write_json(args.out / "index.json", index)
     write_summary(args.out / "summary.md", index)

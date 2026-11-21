@@ -27,7 +27,10 @@ use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -117,7 +120,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery|DropTable
+function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
 {
     $semantics = new Semantics();
     $tables = [];
@@ -211,6 +214,33 @@ function valueRows(ValuesQuery $value): array
     return array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows);
 }
 
+function directCreateTable(array $input): CreateTable
+{
+    return new CreateTable(
+        new Identifier($input['schema']),
+        new Identifier($input['table']),
+        array_map(static fn (array $slot): TableColumn => new TableColumn(new Identifier($slot[0]), DeclaredDatatypeName::from($slot[1]), $slot[2]), $input['columns']),
+        $input['ifNotExists'],
+    );
+}
+
+function observeCreateTable(CreateTable $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-table',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'columns' => array_map(
+            static fn (TableColumn $column): array => [$column->name->value, $column->type->value, $column->notNull],
+            $value->columns,
+        ),
+        'ifNotExists' => $value->ifNotExists,
+        'sql' => $value->toString(),
+    ];
+}
+
 function runCase(array $input): array
 {
     try {
@@ -220,6 +250,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
+            ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
@@ -248,6 +279,9 @@ function runCase(array $input): array
             'ifExists' => $value->ifExists,
             'sql' => $value->toString(),
         ];
+    }
+    if ($value instanceof CreateTable) {
+        return observeCreateTable($value);
     }
     if ($value instanceof ValuesQuery) {
         return observeValues($value);

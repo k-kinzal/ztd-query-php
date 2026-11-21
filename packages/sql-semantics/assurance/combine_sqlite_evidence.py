@@ -29,6 +29,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-insert-evidence", "sqlite-insert-v1.json", 54, 155, 5, 3),
     Domain("semantics-ir-sqlite-update-evidence", "sqlite-update-v1.json", 54, 168, 7, 4),
     Domain("semantics-ir-sqlite-drop-table-evidence", "sqlite-drop-table-v1.json", 12, 89, 5, 2),
+    Domain("semantics-ir-sqlite-create-table-evidence", "sqlite-create-table-v1.json", 40, 117, 5, 4),
 )
 
 
@@ -54,6 +55,9 @@ def collect(path, domain, commit, tools, allow_local):
     if domain.contract == "contract-v1.json":
         require({fault["id"] for fault in fault_records} == {f"F{number:02d}" for number in range(1, 13)},
                 "required-fault-set-mismatch", str(index_path))
+        grammar = index["grammarScope"]
+        require(grammar["record"] == "grammar-scope.json" and grammar["sha256"] == digest(path / "grammar-scope.json"),
+                "grammar-scope-evidence-mismatch", str(index_path))
     else:
         require(len({fault["case"] for fault in fault_records}) == domain.faults and
                 all(fault["control"] == "passed" and fault["expected"] == fault["observed"] for fault in fault_records),
