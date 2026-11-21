@@ -38,12 +38,28 @@ final class ExpressionLowering
             $expression = $expression->operand;
         }
         if ($expression instanceof BinaryOperation) {
-            return $this->arithmetic($expression, $binding, $catalogFirst);
+            $qualifiers = array_column($expression->operator->qualifiers, 'value');
+            Check::input(
+                ($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],
+                'Integer arithmetic must resolve to a pg_catalog operator.',
+            );
+            $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
+            Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
+            $left = $this->lower($expression->left, $binding, $catalogFirst);
+            $right = $this->lower($expression->right, $binding, $catalogFirst);
+            $typeError = 'Arithmetic operands must have the int4 role.';
+            Check::input(!$left instanceof BooleanLiteral, $typeError);
+            Check::input(!$left instanceof NullLiteral, $typeError);
+            Check::input(!$right instanceof BooleanLiteral, $typeError);
+            Check::input(!$right instanceof NullLiteral, $typeError);
+
+            return new Arithmetic($operator, $left, $right);
         }
         if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {
             return new IntegerLiteral($expression->value->digits);
         }
-        if ($expression instanceof UnaryOperation && $expression->operator->name->value === '-' && !$expression->operator->explicit && $expression->operand instanceof Constant) {
+        if ($expression instanceof UnaryOperation && $expression->operand instanceof Constant
+            && [$expression->operator->name->value, $expression->operator->explicit] === ['-', false]) {
             $number = $expression->operand->value;
             if ($number instanceof IntegerConstant && $catalogFirst) {
                 return new IntegerLiteral($number->digits === '0' ? '0' : '-' . $number->digits);
@@ -59,27 +75,5 @@ final class ExpressionLowering
             $expression instanceof ParsedColumn => $binding->reference($expression),
             default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
         };
-    }
-
-    /**
-     * Binds the exact builtin operator and checks each operand's int4 role.
-     */
-    private function arithmetic(BinaryOperation $expression, SourceBinding $binding, bool $catalogFirst): Arithmetic
-    {
-        $qualifiers = $expression->operator->qualifiers;
-        Check::input(
-            ($qualifiers === [] && $catalogFirst) || (count($qualifiers) === 1 && $qualifiers[0]->value === 'pg_catalog'),
-            'Integer arithmetic must resolve to a pg_catalog operator.',
-        );
-        $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
-        Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
-        $left = $this->lower($expression->left, $binding, $catalogFirst);
-        $right = $this->lower($expression->right, $binding, $catalogFirst);
-        Check::input(
-            !$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$right instanceof BooleanLiteral && !$right instanceof NullLiteral,
-            'Arithmetic operands must have the int4 role.',
-        );
-
-        return new Arithmetic($operator, $left, $right);
     }
 }
