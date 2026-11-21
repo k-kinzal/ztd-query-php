@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import time
 
-from run import TOOL, IMAGE, Worker, Ledger, digest, manifest, require, shape, verify_distribution, write_json
+from run import TOOL, IMAGE, Worker, Ledger, compare, digest, manifest, require, shape, verify_distribution, write_json
 from server_cases import (
     case, direct_cases, expected, explore, finite_ids, fixtures, node_key, source, source_key,
     observation, VERSIONS, SCHEMAS, analyzed, walk,
@@ -33,8 +33,7 @@ class Observer(Worker):
 
 
 def same(expected_value, actual_value):
-    require(json.dumps(expected_value, sort_keys=True) == json.dumps(actual_value, sort_keys=True),
-            "server-observation-mismatch", {"expected": expected_value, "actual": actual_value})
+    compare(json.dumps(expected_value, sort_keys=True), json.dumps(actual_value, sort_keys=True))
 
 
 def check_server(dialect, release, db):

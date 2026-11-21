@@ -134,3 +134,44 @@ jobs:
         with:
           name: semantics-ir-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-evidence/
+
+  collect:
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    needs: comparison
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - name: Check out the acceptance tools from the workflow revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: trusted
+          persist-credentials: false
+      - name: Download the protected release records
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --pattern 'semantics-ir-*' --dir "$RUNNER_TEMP/server-matrix"
+      - name: Require all native projection releases
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          shopt -s nullglob
+          indexes=("$RUNNER_TEMP"/server-matrix/index.json "$RUNNER_TEMP"/server-matrix/*/index.json)
+          if [[ ! -f "${indexes[0]}" ]]; then
+            indexes=("${indexes[@]:1}")
+          fi
+          python3 trusted/packages/sql-semantics/assurance/combine_server_evidence.py \
+            --candidate "$CANDIDATE" --out "$RUNNER_TEMP/server-matrix.json" "${indexes[@]}"
+      - name: Preserve the native projection matrix report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-projection-matrix
+          path: ${{ runner.temp }}/server-matrix.json

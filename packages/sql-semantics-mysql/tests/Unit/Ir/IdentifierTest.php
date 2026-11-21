@@ -26,7 +26,7 @@ final class IdentifierTest extends TestCase
 
     public function testRejectsNul(): void
     {
-        $this->expectExceptionMessage('without NUL');
+        $this->expectExceptionMessage('no NUL');
 
         new Identifier("a\0b");
     }

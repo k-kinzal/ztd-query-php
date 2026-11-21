@@ -8,7 +8,7 @@ import time
 
 from cases import MAIN, case, expected, finite_identity
 from run import (
-    TOOL, Failure, Ledger, Worker, check_comparator, digest, finite_complete, manifest, negative,
+    TOOL, Failure, Ledger, Worker, check_comparator, compare_response, digest, finite_complete, manifest, negative,
     positive, require, shape, verify_contract, verify_distribution, write_json,
 )
 
@@ -23,8 +23,12 @@ def replace_once(source, before, after):
 
 def expanded_ids(worker, db, generate):
     observed = collections.Counter()
-    for item in generate():
-        response, _ = positive(worker, db, item)
+    inputs = list(generate())
+    responses = worker.request(inputs)
+    require(isinstance(responses, list) and len(responses) == len(inputs), "worker-batch-incomplete")
+    for item, response in zip(inputs, responses):
+        require(time.monotonic() < worker.deadline, "timeout", "finite fault control exhausted its time budget")
+        response, _ = compare_response(db, item, response)
         observed[finite_identity(response["source"], response["columns"])] += 1
     finite_complete(observed)
 

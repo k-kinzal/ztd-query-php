@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use PhpParser\Node\Expr;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Enum_;
@@ -96,6 +99,20 @@ try {
         $short = basename($file, '.php');
         $patched = $overlay === '' ? '' : $overlay . '/' . $base . '/' . basename($file);
         $ast = $traverser->traverse($parser->parse(file_get_contents(is_file($patched) ? $patched : $file)));
+        foreach ($ast as $statement) {
+            requireShape($statement instanceof Stmt\Declare_ || $statement instanceof Stmt\Namespace_, "Executable code outside a namespace in $short");
+            if ($statement instanceof Stmt\Declare_) {
+                requireShape($statement->stmts === null && count($statement->declares) === 1
+                    && $statement->declares[0]->key->toString() === 'strict_types'
+                    && $statement->declares[0]->value instanceof PhpParser\Node\Scalar\Int_
+                    && $statement->declares[0]->value->value === 1, "Unexpected PHP execution directive in $short");
+            }
+            if ($statement instanceof Stmt\Namespace_) {
+                foreach ($statement->stmts as $member) {
+                    requireShape($member instanceof Stmt\Use_ || $member instanceof ClassLike || $member instanceof Stmt\Nop, "Executable namespace member in $short");
+                }
+            }
+        }
         $classes = $finder->findInstanceOf($ast, ClassLike::class);
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
@@ -114,7 +131,12 @@ try {
         }
         $danger = $finder->findFirst($ast, static fn ($node) => $node instanceof Expr\Eval_ || $node instanceof Expr\Include_
             || $node instanceof Expr\ShellExec || $node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction
-            || $node instanceof Expr\Variable && (!is_string($node->name) || str_starts_with($node->name, '_') || $node->name === 'GLOBALS'));
+            || $node instanceof Expr\AssignRef || $node instanceof PhpParser\Node\ArrayItem && $node->byRef || $node instanceof Expr\Print_ || $node instanceof Expr\Exit_ || $node instanceof Stmt\Echo_
+            || $node instanceof Expr\Variable && (!is_string($node->name) || str_starts_with($node->name, '_') || $node->name === 'GLOBALS')
+            || $node instanceof Expr\New_ && !$node->class instanceof Name
+            || $node instanceof Expr\StaticCall && (!$node->class instanceof Name || !$node->name instanceof Identifier)
+            || $node instanceof Expr\MethodCall && !$node->name instanceof Identifier
+            || $node instanceof Expr\PropertyFetch && !$node->name instanceof Identifier);
         requireShape($danger === null, "Unexpected dynamic PHP in $short");
         if (!isset($properties[$short])) {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->getProperties() === [], "Stateful SELECT collaborator $short");
@@ -147,7 +169,13 @@ try {
         requireShape($actual === $expected, "Property domain differs in $short");
         requireShape($methods[$short] === $public, "Publication paths differ in $short");
         if ($short === 'ArithmeticOperator') {
-            requireShape($class instanceof Enum_, 'Arithmetic operators must be an enum');
+            requireShape($class instanceof Enum_ && $class->scalarType?->toString() === 'string', 'Arithmetic operators must be a string enum');
+            $operators = [];
+            foreach ($class->stmts as $case) {
+                requireShape($case instanceof Stmt\EnumCase && $case->expr instanceof String_, 'An arithmetic operator must be a literal case');
+                $operators[$case->name->toString()] = $case->expr->value;
+            }
+            requireShape($operators === ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*'], 'Arithmetic operator meanings differ');
             continue;
         }
         requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open value class $short");

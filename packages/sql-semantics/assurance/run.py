@@ -157,7 +157,10 @@ def check_comparator(comparator=compare):
 
 
 def positive(worker, db, item, constructed=None):
-    response = worker.request(item)
+    return compare_response(db, item, worker.request(item), constructed)
+
+
+def compare_response(db, item, response, constructed=None):
     require(response["status"] == "constructed", "positive-construction-failed", response)
     require(response["profile"] == PROFILE, "profile-mismatch", response)
     for field in ("columns", "source"):

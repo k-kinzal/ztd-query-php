@@ -122,7 +122,9 @@ function runCase(array $input): array
 echo json_encode(['php' => PHP_VERSION, 'intSize' => PHP_INT_SIZE], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     try {
-        echo json_encode(runCase(json_decode($line, true, 512, JSON_THROW_ON_ERROR)), JSON_THROW_ON_ERROR) . "\n";
+        $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+        $observed = array_is_list($input) ? array_map(runCase(...), $input) : runCase($input);
+        echo json_encode($observed, JSON_THROW_ON_ERROR) . "\n";
     } catch (Throwable $error) {
         echo json_encode(['status' => 'error', 'exception' => $error::class, 'message' => $error->getMessage()], JSON_THROW_ON_ERROR) . "\n";
     }
