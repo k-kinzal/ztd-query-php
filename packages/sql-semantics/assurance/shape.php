@@ -112,6 +112,16 @@ if ($dialect === 'sqlite') {
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Mutation\\Insert';
     $roots[] = 'Mutation\\Update';
+    $properties['Rows\\Compound'] = ['first' => ['Rows\\ValuesQuery', 'Select'], 'limit' => ['?Ordering\\Limit'], 'orderBy' => ['array'], 'steps' => ['array']];
+    $properties['Rows\\CompoundStep'] = ['operator' => ['Rows\\CompoundOperator'], 'query' => ['Rows\\ValuesQuery', 'Select']];
+    $properties['Rows\\CompoundOperator'] = [];
+    $methods['Rows\\Compound'] = $methods['Select'];
+    $methods['Rows\\CompoundStep'] = ['__construct'];
+    $methods['Rows\\CompoundOperator'] = [];
+    $roots[] = 'Rows\\Compound';
+    array_push($internal, 'NumericLiteralLowering', 'Rows\\CompoundBounds', 'Rows\\CompoundLowering');
+    $pureCollaborators[] = 'Rows\\CompoundBounds';
+    $enumCases['Rows\\CompoundOperator'] = ['UnionAll' => 'UNION ALL', 'Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $roots[] = 'Rows\\ValuesQuery';
     $roots[] = 'Schema\\DropTable';
     $roots[] = 'Schema\\CreateTable';
@@ -182,6 +192,7 @@ try {
     if ($dialect === 'sqlite') {
         $analyze = '$operation = $this->inspect($sql, $context); $statement = $operation->statement; return match (true) {'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Compound => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
@@ -209,9 +220,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v1.json';
+    $storagePath = __DIR__ . '/value-storage-v2.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '781a1a27761f2bd3f0f28533078877489bce751e96b9fc3b34f704fdea859413',
+        hash_file('sha256', $storagePath) === '191e4ce81eefa077ff4a586dafc41dfe08841249643d82e71bbc164233f4d222',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import run
+import run_sqlite_compound as compound
 import run_sqlite_create_table as create
 import run_sqlite_delete as delete
 import run_sqlite_drop_table as drop
@@ -32,6 +33,7 @@ DOMAINS = {
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
+    "sqlite-compound-v1.json": (compound, compound.FIXTURE),
 }
 
 

@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Ir;
+
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral as ParsedHex;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as ParsedInteger;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;
+
+/**
+ * Chooses the SQLite storage role of a directly signed numeric literal.
+ *
+ * @visibility SqlSemantics\Platform\Sqlite
+ */
+final class NumericLiteralLowering
+{
+    /**
+     * Converts the digits using the integer range in the written direction.
+     */
+    public function lower(ParsedInteger|ParsedHex|ParsedReal $scalar, bool $negative): IntegerLiteral|HexIntegerLiteral|RealLiteral
+    {
+        if ($scalar instanceof ParsedHex) {
+            $digits = ltrim($scalar->digits, '0');
+
+            return new HexIntegerLiteral($digits === '' ? '0' : $digits, $negative);
+        }
+        if ($scalar instanceof ParsedReal) {
+            return new RealLiteral($scalar->whole, $scalar->fraction, $scalar->exponent, $negative);
+        }
+
+        $digits = ltrim($scalar->digits, '0');
+        $boundary = $negative ? '9223372036854775808' : '9223372036854775807';
+        if (strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $boundary) > 0)) {
+            return new RealLiteral($scalar->digits, null, null, $negative);
+        }
+
+        return new IntegerLiteral($digits === '' ? '0' : ($negative ? '-' : '') . $digits);
+    }
+}

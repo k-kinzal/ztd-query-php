@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
@@ -53,15 +54,25 @@ final class SelectSql
         if ($select->where !== null) {
             $sql .= ' WHERE ' . $this->expression($select->where, $source, $select->joins);
         }
-        if ($select->orderBy !== []) {
-            $terms = [];
-            foreach ($select->orderBy as $term) {
-                $terms[] = $term->position . ($term->descending ? ' DESC' : ' ASC') . ($term->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST');
-            }
-            $sql .= ' ORDER BY ' . implode(', ', $terms);
+        return $sql . $this->ordering($select->orderBy) . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));
+    }
+
+    /**
+     * Emits ordinal ordering for a projection or compound result.
+     *
+     * @param list<Order> $orderBy
+     */
+    public function ordering(array $orderBy): string
+    {
+        if ($orderBy === []) {
+            return '';
+        }
+        $terms = [];
+        foreach ($orderBy as $term) {
+            $terms[] = $term->position . ($term->descending ? ' DESC' : ' ASC') . ($term->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST');
         }
 
-        return $sql . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));
+        return ' ORDER BY ' . implode(', ', $terms);
     }
 
     /**

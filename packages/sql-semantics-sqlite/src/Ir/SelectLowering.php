@@ -25,9 +25,9 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(Operation $operation): Select
+    public function lower(Operation $operation, ?ParsedSelect $arm = null): Select
     {
-        $statement = $operation->statement;
+        $statement = $arm ?? $operation->statement;
         $local = null;
         if ($statement instanceof WithQuery) {
             $local = (new LocalSourceLowering())->lower($operation, $statement);
@@ -40,10 +40,12 @@ final class SelectLowering
         );
         $binding = new SourceBinding($operation, $statement->from, $local);
         $expressions = new ExpressionLowering();
+        $fields = $arm === null ? $operation->fields() : $operation->facts->query($arm)->fields();
+        Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->columns as $index => $column) {
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $operation->field($index)->name;
+            $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier($name->value));
         }

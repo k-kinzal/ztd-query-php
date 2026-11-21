@@ -18,6 +18,9 @@ final class TextLiteral
 {
     use Snapshot;
 
+    /**
+     * Checks decoded text for the UTF-8 SQL profile.
+     */
     public function __construct(public readonly string $value)
     {
         Check::input(!str_contains($value, "\0") && preg_match('//u', $value) === 1, 'TEXT literal requires valid UTF-8 without NUL.');

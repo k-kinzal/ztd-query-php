@@ -41,10 +41,30 @@ final class ExpressionLowering
      */
     public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
     {
-        $expression = $this->ungroup($expression);
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
 
         if ($expression instanceof Binary) {
-            $operator = $this->operator($expression->operator);
+            $operator = match ($expression->operator) {
+                BinaryOperator::Add => ArithmeticOperator::Add,
+                BinaryOperator::Subtract => ArithmeticOperator::Subtract,
+                BinaryOperator::Multiply => ArithmeticOperator::Multiply,
+                BinaryOperator::And => LogicalOperator::And,
+                BinaryOperator::Or => LogicalOperator::Or,
+                BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,
+                BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,
+                BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,
+                BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,
+                BinaryOperator::Less => ComparisonOperator::Less,
+                BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,
+                BinaryOperator::Greater => ComparisonOperator::Greater,
+                BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,
+                BinaryOperator::Divide, BinaryOperator::Modulo,
+                BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight,
+                BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue
+                    => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),
+            };
             $left = $this->lower($expression->left, $binding);
             $right = $this->lower($expression->right, $binding);
 
@@ -55,75 +75,26 @@ final class ExpressionLowering
             };
         }
         if ($expression instanceof Unary && in_array($expression->operator, [UnaryOperator::Plus, UnaryOperator::Minus], true)) {
-            $operand = $this->ungroup($expression->operand);
+            $operand = $expression->operand;
+            while ($operand instanceof Grouped) {
+                $operand = $operand->operand;
+            }
             Check::input(
                 $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal,
                 'A complete signed literal requires a single numeric literal operand.'
             );
 
-            return $this->number($operand, $expression->operator === UnaryOperator::Minus);
+            return (new NumericLiteralLowering())->lower($operand, $expression->operator === UnaryOperator::Minus);
         }
 
         return match (true) {
-            $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => $this->number($expression, false),
+            $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
             $expression instanceof ParsedText => new TextLiteral($expression->value),
             $expression instanceof ParsedBlob => new BlobLiteral($expression->hex),
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
-        };
-    }
-
-    private function ungroup(Scalar $scalar): Scalar
-    {
-        while ($scalar instanceof Grouped) {
-            $scalar = $scalar->operand;
-        }
-
-        return $scalar;
-    }
-
-    private function number(ParsedInteger|ParsedHex|ParsedReal $scalar, bool $negative): IntegerLiteral|HexIntegerLiteral|RealLiteral
-    {
-        if ($scalar instanceof ParsedHex) {
-            $digits = ltrim($scalar->digits, '0');
-
-            return new HexIntegerLiteral($digits === '' ? '0' : $digits, $negative);
-        }
-        if ($scalar instanceof ParsedReal) {
-            return new RealLiteral($scalar->whole, $scalar->fraction, $scalar->exponent, $negative);
-        }
-
-        $digits = ltrim($scalar->digits, '0');
-        $boundary = $negative ? '9223372036854775808' : '9223372036854775807';
-        if (strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $boundary) > 0)) {
-            return new RealLiteral($scalar->digits, null, null, $negative);
-        }
-
-        return new IntegerLiteral($digits === '' ? '0' : ($negative ? '-' : '') . $digits);
-    }
-
-    private function operator(BinaryOperator $operator): ArithmeticOperator|ComparisonOperator|LogicalOperator
-    {
-        return match ($operator) {
-            BinaryOperator::Add => ArithmeticOperator::Add,
-            BinaryOperator::Subtract => ArithmeticOperator::Subtract,
-            BinaryOperator::Multiply => ArithmeticOperator::Multiply,
-            BinaryOperator::And => LogicalOperator::And,
-            BinaryOperator::Or => LogicalOperator::Or,
-            BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,
-            BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,
-            BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,
-            BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,
-            BinaryOperator::Less => ComparisonOperator::Less,
-            BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,
-            BinaryOperator::Greater => ComparisonOperator::Greater,
-            BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,
-            BinaryOperator::Divide, BinaryOperator::Modulo,
-            BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight,
-            BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue
-                => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),
         };
     }
 }

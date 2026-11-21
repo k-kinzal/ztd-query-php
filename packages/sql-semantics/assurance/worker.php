@@ -28,6 +28,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundStep;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
@@ -123,16 +126,68 @@ function direct(array $input): Select
         $step[2] === null ? null : operand($step[2]),
     ), $input['joins'] ?? []);
     $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
-    $limit = null;
-    if (isset($input['limit'])) {
-        [$count, $offset, $offsetFirst] = $input['limit'];
-        $limit = new Limit(operand($count), $offset === null ? null : operand($offset), $offsetFirst);
-    }
-
-    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
+    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, directLimit($input));
 }
 
-function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
+function directLimit(array $input): ?Limit
+{
+    if (!isset($input['limit'])) {
+        return null;
+    }
+    [$count, $offset, $offsetFirst] = $input['limit'];
+
+    return new Limit(operand($count), $offset === null ? null : operand($offset), $offsetFirst);
+}
+
+function directCompound(array $input): Compound
+{
+    $first = directArm($input['first']);
+    $steps = array_map(
+        static fn (array $step): CompoundStep => new CompoundStep(CompoundOperator::from($step[0]), directArm($step[1])),
+        $input['steps'],
+    );
+    $orders = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy']);
+
+    return new Compound($first, $steps, $orders, directLimit($input));
+}
+
+function directArm(array $input): Select|ValuesQuery
+{
+    return match ($input['operation']) {
+        'select' => direct($input),
+        'values' => directValues($input),
+    };
+}
+
+function observeArm(Select|ValuesQuery $query): array
+{
+    if ($query instanceof ValuesQuery) {
+        return ['operation' => 'values', 'rows' => valueRows($query)];
+    }
+    $observed = observeSelect($query);
+    unset($observed['status'], $observed['profile'], $observed['sql']);
+
+    return ['operation' => 'select', ...$observed];
+}
+
+function observeCompound(Compound $query): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'compound',
+        'profile' => $query->profileId(),
+        'first' => observeArm($query->first),
+        'steps' => array_map(
+            static fn (CompoundStep $step): array => [$step->operator->value, observeArm($step->query)],
+            $query->steps,
+        ),
+        'orderBy' => array_map(static fn (Order $term): array => [$term->position, $term->descending, $term->nullsFirst], $query->orderBy),
+        'limit' => observeLimit($query->limit),
+        'sql' => $query->toString(),
+    ];
+}
+
+function analyzed(array $input): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
 {
     $semantics = new Semantics();
     $tables = [];
@@ -258,6 +313,7 @@ function runCase(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzed($input),
+            ($input['operation'] ?? null) === 'compound' => directCompound($input),
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
@@ -272,6 +328,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof Compound) {
+        return observeCompound($value);
+    }
     if ($value instanceof Delete) {
         return observeDelete($value);
     }
@@ -318,6 +377,18 @@ function runCase(array $input): array
         return ['status' => 'snapshot', 'blocked' => $blocked];
     }
 
+    return observeSelect($value);
+}
+
+function observeLimit(?Limit $limit): ?array
+{
+    return $limit === null ? null : [
+        observeOperand($limit->count), $limit->offset === null ? null : observeOperand($limit->offset), $limit->offsetFirst,
+    ];
+}
+
+function observeSelect(Select $value): array
+{
     $source = $value->source;
     $local = $source instanceof LocalSource ? [
         'names' => array_map(static fn (Identifier $name): string => $name->value, $source->columns),
@@ -335,9 +406,7 @@ function runCase(array $input): array
         'where' => $value->where === null ? null : observeOperand($value->where),
         'orderBy' => array_map(static fn (Order $order): array => [$order->position, $order->descending, $order->nullsFirst], $value->orderBy),
         'distinct' => $value->distinct,
-        'limit' => $value->limit === null ? null : [
-            observeOperand($value->limit->count), $value->limit->offset === null ? null : observeOperand($value->limit->offset), $value->limit->offsetFirst,
-        ],
+        'limit' => observeLimit($value->limit),
         'columns' => array_map(static fn (ResultColumn $field): array => [observeOperand($field->expression), $field->name->value], $value->columns),
         'sql' => $value->toString(),
     ];

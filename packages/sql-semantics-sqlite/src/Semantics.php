@@ -16,6 +16,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
@@ -43,6 +45,7 @@ use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
@@ -154,13 +157,14 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
+    public function analyze(string $sql, array|Context|null $context = null): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
     {
         $operation = $this->inspect($sql, $context);
         $statement = $operation->statement;
 
         return match (true) {
             $statement instanceof ParsedSelect, $statement instanceof WithQuery => (new SelectLowering())->lower($operation),
+            $statement instanceof ParsedCompound => (new CompoundLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),

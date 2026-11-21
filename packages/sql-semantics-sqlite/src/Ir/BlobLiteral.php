@@ -18,6 +18,9 @@ final class BlobLiteral
 {
     use Snapshot;
 
+    /**
+     * Checks that each byte has one complete hexadecimal pair.
+     */
     public function __construct(public readonly string $hex)
     {
         Check::input(strlen($hex) % 2 === 0 && preg_match('/\A[0-9A-F]*\z/', $hex) === 1, 'BLOB literal requires pairs of upper-case hexadecimal digits.');

@@ -15,12 +15,14 @@ ROOTS = {
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Insert",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Update",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\ValuesQuery",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\CreateTable",
 }
 
 
 CONTRACTS = {
+    "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",
     "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",
     "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",

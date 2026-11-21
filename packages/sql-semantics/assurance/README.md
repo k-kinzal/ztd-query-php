@@ -257,3 +257,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_sc
 ```
 
 The runner checks literal storage classes, negative zero, ordered result labels and parameter slots. It covers the finite product of literal pairs and the recorded operators in SELECT and VALUES, and explores nested operands from the fixed seeds. Six persistent-state observations compare the three write forms through direct construction and analysis against a table with duplicates and mixed storage classes. Each write is rolled back to the original fixture. The mutations detect loss of the REAL or hexadecimal sign and a TEXT value emitted as BLOB.
+
+## SQLite compound queries
+
+Run the [compound contract](sqlite-compound-v1.json) with the pinned SQLite library:
+
+```sh
+compound_evidence=$(mktemp -d)/compound-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_compound.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$compound_evidence"
+```
+
+The runner checks SELECT and VALUES operands, all four operations, and mixed chains. The independent evaluator reduces typed rows in lexical order and checks ordinal sorting, row bounds, parameter labels and the names of the first arm. The exact 500-arm boundary and placement errors exercise the composition checks. Additional analyzed inputs compare collated and numerically equivalent rows with the original native execution. Faults change duplicate handling, operand order, and the outer ordering clause.
