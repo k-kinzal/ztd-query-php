@@ -3,7 +3,7 @@
   "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
   "approval": "pending-human-review",
   "requiredScope": "All earlier obligations, additional row expressions and the other grammar families remain in scope.",
-  "additionalPublicRoots": ["Rows/Values"],
+  "additionalPublicRoots": ["Rows/ValuesQuery"],
   "constructors": {
     "Rows/ValueRow": {
       "role": "A nonempty ordered row of independent scalar operands.",
@@ -13,6 +13,7 @@
       "sql": "Emit one parenthesized list, preserving lexical parameter order."
     },
     "Rows/Values": {
+      "type": "Rows/ValuesQuery",
       "role": "Complete top-level SQLite VALUES statement.",
       "structure": "A nonempty ordered list of checked rows of a single width.",
       "boundary": "The row widths agree. The whole statement meets the expansion and parameter label budgets.",
