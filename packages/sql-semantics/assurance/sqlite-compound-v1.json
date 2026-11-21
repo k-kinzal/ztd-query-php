@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/sqlite-compound-1",
+  "approval": "pending-human-review",
+  "requiredScope": "The requirements of contract-v1.json remain in force. This record adds SQLite compound projection and VALUES arms without WITH.",
+  "profile": "SQLite 3.47.2, UTF-8, short column names, numbered parameters, and the default compound and SQL length limits.",
+  "additionalPublicRoots": ["Rows/Compound"],
+  "constructors": {
+    "Rows/Compound": {
+      "role": "A complete SQLite set or bag query with ordered arms.",
+      "structure": "One checked SELECT or VALUES arm, a nonempty list of operator and arm steps, combined result ordering and optional bounds.",
+      "boundary": "Require 2 through 500 arms with equal positive widths. Each SELECT arm has no WITH, ORDER BY or LIMIT. Only a final SELECT permits an outer ORDER BY or LIMIT. Each sort position belongs to the shared output width. Enforce the emitted SQL length limit before returning a value.",
+      "meaning": "Reduce left to right through the recorded operations. Names and positions come from the first arm. Apply combined ordering and bounds after combining the rows. Preserve each arm's source binding, native comparison rules, and lexical parameter registration.",
+      "sql": "Concatenate valid arms with their operator in lexical order, without grouping or synthetic wrapper SELECTs, then append the outer ORDER BY and LIMIT."
+    },
+    "Rows/CompoundStep": {
+      "role": "One operation on the accumulated result and a following arm.",
+      "structure": "An enum operator and an explicit checked SELECT or VALUES arm.",
+      "boundary": "The compound root checks clause placement, common width and statement-wide limits.",
+      "meaning": "The accumulated rows are the left operand. The arm supplies the right operand with its own resolved scope.",
+      "sql": "Emit the operator followed by the right arm."
+    },
+    "Rows/CompoundOperator": {
+      "role": "A closed SQLite set or bag operation.",
+      "structure": "UNION ALL, UNION, INTERSECT or EXCEPT.",
+      "boundary": "Applies to operands with the same width in a checked step.",
+      "meaning": "Concatenate bags, take the union of row equivalence classes, retain common classes, or retain left classes absent from the right. Native SQLite compares NULLs as equal for this purpose and applies its collation rules without affinity conversions.",
+      "sql": "Use the native operator spelling; retain the order of the operands and steps."
+    }
+  },
+  "assurance": {
+    "P01": "Operation and left association are explicit. Every arm carries its resolved bindings. Output ordering uses resolved ordinal slots.",
+    "P02": "Construct both arm forms directly and reject each violated composition condition. Cover the native term boundary.",
+    "P03": "The root holds children, clause values and operation tags. It retains no SQL or analyzer state.",
+    "P04": "Evaluate each arm under its own scope, assemble the bag or set in lexical order, then order and bound.",
+    "P05": "All arm and clause members are closed readonly values and copied ordered lists. Snapshot restoration is blocked.",
+    "P06": "Check native output labels, parameter labels, rows with storage classes and multiplicities, and order. Use the versioned database to probe analyzed collation and numerical equivalence."
+  },
+  "finite": {
+    "armForms": ["select", "values"],
+    "operators": ["UNION ALL", "UNION", "INTERSECT", "EXCEPT"],
+    "atoms": [["integer", "0"], ["integer", "1"], ["null"], ["text", "1"], ["blob", "31"], ["real", "1", "5", null, false]],
+    "rule": "Enumerate the product of two arm forms, both atom choices and every operator. SELECT contributes one row and VALUES contributes two identical rows. Also enumerate all three-SELECT chains of two operators and the first three atoms. Derive exact identities from observed structure."
+  },
+  "exploration": {"seeds": [1529, 4521, 8119], "casesPerSeed": 52, "arms": 5, "width": 3, "valuesRows": 4, "timeoutSeconds": 240, "allowedExclusions": []},
+  "analysis": ["typed bag with labels of the first arm", "ordered left-associated mixed operations", "first-arm VALUES output names and repeated rows", "parameter first-label and bound correspondence", "numeric or collation equivalence compared with the original using the fixed engine"],
+  "negative": ["no second arm", "mismatched width", "ORDER BY on an arm", "LIMIT on an arm", "WITH on an arm", "outer ORDER BY after VALUES", "outer LIMIT after VALUES", "out-of-range order position", "more than 500 arms"],
+  "faults": ["erase UNION ALL multiplicity", "reverse EXCEPT operands", "drop outer ordering"],
+  "observations": "The independent finite and exploratory evaluator uses BINARY comparison and unique typed representatives for equal input rows. It preserves exact typed values and multiplicities. Named collation and alternative numeric representations of one equality class are checked using original and emitted SQL under the same pinned engine. A missing ordering guarantee permits bag comparison. The ordered generated cases sort all columns so remaining ties have identical observed rows.",
+  "trust": "The reference covers the finite and exploratory domains and the given fixtures. The fixed SQLite engine supplies native set comparison, statement limits, collation and tie behavior under the specified profile.",
+  "sources": ["https://www.sqlite.org/lang_select.html#compound_select_statements", "https://sqlite.org/limits.html"]
+}
