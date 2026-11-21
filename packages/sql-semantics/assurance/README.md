@@ -242,3 +242,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_cr
 ```
 
 The observer compares ordered native column metadata, implicit rowids and data writes through the created table. It checks typed affinity conversions, NOT NULL violations and the existing rows preserved by IF NOT EXISTS. Both main and temp catalogs contain a same-named sentinel table. The structural explorer varies type, column count, target identifiers, nullability and collision handling.
+
+## SQLite literals and scalar composition
+
+Run the [scalar contract](sqlite-scalars-v1.json) with the pinned SQLite library:
+
+```sh
+scalar_evidence=$(mktemp -d)/scalar-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_scalars.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$scalar_evidence"
+```
+
+The runner checks literal storage classes, negative zero, ordered result labels and parameter slots. It covers the finite product of literal pairs and the recorded operators in SELECT and VALUES, and explores nested operands from the fixed seeds. Six persistent-state observations compare the three write forms through direct construction and analysis against a table with duplicates and mixed storage classes. Each write is rolled back to the original fixture. The mutations detect loss of the REAL or hexadecimal sign and a TEXT value emitted as BLOB.

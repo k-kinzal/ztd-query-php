@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -26,7 +32,7 @@ final class ValueRow
     use Snapshot;
 
     /**
-     * @var non-empty-list<Arithmetic|IntegerLiteral|NullLiteral|Parameter>
+     * @var non-empty-list<Arithmetic|BlobLiteral|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral>
      */
     public readonly array $values;
 
@@ -41,8 +47,9 @@ final class ValueRow
         $closed = [];
         $pending = [];
         foreach ($values as $value) {
-            Check::input($value instanceof Arithmetic || $value instanceof IntegerLiteral
-                || $value instanceof NullLiteral || $value instanceof Parameter, 'A VALUES row needs a scalar operand independent of tables.');
+            Check::input($value instanceof Arithmetic || $value instanceof BlobLiteral || $value instanceof Comparison
+                || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral || $value instanceof Logical
+                || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral, 'A VALUES row needs a scalar operand independent of tables.');
             $closed[] = $value;
             $pending[] = [$value, 0, 0];
         }

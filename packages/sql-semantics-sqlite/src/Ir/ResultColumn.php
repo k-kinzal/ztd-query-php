@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -22,7 +24,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $expression,
+        public readonly Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $expression,
         public readonly Identifier $name,
     ) {
     }

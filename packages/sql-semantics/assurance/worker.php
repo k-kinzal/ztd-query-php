@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
@@ -49,10 +53,14 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical
+function operand(array $input): Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
 {
     return match ($input[0]) {
         'integer' => new IntegerLiteral($input[1]),
+        'text' => new TextLiteral($input[1]),
+        'blob' => new BlobLiteral($input[1]),
+        'real' => new RealLiteral($input[1], $input[2], $input[3], $input[4]),
+        'hex' => new HexIntegerLiteral($input[1], $input[2]),
         'null' => new NullLiteral(),
         'parameter' => new Parameter($input[1]),
         'column' => new ColumnReference($input[1], $input[2] ?? 0),
@@ -62,10 +70,14 @@ function operand(array $input): Arithmetic|ColumnReference|IntegerLiteral|NullLi
     };
 }
 
-function observeOperand(Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical $value): array
+function observeOperand(Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value): array
 {
     return match (true) {
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
+        $value instanceof TextLiteral => ['text', $value->value],
+        $value instanceof BlobLiteral => ['blob', $value->hex],
+        $value instanceof RealLiteral => ['real', $value->whole, $value->fraction, $value->exponent, $value->negative],
+        $value instanceof HexIntegerLiteral => ['hex', $value->digits, $value->negated],
         $value instanceof NullLiteral => ['null'],
         $value instanceof Parameter => ['parameter', $value->label],
         $value instanceof ColumnReference => $value->source === 0 ? ['column', $value->slot] : ['column', $value->slot, $value->source],

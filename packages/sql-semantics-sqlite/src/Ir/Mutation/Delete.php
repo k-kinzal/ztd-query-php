@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -34,7 +38,7 @@ final class Delete implements SemanticsIR
      */
     public function __construct(
         public readonly TableSource $target,
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
+        public readonly Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
     ) {
         (new ExpressionScope())->check([$target], $where === null ? [] : [[$where, 0, 1]]);
     }

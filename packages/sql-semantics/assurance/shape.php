@@ -30,6 +30,10 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 };
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
+if ($dialect === 'sqlite') {
+    array_push($operands, 'BlobLiteral', 'HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'RealLiteral', 'TextLiteral');
+    sort($operands);
+}
 $properties = [
     'Arithmetic' => ['operator' => ['ArithmeticOperator'], 'left' => $operands, 'right' => $operands],
     'ArithmeticOperator' => [],
@@ -66,7 +70,14 @@ $pureCollaborators = ['SelectBounds', 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
-    $predicates = [...array_slice($operands, 0, 2), 'IntegerLiteral', 'NullLiteral', 'Parameter', 'Predicate\\Comparison', 'Predicate\\Logical'];
+    $predicates = $operands;
+    $properties['BlobLiteral'] = ['hex' => ['string']];
+    $properties['HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
+    $properties['RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool']];
+    $properties['TextLiteral'] = ['value' => ['string']];
+    foreach (['BlobLiteral', 'HexIntegerLiteral', 'RealLiteral', 'TextLiteral'] as $literal) {
+        $methods[$literal] = ['__construct'];
+    }
     $nullablePredicates = [...$predicates, 'null'];
     $properties['ColumnReference']['source'] = ['int'];
     $properties['Select']['joins'] = ['array'];
@@ -132,7 +143,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_is_list','strpbrk'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_is_list','strpbrk','substr_count'];
 
 function requireShape(bool $condition, string $detail): void
 {

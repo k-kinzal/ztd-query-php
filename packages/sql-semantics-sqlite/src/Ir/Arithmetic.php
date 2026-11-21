@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -24,8 +26,8 @@ final class Arithmetic
      */
     public function __construct(
         public readonly ArithmeticOperator $operator,
-        public readonly self|ColumnReference|IntegerLiteral|NullLiteral|Parameter $left,
-        public readonly self|ColumnReference|IntegerLiteral|NullLiteral|Parameter $right,
+        public readonly self|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $left,
+        public readonly self|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $right,
     ) {
     }
 }

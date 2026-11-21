@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -29,7 +35,7 @@ final class UpdateAssignment
      */
     public function __construct(
         public readonly int $targetSlot,
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $value,
+        public readonly Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value,
     ) {
         Check::input($targetSlot >= 0, 'An assignment slot must be nonnegative.');
     }

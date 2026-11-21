@@ -5,26 +5,25 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\From;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
-use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
-use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit as ParsedLimit;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
@@ -91,46 +90,9 @@ final class QueryClauses
     /**
      * Converts a filter or ON expression into the closed predicate domain.
      */
-    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null
+    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null
     {
-        while ($scalar instanceof Grouped) {
-            $scalar = $scalar->operand;
-        }
-        if ($scalar === null) {
-            return null;
-        }
-        if ($scalar instanceof Binary) {
-            $operator = $scalar->operator->value;
-            $comparison = match ($scalar->operator) {
-                BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,
-                BinaryOperator::NotEqual, BinaryOperator::BangEqual => ComparisonOperator::NotEqual,
-                BinaryOperator::Is, BinaryOperator::IsNotDistinctFrom => ComparisonOperator::Is,
-                BinaryOperator::IsNot, BinaryOperator::IsDistinctFrom => ComparisonOperator::IsNot,
-                BinaryOperator::Less => ComparisonOperator::Less,
-                BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,
-                BinaryOperator::Greater => ComparisonOperator::Greater,
-                BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,
-                BinaryOperator::And, BinaryOperator::Or,
-                BinaryOperator::Add, BinaryOperator::Subtract, BinaryOperator::Multiply, BinaryOperator::Divide, BinaryOperator::Modulo,
-                BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight,
-                BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue => null,
-            };
-            if ($comparison !== null) {
-                $expressions = new ExpressionLowering();
-
-                return new Comparison($comparison, $expressions->lower($scalar->left, $binding), $expressions->lower($scalar->right, $binding));
-            }
-            $logical = LogicalOperator::tryFrom($operator);
-            if ($logical !== null) {
-                $left = $this->predicate($scalar->left, $binding);
-                $right = $this->predicate($scalar->right, $binding);
-                Check::invariant($left !== null && $right !== null, 'A logical operation has both operands.');
-
-                return new Logical($logical, $left, $right);
-            }
-        }
-
-        return (new ExpressionLowering())->lower($scalar, $binding);
+        return $scalar === null ? null : (new ExpressionLowering())->lower($scalar, $binding);
     }
 
     /**

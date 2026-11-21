@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Predicate;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -28,8 +32,8 @@ final class Comparison
      */
     public function __construct(
         public readonly ComparisonOperator $operator,
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $left,
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $right,
+        public readonly Arithmetic|BlobLiteral|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $left,
+        public readonly Arithmetic|BlobLiteral|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $right,
     ) {
     }
 }

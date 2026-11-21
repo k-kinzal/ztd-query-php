@@ -32,7 +32,7 @@ final class SelectBounds
         array $results,
         TableSource|LocalSource|null $source,
         array $joins = [],
-        Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
+        Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
         array $orderBy = [],
         ?Limit $limit = null,
     ): void {

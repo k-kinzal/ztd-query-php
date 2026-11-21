@@ -13,6 +13,7 @@ import run_sqlite_insert as insert
 import run_sqlite_local_source as local
 import run_sqlite_relational as relational
 import run_sqlite_result as result
+import run_sqlite_scalars as scalars
 import run_sqlite_update as update
 import run_sqlite_values as values
 from cases import SCHEMA
@@ -30,6 +31,7 @@ DOMAINS = {
     "sqlite-update-v1.json": (update, update.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
+    "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
 }
 
 

@@ -11,6 +11,15 @@ RULE = re.compile(r"^    '([A-Za-z_][A-Za-z0-9_]*)' => \[$")
 ALTERNATIVE = re.compile(r"^        '([^'\\]*)',$")
 SQLITE = "packages/sql-semantics-sqlite/resources/productions/sqlite-3.47.2.php"
 RELATED_SQLITE_DOMAINS = {
+    "term: NULL|FLOAT|BLOB": ("sqlite-scalars-v1.json",),
+    "term: STRING": ("sqlite-scalars-v1.json",),
+    "term: INTEGER": ("sqlite-scalars-v1.json",),
+    "expr: expr AND expr": ("sqlite-scalars-v1.json",),
+    "expr: expr OR expr": ("sqlite-scalars-v1.json",),
+    "expr: expr LT|GT|GE|LE expr": ("sqlite-scalars-v1.json",),
+    "expr: expr EQ|NE expr": ("sqlite-scalars-v1.json",),
+    "expr: expr IS expr": ("sqlite-scalars-v1.json",),
+    "expr: expr IS NOT expr": ("sqlite-scalars-v1.json",),
     "cmd: select": ("contract-v1.json", "sqlite-relational-v1.json", "sqlite-result-v1.json",
                     "sqlite-values-v1.json", "sqlite-local-source-v1.json"),
     "cmd: with DELETE FROM xfullname indexed_opt where_opt_ret": ("sqlite-delete-v1.json",),

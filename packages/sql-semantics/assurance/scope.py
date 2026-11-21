@@ -21,6 +21,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",
     "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
     "sqlite-relational-v1.json": "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d",

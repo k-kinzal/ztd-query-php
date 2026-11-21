@@ -85,7 +85,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical $expression,
+        Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -100,6 +100,12 @@ final class SelectSql
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
+            $expression instanceof HexIntegerLiteral => ($expression->negated ? '-' : '') . '0x' . $expression->digits,
+            $expression instanceof RealLiteral => ($expression->negative ? '-' : '') . $expression->whole
+                . ($expression->fraction === null ? '' : '.' . $expression->fraction)
+                . ($expression->exponent === null ? '' : 'e' . $expression->exponent),
+            $expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'",
+            $expression instanceof BlobLiteral => "X'" . $expression->hex . "'",
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
