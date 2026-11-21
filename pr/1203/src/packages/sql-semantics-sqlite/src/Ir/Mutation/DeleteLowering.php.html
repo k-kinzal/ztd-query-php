@@ -46,32 +46,33 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\SourceBinding</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Operation</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete</span> <span class="tok-kw">as</span> <span class="tok-id">ParsedDelete</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Resolves the supported top-level SQLite DELETE.</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility SqlSemantics\Platform\Sqlite</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeleteLowering</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>{</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * Constructs the write only after resolving its target and predicate.</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, <span class="tok-id">ParsedDelete</span> <span class="tok-var">$statement</span>): <span class="tok-id">Delete</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">with</span> === <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$statement</span>-&gt;<span class="tok-id">returning</span> === [], <span class="tok-str">&#039;Complete SQLite DELETE requires a single target without WITH or RETURNING.&#039;</span>);</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-var">$binding</span> = <span class="tok-kw">new</span> <span class="tok-id">SourceBinding</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">target</span>);</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$where</span> = (<span class="tok-kw">new</span> <span class="tok-id">QueryClauses</span>())-&gt;<span class="tok-id">predicate</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$binding</span>);</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-var">$target</span> = <span class="tok-var">$binding</span>-&gt;<span class="tok-id">source</span>();</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-id">Check</span>::<span class="tok-id">invariant</span>(<span class="tok-var">$target</span> !== <span class="tok-id">null</span>, <span class="tok-str">&#039;A resolved DELETE has one target.&#039;</span>);</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Delete</span>(<span class="tok-var">$target</span>, <span class="tok-var">$where</span>);</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    }</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>}</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\TableSource</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Operation</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete</span> <span class="tok-kw">as</span> <span class="tok-id">ParsedDelete</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Resolves the supported top-level SQLite DELETE.</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility SqlSemantics\Platform\Sqlite</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeleteLowering</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>{</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * Constructs the write only after resolving its target and predicate.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, <span class="tok-id">ParsedDelete</span> <span class="tok-var">$statement</span>): <span class="tok-id">Delete</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    {</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">with</span> === <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$statement</span>-&gt;<span class="tok-id">returning</span> === [], <span class="tok-str">&#039;Complete SQLite DELETE requires a single target without WITH or RETURNING.&#039;</span>);</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$binding</span> = <span class="tok-kw">new</span> <span class="tok-id">SourceBinding</span>(<span class="tok-var">$operation</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">target</span>);</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-var">$where</span> = (<span class="tok-kw">new</span> <span class="tok-id">QueryClauses</span>())-&gt;<span class="tok-id">predicate</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$binding</span>);</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-var">$target</span> = <span class="tok-var">$binding</span>-&gt;<span class="tok-id">source</span>();</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-id">Check</span>::<span class="tok-id">invariant</span>(<span class="tok-var">$target</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TableSource</span>, <span class="tok-str">&#039;A resolved DELETE has one external target.&#039;</span>);</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Delete</span>(<span class="tok-var">$target</span>, <span class="tok-var">$where</span>);</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    }</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>}</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
