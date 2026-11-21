@@ -107,13 +107,13 @@ def exercise(args, db, distribution):
                 "source column list can change", None, static=True)
     patch_model("F05", "Select",
                 "public readonly ?TableSource $source = null", "public readonly ?TableSource $source = null, private readonly string $originalSql = ''",
-                "shape-mismatch", "raw original SQL is retained as a third root property", None, static=True)
+                "shape-mismatch", "raw original SQL is retained in a root property", None, static=True)
     patch_model("F06", "Select",
                 "return (new SelectSql())->render($this);", 'return "SELECT 1 AS ignored";',
                 "meaning-mismatch", simple, lambda worker: positive(worker, db, simple))
     patch_model("F07", "SelectSql",
-                """'(' . $this->expression($expression->left, $source) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source) . ')'""",
-                "$this->expression($expression->left, $source)", "meaning-mismatch",
+                """'(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')'""",
+                "$this->expression($expression->left, $source, $joins)", "meaning-mismatch",
                 arithmetic, lambda worker: positive(worker, db, arithmetic))
 
     def execute_tool(original_path, source):

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\AnalysisContext;
 use SqlSemantics\IrAnalyzer;
+use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
@@ -43,10 +44,10 @@ final class Analyzer implements IrAnalyzer
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete SQLite IR currently supports a single projection SELECT.');
         Check::input(
-            $statement->where === null && $statement->groupBy === [] && $statement->having === null
-                && $statement->windows === [] && $statement->orderBy === [] && $statement->limit === null
+            $statement->groupBy === [] && $statement->having === null
+                && $statement->windows === [] && $statement->limit === null
                 && $statement->quantifier !== SetQuantifier::Distinct,
-            'Complete SQLite IR currently supports unfiltered, unordered bag projections.',
+            'Complete SQLite IR currently supports bag projections without grouping, windows or limits.',
         );
         $binding = new SourceBinding($operation, $statement->from);
         $expressions = new ExpressionLowering();
@@ -58,6 +59,10 @@ final class Analyzer implements IrAnalyzer
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier($name->value));
         }
 
-        return new Select($results, $binding->source());
+        $clauses = new QueryClauses();
+        $where = $clauses->predicate($statement->where, $binding);
+        $joins = $clauses->joins($statement->from, $binding);
+
+        return new Select($results, $binding->source(), $joins, $where, $clauses->ordering($statement->orderBy));
     }
 }

@@ -66,8 +66,25 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_server.py
 
 The finite verifier checks the observed case IDs by expression tree and source policy. The evaluator independently computes integer operations, NULL propagation, overflow, output types and names, duplicate rows, and PostgreSQL inheritance. Each analyzed case compares the original statement and its emitted SQL in the observed server settings.
 
-The SQLite evidence now also writes `scope.json`. It checks published root roles through inherited interfaces and compares the candidate's grammar artifacts to [the fixed baseline list](required-grammars.json). A matching list provides a fixed scope input. The report records the wider public model and grammar obligations as open.
+The SQLite evidence also writes `scope.json`. It compares the AST inventory with the constructor IDs and named public return roles in the fixed contracts. Each matched constructor links to its source digest and public and magic signatures. An added or missing constructor or publication route fails the check. The same audit follows inherited interfaces to find every completed root and compares grammar artifact digests against [the fixed baseline list](required-grammars.json). The wider model and grammar obligations remain open. Legacy public types are listed for further classification by semantic role.
 
 For a single declared release, pass `--engine mysql --release 8.4.7` or `--engine postgres --release 16.6` and connect the observer to that release. The runner checks the exact server version before comparing any case. The [manual release matrix](../../../.github/workflows/semantics-ir-release-matrix.yml) pins images for all nine MySQL releases and both PostgreSQL releases. Its artifacts are keyed by engine and release. Every matrix result remains specific to the native projection domain.
 
 To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --out server-matrix.json` with the paths to the per-release `index.json` files. All inputs must identify the same candidate, distribution, contract and tools. The join fails when a required release is missing, appears twice or has incomplete evidence.
+
+## SQLite joins, filters and ordering
+
+The [SQLite relational criteria](sqlite-relational-v1.json) extend the initial SQLite projection domain. Run the same pinned SQLite 3.47.2 build and isolated PHP image through the separate checker:
+
+```sh
+relational_evidence=$(mktemp -d)/sqlite-relational-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_relational.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$relational_evidence"
+```
+
+The evaluator treats outer joins as filtered products with unmatched-row extension, uses SQL truth rules for predicates and checks ordering without constraining ties. It reads fixture data with deliberately different and duplicate rows, NULLs and empty inputs. Separate analyzed cases compare the original and emitted statements, including a self join and ordering by a column with a declared collation. The relational mutations change an occurrence alias, remove NULL-extended rows, drop a filter, reverse an ordering key and bypass the snapshot restoration guard. Run the initial F01–F12 exercise on the same distribution.
+
+The source audit also checks the baseline digests of the value primitives used by all three dialects. A change to list copying, constructor checks, name comparison or the snapshot restoration guard is visible to the verifier. Any intentional revision of those primitives belongs in the review of the assurance mechanism.

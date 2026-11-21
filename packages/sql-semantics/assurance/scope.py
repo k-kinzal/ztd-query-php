@@ -1,5 +1,6 @@
 """Compare the fixed grammar scope with an independently extracted PHP inventory."""
 
+import hashlib
 import json
 
 from pathlib import Path
@@ -11,6 +12,58 @@ ROOTS = {
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Select",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Select",
 }
+
+
+CONTRACTS = {
+    "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
+    "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
+    "sqlite-relational-v1.json": "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d",
+}
+
+
+def constructor_scope(by_class):
+    definitions = {}
+    prefixes = ("SqlSemantics\\Platform\\MySql", "SqlSemantics\\Platform\\PostgreSql", "SqlSemantics\\Platform\\Sqlite")
+    routes = {"SqlSemantics\\IrAnalyzer::analyze": ["SqlSemantics\\SemanticsIR"]}
+    for name, sha256 in CONTRACTS.items():
+        raw = (TOOL / name).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != sha256:
+            raise ValueError(f"Constructor contract differs from its recorded revision: {name}")
+        for role, record in json.loads(raw)["constructors"].items():
+            concrete = record.get("type", role).replace("/", "\\")
+            for platform in prefixes[:2] if name == "server-projection-v1.json" else prefixes[2:]:
+                clas = platform + "\\Ir\\" + concrete
+                definitions.setdefault(clas, []).append({"record": name, "role": role})
+    for platform in prefixes:
+        routes[platform + "\\Semantics::ir"] = [platform + "\\Ir\\Analyzer"]
+        routes[platform + "\\Ir\\Analyzer::analyze"] = [platform + "\\Ir\\Select"]
+    published = {
+        clas for clas, record in by_class.items()
+        if record["visibility"] == "public" and record["kind"] in ("Stmt_Class", "Stmt_Enum")
+        and clas.startswith(tuple(prefix + "\\Ir\\" for prefix in prefixes))
+        and not clas.endswith("\\Analyzer")
+    }
+    publication_types = set(definitions) | {kind for cases in routes.values() for kind in cases}
+    found = {}
+    for clas, record in by_class.items():
+        if record["visibility"] != "public":
+            continue
+        for method, returns in record["public_return_roles"].items():
+            matched = sorted(set(returns) & publication_types)
+            if matched:
+                found[f"{clas}::{method}"] = matched
+    return {
+        "registeredConstructors": {name: {
+            "contracts": definitions[name], "source": by_class[name]["file"],
+            "sha256": by_class[name]["sha256"], "paths": by_class[name]["public_and_magic_signatures"],
+        } for name in sorted(published & set(definitions))},
+        "unregisteredConstructors": sorted(published - set(definitions)),
+        "missingConstructors": sorted(set(definitions) - published),
+        "publicationRoutes": found,
+        "unexpectedPublicationRoutes": {
+            name: found.get(name) for name in sorted(set(routes) | set(found)) if routes.get(name) != found.get(name)
+        },
+    }
 
 
 def public_scope(packages, distribution):
@@ -33,13 +86,14 @@ def public_scope(packages, distribution):
                               if not record["abstract"] and record["kind"] in ("Stmt_Class", "Stmt_Enum")
                               and record["visibility"] == "public" and "\\Ir\\" not in name)
     return {
+        **constructor_scope(by_class),
         "requiredGrammarArtifacts": required,
         "changedGrammarArtifacts": changed,
         "completeRootTypes": sorted(all_roots),
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite projection domain",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite projections and joined base-table queries",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

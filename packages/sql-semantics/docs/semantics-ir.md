@@ -1,6 +1,6 @@
 # Complete SemanticsIR values
 
-`SqlSemantics\SemanticsIR` and `SqlSemantics\IrAnalyzer` are shared interfaces. The database package supplies the operation classes, operand types, scope checks, and SQL representation. All three database packages provide a checked projection over zero or one external table. Each implementation fixes its own language profile and operand roles.
+`SqlSemantics\SemanticsIR` and `SqlSemantics\IrAnalyzer` are shared interfaces. The database package supplies the operation classes, operand types, scope checks, and SQL representation. All three database packages provide checked projections. SQLite also supports a chain of joined base-table occurrences. Each implementation fixes its own language profile and operand roles.
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -22,9 +22,11 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 
 ## Supported SQLite scope
 
-- One plain SELECT with explicit result expressions and at most one base table source. A named source must resolve to a complete declaration. Column expressions resolve to explicitly declared table columns.
+- One SELECT with explicit result expressions and up to 64 base-table occurrences. A source must resolve to a complete declaration. Each column resolves to an explicit member of a specific occurrence. Two aliases of the same table have different occurrence indices.
+- INNER, CROSS, LEFT, RIGHT and FULL joins with optional ON, and filtering with WHERE. The supported predicates include scalar truth conversion, comparisons and AND or OR. Each ON clause sees its join prefix. The filter sees the completed joined input.
+- ORDER BY on one-based output positions, including ASC, DESC and either NULL placement. Rows with equal keys can appear in any relative order.
 - Integer literals in the signed 64-bit range, NULL, numbered SQLite parameters, column references, and binary addition, subtraction and multiplication.
-- Result order, result names, SQLite storage classes and values, repeated rows, and numeric parameter slots and labels. The result rows form a multiset because this domain has no ordering clause.
+- Result order, result names, SQLite storage classes and values, repeated rows, and numeric parameter slots and labels. Without an ordering clause, the result is a multiset. The ordering contract fixes the relative order of rows with different keys.
 - The default UTF-8 profile with short column names enabled and full column names disabled. The engine uses the standard SQLite 3.47.2 limits. The initial IR domain also bounds identifier length, the number of result columns, and expanded expression size.
 
 Other clauses, expressions and statement families fail through the complete entry point. The legacy `Semantics::analyze()` continues to provide `Operation` for declaration extraction, diagnostic facts and the broader syntax domain. Those values may have unresolved dependencies. Existing callers can continue using that API. To start consuming complete values, switch query call sites to `$sqlite->ir()->analyze()`, handle `SqlSemantics\AnalysisException`, and use concrete SQLite value classes for traversal. Use the legacy API to prepare declarations.
@@ -49,4 +51,4 @@ Call `ir()->analyze()` on the MySQL or PostgreSQL `Semantics` object configured 
 | P05 | Every published property is readonly. The operand types and list element classes are closed. `Snapshot` blocks cloning, dynamic properties and PHP serialization and restoration. |
 | P06 | The emitter visits every expression alternative, writes grouping explicitly, quotes identifiers, and emits a result name for every projection. Independent execution checks the observations on SQLite 3.47.2 within the recorded domain. |
 
-The table describes the initial SQLite domain. The server projection record specifies the additional MySQL and PostgreSQL conditions and observations. The full scope and status of the remaining obligations are recorded in the [contract ledger](../assurance/contract-v1.json) and the [evidence guide](../assurance/README.md).
+The table applies to the checked projection roles. The SQLite [relational evidence record](../assurance/sqlite-relational-v1.json) adds checked join, predicate and ordering roles. The server projection record specifies the additional MySQL and PostgreSQL conditions and observations. The full scope and status of the remaining obligations are recorded in the [contract ledger](../assurance/contract-v1.json) and the [evidence guide](../assurance/README.md).

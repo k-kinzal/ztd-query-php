@@ -70,7 +70,7 @@ class Database:
             return None
         raise RuntimeError(f"Unknown SQLite storage class {storage}")
 
-    def observe(self, sql, bindings):
+    def observe(self, sql, bindings, preserve_order=False):
         stmt, tail = c.c_void_p(), c.c_char_p()
         encoded = sql.encode()
         self.check(self.prepare_v2(self.db, encoded, len(encoded) + 1, c.byref(stmt), c.byref(tail)))
@@ -104,7 +104,7 @@ class Database:
             return {
                 "names": [self.column_name(stmt, index).decode() for index in range(width)],
                 "parameters": parameters, "parameterCount": count,
-                "rows": sorted(rows), "readOnly": readonly,
+                "rows": rows if preserve_order else sorted(rows), "readOnly": readonly,
                 "changes": self.total_changes(self.db) - changes,
             }
         finally:

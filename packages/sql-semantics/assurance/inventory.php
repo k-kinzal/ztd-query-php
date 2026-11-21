@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Interface_;
@@ -47,7 +48,12 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                 }
             }
             $methods = [];
+            $publicReturns = [];
             foreach ($type->getMethods() as $method) {
+                if ($method->isPublic() && $method->returnType !== null) {
+                    $names = $finder->findInstanceOf($method->returnType, FullyQualified::class);
+                    $publicReturns[$method->name->toString()] = array_map(static fn (FullyQualified $name) => $name->toString(), $names);
+                }
                 if ($method->isPublic() || str_starts_with($method->name->toString(), '__')) {
                     $signature = clone $method;
                     $signature->stmts = null;
@@ -73,6 +79,7 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                     $finder->findInstanceOf($type->stmts, PhpParser\Node\Stmt\TraitUse::class),
                 )),
                 'public_and_magic_signatures' => $methods,
+                'public_return_roles' => (object) $publicReturns,
             ];
         }
     }

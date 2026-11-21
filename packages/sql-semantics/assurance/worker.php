@@ -5,10 +5,17 @@ declare(strict_types=1);
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -28,41 +35,64 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter
+function operand(array $input): Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical
 {
     return match ($input[0]) {
         'integer' => new IntegerLiteral($input[1]),
         'null' => new NullLiteral(),
         'parameter' => new Parameter($input[1]),
-        'column' => new ColumnReference($input[1]),
+        'column' => new ColumnReference($input[1], $input[2] ?? 0),
+        'comparison' => new Comparison(ComparisonOperator::from($input[1]), operand($input[2]), operand($input[3])),
+        'logical' => new Logical(LogicalOperator::from($input[1]), operand($input[2]), operand($input[3])),
         'arithmetic' => new Arithmetic(ArithmeticOperator::from($input[1]), operand($input[2]), operand($input[3])),
     };
 }
 
-function observeOperand(Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $value): array
+function observeOperand(Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical $value): array
 {
     return match (true) {
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
         $value instanceof NullLiteral => ['null'],
         $value instanceof Parameter => ['parameter', $value->label],
-        $value instanceof ColumnReference => ['column', $value->slot],
+        $value instanceof ColumnReference => $value->source === 0 ? ['column', $value->slot] : ['column', $value->slot, $value->source],
+        $value instanceof Comparison => ['comparison', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
+        $value instanceof Logical => ['logical', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
         $value instanceof Arithmetic => ['arithmetic', $value->operator->value, observeOperand($value->left), observeOperand($value->right)],
     };
 }
 
+function source(array $specification): TableSource
+{
+    return new TableSource(new Identifier($specification[0]), new Identifier($specification[1]), array_map(
+        static fn (string $name): Identifier => new Identifier($name),
+        $specification[2],
+    ));
+}
+
+function observeSource(TableSource $source): array
+{
+    return [$source->schema->value, $source->table->value, array_map(
+        static fn (Identifier $name): string => $name->value,
+        $source->columns,
+    )];
+}
+
 function direct(array $input): Select
 {
-    $source = $input['source'];
-    $from = $source === null ? null : new TableSource(new Identifier($source[0]), new Identifier($source[1]), array_map(
-        static fn (string $name): Identifier => new Identifier($name),
-        $source[2],
-    ));
+    $from = $input['source'] === null ? null : source($input['source']);
     $columns = array_map(
         static fn (array $field): ResultColumn => new ResultColumn(operand($field[0]), new Identifier($field[1])),
         $input['columns'],
     );
 
-    return new Select($columns, $from);
+    $joins = array_map(static fn (array $step): Join => new Join(
+        JoinKind::from($step[0]),
+        source($step[1]),
+        $step[2] === null ? null : operand($step[2]),
+    ), $input['joins'] ?? []);
+    $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
+
+    return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy);
 }
 
 function analyzed(array $input): Select
@@ -110,10 +140,12 @@ function runCase(array $input): array
     return [
         'status' => 'constructed',
         'profile' => $value->profileId(),
-        'source' => $source === null ? null : [$source->schema->value, $source->table->value, array_map(
-            static fn (Identifier $name): string => $name->value,
-            $source->columns,
-        )],
+        'source' => $source === null ? null : observeSource($source),
+        'joins' => array_map(static fn (Join $join): array => [
+            $join->kind->value, observeSource($join->source), $join->on === null ? null : observeOperand($join->on),
+        ], $value->joins),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'orderBy' => array_map(static fn (Order $order): array => [$order->position, $order->descending, $order->nullsFirst], $value->orderBy),
         'columns' => array_map(static fn (ResultColumn $field): array => [observeOperand($field->expression), $field->name->value], $value->columns),
         'sql' => $value->toString(),
     ];

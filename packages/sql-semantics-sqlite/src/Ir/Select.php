@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A complete SQLite projection over zero or one external table.
+ * A complete SQLite projection over a checked list of bound table occurrences.
  *
  * @visibility public
  * @example Constructing a projection directly
@@ -26,15 +30,35 @@ final class Select implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * @var list<Join> Joined inputs in their associative order
+     */
+    public readonly array $joins;
+
+    /**
+     * @var list<Order> Result ordering keys in their priority order
+     */
+    public readonly array $orderBy;
+
+    /**
      * Establishes the list and scope conditions before publication.
      *
      * @param non-empty-list<ResultColumn> $columns The ordered result columns
-     * @param TableSource|null $source The external input slots
+     * @param TableSource|null $source The first external input
+     * @param list<Join> $joins The inputs joined to the left prefix
+     * @param Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where The post-join filter
+     * @param list<Order> $orderBy The output ordering
      */
-    public function __construct(array $columns, public readonly ?TableSource $source = null)
-    {
+    public function __construct(
+        array $columns,
+        public readonly ?TableSource $source = null,
+        array $joins = [],
+        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical|null $where = null,
+        array $orderBy = [],
+    ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
-        (new SelectBounds())->check($results, $source);
+        $this->joins = Check::listOf($joins, Join::class, 'Joins must be an ordered list of join steps.');
+        $this->orderBy = Check::listOf($orderBy, Order::class, 'Ordering must be an ordered list of output positions.');
+        (new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy);
         $this->columns = $results;
     }
 

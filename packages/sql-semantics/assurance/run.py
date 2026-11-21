@@ -330,7 +330,7 @@ def run(args, db, contract, output):
                 (case(None, [["null"]], labels=["a\0b"]), "without NUL", "rejected"),
                 (case(None, [["null"]], labels=["a" * 256]), "at most 255 bytes", "rejected"),
                 ({"sql": "SELECT id FROM accounts", "declarations": []}, "resolved, complete base table", "rejected"),
-                ({"sql": "SELECT DISTINCT 1", "declarations": []}, "unfiltered, unordered", "rejected"),
+                ({"sql": "SELECT DISTINCT 1", "declarations": []}, "bag projections", "rejected"),
                 ({"sql": "SELECT ?", "declarations": []}, "numbered parameter label", "rejected"),
                 ({"sql": "SELECT id FROM", "declarations": []}, "Unexpected", "analysis-rejected"),
             ]
@@ -434,6 +434,8 @@ def main():
     write_json(args.out / "scope.json", scope)
     require(not scope["unregisteredRootTypes"] and not scope["missingRootTypes"], "unexpected-complete-root", scope["completeRootTypes"])
     require(not scope["changedGrammarArtifacts"], "required-grammar-set-changed", scope["changedGrammarArtifacts"])
+    for field in ("unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes"):
+        require(not scope[field], "ir-constructor-ledger-mismatch", {"field": field, "detail": scope[field]})
     db = Database(args.sqlite_library)
     require(db.version == contract["initialExecutableDomain"]["profile"]["version"], "engine-version-mismatch", db.version)
     db.execute(SCHEMA)

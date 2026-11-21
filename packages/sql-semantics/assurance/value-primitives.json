@@ -1,0 +1,20 @@
+{
+  "artifacts": {
+    "mysql": {
+      "src/Model/Diagnostic/Check.php": "b203ce4940af5a11c3dd10ced06e05486ee95f8a5d1c6d530cd61fac12297013",
+      "src/Model/Statement/Identifier/Comparison.php": "2e7b56a7284846ae630e0d5699478806e61224bf0e6950c2cfb50e3a04cf0ed9",
+      "src/Model/Statement/Snapshot.php": "78edaf04d83097f9d099df6f70c534b3e22dcad12d3862721d881a6c0d507a05"
+    },
+    "postgres": {
+      "src/Model/Diagnostic/Check.php": "f94bb4d0b8ffdeb4b9522bdbf227447e02e2ac58956109b2d0884c2891e0e451",
+      "src/Model/Statement/Identifier/Comparison.php": "8d4528f0a5b22e9862e0c9966e5604d965e09615fbdc02c30a8b8d012c065dd7",
+      "src/Model/Statement/Snapshot.php": "df34cb7fa4c8394b5ba40b698b58f89b51cdccd4ea0aa29eaf68ed2c32009cff"
+    },
+    "sqlite": {
+      "src/Model/Diagnostic/Check.php": "67890fae4bc8cf3bca2d6a50216e5d4b348afebdca7145e9ebc9326c5f93341d",
+      "src/Model/Statement/Identifier/Comparison.php": "e9f758a8ba45e2db8871175654cd1c1bb1c5610516ba2f14f9eadaf9724399a6",
+      "src/Model/Statement/Snapshot.php": "317001eec3157e83e58c37a05a3dad395947947cdb40a31dcf92e6a11a97763f"
+    }
+  },
+  "baseline": "9703938a21d69446897512513e61df47e1e7172c"
+}

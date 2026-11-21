@@ -8,7 +8,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A reference to a zero-based column slot of the SELECT's sole source.
+ * A reference to a zero-based column slot of a local table occurrence.
  *
  * @visibility public
  * @example Referring to the first source column
@@ -21,8 +21,9 @@ final class ColumnReference
     /**
      * Identifies a nonnegative position in a SELECT source.
      */
-    public function __construct(public readonly int $slot)
+    public function __construct(public readonly int $slot, public readonly int $source = 0)
     {
         Check::input($slot >= 0, 'A column slot must be nonnegative.');
+        Check::input($source >= 0, 'A table occurrence index must be nonnegative.');
     }
 }

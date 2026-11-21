@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 #[CoversClass(SelectSql::class)]
 #[Small]
@@ -26,5 +27,19 @@ final class SelectSqlTest extends TestCase
     public function testExpressionKeepsNegativeValues(): void
     {
         self::assertSame('-2', (new SelectSql())->expression(new IntegerLiteral('-2'), null));
+    }
+
+    public function testSourceQualifiesTheExternalNameAndItsAlias(): void
+    {
+        $source = new TableSource(new Identifier('main'), new Identifier('metrics'), []);
+
+        self::assertSame('"main"."metrics" AS "__ztd_source_2"', (new SelectSql())->source($source, 2));
+    }
+
+    public function testAliasDistinguishesTheFirstAndLaterOccurrences(): void
+    {
+        $sql = new SelectSql();
+        self::assertSame('"__ztd_source"', $sql->alias(0));
+        self::assertSame('"__ztd_source_1"', $sql->alias(1));
     }
 }

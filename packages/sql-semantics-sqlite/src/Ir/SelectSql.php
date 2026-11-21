@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
- * Emits SQL from a complete SQLite SELECT.
+ * Emits a complete SQLite SELECT with canonical occurrence aliases.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -16,39 +19,78 @@ final class SelectSql
     private const SOURCE_ALIAS = '"__ztd_source"';
 
     /**
-     * Renders the result columns in order, then the optional source.
+     * Renders the SELECT, the join chain, the filter and the ordering in clause order.
      */
     public function render(Select $select): string
     {
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $column) {
-            $items[] = $this->expression($column->expression, $source) . ' AS ' . $column->name->quoted();
+            $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();
         }
         $sql = 'SELECT ' . implode(', ', $items);
         if ($source !== null) {
-            $sql .= ' FROM ' . $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . self::SOURCE_ALIAS;
+            $sql .= ' FROM ' . $this->source($source, 0);
+        }
+        foreach ($select->joins as $index => $join) {
+            $sql .= ' ' . $join->kind->value . ' JOIN ' . $this->source($join->source, $index + 1);
+            if ($join->on !== null) {
+                $sql .= ' ON ' . $this->expression($join->on, $source, $select->joins);
+            }
+        }
+        if ($select->where !== null) {
+            $sql .= ' WHERE ' . $this->expression($select->where, $source, $select->joins);
+        }
+        if ($select->orderBy !== []) {
+            $terms = [];
+            foreach ($select->orderBy as $term) {
+                $terms[] = $term->position . ($term->descending ? ' DESC' : ' ASC') . ($term->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST');
+            }
+            $sql .= ' ORDER BY ' . implode(', ', $terms);
         }
 
         return $sql;
     }
 
     /**
-     * Renders a checked expression occurrence.
+     * Renders a checked expression occurrence, keeping its operand order.
+     *
+     * @param list<Join> $joins The remaining source occurrences
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $expression, ?TableSource $source): string
-    {
+    public function expression(
+        Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter|Comparison|Logical $expression,
+        ?TableSource $source,
+        array $joins = [],
+    ): string {
         if ($expression instanceof ColumnReference) {
+            $source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);
             Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');
 
-            return self::SOURCE_ALIAS . '.' . $source->columns[$expression->slot]->quoted();
+            return $this->alias($expression->source) . '.' . $source->columns[$expression->slot]->quoted();
         }
 
         return match (true) {
-            $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source) . ')',
+            $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
+                => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Renders an absolute external reference with its local alias.
+     */
+    public function source(TableSource $source, int $occurrence): string
+    {
+        return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($occurrence);
+    }
+
+    /**
+     * Gives each occurrence its own quoted name.
+     */
+    public function alias(int $occurrence): string
+    {
+        return $occurrence === 0 ? self::SOURCE_ALIAS : '"__ztd_source_' . $occurrence . '"';
     }
 }

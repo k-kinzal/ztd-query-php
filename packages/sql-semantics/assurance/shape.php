@@ -60,6 +60,32 @@ if ($dialect === 'postgres') {
     $properties['TableSource']['only'] = ['bool'];
 }
 $internal = ['Analyzer', 'ExpressionLowering', 'SelectBounds', 'SelectSql', 'SourceBinding'];
+$enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
+if ($dialect === 'sqlite') {
+    $predicates = [...array_slice($operands, 0, 2), 'IntegerLiteral', 'NullLiteral', 'Parameter', 'Predicate\\Comparison', 'Predicate\\Logical'];
+    $nullablePredicates = [...$predicates, 'null'];
+    $properties['ColumnReference']['source'] = ['int'];
+    $properties['Select']['joins'] = ['array'];
+    $properties['Select']['orderBy'] = ['array'];
+    $properties['Select']['where'] = $nullablePredicates;
+    $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
+    $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
+    $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
+    $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
+    $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
+    $enumCases['Predicate\\ComparisonOperator'] = [
+        'Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=',
+        'Greater' => '>', 'GreaterOrEqual' => '>=', 'Is' => 'IS', 'IsNot' => 'IS NOT',
+    ];
+    $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR'];
+    foreach (['From\\JoinKind', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator'] as $enum) {
+        $methods[$enum] = $properties[$enum] = [];
+    }
+    foreach (['From\\Join', 'Ordering\\Order', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
+        $methods[$value] = ['__construct'];
+    }
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses');
+}
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
     $snapshot, 'SqlSemantics\\SemanticsIR',
@@ -92,12 +118,25 @@ $parser = (new ParserFactory())->createForNewestSupportedVersion();
 $traverser = new NodeTraverser(new NameResolver());
 $finder = new NodeFinder();
 try {
-    $base = 'sql-semantics-' . $dialect . '/src/Ir';
-    $files = glob($root . '/packages/' . $base . '/*.php');
+    $package = 'sql-semantics-' . $dialect;
+    $primitives = json_decode(file_get_contents(__DIR__ . '/value-primitives.json'), true, 512, JSON_THROW_ON_ERROR);
+    foreach ($primitives['artifacts'][$dialect] as $path => $approved) {
+        $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
+        $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
+        requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
+    }
+    $base = $package . '/src/Ir';
+    $directory = $root . '/packages/' . $base . '/';
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
-    foreach ($files as $file) {
-        $short = basename($file, '.php');
-        $patched = $overlay === '' ? '' : $overlay . '/' . $base . '/' . basename($file);
+    foreach ($files as $entry) {
+        if (!$entry->isFile() || $entry->getExtension() !== 'php') {
+            continue;
+        }
+        $file = $entry->getPathname();
+        $relative = substr($file, strlen($directory));
+        $short = str_replace('/', '\\', substr($relative, 0, -4));
+        $patched = $overlay === '' ? '' : $overlay . '/' . $base . '/' . $relative;
         $ast = $traverser->traverse($parser->parse(file_get_contents(is_file($patched) ? $patched : $file)));
         foreach ($ast as $statement) {
             requireShape($statement instanceof Stmt\Declare_ || $statement instanceof Stmt\Namespace_, "Executable code outside a namespace in $short");
@@ -117,8 +156,18 @@ try {
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
         $observed[] = $short;
-        if (in_array($short, $internal, true) && isset($class->implements) && $class->implements !== []) {
-            requireShape($short === 'Analyzer' && $class->implements[0]->toString() === 'SqlSemantics\\IrAnalyzer', "Unexpected internal interface in $short");
+        if (in_array($short, $internal, true)) {
+            requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open IR collaborator $short");
+            $interfaces = array_map(static fn ($interface) => $interface->toString(), $class->implements);
+            requireShape($interfaces === ($short === 'Analyzer' ? ['SqlSemantics\\IrAnalyzer'] : []), "Unexpected collaborator interface in $short");
+            if ($short === 'Analyzer') {
+                $publicMethods = array_values(array_map(
+                    static fn ($method) => $method->name->toString(),
+                    array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
+                ));
+                requireShape($publicMethods === ['__construct', 'analyze'], 'Unexpected public analyzer entry point');
+                requireShape($class->getMethod('analyze')?->returnType?->toString() === $prefix . 'Select', 'Analyzer return role differs');
+            }
         }
         if (in_array($short, $internal, true) && $short !== 'SelectBounds' && $short !== 'SelectSql') {
             continue;
@@ -168,14 +217,14 @@ try {
         ksort($expected);
         requireShape($actual === $expected, "Property domain differs in $short");
         requireShape($methods[$short] === $public, "Publication paths differ in $short");
-        if ($short === 'ArithmeticOperator') {
+        if (isset($enumCases[$short])) {
             requireShape($class instanceof Enum_ && $class->scalarType?->toString() === 'string', 'Arithmetic operators must be a string enum');
             $operators = [];
             foreach ($class->stmts as $case) {
                 requireShape($case instanceof Stmt\EnumCase && $case->expr instanceof String_, 'An arithmetic operator must be a literal case');
                 $operators[$case->name->toString()] = $case->expr->value;
             }
-            requireShape($operators === ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*'], 'Arithmetic operator meanings differ');
+            requireShape($operators === $enumCases[$short], "Operator meanings differ in $short");
             continue;
         }
         requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open value class $short");
@@ -184,6 +233,7 @@ try {
         requireShape(count($traits) === 1 && count($traits[0]->traits) === 1 && $traits[0]->traits[0]->toString() === $snapshot && $traits[0]->adaptations === [], "Snapshot paths differ in $short");
     }
     requireShape(array_diff([...array_keys($properties), ...$internal], $observed) === [] && count($observed) === count($properties) + count($internal), 'Closed IR inventory differs');
+    sort($observed);
     echo json_encode(['status' => 'verified', 'types' => $observed]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
