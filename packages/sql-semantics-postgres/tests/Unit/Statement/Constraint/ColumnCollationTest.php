@@ -14,14 +14,14 @@ final class ColumnCollationTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('CREATE TABLE t (a text COLLATE "C")', []);
         self::assertSame(0, count($statement->facts->diagnostics));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('CREATE TABLE t (a text COLLATE pg_catalog."C")', []);
         self::assertSame('CREATE TABLE t (a text COLLATE pg_catalog."C")', $statement->toString());
     }

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\ForeignServer;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of CREATE SERVER or ALTER SERVER: `USER 'name'`, `PORT 3306`, ….

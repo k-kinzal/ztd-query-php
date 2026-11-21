@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `SET [LOCAL] parameter TO DEFAULT` or `SET [LOCAL] parameter FROM CURRENT`: a parameter set without a written value.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Restoring a default
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET work_mem = DEFAULT');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET work_mem = DEFAULT');
  *     [$operation->statement->source, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, 'SET work_mem TO DEFAULT']
  */
 final class SetParameterFrom implements Statement

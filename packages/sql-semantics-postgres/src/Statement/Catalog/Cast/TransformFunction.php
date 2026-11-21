@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FROM SQL WITH FUNCTION function` or `TO SQL WITH FUNCTION function` of a transform.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the direction of a transform function
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))');
  *     $operation->statement->functions[0]->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\TransformDirection::ToSql
  */
 final class TransformFunction implements Clause

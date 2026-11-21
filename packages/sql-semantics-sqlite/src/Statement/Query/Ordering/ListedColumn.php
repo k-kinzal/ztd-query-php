@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Ordering;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * One name of a column name list, with the collation and direction the grammar admits after it.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the column names of a common table expression
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('WITH c(x, y) AS (SELECT 1, 2) SELECT x FROM c');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('WITH c(x, y) AS (SELECT 1, 2) SELECT x FROM c');
  *     $query->statement->with->tables[0]->columns[1]->name->value // => 'y'
  */
 final class ListedColumn implements Node

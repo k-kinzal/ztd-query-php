@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the output columns of set operations and VALUES statements from the columns they combine.

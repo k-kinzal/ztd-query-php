@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
@@ -13,9 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] privileges ON [kind] level FROM accounts [IGNORE UNKNOWN USER]`: a request to revoke privileges.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Revoking a privilege
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists execute on procedure p from u ignore unknown user')->toString() // => 'REVOKE IF EXISTS EXECUTE ON PROCEDURE p FROM u IGNORE UNKNOWN USER'
  */
 final class RevokePrivileges implements Statement
 {

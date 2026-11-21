@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\OperandChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Unification;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseExpression;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Types a CASE expression.

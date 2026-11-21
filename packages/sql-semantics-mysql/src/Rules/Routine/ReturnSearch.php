@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop;
@@ -13,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use SqlSemantics\Statement\Node;
 
 /**
  * Finds out whether the body of a stored function holds a RETURN statement.

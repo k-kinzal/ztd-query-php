@@ -6,7 +6,11 @@ deptrac:
     - name: Core
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\(Diagnostic|Contract|Statement|Construction|Resolution|Rendering|Lowering|Validation|Facade)\\.*'
+          value: '^SqlSemantics\\(AnalysisContext|AnalysisException|Analyzer|Query|Contract\\(Dialect|Mode))$'
+    - name: DatabaseModel
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\PostgreSql\\Model\\.*'
     - name: Parser
       collectors:
         - type: classLike
@@ -28,9 +32,10 @@ deptrac:
         - type: classLike
           value: '^SqlSemantics\\Platform\\PostgreSql\\[A-Za-z]+$'
   ruleset:
-    Core: [Parser]
+    Core: []
+    DatabaseModel: [Core, Parser, Wiring]
     Parser: []
-    Model: [Core, Rules]
-    Rules: [Core, Model, Parser]
-    PlatformLowering: [Core, Model, Rules, Parser]
-    Wiring: [Core, Model, Rules, PlatformLowering, Parser]
+    Model: [Core, DatabaseModel, Rules]
+    Rules: [Core, DatabaseModel, Model, Parser]
+    PlatformLowering: [Core, DatabaseModel, Model, Rules, Parser]
+    Wiring: [Core, DatabaseModel, Model, Rules, PlatformLowering, Parser]

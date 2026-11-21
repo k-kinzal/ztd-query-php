@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Literal;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A floating point literal, kept as its exact decimal parts and never as a PHP float.
@@ -25,17 +25,17 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the parts of a floating point literal
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1.50E-3 AS r');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1.50E-3 AS r');
  *     $literal = $query->statement->columns[0]->expression;
  *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
  * @example Refusing a literal with neither a decimal point nor an exponent
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a point without any digit
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('', '') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('', '') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing non digit parts
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1a', '5') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1a', '5') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing an exponent with a letter
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, 'e5') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, 'e5') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class RealLiteral implements Scalar
 {

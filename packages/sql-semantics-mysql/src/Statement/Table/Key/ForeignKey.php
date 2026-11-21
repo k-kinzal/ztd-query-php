@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FOREIGN KEY constraint: the child columns and the reference to the parent table.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a foreign key
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE c (p INT, CONSTRAINT fk FOREIGN KEY (p) REFERENCES p (id))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE c (p INT, CONSTRAINT fk FOREIGN KEY (p) REFERENCES p (id))');
  *     [$create->statement->elements[1]->constraint->name->column->value, $create->statement->elements[1]->references->table->name->value] // => ['fk', 'p']
  */
 final class ForeignKey implements TableElement

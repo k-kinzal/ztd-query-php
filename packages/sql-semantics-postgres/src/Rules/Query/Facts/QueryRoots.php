@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
@@ -13,13 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Derives a query that is a whole statement: its rows, or the table SELECT INTO creates.
@@ -48,7 +48,7 @@ final class QueryRoots
         $modifying = new ModifyingCommonTables();
         $modifying->check($root, $modifying->top($root), $derivation);
         $first = $this->first($root);
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root) as $object) {
             if ($object instanceof Select && $object->into !== null && $object !== $first) {
                 $derivation->report(new QueryMisuse(QueryMisuseRule::IntoNotAllowed));
             }

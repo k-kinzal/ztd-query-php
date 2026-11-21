@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A call that uses a clause the function called does not accept.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Describing a window function called without OVER
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuse(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuseKind::WindowWithoutOver,
- *         new \SqlSemantics\Statement\Identifier\Name('rank'),
+ *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('rank'),
  *     ))->message() // => 'window function rank requires an OVER clause'
  */
 final class CallMisuse implements Diagnostic

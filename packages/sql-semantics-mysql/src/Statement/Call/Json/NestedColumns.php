@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A `NESTED PATH path COLUMNS (...)` column of JSON_TABLE: the columns of the rows of a nested array.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the nested columns
- *     $nested = new \SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.b[*]']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Statement\Identifier\Name('n'))]);
+ *     $nested = new \SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.b[*]']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('n'))]);
  *     count($nested->columns) // => 1
  */
 final class NestedColumns implements JsonTableColumn
@@ -58,7 +58,7 @@ final class NestedColumns implements JsonTableColumn
         $slots = [];
         foreach ($this->columns as $column) {
             foreach ($column->deriveColumns($derivation, $environment) as $slot) {
-                $slots[] = new OutputSlot($slot->name, $slot->type, \SqlSemantics\Statement\Type\Nullability::Nullable);
+                $slots[] = new OutputSlot($slot->name, $slot->type, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable);
             }
         }
 

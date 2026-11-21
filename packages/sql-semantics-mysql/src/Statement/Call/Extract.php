@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of EXTRACT(unit FROM date): the part of a date or time a unit names.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Typing EXTRACT()
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT EXTRACT(YEAR_MONTH FROM '2024-07-02')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT EXTRACT(YEAR_MONTH FROM '2024-07-02')");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class Extract implements Scalar

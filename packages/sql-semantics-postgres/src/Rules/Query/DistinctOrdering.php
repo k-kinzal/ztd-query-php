@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\Equivalence;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Validation\Equivalence;
 
 /**
  * Checks that DISTINCT ON and ORDER BY agree, as PostgreSQL requires.

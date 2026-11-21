@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeReader;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\CreateComposite;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\CreateEnum;
@@ -23,8 +25,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\CopyCollation;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Define;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers DefineStmt: CREATE AGGREGATE, OPERATOR, TYPE, TEXT SEARCH objects and COLLATION.

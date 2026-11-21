@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The account of the session, written `CURRENT_USER` or `CURRENT_USER()` at an account position.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Rendering the current user
- *     $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+ *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));
  *     (new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())->render($out);
  *     $out->pieces()[0]->text // => 'CURRENT_USER'
  */

@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\LiteralDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
@@ -17,11 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Reports what the declared columns of a table rule out in an ALTER TABLE request.

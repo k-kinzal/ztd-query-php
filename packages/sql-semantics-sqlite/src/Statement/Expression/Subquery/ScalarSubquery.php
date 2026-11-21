@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A query in parentheses used as a value: the first row of its result, or NULL when it has no row.
@@ -31,8 +31,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the facts of a scalar subquery
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (SELECT 1)');
- *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (SELECT 1)');
+ *     [$query->field(0)->type->descriptor, $query->field(0)->nullability] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class ScalarSubquery implements Scalar
 {

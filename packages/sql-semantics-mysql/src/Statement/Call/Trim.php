@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of TRIM(): a string without the leading, trailing or both occurrences of a removed string, by default spaces.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding the parts of TRIM(LEADING 'x' FROM a)
- *     $trim = new \SqlSemantics\Platform\MySql\Statement\Call\Trim(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), \SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading, new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']));
+ *     $trim = new \SqlSemantics\Platform\MySql\Statement\Call\Trim(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), \SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading, new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']));
  *     [$trim->side, $trim->removed !== null] // => [\SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading, true]
  */
 final class Trim implements Scalar

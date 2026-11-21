@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
 
 /**
  * Flattens the recursive list rules of the table definition family and checks every production of the spine.

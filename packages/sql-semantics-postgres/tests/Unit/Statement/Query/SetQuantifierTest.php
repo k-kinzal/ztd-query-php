@@ -14,7 +14,7 @@ final class SetQuantifierTest extends TestCase
 {
     public function testQuantifierOfUnionAll(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT 1 UNION ALL SELECT 2');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $statement);

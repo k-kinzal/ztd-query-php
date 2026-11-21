@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
@@ -18,12 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\Manipulation
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Derives the columns an INSERT column list or a SET list writes, and the values assigned to them.

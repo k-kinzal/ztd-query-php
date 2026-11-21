@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ArgumentText;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignatio
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ArgumentText::class)]
 #[Small]

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table VACUUM or ANALYZE processes, with the columns to analyze when some are listed.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the columns of an analyzed table
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ANALYZE app.t (a, b)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ANALYZE app.t (a, b)');
  *     [$operation->statement->targets[0]->table->schema->value, count($operation->statement->targets[0]->columns)] // => ['app', 2]
  */
 final class MaintenanceTarget implements Node

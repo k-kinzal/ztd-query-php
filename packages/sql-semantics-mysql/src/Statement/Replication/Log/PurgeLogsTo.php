@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `PURGE BINARY LOGS TO 'file'`: deletes the binary log files listed before the named one.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Writing MASTER LOGS as its synonym
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze("purge master logs to 'binlog.000010'")->toString() // => "PURGE BINARY LOGS TO 'binlog.000010'"
  */
 final class PurgeLogsTo implements Statement
 {

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
@@ -14,10 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignat
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET [LOCAL] TIME ZONE value`: a request to change the time zone of the session.
@@ -32,13 +32,13 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a time zone set by an interval
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
  *     [$operation->statement->zone->value->value, $operation->toString()] // => ['-08:00', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"]
  * @example Refusing a constant of another type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
- *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('date')]))),
+ *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('date')]))),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('1'),
- *     )) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     )) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class SetTimeZone implements Statement
 {

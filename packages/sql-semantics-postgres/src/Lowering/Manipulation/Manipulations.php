@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * The entry point of the manipulation family: INSERT, UPDATE, DELETE, MERGE, COPY, prepared statements and cursors.

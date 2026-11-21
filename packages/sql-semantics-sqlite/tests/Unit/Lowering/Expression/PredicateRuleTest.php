@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\PredicateRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
@@ -28,7 +27,7 @@ final class PredicateRuleTest extends TestCase
 {
     public function testExpressionLowersTheNullTestsByTheirSpelling(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
+        $operation = (new Semantics())->analyze('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([NullTestForm::IsNull, NullTestForm::NotNull, NullTestForm::NotNullWords], array_map(static function (object $column): NullTestForm {
@@ -43,7 +42,7 @@ final class PredicateRuleTest extends TestCase
 
     public function testExpressionLowersRangeTests(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a BETWEEN 1 AND 2, a NOT BETWEEN 1 AND 2 FROM t');
+        $operation = (new Semantics())->analyze('SELECT a BETWEEN 1 AND 2, a NOT BETWEEN 1 AND 2 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -60,7 +59,7 @@ final class PredicateRuleTest extends TestCase
 
     public function testExpressionLowersMembershipTestsAgainstAListAQueryAndATable(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a IN (1, 2), a NOT IN (), a IN (SELECT 1), a NOT IN main.u FROM t');
+        $operation = (new Semantics())->analyze('SELECT a IN (1, 2), a NOT IN (), a IN (SELECT 1), a NOT IN main.u FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $expressions = array_map(static function (object $column): object {
@@ -85,7 +84,7 @@ final class PredicateRuleTest extends TestCase
 
     public function testMatchLowersEachPatternOperatorWithItsNegation(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a LIKE 'x', a NOT LIKE 'x', a GLOB 'x', a NOT REGEXP 'x', a MATCH 'x' FROM t");
+        $operation = (new Semantics())->analyze("SELECT a LIKE 'x', a NOT LIKE 'x', a GLOB 'x', a NOT REGEXP 'x', a MATCH 'x' FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([[PatternOperator::Like, false], [PatternOperator::Like, true], [PatternOperator::Glob, false], [PatternOperator::Regexp, true], [PatternOperator::Match, false]], array_map(static function (object $column): array {
@@ -100,7 +99,7 @@ final class PredicateRuleTest extends TestCase
 
     public function testMatchKeepsTheEscapeOperand(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a LIKE 'x' ESCAPE '!', a NOT GLOB b ESCAPE c FROM t");
+        $operation = (new Semantics())->analyze("SELECT a LIKE 'x' ESCAPE '!', a NOT GLOB b ESCAPE c FROM t");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -118,7 +117,7 @@ final class PredicateRuleTest extends TestCase
 
     public function testNegatedTellsWhetherNotIsWrittenBeforeBetweenOrIn(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 BETWEEN 0 AND 2, 1 NOT BETWEEN 0 AND 2, 1 IN (1), 1 NOT IN (1)');
+        $operation = (new Semantics())->analyze('SELECT 1 BETWEEN 0 AND 2, 1 NOT BETWEEN 0 AND 2, 1 IN (1), 1 NOT IN (1)');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([false, true, false, true], array_map(static function (object $column): ?bool {

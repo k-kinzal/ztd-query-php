@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The tables of a schema as an item of a publication: `TABLES IN SCHEMA { name | CURRENT_SCHEMA }`.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Publishing the tables of the current schema
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA CURRENT_SCHEMA, s');
  *     [$operation->statement->objects[0]->schema, $operation->statement->objects[1]->schema?->value] // => [null, 's']
  */
 final class PublicationSchema implements PublicationMember

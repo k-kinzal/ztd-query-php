@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The definition of a routine written as a string constant: unanalysed text in the routine's language.
@@ -48,7 +48,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the language and the text of a routine definition
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$");
  *     $source = $operation->statement->options[1]->source;
  *     [$source->language?->value, $source->text->value] // => ['sql', ' SELECT 1 ']
  */

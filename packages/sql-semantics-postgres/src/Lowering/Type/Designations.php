@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Type;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\BitDesignation;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignati
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the designation of a type: its keyword spelling or its name.

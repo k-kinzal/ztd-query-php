@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `RESTART`: a request to stop and start the server under its supervisor (MySQL 8.0.12 and later).
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('restart')->toString() // => 'RESTART'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('restart')->toString() // => 'RESTART'
  */
 final class Restart implements Statement
 {

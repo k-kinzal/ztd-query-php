@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The role option INHERIT: the role inherits the privileges of the roles it is a member of.

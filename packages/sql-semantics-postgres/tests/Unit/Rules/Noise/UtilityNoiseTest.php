@@ -7,9 +7,8 @@ namespace Tests\Unit\Rules\Noise;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Platform\PostgreSql\Rules\Noise\UtilityNoise;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 
 #[CoversClass(UtilityNoise::class)]
 #[Medium]
@@ -36,7 +35,7 @@ final class UtilityNoiseTest extends TestCase
 
     public function testPositionsLetTheStatementsRoundTripWithoutTheWords(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['ROLLBACK TO s', 'BEGIN READ ONLY DEFERRABLE', 'SET a TO DEFAULT', 'SET a TO 1'],
             [$semantics->analyze('ROLLBACK TRANSACTION TO SAVEPOINT s')->toString(), $semantics->analyze('BEGIN WORK READ ONLY, DEFERRABLE')->toString(), $semantics->analyze('SET a = DEFAULT')->toString(), $semantics->analyze('SET SESSION a = 1')->toString()],

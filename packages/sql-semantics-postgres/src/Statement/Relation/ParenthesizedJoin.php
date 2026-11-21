@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Relation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\AliasSpelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A join in parentheses, optionally renamed.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a renamed join
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM (a CROSS JOIN b) AS j');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 FROM (a CROSS JOIN b) AS j');
  *     [$query->statement->from->alias->value, $query->toString()] // => ['j', 'SELECT 1 FROM (a CROSS JOIN b) AS j']
  */
 final class ParenthesizedJoin implements Relation

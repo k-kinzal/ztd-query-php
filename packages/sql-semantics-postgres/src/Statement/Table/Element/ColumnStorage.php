@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The STORAGE clause of a column: the storage method of its values, or DEFAULT.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the storage of a column
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text STORAGE DEFAULT)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a text STORAGE DEFAULT)');
  *     $create->statement->definition->elements[0]->storage->method // => null
  */
 final class ColumnStorage implements Node

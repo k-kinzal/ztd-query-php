@@ -7,18 +7,18 @@ namespace Tests\Unit\Rules\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UnboundParameter;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
-use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Storages::class)]
 #[Small]

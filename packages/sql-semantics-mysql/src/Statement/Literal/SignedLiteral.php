@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * A number literal written with a sign at a position that takes a signed literal, such as a column default.

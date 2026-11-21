@@ -7,10 +7,9 @@ namespace Tests\Unit\Statement\Name;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(AmbiguousAlias::class)]
 #[Medium]
@@ -18,7 +17,7 @@ final class AmbiguousAliasTest extends TestCase
 {
     public function testMessageNamesTheAlias(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []);
+        $operation = (new Semantics())->inspect('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []);
         $fields = $operation->fields()->items ?? [];
 
         self::assertSame('Column x is ambiguous.', (new AmbiguousAlias(new Name('x'), $fields))->message());
@@ -29,7 +28,7 @@ final class AmbiguousAliasTest extends TestCase
 
     public function testRejectsASingleCandidate(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x', []);
+        $operation = (new Semantics())->inspect('SELECT 1 AS x', []);
 
         $this->expectExceptionMessage('An ambiguous alias names at least two select list items.');
 

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
@@ -32,7 +33,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\TypeArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Reads the value of a definition attribute the way its command does.

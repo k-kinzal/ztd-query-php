@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Query;
 
 /**
  * Derives the facts of a set operation.
@@ -60,7 +60,7 @@ final class SetFacts
     /**
      * Derives the operands of a leading union and answers the rows they combine to.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the release does not read the form
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the release does not read the form
      */
     public function leading(LeadingUnion $leading, Derivation $derivation, Environment $outer): QueryFact
     {

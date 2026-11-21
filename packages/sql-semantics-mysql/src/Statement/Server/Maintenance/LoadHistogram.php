@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `UPDATE HISTOGRAM ON column USING DATA 'json'`: a request to store a histogram given as its JSON form (MySQL 8.0.31 and later).
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the histogram request
- *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
+ *     $analyze = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
  *     [$analyze->toString(), $analyze->statement->histogram->data->value === '{}'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", true]
  */
 final class LoadHistogram implements Histogram

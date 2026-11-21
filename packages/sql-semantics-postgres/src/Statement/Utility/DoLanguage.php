@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LANGUAGE name` in DO: the procedural language the code is written in.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the language of an anonymous block
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("DO LANGUAGE plpgsql 'BEGIN END'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("DO LANGUAGE plpgsql 'BEGIN END'");
  *     $operation->statement->items[0]->name() // => 'plpgsql'
  */
 final class DoLanguage implements Node

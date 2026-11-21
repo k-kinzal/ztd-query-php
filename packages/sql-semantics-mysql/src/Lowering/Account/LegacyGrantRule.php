@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of MySQL 5.6 and 5.7.

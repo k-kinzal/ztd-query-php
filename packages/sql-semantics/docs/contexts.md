@@ -1,6 +1,6 @@
 # Contexts
 
-Facts such as resolutions, shapes and types depend on what is known about the database. That knowledge is passed explicitly, as an immutable `SqlSemantics\Contract\AnalysisContext`. Nothing is read from a connection, the host locale, the clock or a mutable setting, and no statement changes a context.
+Facts such as resolutions, shapes and types depend on what is known about the database. That knowledge is passed explicitly, as an immutable `SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext`. Nothing is read from a connection, the host locale, the clock or a mutable setting, and no statement changes a context.
 
 ## What a context holds
 
@@ -23,10 +23,9 @@ Create contexts with `Semantics::context()`, which applies the search path and t
 | An `AnalysisContext` | Used as it is. Passing the same context object to several analyses keeps its identity. |
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 $context = $semantics->context([$users]);
 
@@ -45,19 +44,18 @@ A context declares relations, such as tables and views, with their columns. Ther
 
 **From CREATE statements.** An operation provides the declarations its statement creates, for example those of CREATE TABLE, CREATE TABLE AS, CREATE VIEW or CREATE VIRTUAL TABLE; `declarations()` lists them. Passing the operation in a context list contributes those declarations. Analyzing the CREATE statement in a context matters where the declaration depends on other declarations, as for a view over a table or a column of a user type. The declarations of the database packages also carry columns the database adds implicitly, such as the SQLite `rowid`.
 
-**From your own catalog.** `Table`, `Column` and `ImplicitColumn` (namespace `SqlSemantics\Statement\Declaration`) have public constructors. A `Column` needs a type descriptor of the database package, for example SQLite's `ColumnDomain`, a NULL fact (nullable by default) and whether it is generated (not by default). A `Table` takes its relation kind (a base table by default). A table you construct has exactly the columns you give it; implicit columns such as `rowid` exist only if you list them.
+**From your own catalog.** `Table`, `Column` and `ImplicitColumn` (namespace `SqlSemantics\Platform\Sqlite\Model\Statement\Declaration`) have public constructors. A `Column` needs a type descriptor of the database package, for example SQLite's `ColumnDomain`, a NULL fact (nullable by default) and whether it is generated (not by default). A `Table` takes its relation kind (a base table by default). A table you construct has exactly the columns you give it; implicit columns such as `rowid` exist only if you list them.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = new Table(
     new QualifiedName(new Name('users')),
     $semantics->profile(),
@@ -70,7 +68,7 @@ $query = $semantics->analyze('SELECT name FROM users', [$users]);
 
 $query->field('name')->column() === $users->columns[1]; // => true
 $query->field('name')->type->descriptor->name(); // => 'TEXT'
-$semantics->analyze('SELECT rowid FROM users', [$users])->facts->diagnostics[0]->message(); // => 'Column rowid does not exist.'
+$semantics->analyze('SELECT rowid FROM users', [$users]); // throws SemanticException with message 'Column rowid does not exist.'
 ```
 
 A declaration belongs to one language profile; a declaration of another profile is refused with `InvalidConstruction`.
@@ -78,17 +76,16 @@ A declaration belongs to one language profile; a declaration of another profile 
 A table whose column list is not known completely is constructed with `complete: false`. Its listed columns resolve; another name is conditional, and a star over it stays open, naming the `IncompleteMembers` it depends on:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $events = new Table(new QualifiedName(new Name('events')), $semantics->profile(), [new Column(new Name('id'), new ColumnDomain('INTEGER'))], complete: false);
 
 $semantics->analyze('SELECT id FROM events', [$events])->field('id')->resolution instanceof ResolvedColumn; // => true
@@ -105,24 +102,23 @@ A `Table` states its `kind`, a `RelationKind`: `BaseTable`, `View`, `Materialize
 A `Column` states whether it is `generated`: its value is computed from other columns of its row, and the statement cannot write it. CREATE TABLE declares the generated columns its definition has, and each database package reports the writes into them that its database refuses, such as an UPDATE that assigns one. Reading a generated column is like reading any other column.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $view = new Table(new QualifiedName(new Name('active_users')), $semantics->profile(), [new Column(new Name('id'), new ColumnDomain('INTEGER'))], kind: RelationKind::View);
 $orders = new Table(new QualifiedName(new Name('orders')), $semantics->profile(), [
     new Column(new Name('price'), new ColumnDomain('INTEGER')),
     new Column(new Name('total'), new ColumnDomain('INTEGER'), generated: true),
 ]);
 
-$semantics->analyze('DROP TABLE active_users', [$view])->facts->diagnostics[0]->message(); // => 'Relation active_users is a view: DROP TABLE removes only a table.'
-$semantics->analyze('UPDATE orders SET total = 2', [$orders])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "total"'
+$semantics->analyze('DROP TABLE active_users', [$view]); // throws SemanticException with message 'Relation active_users is a view: DROP TABLE removes only a table.'
+$semantics->analyze('UPDATE orders SET total = 2', [$orders]); // throws SemanticException with message 'cannot UPDATE generated column "total"'
 $semantics->analyze('SELECT total FROM orders', [$orders])->field('total')->column()->generated; // => true
 $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
 ```
@@ -134,18 +130,14 @@ A declaration keeps neither the query of a view nor the expression of a generate
 The declaration object is the identity of a declaration. A resolved reference reaches the very `Table` and `Column` objects of the context; they are never copied. The same object given twice, directly or through the operation that provides it, is kept once. Two different objects with the same name are two declarations, and the context keeps the conflict: the name resolves to `ConflictingTables`, a diagnostic, and no declaration is chosen. There is no "last declaration wins".
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $first = $semantics->analyze('CREATE TABLE t (a INTEGER)');
 $second = $semantics->analyze('CREATE TABLE t (b TEXT)');
 
 count($semantics->context([$first, $first, $first->declarations()[0]])->tables); // => 1
-$query = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
-$query->facts->relation($query->inputRelation())->table instanceof ConflictingTables; // => true
-$query->facts->diagnostics[0]->message(); // => 'Relation t has conflicting declarations.'
+$semantics->analyze('SELECT 1 FROM t', [$first, $second]); // throws SemanticException
 ```
 
 ## Completeness
@@ -161,12 +153,11 @@ Completeness concerns the list of relations; each `Table` states separately whet
 An open context has no declarations, so every relation name in it is undeclared. In a partial context, the search order matters. When an unqualified name is declared in a later schema of the search path, an undeclared relation of an earlier schema would be found first, so the result is a `ConditionalTable` with the declaration as its candidate. SQLite searches `temp` before `main`, and PostgreSQL searches `pg_temp` and `pg_catalog` before the path, so in a partial context of these databases qualify the names whose resolution you rely on, or use a complete context:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\ConditionalTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
 $partial = $semantics->context([$users], false);
 
@@ -180,7 +171,7 @@ A complete context enumerates relations only. Version 1 contexts cannot declare 
 
 ## Search paths
 
-The fifth argument of `Semantics` is a `SqlSemantics\Contract\SearchPath`: the schemas an unqualified relation name is searched in, in precedence order. A path the database cannot search is refused by the `Semantics` constructor with an `InvalidArgumentException`.
+The `searchPath` argument of `Semantics` is a `SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath`: the schemas an unqualified relation name is searched in, in precedence order. A path the database cannot search is refused by the `Semantics` constructor with an `InvalidArgumentException`.
 
 | Database | Default | Searched | Unqualified declarations belong to |
 |----------|---------|----------|------------------------------------|
@@ -189,15 +180,14 @@ The fifth argument of `Semantics` is a `SqlSemantics\Contract\SearchPath`: the s
 | SQLite | `main` | `temp`, then the path, which starts with `main` and continues with attached schemas | `main` |
 
 ```php
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite, null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
+$semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
 
 array_map(static fn ($schema) => $schema->value, $semantics->context()->searchPath); // => ['temp', 'main', 'archive']
-new Semantics(Dialect::Sqlite, null, null, ParameterStyle::Native, new SearchPath('archive')); // throws InvalidArgumentException
+new Semantics(null, null, ParameterStyle::Native, new SearchPath('archive')); // throws InvalidArgumentException
 ```
 
 A qualified name is looked up in the schema it names. A declaration without a schema belongs to `declarationSchema`.
@@ -223,15 +213,14 @@ A context belongs to one language profile, and `Semantics` accepts only a contex
 A context is a snapshot, not a database. Only statements that create relations contribute declarations. ALTER, DROP, writes and transaction statements are analyzed as requests, and contribute nothing:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $create = $semantics->analyze('CREATE TABLE t (a INTEGER)');
 $alter = $semantics->analyze('ALTER TABLE t ADD COLUMN d INTEGER', [$create]);
 
 $alter->declarations(); // => []
-$semantics->analyze('SELECT d FROM t', [$create, $alter])->facts->diagnostics[0]->message(); // => 'Column d does not exist.'
+$semantics->analyze('SELECT d FROM t', [$create, $alter]); // throws SemanticException with message 'Column d does not exist.'
 ```
 
 In the same way, `analyze()` of a script and `analyzeAll()` pass the same context to every statement; a CREATE earlier in the script is not applied for the statements after it. Context order is not execution order.

@@ -7,22 +7,21 @@ namespace Tests\Unit\Rules\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Query\CommonTables;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(CommonTables::class)]
 #[Medium]
@@ -30,8 +29,8 @@ final class CommonTablesTest extends TestCase
 {
     public function testBindMakesEveryTableVisibleWhateverTheWrittenOrder(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze("WITH d(y) AS (SELECT x FROM c), c AS (SELECT 1 AS x, 'z') SELECT * FROM d")->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect("WITH d(y) AS (SELECT x FROM c), c AS (SELECT 1 AS x, 'z') SELECT * FROM d")->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $derivation = new Derivation($semantics->context([]));
 
@@ -53,9 +52,9 @@ final class CommonTablesTest extends TestCase
 
     public function testBindReportsARepeatedNameAndACircularReference(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $repeated = $semantics->analyze('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT * FROM c')->statement;
-        $circular = $semantics->analyze('WITH c AS (SELECT * FROM d), d AS (SELECT * FROM c) SELECT * FROM c')->statement;
+        $semantics = new Semantics();
+        $repeated = $semantics->inspect('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT * FROM c')->statement;
+        $circular = $semantics->inspect('WITH c AS (SELECT * FROM d), d AS (SELECT * FROM c) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $repeated);
         self::assertInstanceOf(WithQuery::class, $circular);
         $first = new Derivation($semantics->context([]));
@@ -72,8 +71,8 @@ final class CommonTablesTest extends TestCase
 
     public function testBindTypesARecursiveReferenceAsAnyStorageClass(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c) SELECT * FROM c')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $derivation = new Derivation($semantics->context([]));
 
@@ -88,8 +87,8 @@ final class CommonTablesTest extends TestCase
 
     public function testUsesAnswersTheUnqualifiedTableNamesFolded(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('WITH c AS (SELECT (SELECT 1 FROM Nested) FROM T JOIN main.u, v AS w) SELECT * FROM c')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('WITH c AS (SELECT (SELECT 1 FROM Nested) FROM T JOIN main.u, v AS w) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
 
         $uses = (new CommonTables())->uses($statement->with->tables[0]);
@@ -100,8 +99,8 @@ final class CommonTablesTest extends TestCase
 
     public function testProvisionalHasOneSlotPerListedColumnThatCanHoldAnything(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('WITH c(x, y) AS (SELECT 1, 2), d AS (SELECT 3) SELECT * FROM c')->statement;
+        $semantics = new Semantics();
+        $statement = $semantics->inspect('WITH c(x, y) AS (SELECT 1, 2), d AS (SELECT 3) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
 
         $listed = (new CommonTables())->provisional($statement->with->tables[0]);
@@ -117,8 +116,8 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeRenamesTheColumnsByTheListAndReportsAnotherLength(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze("WITH c(x, y, z) AS (SELECT 1 AS a, 'b') SELECT * FROM c", []);
+        $semantics = new Semantics();
+        $query = $semantics->inspect("WITH c(x, y, z) AS (SELECT 1 AS a, 'b') SELECT * FROM c", []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
@@ -142,8 +141,8 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeKeepsTheQueryNamesWithoutAListAndReportsADecoratedName(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('WITH c AS (SELECT 1 AS a, 2 AS a), d(x COLLATE nocase) AS (SELECT 3) SELECT * FROM c', []);
+        $semantics = new Semantics();
+        $query = $semantics->inspect('WITH c AS (SELECT 1 AS a, 2 AS a), d(x COLLATE nocase) AS (SELECT 3) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $plain = $statement->with->tables[0];
@@ -159,8 +158,8 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeDependsOnTheMissingInputsOfAnOpenQuery(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('WITH c(x, y) AS (SELECT * FROM t) SELECT * FROM c');
+        $semantics = new Semantics();
+        $query = $semantics->inspect('WITH c(x, y) AS (SELECT * FROM t) SELECT * FROM c');
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];

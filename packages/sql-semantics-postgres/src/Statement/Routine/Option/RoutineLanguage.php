@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LANGUAGE name`: the language the routine is written in.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the language name
- *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage(new \SqlSemantics\Platform\PostgreSql\Statement\Option\Word(new \SqlSemantics\Statement\Identifier\Name('plpgsql')));
+ *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage(new \SqlSemantics\Platform\PostgreSql\Statement\Option\Word(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('plpgsql')));
  *     $option->name() // => 'plpgsql'
  */
 final class RoutineLanguage implements RoutineOption

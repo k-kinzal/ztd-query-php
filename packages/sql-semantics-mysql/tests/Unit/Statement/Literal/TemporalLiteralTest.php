@@ -7,8 +7,10 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Operation;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
@@ -17,9 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TemporalLiteral::class)]
 #[Medium]
@@ -53,7 +52,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheTemporalTypeThatIsNeverNull(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
+        $operation = (new Semantics())->analyze("SELECT a FROM t WHERE a = TIMESTAMP '2024-01-02 03:04:05.25'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -73,7 +72,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersDateForADateLiteral(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT DATE '2024-01-02'");
+        $operation = (new Semantics())->analyze("SELECT DATE '2024-01-02'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -88,7 +87,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
     {
-        $context = (new Semantics(Dialect::MySql))->context();
+        $context = (new Semantics())->context();
         $statement = new Select([], [new SelectExpression(new TemporalLiteral(TemporalForm::Date, '2024-01-02', EscapeRule::Verbatim))]);
 
         $this->expectExceptionMessage('A temporal literal must be spelled under the escape rule of the language profile.');
@@ -98,7 +97,7 @@ final class TemporalLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordAndTheQuotedText(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
         self::assertSame("SELECT DATE '2024-01-02' AS v", $semantics->analyze("select date '2024-01-02' as v")->toString());
         self::assertSame("SELECT TIME 'a''b' AS v", $semantics->analyze("SELECT TIME 'a\\'b' AS v")->toString());

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Expression;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling;
@@ -30,7 +31,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\QuantifiedArr
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\QuantifiedSubquery;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\UniquePredicate;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Decides whether an operand keeps its place when an operator expression is written without parentheses.

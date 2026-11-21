@@ -4,7 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Account;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConditionalTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
@@ -19,15 +28,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Derives the facts of the privilege list, level and object of GRANT and REVOKE.

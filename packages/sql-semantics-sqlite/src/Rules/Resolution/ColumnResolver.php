@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\LookupLevel;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AmbiguousColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\Resolution;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\LookupLevel;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
 
 /**
  * Resolves a column name the way SQLite does.

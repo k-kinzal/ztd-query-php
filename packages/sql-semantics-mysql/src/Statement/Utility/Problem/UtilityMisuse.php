@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A rule of SET, SHOW or EXPLAIN the statement breaks, which the server would refuse.
  *
  * @visibility public
  * @example Reading the message of a refused format
- *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN FORMAT = yaml SELECT 1');
- *     $explain->facts->diagnostics[0]->message() // => 'Unknown EXPLAIN format name'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('EXPLAIN FORMAT = yaml SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown EXPLAIN format name
  */
 final class UtilityMisuse implements Diagnostic
 {

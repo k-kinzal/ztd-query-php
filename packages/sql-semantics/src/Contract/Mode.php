@@ -8,8 +8,9 @@ namespace SqlSemantics\Contract;
  * The session settings of one database that change how SQL text is read.
  *
  * @visibility public
- * @example Naming the lexical settings of a MySQL session
- *     \SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES')->toString() // => 'ANSI_QUOTES'
+ * @example Serializing a database session mode
+ *     $mode = new class implements \SqlSemantics\Contract\Mode { public function toString(): string { return 'ANSI_QUOTES'; } };
+ *     $mode->toString() // => 'ANSI_QUOTES'
  */
 interface Mode
 {

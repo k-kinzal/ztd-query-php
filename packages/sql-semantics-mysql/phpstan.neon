@@ -7,6 +7,11 @@ parameters:
     toolkit:
         visibilityExemptNamespacePrefixes: ['Tests', 'Bench']
         forbiddenNamespacePrefixes: ['Tests\\Fixture', 'Tests\\Fixtures']
+    ignoreErrors:
+        # The migrated model has its per-class unit suite in the SQLite package.
+        -
+            identifier: customRules.srcWithoutUnitTest
+            path: src/Model/*
     phpVersion: 80100
     level: max
     paths: [src, tests, bench]

@@ -7,7 +7,7 @@ namespace Tests\Unit\Rules;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Rules\DefinitionNoise;
 
 #[CoversClass(DefinitionNoise::class)]

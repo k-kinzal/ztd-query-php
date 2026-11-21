@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  *
  * @visibility public
  * @example Reading the kind of a truth-value test
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT NULL IS NOT UNKNOWN');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT NULL IS NOT UNKNOWN');
  *     $query->field(0)->expression->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTestKind::IsNotUnknown
  */
 enum BooleanTestKind: string

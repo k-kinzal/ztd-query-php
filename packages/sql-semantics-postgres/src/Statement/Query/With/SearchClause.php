@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * SEARCH DEPTH FIRST or BREADTH FIRST BY columns SET column: an ordering column added to a recursive query.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a search clause
- *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchClause(\SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchOrder::Depth, [new \SqlSemantics\Statement\Identifier\Name('id')], new \SqlSemantics\Statement\Identifier\Name('ordercol'));
+ *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchClause(\SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchOrder::Depth, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('ordercol'));
  *     [$clause->order->value, $clause->sequence->value] // => ['DEPTH', 'ordercol']
  */
 final class SearchClause implements Node

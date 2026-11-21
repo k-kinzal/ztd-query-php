@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Alterations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\GeneratedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET EXPRESSION AS ( expression ): replaces the expression of a generated column.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Replacing a generation expression
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)');
  *     $statement->toString() // => 'ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)'
  */
 final class SetExpression implements AlterCommand

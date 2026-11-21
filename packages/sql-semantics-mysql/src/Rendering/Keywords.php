@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rendering;
 
 use SqlParser\Resource\VersionRegistry;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 /**
  * The words the MySQL lexer of one release can read as something other than an identifier.

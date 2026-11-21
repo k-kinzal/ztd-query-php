@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;

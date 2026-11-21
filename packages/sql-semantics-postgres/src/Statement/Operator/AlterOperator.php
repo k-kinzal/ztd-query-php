@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ChangeChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorChangeAttribute;
@@ -13,9 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER OPERATOR operator (types) SET ( attribute = value, ... )`: changes attributes of an operator.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the changed attributes
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
  *     $operation->statement->attributes[0]->attribute->name->value // => 'restrict'
  */
 final class AlterOperator implements Statement

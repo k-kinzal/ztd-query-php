@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * The type of a column defined by a query when that type depends on inputs the context does not declare.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the declared type of a column computed by an undeclared function
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $column = $semantics->analyze('CREATE TABLE t AS SELECT f(1) AS a', [])->declarations()[0]->columns[0];
  *     [$column->name->value, $column->type->name()] // => ['a', 'the type settled by the signature of routine f']
  */

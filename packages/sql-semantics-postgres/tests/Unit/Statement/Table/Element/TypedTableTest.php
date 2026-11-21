@@ -14,7 +14,7 @@ final class TypedTableTest extends TestCase
 {
     public function testElementsAnswersTheConstraints(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('CREATE TABLE t OF ty (PRIMARY KEY (id))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -25,7 +25,7 @@ final class TypedTableTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('CREATE TABLE t OF s.ty (id WITH OPTIONS NOT NULL)', []);
         self::assertSame('CREATE TABLE t OF s.ty (id NOT NULL)', $statement->toString());
     }

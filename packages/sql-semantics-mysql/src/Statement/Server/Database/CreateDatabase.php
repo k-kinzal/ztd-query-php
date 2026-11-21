@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `CREATE {DATABASE | SCHEMA} [IF NOT EXISTS] name [option …]`: a request to create a database.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Creating a database with options
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
  *     [$create->toString(), count($create->statement->options)] // => ['CREATE DATABASE IF NOT EXISTS shop CHARACTER SET utf8mb4 COLLATE utf8mb4_bin', 2]
  */
 final class CreateDatabase implements Statement

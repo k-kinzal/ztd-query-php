@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Reference;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A MATCH clause of a foreign key.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a MATCH name
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent MATCH FULL)');
  *     $create->statement->columns[0]->constraints[0]->arguments[0]->name->value // => 'FULL'
  */
 final class MatchName implements ReferenceArgument

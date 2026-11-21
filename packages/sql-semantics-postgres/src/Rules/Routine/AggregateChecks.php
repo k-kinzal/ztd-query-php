@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\ParameterMode;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Reports aggregate argument lists the server rejects while parsing.

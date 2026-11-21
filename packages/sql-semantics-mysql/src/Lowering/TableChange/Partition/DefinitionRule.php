@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange\Partition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan;
 use SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionBound;
 use SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesIn;
 use SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesInRows;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
 use SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers partition and subpartition definitions with their values.

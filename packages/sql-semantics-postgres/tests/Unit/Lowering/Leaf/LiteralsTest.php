@@ -9,12 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Literals;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\PositionalParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
-use SqlSemantics\Statement\Scalar;
 
 #[CoversClass(Literals::class)]
 #[Medium]
@@ -50,7 +50,7 @@ final class LiteralsTest extends TestCase
 
     public function testNumberTokenKeepsTheTextASettingReceives(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         self::assertSame(
             ['SET application_name TO 1e2', 'SET application_name TO .5', 'SET application_name TO - .5', 'SET application_name TO 0001.50', 'SET application_name TO 0x1FFFFFFFFF'],
             [$semantics->analyze('SET application_name = 1e2')->toString(), $semantics->analyze('SET application_name = .5')->toString(), $semantics->analyze('SET application_name = -.5')->toString(), $semantics->analyze('SET application_name = 0001.50')->toString(), $semantics->analyze('SET application_name = 0x1FFFFFFFFF')->toString()],

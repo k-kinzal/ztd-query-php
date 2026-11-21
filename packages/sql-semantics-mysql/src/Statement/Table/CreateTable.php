@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a table from column, index and constraint definitions, a query, or both.
@@ -47,11 +47,11 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Providing a declaration to a context
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20), note TEXT NULL)');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20), note TEXT NULL)');
  *     $table = $create->declarations()[0];
- *     [count($table->columns), $table->columns[0]->nullability, $table->columns[2]->nullability] // => [3, \SqlSemantics\Statement\Type\Nullability::NotNull, \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     [count($table->columns), $table->columns[0]->nullability, $table->columns[2]->nullability] // => [3, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull, \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable]
  * @example The relation fact of the statement resolves to the declaration it provides
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
  *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
  */
 final class CreateTable implements Statement, Relation

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A form the grammar accepts and the server rejects as not yet supported (`ER_NOT_SUPPORTED_YET`, error 1235).
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting CAST … AT LOCAL
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)');
- *     $query->facts->diagnostics[0]->message() // => "This version of MySQL doesn't yet support 'AT LOCAL'."
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'AT LOCAL'.
  */
 final class NotSupportedYet implements Diagnostic
 {

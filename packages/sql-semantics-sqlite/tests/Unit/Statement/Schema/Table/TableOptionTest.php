@@ -7,14 +7,14 @@ namespace Tests\Unit\Statement\Schema\Table;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Lexical;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOption;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(TableOption::class)]
 #[Small]

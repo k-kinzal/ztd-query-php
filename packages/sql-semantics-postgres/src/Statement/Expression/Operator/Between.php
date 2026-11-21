@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\OperandChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range test: `a [NOT] BETWEEN [SYMMETRIC] low AND high`.
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a symmetric range test
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1');
  *     [$query->field(0)->expression->negated, $query->field(0)->expression->symmetric, $query->toString()] // => [true, true, 'SELECT 2 NOT BETWEEN SYMMETRIC 3 AND 1']
  */
 final class Between implements Scalar

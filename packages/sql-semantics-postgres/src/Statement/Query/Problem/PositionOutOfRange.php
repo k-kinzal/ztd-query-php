@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * An output column position that the select list does not have.
  *
  * @visibility public
  * @example Reporting a position past the select list
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 2');
- *     $query->facts->diagnostics[0]->message() // => 'ORDER BY position 2 is not in select list'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: ORDER BY position 2 is not in select list
  */
 final class PositionOutOfRange implements Diagnostic
 {

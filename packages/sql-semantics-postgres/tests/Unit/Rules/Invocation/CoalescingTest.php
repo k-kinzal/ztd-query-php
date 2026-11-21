@@ -7,12 +7,12 @@ namespace Tests\Unit\Rules\Invocation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\Coalescing;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Coalescing::class)]
 #[Small]

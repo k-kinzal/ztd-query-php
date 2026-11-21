@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
@@ -16,8 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers view and index definitions, DROP and ALTER TABLE.

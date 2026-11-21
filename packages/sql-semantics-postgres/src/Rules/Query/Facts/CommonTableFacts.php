@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\CommonBinding;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Unification;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\ColumnAliases;
@@ -22,16 +32,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Resolution\CommonBinding;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Binds the common table expressions of a WITH clause.
@@ -113,7 +113,7 @@ final class CommonTableFacts
     public function uses(CommonTableExpression $table, Derivation $derivation): array
     {
         $names = [];
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($table->query) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($table->query) as $object) {
             if ($object instanceof TableInput && $object->table->name->schema === null) {
                 $names[$derivation->context->relationNames->fold($object->table->name->name->value)] = true;
             }
@@ -201,7 +201,7 @@ final class CommonTableFacts
     /**
      * Derives the mark values of a CYCLE clause and answers the type of the mark column.
      */
-    public function mark(CommonTableExpression $table, Derivation $derivation): \SqlSemantics\Statement\Type\TypeFact
+    public function mark(CommonTableExpression $table, Derivation $derivation): \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact
     {
         $cycle = $table->cycle;
         if ($cycle === null || $cycle->markValue === null || $cycle->markDefault === null) {

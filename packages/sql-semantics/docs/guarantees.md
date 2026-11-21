@@ -31,7 +31,7 @@ Each outcome has its own class, so a caller can tell them apart:
 | Outcome | Class |
 |---------|-------|
 | The text is outside the grammar of the release | `AnalysisException` |
-| The SQL is grammatical but semantically wrong | a successful operation with diagnostics |
+| The SQL is grammatical but semantically wrong | a `SemanticException` containing the diagnostics |
 | A declaration, signature, parameter value or session value is missing | a successful operation with `Dependent` facts naming it |
 | A rule is not implemented | `ImplementationGap` |
 | A constructor input is outside its documented domain | `InvalidConstruction` |
@@ -80,7 +80,7 @@ What they do not establish: that a fact agrees with the server for every input, 
 ### All databases
 
 - A version 1 context declares relations only. Routines, data types and session state cannot be declared; facts that need them are `Dependent`, also in a complete context.
-- Not every error the server would report is a diagnostic: an operation without diagnostics may still fail on the server.
+- Not every error the server would report is a diagnostic: a query that passes analysis may still fail on the server.
 - `ResourceLimitExceeded` is reserved. No work limit is configured in this release; very large or deeply nested inputs are bounded only by PHP memory and time.
 - A context built with the public `AnalysisContext` constructor takes its search path and name comparison from its arguments, not from the rules of the database; `Semantics::context()` applies those rules.
 - A declaration holds a relation kind and columns, but no view query, generation expression, index, constraint or trigger. Checks that depend on them are not made; each database package lists the ones that matter.

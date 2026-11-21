@@ -14,15 +14,15 @@ final class AlterDatabaseSettingTest extends TestCase
 {
     public function testRenderWritesTheDatabaseBeforeTheSetting(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
-        (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting(new \SqlSemantics\Statement\Identifier\Name('d'), new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\RefreshDatabaseCollation(new \SqlSemantics\Statement\Identifier\Name('e'))))->render($out);
-        self::assertSame('ALTER DATABASE d ALTER DATABASE e REFRESH COLLATION VERSION', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
+        (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('d'), new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\RefreshDatabaseCollation(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('e'))))->render($out);
+        self::assertSame('ALTER DATABASE d ALTER DATABASE e REFRESH COLLATION VERSION', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 
     public function testDeriveStatementDerivesTheSetting(): void
     {
-        $statement = new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting(new \SqlSemantics\Statement\Identifier\Name('d'), new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabase(new \SqlSemantics\Statement\Identifier\Name('e'), [new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DatabaseOption(new \SqlSemantics\Statement\Identifier\Name('foo'), \SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle::On)]));
-        $derivation = new \SqlSemantics\Construction\Derivation(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), [new \SqlSemantics\Statement\Identifier\Name('public')]));
+        $statement = new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('d'), new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabase(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('e'), [new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DatabaseOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('foo'), \SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle::On)]));
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation(new \SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext(new \SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172), [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('public')]));
         $statement->deriveStatement($derivation);
         self::assertCount(1, $derivation->facts()->diagnostics);
     }

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * A request to rebuild a database file, optionally into a new file.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the schema and the target of a vacuum
- *     $vacuum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VACUUM main INTO 'backup.db'");
+ *     $vacuum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VACUUM main INTO 'backup.db'");
  *     [$vacuum->statement->schema?->value, $vacuum->statement->into !== null] // => ['main', true]
  */
 final class Vacuum implements Statement

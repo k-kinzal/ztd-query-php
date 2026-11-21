@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Access;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterGroupMembers;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterRole;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterRoleSetting;
@@ -22,8 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RolePassword;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleSystemId;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleValidity;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the role commands.

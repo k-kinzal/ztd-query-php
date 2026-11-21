@@ -6,9 +6,9 @@ namespace SqlSemantics\Platform\PostgreSql\Rendering;
 
 use SqlParser\PostgreSql\PostgreSqlVersion;
 use SqlParser\Resource\VersionRegistry;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
 
 /**
  * The keyword categories of one PostgreSQL grammar release.

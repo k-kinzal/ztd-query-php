@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Partition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `UPGRADE PARTITIONING` (5.7): a request to convert a table to native InnoDB partitioning.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Upgrading the partitioning of a 5.7 table
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t UPGRADE PARTITIONING')->toString() // => 'ALTER TABLE t UPGRADE PARTITIONING'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('ALTER TABLE t UPGRADE PARTITIONING')->toString() // => 'ALTER TABLE t UPGRADE PARTITIONING'
  */
 final class UpgradePartitioning implements AlterCommand
 {

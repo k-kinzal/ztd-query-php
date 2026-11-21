@@ -7,8 +7,10 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
@@ -16,9 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownStorage;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(Generated::class)]
 #[Medium]
@@ -39,7 +38,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintResolvesColumnsOfTheTableBeingDefined(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (a))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (a))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -53,7 +52,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintDoesNotSeeTheRowIdentifier(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (rowid))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (rowid))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -61,7 +60,7 @@ final class GeneratedTest extends TestCase
 
     public function testDeriveConstraintReportsAnUnknownStorageWord(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (a) "stored")', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT, b AS (a) "stored")', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(UnknownStorage::class, $operation->facts->diagnostics[0]);
@@ -69,10 +68,10 @@ final class GeneratedTest extends TestCase
 
     public function testRenderDropsTheOptionalKeywordsAndKeepsTheStorageWord(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
-        self::assertSame('CREATE TABLE t (a INT, b INT NOT NULL AS (a + 1) stored)', $semantics->analyze('create table t (a INT, b INT not null generated always as (a + 1) stored)')->toString());
-        self::assertSame('CREATE TABLE t (a, b AS (a) "stored")', $semantics->analyze('CREATE TABLE t (a, b AS (a) "stored")')->toString());
-        self::assertSame('CREATE TABLE t (a, b AS (a))', $semantics->analyze('CREATE TABLE t (a, b AS (a))')->toString());
+        self::assertSame('CREATE TABLE t (a INT, b INT NOT NULL AS (a + 1) stored)', $semantics->inspect('create table t (a INT, b INT not null generated always as (a + 1) stored)')->toString());
+        self::assertSame('CREATE TABLE t (a, b AS (a) "stored")', $semantics->inspect('CREATE TABLE t (a, b AS (a) "stored")')->toString());
+        self::assertSame('CREATE TABLE t (a, b AS (a))', $semantics->inspect('CREATE TABLE t (a, b AS (a))')->toString());
     }
 }

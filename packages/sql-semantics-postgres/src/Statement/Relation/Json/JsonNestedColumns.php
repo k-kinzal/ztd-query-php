@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Relation\Json;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * NESTED [PATH] path [AS name] COLUMNS (…): columns read from the items a path yields within the row.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading nested columns
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED '$.b[*]' COLUMNS (b text)))");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2'))->analyze("SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED '$.b[*]' COLUMNS (b text)))");
  *     [$query->field(0)->name->value, $query->toString()] // => ['b', "SELECT * FROM JSON_TABLE ('[]', '$[*]' COLUMNS (NESTED PATH '$.b[*]' COLUMNS (b text)))"]
  */
 final class JsonNestedColumns implements JsonTableColumn

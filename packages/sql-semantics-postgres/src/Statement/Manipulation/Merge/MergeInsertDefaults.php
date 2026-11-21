@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The action INSERT DEFAULT VALUES of a MERGE WHEN clause: a row of column defaults is inserted.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an insert of the defaults
- *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT DEFAULT VALUES');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT DEFAULT VALUES');
  *     $merge->statement->clauses[0]->action instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsertDefaults // => true
  */
 final class MergeInsertDefaults implements Node

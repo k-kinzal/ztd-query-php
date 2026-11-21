@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Type;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
 
 /**
  * The type of a row value: an ordered group of two or more values that is no single storage class.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the width of a row value
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (1, 2) = (1, 2)');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (1, 2) = (1, 2)');
  *     $query->facts->scalar($query->statement->columns[0]->expression->left)->type->descriptor->width // => 2
  */
 final class Vector implements TypeDescriptor

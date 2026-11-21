@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The `PROCEDURE ANALYSE (max_elements, max_memory)` clause of the 5.x grammars.
@@ -20,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the arguments
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE(10, 2000)');
  *     count($query->statement->procedure->arguments) // => 2
  * @example Refusing a third argument
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
- *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse([$one, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse([$one, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class ProcedureAnalyse implements Node
 {

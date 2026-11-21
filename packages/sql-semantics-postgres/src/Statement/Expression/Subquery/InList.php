@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\OperandChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A membership test against a list of values: `a [NOT] IN (v1, v2, …)`.
@@ -29,8 +29,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a list
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 IN (1, 2, NULL)');
- *     [count($query->field(0)->expression->values), $query->field(0)->nullability] // => [3, \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 IN (1, 2, NULL)');
+ *     [count($query->field(0)->expression->values), $query->field(0)->nullability] // => [3, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable]
  */
 final class InList implements Scalar
 {

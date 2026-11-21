@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeDelete;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeNothing;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeUpdate;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeWhen;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers MERGE.

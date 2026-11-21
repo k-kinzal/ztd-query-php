@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignment;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\ColumnTarget;
@@ -12,10 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssign
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\OutputSlot;
 
 /**
  * Reports a generated column that a data-modifying statement writes with a value other than DEFAULT.

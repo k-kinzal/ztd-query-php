@@ -7,17 +7,16 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(ProgramNames::class)]
 #[Medium]
@@ -51,12 +50,12 @@ final class ProgramNamesTest extends TestCase
         (new ProgramNames())->end($out, null);
 
         self::assertSame('END l', (new Lexical())->join($out->pieces()));
-        self::assertSame('CREATE PROCEDURE p() l: BEGIN END l', (new Semantics(Dialect::MySql))->analyze('create procedure p() l: begin end l')->toString());
+        self::assertSame('CREATE PROCEDURE p() l: BEGIN END l', (new Semantics())->analyze('create procedure p() l: begin end l')->toString());
     }
 
     public function testTypeWritesTheCollateClauseWhenPresent(): void
     {
-        $function = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS CHAR(1) COLLATE utf8mb4_bin RETURN 1')->statement;
+        $function = (new Semantics())->analyze('CREATE FUNCTION f() RETURNS CHAR(1) COLLATE utf8mb4_bin RETURN 1')->statement;
         self::assertInstanceOf(CreateFunction::class, $function);
         $out = new Output(new Codec(GrammarRelease::MySql910));
         (new ProgramNames())->type($out, $function->returns, $function->collation);

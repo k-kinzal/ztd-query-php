@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Lexical;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\BareWords;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A word at a position where SQLite looks at the written text: the name and how it is quoted.
@@ -26,14 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Spelling a quoted word
- *     $word = new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Statement\Identifier\Name('big "int"'), \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Double);
+ *     $word = new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('big "int"'), \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Double);
  *     $word->spelling() // => '"big ""int"""'
  * @example Refusing an unquoted word that is a reserved keyword
- *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Statement\Identifier\Name('select')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('select')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing an unquoted word that is not one identifier
- *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Statement\Identifier\Name('two words')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('two words')) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a bracketed word that contains a closing bracket
- *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Statement\Identifier\Name('a]b'), \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Bracket) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Lexical\Word(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('a]b'), \SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote::Bracket) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Word implements Node
 {

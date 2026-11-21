@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 
@@ -18,14 +17,14 @@ final class CollationTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothingForAnUnknownCollation(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a COLLATE no_such_collation)', []);
+        $operation = (new Semantics())->analyze('CREATE TABLE t (a COLLATE no_such_collation)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheCollationName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a text collate "RTRIM")');
+        $operation = (new Semantics())->analyze('create table t (a text collate "RTRIM")');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

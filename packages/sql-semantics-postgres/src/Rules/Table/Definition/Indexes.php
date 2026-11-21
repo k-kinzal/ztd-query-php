@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Derives and writes CREATE INDEX.

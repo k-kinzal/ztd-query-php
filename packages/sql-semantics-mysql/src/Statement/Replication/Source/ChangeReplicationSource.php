@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Source;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHANGE REPLICATION SOURCE TO option = value, … [FOR CHANNEL 'name']`, written `CHANGE MASTER TO` in the legacy vocabulary.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the options of the legacy spelling as their current synonyms
- *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze("CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'");
+ *     $change = (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.0.44'))->analyze("CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'");
  *     [$change->toString(), $change->statement->options[1]->kind] // => ["CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h', SOURCE_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
  */
 final class ChangeReplicationSource implements Statement

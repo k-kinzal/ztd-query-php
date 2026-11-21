@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Access;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\GrantRole;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\MembershipOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\MembershipSetting;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\RevokeRole;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of role membership.

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A new table name that a declared table, or a table an earlier rename of the same statement created, already has.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the problem
- *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))->message() // => 'Table t already exists.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->message() // => 'Table t already exists.'
  */
 final class TableExists implements Diagnostic
 {

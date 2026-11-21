@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem;
  *
  * @visibility public
  * @example Reading which rule a statement breaks
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
+ *     $insert = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
  *     $insert->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn
  */
 enum ManipulationMisuseRule: string

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The head of an INSERT statement: the verb, the conflict resolution, the written table and the column list.
@@ -21,10 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the head of an INSERT
- *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
+ *     $insert = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
  *     [$insert->statement->into->resolution, $insert->statement->into->target->name->name->value, count($insert->statement->into->columns)] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore, 't', 2]
  * @example Refusing a conflict resolution next to REPLACE
- *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class InsertInto implements Node
 {

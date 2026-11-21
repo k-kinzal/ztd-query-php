@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE [OR REPLACE] FUNCTION` or `PROCEDURE`: defines a routine.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the parameters of a function
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b');
  *     [$operation->statement->name->last()->value, count($operation->statement->parameters->parameters)] // => ['add', 2]
  */
 final class CreateFunction implements Statement

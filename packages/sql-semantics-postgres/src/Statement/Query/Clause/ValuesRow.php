@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * One parenthesized row of a VALUES list.
@@ -17,10 +17,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the values of a row
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VALUES (1, 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VALUES (1, 2)');
  *     count($query->statement->rows[0]->values) // => 2
  * @example Refusing an empty row
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ValuesRow implements Node
 {

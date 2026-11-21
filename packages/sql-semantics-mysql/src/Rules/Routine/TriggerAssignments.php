@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
@@ -12,8 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 /**
  * Checks the assignments of SET to a column of the NEW or OLD row in a trigger body.

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] ENCRYPTION [=] {'Y' | 'N'}`: the default encryption of the database's tables (MySQL 8.0.16 and later).
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the encryption
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE DATABASE d ENCRYPTION 'Y'");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE DATABASE d ENCRYPTION 'Y'");
  *     $create->statement->options[0]->encryption->value // => 'Y'
  */
 final class DatabaseEncryption implements DatabaseOption

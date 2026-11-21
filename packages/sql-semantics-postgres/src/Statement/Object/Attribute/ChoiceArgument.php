@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ArgumentText;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
@@ -13,9 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Choice;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An attribute value read as one of a fixed set of words, such as the `parallel` mode of an aggregate.
@@ -26,10 +26,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the parallel mode of an aggregate
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4, parallel = SAFE)');
  *     $operation->statement->definition[2]->value->choice // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Safe
  * @example Rejecting a member the text does not name
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\ChoiceArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('safe'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Unsafe) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\ChoiceArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('safe'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::Unsafe) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ChoiceArgument implements AttributeArgument
 {

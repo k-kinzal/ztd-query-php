@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An index or key of a table definition: INDEX, PRIMARY KEY, UNIQUE, FULLTEXT or SPATIAL with its parts and options.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an index definition
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, UNIQUE KEY ab (a, b))');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, b INT, UNIQUE KEY ab (a, b))');
  *     [$create->statement->elements[2]->kind, $create->statement->elements[2]->name->column->value, count($create->statement->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
  */
 final class IndexDefinition implements TableElement

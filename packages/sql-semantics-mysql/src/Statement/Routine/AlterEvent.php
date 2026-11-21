@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Routine\EventClauses;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
@@ -17,11 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * ALTER EVENT: changes the schedule, name, status, comment or statement of an event.
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the changes of an event
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
  *     [$alter->statement->newName->name->value, $alter->statement->status, $alter->statement->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
  */
 final class AlterEvent implements Statement

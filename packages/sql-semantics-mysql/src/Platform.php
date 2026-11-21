@@ -11,19 +11,19 @@ use SqlParser\MySql\SqlMode;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
 use SqlParser\Resource\VersionRegistry;
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Contract\LexicalSettings;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Wires the MySQL grammar releases, lowering rules and spelling rules into the analysis.
@@ -52,8 +52,18 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Platform implements \SqlSemantics\Contract\Platform
+final class Platform
 {
+    private static ?self $shared = null;
+
+    /**
+     * Shares the parser cache within this database package.
+     */
+    public static function shared(): self
+    {
+        return self::$shared ??= new self();
+    }
+
     /**
      * @var array<string, SqlParser>
      */
@@ -75,7 +85,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
         $registry = new VersionRegistry();
         $name = $version ?? $registry->resolve('mysql')->name;
         $release = GrammarRelease::tryFrom(str_starts_with($name, 'mysql-') ? $name : 'mysql-' . $name);
-        if ($release === null || $release->database() !== 'mysql' || !in_array($release->value, $registry->names('mysql'), true)) {
+        if ($release === null || !in_array($release->value, $registry->names('mysql'), true)) {
             throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
         }
         $artifact = $registry->resolve('mysql', $release->value);
@@ -108,6 +118,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Lowers a parse tree into its statements.
+     *
+     * @return list<Model\Statement\Statement>
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
@@ -133,6 +145,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Creates a context: one current database, exact table and database names, column names without regard to ASCII case.
      *
+     * @param list<string>|null $searchPath
+     * @param list<Model\Statement\Declaration\Table> $tables
      * @throws InvalidArgumentException When the path names more than the current database
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext

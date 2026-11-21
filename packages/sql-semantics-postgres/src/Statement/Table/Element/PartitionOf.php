@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\TableConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionBound;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A partition: its columns are those of the partitioned parent, and its bound says which rows it holds.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example A partition has the columns of its parent
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $parent = $semantics->analyze('CREATE TABLE p (id int NOT NULL, day date) PARTITION BY RANGE (day)', []);
  *     $part = $semantics->analyze("CREATE TABLE p1 PARTITION OF p FOR VALUES FROM ('2024-01-01') TO (MAXVALUE)", $parent->declarations());
  *     array_map(static fn ($column) => $column->name->value, $part->declarations()[0]->columns) // => ['id', 'day']

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The TABLE statement: every row and column of one table (MySQL 8.0.19 and later).
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the table of a TABLE statement
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('TABLE shop.t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('TABLE shop.t');
  *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
  */
 final class ExplicitTable implements Statement, Query, NamedRelation

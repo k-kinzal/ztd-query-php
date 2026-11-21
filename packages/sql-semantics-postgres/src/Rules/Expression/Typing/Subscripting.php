@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
@@ -16,12 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\AllFields;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\Slice;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Types the steps of an indirection applied to a value.

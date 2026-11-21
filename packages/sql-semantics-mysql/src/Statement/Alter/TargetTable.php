@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * One table a DROP TABLE removes: the position its resolution is recorded at.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a table name with its database
- *     $target = new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('shop')));
+ *     $target = new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')));
  *     $target->name->schema?->value // => 'shop'
  */
 final class TargetTable implements Node

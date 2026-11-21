@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\FactorRule as LegacyFactorRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\JoinRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\FactorRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ReferenceRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Lowers the FROM clause and the table reference lists of every grammar generation, handing each table factor to its generation.

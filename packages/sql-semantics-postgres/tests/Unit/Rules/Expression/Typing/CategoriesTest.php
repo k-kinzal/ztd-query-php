@@ -7,11 +7,11 @@ namespace Tests\Unit\Rules\Expression\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Categories;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Parameterized;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Categories::class)]
 #[Small]

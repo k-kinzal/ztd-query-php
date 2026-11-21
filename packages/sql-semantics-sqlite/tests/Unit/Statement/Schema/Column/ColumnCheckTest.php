@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(ColumnCheck::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class ColumnCheckTest extends TestCase
 {
     public function testDeriveConstraintResolvesColumnsOfTheTableBeingDefined(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT CHECK (a < b), b INT)', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a INT CHECK (a < b), b INT)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -37,7 +36,7 @@ final class ColumnCheckTest extends TestCase
 
     public function testDeriveConstraintSeesTheRowIdentifier(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a CHECK (rowid > 0))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a CHECK (rowid > 0))', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -51,7 +50,7 @@ final class ColumnCheckTest extends TestCase
 
     public function testDeriveConstraintReportsANameThatIsNoColumn(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a CHECK (missing > 0))', []);
+        $operation = (new Semantics())->inspect('CREATE TABLE t (a CHECK (missing > 0))', []);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -59,6 +58,6 @@ final class ColumnCheckTest extends TestCase
 
     public function testRenderWritesTheConditionInParentheses(): void
     {
-        self::assertSame('CREATE TABLE t (a CHECK (a > 0))', (new Semantics(Dialect::Sqlite))->analyze('create table t (a check(a>0))')->toString());
+        self::assertSame('CREATE TABLE t (a CHECK (a > 0))', (new Semantics())->inspect('create table t (a check(a>0))')->toString());
     }
 }

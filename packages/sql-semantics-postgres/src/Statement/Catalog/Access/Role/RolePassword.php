@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option PASSWORD: a password, or NULL to remove the password.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Removing the password of a role
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE joe PASSWORD NULL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER ROLE joe PASSWORD NULL');
  *     $operation->statement->options[0]->password // => null
  */
 final class RolePassword implements RoleOption

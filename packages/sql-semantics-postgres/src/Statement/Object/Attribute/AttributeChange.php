@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One changed attribute of `ALTER OPERATOR ... SET` or `ALTER TYPE ... SET`.
@@ -23,10 +23,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an attribute set to NONE
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
  *     [$operation->statement->attributes[0]->none, $operation->statement->attributes[0]->attribute->value] // => [true, null]
  * @example Refusing NONE together with a value
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange(new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Statement\Identifier\Name('x'), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange(new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class AttributeChange implements Clause
 {

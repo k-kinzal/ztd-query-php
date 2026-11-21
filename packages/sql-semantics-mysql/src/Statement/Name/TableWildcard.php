@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * Every column of one table occurrence: `t.*` or `db.t.*`.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a qualified star
- *     $star = new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('shop')));
+ *     $star = new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')));
  *     [$star->table->schema?->value, $star->table->name->value] // => ['shop', 't']
  */
 final class TableWildcard implements Node

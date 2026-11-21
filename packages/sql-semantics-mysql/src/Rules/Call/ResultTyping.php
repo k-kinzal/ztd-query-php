@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * The result facts of a built-in function from its result code and the facts of its arguments.

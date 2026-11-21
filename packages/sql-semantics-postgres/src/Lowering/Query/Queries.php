@@ -6,16 +6,16 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry point of the query family.

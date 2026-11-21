@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\Resolution;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the facts of a name from the outcome of its lookup.

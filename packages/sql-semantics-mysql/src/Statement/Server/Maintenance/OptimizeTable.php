@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `OPTIMIZE [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, …`: a request to reorganize the storage of tables.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('optimize table t');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('optimize table t');
  *     [$statement->toString(), !$statement->statement->noWriteToBinlog] // => ['OPTIMIZE TABLE t', true]
  */
 final class OptimizeTable implements Statement

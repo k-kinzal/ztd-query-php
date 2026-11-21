@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
-use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Makes the row of the trigger table visible as NEW and OLD in a trigger body.

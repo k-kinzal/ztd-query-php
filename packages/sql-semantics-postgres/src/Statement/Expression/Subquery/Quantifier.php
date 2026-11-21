@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery;
  *
  * @visibility public
  * @example Reading the quantifier
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 = SOME (SELECT 1)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 = SOME (SELECT 1)');
  *     $query->field(0)->expression->quantifier // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\Quantifier::Some
  */
 enum Quantifier: string

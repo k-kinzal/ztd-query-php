@@ -7,16 +7,15 @@ namespace Tests\Unit\Statement\Dml\Handler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 
 #[CoversClass(OpenHandler::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class OpenHandlerTest extends TestCase
 {
     public function testDeriveRelationIsOpen(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ FIRST WHERE a');
+        $operation = (new Semantics())->analyze('HANDLER h READ FIRST WHERE a');
         self::assertInstanceOf(HandlerScan::class, $operation->statement);
 
         self::assertFalse($operation->facts->relation($operation->statement->handler)->shape->complete());
@@ -33,7 +32,7 @@ final class OpenHandlerTest extends TestCase
 
     public function testRenderWritesTheName(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new OpenHandler(new Name('h')))->render($out);
 
         self::assertSame('h', (new Lexical())->join($out->pieces()));

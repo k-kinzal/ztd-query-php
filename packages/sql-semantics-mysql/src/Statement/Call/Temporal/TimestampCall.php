@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A call of TIMESTAMPADD(unit, interval, datetime) or TIMESTAMPDIFF(unit, datetime1, datetime2).
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Typing TIMESTAMPDIFF()
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT TIMESTAMPDIFF(MONTH, '2024-01-01', '2024-03-01')");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT TIMESTAMPDIFF(MONTH, '2024-01-01', '2024-03-01')");
  *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class TimestampCall implements Scalar

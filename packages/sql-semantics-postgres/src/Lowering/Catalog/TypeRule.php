@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AddAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AddEnumLabel;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\AlterComposite;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\EnumPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\RenameEnumLabel;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\RetypeAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the ALTER TYPE commands of enum, composite and base types.

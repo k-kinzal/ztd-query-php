@@ -7,9 +7,15 @@ namespace Tests\Unit\Rules\Expression\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Subscripting;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
@@ -23,12 +29,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\Subscript;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Subscripting::class)]
 #[Small]

@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
@@ -22,7 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Precedence::class)]
 #[Small]

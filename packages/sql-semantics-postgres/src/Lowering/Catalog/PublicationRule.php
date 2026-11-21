@@ -6,10 +6,11 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\AlterPublicationMembers;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\AlterPublicationOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication;
@@ -19,7 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSc
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the publication commands.
@@ -126,7 +126,7 @@ final class PublicationRule
             return new PublicationSchema($name, false);
         }
 
-        return new PublicationTable(new RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name)), $columns, $where, false);
+        return new PublicationTable(new RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName($name)), $columns, $where, false);
     }
 
     /**

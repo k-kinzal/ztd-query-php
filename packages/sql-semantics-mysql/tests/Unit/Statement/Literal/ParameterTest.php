@@ -7,15 +7,14 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UnboundParameter;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Parameter::class)]
 #[Medium]
@@ -23,7 +22,7 @@ final class ParameterTest extends TestCase
 {
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = ?');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = ?');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -43,7 +42,7 @@ final class ParameterTest extends TestCase
 
     public function testDeriveScalarNamesANamedMarker(): void
     {
-        $operation = (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id');
+        $operation = (new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -58,8 +57,8 @@ final class ParameterTest extends TestCase
 
     public function testRenderWritesTheMarkerAsWritten(): void
     {
-        self::assertSame('SELECT ?', (new Semantics(Dialect::MySql))->analyze('select ?')->toString());
-        self::assertSame('SELECT a FROM t WHERE a = :id', (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id')->toString());
+        self::assertSame('SELECT ?', (new Semantics())->analyze('select ?')->toString());
+        self::assertSame('SELECT a FROM t WHERE a = :id', (new Semantics(null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id')->toString());
     }
 
     public function testRejectsAWordWithoutAColon(): void

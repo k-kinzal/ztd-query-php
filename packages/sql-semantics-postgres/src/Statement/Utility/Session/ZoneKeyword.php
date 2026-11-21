@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
  *
  * @visibility public
  * @example Reading the keyword of SET TIME ZONE LOCAL
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE LOCAL');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET TIME ZONE LOCAL');
  *     $operation->statement->zone // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ZoneKeyword::Local
  */
 enum ZoneKeyword: string

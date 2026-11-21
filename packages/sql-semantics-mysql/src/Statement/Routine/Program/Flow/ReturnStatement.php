@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * RETURN: ends a stored function and returns the value of an expression.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the returned expression
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
  *     $create->statement->body->value->name->value // => 'a'
  */
 final class ReturnStatement implements ProgramStatement

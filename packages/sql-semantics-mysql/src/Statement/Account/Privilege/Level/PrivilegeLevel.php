@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * The level of the ON clause of GRANT and REVOKE: `*.*`, `*`, `db.*`, or a table or routine.

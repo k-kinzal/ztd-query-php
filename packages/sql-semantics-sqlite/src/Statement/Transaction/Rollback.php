@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * A request to roll the open transaction back completely.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a rollback
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ROLLBACK TRANSACTION')->toString() // => 'ROLLBACK'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('ROLLBACK TRANSACTION')->toString() // => 'ROLLBACK'
  */
 final class Rollback implements Statement
 {

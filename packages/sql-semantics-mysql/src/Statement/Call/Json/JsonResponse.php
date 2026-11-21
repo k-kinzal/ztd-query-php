@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The response of an ON EMPTY or ON ERROR clause: raise an error, return NULL, or return a default literal.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $response = new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse(\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind::Default, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0'));
  *     $response->default?->text // => '0'
  * @example Refusing a default without DEFAULT
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse(\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind::Null, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse(\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind::Null, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class JsonResponse implements Node
 {

@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Selection;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\SelectFacts;
@@ -18,16 +28,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A selection: the SELECT form of PostgreSQL's `SelectStmt` without set operation.
@@ -42,10 +42,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the parts of a selection
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3');
  *     [count($query->statement->targets), $query->statement->distinct !== null, count($query->statement->groupBy), count($query->statement->options->order), $query->toString()] // => [2, true, 1, 1, 'SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3']
  * @example Refusing DISTINCT without a select list
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([], distinct: new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\DistinctClause()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([], distinct: new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\DistinctClause()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Select implements Statement, Query, Selection, OutputNaming
 {

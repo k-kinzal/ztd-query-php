@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateFunction;
@@ -40,7 +41,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 5.6 and 5.7 about schema objects, stored programs and the server.

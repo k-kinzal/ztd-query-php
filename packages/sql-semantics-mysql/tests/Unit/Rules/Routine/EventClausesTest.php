@@ -7,16 +7,15 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Routine\EventClauses;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(EventClauses::class)]
 #[Medium]
@@ -43,10 +42,10 @@ final class EventClausesTest extends TestCase
 
     public function testWriteRendersTheClausesOfCreateAndAlterEvent(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
         self::assertSame("CREATE EVENT db.e ON SCHEDULE EVERY 1 DAY ON COMPLETION NOT PRESERVE DISABLE ON REPLICA COMMENT 'c' DO SELECT 1", $semantics->analyze("create event db.e on schedule every 1 day on completion not preserve disable on replica comment 'c' do select 1")->toString());
         self::assertSame("ALTER EVENT e ON COMPLETION PRESERVE DISABLE ON SLAVE COMMENT 'x'", $semantics->analyze("alter event e on completion preserve disable on slave comment 'x'")->toString());
-        self::assertSame('ALTER EVENT e ENABLE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('alter event e enable')->toString());
+        self::assertSame('ALTER EVENT e ENABLE', (new Semantics('mysql-5.7.44'))->analyze('alter event e enable')->toString());
     }
 }

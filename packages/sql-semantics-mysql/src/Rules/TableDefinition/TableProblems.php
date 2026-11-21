@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
@@ -20,8 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\QueryFact;
 
 /**
  * Reports the problems of a table definition that the server rejects.

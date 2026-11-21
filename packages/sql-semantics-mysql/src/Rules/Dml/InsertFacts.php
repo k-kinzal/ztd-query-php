@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -18,14 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the facts of INSERT and REPLACE.

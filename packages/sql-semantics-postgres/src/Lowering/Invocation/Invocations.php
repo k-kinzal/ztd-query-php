@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Argument;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling;
@@ -22,8 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonWrappin
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlPassing;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * The entry point of the invocation family: function calls and function-like expressions.

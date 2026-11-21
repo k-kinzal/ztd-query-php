@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Triggers;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create an event trigger: a function that runs on DDL events.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Creating an event trigger
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
  *     $statement->toString() // => 'CREATE EVENT TRIGGER e ON sql_drop EXECUTE FUNCTION f()'
  */
 final class CreateEventTrigger implements Statement

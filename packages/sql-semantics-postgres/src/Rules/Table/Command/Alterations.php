@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Declarations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
@@ -27,13 +34,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\AttachPartition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachPartition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives ALTER TABLE and the other commands built on `AlterTableStmt`.

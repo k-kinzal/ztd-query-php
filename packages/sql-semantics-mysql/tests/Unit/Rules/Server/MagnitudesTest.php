@@ -7,10 +7,9 @@ namespace Tests\Unit\Rules\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -37,7 +36,7 @@ final class MagnitudesTest extends TestCase
 
     public function testIntegerReportsAFractionalNumber(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('DROP SPATIAL REFERENCE SYSTEM 1e2');
+        $operation = (new Semantics())->inspect('DROP SPATIAL REFERENCE SYSTEM 1e2');
 
         self::assertInstanceOf(FractionalNumber::class, $operation->facts->diagnostics[0]);
     }

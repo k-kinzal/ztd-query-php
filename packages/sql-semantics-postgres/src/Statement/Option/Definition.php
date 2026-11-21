@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One named option of a definition or storage-parameter list: `name`, `name = value` or `namespace.name = value`.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a storage parameter
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Option\Definition(
- *         new \SqlSemantics\Statement\Identifier\Name('fillfactor'),
+ *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('fillfactor'),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('70')),
  *     );
  *     [$option->name->value, $option->argument->magnitude->digits] // => ['fillfactor', '70']

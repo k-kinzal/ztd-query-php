@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * An argument passed by parameter name: `name => value` or `name := value`.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a named argument
  *     $argument = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\NamedArgument(
- *         new \SqlSemantics\Statement\Identifier\Name('days'),
+ *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('days'),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2')),
  *     );
  *     [$argument->name()->value, $argument->spelling->value] // => ['days', '=>']

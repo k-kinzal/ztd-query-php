@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of a configuration parameter, such as `search_path` or `plpgsql.variable_conflict`.
@@ -22,10 +22,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the text of a dotted parameter name
- *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('plpgsql'), new \SqlSemantics\Statement\Identifier\Name('variable_conflict')]);
+ *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('plpgsql'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('variable_conflict')]);
  *     $name->text() // => 'plpgsql.variable_conflict'
  * @example Refusing a name without parts
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ParameterName implements Node
 {

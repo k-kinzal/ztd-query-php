@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
@@ -15,12 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REINDEX`: a request to rebuild indexes.
@@ -39,10 +39,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a concurrent REINDEX of a table
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REINDEX (VERBOSE) TABLE CONCURRENTLY app.t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REINDEX (VERBOSE) TABLE CONCURRENTLY app.t');
  *     [$operation->statement->target, $operation->statement->concurrently, $operation->statement->object->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Table, true, 't']
  * @example Refusing a schema named like a relation
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Schema, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('s'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Schema, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Reindex implements Statement
 {

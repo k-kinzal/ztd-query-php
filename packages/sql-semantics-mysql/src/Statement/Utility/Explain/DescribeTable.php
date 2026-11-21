@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Explain;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DESCRIBE (DESC, EXPLAIN) with a table: the columns of a table or view, as SHOW COLUMNS reports them.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a column pattern
- *     $describe = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("DESC t 'a%'");
+ *     $describe = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("DESC t 'a%'");
  *     [$describe->statement->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESCRIBE t 'a%'"]
  */
 final class DescribeTable implements Statement

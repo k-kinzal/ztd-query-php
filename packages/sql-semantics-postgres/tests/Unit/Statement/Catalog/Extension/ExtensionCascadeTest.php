@@ -19,8 +19,8 @@ final class ExtensionCascadeTest extends TestCase
 
     public function testRenderWritesTheKeyword(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
         \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionCascade::Cascade->render($out);
-        self::assertSame('CASCADE', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        self::assertSame('CASCADE', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 }

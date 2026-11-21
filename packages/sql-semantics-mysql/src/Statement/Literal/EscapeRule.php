@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
-use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 
 /**
  * How a backslash inside a quoted string is read: as an escape character or as itself.
@@ -18,7 +18,7 @@ use SqlSemantics\Contract\LexicalSettings;
  *
  * @visibility public
  * @example Choosing the rule of a profile
- *     \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::under(new \SqlSemantics\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES')) // => \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Verbatim
+ *     \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::under(new \SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES')) // => \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Verbatim
  */
 enum EscapeRule
 {

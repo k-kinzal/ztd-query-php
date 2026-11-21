@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Prepared;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * DEALLOCATE PREPARE (or its synonym DROP PREPARE): releases a prepared statement.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a DEALLOCATE PREPARE
- *     $deallocate = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP PREPARE stmt');
+ *     $deallocate = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP PREPARE stmt');
  *     [$deallocate->statement->name->value, $deallocate->toString()] // => ['stmt', 'DEALLOCATE PREPARE stmt']
  */
 final class Deallocate implements Statement

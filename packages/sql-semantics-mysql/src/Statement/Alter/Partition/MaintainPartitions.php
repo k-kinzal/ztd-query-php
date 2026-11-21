@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Partition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
 use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REBUILD | OPTIMIZE | ANALYZE | CHECK | REPAIR | TRUNCATE PARTITION ALL | p, …`: a maintenance operation on partitions.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Rebuilding every partition
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t REBUILD PARTITION ALL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t REBUILD PARTITION ALL');
  *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
  */
 final class MaintainPartitions implements StandaloneCommand

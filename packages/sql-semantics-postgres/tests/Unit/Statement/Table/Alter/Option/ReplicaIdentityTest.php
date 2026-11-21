@@ -14,8 +14,8 @@ final class ReplicaIdentityTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER TABLE t REPLICA IDENTITY NOTHING', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('ALTER TABLE t REPLICA IDENTITY NOTHING', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -23,14 +23,14 @@ final class ReplicaIdentityTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER TABLE t REPLICA IDENTITY USING INDEX k', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('ALTER TABLE t REPLICA IDENTITY USING INDEX k', []);
         self::assertSame('ALTER TABLE t REPLICA IDENTITY USING INDEX k', $statement->toString());
     }
 
     public function testRefusesAnIndexForFull(): void
     {
         $this->expectExceptionMessage('An index is named exactly for USING INDEX.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\ReplicaIdentity(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\ReplicaIdentityKind::Full, new \SqlSemantics\Statement\Identifier\Name('k'));
+        new \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\ReplicaIdentity(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\ReplicaIdentityKind::Full, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('k'));
     }
 }

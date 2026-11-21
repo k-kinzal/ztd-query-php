@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * Where the columns of a new table come from: a column list, a composite type, or a partitioned parent.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the form of a table definition
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t OF person');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t OF person');
  *     $create->statement->definition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TypedTable // => true
  */
 interface TableForm extends Node

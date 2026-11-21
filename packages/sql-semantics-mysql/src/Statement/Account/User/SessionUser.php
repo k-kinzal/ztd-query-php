@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `USER()` at the account position of ALTER USER: the account of the session.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Rendering the session account
- *     $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+ *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser())->render($out);
  *     $out->pieces()[0]->text // => 'USER'
  */

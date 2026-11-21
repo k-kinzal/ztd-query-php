@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * One part of an index or foreign key: a column with an optional prefix length, or an expression.

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the row shape of a derived table or a common table from its query and its column list.

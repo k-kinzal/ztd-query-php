@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\CallTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of a function, aggregate or window function written with the function's name.
@@ -43,16 +43,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of an aggregate call
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(
- *         new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('count')]),
+ *         new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('count')]),
  *         star: true,
  *     );
  *     [$call->name->last()->value, $call->star, $call->arguments, $call->outputName()->value] // => ['count', true, [], 'count']
  * @example Rejecting arguments next to the star
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(
- *         new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('count')]),
+ *         new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('count')]),
  *         [new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\PositionalArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral())],
  *         true,
- *     ) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     ) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class FunctionCall implements Scalar, OutputNaming
 {

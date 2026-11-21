@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RENAME TABLE old TO new, …`: a request to rename tables, one rename after the other.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Swapping two tables through a third name
- *     $rename = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('RENAME TABLES a TO tmp, b TO a, tmp TO b');
+ *     $rename = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('RENAME TABLES a TO tmp, b TO a, tmp TO b');
  *     [count($rename->statement->renamings), $rename->toString()] // => [3, 'RENAME TABLE a TO tmp, b TO a, tmp TO b']
  */
 final class RenameTable implements Statement

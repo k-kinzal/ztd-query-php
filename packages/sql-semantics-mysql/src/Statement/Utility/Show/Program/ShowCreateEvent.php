@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Program;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE EVENT: the statement that creates a scheduled event.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE EVENT shop.p');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE EVENT shop.p');
  *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE EVENT shop.p']
  */
 final class ShowCreateEvent implements Statement

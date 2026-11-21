@@ -7,17 +7,17 @@ namespace Tests\Unit\Statement\Invocation\Json\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(JsonBehavior::class)]
 #[Small]

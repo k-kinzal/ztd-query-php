@@ -6,13 +6,13 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Leaf;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Rules\Identifiers;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Lowers identifiers and the name forms built from them.

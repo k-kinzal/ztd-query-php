@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A `name type PATH path` or `name type EXISTS PATH path` column of JSON_TABLE, with its ON EMPTY and ON ERROR responses.
@@ -33,10 +33,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading a path column
- *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.a']));
+ *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.a']));
  *     [$column->name->value, $column->type->name(), $column->exists] // => ['a', 'INT', false]
  * @example Refusing the reversed order without both responses
- *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.a']), errorFirst: true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.a']), errorFirst: true) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class PathColumn implements JsonTableColumn
 {

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * The result of a call written as `name(...)` or `db.name(...)`: a native, loadable or stored function.

@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Object;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
@@ -25,7 +25,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblemKi
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Define::class)]
 #[Medium]
@@ -33,19 +32,19 @@ final class DefineTest extends TestCase
 {
     public function testDeriveStatementReportsMissingAttributes(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
-        $aggregate = $semantics->analyze('CREATE AGGREGATE a(int4) (initcond = 0)');
-        $operator = $semantics->analyze('CREATE OPERATOR === (leftarg = int4)');
+        $semantics = new Semantics();
+        $aggregate = $semantics->inspect('CREATE AGGREGATE a(int4) (initcond = 0)');
+        $operator = $semantics->inspect('CREATE OPERATOR === (leftarg = int4)');
         self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['stype']), new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['sfunc'])], $aggregate->facts->diagnostics);
         self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingOperatorFunction), new AttributeProblem(AttributeProblemKind::MissingRightArgument)], $operator->facts->diagnostics);
     }
 
     public function testRenderWritesEachForm(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['CREATE OR REPLACE AGGREGATE a (basetype = int4, sfunc = f, stype = int4)', 'CREATE TYPE t', 'CREATE COLLATION IF NOT EXISTS c (locale = \'C\')', 'CREATE TEXT SEARCH DICTIONARY d (template = simple)'],
-            [$semantics->analyze('CREATE OR REPLACE AGGREGATE a (basetype = int4, sfunc = f, stype = int4)')->toString(), $semantics->analyze('CREATE TYPE t')->toString(), $semantics->analyze("CREATE COLLATION IF NOT EXISTS c (locale = 'C')")->toString(), $semantics->analyze('CREATE TEXT SEARCH DICTIONARY d (template = simple)')->toString()],
+            [$semantics->inspect('CREATE OR REPLACE AGGREGATE a (basetype = int4, sfunc = f, stype = int4)')->toString(), $semantics->inspect('CREATE TYPE t')->toString(), $semantics->inspect("CREATE COLLATION IF NOT EXISTS c (locale = 'C')")->toString(), $semantics->inspect('CREATE TEXT SEARCH DICTIONARY d (template = simple)')->toString()],
         );
     }
 
@@ -105,7 +104,7 @@ final class DefineTest extends TestCase
 
     public function testDeriveStatementReadsTheFunctionOfAnOperatorAsARoutine(): void
     {
-        $define = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)')->statement;
+        $define = (new Semantics())->inspect('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)')->statement;
         self::assertInstanceOf(Define::class, $define);
         $definition = $define->definition ?? [];
         self::assertSame([OperatorAttribute::Leftarg, OperatorAttribute::Rightarg, OperatorAttribute::Function], array_map(static fn (Attribute $attribute): ?KnownAttribute => $attribute->known, $definition));
@@ -114,11 +113,11 @@ final class DefineTest extends TestCase
 
     public function testRenderKeepsAnOldStyleAttributeSpelledLikeAKeywordQuoted(): void
     {
-        self::assertSame('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)', (new Semantics(Dialect::PostgreSql))->analyze('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)')->toString());
+        self::assertSame('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)', (new Semantics())->inspect('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)')->toString());
     }
 
     public function testRenderWritesANewStyleAttributeAsALabel(): void
     {
-        self::assertSame('CREATE AGGREGATE a (int4) (type = x, sfunc = f)', (new Semantics(Dialect::PostgreSql))->analyze('CREATE AGGREGATE a (int4) ("type" = x, sfunc = f)')->toString());
+        self::assertSame('CREATE AGGREGATE a (int4) (type = x, sfunc = f)', (new Semantics())->inspect('CREATE AGGREGATE a (int4) ("type" = x, sfunc = f)')->toString());
     }
 }

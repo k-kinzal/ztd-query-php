@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The INTO clause of SELECT INTO: the new table the rows are stored in.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the target of SELECT INTO
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a INTO TEMP TABLE t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 AS a INTO TEMP TABLE t');
  *     [$query->statement->into->table->name->value, $query->statement->into->persistence->value, $query->toString()] // => ['t', 'TEMP', 'SELECT 1 AS a INTO TEMP t']
  */
 final class IntoClause implements Node

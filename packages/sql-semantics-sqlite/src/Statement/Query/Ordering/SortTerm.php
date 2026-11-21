@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Ordering;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * One ordering term: an expression with its optional direction and NULL placement.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an ordering term
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
  *     $term = $query->statement->orderBy[0];
  *     [$term->direction, $term->nulls] // => [\SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Ascending, \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder::First]
  */

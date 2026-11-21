@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `VALUES LESS THAN (values)` or `VALUES LESS THAN MAXVALUE`: the exclusive upper bound of a RANGE partition.

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
@@ -19,10 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
  * Derives the declaration a table definition provides.
@@ -120,7 +120,7 @@ final class Declarations
             if ($like === null) {
                 $set->inherit($column);
             } else {
-                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Statement\Type\Nullability::NotNull, $generation && $column->generated);
+                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull, $generation && $column->generated);
             }
         }
     }

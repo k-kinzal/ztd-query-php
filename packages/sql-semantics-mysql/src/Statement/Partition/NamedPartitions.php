@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A comma-separated list of partition names.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Selecting two partitions
- *     $partitions = new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Statement\Identifier\Name('p0'), new \SqlSemantics\Statement\Identifier\Name('p1')]);
+ *     $partitions = new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('p0'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('p1')]);
  *     count($partitions->names) // => 2
  */
 final class NamedPartitions implements PartitionSelection

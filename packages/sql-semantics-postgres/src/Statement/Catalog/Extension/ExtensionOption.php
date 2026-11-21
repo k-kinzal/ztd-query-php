@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * One option of CREATE EXTENSION: SCHEMA, VERSION, FROM or CASCADE.

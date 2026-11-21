@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;

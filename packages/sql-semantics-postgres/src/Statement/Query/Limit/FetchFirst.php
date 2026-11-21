@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Limit;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\FetchCounts;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * FETCH FIRST count ROWS ONLY or WITH TIES: the SQL-standard row limit.
@@ -22,12 +22,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading FETCH FIRST WITH TIES
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
  *     [$query->statement->options->limit->count->withTies, $query->toString()] // => [true, 'SELECT 1 ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES']
  * @example Refusing a count that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\FetchFirst(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Statement\Identifier\Name('+')), $one, $two)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\FetchFirst(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('+')), $one, $two)) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class FetchFirst implements Node
 {

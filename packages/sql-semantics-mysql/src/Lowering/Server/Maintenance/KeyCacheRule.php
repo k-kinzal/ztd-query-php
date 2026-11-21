@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Maintenance;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CACHE INDEX and LOAD INDEX INTO CACHE.
@@ -150,7 +150,7 @@ final class KeyCacheRule
     /**
      * Lowers the table, the partitions, the index list and IGNORE LEAVES of one entry.
      *
-     * @return array{\SqlSemantics\Statement\Identifier\QualifiedName, PartitionSelection|null, list<Name|PrimaryIndex>|null, bool}
+     * @return array{\SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName, PartitionSelection|null, list<Name|PrimaryIndex>|null, bool}
      * @throws ImplementationGap When a production has no rule
      */
     public function entry(Form $form): array

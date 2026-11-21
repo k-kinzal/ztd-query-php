@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Table options written one after the other without commas, such as `ENGINE = InnoDB COMMENT = 'x'`.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Changing the storage engine and the comment
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
  *     count($alter->statement->commands[0]->options) // => 2
  */
 final class SetTableOptions implements AlterCommand

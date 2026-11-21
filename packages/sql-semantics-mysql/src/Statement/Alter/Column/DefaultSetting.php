@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Column;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER [COLUMN] c SET DEFAULT value`, `SET DEFAULT (expression)` or `DROP DEFAULT`: a request to change the default of a column.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Setting a literal default
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER a SET DEFAULT 1');
  *     [$alter->statement->commands[0]->expression, $alter->toString()] // => [false, 'ALTER TABLE t ALTER COLUMN a SET DEFAULT 1']
  */
 final class DefaultSetting implements AlterCommand

@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor;
  *
  * @visibility public
  * @example Reading the options of a cursor
- *     $declare = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DECLARE c BINARY NO SCROLL CURSOR FOR SELECT 1');
+ *     $declare = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DECLARE c BINARY NO SCROLL CURSOR FOR SELECT 1');
  *     $declare->statement->options // => [\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::NoScroll]
  */
 enum CursorOption: string

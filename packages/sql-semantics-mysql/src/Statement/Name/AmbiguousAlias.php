@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\Resolution;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A name that no column of the position has and that several different select list items carry as their alias; none is chosen.
@@ -21,10 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping every select list item an alias names
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []);
- *     count($query->facts->diagnostics[0]->candidates) // => 2
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 AS x, 2 AS x ORDER BY x + 1', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column x is ambiguous.
  * @example Refusing a single candidate
- *     new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(new \SqlSemantics\Statement\Identifier\Name('x'), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x'), []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class AmbiguousAlias implements Resolution, Diagnostic
 {

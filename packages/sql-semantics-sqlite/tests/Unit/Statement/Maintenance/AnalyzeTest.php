@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Maintenance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze;
 
 #[CoversClass(Analyze::class)]
@@ -17,7 +16,7 @@ final class AnalyzeTest extends TestCase
 {
     public function testDeriveStatementRecordsNoResolutionForTheName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('ANALYZE users', []);
+        $operation = (new Semantics())->analyze('ANALYZE users', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertFalse($operation->facts->covers($operation->statement));
@@ -25,7 +24,7 @@ final class AnalyzeTest extends TestCase
 
     public function testRenderWritesTheOptionalTarget(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $qualified = $semantics->analyze('analyze main.users');
 
         self::assertInstanceOf(Analyze::class, $qualified->statement);

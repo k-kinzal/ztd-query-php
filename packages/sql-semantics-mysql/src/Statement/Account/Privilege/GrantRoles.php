@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `GRANT role, … TO account, … [WITH ADMIN OPTION]` (8.0+): a request to grant roles.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Granting roles with the admin option
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("grant r1, 'r2'@'%' to u with admin option")->toString() // => 'GRANT r1, r2@`%` TO u WITH ADMIN OPTION'
  */
 final class GrantRoles implements Statement
 {

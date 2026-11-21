@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REPAIR [NO_WRITE_TO_BINLOG | LOCAL] TABLE t, … [QUICK] [EXTENDED] [USE_FRM]`: a request to repair possibly corrupted tables.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('repair table t quick use_frm');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('repair table t quick use_frm');
  *     [$statement->toString(), $statement->statement->options[1] === \SqlSemantics\Platform\MySql\Statement\Server\RepairOption::UseFrm] // => ['REPAIR TABLE t QUICK USE_FRM', true]
  */
 final class RepairTable implements Statement

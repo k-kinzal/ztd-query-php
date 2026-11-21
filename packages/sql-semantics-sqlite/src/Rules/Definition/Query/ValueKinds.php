@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition\Query;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
@@ -26,10 +30,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
-use SqlSemantics\Statement\Fact\Facts;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
 
 /**
  * Derives the set of storage classes SQLite expects a result expression of a compound arm to produce.

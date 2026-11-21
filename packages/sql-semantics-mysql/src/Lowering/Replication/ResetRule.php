@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
@@ -16,8 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers RESET with its items and RESET PERSIST.

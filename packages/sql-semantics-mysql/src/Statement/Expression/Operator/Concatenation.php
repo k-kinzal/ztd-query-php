@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\StringResult;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The string concatenation `a || b` of the PIPES_AS_CONCAT mode (`Item_func_concat`).
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Concatenating under PIPES_AS_CONCAT
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics(null, \SqlSemantics\Platform\MySql\Mode::fromString('PIPES_AS_CONCAT'));
  *     $semantics->analyze("SELECT a FROM t WHERE a || 'x'")->statement->where instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation // => true
  */
 final class Concatenation implements Scalar

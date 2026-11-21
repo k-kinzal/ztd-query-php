@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\ConditionRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
@@ -29,7 +29,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ConditionRule::class)]
 #[Medium]
@@ -49,7 +48,7 @@ final class ConditionRuleTest extends TestCase
     #[DataProvider('providerValueLowersAnErrorCodeAndAnSqlstate')]
     public function testValueLowersAnErrorCodeAndAnSqlstate(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for 1051; declare d condition for sqlstate '42S02'; declare e condition for sqlstate value '42S01'; end");
+        $operation = (new Semantics($release))->analyze("create procedure p() begin declare c condition for 1051; declare d condition for sqlstate '42S02'; declare e condition for sqlstate value '42S01'; end");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -63,7 +62,7 @@ final class ConditionRuleTest extends TestCase
 
     public function testValueLowersTheSqlstateOfResignal(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("resignal sqlstate value '45000'");
+        $operation = (new Semantics())->analyze("resignal sqlstate value '45000'");
 
         self::assertEquals(new Resignal(new SqlState(new Text('45000'))), $operation->statement);
         self::assertSame("RESIGNAL SQLSTATE '45000'", $operation->toString());
@@ -94,7 +93,7 @@ final class ConditionRuleTest extends TestCase
     #[DataProvider('providerHandledLowersEveryKindOfCondition')]
     public function testHandledLowersEveryKindOfCondition(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for 1051; declare continue handler for c, 1052, sqlstate value '42000', sqlwarning, not found, sqlexception set @x = 1; end");
+        $operation = (new Semantics($release))->analyze("create procedure p() begin declare c condition for 1051; declare continue handler for c, 1052, sqlstate value '42000', sqlwarning, not found, sqlexception set @x = 1; end");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -115,7 +114,7 @@ final class ConditionRuleTest extends TestCase
 
     public function testHandledLowersASingleCondition(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('create procedure p() begin declare exit handler for sqlexception begin end; end');
+        $operation = (new Semantics())->analyze('create procedure p() begin declare exit handler for sqlexception begin end; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 5.6 and 5.7: `show: SHOW show_param`.

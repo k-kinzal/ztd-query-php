@@ -7,13 +7,13 @@ namespace Tests\Unit\Rules\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ExplainRows;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Shape\UniqueField;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(ExplainRows::class)]
 #[Small]

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Utility;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Call;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Listen;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Load;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Notify;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Unlisten;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CALL, DO, NOTIFY, LISTEN, UNLISTEN and LOAD.

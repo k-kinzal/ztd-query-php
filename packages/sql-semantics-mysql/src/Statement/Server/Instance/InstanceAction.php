@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * The action of ALTER INSTANCE.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the action of ALTER INSTANCE
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER INSTANCE RELOAD KEYRING')->statement->action instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring // => true
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER INSTANCE RELOAD KEYRING')->statement->action instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring // => true
  */
 interface InstanceAction extends Node
 {

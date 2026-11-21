@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
-use SqlSemantics\Statement\Query;
 
 /**
  * Tells which queries a statement may hold where the grammar writes `SelectStmt`.

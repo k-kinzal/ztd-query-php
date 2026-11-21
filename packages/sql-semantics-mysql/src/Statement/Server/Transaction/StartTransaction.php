@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `START TRANSACTION [characteristic, …]`: a request to start a transaction.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Starting a read-only transaction with a consistent snapshot
- *     $start = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('start transaction with consistent snapshot, read only');
+ *     $start = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('start transaction with consistent snapshot, read only');
  *     [$start->toString(), $start->statement->characteristics[1]] // => ['START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY', \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly]
  */
 final class StartTransaction implements Statement

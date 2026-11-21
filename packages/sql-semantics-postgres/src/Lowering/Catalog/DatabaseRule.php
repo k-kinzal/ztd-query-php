@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabase;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\CreateDatabase;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\RefreshDatabaseC
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\AlterTablespaceOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\CreateTablespace;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Tablespace\DropTablespace;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the database and tablespace commands.

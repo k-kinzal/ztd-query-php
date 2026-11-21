@@ -7,12 +7,11 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(Star::class)]
 #[Medium]
@@ -20,7 +19,7 @@ final class StarTest extends TestCase
 {
     public function testRenderWritesTheStarAmongOtherColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('select *, a, * from t', [$create]);
 
@@ -32,7 +31,7 @@ final class StarTest extends TestCase
 
     public function testRenderWritesANewlyBuiltStarWithoutInput(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new Star()]));
 
         self::assertSame('SELECT *', $operation->toString());

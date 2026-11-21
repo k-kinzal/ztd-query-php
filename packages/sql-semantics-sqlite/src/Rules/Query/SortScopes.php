@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -12,11 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
 
 /**
  * Derives ORDER BY and GROUP BY terms in the environment SQLite resolves each of them in.

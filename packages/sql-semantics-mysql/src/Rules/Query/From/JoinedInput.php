@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
-use SqlSemantics\Resolution\LookupLevel;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Resolution\LookupLevel;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 
 /**
  * The outcome of deriving a FROM clause term: its facts, the relations it makes visible and the columns `*` selects.

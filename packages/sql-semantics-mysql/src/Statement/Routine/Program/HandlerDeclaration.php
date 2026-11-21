@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DECLARE ... HANDLER: the statement that runs when one of the listed conditions occurs in the block.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a handler
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
  *     $handler = $create->statement->body->declarations[0];
  *     [$handler->action, count($handler->conditions)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Continue, 2]
  */

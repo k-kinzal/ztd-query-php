@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Invocation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Argument;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuseKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Reports the calls every routine, or the resolved kind of function, rejects.

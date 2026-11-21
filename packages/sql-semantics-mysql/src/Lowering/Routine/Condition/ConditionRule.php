@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine\Condition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;

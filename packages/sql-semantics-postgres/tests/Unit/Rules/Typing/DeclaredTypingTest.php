@@ -7,18 +7,18 @@ namespace Tests\Unit\Rules\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredDomain;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\NamedOnPath;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredDomain;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(DeclaredTyping::class)]
 #[Small]

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Combines the visible relations of the two sides of a join.

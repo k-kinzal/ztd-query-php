@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Option;
 
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The SECONDARY_ENGINE option (MySQL 8.0.13 and later): the secondary storage engine, or NULL for none.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a table option
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT) SECONDARY_ENGINE = NULL');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT) SECONDARY_ENGINE = NULL');
  *     $create->statement->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption // => true
  */
 final class SecondaryEngineOption implements TableOption

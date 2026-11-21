@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Index;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\ColumnFacts;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column written by name as the key of an index, a partition key or extended statistics.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving an indexed column
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a int, b text)');
  *     $index = $semantics->analyze('CREATE INDEX i ON t (b)', $table->declarations());
  *     $index->facts->scalar($index->statement->elements[0]->key)->resolution->slot->column === $table->declarations()[0]->columns[1] // => true

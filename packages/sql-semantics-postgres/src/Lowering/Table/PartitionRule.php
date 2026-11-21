@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
@@ -19,7 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionElement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\PartitionSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\RangeBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\RangeLimit;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers partition keys and partition bounds.

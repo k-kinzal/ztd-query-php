@@ -8,18 +8,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Call\AggregateRule;
 use SqlSemantics\Platform\MySql\Lowering\Call\FrameRule;
 use SqlSemantics\Platform\MySql\Lowering\Call\WindowRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(AggregateRule::class)]
 #[Small]
@@ -32,7 +32,7 @@ final class AggregateRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $list = $platform->parser($profile)->parse("SELECT COUNT(ALL *), COUNT(DISTINCT a, b), SUM(ALL a) OVER w, JSON_OBJECTAGG(ALL a, b), GROUP_CONCAT(DISTINCT a SEPARATOR '-')")->find('select_item_list')[0];
         $rule = new AggregateRule($lowering, new WindowRule($lowering, new FrameRule($lowering)));
-        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar => $rule->aggregate($node), $list->find('sum_expr'));
+        $calls = array_map(static fn (Node $node): \SqlSemantics\Platform\MySql\Model\Statement\Scalar => $rule->aggregate($node), $list->find('sum_expr'));
 
         self::assertEquals(new Aggregate(AggregateFunction::Count, [], false, true), $calls[0]);
         self::assertInstanceOf(Aggregate::class, $calls[1]);

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Account\Password;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the account family: the methods other families and the statement dispatcher call.

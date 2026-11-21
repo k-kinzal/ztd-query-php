@@ -7,18 +7,18 @@ namespace Tests\Unit\Rules\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Functions;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\WrongArgumentCount;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Functions::class)]
 #[Small]

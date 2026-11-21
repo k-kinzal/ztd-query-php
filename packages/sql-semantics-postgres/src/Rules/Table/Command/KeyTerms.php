@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
 
@@ -28,7 +28,7 @@ final class KeyTerms
     public function checked(array $terms): array
     {
         $checked = [];
-        foreach (Check::listOf($terms, \SqlSemantics\Statement\Node::class, 'Key terms are an ordered list.') as $term) {
+        foreach (Check::listOf($terms, \SqlSemantics\Platform\PostgreSql\Model\Statement\Node::class, 'Key terms are an ordered list.') as $term) {
             Check::input($term instanceof ColumnKey || $term instanceof ExpressionKey, 'A key term is a column or an expression.');
             $checked[] = $term;
         }

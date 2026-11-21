@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type;
 
-use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * The part of a type name that designates the element type: a keyword spelling, a catalog name, or a column's type.

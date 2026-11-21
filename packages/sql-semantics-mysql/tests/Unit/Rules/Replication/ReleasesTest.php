@@ -7,7 +7,7 @@ namespace Tests\Unit\Rules\Replication;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;

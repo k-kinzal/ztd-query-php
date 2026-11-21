@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\KeyCache;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CACHE INDEX t [INDEX (…)], … IN {cache | DEFAULT}`: a request to assign the indexes of MyISAM tables to a key cache.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Assigning indexes to a key cache
- *     $cache = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('cache index t key (primary, i), u in hot');
+ *     $cache = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('cache index t key (primary, i), u in hot');
  *     [$cache->toString(), $cache->statement->cache?->value] // => ['CACHE INDEX t INDEX (PRIMARY, i), u IN hot', 'hot']
  */
 final class CacheIndex implements Statement

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FORMAT JSON [ENCODING name]`: the value is JSON text in an encoding.
@@ -22,9 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the encoding of a format
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat(new \SqlSemantics\Statement\Identifier\Name('utf16')))->encoding() // => \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonEncoding::Utf16
+ *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('utf16')))->encoding() // => \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonEncoding::Utf16
  * @example Rejecting an unknown encoding
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat(new \SqlSemantics\Statement\Identifier\Name('latin1')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('latin1')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class JsonFormat implements Clause
 {

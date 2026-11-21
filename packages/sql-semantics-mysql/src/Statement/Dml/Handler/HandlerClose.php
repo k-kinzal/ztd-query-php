@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * HANDLER ... CLOSE: closes an open handler.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a HANDLER ... CLOSE
- *     $close = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h CLOSE');
+ *     $close = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('HANDLER h CLOSE');
  *     [$close->statement->handler->value, $close->toString()] // => ['h', 'HANDLER h CLOSE']
  */
 final class HandlerClose implements Statement

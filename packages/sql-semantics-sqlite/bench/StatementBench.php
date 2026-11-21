@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Bench;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
 /**
  * Measures the analysis of a statement: parsing, lowering, derivation and rendering with its checks.
@@ -20,8 +19,8 @@ final class StatementBench
      */
     public function benchSelect(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $semantics->analyze('SELECT t.a, count(*) AS n FROM t LEFT JOIN u USING (id) WHERE t.b > 1 GROUP BY t.a ORDER BY n DESC LIMIT 10')->toString();
+        $semantics = new Semantics();
+        $semantics->analyze('SELECT t.a, count(*) AS n FROM t LEFT JOIN u USING (id) WHERE t.b > 1 GROUP BY t.a ORDER BY n DESC LIMIT 10');
     }
 
     /**
@@ -29,7 +28,7 @@ final class StatementBench
      */
     public function benchInsert(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $semantics->analyze("INSERT INTO items (id, name) VALUES (1, 'example') ON CONFLICT (id) DO UPDATE SET name = excluded.name RETURNING id")->toString();
+        $semantics = new Semantics();
+        $semantics->analyze("INSERT INTO items (id, name) VALUES (1, 'example') ON CONFLICT (id) DO UPDATE SET name = excluded.name RETURNING id");
     }
 }

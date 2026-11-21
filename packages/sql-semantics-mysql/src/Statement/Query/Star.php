@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The unqualified `*` of a select list: every column of every table of the FROM clause.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a star item
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT * FROM t');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT * FROM t');
  *     $query->statement->items[0] instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star // => true
  */
 final class Star implements SelectItem

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * A request to commit the current transaction.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a chained end of a transaction
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('END AND CHAIN');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('END AND CHAIN');
  *     [$operation->statement->chaining, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::Chain, 'END AND CHAIN']
  */
 final class Commit implements Statement

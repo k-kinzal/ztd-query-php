@@ -7,14 +7,13 @@ namespace Tests\Unit\Statement\Schema\Refusal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\WrongRelationKind;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(WrongRelationKind::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class WrongRelationKindTest extends TestCase
 {
     public function testMessageNamesTheRelationItsKindAndTheRequest(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $view = $semantics->analyze('CREATE VIEW v AS SELECT 1')->declarations()[0];
         $table = $semantics->analyze('CREATE TABLE t (a)')->declarations()[0];
         $profile = $semantics->context()->profile;
@@ -34,7 +33,7 @@ final class WrongRelationKindTest extends TestCase
 
     public function testMessageIsNeverAboutARelationOfTheKindTheRequestNeeds(): void
     {
-        $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a)')->declarations()[0];
+        $table = (new Semantics())->analyze('CREATE TABLE t (a)')->declarations()[0];
         $this->expectExceptionMessage('A relation of the kind a request needs is not refused.');
 
         new WrongRelationKind($table, KindRefusal::DropTable);

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A test for rows: `EXISTS (SELECT …)` (`Item_exists_subselect`).
@@ -25,8 +25,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Testing for rows
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1)');
- *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Statement\Type\Nullability::NotNull
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1)');
+ *     $query->facts->scalar($query->statement->where)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull
  */
 final class Exists implements Scalar
 {

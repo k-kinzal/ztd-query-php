@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Lowers the filters of CHANGE REPLICATION FILTER.

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConflictingTables;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RENAME [TO | AS] new`: a request to rename the table, possibly into another database.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Moving a table to another database
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t RENAME AS archive.t');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t RENAME AS archive.t');
  *     $alter->toString() // => 'ALTER TABLE t RENAME TO archive.t'
  */
 final class RenameTo implements AlterCommand

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One authentication method of an account: `IDENTIFIED [WITH plugin] [BY 'password' | BY RANDOM PASSWORD | AS 'string']`.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a plugin and its authentication string
- *     $method = new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(new \SqlSemantics\Statement\Identifier\Name('caching_sha2_password'), \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Hash, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('$A$005$x'));
+ *     $method = new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('caching_sha2_password'), \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Hash, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('$A$005$x'));
  *     [$method->plugin?->value, $method->secret?->value] // => ['caching_sha2_password', '$A$005$x']
  */
 final class Identification implements Node

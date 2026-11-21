@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHECKSUM TABLE t, … [QUICK | EXTENDED]`: a request to compute a checksum of the contents of tables.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('checksum table t extended');
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('checksum table t extended');
  *     [$statement->toString(), $statement->statement->mode === \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumMode::Extended] // => ['CHECKSUM TABLE t EXTENDED', true]
  */
 final class ChecksumTable implements Statement

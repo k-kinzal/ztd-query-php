@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Utility;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
@@ -28,8 +30,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ZoneKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the configuration commands: SET, RESET, SHOW, ALTER SYSTEM, SET CONSTRAINTS and DISCARD.
@@ -256,7 +256,7 @@ final class SettingRule
     /**
      * Lowers `constraints_set_list`; ALL is no name.
      *
-     * @return list<\SqlSemantics\Statement\Identifier\QualifiedName>
+     * @return list<\SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName>
      *
      * @throws ImplementationGap When the production has no rule
      */

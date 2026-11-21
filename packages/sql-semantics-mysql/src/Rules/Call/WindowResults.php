@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
@@ -12,10 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 /**
  * The result of a function that is only a window function.

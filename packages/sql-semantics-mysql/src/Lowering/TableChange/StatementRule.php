@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange;
 
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\AlterRule;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\ModifierRule;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Platform\MySql\Statement\Alter\TargetTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the statements of the table change family other than the actions of ALTER TABLE.

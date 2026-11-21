@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Hands the ORDER BY and locking clauses written after parentheses down to the selection inside them.

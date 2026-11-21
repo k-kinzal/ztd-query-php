@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Deallocate;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Execute;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\PreparedParameters;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers PREPARE, EXECUTE and DEALLOCATE.

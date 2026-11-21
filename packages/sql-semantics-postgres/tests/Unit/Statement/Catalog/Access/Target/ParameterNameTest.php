@@ -14,12 +14,12 @@ final class ParameterNameTest extends TestCase
 {
     public function testParameterJoinsTheParts(): void
     {
-        self::assertSame('myext.setting', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\ParameterName([new \SqlSemantics\Statement\Identifier\Name('myext'), new \SqlSemantics\Statement\Identifier\Name('setting')]))->parameter());
+        self::assertSame('myext.setting', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('myext'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('setting')]))->parameter());
     }
 
     public function testRenderQuotesEveryPartAsAColumnName(): void
     {
-        self::assertSame('GRANT set ON PARAMETER a."select".c TO joe', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SET ON PARAMETER a."select".c TO joe')->toString());
+        self::assertSame('GRANT set ON PARAMETER a."select".c TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT SET ON PARAMETER a."select".c TO joe')->toString());
     }
 
     public function testRejectsNoPart(): void

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 
 /**
  * Lowers comma-separated expression lists.

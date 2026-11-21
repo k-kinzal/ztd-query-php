@@ -8,17 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(CreateLoadableFunction::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class CreateLoadableFunctionTest extends TestCase
 {
     public function testDeriveStatementChangesNoContext(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $create = $semantics->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'", [$table]);
 
@@ -37,7 +36,7 @@ final class CreateLoadableFunctionTest extends TestCase
 
     public function testDeriveStatementReadsTheRegistration(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
+        $create = (new Semantics())->analyze("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
 
@@ -67,12 +66,12 @@ final class CreateLoadableFunctionTest extends TestCase
     #[DataProvider('providerRenderWritesTheRegistration')]
     public function testRenderWritesTheRegistration(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     public function testRenderWritesAConstructedRegistration(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new CreateLoadableFunction(new Name('f'), LoadableResult::String, new Text('u.so')))->render($out);
 

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the parts of a named table reference shared by every grammar generation.

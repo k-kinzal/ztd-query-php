@@ -14,10 +14,10 @@ final class PseudoRelationsTest extends TestCase
 {
     public function testScopeHoldsOldAndNew(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE TRIGGER g AFTER UPDATE ON t FOR EACH ROW WHEN (old.a = new.a AND a > 0) EXECUTE FUNCTION f()', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE TRIGGER g AFTER UPDATE ON t FOR EACH ROW WHEN (old.a = new.a AND a > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'Column a is ambiguous.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));

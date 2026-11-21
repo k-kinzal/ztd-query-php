@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `INSTALL COMPONENT 'urn', … [SET assignment, …]`: a request to load server components (MySQL 8.0 and later).
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Installing a component with a variable value
- *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("install component 'file://a', 'file://b' set global a.size = 2 * 8");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("install component 'file://a', 'file://b' set global a.size = 2 * 8");
  *     [$install->toString(), count($install->statement->components)] // => ["INSTALL COMPONENT 'file://a', 'file://b' SET GLOBAL a.size = 2 * 8", 2]
  */
 final class InstallComponent implements Statement

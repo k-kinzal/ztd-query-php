@@ -14,14 +14,14 @@ final class JsonValueColumnTest extends TestCase
 {
     public function testRenderWritesTheClausesInOrder(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER))", $query->toString());
     }
 
     public function testRenderQuotesAColumnNamedNested(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (\"nested\" path PATH '\$.n'))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (\"nested\" path PATH '\$.n'))", $query->toString());
     }

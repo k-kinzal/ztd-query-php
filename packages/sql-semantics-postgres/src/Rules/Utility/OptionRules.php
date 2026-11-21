@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Utility;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
-use SqlSemantics\Rendering\Output;
 
 /**
  * The rules of the option lists of EXPLAIN, VACUUM, ANALYZE, CLUSTER and REINDEX.

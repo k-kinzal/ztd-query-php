@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
@@ -25,7 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Decides whether an operand keeps its place when an expression is written without grouping parentheses.

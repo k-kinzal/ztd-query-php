@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Call;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevelRange;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers WEIGHT_STRING with its cast, its LEVEL clause of MySQL 5.6 and 5.7, and its internal form.

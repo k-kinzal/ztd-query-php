@@ -7,17 +7,17 @@ namespace Tests\Unit\Statement\Invocation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(FrameBound::class)]
 #[Small]
@@ -49,7 +49,7 @@ final class FrameBoundTest extends TestCase
 
     public function testRenderQuotesABareUnboundedColumn(): void
     {
-        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', []);
+        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', []);
         self::assertSame('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', $query->toString());
     }
 }

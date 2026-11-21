@@ -8,14 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(DataAccess::class)]
 #[Medium]
@@ -35,7 +34,7 @@ final class DataAccessTest extends TestCase
     #[DataProvider('providerRenderWritesTheKeywordsOfTheLevel')]
     public function testRenderWritesTheKeywordsOfTheLevel(string $release, string $sql, string $expected, AccessLevel $level): void
     {
-        $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $alter = (new Semantics($release))->analyze($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -49,12 +48,12 @@ final class DataAccessTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() NO SQL MODIFIES SQL DATA CONTAINS SQL SELECT 1';
 
-        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze(strtolower($sql))->toString());
+        self::assertSame($sql, (new Semantics())->analyze(strtolower($sql))->toString());
     }
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new DataAccess(AccessLevel::ModifiesSqlData))->render($out);
 
         self::assertSame('MODIFIES SQL DATA', (new Lexical())->join($out->pieces()));

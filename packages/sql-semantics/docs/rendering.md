@@ -16,10 +16,9 @@ Each structure class writes itself to a typed, temporary output, clause by claus
 There is no piece for a free SQL fragment, so no expression assembled as a string can reach the output, and the source text reaches it only as the checked spelling of a spelled region. The pieces are joined with one space, except before `,` `)` `]` `;` `.` and after `(` `[` `.`, and where a class requests no space. The writer does not reorder, optimize, drop or add clauses, replace an alias by its expression, or re-associate operators; parentheses that group an expression are part of the structure and are written back.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $semantics->analyze("select a,b from t where (a+1)*2 > b -- comment\n order by a")->toString(); // => 'SELECT a, b FROM t WHERE (a + 1) * 2 > b ORDER BY a'
 $semantics->analyze('SELECT 1 + (2 * 3)')->toString(); // => 'SELECT 1 + (2 * 3)'
@@ -40,7 +39,7 @@ Names are written bare when the database reads the bare spelling as the same nam
 | SQLite | backticks | Backticks, unlike double quotes, never fall back to a string literal. |
 
 ```php
-use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
@@ -53,7 +52,7 @@ use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 Literals hold their exact value: digits as strings, decoded text, hexadecimal digits. They are never converted through a PHP float. A literal is written in a spelling of that value that the database reads back as the same value.
 
 ```php
-use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
@@ -67,7 +66,7 @@ An operation is returned only after the following checks pass. They run on every
 
 Every construction, `new Operation(...)` and `analyze()` alike:
 
-1. **Value audit.** Every value reachable from the structure, and from the facts, is an enum case or an instance of a final class of the closed semantic namespaces that uses the `SqlSemantics\Statement\Snapshot` trait (which refuses cloning, dynamic properties and serialization), with initialised readonly properties only, holding no float, closure, resource or PHP reference. A node may occur at one position only.
+1. **Value audit.** Every value reachable from the structure, and from the facts, is an enum case or an instance of a final class of the closed semantic namespaces that uses the `SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot` trait (which refuses cloning, dynamic properties and serialization), with initialised readonly properties only, holding no float, closure, resource or PHP reference. A node may occur at one position only.
 2. **Fact completeness.** Every expression, relation and query of the structure received exactly one fact. A rule cannot silently skip a region.
 3. **Spellings.** When the structure holds [layouts](#spelled-regions), the text as the layouts spell it and the text as the structure renders it without them are read by the lexer of the profile, and must have the same tokens: as many, and each written token an equivalent spelling of the rendered one.
 4. **Structure equivalence.** The rendered text is parsed with the same grammar release and lowered by the same rules, and the result must equal the structure operand by operand: the same classes, the same scalar values and enum cases, layouts included, and lists of the same length and order, recursively. This compares actual operands, not a fingerprint or text.
@@ -97,7 +96,7 @@ The rendered text is SQL that requests the same thing as the input, in the spell
 - the spelling of a name or a literal where the database reads several spellings as the same value: identifier quotes, string escapes, dollar quoting and Unicode escapes, digit separators, the case of hexadecimal digits.
 
 ```php
-use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\MySql\Dialect as MySql;
 use SqlSemantics\Platform\PostgreSql\Dialect as PostgreSql;
 use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
@@ -111,10 +110,9 @@ use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 Where a spelling carries meaning, the model keeps the distinction as a bounded value and renders it. In SQLite, for example, `=` and `==` are kept apart, `<>` and `!=` too, and a double-quoted word stays a double-quoted word, because SQLite reads it as a string when no column has that name; the bare words `TRUE` and `FALSE` stay boolean words for the same reason. In SQLite and MySQL, whether `AS` introduces an alias is kept too, because the text these databases name a result column after can include it.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $semantics->analyze('SELECT a FROM t WHERE a == 1 AND a != 2')->toString(); // => 'SELECT a FROM t WHERE a == 1 AND a != 2'
 $semantics->analyze('select "a" from t')->toString(); // => 'SELECT "a" FROM t'
@@ -126,13 +124,12 @@ The rendered text targets the selected release and profile. It is not translated
 
 SQLite and MySQL name a result column without an alias after the text of its expression as it was written: `SELECT 1+1` returns a column named `1+1`, and `SELECT 1 + 1` one named `1 + 1`. There the spelling is part of what the statement returns, and rendering the expression in the canonical spelling would rename the column. The model therefore keeps the written spelling of such an expression as a layout (rule `CORE-SPELLING-001`). PostgreSQL names these columns by rules that do not depend on the spelling, such as `?column?` or the name of a called function, so the PostgreSQL package keeps no layouts.
 
-A `SqlSemantics\Statement\Spelling\Layout` holds one `Spelled` value per token the expression renders, in order: `gap`, the whitespace and comments written before the token, and `text`, its written spelling. `trail` holds what was written after the last token; only SQLite uses it, because the SQLite name extends to the start of the next token, so a comment after the expression is part of the name. `text()` answers the text from the first to the last token. A layout is kept only where it differs from the canonical spelling, and an aliased result column keeps none; the database packages document which result columns keep one (`ResultColumn::$layout` in SQLite, `SelectExpression::$layout` in MySQL).
+A `SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout` holds one `Spelled` value per token the expression renders, in order: `gap`, the whitespace and comments written before the token, and `text`, its written spelling. `trail` holds what was written after the last token; only SQLite uses it, because the SQLite name extends to the start of the next token, so a comment after the expression is part of the name. `text()` answers the text from the first to the last token. A layout is kept only where it differs from the canonical spelling, and an aliased result column keeps none; the database packages document which result columns keep one (`ResultColumn::$layout` in SQLite, `SelectExpression::$layout` in MySQL).
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $query = $semantics->analyze('select 1+1 /* sum */, 2 as two from t where a+1 > 2');
 $layout = $query->statement->columns[0]->layout;
 
@@ -154,18 +151,17 @@ A layout is checked like any other operand:
 These two checks run at publication, so a layout constructed with `new` that fails them is refused with `InvariantViolation`, and no operation is returned. In this case the exception reports a layout that does not fit its expression, not necessarily a defect of the library:
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Spelling\Layout;
-use SqlSemantics\Statement\Spelling\Spelled;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Spelled;
 
-$context = (new Semantics(Dialect::Sqlite))->context([]);
+$context = (new Semantics())->context([]);
 $sum = static fn (): Binary => new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('1'));
 $spelled = static fn (string $operator): Layout => new Layout([new Spelled('', '1'), new Spelled(' /* plus */ ', $operator), new Spelled(' ', '1')]);
 

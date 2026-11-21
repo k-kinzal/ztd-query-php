@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\NamedOnPath;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined;
-use SqlSemantics\Statement\Type\TypeDescriptor;
 
 /**
  * Reports an identity column whose type is not smallint, integer or bigint.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rendering;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 
 /**
  * Spells decoded names as SQLite identifiers.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Codec implements \SqlSemantics\Contract\Codec
+final class Codec implements \SqlSemantics\Platform\Sqlite\Model\Contract\Codec
 {
     /**
      * Spells a decoded name; every position uses the same rule.

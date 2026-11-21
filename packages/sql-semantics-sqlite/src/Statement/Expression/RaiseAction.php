@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
  *
  * @visibility public
  * @example Reading the action of a RAISE
- *     $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(ABORT, 'no'); END");
+ *     $trigger = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(ABORT, 'no'); END");
  *     $trigger->statement->steps[0]->columns[0]->expression->action // => \SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Abort
  */
 enum RaiseAction: string

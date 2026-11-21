@@ -7,24 +7,24 @@ namespace Tests\Unit\Rules\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(SubqueryRows::class)]
 #[Medium]

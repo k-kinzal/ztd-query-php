@@ -7,8 +7,10 @@ namespace Tests\Unit\Statement\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
@@ -16,9 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(LiteralColumn::class)]
 #[Medium]
@@ -31,7 +30,7 @@ final class LiteralColumnTest extends TestCase
 
     public function testDeriveScalarResolvesTheColumnOfTheTableBeingDefined(): void
     {
-        $create = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
+        $create = (new Semantics())->inspect("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
         $statement = $create->statement;
         $table = $create->declarations()[0];
 
@@ -52,10 +51,10 @@ final class LiteralColumnTest extends TestCase
 
     public function testDeriveScalarReportsANameThatIsNoColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $table = $semantics->analyze('CREATE TABLE t (a)');
-        $create = $semantics->analyze("CREATE TABLE u (a, UNIQUE ('zz'))");
-        $index = $semantics->analyze("CREATE INDEX i ON t ('zz')", [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a)');
+        $create = $semantics->inspect("CREATE TABLE u (a, UNIQUE ('zz'))");
+        $index = $semantics->inspect("CREATE INDEX i ON t ('zz')", [$table]);
 
         self::assertCount(1, $create->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $create->facts->diagnostics[0]);
@@ -65,11 +64,11 @@ final class LiteralColumnTest extends TestCase
 
     public function testRenderWritesTheLiteralAsWritten(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $index = $semantics->analyze("create index i on t ('a' collate nocase desc, (('b')))");
+        $semantics = new Semantics();
+        $index = $semantics->inspect("create index i on t ('a' collate nocase desc, (('b')))");
 
         self::assertInstanceOf(CreateIndex::class, $index->statement);
         self::assertSame("CREATE INDEX i ON t ('a' COLLATE nocase DESC, (('b')))", $index->toString());
-        self::assertSame("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))", $semantics->analyze("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))")->toString());
+        self::assertSame("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))", $semantics->inspect("CREATE TABLE t (a, PRIMARY KEY ('a' COLLATE nocase COLLATE binary))")->toString());
     }
 }

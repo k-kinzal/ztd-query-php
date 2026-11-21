@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
@@ -12,11 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives CREATE SEQUENCE and the options of a sequence.

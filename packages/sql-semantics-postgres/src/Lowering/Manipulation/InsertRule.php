@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\ColumnTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoNothing;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoUpdate;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\ValueRows;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
-use SqlSemantics\Statement\Query;
 
 /**
  * Lowers INSERT.

@@ -7,19 +7,18 @@ namespace Tests\Unit\Rules\Query\Having;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(HavingScope::class)]
 #[Medium]
@@ -41,10 +40,10 @@ final class HavingScopeTest extends TestCase
 
     public function testGroupingAnswersTheColumnsAsTheHavingPositionSeesThem(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
-        $plain = $semantics->analyze('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
-        $rollup = $semantics->analyze('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
+        $semantics = new Semantics();
+        $table = $semantics->inspect('CREATE TABLE t (a INT NOT NULL)');
+        $plain = $semantics->inspect('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
+        $rollup = $semantics->inspect('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
         $plainSelect = $plain->statement;
         $rollupSelect = $rollup->statement;
         self::assertInstanceOf(Select::class, $plainSelect);
@@ -63,10 +62,10 @@ final class HavingScopeTest extends TestCase
 
     public function testUndecidedAnswersTheColumnsOfIncompletelyKnownOccurrences(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $grouped = $semantics->analyze('SELECT 1 FROM u GROUP BY c HAVING c > 0');
-        $selected = $semantics->analyze('SELECT a AS x FROM u HAVING a > 0');
-        $missing = $semantics->analyze('SELECT a AS x FROM u HAVING b > 0');
+        $semantics = new Semantics();
+        $grouped = $semantics->inspect('SELECT 1 FROM u GROUP BY c HAVING c > 0');
+        $selected = $semantics->inspect('SELECT a AS x FROM u HAVING a > 0');
+        $missing = $semantics->inspect('SELECT a AS x FROM u HAVING b > 0');
         $groupedSelect = $grouped->statement;
         $selectedSelect = $selected->statement;
         self::assertInstanceOf(Select::class, $groupedSelect);
@@ -83,8 +82,8 @@ final class HavingScopeTest extends TestCase
 
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->inspect('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);

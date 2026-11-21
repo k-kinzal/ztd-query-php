@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Reset;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * One item of the list of RESET: the replica, the binary logs or (5.x) the query cache.

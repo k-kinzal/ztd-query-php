@@ -7,9 +7,9 @@ namespace Tests\Unit\Lowering\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Mutation\MutationRule;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
@@ -27,7 +27,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(MutationRule::class)]
 #[Medium]
@@ -35,7 +34,7 @@ final class MutationRuleTest extends TestCase
 {
     public function testCommandLowersEachDataChangeForm(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertInstanceOf(Delete::class, $semantics->analyze('DELETE FROM t')->statement);
         self::assertInstanceOf(Update::class, $semantics->analyze('UPDATE t SET a = 1')->statement);
@@ -46,7 +45,7 @@ final class MutationRuleTest extends TestCase
 
     public function testDeleteLowersTheTargetThePredicateTheReturningAndTheWithClause(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1) DELETE FROM t INDEXED BY i WHERE a IN c RETURNING *');
+        $operation = (new Semantics())->analyze('WITH c AS (SELECT 1) DELETE FROM t INDEXED BY i WHERE a IN c RETURNING *');
 
         self::assertInstanceOf(Delete::class, $operation->statement);
         self::assertNotNull($operation->statement->with);
@@ -60,7 +59,7 @@ final class MutationRuleTest extends TestCase
 
     public function testUpdateLowersEveryClauseInGrammarOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH c AS (SELECT 1) UPDATE OR REPLACE main.t AS x INDEXED BY i SET a = 1 FROM u WHERE x.id = u.id RETURNING x.*');
+        $operation = (new Semantics())->analyze('WITH c AS (SELECT 1) UPDATE OR REPLACE main.t AS x INDEXED BY i SET a = 1 FROM u WHERE x.id = u.id RETURNING x.*');
 
         self::assertInstanceOf(Update::class, $operation->statement);
         self::assertNotNull($operation->statement->with);
@@ -79,7 +78,7 @@ final class MutationRuleTest extends TestCase
 
     public function testUpdateLeavesEveryOptionalClauseEmptyWhenNotWritten(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = 1')->statement;
+        $statement = (new Semantics())->analyze('UPDATE t SET a = 1')->statement;
 
         self::assertInstanceOf(Update::class, $statement);
         self::assertNull($statement->with);
@@ -93,7 +92,7 @@ final class MutationRuleTest extends TestCase
 
     public function testIntoLowersAnInsertWithItsOrClauseAndAReplace(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $insert = $semantics->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
         $replace = $semantics->analyze('REPLACE INTO t VALUES (1)');
 
@@ -112,7 +111,7 @@ final class MutationRuleTest extends TestCase
 
     public function testInsertLowersWrittenRowsAndEveryOtherSourceAsAQuery(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $rows = $semantics->analyze('INSERT INTO t VALUES (1), (2)')->statement;
         $select = $semantics->analyze('INSERT INTO t SELECT * FROM u')->statement;
         $compound = $semantics->analyze('INSERT INTO t VALUES (1) UNION SELECT 2')->statement;
@@ -130,7 +129,7 @@ final class MutationRuleTest extends TestCase
 
     public function testDefaultsLowersAnInsertOfDefaultValuesWithItsReturning(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $returning = $semantics->analyze('INSERT INTO main.t AS x DEFAULT VALUES RETURNING *');
         $bare = $semantics->analyze('INSERT OR FAIL INTO t DEFAULT VALUES');
 
@@ -147,7 +146,7 @@ final class MutationRuleTest extends TestCase
 
     public function testTargetLowersEveryFormOfTheWrittenTable(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('DELETE FROM t')->statement;
         $qualified = $semantics->analyze('DELETE FROM main.t')->statement;
         $aliased = $semantics->analyze('DELETE FROM t AS x')->statement;
@@ -170,7 +169,7 @@ final class MutationRuleTest extends TestCase
 
     public function testAssignmentsKeepsTheWrittenOrderAndTheListForm(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = 1, (b, c) = (2, 3), d = 4');
+        $operation = (new Semantics())->analyze('UPDATE t SET a = 1, (b, c) = (2, 3), d = 4');
 
         self::assertInstanceOf(Update::class, $operation->statement);
         $assignments = $operation->statement->assignments;
@@ -187,7 +186,7 @@ final class MutationRuleTest extends TestCase
 
     public function testAssignmentsStartWithAListForm(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET (a, b) = (SELECT 1, 2), c = 3');
+        $operation = (new Semantics())->analyze('UPDATE t SET (a, b) = (SELECT 1, 2), c = 3');
 
         self::assertInstanceOf(Update::class, $operation->statement);
         self::assertInstanceOf(RowAssignment::class, $operation->statement->assignments[0]);
@@ -197,7 +196,7 @@ final class MutationRuleTest extends TestCase
 
     public function testWhereReturningLowersEachOfTheFourTails(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $none = $semantics->analyze('DELETE FROM t')->statement;
         $where = $semantics->analyze('DELETE FROM t WHERE a')->statement;
         $returning = $semantics->analyze('DELETE FROM t RETURNING a')->statement;
@@ -220,7 +219,7 @@ final class MutationRuleTest extends TestCase
 
     public function testReturningIsEmptyWithoutTheClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $bare = $semantics->analyze('INSERT INTO t DEFAULT VALUES')->statement;
         $listed = $semantics->analyze('INSERT INTO t DEFAULT VALUES RETURNING a, b AS c')->statement;
 

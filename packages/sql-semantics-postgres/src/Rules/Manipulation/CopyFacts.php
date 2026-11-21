@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
@@ -18,10 +22,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\Manipulation
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Derives the facts of COPY.

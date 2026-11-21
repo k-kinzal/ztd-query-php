@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockingClause;
@@ -20,13 +27,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Checks which FROM items a locking clause can lock.

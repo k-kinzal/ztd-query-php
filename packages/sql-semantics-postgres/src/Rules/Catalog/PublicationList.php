@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationMember;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
-use SqlSemantics\Resolution\Environment;
 
 /**
  * Reads and checks the object list of CREATE and ALTER PUBLICATION.

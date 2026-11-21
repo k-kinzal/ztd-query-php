@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Table\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
@@ -19,7 +18,7 @@ final class CollateAttributeTest extends TestCase
 {
     public function testDeriveAttributeDerivesNothing(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $statement = $create->statement;
@@ -34,6 +33,6 @@ final class CollateAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)', (new Semantics())->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)')->toString());
     }
 }

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectForms;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER kind object SET SCHEMA schema`: moves an object to another schema.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the new schema
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION hstore SET SCHEMA util');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER EXTENSION hstore SET SCHEMA util');
  *     $operation->statement->schema->value // => 'util'
  */
 final class SetSchema implements Statement

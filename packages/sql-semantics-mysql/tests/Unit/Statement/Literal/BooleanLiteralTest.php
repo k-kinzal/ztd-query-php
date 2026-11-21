@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(BooleanLiteral::class)]
 #[Medium]
@@ -28,7 +27,7 @@ final class BooleanLiteralTest extends TestCase
 {
     public function testDeriveScalarAnswersBigIntThatIsNeverNull(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = TRUE');
+        $operation = (new Semantics())->analyze('SELECT a FROM t WHERE a = TRUE');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -46,7 +45,7 @@ final class BooleanLiteralTest extends TestCase
 
     public function testDeriveScalarTypesFalseLikeTrue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT FALSE');
+        $operation = (new Semantics())->analyze('SELECT FALSE');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -64,7 +63,7 @@ final class BooleanLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('select a from t where a = false');
+        $operation = (new Semantics())->analyze('select a from t where a = false');
 
         self::assertSame('SELECT a FROM t WHERE a = FALSE', $operation->toString());
     }

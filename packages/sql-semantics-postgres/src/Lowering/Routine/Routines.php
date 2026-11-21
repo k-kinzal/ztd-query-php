@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\KnownAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry point of the routine family: functions, procedures, aggregates, operators, operator classes and the generic object commands.

@@ -14,7 +14,7 @@ final class CreateConstraintTriggerTest extends TestCase
 {
     public function testCreatedSchemaIsTheSchemaOfTheTable(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON s.t FOR EACH ROW EXECUTE FUNCTION f()', []);
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON s.t FOR EACH ROW EXECUTE FUNCTION f()', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
@@ -22,22 +22,22 @@ final class CreateConstraintTriggerTest extends TestCase
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()');
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()');
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $n1->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
+        $n1->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));
         $n2 = $derivation->facts()->relation($n1)->table;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $n2);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredTable::class, $n2);
         self::assertSame('s', $n2->missing->name->schema?->value);
     }
 
     public function testDeriveStatementResolvesTheTablesAndTheCondition(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE CONSTRAINT TRIGGER g AFTER UPDATE ON t FROM u NOT VALID FOR EACH ROW WHEN (new.zz > 0) EXECUTE FUNCTION f()', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE CONSTRAINT TRIGGER g AFTER UPDATE ON t FROM u NOT VALID FOR EACH ROW WHEN (new.zz > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'Relation u does not exist.',
           1 => 'TRIGGER constraints cannot be marked NOT VALID',
@@ -47,19 +47,19 @@ final class CreateConstraintTriggerTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context), new \SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE OR REPLACE CONSTRAINT TRIGGER g AFTER INSERT OR UPDATE OF a ON t FROM s.u INITIALLY DEFERRED FOR EACH ROW WHEN (new.a > 0) EXECUTE PROCEDURE f(1)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE OR REPLACE CONSTRAINT TRIGGER g AFTER INSERT OR UPDATE OF a ON t FROM s.u INITIALLY DEFERRED FOR EACH ROW WHEN (new.a > 0) EXECUTE PROCEDURE f(1)', []);
         self::assertSame('CREATE OR REPLACE CONSTRAINT TRIGGER g AFTER INSERT OR UPDATE OF a ON t FROM s.u INITIALLY DEFERRED FOR EACH ROW WHEN (new.a > 0) EXECUTE FUNCTION f(1)', $statement->toString());
     }
 }

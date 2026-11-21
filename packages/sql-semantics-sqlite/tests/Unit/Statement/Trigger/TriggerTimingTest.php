@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Trigger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
 
@@ -24,7 +23,7 @@ final class TriggerTimingTest extends TestCase
 
     public function testCasesAreReadFromTheTimingWordsOrAbsent(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $instead = $semantics->analyze('create trigger tr instead of insert on v begin select 1; end');
         $before = $semantics->analyze('create trigger tr Before delete on t begin select 1; end');
         $none = $semantics->analyze('create trigger tr delete on t begin select 1; end');

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Spelling\Layout;
 
 /**
  * One projected expression of a selection or of a RETURNING clause with its optional alias.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Spelling\Layout;
  *
  * @visibility public
  * @example Reading a projected expression, its alias and its spelling
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS one, 1+1');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 AS one, 1+1');
  *     [$query->statement->columns[0]->alias?->value, $query->statement->columns[1]->layout?->text(), $query->toString()] // => ['one', '1+1', 'SELECT 1 AS one, 1+1']
  */
 final class ResultColumn implements Node
@@ -42,7 +42,7 @@ final class ResultColumn implements Node
      * @param Name|null $alias The output name
      * @param Layout|null $layout The spelling of the expression of a column without an alias when it is not the canonical one
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias, an aliased column has a layout, or the layout does not spell one token per rendered token, keeps whitespace alone after the expression, or is the canonical spelling
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When AS is left out without an alias, an aliased column has a layout, or the layout does not spell one token per rendered token, keeps whitespace alone after the expression, or is the canonical spelling
      */
     public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly bool $as = true)
     {

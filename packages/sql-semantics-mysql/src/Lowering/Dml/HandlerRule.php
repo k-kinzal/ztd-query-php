@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Dml;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
@@ -18,8 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers HANDLER of every release.

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Load;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The trailing options of a bulk LOAD DATA: `PARALLEL = n`, `MEMORY = size` and `ALGORITHM = BULK`.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the options of a bulk load
- *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
+ *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
  *     [$load->statement->bulk->parallel->text, $load->statement->bulk->bulk] // => ['4', true]
  */
 final class BulkOptions implements Node

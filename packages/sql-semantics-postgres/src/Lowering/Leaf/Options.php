@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Leaf;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
@@ -19,7 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the generic option machinery.

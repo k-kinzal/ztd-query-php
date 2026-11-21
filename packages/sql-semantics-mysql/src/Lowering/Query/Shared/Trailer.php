@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
-use SqlSemantics\Statement\Query;
 
 /**
  * The clauses written after a query during lowering: ORDER BY, LIMIT, PROCEDURE ANALYSE, a trailing INTO and the locking clauses.

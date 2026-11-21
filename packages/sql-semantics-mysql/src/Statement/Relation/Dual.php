@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Relation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `FROM DUAL`: the dummy table of one row and no columns.
@@ -21,10 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a selection from DUAL
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM DUAL');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 FROM DUAL');
  *     $query->statement->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual // => true
  */
-final class Dual implements \SqlSemantics\Statement\Relation
+final class Dual implements \SqlSemantics\Platform\MySql\Model\Statement\Relation
 {
     use Snapshot;
 

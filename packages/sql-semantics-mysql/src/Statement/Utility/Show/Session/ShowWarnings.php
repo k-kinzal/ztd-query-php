@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Session;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW WARNINGS: the errors, warnings and notes of the last statement of the session.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW WARNINGS LIMIT 1, 2');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW WARNINGS LIMIT 1, 2');
  *     [$show->field(2)->name?->value, $show->toString()] // => ['Message', 'SHOW WARNINGS LIMIT 1, 2']
  */
 final class ShowWarnings implements Statement

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `KILL [CONNECTION | QUERY] processlist_id`: a request to end a connection or the statement it runs.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Ending the statement of a connection
- *     $kill = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('kill query 42');
+ *     $kill = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('kill query 42');
  *     [$kill->toString(), $kill->statement->scope] // => ['KILL QUERY 42', \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]
  */
 final class Kill implements Statement

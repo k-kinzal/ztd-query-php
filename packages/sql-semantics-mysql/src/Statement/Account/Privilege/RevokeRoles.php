@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] role, … FROM account, … [IGNORE UNKNOWN USER]` (8.0+): a request to revoke roles.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Revoking a role
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('revoke if exists r from u, v')->toString() // => 'REVOKE IF EXISTS r FROM u, v'
  */
 final class RevokeRoles implements Statement
 {

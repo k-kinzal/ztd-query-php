@@ -7,9 +7,9 @@ namespace Tests\Unit\Lowering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\ProceduralModes;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
 
 #[CoversClass(ProceduralModes::class)]
 #[Small]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * An account at a position that names a user or a role: a written account name or the current user.

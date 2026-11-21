@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Branching;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A CASE expression in its simple form, `CASE operand WHEN value THEN result … [ELSE result] END`, or its searched form, `CASE WHEN condition THEN result … [ELSE result] END` (`Item_func_case`).
@@ -32,8 +32,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Typing a CASE by its results
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
- *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
+ *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
  */
 final class CaseExpression implements Scalar
 {

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Reset;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `RESET PERSIST [[IF EXISTS] [component.]variable]`: removes persisted global system variable settings (MySQL 8.0 and later).
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Removing one persisted setting
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('reset persist if exists max_connections')->toString() // => 'RESET PERSIST IF EXISTS max_connections'
  */
 final class ResetPersist implements Statement
 {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A window function or window specification that uses a part of the syntax the server does not support.
@@ -14,8 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of an unsupported frame unit
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)');
- *     $query->facts->diagnostics[0]->message() // => "This version of MySQL doesn't yet support 'GROUPS'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT SUM(1) OVER (GROUPS UNBOUNDED PRECEDING)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: This version of MySQL doesn't yet support 'GROUPS'
  */
 final class UnsupportedWindowing implements Diagnostic
 {

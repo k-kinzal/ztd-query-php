@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\QueryColumns;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
@@ -13,13 +20,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\ColumnCountMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a view: a named query.
@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Declaring a view with a column list
- *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE VIEW v (one, two) AS SELECT 1, 2');
+ *     $view = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE VIEW v (one, two) AS SELECT 1, 2');
  *     [$view->declarations()[0]->columns[1]->name->value, $view->declarations()[0]->implicit] // => ['two', []]
  */
 final class CreateView implements Statement

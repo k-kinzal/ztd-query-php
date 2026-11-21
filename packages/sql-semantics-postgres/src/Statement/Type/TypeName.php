@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A type as SQL writes it: a designation, an optional array part, and SETOF for a function result.
@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Type\TypeFact;
  *         false,
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound()]),
  *     );
- *     $analysis = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]);
+ *     $analysis = (new \SqlSemantics\Platform\PostgreSql\Semantics())->context([]);
  *     $type->typeFact($analysis)->descriptor->name() // => 'integer[]'
  */
 final class TypeName implements OptionArgument

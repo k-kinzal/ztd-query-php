@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TableList::class)]
 #[Medium]
@@ -28,7 +27,7 @@ final class TableListTest extends TestCase
 {
     public function testDeriveRelationJoinsTheMembersLeftToRight(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -37,7 +36,7 @@ final class TableListTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT * FROM t, u', [$t, $u]);
+        $operation = $semantics->inspect('SELECT * FROM t, u', [$t, $u]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(TableList::class, $operation->statement->from);
@@ -47,7 +46,7 @@ final class TableListTest extends TestCase
 
     public function testDeriveRelationKeepsTheJoinConditionToItsOperands(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -56,7 +55,7 @@ final class TableListTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $operation = $semantics->analyze('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
+        $operation = $semantics->inspect('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
@@ -64,7 +63,7 @@ final class TableListTest extends TestCase
 
     public function testRenderWritesTheMembers(): void
     {
-        self::assertSame('SELECT 1 FROM t, u, v', (new Semantics(Dialect::MySql))->analyze('select 1 from t,u,v')->toString());
+        self::assertSame('SELECT 1 FROM t, u, v', (new Semantics())->inspect('select 1 from t,u,v')->toString());
     }
 
     public function testAListOfOneMemberIsRejected(): void

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate;
@@ -47,8 +49,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Reports the statements a stored program may not contain.

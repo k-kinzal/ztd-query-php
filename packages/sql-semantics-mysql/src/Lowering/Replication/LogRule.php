@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers PURGE BINARY LOGS, BINLOG and START and STOP GROUP_REPLICATION.

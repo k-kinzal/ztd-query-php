@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A logical AND, OR or XOR of two operands, in the order written (`Item_cond_and`, `Item_cond_or`, `Item_func_xor`).
@@ -29,11 +29,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading both operands of a conjunction
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a && b');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a && b');
  *     [$query->statement->where->operator->value, $query->toString()] // => ['AND', 'SELECT a FROM t WHERE a AND b']
  * @example Refusing an operand that would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a OR b')->statement->where;
- *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('c'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $or = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a OR b')->statement->where;
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And, $or, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c'))) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class Logical implements Scalar
 {

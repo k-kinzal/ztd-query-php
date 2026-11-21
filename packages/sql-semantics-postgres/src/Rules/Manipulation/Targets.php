@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\RelationFact;
 
 /**
  * Derives the table a data-modifying statement or COPY names.

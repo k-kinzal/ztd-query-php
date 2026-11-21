@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column\ColumnRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\ReferenceRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\ViewRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the table definition family: the methods other families and the statement dispatcher call.

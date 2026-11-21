@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
  *
  * @visibility public
  * @example Reading the direction of COPY
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t FROM STDIN');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t FROM STDIN');
  *     $copy->statement->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection::From
  */
 enum CopyDirection: string

@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Maintenance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 
 #[CoversClass(Reindex::class)]
@@ -17,7 +16,7 @@ final class ReindexTest extends TestCase
 {
     public function testDeriveStatementRecordsNoResolutionForTheName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('REINDEX nocase', []);
+        $operation = (new Semantics())->analyze('REINDEX nocase', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertFalse($operation->facts->covers($operation->statement));
@@ -25,7 +24,7 @@ final class ReindexTest extends TestCase
 
     public function testRenderWritesTheOptionalTarget(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $qualified = $semantics->analyze('reindex main.users');
 
         self::assertInstanceOf(Reindex::class, $qualified->statement);

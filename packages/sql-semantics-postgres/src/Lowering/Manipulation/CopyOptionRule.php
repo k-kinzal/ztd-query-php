@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyAllColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyArguments;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyFlag;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyText;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTextKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the options of COPY.

@@ -7,17 +7,16 @@ namespace Tests\Unit\Rules\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(ElementFacts::class)]
 #[Medium]
@@ -25,7 +24,7 @@ final class ElementFactsTest extends TestCase
 {
     public function testElementResolvesTheReferences(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES p (x))');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES p (x))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
@@ -39,7 +38,7 @@ final class ElementFactsTest extends TestCase
 
     public function testSpecificationDerivesTheExpressions(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT DEFAULT (1 + 2))');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT DEFAULT (1 + 2))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
@@ -54,7 +53,7 @@ final class ElementFactsTest extends TestCase
 
     public function testOptionsAcceptsTableOptions(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) ENGINE x');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT) ENGINE x');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
@@ -66,7 +65,7 @@ final class ElementFactsTest extends TestCase
 
     public function testDeclarationAnswersTheColumnDeclaration(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT AUTO_INCREMENT)');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT AUTO_INCREMENT)');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 
@@ -78,7 +77,7 @@ final class ElementFactsTest extends TestCase
 
     public function testReferencesAnswersTheInlineReference(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT REFERENCES p (x))');
+        $create = (new Semantics())->analyze('CREATE TABLE t (a INT REFERENCES p (x))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
 

@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Argument;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\ArgumentSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\NamedArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\PositionalArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers function calls written with the function's name, and their arguments and aggregate clauses.

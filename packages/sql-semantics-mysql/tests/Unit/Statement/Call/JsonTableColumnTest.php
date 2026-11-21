@@ -7,13 +7,13 @@ namespace Tests\Unit\Statement\Call;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversNothing]
 #[Small]

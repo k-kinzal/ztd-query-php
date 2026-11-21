@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\View;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to drop views.
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the views to drop
- *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP VIEW IF EXISTS v, shop.w');
+ *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP VIEW IF EXISTS v, shop.w');
  *     [count($drop->statement->views), $drop->statement->ifExists] // => [2, true]
  */
 final class DropView implements Statement

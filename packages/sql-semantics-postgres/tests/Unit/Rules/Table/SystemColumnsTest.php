@@ -29,6 +29,6 @@ final class SystemColumnsTest extends TestCase
         self::assertSame([
           0 => true,
           1 => false,
-        ], [(new \SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns())->reserved(new \SqlSemantics\Statement\Identifier\Name('xmin')), (new \SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns())->reserved(new \SqlSemantics\Statement\Identifier\Name('xmint'))]);
+        ], [(new \SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns())->reserved(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('xmin')), (new \SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns())->reserved(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('xmint'))]);
     }
 }

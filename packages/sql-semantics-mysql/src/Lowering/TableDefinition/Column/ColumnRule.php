@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Spine;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
@@ -26,7 +27,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers column specifications: the data type, the attributes and the generation expression of a column.

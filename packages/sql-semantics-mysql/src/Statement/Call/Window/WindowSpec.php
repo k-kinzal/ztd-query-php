@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A parenthesized window specification: an optional window it refines, a partitioning, an ordering and a frame.
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding the parts of a window
- *     $order = [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('b')))];
+ *     $order = [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b')))];
  *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(null, [], $order, new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::UnboundedPreceding)));
  *     [count($window->partition), count($window->order), $window->frame?->unit] // => [0, 1, \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows]
  */

@@ -14,16 +14,16 @@ final class ParameterNameTest extends TestCase
 {
     public function testTextJoinsThePartsWithDots(): void
     {
-        self::assertSame('a.b', (new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\Name('b')]))->text());
+        self::assertSame('a.b', (new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('b')]))->text());
     }
 
     public function testRenderQuotesAKeywordPart(): void
     {
-        self::assertSame('SET "select".x TO 1', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET "select".x = 1')->toString());
+        self::assertSame('SET "select".x TO 1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET "select".x = 1')->toString());
     }
 
     public function testRenderKeepsCaseOfAQuotedPart(): void
     {
-        self::assertSame('RESET "A".b', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RESET "A".b')->toString());
+        self::assertSame('RESET "A".b', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('RESET "A".b')->toString());
     }
 }

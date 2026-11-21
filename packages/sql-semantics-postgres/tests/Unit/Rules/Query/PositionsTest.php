@@ -14,7 +14,7 @@ final class PositionsTest extends TestCase
 {
     public function testValueFoldsMinusSignsAndParentheses(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT 1 ORDER BY - (- 1)');
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
@@ -30,6 +30,6 @@ final class PositionsTest extends TestCase
 
     public function testMinusTellsThePlainMinusSign(): void
     {
-        self::assertTrue((new \SqlSemantics\Platform\PostgreSql\Rules\Query\Positions())->minus(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Statement\Identifier\Name('-')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))));
+        self::assertTrue((new \SqlSemantics\Platform\PostgreSql\Rules\Query\Positions())->minus(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('-')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))));
     }
 }

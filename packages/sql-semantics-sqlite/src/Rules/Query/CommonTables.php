@@ -4,7 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\CommonBinding;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
@@ -14,16 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\CommonTable;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Resolution\CommonBinding;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Binds the common table expressions of a WITH clause.
@@ -100,7 +100,7 @@ final class CommonTables
     public function uses(CommonTable $table): array
     {
         $names = [];
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($table->query) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($table->query) as $object) {
             if ($object instanceof TableInput && $object->name->schema === null) {
                 $names[strtr($object->name->name->value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')] = true;
             }

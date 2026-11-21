@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * The client connection as the file of COPY, written STDIN or STDOUT.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Copying to the client
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT');
  *     $copy->statement->file // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyStream::Stdout
  */
 enum CopyStream: string implements Node

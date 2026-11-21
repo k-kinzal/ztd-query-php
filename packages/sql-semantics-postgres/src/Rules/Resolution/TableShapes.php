@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Resolution;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\ConditionalTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Derives the row shape of one use of a named relation.

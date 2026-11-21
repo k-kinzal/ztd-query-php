@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Call\TemporalRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
@@ -46,7 +46,7 @@ final class TemporalRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $list = $platform->parser($profile)->parse('SELECT UTC_TIME(2), CURRENT_DATE, SUBDATE(a, INTERVAL 1 DAY), EXTRACT(HOUR FROM a), GET_FORMAT(DATETIME, a), TIMESTAMPADD(SQL_TSI_DAY, 1, a), NOW()')->find('select_item_list')[0];
         $rule = new TemporalRule($lowering);
-        $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
+        $calls = array_map(static fn (Node $node): \SqlSemantics\Platform\MySql\Model\Statement\Scalar => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
 
         self::assertEquals(new ClockCall(Clock::UtcTime, new Numeral('2')), $calls[0]);
         self::assertEquals(new ClockCall(Clock::CurrentDate, null, OptionalWords::Omitted), $calls[1]);

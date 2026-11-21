@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
 
 /**
  * The NULL literal.
@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Type\NullOnly;
  *
  * @visibility public
  * @example Typing a bare NULL
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = NULL');
- *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE a = NULL');
+ *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::Nullable
  */
 final class NullLiteral implements Scalar
 {

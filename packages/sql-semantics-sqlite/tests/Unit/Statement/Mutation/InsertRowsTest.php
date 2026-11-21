@@ -7,9 +7,13 @@ namespace Tests\Unit\Statement\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
@@ -24,11 +28,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(InsertRows::class)]
 #[Medium]
@@ -36,11 +35,11 @@ final class InsertRowsTest extends TestCase
 {
     public function testDeriveStatementCountsTheValuesAgainstTheColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $short = $semantics->analyze('INSERT INTO t VALUES (1)', [$t]);
-        $listed = $semantics->analyze('INSERT INTO t (a, b) VALUES (1, 2)', [$t]);
-        $open = $semantics->analyze('INSERT INTO t VALUES (1)');
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $short = $semantics->inspect('INSERT INTO t VALUES (1)', [$t]);
+        $listed = $semantics->inspect('INSERT INTO t (a, b) VALUES (1, 2)', [$t]);
+        $open = $semantics->inspect('INSERT INTO t VALUES (1)');
 
         self::assertInstanceOf(ArityMismatch::class, $short->facts->diagnostics[0]);
         self::assertSame(ArityRule::InsertedValues, $short->facts->diagnostics[0]->rule);
@@ -54,9 +53,9 @@ final class InsertRowsTest extends TestCase
 
     public function testDeriveStatementReportsAColumnTheTableLacks(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('INSERT INTO t (zz, rowid) VALUES (1, 2)', [$t]);
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('INSERT INTO t (zz, rowid) VALUES (1, 2)', [$t]);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $query->facts->diagnostics[0]);
@@ -65,10 +64,10 @@ final class InsertRowsTest extends TestCase
 
     public function testDeriveWithinLetsDoUpdateSeeTheTableAndExcluded(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a, b = b WHERE a > 1 RETURNING *', [$t]);
-        $missing = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.zz', [$t]);
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a, b = b WHERE a > 1 RETURNING *', [$t]);
+        $missing = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.zz', [$t]);
 
         self::assertInstanceOf(InsertRows::class, $query->statement);
         self::assertInstanceOf(Assignment::class, $query->statement->upserts[0]->assignments[0]);
@@ -88,10 +87,10 @@ final class InsertRowsTest extends TestCase
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3)', [$t])->statement;
-        $returning = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) RETURNING b', [$t])->statement;
+        $semantics = new Semantics();
+        $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $statement = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3)', [$t])->statement;
+        $returning = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) RETURNING b', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(InsertRows::class, $statement);
@@ -103,7 +102,7 @@ final class InsertRowsTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('INSERT INTO t VALUES (RAISE(IGNORE))');
+        $query = (new Semantics())->inspect('INSERT INTO t VALUES (RAISE(IGNORE))');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
@@ -111,7 +110,7 @@ final class InsertRowsTest extends TestCase
 
     public function testRenderWritesIntoRowsUpsertsAndReturning(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('insert into t (id, a) values (1, 2), (3, 4) on conflict (id) do update set a = excluded.a on conflict do nothing returning id');
+        $query = (new Semantics())->inspect('insert into t (id, a) values (1, 2), (3, 4) on conflict (id) do update set a = excluded.a on conflict do nothing returning id');
 
         self::assertSame('INSERT INTO t (id, a) VALUES (1, 2), (3, 4) ON CONFLICT (id) DO UPDATE SET a = excluded.a ON CONFLICT DO NOTHING RETURNING id', $query->toString());
         self::assertInstanceOf(InsertRows::class, $query->statement);

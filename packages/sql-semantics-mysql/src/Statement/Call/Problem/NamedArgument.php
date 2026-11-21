@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A call of a native function with an argument that has an alias, which only loadable functions accept (ER_WRONG_PARAMETERS_TO_NATIVE_FCT).
@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a named argument
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT abs(1 AS x)');
- *     $query->facts->diagnostics[0]->message() // => "Incorrect parameters in the call to native function 'abs'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT abs(1 AS x)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Incorrect parameters in the call to native function 'abs'
  */
 final class NamedArgument implements Diagnostic
 {

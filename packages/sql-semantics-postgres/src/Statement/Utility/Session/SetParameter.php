@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET [LOCAL] parameter TO value [, ...]`: a request to change a configuration parameter.
@@ -25,10 +25,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a SET with several values
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET LOCAL search_path = app, 'Public'");
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SET LOCAL search_path = app, 'Public'");
  *     [$operation->statement->parameter->text(), count($operation->statement->values), $operation->toString()] // => ['search_path', 2, "SET LOCAL search_path TO app, 'Public'"]
  * @example Refusing a SET without a value
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('a')]), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]), []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class SetParameter implements Statement
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One change to the options of a foreign-data object: `ADD name 'value'`, `SET name 'value'` or `DROP name`.
@@ -19,10 +19,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Dropping an option
- *     $change = new \SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption(\SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Drop, new \SqlSemantics\Statement\Identifier\Name('host'));
+ *     $change = new \SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption(\SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Drop, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('host'));
  *     $change->value // => null
  * @example Rejecting an added option without a value
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption(\SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Add, new \SqlSemantics\Statement\Identifier\Name('host')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption(\SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Add, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('host')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class AlteredOption implements Node
 {

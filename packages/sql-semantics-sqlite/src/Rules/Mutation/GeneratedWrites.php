@@ -4,7 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
@@ -14,14 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\GeneratedColumnWrite
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\WriteKind;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\RowAssignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Reports the writes of generated columns, and counts the columns an INSERT without a column list fills.

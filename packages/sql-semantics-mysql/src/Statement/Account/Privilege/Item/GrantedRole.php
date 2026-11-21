@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A role in the list of GRANT or REVOKE (8.0+).
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a granted role
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT reader TO u')->statement->roles[0]->role->user->value // => 'reader'
  */
 final class GrantedRole implements Grantable
 {

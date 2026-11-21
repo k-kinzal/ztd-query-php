@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * A composite value whose fields are known: a row constructor or the whole row of a relation.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the fields of a row constructor
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT ROW(1, 2)');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT ROW(1, 2)');
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->type->descriptor->fields[1]->name->value] // => ['record', 'f2']
  */
 final class Composite implements TypeDescriptor

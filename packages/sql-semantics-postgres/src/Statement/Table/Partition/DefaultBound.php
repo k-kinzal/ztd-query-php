@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Partition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The DEFAULT bound: the partition holds the rows no other partition holds.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing a default partition
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('create table p0 partition of p default')->toString() // => 'CREATE TABLE p0 PARTITION OF p DEFAULT'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('create table p0 partition of p default')->toString() // => 'CREATE TABLE p0 PARTITION OF p DEFAULT'
  */
 final class DefaultBound implements PartitionBound
 {

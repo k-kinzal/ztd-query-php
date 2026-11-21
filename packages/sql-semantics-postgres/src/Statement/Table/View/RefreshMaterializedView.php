@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to replace the rows of a materialized view.
@@ -30,8 +30,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Resolving the refreshed view
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []);
- *     [$statement->facts->diagnostics[0]->message(), $statement->toString()] // => ['Relation m does not exist.', 'REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA']
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY m WITH DATA', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Relation m does not exist.
  */
 final class RefreshMaterializedView implements Statement, Relation
 {

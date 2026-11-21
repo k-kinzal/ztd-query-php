@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\OperatorTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An operator applied to a left and a right operand: `a + b`, `a = b`, `a OPERATOR(s.@@) b`.
@@ -34,16 +34,16 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a comparison
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE a >= 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT a FROM t WHERE a >= 1');
  *     [$query->statement->where->operator->name->value, $query->statement->where->right->value->digits] // => ['>=', '1']
  * @example Reading the type of an arithmetic operation
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 + 2.5')->field(0)->type->descriptor->name() // => 'numeric'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 + 2.5')->field(0)->type->descriptor->name() // => 'numeric'
  * @example Rejecting an operand that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));
- *     $plus = new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Statement\Identifier\Name('+'));
- *     $times = new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Statement\Identifier\Name('*'));
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation($times, new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation($plus, $one, $two), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $plus = new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('+'));
+ *     $times = new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('*'));
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation($times, new \SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation($plus, $one, $two), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class BinaryOperation implements Scalar, OutputNaming
 {

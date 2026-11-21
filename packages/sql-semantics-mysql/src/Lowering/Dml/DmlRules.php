@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Dml;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Dml\Insert\InsertRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the dml family: the methods other families and the statement dispatcher call.

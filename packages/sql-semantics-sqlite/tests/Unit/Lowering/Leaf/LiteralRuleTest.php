@@ -7,9 +7,10 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\LiteralRule;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
@@ -21,8 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(LiteralRule::class)]
 #[Medium]
@@ -30,7 +29,7 @@ final class LiteralRuleTest extends TestCase
 {
     public function testTermLowersNullAndADecodedString(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT NULL, 'it''s'");
+        $operation = (new Semantics())->analyze("SELECT NULL, 'it''s'");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -46,7 +45,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testTermLowersABlobWithUpperCasedDigits(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT x\'0aff\' AS c1, X\'AB\' AS c2');
+        $operation = (new Semantics())->analyze('SELECT x\'0aff\' AS c1, X\'AB\' AS c2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
@@ -59,7 +58,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testTermLowersTheCurrentTimeKeywords(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT current_time AS c1, CURRENT_DATE AS c2, Current_Timestamp AS c3');
+        $operation = (new Semantics())->analyze('SELECT current_time AS c1, CURRENT_DATE AS c2, Current_Timestamp AS c3');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([TimeKeyword::Time, TimeKeyword::Date, TimeKeyword::Timestamp], array_map(static function (object $column): TimeKeyword {
@@ -73,7 +72,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testTermLowersAnIntegerAndDropsItsDigitSeparators(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 42 AS c1, 1_000_000 AS c2');
+        $operation = (new Semantics())->analyze('SELECT 42 AS c1, 1_000_000 AS c2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(['42', '1000000'], array_map(static function (object $column): string {
@@ -89,7 +88,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testPlainLowersAFloatingPointTokenByItsParts(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1.5, 2.');
+        $operation = (new Semantics())->analyze('SELECT 1.5, 2.');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([['1', '5', null], ['2', '', null]], array_map(static function (object $column): array {
@@ -105,7 +104,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testNumberLowersAHexadecimalIntegerWithUpperCasedDigits(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 0x1f AS c1, 0XaB_cd AS c2');
+        $operation = (new Semantics())->analyze('SELECT 0x1f AS c1, 0XaB_cd AS c2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(['1F', 'ABCD'], array_map(static function (object $column): string {
@@ -121,7 +120,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testNumberLowersEverySpellingOfARealNumber(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT .5 AS c1, 1e5 AS c2, 1E+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6');
+        $operation = (new Semantics())->analyze('SELECT .5 AS c1, 1e5 AS c2, 1E+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([['', '5', null], ['1', null, '5'], ['1', null, '+5'], ['1', '5', '-3'], ['', '5', '2'], ['1', '', '3']], array_map(static function (object $column): array {
@@ -135,7 +134,7 @@ final class LiteralRuleTest extends TestCase
 
     public function testNumberDropsTheDigitSeparatorsOfARealToken(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1_000.5 AS c1, 1_0e1_0 AS c2');
+        $operation = (new Semantics())->analyze('SELECT 1_000.5 AS c1, 1_0e1_0 AS c2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([['1000', '5', null], ['10', null, '10']], array_map(static function (object $column): array {

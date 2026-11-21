@@ -14,8 +14,8 @@ final class CycleClauseTest extends TestCase
 {
     public function testRenderWritesTheMarkValues(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
-        (new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Statement\Identifier\Name('a')], new \SqlSemantics\Statement\Identifier\Name('m'), new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->render($out);
-        self::assertSame('CYCLE a SET m TO 1 DEFAULT NULL USING p', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
+        (new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('m'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()))->render($out);
+        self::assertSame('CYCLE a SET m TO 1 DEFAULT NULL USING p', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 }

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE TABLESPACE name [ADD DATAFILE 'file'] [USE LOGFILE GROUP group] [option …]`: a request to create a general tablespace.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Creating a tablespace
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create tablespace ts add datafile 'ts.ibd' engine = InnoDB");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create tablespace ts add datafile 'ts.ibd' engine = InnoDB");
  *     [$statement->toString(), $statement->statement->datafile?->value] // => ["CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' ENGINE InnoDB", 'ts.ibd']
  */
 final class CreateTablespace implements Statement

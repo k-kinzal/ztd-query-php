@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One occurrence of a table-valued function as query input: a name with arguments.
@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a table-valued function call
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT * FROM json_each('[1]') AS j", []);
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("SELECT * FROM json_each('[1]') AS j", []);
  *     [$query->statement->from->name->name->value, count($query->statement->from->arguments), $query->shape()->missing[0]->describe()] // => ['json_each', 1, 'the signature of routine json_each']
  */
 final class TableCall implements Relation
@@ -51,7 +51,7 @@ final class TableCall implements Relation
      * @param list<Scalar> $arguments The arguments in order
      * @param Name|null $alias The correlation name
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
     public function __construct(public readonly QualifiedName $name, array $arguments, public readonly ?Name $alias = null, public readonly bool $as = true)
     {

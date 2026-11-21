@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program;
 
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DECLARE ... CONDITION: a name for an error code or an SQLSTATE value.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a named condition
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
  *     $declaration = $create->statement->body->declarations[0];
  *     [$declaration->name->value, $declaration->value->state->value] // => ['gone', '42S02']
  */

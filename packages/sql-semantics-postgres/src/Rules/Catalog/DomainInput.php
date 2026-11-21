@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredDomain;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredDomain;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Derives the environment in which the constraint expressions of a domain are evaluated.

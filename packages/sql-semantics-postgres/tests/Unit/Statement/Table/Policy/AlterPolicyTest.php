@@ -14,10 +14,10 @@ final class AlterPolicyTest extends TestCase
 {
     public function testDeriveStatementDerivesTheConditionsAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('ALTER POLICY p ON t USING (zz > 0) WITH CHECK (a)', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('ALTER POLICY p ON t USING (zz > 0) WITH CHECK (a)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'argument of POLICY must be type boolean',
@@ -26,19 +26,19 @@ final class AlterPolicyTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('ALTER POLICY p ON t TO bob', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('ALTER POLICY p ON t TO bob', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\AlterPolicy::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context), new \SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER POLICY p ON s.t TO CURRENT_USER, bob USING (a > 0) WITH CHECK (b > 0)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('ALTER POLICY p ON s.t TO CURRENT_USER, bob USING (a > 0) WITH CHECK (b > 0)', []);
         self::assertSame('ALTER POLICY p ON s.t TO CURRENT_USER, bob USING (a > 0) WITH CHECK (b > 0)', $statement->toString());
     }
 }

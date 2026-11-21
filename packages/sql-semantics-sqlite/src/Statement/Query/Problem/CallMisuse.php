@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A call of a built-in function with a clause its kind of function does not take.
@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a scalar function used as a window function
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT abs(1) OVER ()');
- *     $query->facts->diagnostics[0]->message() // => 'abs() may not be used as a window function'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT abs(1) OVER ()') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: abs() may not be used as a window function
  */
 final class CallMisuse implements Diagnostic
 {

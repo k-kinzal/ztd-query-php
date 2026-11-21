@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Dml\Insert;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Dml\ValueRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
@@ -18,8 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSERT and REPLACE of every release.

@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The one table INSERT, REPLACE, LOAD DATA or a single-table DELETE writes, with its correlation name and partition selection.
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the table a DELETE writes
- *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
+ *     $delete = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE FROM shop.t AS x PARTITION (p0) WHERE x.a = 1');
  *     [$delete->statement->table->name()->schema?->value, $delete->statement->table->alias()?->value, count($delete->statement->table->partitions)] // => ['shop', 'x', 1]
  */
 final class WriteTarget implements NamedRelation

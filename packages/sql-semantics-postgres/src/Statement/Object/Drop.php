@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectForms;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
@@ -15,9 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP kind [IF EXISTS] object, ... [CASCADE | RESTRICT]`: removes catalog objects of one kind.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the dropped tables
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP TABLE IF EXISTS a, b CASCADE');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('DROP TABLE IF EXISTS a, b CASCADE');
  *     [$operation->statement->kind->value, count($operation->statement->objects), $operation->statement->ifExists] // => ['TABLE', 2, true]
  */
 final class Drop implements Statement

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Legacy;
 
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
-use SqlSemantics\Statement\Query;
 
 /**
  * The operands of a 5.x UNION in written order, the quantifiers between them and the clauses written after the last one.

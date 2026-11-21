@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNINSTALL COMPONENT 'urn', …`: a request to unload server components (MySQL 8.0 and later).
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Removing a component
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
  */
 final class UninstallComponent implements Statement
 {

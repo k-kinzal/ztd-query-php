@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Invocation\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblemKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ArgumentProblem::class)]
 #[Small]

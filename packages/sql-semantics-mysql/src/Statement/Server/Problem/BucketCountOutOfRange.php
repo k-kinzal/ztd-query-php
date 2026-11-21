@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Problem;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A histogram bucket count outside 1 to 1024.

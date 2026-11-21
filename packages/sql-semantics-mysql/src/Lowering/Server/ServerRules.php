@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Server\Maintenance\MaintenanceRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the server family: the methods other families and the statement dispatcher call.

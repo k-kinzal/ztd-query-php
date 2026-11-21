@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers function call productions.

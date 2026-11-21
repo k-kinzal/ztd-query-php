@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Reference;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * An ON DELETE, ON UPDATE or ON INSERT clause of a foreign key.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a foreign key action
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent ON DELETE NO ACTION)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE c (p REFERENCES parent ON DELETE NO ACTION)');
  *     $action = $create->statement->columns[0]->constraints[0]->arguments[0];
  *     [$action->event->value, $action->reaction->value] // => ['DELETE', 'NO ACTION']
  */

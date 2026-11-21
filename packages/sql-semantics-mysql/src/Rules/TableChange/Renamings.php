@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConflictingTables;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Follows the renames of one RENAME TABLE statement in order.

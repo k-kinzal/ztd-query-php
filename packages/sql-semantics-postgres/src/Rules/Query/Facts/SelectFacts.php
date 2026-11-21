@@ -4,7 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\DistinctOrdering;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Limits;
@@ -20,15 +29,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the facts of a selection and of a TABLE query.

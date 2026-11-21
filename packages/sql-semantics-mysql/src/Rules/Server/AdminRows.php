@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Server;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowRows;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Shape\Field;
 
 /**
  * Records the rows the row-returning server administration statements return.

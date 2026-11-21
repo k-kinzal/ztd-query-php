@@ -7,8 +7,12 @@ namespace Tests\Unit\Statement\Query\Ordering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
@@ -20,11 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\OrdinalOutOfRange;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(OutputOrdinal::class)]
 #[Medium]
@@ -40,7 +39,7 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarDenotesTheResultColumnAtThePosition(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT 'x' AS a, 2 AS b ORDER BY 2, +1");
+        $query = (new Semantics())->inspect("SELECT 'x' AS a, 2 AS b ORDER BY 2, +1");
 
         self::assertInstanceOf(Select::class, $query->statement);
         $second = $query->statement->orderBy[0]->expression;
@@ -60,7 +59,7 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarAlsoRecordsTheConstant(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 GROUP BY 1');
+        $query = (new Semantics())->inspect('SELECT 1 GROUP BY 1');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $ordinal = $query->statement->groupBy[0];
@@ -71,9 +70,9 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarReportsAPositionOutsideTheResultColumns(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $beyond = $semantics->analyze('SELECT 1 ORDER BY 2');
-        $negative = $semantics->analyze('SELECT 1 AS a, 2 AS b ORDER BY -1');
+        $semantics = new Semantics();
+        $beyond = $semantics->inspect('SELECT 1 ORDER BY 2');
+        $negative = $semantics->inspect('SELECT 1 AS a, 2 AS b ORDER BY -1');
 
         self::assertInstanceOf(Select::class, $beyond->statement);
         $fact = $beyond->facts->scalar($beyond->statement->orderBy[0]->expression);
@@ -88,7 +87,7 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarDependsOnTheMissingInputsBeyondTheKnownColumns(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, * FROM t ORDER BY 3');
+        $query = (new Semantics())->inspect('SELECT a, * FROM t ORDER BY 3');
 
         self::assertInstanceOf(Select::class, $query->statement);
         $fact = $query->facts->scalar($query->statement->orderBy[0]->expression);
@@ -101,7 +100,7 @@ final class OutputOrdinalTest extends TestCase
 
     public function testDeriveScalarCountsTheColumnsOfACompound(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a, 2 AS b UNION SELECT 3, 4 ORDER BY 2');
+        $query = (new Semantics())->inspect('SELECT 1 AS a, 2 AS b UNION SELECT 3, 4 ORDER BY 2');
 
         self::assertInstanceOf(Compound::class, $query->statement);
         $fact = $query->facts->scalar($query->statement->orderBy[0]->expression);
@@ -111,7 +110,7 @@ final class OutputOrdinalTest extends TestCase
 
     public function testRenderWritesTheConstantAsWritten(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select 1 as a, 2 as b order by (1) collate nocase, 0x2, +1');
+        $query = (new Semantics())->inspect('select 1 as a, 2 as b order by (1) collate nocase, 0x2, +1');
 
         self::assertSame('SELECT 1 AS a, 2 AS b ORDER BY (1) COLLATE nocase, 0x2, + 1', $query->toString());
     }

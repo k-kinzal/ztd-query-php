@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Selection;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\GeneratedWrites;
@@ -15,14 +23,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * An UPDATE of columns of the rows of a table that satisfy a predicate, optionally joined to further input.
@@ -35,10 +35,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the parts of an UPDATE
- *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('UPDATE OR FAIL t SET a = u.b FROM u WHERE t.id = u.id');
+ *     $update = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('UPDATE OR FAIL t SET a = u.b FROM u WHERE t.id = u.id');
  *     [$update->statement->resolution, count($update->statement->assignments), $update->statement->from->name->name->value] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Fail, 1, 'u']
  * @example Refusing an UPDATE that assigns nothing
- *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\Update(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\Update(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('t'))), []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Update implements Statement, Selection
 {

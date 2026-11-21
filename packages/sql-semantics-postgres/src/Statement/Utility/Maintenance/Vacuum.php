@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `VACUUM`: a request to reclaim storage and optionally analyze tables.
@@ -28,13 +28,13 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a VACUUM written with words
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VACUUM FULL ANALYZE t');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('VACUUM FULL ANALYZE t');
  *     [$operation->statement->options[1]->option(), $operation->statement->targets[0]->table->name->value, $operation->toString()] // => ['analyze', 't', 'VACUUM FULL ANALYZE t']
  * @example Refusing words in another order than the grammar reads
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum([
- *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('verbose')),
- *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('full')),
- *     ], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('verbose')),
+ *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('full')),
+ *     ], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Vacuum implements Statement
 {

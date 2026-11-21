@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * One item of a select list: an expression with its optional alias, a star, or a qualified star.

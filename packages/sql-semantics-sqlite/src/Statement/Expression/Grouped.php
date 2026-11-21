@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * An expression written in parentheses.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping a grouping
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
  */
 final class Grouped implements Scalar
 {

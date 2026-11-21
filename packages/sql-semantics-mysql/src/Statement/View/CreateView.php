@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\View;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a view, or to replace one with OR REPLACE.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Declaring a view with a column list
- *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE OR REPLACE VIEW v (one, two) AS SELECT 1, 2');
+ *     $view = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE OR REPLACE VIEW v (one, two) AS SELECT 1, 2');
  *     [$view->statement->orReplace, $view->declarations()[0]->columns[1]->name->value] // => [true, 'two']
  */
 final class CreateView implements Statement

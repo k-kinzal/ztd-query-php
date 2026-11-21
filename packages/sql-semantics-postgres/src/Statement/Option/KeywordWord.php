@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Keywords;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A reserved keyword, or NONE, written as the value of a definition option.
@@ -23,9 +23,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the text of a keyword value
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord(new \SqlSemantics\Statement\Identifier\Name('none')))->word->value // => 'none'
+ *     (new \SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('none')))->word->value // => 'none'
  * @example Rejecting a word that is not a reserved keyword
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord(new \SqlSemantics\Statement\Identifier\Name('fillfactor')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('fillfactor')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class KeywordWord implements OptionArgument
 {

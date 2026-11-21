@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The `ATTRIBUTE '…'` or `COMMENT '…'` clause of CREATE USER or ALTER USER.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a comment
- *     $comment = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER u COMMENT 'ops'")->statement->comment;
+ *     $comment = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER u COMMENT 'ops'")->statement->comment;
  *     [$comment?->kind, $comment?->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Comment, 'ops']
  */
 final class UserComment implements Node

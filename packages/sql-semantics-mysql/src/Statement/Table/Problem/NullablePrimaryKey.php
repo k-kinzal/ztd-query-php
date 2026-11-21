@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A primary key column declared with the NULL attribute, which MySQL 5.7 and later reject (ER_PRIMARY_CANT_HAVE_NULL); MySQL 5.6 makes the column NOT NULL silently.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)')->facts->diagnostics[0]->column->value // => 'a'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: All parts of a PRIMARY KEY must be NOT NULL; column a is declared NULL.
  */
 final class NullablePrimaryKey implements Diagnostic
 {

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * The partition values of a RANGE or LIST partition definition: `VALUES LESS THAN …` or `VALUES IN …`.

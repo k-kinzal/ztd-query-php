@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\ArrayItems;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseBranch;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers row constructors, array constructors and CASE.

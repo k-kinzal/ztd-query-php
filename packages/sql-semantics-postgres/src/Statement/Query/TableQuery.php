@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Selection;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\SelectFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * TABLE name: every row and column of one table, the same as `SELECT * FROM name`.
@@ -31,10 +31,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a TABLE query
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('TABLE ONLY s.t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('TABLE ONLY s.t');
  *     [$query->singleNamedInput()->name()->name->value, $query->singleNamedInput()->table->only, $query->toString()] // => ['t', true, 'TABLE ONLY s.t']
  * @example Refusing a table with an alias
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Statement\Identifier\Name('x'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'))), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class TableQuery implements Statement, Query, Selection, OutputNaming
 {

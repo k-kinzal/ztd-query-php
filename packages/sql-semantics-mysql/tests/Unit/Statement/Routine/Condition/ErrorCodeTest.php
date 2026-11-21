@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
@@ -19,9 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(ErrorCode::class)]
 #[Medium]
@@ -37,7 +36,7 @@ final class ErrorCodeTest extends TestCase
 
     public function testRenderWritesTheCodesOfADeclarationAndAHandler(): void
     {
-        $create = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END');
+        $create = (new Semantics('mysql-5.7.44'))->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR c, 1052 BEGIN END; END');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
@@ -121,7 +120,7 @@ final class ErrorCodeTest extends TestCase
 
     public function testValidLetsTheProgramReportTheCodeZero(): void
     {
-        $create = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
+        $create = (new Semantics('mysql-5.6.51'))->inspect('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END');
 
         self::assertSame(["Incorrect CONDITION value: '0'"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 0.5; END', $create->toString());

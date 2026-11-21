@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Maintenance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
@@ -17,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(UtilityOption::class)]
 #[Medium]
@@ -46,12 +45,12 @@ final class UtilityOptionTest extends TestCase
 
     public function testDeriveClauseRecordsNoProblemForAValue(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->facts->diagnostics);
+        self::assertSame([], (new Semantics())->analyze("VACUUM (TRUNCATE 'on', PARALLEL 2, INDEX_CLEANUP auto) t")->facts->diagnostics);
     }
 
     public function testRenderQuotesFormatOnlyBeforeJson(): void
     {
-        $semantics = new Semantics(Dialect::PostgreSql);
+        $semantics = new Semantics();
         self::assertSame(
             ['EXPLAIN (FORMAT json) SELECT 1', 'EXPLAIN ("format" json) SELECT 1', 'EXPLAIN (format xml) SELECT 1', 'EXPLAIN (costs FALSE, "analyze") SELECT 1'],
             [$semantics->analyze('EXPLAIN (FORMAT JSON) SELECT 1')->toString(), $semantics->analyze('EXPLAIN ("format" json) SELECT 1')->toString(), $semantics->analyze('EXPLAIN ("format" xml) SELECT 1')->toString(), $semantics->analyze('EXPLAIN (COSTS false, "analyze") SELECT 1')->toString()],

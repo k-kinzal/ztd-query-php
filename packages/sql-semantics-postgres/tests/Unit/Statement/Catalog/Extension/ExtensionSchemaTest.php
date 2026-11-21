@@ -14,13 +14,13 @@ final class ExtensionSchemaTest extends TestCase
 {
     public function testOptionIsSchema(): void
     {
-        self::assertSame('schema', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Statement\Identifier\Name('ext')))->option());
+        self::assertSame('schema', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('ext')))->option());
     }
 
     public function testRenderWritesSchema(): void
     {
-        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));
-        (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Statement\Identifier\Name('Ext')))->render($out);
-        self::assertSame('SCHEMA "Ext"', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
+        $out = new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease::PostgreSql172));
+        (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionSchema(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('Ext')))->render($out);
+        self::assertSame('SCHEMA "Ext"', (new \SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical())->join($out->pieces()));
     }
 }

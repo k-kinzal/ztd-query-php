@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Table\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(KindProblem::class)]
 #[Medium]
@@ -18,8 +18,8 @@ final class KindProblemTest extends TestCase
 {
     public function testMessageNamesTheRelation(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('DROP TABLE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')]);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('DROP TABLE v', [$semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')]);
         $problem = $statement->facts->diagnostics[0];
         self::assertInstanceOf(KindProblem::class, $problem);
         self::assertSame('"v" is not a table', $problem->message());

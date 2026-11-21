@@ -7,17 +7,16 @@ namespace Tests\Unit\Statement\Invocation\Json\Constructor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(JsonArrayQuery::class)]
 #[Medium]
@@ -25,7 +24,7 @@ final class JsonArrayQueryTest extends TestCase
 {
     public function testOutputNameIsJsonArray(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
@@ -37,7 +36,7 @@ final class JsonArrayQueryTest extends TestCase
 
     public function testDeriveScalarReportsAQueryOfSeveralColumns(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];
@@ -50,7 +49,7 @@ final class JsonArrayQueryTest extends TestCase
 
     public function testRenderWritesTheQueryWithoutParentheses(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
+        $operation = (new Semantics())->inspect('SELECT JSON_ARRAY(SELECT 1, 2 RETURNING text)', []);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $target = $select->targets[0];

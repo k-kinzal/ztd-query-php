@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 
 /**
  * The type a name denotes on the search path when the context cannot tell which catalog type that is.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the declared type of a column of a user type
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     $column = $semantics->analyze('CREATE TABLE person (current_mood mood)', [])->declarations()[0]->columns[0];
  *     [$column->type->name(), $column->type->missing[0]->describe()] // => ['mood', 'the definition of data type mood']
  */

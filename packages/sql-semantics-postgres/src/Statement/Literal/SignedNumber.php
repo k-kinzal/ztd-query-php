@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A number with an optional minus sign, written where the grammar reads `NumericOnly` instead of an expression.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $number = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('5'));
  *     [$number->negative, $number->magnitude->digits] // => [true, '5']
  * @example Reading the text a command receives from a negative numeric constant
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET application_name = -.5');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET application_name = -.5');
  *     [$operation->statement->values[0]->text(), $operation->toString()] // => ['-.5', 'SET application_name TO - .5']
  */
 final class SignedNumber implements OptionArgument

@@ -7,9 +7,10 @@ namespace Tests\Unit\Lowering\Query\Shared;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -23,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Block::class)]
 #[Small]

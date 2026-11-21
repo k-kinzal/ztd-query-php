@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\Sqlite;
  *
  * @visibility public
  * @example Analyzing SQLite SQL
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $semantics->analyze('SELECT 42')->toString() // => 'SELECT 42'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect

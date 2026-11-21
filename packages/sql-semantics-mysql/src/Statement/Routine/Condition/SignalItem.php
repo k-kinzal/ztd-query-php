@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * One assignment of the SET clause of SIGNAL or RESIGNAL: a condition information item and its value.
@@ -17,10 +17,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the items of a SIGNAL
- *     $signal = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
+ *     $signal = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no', MYSQL_ERRNO = 1001");
  *     $signal->statement->items[1]->name // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno
  */
-final class SignalItem implements \SqlSemantics\Statement\Node
+final class SignalItem implements \SqlSemantics\Platform\MySql\Model\Statement\Node
 {
     use Snapshot;
 

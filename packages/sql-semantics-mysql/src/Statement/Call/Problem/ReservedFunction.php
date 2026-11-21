@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A call of a native function the server reserves for the views of its data dictionary (ER_NO_ACCESS_TO_NATIVE_FCT).
@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a reserved function
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)');
- *     $query->facts->diagnostics[0]->message() // => "Access to native function 'internal_table_rows' is rejected"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT internal_table_rows(1, 2, 3, 4, 5, 6, 7, 8)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Access to native function 'internal_table_rows' is rejected
  */
 final class ReservedFunction implements Diagnostic
 {

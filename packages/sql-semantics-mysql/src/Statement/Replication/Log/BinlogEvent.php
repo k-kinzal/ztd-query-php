@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `BINLOG 'str'`: applies binary log events written in base64 by mysqlbinlog.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Holding the encoded events
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("binlog 'AAAA'")->statement->events->value // => 'AAAA'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("binlog 'AAAA'")->statement->events->value // => 'AAAA'
  */
 final class BinlogEvent implements Statement
 {

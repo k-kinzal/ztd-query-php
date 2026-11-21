@@ -7,9 +7,16 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RelationTargets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
@@ -20,13 +27,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\MemberName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\RelationTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 
 #[CoversClass(RelationTargets::class)]
 #[Small]

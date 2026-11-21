@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Dml;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(DefaultRequest::class)]
 #[Medium]
@@ -28,9 +27,9 @@ final class DefaultRequestTest extends TestCase
 {
     public function testDeriveScalarTakesTheAssignedColumn(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
+        $operation = $semantics->inspect('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
         self::assertInstanceOf(InsertRows::class, $operation->statement);
         $fact = $operation->facts->scalar($operation->statement->rows[0]->values[1]);
 
@@ -41,7 +40,7 @@ final class DefaultRequestTest extends TestCase
 
     public function testDeriveScalarReportsDefaultOutsideAnAssignment(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(DEFAULT)');
+        $operation = (new Semantics())->inspect('VALUES ROW(DEFAULT)');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(WriteMisuse::class, $operation->facts->diagnostics[0]);
@@ -50,6 +49,6 @@ final class DefaultRequestTest extends TestCase
 
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('UPDATE t SET a = DEFAULT', (new Semantics(Dialect::MySql))->analyze('update t set a = default')->toString());
+        self::assertSame('UPDATE t SET a = DEFAULT', (new Semantics())->inspect('update t set a = default')->toString());
     }
 }

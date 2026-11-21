@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
-use SqlSemantics\Statement\Node;
 
 /**
  * A statement of the stored program language: a compound statement, a flow control statement, a cursor statement or a condition statement.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Telling a program statement from other statements
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN END');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE PROCEDURE p() BEGIN END');
  *     $create->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement // => true
  */
 interface ProgramStatement extends Node

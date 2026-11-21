@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The frame of a window: its mode, its start, an optional end, and an optional exclusion.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowFrame(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode::Rows,
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind::UnboundedFollowing),
- *     ) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     ) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class WindowFrame implements Clause
 {

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Event;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The schedule `EVERY quantity unit [STARTS timestamp] [ENDS timestamp]`: the event runs repeatedly.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a recurring schedule
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS CURRENT_TIMESTAMP DO SELECT 1');
+ *     $create = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS CURRENT_TIMESTAMP DO SELECT 1');
  *     [$create->statement->schedule->unit, $create->statement->schedule->ends] // => [\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Hour, null]
  */
 final class RecurringSchedule implements Schedule

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Partition;
 
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One item of a hash partition bound: MODULUS or REMAINDER and its number.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a hash bound item
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)');
  *     [$create->statement->definition->bound->items[1]->name->value, $create->statement->definition->bound->items[1]->value->digits] // => ['remainder', '1']
  */
 final class HashModulus implements Node
@@ -39,6 +39,6 @@ final class HashModulus implements Node
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, \SqlSemantics\Contract\NameUse::Qualifier)->node($this->value);
+        $out->name($this->name, \SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse::Qualifier)->node($this->value);
     }
 }

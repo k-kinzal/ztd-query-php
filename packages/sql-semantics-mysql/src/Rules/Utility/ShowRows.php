@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Utility;
 
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\MySql\Rules\Utility\Columns\ExplainReports;
 use SqlSemantics\Platform\MySql\Rules\Utility\Columns\ReplicationReports;
 use SqlSemantics\Platform\MySql\Rules\Utility\Columns\SchemaReports;
@@ -20,12 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * The columns of the rows SHOW and EXPLAIN return.
@@ -105,7 +105,7 @@ final class ShowRows
     /**
      * Answers the type of a code.
      *
-     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the code is none of the codes of the tables
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation When the code is none of the codes of the tables
      */
     public function type(string $code): TypeFact
     {
@@ -125,7 +125,7 @@ final class ShowRows
             'D' => new Known(new Temporal(TemporalKind::DateTime)),
             'T' => new Known(new Temporal(TemporalKind::Timestamp)),
             'n' => new NullOnly(),
-            default => throw new \SqlSemantics\Diagnostic\InvariantViolation('Unknown column code ' . $code . '.'),
+            default => throw new \SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation('Unknown column code ' . $code . '.'),
         };
     }
 }

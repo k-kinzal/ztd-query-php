@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A table or view that would have two columns with one name (ER_DUP_FIELDNAME).
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, a INT)')->facts->diagnostics[0]->message() // => 'Duplicate column name a.'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t (a INT, a INT)') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Duplicate column name a.
  */
 final class DuplicateColumn implements Diagnostic
 {

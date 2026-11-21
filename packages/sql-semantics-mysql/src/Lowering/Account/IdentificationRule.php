@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Identification;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;

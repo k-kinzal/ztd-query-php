@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Storage;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\LogFile;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the log file group statements.

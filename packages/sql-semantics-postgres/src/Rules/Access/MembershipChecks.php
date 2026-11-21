@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Access;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Checks the grants and revokes of role membership.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
-use SqlSemantics\Statement\Query;
 
 /**
  * Tells whether a query block aggregates its rows.

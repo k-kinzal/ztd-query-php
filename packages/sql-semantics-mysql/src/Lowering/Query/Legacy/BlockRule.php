@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Legacy;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
@@ -14,6 +12,8 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 
@@ -77,7 +77,7 @@ final class BlockRule
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When PROCEDURE ANALYSE and INTO are both written (ER_WRONG_USAGE "PROCEDURE and INTO" of the 5.7 `select_part2` action, raised while parsing)
      */
-    public function full(\SqlSemantics\Lowering\Form $form): Block
+    public function full(\SqlSemantics\Platform\MySql\Model\Lowering\Form $form): Block
     {
         [$options, $list] = $this->head($form->node(0));
         $clauses = new ClauseRule($this->lowering);

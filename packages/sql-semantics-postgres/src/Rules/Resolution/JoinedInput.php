@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Resolution;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\RelationFact;
 
 /**
  * What a FROM item contributes to the query that reads it: its facts and the relations it makes visible.

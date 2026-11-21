@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeDescriptor;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\TypeDescriptor;
 
 /**
  * The interval type restricted to a set of fields, a fractional-second precision, or both.

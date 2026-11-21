@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A table a multiple-table DELETE deletes from that none of its table references names.
@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the unknown table
- *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE u FROM t');
- *     $delete->facts->diagnostics[0]->message() // => "Unknown table 'u' in MULTI DELETE"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DELETE u FROM t') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Unknown table 'u' in MULTI DELETE
  */
 final class UnknownDeleteTable implements Diagnostic
 {

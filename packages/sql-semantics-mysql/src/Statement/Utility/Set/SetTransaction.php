@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SET TRANSACTION: the isolation level and access mode of later transactions.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the characteristics
- *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE');
  *     [$set->statement->scope, $set->statement->characteristics, $set->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Global, [\SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode::ReadOnly, \SqlSemantics\Platform\MySql\Statement\Utility\Set\IsolationLevel::Serializable], 'SET GLOBAL TRANSACTION READ ONLY, ISOLATION LEVEL SERIALIZABLE']
  */
 final class SetTransaction implements Statement

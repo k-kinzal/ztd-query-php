@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry point of the catalog family: schemas, databases, tablespaces, extensions, foreign data, languages, access methods, publications, subscriptions, text search, collations, conversions, domains, types, casts and transforms.

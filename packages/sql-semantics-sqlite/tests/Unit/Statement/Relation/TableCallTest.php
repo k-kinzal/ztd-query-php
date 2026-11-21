@@ -7,20 +7,19 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Shape\DependentField;
 
 #[CoversClass(TableCall::class)]
 #[Medium]
@@ -28,7 +27,7 @@ final class TableCallTest extends TestCase
 {
     public function testDeriveRelationIsAnOpenShapeNamingTheUndeclaredRoutine(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT * FROM json_each(1) AS j', [$t]);
         $shape = $query->shape();
@@ -49,7 +48,7 @@ final class TableCallTest extends TestCase
 
     public function testDeriveRelationResolvesArgumentsAgainstTheTablesToTheLeft(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT * FROM t, json_each(b) AS j', [$t]);
 
@@ -66,7 +65,7 @@ final class TableCallTest extends TestCase
 
     public function testRenderWritesSchemaNameArgumentsAndAlias(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $call = new TableCall(new QualifiedName(new Name('json_each'), new Name('main')), [new IntegerLiteral('1'), new TextLiteral('x')], new Name('j'));
         $built = new Operation($semantics->context(), new Select([new Star()], $call));
 

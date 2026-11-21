@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Leaf;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keyword\BareLabelKeywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keyword\ColumnNameKeywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keyword\ReservedKeywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keyword\TypeFunctionNameKeywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keyword\UnreservedKeywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Rules\Identifiers;
 
 /**

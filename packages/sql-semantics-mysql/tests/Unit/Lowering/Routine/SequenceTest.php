@@ -9,20 +9,19 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Sequence::class)]
 #[Medium]
@@ -41,7 +40,7 @@ final class SequenceTest extends TestCase
     #[DataProvider('providerItemsAnswersTheMembersInSourceOrder')]
     public function testItemsAnswersTheMembersInSourceOrder(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(a int, b int, c int) begin declare x int; declare y, z int; set @a = 1; set @b = 2; set @c = 3; end');
+        $create = (new Semantics($release))->analyze('create procedure p(a int, b int, c int) begin declare x int; declare y, z int; set @a = 1; set @b = 2; set @c = 3; end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));

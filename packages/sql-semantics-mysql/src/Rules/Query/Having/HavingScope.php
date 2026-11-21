@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\Having;
 
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Builds the environment of a HAVING clause, and the environment of the set functions written in it.

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Expression;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Reports the expressions that SQLite admits on one side of a trigger program only.
@@ -59,7 +59,7 @@ final class ProgramOnly
      */
     public function holds(Node $node, string $class): bool
     {
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($node) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($node) as $object) {
             if ($object instanceof $class) {
                 return true;
             }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Reset;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET QUERY CACHE`: removes every query result from the query cache (MySQL 5.6 and 5.7; 8.0 removed the cache).
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Resetting the query cache
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('reset query cache')->toString() // => 'RESET QUERY CACHE'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-5.7.44'))->analyze('reset query cache')->toString() // => 'RESET QUERY CACHE'
  */
 final class ResetQueryCache implements ResetTarget
 {

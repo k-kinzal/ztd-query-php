@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER CHECK c [NOT] ENFORCED` or `ALTER CONSTRAINT c [NOT] ENFORCED` (8.0.16 and later).
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Suspending a check constraint
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
  *     [$alter->statement->commands[0]->enforced, $alter->toString()] // => [false, 'ALTER TABLE t ALTER CHECK c NOT ENFORCED']
  */
 final class ConstraintEnforcement implements AlterCommand

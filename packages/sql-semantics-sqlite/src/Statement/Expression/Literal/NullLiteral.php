@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Literal;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 
 /**
  * The NULL literal.
@@ -22,8 +22,8 @@ use SqlSemantics\Statement\Type\NullOnly;
  *
  * @visibility public
  * @example Reading the facts of NULL
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT NULL');
- *     [$query->field(0)->type instanceof \SqlSemantics\Statement\Type\NullOnly, $query->field(0)->nullability] // => [true, \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT NULL');
+ *     [$query->field(0)->type instanceof \SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly, $query->field(0)->nullability] // => [true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class NullLiteral implements Scalar
 {

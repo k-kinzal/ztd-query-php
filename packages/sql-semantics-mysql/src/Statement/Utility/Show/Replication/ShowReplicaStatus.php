@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW REPLICA STATUS (SHOW SLAVE STATUS): the state of the replication threads.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW REPLICA STATUS FOR CHANNEL 'c'");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW REPLICA STATUS FOR CHANNEL 'c'");
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Replica_IO_State', "SHOW REPLICA STATUS FOR CHANNEL 'c'"]
  */
 final class ShowReplicaStatus implements Statement

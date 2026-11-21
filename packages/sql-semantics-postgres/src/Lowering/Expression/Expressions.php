@@ -6,9 +6,10 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Expression;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\ArrayItems;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseExpression;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstru
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * The entry point of the expression family.

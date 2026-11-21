@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A catalog command that PostgreSQL rejects because it breaks a rule of the command.
  *
  * @visibility public
  * @example Reading the problem of a duplicated database option
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d OWNER a OWNER b');
- *     $operation->facts->diagnostics[0]->message() // => 'conflicting or redundant options'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d OWNER a OWNER b') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: conflicting or redundant options
  */
 final class CatalogMisuse implements Diagnostic
 {

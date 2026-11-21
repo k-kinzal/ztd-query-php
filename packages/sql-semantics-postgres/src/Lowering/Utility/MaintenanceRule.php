@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Utility;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Analyze;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Checkpoint;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Cluster;
@@ -18,8 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the maintenance commands, EXPLAIN and LOCK.

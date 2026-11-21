@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `XA END xid [SUSPEND [FOR MIGRATE]]`: a request to end the work of an XA transaction branch.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the request
- *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa end 'g' suspend for migrate");
+ *     $xa = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("xa end 'g' suspend for migrate");
  *     [$xa->toString(), $xa->statement->option === \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEndOption::SuspendForMigrate] // => ["XA END 'g' SUSPEND FOR MIGRATE", true]
  */
 final class XaEnd implements Statement
@@ -38,7 +38,7 @@ final class XaEnd implements Statement
     /**
      * Refuses a format identifier the release rejects; the request names no relation and no value.
      *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the release does not read the format identifier
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the release does not read the format identifier
      */
     public function deriveStatement(Derivation $derivation): void
     {

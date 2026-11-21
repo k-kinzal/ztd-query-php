@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE USER: the CREATE USER statement that reproduces an account (MySQL 5.7 and later).
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the column named after the account
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE USER u');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE USER u');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['CREATE USER for u@%', 'SHOW CREATE USER u']
  */
 final class ShowCreateUser implements Statement

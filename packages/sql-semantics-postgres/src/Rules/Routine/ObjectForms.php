@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Tells which object name forms each generic object command writes for each object kind.

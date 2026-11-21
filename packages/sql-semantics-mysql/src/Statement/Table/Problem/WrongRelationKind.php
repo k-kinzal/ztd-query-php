@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A name whose declaration is a base table where the statement needs a view, or a view where it needs a base table.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing a base table that a view statement names
- *     (new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('shop')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView))->message() // => 'shop.t is not VIEW.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView))->message() // => 'shop.t is not VIEW.'
  */
 final class WrongRelationKind implements Diagnostic
 {

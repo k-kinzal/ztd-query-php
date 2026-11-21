@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Program\StatementRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
@@ -17,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
 use SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Lowers CREATE, ALTER and DROP of stored procedures and functions, CREATE of loadable functions, and DROP of triggers and events.

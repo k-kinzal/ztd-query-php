@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER LOGFILE GROUP name ADD {UNDOFILE | REDOFILE} 'file' [option …]`: a request to add a log file to an NDB log file group.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Adding an undo file
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter logfile group lg add undofile 'v.log' wait");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("alter logfile group lg add undofile 'v.log' wait");
  *     [$statement->toString(), $statement->statement->file->kind] // => ["ALTER LOGFILE GROUP lg ADD UNDOFILE 'v.log' WAIT", \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Undo]
  */
 final class AlterLogfileGroup implements Statement

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A prefix operation over one operand.
@@ -27,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the operand of a negation
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT -a FROM t');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT -a FROM t');
  *     $query->statement->columns[0]->expression->operand->name->value // => 'a'
  * @example Refusing an operand that the prefix operator would not cover when written
- *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Minus, $sum) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $sum = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Minus, $sum) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Unary implements Scalar
 {

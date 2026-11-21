@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter;
 
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\TableResolution;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\TableResolution;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The resolution of a table name that a complete context does not declare and IF EXISTS allows to be absent.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving an absent table that IF EXISTS allows
- *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP TABLE IF EXISTS t', []);
+ *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('DROP TABLE IF EXISTS t', []);
  *     $drop->facts->relation($drop->statement->tables[0])->table instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable // => true
  */
 final class AbsentTable implements TableResolution

@@ -7,15 +7,14 @@ namespace Tests\Unit\Statement\Manipulation\Prepared;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\PreparedParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(PreparedParameters::class)]
 #[Medium]
@@ -23,14 +22,14 @@ final class PreparedParametersTest extends TestCase
 {
     public function testInfersUndeclaredIsTrue(): void
     {
-        $prepare = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1')->statement;
+        $prepare = (new Semantics())->analyze('PREPARE p (integer) AS SELECT $1')->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertTrue($prepare->parameters?->infersUndeclared());
     }
 
     public function testDeriveRelationAnswersOneUnnamedSlotPerType(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer, pg_catalog.text) AS SELECT 1');
+        $operation = (new Semantics())->analyze('PREPARE p (integer, pg_catalog.text) AS SELECT 1');
         $prepare = $operation->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertInstanceOf(PreparedParameters::class, $prepare->parameters);
@@ -43,7 +42,7 @@ final class PreparedParametersTest extends TestCase
 
     public function testDeriveRelationTypesTheParametersOfThePreparedStatement(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1, $2');
+        $operation = (new Semantics())->analyze('PREPARE p (integer) AS SELECT $1, $2');
         $prepare = $operation->statement;
         self::assertInstanceOf(Prepare::class, $prepare);
         $projection = $operation->facts->query($prepare->statement)->projection;
@@ -57,6 +56,6 @@ final class PreparedParametersTest extends TestCase
 
     public function testRenderWritesTheTypesInParentheses(): void
     {
-        self::assertSame('PREPARE p (INTEGER, text) AS SELECT $1', (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer, text) AS SELECT $1')->toString());
+        self::assertSame('PREPARE p (INTEGER, text) AS SELECT $1', (new Semantics())->analyze('PREPARE p (integer, text) AS SELECT $1')->toString());
     }
 }

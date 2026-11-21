@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind;

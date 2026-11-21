@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A call of a function that reads the current date or time, with its optional fractional seconds precision.
@@ -33,10 +33,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Typing the current timestamp with a precision
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CURRENT_TIMESTAMP(3)');
- *     [$query->field(0)->type->descriptor->precision, $query->field(0)->nullability] // => ['3', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT CURRENT_TIMESTAMP(3)');
+ *     [$query->field(0)->type->descriptor->precision, $query->field(0)->nullability] // => ['3', \SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability::NotNull]
  * @example Refusing a precision for a date
- *     new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::CurrentDate, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::CurrentDate, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3')) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class ClockCall implements Scalar
 {

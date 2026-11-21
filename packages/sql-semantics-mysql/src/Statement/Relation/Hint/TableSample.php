@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The TABLESAMPLE clause of a table reference (MySQL 9.x grammars): the sampling method and the percentage.
@@ -22,10 +22,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a sampling clause
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics('mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
  *     [$query->statement->from->sample->method, $query->statement->from->sample->percentage->text] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, '10']
  * @example Refusing an expression as the percentage
- *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction
  */
 final class TableSample implements Node
 {

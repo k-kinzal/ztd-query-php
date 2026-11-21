@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Account\Privilege\Item;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
@@ -21,7 +20,7 @@ final class GrantableTest extends TestCase
 {
     public function testEveryItemImplementsTheInterface(): void
     {
-        $grant = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT, BACKUP_ADMIN, r@h ON *.* TO u');
+        $grant = (new Semantics())->inspect('GRANT SELECT, BACKUP_ADMIN, r@h ON *.* TO u');
 
         self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
         self::assertContainsOnlyInstancesOf(Grantable::class, $grant->statement->privileges);

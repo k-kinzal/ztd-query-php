@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `EXPLAIN`: a request for the execution plan of a statement.
@@ -29,13 +29,13 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the row EXPLAIN returns
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('EXPLAIN (ANALYZE, FORMAT JSON) SELECT 1');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('EXPLAIN (ANALYZE, FORMAT JSON) SELECT 1');
  *     [$operation->field(0)->name->value, $operation->field(0)->type->descriptor->name(), $operation->toString()] // => ['QUERY PLAN', 'json', 'EXPLAIN (ANALYZE, FORMAT json) SELECT 1']
  * @example Refusing words the old syntax does not have
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Explain(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Checkpoint(),
- *         [new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('costs'))],
- *     ) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *         [new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('costs'))],
+ *     ) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Explain implements Statement
 {

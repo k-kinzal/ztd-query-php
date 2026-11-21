@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert;
@@ -13,12 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeUpdate;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeWhen;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the facts of MERGE.

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Limits;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Ordering;
@@ -17,9 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Derives the facts of a query expression: its WITH clause, its body and the clauses after it.

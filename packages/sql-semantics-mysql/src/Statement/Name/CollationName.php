@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A collation at a position that names one: a collation name or the keyword DEFAULT.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a collation name and the default
- *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_bin'));
+ *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4_bin'));
  *     [$named->name?->value, (new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null))->name] // => ['utf8mb4_bin', null]
  */
 final class CollationName implements Node

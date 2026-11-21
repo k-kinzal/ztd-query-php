@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator;
  *
  * @visibility public
  * @example Reading the operator of a pattern match
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT 'a' ILIKE 'A'");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT 'a' ILIKE 'A'");
  *     $query->field(0)->expression->operator // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternOperator::ILike
  */
 enum PatternOperator

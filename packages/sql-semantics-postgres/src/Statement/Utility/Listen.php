@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `LISTEN channel`: a request to receive the notifications of a channel.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the channel listened to
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('LISTEN Jobs')->statement->channel->value // => 'jobs'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('LISTEN Jobs')->statement->channel->value // => 'jobs'
  */
 final class Listen implements Statement
 {

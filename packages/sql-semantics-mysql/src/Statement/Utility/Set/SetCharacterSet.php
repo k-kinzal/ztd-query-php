@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET CHARACTER SET: sets the client and result character sets and makes the connection use the database character set.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading SET CHARACTER SET
- *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET CHARACTER SET DEFAULT');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET CHARACTER SET DEFAULT');
  *     [$set->statement->items[0]->charset->name, $set->toString()] // => [null, 'SET CHARSET DEFAULT']
  */
 final class SetCharacterSet implements SetItem

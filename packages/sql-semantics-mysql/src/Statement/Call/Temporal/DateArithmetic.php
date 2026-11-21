@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A call of DATE_ADD(date, INTERVAL expr unit) or DATE_SUB(date, INTERVAL expr unit).
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Typing a date plus months
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT ADDDATE(DATE '2024-01-01', INTERVAL 1 MONTH) AS d");
+ *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SELECT ADDDATE(DATE '2024-01-01', INTERVAL 1 MONTH) AS d");
  *     [$query->field(0)->type->descriptor->name(), $query->toString()] // => ['DATE', "SELECT DATE_ADD(DATE '2024-01-01', INTERVAL 1 MONTH) AS d"]
  */
 final class DateArithmetic implements Scalar

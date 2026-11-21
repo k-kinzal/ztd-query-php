@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the predicate level: IN, BETWEEN, LIKE, REGEXP, SOUNDS LIKE and MEMBER OF.

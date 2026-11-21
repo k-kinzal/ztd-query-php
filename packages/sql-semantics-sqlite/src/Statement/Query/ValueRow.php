@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * One row of a VALUES clause.
  *
  * @visibility public
  * @example Reading a row of values
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VALUES (1, 'a')");
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VALUES (1, 'a')");
  *     $query->statement->rows[0]->values[1]->value // => 'a'
  */
 final class ValueRow implements Node

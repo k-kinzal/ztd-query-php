@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * A request to set or reset the default of a configuration parameter for a database.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Telling that the request is a statement of its own
- *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting::class, \SqlSemantics\Statement\Statement::class) // => true
+ *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting::class, \SqlSemantics\Platform\PostgreSql\Model\Statement\Statement::class) // => true
  */
 final class AlterDatabaseSetting implements Statement
 {

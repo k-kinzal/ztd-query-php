@@ -10,12 +10,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\WrongRelationKind;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(RelationKinds::class)]
 #[Medium]
@@ -37,8 +36,8 @@ final class RelationKindsTest extends TestCase
     #[TestWith(['INSERT INTO v VALUES (1) ON CONFLICT DO NOTHING', KindRefusal::Upsert])]
     public function testRefuseReportsWhatSqliteRefusesForTheKindOfTheRelation(string $sql, KindRefusal $refusal): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE VIEW v (x) AS SELECT a FROM t')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE VIEW v (x) AS SELECT a FROM t')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
@@ -59,8 +58,8 @@ final class RelationKindsTest extends TestCase
     #[TestWith(['ALTER TABLE t RENAME TO w'])]
     public function testRefuseReportsNothingForTheKindTheRequestNeeds(string $sql): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE VIEW v (x) AS SELECT a FROM t')]);
+        $semantics = new Semantics();
+        $operation = $semantics->inspect($sql, [$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE VIEW v (x) AS SELECT a FROM t')]);
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a INTEGER); CREATE VIEW v (x) AS SELECT a FROM t; CREATE TRIGGER vi INSTEAD OF INSERT ON v BEGIN SELECT 1; END');
 
@@ -70,10 +69,10 @@ final class RelationKindsTest extends TestCase
 
     public function testRefuseLeavesTheKindOfAnUndeclaredRelationUndecided(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
-        self::assertSame([], $semantics->analyze('DROP TABLE v')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('DROP VIEW v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('DROP TABLE v', $semantics->context([$semantics->analyze('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('DROP TABLE v')->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('DROP VIEW v', $semantics->context([$semantics->inspect('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('DROP TABLE v', $semantics->context([$semantics->inspect('CREATE VIEW main.v AS SELECT 1')], false))->facts->diagnostics);
     }
 }

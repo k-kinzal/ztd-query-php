@@ -4,6 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\Resolution;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -16,17 +27,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
-use SqlSemantics\Statement\Fact\Facts;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
 
 /**
  * Names a result column the way SQLite does.

@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics--sqlite-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-sqlite/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md): the statement structure classes of the official SQLite grammar, the SQLite rules for resolving names and deriving types, affinities, NULL facts and diagnostics, and the SQLite spelling of rendered SQL. Installing it also installs the shared runtime, and `Dialect::Sqlite` selects SQLite in the runtime's `Semantics`. No database connection is needed.
+SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/README.md): the statement structure classes of the official SQLite grammar, the SQLite rules for resolving names and deriving types, affinities, NULL facts and diagnostics, and the SQLite spelling of rendered SQL. The package provides its own `Semantics` analyzer and installs the common SQL Semantics interfaces. No database connection is needed.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ SQL Semantics for SQLite adds SQLite to [SQL Semantics](https://github.com/k-kin
 
 ## Support Syntax
 
-The following grammar release is supported. Pass the version tag as the second argument of `Semantics`; omitting it selects the default.
+The following grammar release is supported. Pass the version tag as the first argument of `Semantics`; omitting it selects the default.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -30,19 +30,18 @@ composer require k-kinzal/sql-semantics-sqlite
 ## Usage
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
-use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
 $insert = $semantics->analyze("insert or replace into users (id, name) values (1, 'Alice') returning id", [$users]);
 
 $insert->statement instanceof InsertRows; // => true
 $insert->toString(); // => "INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice') RETURNING id"
 $insert->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users])->facts->diagnostics[0]->message(); // => '2 values for 1 columns.'
+$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users]); // throws SemanticException with message '2 values for 1 columns.'
 ```
 
 INSERT with VALUES, with a query and with DEFAULT VALUES are three classes: `InsertRows`, `InsertSelect` and `InsertDefaults`.
@@ -54,13 +53,12 @@ See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/
 A declared column type keeps its text as SQLite reports it, and the affinity SQLite derives from it (`ColumnDomain`). A computed value has the storage class of its result (`Storage`). A `TypeName`, as in a CAST, keeps its words and how they are quoted, because SQLite records quoted type words with their quotes.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $table = $semantics->analyze('CREATE TABLE t (a VARCHAR(10), b integer, c)')->declarations()[0];
 
 $table->columns[0]->type->affinity; // => Affinity::Text
@@ -78,11 +76,10 @@ $semantics->analyze('SELECT 1.5')->field(0)->type->descriptor; // => Storage::Re
 - A table created by CREATE TABLE has the implicit columns SQLite gives it, such as `rowid`, `oid` and `_rowid_` (unless it is declared WITHOUT ROWID). A declaration you construct yourself has only the columns you give it.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
 
 $semantics->analyze('SELECT NAME FROM USERS', [$users])->field(0)->column() === $users->declarations()[0]->columns[1]; // => true
@@ -99,12 +96,11 @@ In the example, `id` is an `INTEGER PRIMARY KEY`, so `rowid` is another name for
 SQLite searches an unqualified name in `temp`, then `main`, then the attached schemas in order. A `SearchPath` lists `main` and the attached schemas; it must start with `main`. An unqualified declaration belongs to `main`, and `CREATE TEMP TABLE` declares in `temp`.
 
 ```php
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Contract\SearchPath;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite, null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
+$semantics = new Semantics(null, null, ParameterStyle::Native, new SearchPath('main', 'archive'));
 
 array_map(static fn ($schema) => $schema->value, $semantics->context()->searchPath); // => ['temp', 'main', 'archive']
 $semantics->analyze('CREATE TEMP TABLE scratch (a)')->declarations()[0]->name->schema?->value; // => 'temp'
@@ -117,10 +113,9 @@ Because `temp` is searched first, an unqualified name in a partial context (`$se
 SQLite reads every parameter form natively: `?`, `?NNN`, `:name`, `@name` and `$name`. The parameter style of the profile does not change how SQLite text is read; it is still part of the profile, so declarations analyzed under one style cannot be used under the other. A parameter's type depends on the value bound to it.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$query = (new Semantics(Dialect::Sqlite))->analyze('SELECT ?, ?2, :name, @name, $name');
+$query = (new Semantics())->analyze('SELECT ?, ?2, :name, @name, $name');
 
 $query->toString(); // => 'SELECT ?, ?2, :name, @name, $name'
 $query->field(2)->type->missing[0]->describe(); // => 'the value bound to parameter :name'
@@ -139,12 +134,11 @@ SQLite names an unaliased result column after the text of its expression as it w
 The layout is kept only where it differs from the canonical spelling, and it keeps the trivia after the expression only when that holds a comment. Whether AS introduces an alias is kept as well, because the text of an enclosing expression includes it. A result column built with `new` and without a layout is rendered in the canonical spelling and named after that text, which is the text the database reads.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\DependentField;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 
 $semantics->analyze('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
 $semantics->analyze('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
@@ -159,15 +153,14 @@ $semantics->analyze('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution 
 `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a table. Where a name resolves to one declaration, a request SQLite carries out only for the other kind is a `WrongRelationKind` diagnostic: `DROP TABLE`, every `ALTER TABLE` form, `CREATE INDEX`, a `BEFORE` or `AFTER` trigger and an upsert on a view, and `DROP VIEW` and an `INSTEAD OF` trigger on a table. A view has no `rowid`.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one');
 
 $view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => 'Relation v is a view: DROP TABLE removes only a table.'
+$semantics->analyze('DROP TABLE v', [$view]); // throws SemanticException with message 'Relation v is a view: DROP TABLE removes only a table.'
 ```
 
 ### Generated columns
@@ -175,15 +168,14 @@ $semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); 
 A column defined with `GENERATED ALWAYS AS (...)` or `AS (...)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`). It reads like any other column, but SQLite computes its value, so writing it is a `GeneratedColumnWrite` diagnostic with the message SQLite gives: naming it in the column list of an `INSERT`, and assigning it in `UPDATE ... SET` or in the `DO UPDATE SET` of an upsert. An `INSERT` without a column list supplies one value per column that is not generated. In a trigger program these writes are reported by `CREATE TRIGGER`, although SQLite rejects them only when the trigger runs.
 
 ```php
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
-$semantics = new Semantics(Dialect::Sqlite);
+$semantics = new Semantics();
 $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))');
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('UPDATE t SET b = 1', [$table])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "b"'
-$semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics; // => []
+$semantics->analyze('UPDATE t SET b = 1', [$table]); // throws SemanticException with message 'cannot UPDATE generated column "b"'
+$semantics->analyze('INSERT INTO t VALUES (1)', [$table]); // Returns a query
 ```
 
 ## Limitations

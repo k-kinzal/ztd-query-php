@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownTableOption;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Reports the problems of a table definition that follow from the definition alone.

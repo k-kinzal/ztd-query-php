@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Query;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
@@ -13,10 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Finds the relations of the source query of INSERT ... SELECT that ON DUPLICATE KEY UPDATE may refer to.

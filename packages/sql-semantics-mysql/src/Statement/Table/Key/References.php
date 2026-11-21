@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The REFERENCES clause of a foreign key or of a column: the parent table, its columns, MATCH and the referential actions.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Resolving the parent table
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $parent = $semantics->analyze('CREATE TABLE p (id INT PRIMARY KEY)');
  *     $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id) ON DELETE CASCADE)', [$parent]);
  *     $child->facts->relation($child->statement->elements[1]->references)->table->table === $parent->declarations()[0] // => true

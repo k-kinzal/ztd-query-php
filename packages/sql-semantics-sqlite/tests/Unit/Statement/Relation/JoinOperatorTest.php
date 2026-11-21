@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(JoinOperator::class)]
 #[Medium]
@@ -70,7 +69,7 @@ final class JoinOperatorTest extends TestCase
 
     public function testRenderWritesACommaOrTheWordsBeforeJoin(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select * from t, u left wrong join t as t2 inner join u as u2');
+        $query = (new Semantics())->inspect('select * from t, u left wrong join t as t2 inner join u as u2');
 
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(JoinChain::class, $query->statement->from);

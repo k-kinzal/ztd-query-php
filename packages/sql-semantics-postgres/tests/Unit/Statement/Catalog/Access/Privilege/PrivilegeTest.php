@@ -14,7 +14,7 @@ final class PrivilegeTest extends TestCase
 {
     public function testPrivilegeOfAName(): void
     {
-        self::assertSame('insert', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(new \SqlSemantics\Statement\Identifier\Name('insert')))->privilege());
+        self::assertSame('insert', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('insert')))->privilege());
     }
 
     public function testPrivilegeOfAKeyword(): void
@@ -24,12 +24,12 @@ final class PrivilegeTest extends TestCase
 
     public function testPrivilegeOfAllIsNull(): void
     {
-        self::assertSame(null, (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::All, [new \SqlSemantics\Statement\Identifier\Name('a')]))->privilege());
+        self::assertSame(null, (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::All, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]))->privilege());
     }
 
     public function testRenderWritesTheNameAndTheColumns(): void
     {
-        self::assertSame('GRANT SELECT (a, "B"), "select", update ON TABLE t TO joe', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT select (a, "B"), "select", update ON t TO joe')->toString());
+        self::assertSame('GRANT SELECT (a, "B"), "select", update ON TABLE t TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('GRANT select (a, "B"), "select", update ON t TO joe')->toString());
     }
 
     public function testRejectsAllWithoutColumns(): void
@@ -41,6 +41,6 @@ final class PrivilegeTest extends TestCase
     public function testRejectsColumnsOnAlterSystem(): void
     {
         $this->expectExceptionMessage('ALTER SYSTEM takes no column list.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::AlterSystem, [new \SqlSemantics\Statement\Identifier\Name('a')]);
+        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::AlterSystem, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')]);
     }
 }

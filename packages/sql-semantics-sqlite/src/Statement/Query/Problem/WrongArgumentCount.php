@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A call of a built-in function with a number of arguments the function does not accept.
  *
  * @visibility public
  * @example Reading the problem of a call with too many arguments
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT abs(1, 2)');
- *     $query->facts->diagnostics[0]->message() // => 'wrong number of arguments to function abs()'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT abs(1, 2)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: wrong number of arguments to function abs()
  */
 final class WrongArgumentCount implements Diagnostic
 {

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Access;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;

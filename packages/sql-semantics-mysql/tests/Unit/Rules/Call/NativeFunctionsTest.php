@@ -7,7 +7,7 @@ namespace Tests\Unit\Rules\Call;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions;
 
 #[CoversClass(NativeFunctions::class)]
@@ -22,7 +22,6 @@ final class NativeFunctionsTest extends TestCase
         self::assertFalse($natives->exists(GrammarRelease::MySql5651, 'json_array'));
         self::assertTrue($natives->exists(GrammarRelease::MySql5744, 'GLength'));
         self::assertFalse($natives->exists(GrammarRelease::MySql847, 'GLength'));
-        self::assertFalse($natives->exists(GrammarRelease::Sqlite3472, 'concat'));
     }
 
     public function testRowAnswersTheRowThatAcceptsTheArgumentCount(): void

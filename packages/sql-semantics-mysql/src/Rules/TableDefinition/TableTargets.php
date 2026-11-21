@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConditionalTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 
 /**
  * Derives the row shape of a table a definition names or defines, and the scope of the expressions inside a definition.

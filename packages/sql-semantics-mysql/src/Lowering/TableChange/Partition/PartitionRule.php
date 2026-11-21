@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableChange\Partition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod;
@@ -19,8 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the partitioning clause: its method, counts and subpartitioning.

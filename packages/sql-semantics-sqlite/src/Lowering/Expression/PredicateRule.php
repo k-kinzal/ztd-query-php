@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InTable;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the predicate productions: NULL tests, pattern matches, range tests and membership tests.

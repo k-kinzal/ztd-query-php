@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Call;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\Frame;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameExclusion;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers a parenthesized window specification and its frame.

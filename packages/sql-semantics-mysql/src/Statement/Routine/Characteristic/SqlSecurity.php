@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The SQL SECURITY characteristic of a stored routine.
@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the security context of a routine
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER PROCEDURE p SQL SECURITY INVOKER');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER PROCEDURE p SQL SECURITY INVOKER');
  *     $alter->statement->characteristics[0]->context->value // => 'INVOKER'
  */
 final class SqlSecurity implements Characteristic

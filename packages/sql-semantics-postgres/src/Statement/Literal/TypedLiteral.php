@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A constant of a stated type, written `type 'string'`.
@@ -33,13 +33,13 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading a typed constant
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT date '2024-01-01'", []);
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT date '2024-01-01'", []);
  *     [$query->statement->targets[0]->expression->value->value, $query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['2024-01-01', 'date', 'date']
  * @example Rejecting a set-returning type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(), true),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('1 day'),
- *     ) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     ) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class TypedLiteral implements Scalar, OutputNaming
 {

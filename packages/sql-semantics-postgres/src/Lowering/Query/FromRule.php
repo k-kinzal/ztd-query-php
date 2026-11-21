@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\FunctionTable;
@@ -21,8 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableSample;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Lowers FROM clauses and their items.

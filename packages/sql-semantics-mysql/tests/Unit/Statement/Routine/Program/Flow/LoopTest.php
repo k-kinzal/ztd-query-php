@@ -8,12 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Loop::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class LoopTest extends TestCase
 {
     public function testDeriveProgramAddsTheLabelOfTheLoop(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; l: LOOP SET x = x + 1; LEAVE l; END LOOP l; END');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; l: LOOP SET x = x + 1; LEAVE l; END LOOP l; END');
 
         self::assertSame([], $operation->facts->diagnostics);
     }
@@ -32,7 +31,7 @@ final class LoopTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsTheBrokenRule')]
     public function testDeriveProgramReportsTheBrokenRule(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -50,7 +49,7 @@ final class LoopTest extends TestCase
     #[DataProvider('providerRenderWritesTheLoop')]
     public function testRenderWritesTheLoop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Locking;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
@@ -13,10 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\Manipulation
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Derives the parts that INSERT, UPDATE, DELETE and MERGE share: common tables, the target, other inputs and RETURNING.

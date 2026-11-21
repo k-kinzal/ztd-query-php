@@ -7,22 +7,21 @@ namespace Tests\Unit\Rules\Definition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\ColumnLookup;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use SqlSemantics\Resolution\ColumnLookup;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]
@@ -30,7 +29,7 @@ final class TableShapesTest extends TestCase
 {
     public function testShapeHasOneSlotPerDeclaredColumn(): void
     {
-        $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
+        $table = (new Semantics())->analyze('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
         $shape = (new TableShapes())->shape($table);
 
         self::assertCount(2, $shape->slots);
@@ -41,7 +40,7 @@ final class TableShapesTest extends TestCase
 
     public function testShapeOfAnIncompleteDeclarationIsOpen(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new ColumnDomain(''))], [], false);
         $shape = (new TableShapes())->shape($table);
 
@@ -52,7 +51,7 @@ final class TableShapesTest extends TestCase
     public function testImplicitPointsAnAliasAtTheSlotOfItsDeclaredColumn(): void
     {
         $shapes = new TableShapes();
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $aliased = $semantics->analyze('CREATE TABLE t (a, id INTEGER PRIMARY KEY)')->declarations()[0];
         $plain = $semantics->analyze('CREATE TABLE t (a)')->declarations()[0];
         $shape = $shapes->shape($aliased);
@@ -64,7 +63,7 @@ final class TableShapesTest extends TestCase
 
     public function testTargetResolvesADeclaredAMissingAndAnUndeclaredTable(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
         $shapes = new TableShapes();
         $declared = $shapes->target(new Derivation($semantics->context([$table])), new QualifiedName(new Name('T')));
@@ -81,7 +80,7 @@ final class TableShapesTest extends TestCase
 
     public function testImplicitOfAnswersTheRowIdentifierOfAResolvedTableOnly(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $shapes = new TableShapes();
 
@@ -91,7 +90,7 @@ final class TableShapesTest extends TestCase
 
     public function testScopeSeesTheRowIdentifierOnlyAtTheRowPosition(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $index = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
         $derivation = new Derivation($semantics->context([$table]));

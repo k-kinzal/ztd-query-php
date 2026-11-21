@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PARSE_TREE: the parse tree of a statement, in debug builds of the server (MySQL 8.1 and later).
@@ -25,8 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the inspected statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PARSE_TREE SELECT 1');
- *     [$show->facts->diagnostics[0]->rule, $show->shape(), $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly, null, 'SHOW PARSE_TREE SELECT 1']
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW PARSE_TREE SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The statement is available in debug builds of the server only
  */
 final class ShowParseTree implements Statement
 {

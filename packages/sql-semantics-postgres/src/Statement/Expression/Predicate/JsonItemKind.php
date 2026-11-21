@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate;
  *
  * @visibility public
  * @example Reading the tested kind
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT '[]' IS JSON ARRAY");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT '[]' IS JSON ARRAY");
  *     $query->field(0)->expression->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind::JsonArray
  */
 enum JsonItemKind: string

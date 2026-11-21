@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Predicate;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A JSON array membership test: `value MEMBER OF (json_array)` (`Item_func_member_of`, MySQL 8.0.17 and later).
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping the optional OF as written
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE 1 MEMBER (a)')->toString() // => 'SELECT a FROM t WHERE 1 MEMBER (a)'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT a FROM t WHERE 1 MEMBER (a)')->toString() // => 'SELECT a FROM t WHERE 1 MEMBER (a)'
  */
 final class MemberOf implements Scalar
 {

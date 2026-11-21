@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -32,7 +31,7 @@ final class TimeKeywordTest extends TestCase
 
     public function testFromMatchesTheKeywordOfAnAnalyzedExpression(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT current_date, CURRENT_TIME')->statement;
+        $statement = (new Semantics())->analyze('SELECT current_date, CURRENT_TIME')->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

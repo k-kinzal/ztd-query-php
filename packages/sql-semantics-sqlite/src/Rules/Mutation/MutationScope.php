@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Rules\Query\CommonTables;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Projection;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
@@ -19,13 +26,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Derives the parts that INSERT, UPDATE and DELETE share.

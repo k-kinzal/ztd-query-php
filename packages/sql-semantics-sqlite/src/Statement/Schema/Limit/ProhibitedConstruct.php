@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
  *
  * @visibility public
  * @example Reading the construct of a prohibited expression
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (random()))');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (random()))');
  *     $create->facts->diagnostics[0]->construct // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct::NonDeterministicFunction
  */
 enum ProhibitedConstruct: string

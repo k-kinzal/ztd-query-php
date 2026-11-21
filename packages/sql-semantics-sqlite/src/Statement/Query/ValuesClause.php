@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A VALUES clause: a query whose rows are written out.
@@ -33,8 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the output of a VALUES clause
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VALUES (1, 'a'), (2, NULL)");
- *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze("VALUES (1, 'a'), (2, NULL)");
+ *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable]
  */
 final class ValuesClause implements Statement, Query
 {

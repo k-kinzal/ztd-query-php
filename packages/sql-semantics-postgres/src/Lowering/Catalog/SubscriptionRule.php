@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\AlterSubscriptionConnection;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\AlterSubscriptionOptions;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\EnableSubscription;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\RefreshSubscription;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the subscription commands.

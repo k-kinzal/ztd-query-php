@@ -7,14 +7,13 @@ namespace Tests\Unit\Rules\Dml;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\Dml\GeneratedWrites;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(GeneratedWrites::class)]
 #[Medium]
@@ -22,9 +21,9 @@ final class GeneratedWritesTest extends TestCase
 {
     public function testValueReportsAValueWrittenIntoAGeneratedColumn(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), s INT AS (a * 2) STORED, b INT DEFAULT 5)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1), s INT AS (a * 2) STORED, b INT DEFAULT 5)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect($sql, $tables)->facts->diagnostics);
 
         self::assertSame(["The value specified for generated column 'g' in table 't' is not allowed."], $messages('INSERT INTO t (a, G) VALUES (1, 2)'));
         self::assertSame(["The value specified for generated column 's' in table 't' is not allowed."], $messages('REPLACE INTO t (a, s) VALUES (1, NULL)'));
@@ -34,26 +33,26 @@ final class GeneratedWritesTest extends TestCase
 
     public function testValueAcceptsDefaultValueItems(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), s INT AS (a * 2) STORED, b INT DEFAULT 5)')->declarations();
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1), s INT AS (a * 2) STORED, b INT DEFAULT 5)')->declarations();
 
-        self::assertSame([], $semantics->analyze('INSERT INTO t VALUES (1, DEFAULT, DEFAULT(b), 4)', $tables)->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('INSERT INTO t (a, g) VALUES (1, ((DEFAULT(b))))', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('INSERT INTO t VALUES (1, DEFAULT, DEFAULT(b), 4)', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('INSERT INTO t (a, g) VALUES (1, ((DEFAULT(b))))', $tables)->facts->diagnostics);
     }
 
     public function testValueLeavesARowWithAnotherCountToTheCountMismatch(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
 
-        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2, 3)', $tables)->facts->diagnostics));
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect('INSERT INTO t (a, g) VALUES (1, 2, 3)', $tables)->facts->diagnostics));
     }
 
     public function testAssignmentsReportsAssignedGeneratedColumns(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT PRIMARY KEY, g INT AS (a + 1), b INT)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT PRIMARY KEY, g INT AS (a + 1), b INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect($sql, $tables)->facts->diagnostics);
         $expected = ["The value specified for generated column 'g' in table 't' is not allowed."];
 
         self::assertSame($expected, $messages('INSERT INTO t SET a = 1, g = 2'));
@@ -67,19 +66,19 @@ final class GeneratedWritesTest extends TestCase
 
     public function testAssignmentsIgnoresColumnsOutsideDeclaredTables(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
-        $copy = $semantics->analyze('CREATE TABLE c SELECT * FROM t', $tables)->declarations();
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $copy = $semantics->inspect('CREATE TABLE c SELECT * FROM t', $tables)->declarations();
 
-        self::assertSame([], $semantics->analyze('LOAD DATA INFILE \'f\' INTO TABLE t (a, g) SET g = 1', $tables)->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('UPDATE c SET g = 1', $copy)->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('LOAD DATA INFILE \'f\' INTO TABLE t (a, g) SET g = 1', $tables)->facts->diagnostics);
+        self::assertSame([], $semantics->inspect('UPDATE c SET g = 1', $copy)->facts->diagnostics);
     }
 
     public function testQueryReportsTheFieldsOfAQuerySource(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), b INT DEFAULT 5)')->declarations();
-        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1), b INT DEFAULT 5)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->inspect($sql, $tables)->facts->diagnostics);
         $expected = ["The value specified for generated column 'g' in table 't' is not allowed."];
 
         self::assertSame($expected, $messages('INSERT INTO t (a, g) SELECT 1, 2'));
@@ -91,18 +90,18 @@ final class GeneratedWritesTest extends TestCase
 
     public function testQueryChecksTheRowsOfAValuesSourceAsRows(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
-        $diagnostics = $semantics->analyze('INSERT INTO t (a, g) VALUES ROW(1, DEFAULT), ROW(2, 3)', $tables)->facts->diagnostics;
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $diagnostics = $semantics->inspect('INSERT INTO t (a, g) VALUES ROW(1, DEFAULT), ROW(2, 3)', $tables)->facts->diagnostics;
 
         self::assertCount(1, array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof GeneratedColumnWrite));
     }
 
     public function testValueRowsFindsAValuesStatementInsideItsClauses(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $values = $semantics->analyze('INSERT INTO t (a) WITH c AS (SELECT 1) (VALUES ROW(1)) ORDER BY 1 LIMIT 1')->statement;
-        $select = $semantics->analyze('INSERT INTO t (a) (SELECT 1)')->statement;
+        $semantics = new Semantics();
+        $values = $semantics->inspect('INSERT INTO t (a) WITH c AS (SELECT 1) (VALUES ROW(1)) ORDER BY 1 LIMIT 1')->statement;
+        $select = $semantics->inspect('INSERT INTO t (a) (SELECT 1)')->statement;
         self::assertInstanceOf(InsertQuery::class, $values);
         self::assertInstanceOf(InsertQuery::class, $select);
 
@@ -112,7 +111,7 @@ final class GeneratedWritesTest extends TestCase
 
     public function testDefaultTellsDefaultValueItems(): void
     {
-        $insert = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t (a, b, c, d) VALUES (DEFAULT, (DEFAULT(a)), DEFAULT(a) + 0, NULL)')->statement;
+        $insert = (new Semantics())->inspect('INSERT INTO t (a, b, c, d) VALUES (DEFAULT, (DEFAULT(a)), DEFAULT(a) + 0, NULL)')->statement;
         self::assertInstanceOf(InsertRows::class, $insert);
         $values = $insert->rows[0]->values;
 
@@ -121,9 +120,9 @@ final class GeneratedWritesTest extends TestCase
 
     public function testTableAnswersTheDeclaredNameOfTheTable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $tables = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $semantics = new Semantics();
+        $tables = $semantics->inspect('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
 
-        self::assertSame("The value specified for generated column 'g' in table 't' is not allowed.", $semantics->analyze('UPDATE t AS x SET x.g = 1', $tables)->facts->diagnostics[0]->message());
+        self::assertSame("The value specified for generated column 'g' in table 't' is not allowed.", $semantics->inspect('UPDATE t AS x SET x.g = 1', $tables)->facts->diagnostics[0]->message());
     }
 }

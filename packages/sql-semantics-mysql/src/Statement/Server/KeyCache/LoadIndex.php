@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\KeyCache;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `LOAD INDEX INTO CACHE t [INDEX (…)] [IGNORE LEAVES], …`: a request to preload the indexes of MyISAM tables into their key caches.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Preloading indexes
- *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('load index into cache t partition (all) ignore leaves');
+ *     $load = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('load index into cache t partition (all) ignore leaves');
  *     [$load->toString(), $load->statement->tables[0]->ignoreLeaves] // => ['LOAD INDEX INTO CACHE t PARTITION (ALL) IGNORE LEAVES', true]
  */
 final class LoadIndex implements Statement

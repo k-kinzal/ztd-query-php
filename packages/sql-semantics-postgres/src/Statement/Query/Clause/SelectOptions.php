@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ORDER BY, LIMIT, OFFSET, FETCH and locking clauses written after a query body.
@@ -24,10 +24,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the options of a selection
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1');
  *     [count($query->statement->options->order), $query->statement->options->lockingFirst, $query->toString()] // => [1, true, 'SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1']
  * @example Refusing an integer constant that is not given as a position
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions([new \SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions([new \SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class SelectOptions implements Node
 {

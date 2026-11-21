@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\NotImplemented;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * The SQL-standard test of whether a query returns no duplicate rows: `UNIQUE [NULLS [NOT] DISTINCT] (SELECT …)`.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reporting the predicate
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)')->facts->diagnostics[0]->message() // => 'UNIQUE predicate is not yet implemented.'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: UNIQUE predicate is not yet implemented.
  */
 final class UniquePredicate implements Scalar
 {

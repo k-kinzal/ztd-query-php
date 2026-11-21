@@ -4,7 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\CommonBinding;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Unification;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\UnknownOutputs;
@@ -12,15 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\RecursiveDefinition;
-use SqlSemantics\Resolution\CommonBinding;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * Derives the facts of UNION, INTERSECT and EXCEPT.

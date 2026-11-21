@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * Arguments named in a way every routine rejects: a positional argument after a named one, or a name used twice.
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Describing a repeated parameter name
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblem(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblemKind::RepeatedName,
- *         new \SqlSemantics\Statement\Identifier\Name('a'),
+ *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'),
  *     ))->message() // => 'argument name "a" used more than once'
  */
 final class ArgumentProblem implements Diagnostic

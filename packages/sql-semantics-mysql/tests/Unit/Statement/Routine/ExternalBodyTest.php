@@ -8,17 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(ExternalBody::class)]
 #[Medium]
@@ -26,7 +25,7 @@ final class ExternalBodyTest extends TestCase
 {
     public function testRenderKeepsAQuotedCode(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
+        $create = (new Semantics())->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
@@ -56,12 +55,12 @@ final class ExternalBodyTest extends TestCase
     #[DataProvider('providerRenderWritesAsAndTheCode')]
     public function testRenderWritesAsAndTheCode(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     public function testRenderWritesAConstructedBody(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $quoted = new Output(new Codec($semantics->profile()->grammar));
         (new ExternalBody(new Text("it's")))->render($quoted);
         $dollar = new Output(new Codec($semantics->profile()->grammar));

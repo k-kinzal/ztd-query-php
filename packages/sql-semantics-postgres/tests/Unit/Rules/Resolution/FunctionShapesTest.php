@@ -14,15 +14,15 @@ final class FunctionShapesTest extends TestCase
 {
     public function testDeriveIsOpenForAnUndeclaredFunction(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('SELECT * FROM f()');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('SELECT * FROM f()');
         self::assertNull($query->fields());
     }
 
     public function testFunctionNameIsTheCalledName(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('SELECT * FROM f() AS (a integer)');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('SELECT * FROM f() AS (a integer)');
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $from = $select->from;
@@ -32,33 +32,33 @@ final class FunctionShapesTest extends TestCase
 
     public function testDeriveReportsDefinitionsAfterSeveralFunctions(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('SELECT * FROM ROWS FROM (f(), g()) AS s (a int)');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('SELECT * FROM ROWS FROM (f(), g()) AS s (a int)');
         self::assertSame('ROWS FROM() with multiple functions cannot have a column definition list', $query->facts->diagnostics[0]->message());
     }
 
     public function testDeriveDerivesRepeatedDefinitions(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('SELECT * FROM ROWS FROM (f() AS (x int)) AS s (a b.c ((1 IS FALSE)))');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('SELECT * FROM ROWS FROM (f() AS (x int)) AS s (a b.c ((1 IS FALSE)))');
         self::assertSame('multiple column definition lists are not allowed for the same function', $query->facts->diagnostics[0]->message());
     }
 
     public function testDefinedHasTheDefinedTypes(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $query = $semantics->analyze('SELECT * FROM f() AS (a boolean)');
-        self::assertSame('boolean', ($query->field(0)->type instanceof \SqlSemantics\Statement\Type\Known ? $query->field(0)->type->descriptor->name() : null));
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $query = $semantics->inspect('SELECT * FROM f() AS (a boolean)');
+        self::assertSame('boolean', ($query->field(0)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $query->field(0)->type->descriptor->name() : null));
     }
 
     public function testPaddedMakesSlotsNullable(): void
     {
-        self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\FunctionShapes())->padded([new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Statement\Type\Nullability::NotNull)])[0]->nullability);
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\FunctionShapes())->padded([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull)])[0]->nullability);
     }
 
     public function testDistinctRemovesRepeatedInputs(): void
     {
-        $missing = new \SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('f')));
+        $missing = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredRoutine(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('f')));
         self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\FunctionShapes())->distinct([$missing, $missing]));
     }
 }

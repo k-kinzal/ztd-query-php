@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Invocation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblemKind;

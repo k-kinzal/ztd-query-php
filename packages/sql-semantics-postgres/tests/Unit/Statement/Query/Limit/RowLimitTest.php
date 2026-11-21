@@ -14,7 +14,7 @@ final class RowLimitTest extends TestCase
 {
     public function testRenderKeepsTheOffsetFirst(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze('SELECT 1 OFFSET 1 FETCH FIRST ROWS ONLY');
         self::assertSame('SELECT 1 OFFSET 1 FETCH FIRST ROWS ONLY', $query->toString());
     }

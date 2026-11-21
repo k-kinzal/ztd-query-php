@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * Whether a name denotes a base table or a view, which decides the columns SHOW CREATE TABLE returns.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the missing fact
- *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\TableOrView(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))->describe() // => 'whether t is a base table or a view'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\TableOrView(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->describe() // => 'whether t is a base table or a view'
  */
 final class TableOrView implements MissingInput
 {

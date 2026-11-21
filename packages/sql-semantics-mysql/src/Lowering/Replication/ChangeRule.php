@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Replication;
 
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CHANGE MASTER TO, CHANGE REPLICATION SOURCE TO and CHANGE REPLICATION FILTER of every release.

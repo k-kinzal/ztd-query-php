@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * A request to remove a savepoint and every later one from the transaction stack.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Writing a release without the optional keyword
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('RELEASE SAVEPOINT s1')->toString() // => 'RELEASE s1'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('RELEASE SAVEPOINT s1')->toString() // => 'RELEASE s1'
  */
 final class Release implements Statement
 {

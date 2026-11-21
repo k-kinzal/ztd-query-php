@@ -9,14 +9,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\DefinitionRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
@@ -48,7 +47,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAProcedure')]
     public function testRoutineLowersAProcedure(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze("create definer = 'root'@'%' procedure db.p(in a int, out b int, inout c int) comment 'x' select a");
+        $create = (new Semantics($release))->analyze("create definer = 'root'@'%' procedure db.p(in a int, out b int, inout c int) comment 'x' select a");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame('p', $statement->name->name->value);
@@ -76,7 +75,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineLowersAFunctionWithItsReturnCollation')]
     public function testRoutineLowersAFunctionWithItsReturnCollation(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
+        $create = (new Semantics($release))->analyze('create function f(a int) returns varchar(5) collate utf8mb4_bin deterministic return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame('f', $statement->name->name->value);
@@ -101,7 +100,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerRoutineReadsIfNotExists')]
     public function testRoutineReadsIfNotExists(string $release): void
     {
-        $semantics = new Semantics(Dialect::MySql, $release);
+        $semantics = new Semantics($release);
         $procedure = $semantics->analyze('create procedure if not exists p() select 1');
         self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
         self::assertTrue($procedure->statement->ifNotExists);
@@ -116,7 +115,7 @@ final class DefinitionRuleTest extends TestCase
 
     public function testRoutineLowersAStoredRoutineBody(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-8.1.0');
+        $semantics = new Semantics('mysql-8.1.0');
         $function = $semantics->analyze("create function f() returns int language javascript as 'return 1'");
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertInstanceOf(ExternalBody::class, $function->statement->body);
@@ -156,7 +155,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerLoadableLowersEveryLayoutAndResult')]
     public function testLoadableLowersEveryLayoutAndResult(string $release, string $sql, LoadableResult $result, bool $aggregate, bool $ifNotExists, string $expected): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $create = (new Semantics($release))->analyze($sql);
         $statement = $create->statement;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
         self::assertSame('u', $statement->name->value);
@@ -192,7 +191,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerAlterLowersProceduresAndFunctions')]
     public function testAlterLowersProceduresAndFunctions(string $release, string $sql, ProgramKind $kind, string $expected): void
     {
-        $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $alter = (new Semantics($release))->analyze($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         self::assertSame($kind, $statement->kind);
@@ -233,7 +232,7 @@ final class DefinitionRuleTest extends TestCase
     #[DataProvider('providerDropLowersEveryKindOfProgram')]
     public function testDropLowersEveryKindOfProgram(string $release, string $sql, ProgramKind $kind, ?string $schema, bool $ifExists, string $expected): void
     {
-        $drop = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $drop = (new Semantics($release))->analyze($sql);
         $statement = $drop->statement;
         self::assertInstanceOf(DropProgram::class, $statement);
         self::assertSame($kind, $statement->kind);

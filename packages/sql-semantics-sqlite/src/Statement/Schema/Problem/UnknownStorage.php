@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A word after the expression of a generated column that is neither VIRTUAL nor STORED.
@@ -17,8 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an unknown storage word
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (a) PERSISTED)');
- *     $create->facts->diagnostics[0]->message() // => 'Generated column storage PERSISTED is neither VIRTUAL nor STORED.'
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a, b AS (a) PERSISTED)') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Generated column storage PERSISTED is neither VIRTUAL nor STORED.
  */
 final class UnknownStorage implements Diagnostic
 {

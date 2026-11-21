@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A CREATE TABLE without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS).
@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t ENGINE = InnoDB')->facts->diagnostics[0]->message() // => 'A table must have at least 1 column.'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE TABLE t ENGINE = InnoDB') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: A table must have at least 1 column.
  */
 final class NoColumns implements Diagnostic
 {

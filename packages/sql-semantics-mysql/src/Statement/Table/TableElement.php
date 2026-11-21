@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * One element of a table definition: a column, an index, or a constraint.

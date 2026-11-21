@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternMatch;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\Normalizatio
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTestSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\Overlaps;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the predicate productions of `a_expr`.

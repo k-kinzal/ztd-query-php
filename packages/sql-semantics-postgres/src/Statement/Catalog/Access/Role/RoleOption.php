@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * One option of CREATE ROLE or ALTER ROLE.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Telling which option of the server a spelling fills
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ROLE joe NOLOGIN');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE ROLE joe NOLOGIN');
  *     $operation->statement->options[0]->option() // => 'canlogin'
  */
 interface RoleOption extends Node

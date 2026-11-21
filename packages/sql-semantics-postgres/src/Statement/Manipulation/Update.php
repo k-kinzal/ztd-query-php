@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\ChangeFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Roots;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
@@ -14,12 +20,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignmen
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An UPDATE: assignments to the rows of a table that meet a condition, optionally joined with other FROM items.
@@ -31,10 +31,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the parts of an UPDATE
- *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a');
+ *     $update = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a');
  *     [count($update->statement->assignments), $update->statement->from instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput, $update->toString()] // => [1, true, 'UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a']
  * @example Refusing UPDATE without an assignment
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')))), []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Update implements Modification
 {

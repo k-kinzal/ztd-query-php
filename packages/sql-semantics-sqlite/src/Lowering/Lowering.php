@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Lists;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\DefinitionCommands;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\ExpressionRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\WindowRule;
@@ -26,7 +22,11 @@ use SqlSemantics\Platform\Sqlite\Lowering\Query\SelectRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\SortRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\WithRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Trigger\TriggerRule;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * The lowering of one SQLite parse tree: the entry rule and the rule objects of one analysis.

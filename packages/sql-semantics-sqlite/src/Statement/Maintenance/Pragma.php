@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Maintenance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A pragma: a query or a change of a setting or of internal data of the database library.
@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a pragma with a schema and a value
- *     $pragma = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('PRAGMA main.cache_size(4000)');
+ *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('PRAGMA main.cache_size(4000)');
  *     [$pragma->statement->name->schema?->value, $pragma->statement->name->name->value, $pragma->statement->value->number->digits, $pragma->toString()] // => ['main', 'cache_size', '4000', 'PRAGMA main.cache_size = 4000']
  */
 final class Pragma implements Statement

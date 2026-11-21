@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\ColumnNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ColumnNaming::class)]
 #[Small]

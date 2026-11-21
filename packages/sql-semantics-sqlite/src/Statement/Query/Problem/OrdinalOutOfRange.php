@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\Resolution;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * An ORDER BY or GROUP BY integer that names no result column.
  *
  * @visibility public
  * @example Reading the problem of an ordinal beyond the result columns
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 ORDER BY 2');
- *     [$query->facts->diagnostics[0]->ordinal, $query->facts->diagnostics[0]->columns] // => [2, 1]
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 ORDER BY 2') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Term 2 is out of range - should be between 1 and 1.
  */
 final class OrdinalOutOfRange implements Resolution, Diagnostic
 {

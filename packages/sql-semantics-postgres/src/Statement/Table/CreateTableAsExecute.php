@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a table from the rows of a prepared statement: CREATE TABLE ... AS EXECUTE.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Declaring the table of a prepared statement
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
  *     [$create->declarations()[0]->complete, $create->toString()] // => [false, 'CREATE TABLE t AS EXECUTE q (1) WITH DATA']
  */
 final class CreateTableAsExecute implements Statement

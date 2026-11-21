@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Expression;
 
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InTable;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Decides whether an operand keeps its place when an operator expression is written without parentheses.

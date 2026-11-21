@@ -14,8 +14,8 @@ final class ReferencesTest extends TestCase
 {
     public function testKindIsForeignKey(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int REFERENCES u)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int REFERENCES u)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -29,10 +29,10 @@ final class ReferencesTest extends TestCase
 
     public function testDeriveClauseResolvesTheReferencedTable(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
-        $statement = $semantics->analyze('CREATE TABLE t (a int REFERENCES p (id))', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
+        $statement = $semantics->inspect('CREATE TABLE t (a int REFERENCES p (id))', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
@@ -42,16 +42,16 @@ final class ReferencesTest extends TestCase
         $n4 = $n3->qualifiers[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\References::class, $n4);
         $n5 = $statement->facts->relation($n4)->table;
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n5);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable::class, $n5);
         self::assertSame(true, $n5->table === $context[0]);
     }
 
     public function testDeriveClauseReportsAMissingReferencedColumn(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
-        $statement = $semantics->analyze('CREATE TABLE t (a int REFERENCES p (nope) MATCH PARTIAL ON UPDATE SET NULL (a))', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
+        $statement = $semantics->inspect('CREATE TABLE t (a int REFERENCES p (nope) MATCH PARTIAL ON UPDATE SET NULL (a))', $context);
         self::assertSame([
           0 => 'column "nope" referenced in foreign key constraint does not exist',
           1 => 'MATCH PARTIAL not yet implemented',
@@ -61,8 +61,8 @@ final class ReferencesTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $statement = $semantics->analyze('CREATE TABLE t (a int CONSTRAINT f REFERENCES s.p (id) MATCH FULL ON DELETE CASCADE ON UPDATE RESTRICT)', []);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $statement = $semantics->inspect('CREATE TABLE t (a int CONSTRAINT f REFERENCES s.p (id) MATCH FULL ON DELETE CASCADE ON UPDATE RESTRICT)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT f REFERENCES s.p (id) MATCH FULL ON DELETE CASCADE ON UPDATE RESTRICT)', $statement->toString());
     }
 }

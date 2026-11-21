@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A command that names a relation of a kind it does not accept, as the declaration of the relation states it.
  *
  * @visibility public
  * @example Reading the problem of a TRUNCATE of a view
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
- *     $semantics->analyze('TRUNCATE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')])->facts->diagnostics[0]->message() // => '"v" is not a table'
+ *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+ *     $semantics->analyze('TRUNCATE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: "v" is not a table
  * @example Refusing a problem without the relation its message names
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, null) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  * @example Refusing an action for a rule that names none
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, new \SqlSemantics\Statement\Identifier\Name('t'), \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction::AddColumn) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t'), \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction::AddColumn) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class KindProblem implements Diagnostic
 {

@@ -5,13 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Account\AccountRules;
 use SqlSemantics\Platform\MySql\Lowering\Call\CallRules;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionRoutes;
@@ -36,7 +29,14 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableDefinitionRules;
 use SqlSemantics\Platform\MySql\Lowering\Type\TypeRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * The lowering of one MySQL parse tree: the statement dispatcher and the entry rules of every family.

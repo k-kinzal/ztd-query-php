@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 /**
  * Looks up the native functions of a MySQL release: the functions a generic call `name(...)` reaches before a loadable or stored function.
@@ -72,7 +72,7 @@ final class NativeFunctions
     public function rows(GrammarRelease $release, string $name): array
     {
         $key = strtoupper($name);
-        $bit = self::BITS[$release->value] ?? 0;
+        $bit = self::BITS[$release->value];
         $rows = [];
         foreach (NativeCatalog::ROWS[$key] ?? NativeSpatialCatalog::ROWS[$key] ?? NativeInternalCatalog::ROWS[$key] ?? [] as [$mask, $minimum, $maximum, $code]) {
             if (($mask & $bit) !== 0) {

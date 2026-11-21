@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\InSubquery;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\MatchKeyword;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\QuantifiedSub
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\UniquePredicate;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the productions of `a_expr` that compare a value with a query or a list.

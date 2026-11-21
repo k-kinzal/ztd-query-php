@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyPartRule;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;

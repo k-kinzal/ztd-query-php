@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An aggregate named with its argument list, as `aggregate_with_argtypes` writes it.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the aggregate name
- *     $signature = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('total')]), new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments([]));
+ *     $signature = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('total')]), new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments([]));
  *     [$signature->name->last()->value, $signature->arguments->star()] // => ['total', true]
  */
 final class AggregateSignature implements ObjectReference

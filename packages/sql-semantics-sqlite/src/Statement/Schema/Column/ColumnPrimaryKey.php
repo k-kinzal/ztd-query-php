@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Column;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A PRIMARY KEY column constraint.
@@ -26,9 +26,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a primary key column constraint
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY DESC ON CONFLICT FAIL AUTOINCREMENT)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY ASC ON CONFLICT FAIL AUTOINCREMENT)');
  *     $key = $create->statement->columns[0]->constraints[0];
- *     [$key->direction?->value, $key->conflict?->value, $key->autoincrement] // => ['DESC', 'FAIL', true]
+ *     [$key->direction?->value, $key->conflict?->value, $key->autoincrement] // => ['ASC', 'FAIL', true]
  */
 final class ColumnPrimaryKey implements ColumnConstraint
 {

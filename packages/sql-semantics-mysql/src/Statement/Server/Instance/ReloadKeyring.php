@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * `RELOAD KEYRING`: reinitialize the keyring component from its configuration (MySQL 8.0.24 and later).
@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reloading the keyring
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter instance reload keyring')->toString() // => 'ALTER INSTANCE RELOAD KEYRING'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter instance reload keyring')->toString() // => 'ALTER INSTANCE RELOAD KEYRING'
  */
 final class ReloadKeyring implements InstanceAction
 {

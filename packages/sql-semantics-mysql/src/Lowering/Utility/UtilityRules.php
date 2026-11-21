@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Utility;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Explain\ExplainRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Set\SetRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Show\LegacyShowRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Show\ShowRule;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * The entry rules of the utility family: the methods other families and the statement dispatcher call.

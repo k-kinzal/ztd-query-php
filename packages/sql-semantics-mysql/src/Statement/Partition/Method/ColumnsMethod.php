@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnNames;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RANGE COLUMNS (columns)` or `LIST COLUMNS (columns)`: partitioning by a tuple of column values.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a list partitioning by columns
- *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List, [new \SqlSemantics\Statement\Identifier\Name('region')]);
+ *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('region')]);
  *     [$method->kind->value, $method->columns[0]->value] // => ['LIST', 'region']
  */
 final class ColumnsMethod implements PartitionMethod

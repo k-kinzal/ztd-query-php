@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * @visibility public
  * @example Reading the actions of ALTER TABLE
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ADD c int, DROP d');
+ *     $alter = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ADD c int, DROP d');
  *     count($alter->statement->commands) // => 2
  */
 interface AlterCommand extends Clause

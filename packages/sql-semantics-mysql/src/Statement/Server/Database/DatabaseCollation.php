@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] COLLATE [=] collation`: the default collation of the database's tables.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the collation
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
  *     $alter->statement->options[0]->collation->name?->value // => 'utf8mb4_bin'
  */
 final class DatabaseCollation implements DatabaseOption

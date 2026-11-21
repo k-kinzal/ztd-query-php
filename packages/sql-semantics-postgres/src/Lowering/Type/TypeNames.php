@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Type;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier;
@@ -18,7 +19,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers type names.

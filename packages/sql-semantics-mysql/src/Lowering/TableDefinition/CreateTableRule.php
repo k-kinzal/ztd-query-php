@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Platform\MySql\Statement\Table\TableQuery;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers CREATE TABLE in its column list, query and LIKE forms.

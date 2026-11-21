@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A table definition that uses a generated column in a way SQLite rejects.
@@ -18,8 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a table made of generated columns only
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a AS (1))');
- *     [$create->facts->diagnostics[0]->message(), $create->facts->diagnostics[0]->column] // => ['A table must have at least one column that is not generated.', null]
+ *     (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a AS (1))') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: A table must have at least one column that is not generated.
  */
 final class GeneratedColumnProblem implements Diagnostic
 {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * How rows are assigned to partitions or subpartitions: KEY, HASH, RANGE or LIST, over an expression or over columns.

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Invocation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorClause;
@@ -14,10 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonQueryFu
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
 
 /**
  * Reports the SQL/JSON expressions the server rejects while analyzing them.

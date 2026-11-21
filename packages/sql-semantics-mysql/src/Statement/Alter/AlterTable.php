@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnChanges;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\StandaloneCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER [IGNORE] TABLE t action, …`: a request to change the structure of a table.
@@ -46,10 +46,9 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the actions of a table change
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
- *     $alter = $semantics->analyze('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]);
- *     [count($alter->statement->commands), $alter->facts->diagnostics[0]->message()] // => [2, 'Column b does not exist in the table.']
+ *     $semantics->analyze('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist in the table.
  */
 final class AlterTable implements Statement, Relation
 {

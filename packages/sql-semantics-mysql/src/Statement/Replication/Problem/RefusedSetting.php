@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A value of a replication statement that the server refuses while it parses the statement.
@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the refused value of a statement
- *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2');
- *     $change->facts->diagnostics[0]->message() // => 'SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).'
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY accept only 0 or 1 (ER_PARSE_ERROR).
  */
 final class RefusedSetting implements Diagnostic
 {

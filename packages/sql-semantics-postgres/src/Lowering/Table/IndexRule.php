@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\IndexElement;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers CREATE INDEX and the index keys several statements share.

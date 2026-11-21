@@ -7,14 +7,13 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(RowLimit::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class RowLimitTest extends TestCase
 {
     public function testRenderWritesTheOperandsInTheirSpelling(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
 
         self::assertSame('SELECT a FROM t LIMIT 5, 10', $semantics->analyze('select a from t limit 5,10')->toString());
         self::assertSame('SELECT a FROM t LIMIT 10 OFFSET 5', $semantics->analyze('select a from t limit 10 offset 5')->toString());
@@ -31,7 +30,7 @@ final class RowLimitTest extends TestCase
 
     public function testOperandsAreTheCountAndTheOffset(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT 5, 10');
+        $operation = (new Semantics())->analyze('SELECT a FROM t LIMIT 5, 10');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);

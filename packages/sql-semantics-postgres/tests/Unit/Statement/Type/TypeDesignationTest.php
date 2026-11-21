@@ -7,8 +7,9 @@ namespace Tests\Unit\Statement\Type;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignati
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
-use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(TypeDesignation::class)]
 #[Small]

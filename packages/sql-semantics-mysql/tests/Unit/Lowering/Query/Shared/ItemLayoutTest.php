@@ -7,9 +7,9 @@ namespace Tests\Unit\Lowering\Query\Shared;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemLayout;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(ItemLayout::class)]

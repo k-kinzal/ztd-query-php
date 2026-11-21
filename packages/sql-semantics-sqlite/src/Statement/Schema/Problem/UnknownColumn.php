@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A column name in a definition or alteration that the completely known table does not have.
@@ -18,9 +18,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a dropped column that does not exist
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table])->facts->diagnostics[0]->message() // => 'Column c does not exist in the table.'
+ *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: Column c does not exist in the table.
  */
 final class UnknownColumn implements Diagnostic
 {

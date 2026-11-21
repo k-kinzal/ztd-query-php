@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\AnalysisException;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the XA transaction statements.

@@ -15,13 +15,12 @@ use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Sqlite\SqliteProvider;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
 $grammarVersion = 'sqlite-3.47.2';
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/sqlite-schema');
 $provider = new SqliteProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new SchemaTarget(new Semantics(Dialect::Sqlite, $grammarVersion), $grammarVersion);
+$target = new SchemaTarget(new Semantics($grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::constrained('cmd', [
     'cmd' => [ProductionPattern::containing('create_table', 'create_table_args')],

@@ -7,9 +7,13 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BitStringConstant;
@@ -19,10 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Constant::class)]
 #[Medium]
@@ -38,7 +38,7 @@ final class ConstantTest extends TestCase
 
     public function testBuiltinReadsTheTextOfANumericConstantThroughTheFacade(): void
     {
-        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2');
+        $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2');
         self::assertEquals([new Known(Builtin::Int8), new Known(Builtin::Int8), new Known(Builtin::Numeric), new Known(Builtin::Numeric)], [$query->field(0)->type, $query->field(1)->type, $query->field(2)->type, $query->field(3)->type]);
         self::assertSame('SELECT 0x1FFFFFFFFF, 1_000_000_000_000, 0001.50, 1e2', $query->toString());
     }

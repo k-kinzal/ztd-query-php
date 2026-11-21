@@ -4,7 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition\Query;
 
-use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -24,16 +34,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Fact\Facts;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OutputSlot;
 
 /**
  * Derives the affinity of a result expression, which decides the column type of a table or view made from a query.

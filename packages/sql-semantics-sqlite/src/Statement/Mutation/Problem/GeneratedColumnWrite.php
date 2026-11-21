@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
  * A statement that writes a generated column, which SQLite rejects.
@@ -19,9 +19,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an UPDATE of a generated column
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1))');
- *     $semantics->analyze('UPDATE t SET B = 1', [$table])->facts->diagnostics[0]->message() // => 'cannot UPDATE generated column "b"'
+ *     $semantics->analyze('UPDATE t SET B = 1', [$table]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException: cannot UPDATE generated column "b"
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

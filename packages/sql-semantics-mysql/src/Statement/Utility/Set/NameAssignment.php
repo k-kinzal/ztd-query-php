@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a variable named without `@@`: `SET x = v`, `SET GLOBAL x = v`, `SET a.x = v`.
@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a scoped name assignment
- *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET SESSION sort_buffer_size = DEFAULT');
+ *     $set = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET SESSION sort_buffer_size = DEFAULT');
  *     [$set->statement->items[0]->scope, $set->statement->items[0]->name->value, $set->statement->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
  */
 final class NameAssignment implements SetItem

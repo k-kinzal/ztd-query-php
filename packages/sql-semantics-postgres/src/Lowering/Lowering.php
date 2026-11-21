@@ -5,10 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\PostgreSql\Lowering\Access\Privileges;
 use SqlSemantics\Platform\PostgreSql\Lowering\Catalog\Catalogs;
 use SqlSemantics\Platform\PostgreSql\Lowering\Expression\Expressions;
@@ -25,7 +21,11 @@ use SqlSemantics\Platform\PostgreSql\Lowering\Routine\Routines;
 use SqlSemantics\Platform\PostgreSql\Lowering\Table\Tables;
 use SqlSemantics\Platform\PostgreSql\Lowering\Type\TypeNames;
 use SqlSemantics\Platform\PostgreSql\Lowering\Utility\UtilityCommands;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * The entry point of PostgreSQL lowering: a parse tree in, statements out.

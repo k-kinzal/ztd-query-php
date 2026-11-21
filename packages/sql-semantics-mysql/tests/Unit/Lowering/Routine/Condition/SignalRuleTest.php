@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\SignalRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -33,7 +33,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(SignalRule::class)]
 #[Medium]
@@ -53,7 +52,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerStatementLowersSignal')]
     public function testStatementLowersSignal(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate '45000'");
+        $operation = (new Semantics($release))->analyze("signal sqlstate '45000'");
 
         self::assertEquals(new Signal(new SqlState(new Text('45000'))), $operation->statement);
         self::assertSame("SIGNAL SQLSTATE '45000'", $operation->toString());
@@ -73,7 +72,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerStatementLowersResignal')]
     public function testStatementLowersResignal(string $release, string $sql, Resignal $expected, string $rendering): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $operation = (new Semantics($release))->analyze($sql);
 
         self::assertEquals($expected, $operation->statement);
         self::assertSame($rendering, $operation->toString());
@@ -103,7 +102,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerConditionLowersAConditionName')]
     public function testConditionLowersAConditionName(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p() begin declare c condition for sqlstate '45000'; signal c; resignal c; end");
+        $operation = (new Semantics($release))->analyze("create procedure p() begin declare c condition for sqlstate '45000'; signal c; resignal c; end");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -115,7 +114,7 @@ final class SignalRuleTest extends TestCase
 
     public function testConditionLowersAnSqlstateWithTheWordValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("signal sqlstate value '01000'");
+        $operation = (new Semantics())->analyze("signal sqlstate value '01000'");
 
         self::assertEquals(new Signal(new SqlState(new Text('01000'))), $operation->statement);
         self::assertSame("SIGNAL SQLSTATE '01000'", $operation->toString());
@@ -135,7 +134,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerItemsLowersEveryItemNameInOrder')]
     public function testItemsLowersEveryItemNameInOrder(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate '45000' set class_origin = 1, subclass_origin = 1, constraint_catalog = 1, constraint_schema = 1, constraint_name = 1, catalog_name = 1, schema_name = 1, table_name = 1, column_name = 1, cursor_name = 1, message_text = 1, mysql_errno = 1");
+        $operation = (new Semantics($release))->analyze("signal sqlstate '45000' set class_origin = 1, subclass_origin = 1, constraint_catalog = 1, constraint_schema = 1, constraint_name = 1, catalog_name = 1, schema_name = 1, table_name = 1, column_name = 1, cursor_name = 1, message_text = 1, mysql_errno = 1");
         $statement = $operation->statement;
         self::assertInstanceOf(Signal::class, $statement);
 
@@ -149,7 +148,7 @@ final class SignalRuleTest extends TestCase
 
     public function testItemsLowersAnAbsentClauseAsEmpty(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze("signal sqlstate '45000'")->statement;
+        $statement = (new Semantics())->analyze("signal sqlstate '45000'")->statement;
         self::assertInstanceOf(Signal::class, $statement);
 
         self::assertSame([], $statement->items);
@@ -169,7 +168,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerOperandLowersLiteralsVariablesAndNames')]
     public function testOperandLowersLiteralsVariablesAndNames(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.x, table_name = null, mysql_errno = 1000, column_name = 'c'");
+        $operation = (new Semantics($release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.x, table_name = null, mysql_errno = 1000, column_name = 'c'");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Signal::class, $statement->body);

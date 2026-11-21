@@ -7,9 +7,8 @@ namespace Tests\Unit\Lowering\Leaf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\ConflictRule;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
@@ -28,7 +27,7 @@ final class ConflictRuleTest extends TestCase
 {
     public function testResolutionLowersEachOfTheFiveAlgorithms(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $ignore = $semantics->analyze('INSERT OR IGNORE INTO t VALUES (1)')->statement;
         $replace = $semantics->analyze('INSERT OR REPLACE INTO t VALUES (1)')->statement;
         $rollback = $semantics->analyze('INSERT OR ROLLBACK INTO t VALUES (1)')->statement;
@@ -49,7 +48,7 @@ final class ConflictRuleTest extends TestCase
 
     public function testResolutionRendersTheAlgorithmAsWritten(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
 
         self::assertSame('INSERT OR IGNORE INTO t VALUES (1)', $semantics->analyze('insert or ignore into t values (1)')->toString());
         self::assertSame('UPDATE OR REPLACE t SET a = 1', $semantics->analyze('update or replace t set a = 1')->toString());
@@ -57,7 +56,7 @@ final class ConflictRuleTest extends TestCase
 
     public function testRaisedLowersTheAlgorithmsRaiseCanName(): void
     {
-        $trigger = (new Semantics(Dialect::Sqlite))->analyze("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(FAIL, 'x'), RAISE(ROLLBACK, 'y'), RAISE(ABORT, 'z'); END")->statement;
+        $trigger = (new Semantics())->analyze("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(FAIL, 'x'), RAISE(ROLLBACK, 'y'), RAISE(ABORT, 'z'); END")->statement;
 
         self::assertInstanceOf(CreateTrigger::class, $trigger);
         $select = $trigger->steps[0];
@@ -72,7 +71,7 @@ final class ConflictRuleTest extends TestCase
 
     public function testOnConflictLowersTheAlgorithmOfAConstraintAndNullWithoutTheClause(): void
     {
-        $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT IGNORE, b UNIQUE, c PRIMARY KEY ON CONFLICT ABORT)')->statement;
+        $table = (new Semantics())->analyze('CREATE TABLE t (a UNIQUE ON CONFLICT IGNORE, b UNIQUE, c PRIMARY KEY ON CONFLICT ABORT)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $table);
         $ignore = $table->columns[0]->constraints[0];
@@ -88,7 +87,7 @@ final class ConflictRuleTest extends TestCase
 
     public function testOrConflictLowersTheAlgorithmAfterOrAndNullWithoutTheClause(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $plain = $semantics->analyze('UPDATE t SET a = 1')->statement;
         $fail = $semantics->analyze('UPDATE OR FAIL t SET a = 1')->statement;
         $insert = $semantics->analyze('INSERT INTO t VALUES (1)')->statement;

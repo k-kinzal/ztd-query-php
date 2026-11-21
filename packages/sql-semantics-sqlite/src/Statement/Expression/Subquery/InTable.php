@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Reference\Table\CommonTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A membership test against the rows of a named table or of a table-valued function, optionally negated.
@@ -42,10 +42,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the relation of a membership test
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
  *     $query = $semantics->analyze('SELECT 1 IN t', [$table]);
- *     [$query->statement->columns[0]->expression->table->name->value, $query->facts->relation($query->statement->columns[0]->expression)->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->statement->columns[0]->expression->table->name->value, $query->facts->relation($query->statement->columns[0]->expression)->table->table === $table->declarations()[0], $query->field(0)->nullability] // => ['t', true, \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull]
  */
 final class InTable implements Scalar
 {

@@ -7,13 +7,12 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
 
 #[CoversNothing]
 #[Medium]
@@ -27,7 +26,7 @@ final class WithClauseTest extends TestCase
 
     public function testBindAnswersTheScopeWithTheCommonTables(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $operation = $semantics->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
         $with = $operation->statement instanceof QueryExpression ? $operation->statement->with : null;
         $derivation = new Derivation($semantics->context());

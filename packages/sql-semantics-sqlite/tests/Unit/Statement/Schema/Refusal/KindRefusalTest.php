@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Schema\Refusal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
-use SqlSemantics\Statement\Declaration\RelationKind;
 
 #[CoversClass(KindRefusal::class)]
 #[Small]

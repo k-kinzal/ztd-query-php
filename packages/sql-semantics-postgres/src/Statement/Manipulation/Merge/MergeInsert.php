@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\ColumnTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The action INSERT ... VALUES of a MERGE WHEN clause: one row is inserted from the source row.
@@ -22,10 +22,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an insert action
- *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
+ *     $merge = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
  *     [count($merge->statement->clauses[0]->action->values), $merge->toString()] // => [1, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)']
  * @example Refusing an insert without value
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert([], null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert([], null, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class MergeInsert implements Node
 {

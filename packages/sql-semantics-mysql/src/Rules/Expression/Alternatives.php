@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\NullOnly;
-use SqlSemantics\Statement\Type\TypeDescriptor;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Lifts a type rule over the alternatives of its operand types.

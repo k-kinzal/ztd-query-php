@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Into;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 
 /**
  * Where an INTO clause sends the rows of a query: variables, an outfile or a dumpfile.

@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * Two column counts that PostgreSQL requires to agree differ.
  *
  * @visibility public
  * @example Reporting arms of different widths
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 UNION SELECT 1, 2');
- *     $query->facts->diagnostics[0]->message() // => 'each UNION query must have the same number of columns'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 UNION SELECT 1, 2') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: each UNION query must have the same number of columns
  * @example Refusing equal counts
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch(\SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule::ValuesRows, 'VALUES', 2, 2) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch(\SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule::ValuesRows, 'VALUES', 2, 2) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ArityMismatch implements Diagnostic
 {

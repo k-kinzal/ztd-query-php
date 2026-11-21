@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Account;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 

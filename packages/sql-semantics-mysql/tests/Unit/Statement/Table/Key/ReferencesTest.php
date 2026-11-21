@@ -7,14 +7,13 @@ namespace Tests\Unit\Statement\Table\Key;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 #[CoversClass(References::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class ReferencesTest extends TestCase
 {
     public function testDeriveReferencesResolvesTheTableBeingDefined(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
+        $create = (new Semantics())->analyze('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -39,7 +38,7 @@ final class ReferencesTest extends TestCase
 
     public function testDeriveReferencesResolvesAnotherTable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $parent = $semantics->analyze('CREATE TABLE p (id INT)');
         $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id))', [$parent]);
         $childStatement = $child->statement;
@@ -54,6 +53,6 @@ final class ReferencesTest extends TestCase
 
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
+        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Semantics())->analyze('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
     }
 }

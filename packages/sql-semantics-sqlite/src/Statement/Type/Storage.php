@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Type;
 
-use SqlSemantics\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeDescriptor;
 
 /**
  * The storage class of a value SQLite computes: the type of an expression that is not a plain column.
@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * @visibility public
  * @example Reading the storage class of a literal
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1');
  *     $query->field(0)->type->descriptor // => \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer
  */
 enum Storage: string implements TypeDescriptor

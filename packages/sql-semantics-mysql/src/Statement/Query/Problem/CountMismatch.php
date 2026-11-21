@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * Two lists whose lengths MySQL requires to agree, with the lengths written.
  *
  * @visibility public
  * @example Reading the lengths of a set operation that disagree
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
- *     [$query->facts->diagnostics[0]->expected, $query->facts->diagnostics[0]->actual] // => [1, 2]
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SELECT 1 UNION SELECT 1, 2') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: The used SELECT statements have a different number of columns (1 and 2).
  */
 final class CountMismatch implements Diagnostic
 {

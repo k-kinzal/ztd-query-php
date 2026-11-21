@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * ALTER PROCEDURE or ALTER FUNCTION: changes the characteristics of a stored routine.
@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading an ALTER FUNCTION
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER FUNCTION shop.f NO SQL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER FUNCTION shop.f NO SQL');
  *     [$alter->statement->kind, count($alter->statement->characteristics)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function, 1]
  */
 final class AlterRoutine implements Statement

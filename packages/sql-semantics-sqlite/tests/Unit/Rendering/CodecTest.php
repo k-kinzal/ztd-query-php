@@ -7,11 +7,10 @@ namespace Tests\Unit\Rendering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Contract\NameUse;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Semantics;
 
 #[CoversClass(Codec::class)]
 #[Medium]
@@ -59,7 +58,7 @@ final class CodecTest extends TestCase
 
     public function testNameSpellsTheNamesOfARenderedStatementSoTheyDecodeToTheSameNames(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = $semantics->analyze('SELECT "select" AS c1, [a b] AS c2, `x``y` AS c3 FROM "order"');
 
         self::assertSame('SELECT "select" AS c1, `a b` AS c2, `x``y` AS c3 FROM `order`', $operation->toString());

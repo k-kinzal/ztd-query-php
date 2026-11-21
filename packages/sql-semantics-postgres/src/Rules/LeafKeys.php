@@ -37,7 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\UtilityNoise;
  *
  * @visibility SqlSemantics
  */
-final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
+final class LeafKeys implements \SqlSemantics\Platform\PostgreSql\Model\Contract\LeafKeys
 {
     /**
      * The base keyword of each lookahead terminal.

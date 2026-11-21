@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * `SET parameter ...` or `RESET parameter`: a configuration parameter set while the routine runs.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Telling that a configuration setting may be repeated
- *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Drop(\SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema, [new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName(new \SqlSemantics\Statement\Identifier\Name('s'))]);
+ *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Drop(\SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema, [new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'))]);
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\ConfigurationSetting($clause))->setting() // => null
  */
 final class ConfigurationSetting implements RoutineOption

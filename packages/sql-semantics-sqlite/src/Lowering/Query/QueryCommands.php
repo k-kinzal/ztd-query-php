@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * Lowers the commands that read or write rows.

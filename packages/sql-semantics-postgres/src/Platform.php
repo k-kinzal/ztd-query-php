@@ -11,19 +11,19 @@ use SqlParser\Parser\SqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlParser\PostgreSql\PostgreSqlVersion;
 use SqlParser\Resource\VersionRegistry;
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Contract\LexicalSettings;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LexicalSettings;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Rules\LeafKeys;
-use SqlSemantics\Statement\Identifier\Comparison;
-use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Wires the PostgreSQL grammar releases, lowering rules and spelling rules into the analysis.
@@ -41,8 +41,18 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * @visibility SqlSemantics
  */
-final class Platform implements \SqlSemantics\Contract\Platform
+final class Platform
 {
+    private static ?self $shared = null;
+
+    /**
+     * Shares the parser cache within this database package.
+     */
+    public static function shared(): self
+    {
+        return self::$shared ??= new self();
+    }
+
     /**
      * @var array<string, SqlParser>
      */
@@ -59,7 +69,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('PostgreSQL reads SQL under no session mode; ' . $mode::class . ' given.');
         }
         $release = GrammarRelease::tryFrom((new PostgreSqlParser($version))->version());
-        if ($release === null || $release->database() !== PostgreSqlVersion::DIALECT) {
+        if ($release === null) {
             throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
         }
         $artifact = (new VersionRegistry())->resolve(PostgreSqlVersion::DIALECT, $release->value);
@@ -93,6 +103,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Lowers a parse tree into its statements.
+     *
+     * @return list<Model\Statement\Statement>
      */
     public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
@@ -117,6 +129,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Creates a context: the temporary schema and `pg_catalog` are searched before the path unless the path names them, and names compare exactly.
+     * @param list<string>|null $searchPath
+     * @param list<Model\Statement\Declaration\Table> $tables
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
     {

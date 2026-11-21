@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `ROLLBACK [WORK] [AND [NO] CHAIN] [[NO] RELEASE]`: a request to end the transaction and undo its changes.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Ending a transaction with explicit completion choices
- *     $end = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('rollback and chain no release');
+ *     $end = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('rollback and chain no release');
  *     [$end->toString(), $end->statement->chain, $end->statement->release] // => ['ROLLBACK AND CHAIN NO RELEASE', true, false]
  */
 final class Rollback implements Statement

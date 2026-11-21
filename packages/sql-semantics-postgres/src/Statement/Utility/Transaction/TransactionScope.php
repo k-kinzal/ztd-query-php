@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  *
  * @visibility public
  * @example Reading the scope of session characteristics
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY');
  *     $operation->statement->scope // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::SessionCharacteristics
  */
 enum TransactionScope: string

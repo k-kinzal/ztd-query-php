@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Replica;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
@@ -14,9 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START REPLICA [threads] [UNTIL …] [USER = …] [PASSWORD = …] [DEFAULT_AUTH = …] [PLUGIN_DIR = …] [FOR CHANNEL …]`, or START SLAVE.
@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Starting the receiver thread with credentials
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
  */
 final class StartReplica implements Statement
 {

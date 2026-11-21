@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Column;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
-use SqlSemantics\Statement\Node;
 
 /**
  * One clause written after the name and type of a column, in written order.
@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Node;
  *
  * @visibility public
  * @example Reading the constraints of a column in written order
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
  *     count($create->statement->columns[0]->constraints) // => 2
  */
 interface ColumnConstraint extends Node

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `behavior ON EMPTY` and `behavior ON ERROR` of an SQL/JSON function or JSON_TABLE column.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $clause = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorClause(null, new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehavior(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorKind::Error));
  *     [$clause->onEmpty, $clause->onError->kind->value] // => [null, 'ERROR']
  * @example Rejecting a clause without a behavior
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorClause(null, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorClause(null, null) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class JsonBehaviorClause implements Clause
 {

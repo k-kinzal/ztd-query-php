@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
-use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\ConditionalTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 
 /**
  * Derives the row shape of the table a definition or administration command names, and the scope of its expressions.

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnStar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\ArrayConstructor;
@@ -22,7 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\Subscript;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\ArraySubquery;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\ScalarSubquery;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers `c_expr`, `columnref` and the indirection steps.

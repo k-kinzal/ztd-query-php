@@ -8,11 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor;
-use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(OpenCursor::class)]
 #[Medium]
@@ -20,7 +19,7 @@ final class OpenCursorTest extends TestCase
 {
     public function testDeriveProgramReportsAnUndefinedCursor(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() OPEN c');
+        $operation = (new Semantics())->inspect('CREATE PROCEDURE p() OPEN c');
         $create = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
         self::assertInstanceOf(OpenCursor::class, $create->body);
@@ -35,7 +34,7 @@ final class OpenCursorTest extends TestCase
     #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocks')]
     public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocks(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -56,7 +55,7 @@ final class OpenCursorTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

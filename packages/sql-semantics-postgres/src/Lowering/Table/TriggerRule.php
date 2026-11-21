@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\AlterEventTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger;
@@ -19,8 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEvent;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEventKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTransition;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers triggers and event triggers.

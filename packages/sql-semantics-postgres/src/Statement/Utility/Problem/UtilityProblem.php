@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A utility command that PostgreSQL rejects because it breaks a rule of the command.
  *
  * @visibility public
  * @example Reading the problem of an unknown EXPLAIN option
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('EXPLAIN (fast) SELECT 1');
- *     $operation->facts->diagnostics[0]->message() // => 'unrecognized EXPLAIN option "fast"'
+ *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('EXPLAIN (fast) SELECT 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: unrecognized EXPLAIN option "fast"
  */
 final class UtilityProblem implements Diagnostic
 {

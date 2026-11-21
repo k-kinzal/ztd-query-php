@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
  * `ALTER INSTANCE action`: a request to change the running server instance (MySQL 5.7.11 and later).
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Rotating the InnoDB master key
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter instance rotate innodb master key');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('alter instance rotate innodb master key');
  *     [$alter->toString(), $alter->statement->action->binaryLog()] // => ['ALTER INSTANCE ROTATE innodb MASTER KEY', false]
  */
 final class AlterInstance implements Statement

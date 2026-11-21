@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Validation\Equivalence;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\Equivalence;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use Throwable;
 
 /**
@@ -29,9 +29,9 @@ final class RoundTripTarget
         }
         $rendered = null;
         try {
-            $operation = $this->semantics->analyze($sql);
+            $operation = $this->semantics->inspect($sql);
             $rendered = $operation->toString();
-            $again = $this->semantics->analyze($rendered);
+            $again = $this->semantics->inspect($rendered);
             $difference = (new Equivalence())->difference($operation->statement, $again->statement);
             if ($difference !== null) {
                 throw new Error('The structure of the rendered SQL differs from the structure of the input at ' . $difference);

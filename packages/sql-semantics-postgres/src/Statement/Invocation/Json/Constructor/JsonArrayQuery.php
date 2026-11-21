@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonFormat;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * `JSON_ARRAY (query [FORMAT JSON] [RETURNING type])`: the rows of a one-column query as a JSON array.
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Telling the class plays the expression role
- *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayQuery::class, \SqlSemantics\Statement\Scalar::class) // => true
+ *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayQuery::class, \SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar::class) // => true
  */
 final class JsonArrayQuery implements Scalar, OutputNaming
 {

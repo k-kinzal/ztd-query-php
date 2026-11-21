@@ -7,10 +7,10 @@ namespace Tests\Unit\Lowering\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\CreateTableRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
@@ -35,7 +35,7 @@ final class CreateTableRuleTest extends TestCase
         $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT) ENGINE = x')->find('create2a')[0];
-        $create = (new CreateTableRule($lowering))->enclosed(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $lowering->form($node), 0, false);
+        $create = (new CreateTableRule($lowering))->enclosed(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), $lowering->form($node), 0, false);
 
         self::assertCount(1, $create->elements);
         self::assertCount(1, $create->options);
@@ -47,7 +47,7 @@ final class CreateTableRuleTest extends TestCase
         $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (SELECT 1 AS a)')->find('create2a')[0];
-        $create = (new CreateTableRule($lowering))->enclosed(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $lowering->form($node), 2, true);
+        $create = (new CreateTableRule($lowering))->enclosed(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), $lowering->form($node), 2, true);
 
         self::assertNotNull($create->query);
         self::assertSame(2, $create->temporaryWords);
@@ -91,7 +91,7 @@ final class CreateTableRuleTest extends TestCase
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t ENGINE x AS SELECT 1 AS a')->find('opt_create_table_options_etc')[0];
-        $create = (new CreateTableRule($lowering))->rest(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], $node, 0, false);
+        $create = (new CreateTableRule($lowering))->rest(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), [], $node, 0, false);
 
         self::assertCount(1, $create->options);
         self::assertNotNull($create->query);

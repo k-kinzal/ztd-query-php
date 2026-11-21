@@ -7,8 +7,12 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
@@ -17,11 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(LateOrdering::class)]
 #[Medium]
@@ -29,7 +28,7 @@ final class LateOrderingTest extends TestCase
 {
     public function testRenderWritesTheOrderingAfterTheLockingClausesOfTheBlock(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $semantics = new Semantics('mysql-5.6.51');
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('select (select a from t for update order by b limit 1) as v', [$table]);
         $select = $operation->statement;
@@ -54,7 +53,7 @@ final class LateOrderingTest extends TestCase
 
     public function testRenderWritesALimitThatReplacesTheLimitOfTheBlock(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', []);
+        $operation = (new Semantics('mysql-5.6.51'))->analyze('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', []);
 
         self::assertSame('SELECT (SELECT 1 LIMIT 1 LIMIT 2)', $operation->toString());
         self::assertNotNull((new LateOrdering([], new RowLimit(new NumberLiteral('2'))))->limit);

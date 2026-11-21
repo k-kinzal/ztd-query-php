@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One account of CREATE USER, ALTER USER or a MySQL 5.x GRANT, with what the statement sets for its authentication.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the password of an account
- *     $user = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
+ *     $user = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("CREATE USER app IDENTIFIED BY 'secret'")->statement->users[0];
  *     $user->identification?->secret?->value // => 'secret'
  */
 final class UserSpecification implements UserAlteration

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\TableOrView;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE TABLE: the statement that creates a table, or a view.
@@ -31,10 +31,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE TABLE shop.t');
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SHOW CREATE TABLE shop.t');
  *     [$show->shape()?->missing[0]->describe(), $show->toString()] // => ['whether shop.t is a base table or a view', 'SHOW CREATE TABLE shop.t']
  * @example Reading the columns for a declared view
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
  *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a');
  *     $semantics->analyze('SHOW CREATE TABLE v', [$view])->field(1)->name?->value // => 'Create View'
  */

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A view whose column list and query disagree in length (ER_VIEW_WRONG_LIST).
@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v (a, b) AS SELECT 1')->facts->diagnostics[0]->returned // => 1
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze('CREATE VIEW v (a, b) AS SELECT 1') // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: View's SELECT and view's field list have different column counts (2 and 1).
  */
 final class ViewColumnCount implements Diagnostic
 {

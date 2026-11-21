@@ -6,13 +6,13 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ModuleArguments;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\ModuleArgument;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers virtual table definitions.

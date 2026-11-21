@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\IntervalSpan;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * The type spelled `INTERVAL`, restricted to fields, to a precision, or to neither.
@@ -30,10 +30,10 @@ use SqlSemantics\Statement\Type\TypeFact;
  *
  * @visibility public
  * @example Reading the fields of an interval constant
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT interval '1 2' day to second(3)");
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze("SELECT interval '1 2' day to second(3)");
  *     [$query->toString(), $query->field(0)->type->descriptor->name()] // => ["SELECT INTERVAL '1 2' DAY TO SECOND (3)", 'interval day to second(3)']
  * @example Rejecting a precision next to fields without seconds
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields::Year, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('3')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalFields::Year, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('3')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class IntervalDesignation implements TypeDesignation
 {

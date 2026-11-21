@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Lowering\Lists;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers LOCK TABLES, UNLOCK TABLES and the backup lock statements.

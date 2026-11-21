@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Leaf;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
 
 /**
  * Lowers the optional keyword groups that only state a yes or a no.

@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(CaseBranch::class)]
 #[Medium]
@@ -25,7 +24,7 @@ final class CaseBranchTest extends TestCase
 {
     public function testRenderKeepsTheConditionAndTheResultInOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
+        $operation = (new Semantics())->analyze('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -41,7 +40,7 @@ final class CaseBranchTest extends TestCase
 
     public function testRenderWritesANewlyBuiltBranch(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $branch = new CaseBranch(new IntegerLiteral('1'), new TextLiteral('one'));
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new CaseExpression(null, [$branch, new CaseBranch(new IntegerLiteral('2'), new NullLiteral())]))]));
 

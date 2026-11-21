@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Server\Transaction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 
 #[CoversClass(Begin::class)]
@@ -17,12 +16,12 @@ final class BeginTest extends TestCase
 {
     public function testRenderWritesBegin(): void
     {
-        self::assertSame('BEGIN', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
+        self::assertSame('BEGIN', (new Semantics())->analyze('begin work')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('BEGIN');
+        $operation = (new Semantics('mysql-5.6.51'))->analyze('BEGIN');
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

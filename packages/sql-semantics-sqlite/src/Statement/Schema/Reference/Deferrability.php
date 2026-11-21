@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Reference;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFERRABLE or NOT DEFERRABLE clause of a foreign key.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Telling a deferred foreign key from an immediate one
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
  *     $deferred = $semantics->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
  *     $immediate = $semantics->analyze('CREATE TABLE c (p REFERENCES parent NOT DEFERRABLE INITIALLY DEFERRED)')->statement->columns[0]->constraints[1];
  *     [$deferred->deferred(), $immediate->deferred()] // => [true, false]

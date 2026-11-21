@@ -8,14 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(SqlSecurity::class)]
 #[Medium]
@@ -34,7 +33,7 @@ final class SqlSecurityTest extends TestCase
     #[DataProvider('providerRenderWritesTheContextKeyword')]
     public function testRenderWritesTheContextKeyword(string $release, string $sql, string $expected, SecurityContext $context): void
     {
-        $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $alter = (new Semantics($release))->analyze($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -46,7 +45,7 @@ final class SqlSecurityTest extends TestCase
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new SqlSecurity(SecurityContext::Definer))->render($out);
 
         self::assertSame('SQL SECURITY DEFINER', (new Lexical())->join($out->pieces()));

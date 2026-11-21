@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\SessionState;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * FETCH or MOVE: rows read from a cursor, or the cursor only repositioned.
@@ -29,10 +29,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading a FETCH
- *     $fetch = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('FETCH ABSOLUTE 3 IN c');
+ *     $fetch = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('FETCH ABSOLUTE 3 IN c');
  *     [$fetch->statement->count->magnitude->digits, $fetch->shape()->complete(), $fetch->toString()] // => ['3', false, 'FETCH ABSOLUTE 3 c']
  * @example Refusing a count where the movement takes none
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch(false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::Next, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Statement\Identifier\Name('c')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch(false, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::Next, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('c')) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class Fetch implements Statement
 {

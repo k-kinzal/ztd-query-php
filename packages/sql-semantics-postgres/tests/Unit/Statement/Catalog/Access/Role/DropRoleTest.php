@@ -14,17 +14,17 @@ final class DropRoleTest extends TestCase
 {
     public function testRenderWritesTheWordAndIfExists(): void
     {
-        self::assertSame('DROP USER IF EXISTS joe, ann', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP USER IF EXISTS joe, ann')->toString());
+        self::assertSame('DROP USER IF EXISTS joe, ann', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP USER IF EXISTS joe, ann')->toString());
     }
 
     public function testRenderWritesTheGroupWord(): void
     {
-        self::assertSame('DROP GROUP staff', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP GROUP staff')->toString());
+        self::assertSame('DROP GROUP staff', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP GROUP staff')->toString());
     }
 
     public function testDeriveStatementReportsEveryDesignation(): void
     {
-        self::assertSame(['cannot use special role specifier in DROP ROLE', 'cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP ROLE joe, CURRENT_USER, public')->facts->diagnostics));
+        self::assertSame(['cannot use special role specifier in DROP ROLE', 'cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP ROLE joe, CURRENT_USER, public')->facts->diagnostics));
     }
 
     public function testRejectsNoRole(): void

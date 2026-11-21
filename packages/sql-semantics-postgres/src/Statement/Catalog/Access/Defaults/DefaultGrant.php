@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\PrivilegeLists;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The GRANT action of ALTER DEFAULT PRIVILEGES: privileges future objects of a kind receive.
@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a default grant
- *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
+ *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES GRANT insert ON TABLES TO joe WITH GRANT OPTION');
  *     [$operation->statement->action->objects->value, $operation->statement->action->grantOption] // => ['TABLES', true]
  */
 final class DefaultGrant implements Node

@@ -8,16 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(RoutineComment::class)]
 #[Medium]
@@ -36,7 +35,7 @@ final class RoutineCommentTest extends TestCase
     #[DataProvider('providerRenderWritesTheCommentText')]
     public function testRenderWritesTheCommentText(string $release, string $sql, string $expected, string $text): void
     {
-        $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $alter = (new Semantics($release))->analyze($sql);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
@@ -48,7 +47,7 @@ final class RoutineCommentTest extends TestCase
 
     public function testRenderWritesAConstructedCharacteristic(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new RoutineComment(new Text('adds')))->render($out);
 
         self::assertSame("COMMENT 'adds'", (new Lexical())->join($out->pieces()));

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW BINLOG EVENTS: the events of a binary log file.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the statement
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2");
  *     [$show->statement->file?->value, $show->toString()] // => ['binlog.000001', "SHOW BINLOG EVENTS IN 'binlog.000001' FROM 4 LIMIT 2"]
  */
 final class ShowBinlogEvents implements Statement

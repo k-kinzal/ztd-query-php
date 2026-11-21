@@ -7,14 +7,13 @@ namespace Tests\Unit\Rules\Routine;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ChangeChecks;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorChangeAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ChangeChecks::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class ChangeChecksTest extends TestCase
 {
     public function testDeriveReportsEachRefusedAttribute(): void
     {
-        $operation = (new Semantics(Dialect::PostgreSql, 'pg-17.2'))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict, negator = NONE, commutator = 1, hashes, sort1 = <)');
+        $operation = (new Semantics('pg-17.2'))->inspect('ALTER OPERATOR = (int4, int4) SET (restrict, negator = NONE, commutator = 1, hashes, sort1 = <)');
         self::assertSame([
             'negator requires a parameter',
             'argument of commutator must be a name',

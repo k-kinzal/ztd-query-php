@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\AlterExtensionContents;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\CreateExtension;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionCascade;
@@ -31,7 +32,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\TransformFor;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\TypeReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the extension, language and access method commands.

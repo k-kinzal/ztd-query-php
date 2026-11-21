@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The nonrecursive part of a recursive common table expression, which fixes the columns a reference to the table sees.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the missing part
- *     (new \SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference(new \SqlSemantics\Statement\Identifier\Name('c')))->describe() // => 'the nonrecursive part of recursive common table c'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c')))->describe() // => 'the nonrecursive part of recursive common table c'
  */
 final class RecursiveReference implements MissingInput
 {

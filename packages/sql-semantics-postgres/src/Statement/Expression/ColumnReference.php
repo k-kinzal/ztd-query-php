@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Expression;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\ColumnFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * A dotted name used as a value: a request to resolve it as a column at its position.
@@ -38,12 +38,12 @@ use SqlSemantics\Statement\Scalar;
  *
  * @visibility public
  * @example Reading a qualified column reference
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT t.a FROM t');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT t.a FROM t');
  *     [count($query->statement->targets[0]->expression->parts), $query->field(0)->name->value] // => [2, 'a']
  */
 final class ColumnReference implements Scalar, OutputNaming
 {
-    use \SqlSemantics\Statement\Snapshot;
+    use \SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
     /**
      * @var non-empty-list<Name> The parts of the name as written, the column last

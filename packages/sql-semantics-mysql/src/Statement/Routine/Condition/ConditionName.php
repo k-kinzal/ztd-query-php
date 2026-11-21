@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A condition named by DECLARE ... CONDITION, used in a handler or raised by SIGNAL.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a condition name
- *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new \SqlSemantics\Statement\Identifier\Name('gone')))->name->value // => 'gone'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('gone')))->name->value // => 'gone'
  */
 final class ConditionName implements Condition
 {

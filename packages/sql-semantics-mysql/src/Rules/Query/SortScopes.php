@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Resolution\Environment;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
@@ -13,12 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OpenStar;
 
 /**
  * Derives the items of ORDER BY and GROUP BY.
@@ -44,7 +44,7 @@ final class SortScopes
      * Requires every integer literal item to be given as a select list position.
      *
      * @param list<OrderItem> $items
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an integer literal is an ordinary item
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When an integer literal is an ordinary item
      */
     public function check(array $items): void
     {

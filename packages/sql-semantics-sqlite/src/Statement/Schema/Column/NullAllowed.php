@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Column;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A bare NULL column constraint: the statement that the column may hold NULL.
@@ -21,8 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Keeping a NULL constraint without effect on the column
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INT NULL)');
- *     $create->declarations()[0]->columns[0]->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('CREATE TABLE t (a INT NULL)');
+ *     $create->declarations()[0]->columns[0]->nullability // => \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::Nullable
  */
 final class NullAllowed implements ColumnConstraint
 {

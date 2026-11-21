@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Selection;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Ordinals;
@@ -14,15 +23,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A selection: result columns over an optional input, with its filter, grouping, windows, ordering and limit.
@@ -34,10 +34,10 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the parts of a selection
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t WHERE a > 1 GROUP BY a HAVING count(*) > 1 ORDER BY a LIMIT 3');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT a FROM t WHERE a > 1 GROUP BY a HAVING count(*) > 1 ORDER BY a LIMIT 3');
  *     [count($query->statement->columns), $query->statement->where !== null, count($query->statement->groupBy), $query->statement->having !== null, count($query->statement->orderBy), $query->statement->limit !== null] // => [1, true, 1, true, 1, true]
  * @example Refusing an integer constant as an ordinary ordering expression
- *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Select([new \SqlSemantics\Platform\Sqlite\Statement\Query\Star()], null, null, [], null, [], [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Select([new \SqlSemantics\Platform\Sqlite\Statement\Query\Star()], null, null, [], null, [], [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class Select implements Statement, Query, Selection
 {

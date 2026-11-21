@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\ScalarFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\CallChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\CallTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Argument;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\NamedArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A call of `substring`, `overlay` or `json_object` spelled with the keyword and plain arguments.
@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction::Substring, []);
  *     [$call->function->value, $call->outputName()->value] // => ['SUBSTRING', 'substring']
  * @example Rejecting JSON_OBJECT without arguments in this form
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction::JsonObject, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction::JsonObject, []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class KeywordCall implements Scalar, OutputNaming
 {

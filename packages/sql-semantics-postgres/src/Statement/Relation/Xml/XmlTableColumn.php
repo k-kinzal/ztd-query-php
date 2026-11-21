@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column of XMLTABLE: a typed column with its options, or the FOR ORDINALITY column.
@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading an ordinality column
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Statement\Identifier\Name('n')))->ordinality() // => true
+ *     (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('n')))->ordinality() // => true
  */
 final class XmlTableColumn implements Node
 {

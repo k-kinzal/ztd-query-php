@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Model\Lowering\Form;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ConstraintName;
@@ -16,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the index, key and constraint elements of a table definition.

@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Mutation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults;
@@ -23,9 +26,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSERT, UPDATE and DELETE.

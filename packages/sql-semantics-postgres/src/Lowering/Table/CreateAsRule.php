@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTableAs;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTableAsExecute;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTarget;
@@ -15,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CheckOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\RefreshMaterializedView;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the statements that define a relation by a query: CREATE TABLE AS, CREATE VIEW, CREATE MATERIALIZED VIEW, and REFRESH.

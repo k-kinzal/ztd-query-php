@@ -14,11 +14,11 @@ final class DefaultSettingTest extends TestCase
 {
     public function testRenderWritesDefault(): void
     {
-        self::assertSame('CREATE DATABASE d WITH TEMPLATE = DEFAULT', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d TEMPLATE DEFAULT')->toString());
+        self::assertSame('CREATE DATABASE d WITH TEMPLATE = DEFAULT', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d TEMPLATE DEFAULT')->toString());
     }
 
     public function testDeriveClauseRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d TEMPLATE = DEFAULT')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE DATABASE d TEMPLATE = DEFAULT')->facts->diagnostics);
     }
 }

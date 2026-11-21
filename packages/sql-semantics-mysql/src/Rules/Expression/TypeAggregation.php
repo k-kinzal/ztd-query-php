@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
@@ -15,8 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Statement\Type\TypeDescriptor;
-use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Derives the common type of values that share one result position: the branches of CASE, IF and COALESCE, the columns of a set operation and the rows of VALUES.

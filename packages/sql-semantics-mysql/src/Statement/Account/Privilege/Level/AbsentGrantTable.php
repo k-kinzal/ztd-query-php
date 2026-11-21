@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\TableResolution;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\TableResolution;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The resolution of a table name a complete context does not declare, at a grant level where the table need not exist.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Granting CREATE on a table that does not exist yet
- *     $grant = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT CREATE ON t TO u', []);
+ *     $grant = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('GRANT CREATE ON t TO u', []);
  *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable // => true
  */
 final class AbsentGrantTable implements TableResolution

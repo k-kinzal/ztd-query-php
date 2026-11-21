@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication;
 
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 
 /**
  * One item of the object list of CREATE or ALTER PUBLICATION: a table, or the tables of a schema.

@@ -8,15 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(DropProgram::class)]
 #[Medium]
@@ -24,7 +23,7 @@ final class DropProgramTest extends TestCase
 {
     public function testDeriveStatementChangesNoContext(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $drop = $semantics->analyze('DROP TRIGGER IF EXISTS shop.tr', [$table]);
 
@@ -47,7 +46,7 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerDeriveStatementReadsTheDroppedProgram')]
     public function testDeriveStatementReadsTheDroppedProgram(string $sql, ProgramKind $kind, bool $ifExists, ?string $schema, string $name): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $statement = (new Semantics())->analyze($sql)->statement;
         self::assertInstanceOf(DropProgram::class, $statement);
 
         self::assertSame($kind, $statement->kind);
@@ -71,12 +70,12 @@ final class DropProgramTest extends TestCase
     #[DataProvider('providerRenderWritesTheDrop')]
     public function testRenderWritesTheDrop(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->analyze($sql)->toString());
     }
 
     public function testRenderWritesAConstructedDrop(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new DropProgram(ProgramKind::Event, new QualifiedName(new Name('e'), new Name('shop')), true))->render($out);
 

@@ -19,13 +19,12 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Platform\PostgreSql\Semantics;
 
 $grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new RoundTripTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), $grammarVersion);
+$target = new RoundTripTarget(new Semantics($grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 

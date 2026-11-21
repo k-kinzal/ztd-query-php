@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\IdentityGeneration;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\IdentityRestart;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\IdentitySetting;
@@ -29,7 +29,7 @@ final class IdentityChanges
     public function checked(array $changes): array
     {
         $checked = [];
-        foreach (Check::listOf($changes, \SqlSemantics\Statement\Node::class, 'Identity changes are an ordered list.') as $change) {
+        foreach (Check::listOf($changes, \SqlSemantics\Platform\PostgreSql\Model\Statement\Node::class, 'Identity changes are an ordered list.') as $change) {
             Check::input($change instanceof IdentityRestart || $change instanceof IdentitySetting || $change instanceof IdentityGeneration, 'An identity change is RESTART, SET with a sequence option, or SET GENERATED.');
             $checked[] = $change;
         }

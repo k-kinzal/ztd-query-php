@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * The LANGUAGE characteristic of a stored routine: SQL, or from MySQL 8.1 the name of an external language.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the language of a routine
- *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER FUNCTION f LANGUAGE SQL');
+ *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER FUNCTION f LANGUAGE SQL');
  *     $alter->statement->characteristics[0]->external // => null
  */
 final class RoutineLanguage implements Characteristic

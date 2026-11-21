@@ -19,6 +19,6 @@ final class ExtensionVersionTest extends TestCase
 
     public function testRenderKeepsAWordVersion(): void
     {
-        self::assertSame('CREATE EXTENSION e VERSION v1', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION e VERSION v1')->toString());
+        self::assertSame('CREATE EXTENSION e VERSION v1', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE EXTENSION e VERSION v1')->toString());
     }
 }

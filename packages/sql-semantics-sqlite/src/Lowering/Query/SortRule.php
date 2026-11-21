@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Ordinals;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder;

@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Alterations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\IdentityColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
@@ -13,11 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\GeneratedWhen;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * ALTER [ COLUMN ] ... ADD GENERATED ... AS IDENTITY: makes a column an identity column.
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Type\Known;
  *
  * @visibility public
  * @example Adding an identity
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)');
+ *     $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)');
  *     $statement->toString() // => 'ALTER TABLE t ALTER a ADD GENERATED ALWAYS AS IDENTITY (CACHE 10)'
  */
 final class AddIdentity implements AlterCommand

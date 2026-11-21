@@ -14,8 +14,8 @@ final class ValuesFactsTest extends TestCase
 {
     public function testDeriveResolvesEachColumn(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze("VALUES (1, NULL), (2.5, 'a')");
-        self::assertSame(['numeric', 'text'], array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): ?string => ($field->type instanceof \SqlSemantics\Statement\Type\Known ? $field->type->descriptor->name() : null), $query->fields()->items ?? []));
+        self::assertSame(['numeric', 'text'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field $field): ?string => ($field->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $field->type->descriptor->name() : null), $query->fields()->items ?? []));
     }
 }

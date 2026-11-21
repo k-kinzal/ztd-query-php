@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rendering;
 
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Spelling\Layout;
-use SqlSemantics\Statement\Spelling\Spelled;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Lexical;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Spelled;
 
 /**
  * Reads the spelling a node has when it is rendered without a layout of its own.

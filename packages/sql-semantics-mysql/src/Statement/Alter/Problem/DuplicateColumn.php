@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Alter\Problem;
 
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A column name the completely known table would have twice after a table change.
@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the problem
- *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn(new \SqlSemantics\Statement\Identifier\Name('a')))->message() // => 'Column a would be defined more than once.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')))->message() // => 'Column a would be defined more than once.'
  */
 final class DuplicateColumn implements Diagnostic
 {

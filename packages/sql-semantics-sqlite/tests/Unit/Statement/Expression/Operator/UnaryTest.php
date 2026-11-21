@@ -7,8 +7,12 @@ namespace Tests\Unit\Statement\Expression\Operator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -20,11 +24,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Type\Choice;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
-use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(Unary::class)]
 #[Medium]
@@ -32,8 +31,8 @@ final class UnaryTest extends TestCase
 {
     public function testDeriveScalarMinusFollowsTheArithmeticRule(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('SELECT -a, -b, -1.5, -NULL, -? FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Semantics();
+        $query = $semantics->inspect('SELECT -a, -b, -1.5, -NULL, -? FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Choice::class, $query->field(0)->type);
         self::assertSame([Storage::Integer, Storage::Real], $query->field(0)->type->alternatives);
@@ -49,9 +48,9 @@ final class UnaryTest extends TestCase
 
     public function testDeriveScalarPlusChangesNothing(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze("SELECT +b, +a, +'x' FROM t", [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->inspect("SELECT +b, +a, +'x' FROM t", [$create]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame($create->declarations()[0]->columns[1]->type, $query->field(0)->type->descriptor);
@@ -63,8 +62,8 @@ final class UnaryTest extends TestCase
 
     public function testDeriveScalarNotAndBitNotAreIntegerUnlessTheOperandIsNull(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('SELECT NOT b, ~b, NOT a, NOT NULL, ~NULL FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
+        $semantics = new Semantics();
+        $query = $semantics->inspect('SELECT NOT b, ~b, NOT a, NOT NULL, ~NULL FROM t', [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
@@ -78,7 +77,7 @@ final class UnaryTest extends TestCase
 
     public function testDeriveScalarReportsARowValueOperand(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT -(1, 2)', []);
+        $query = (new Semantics())->inspect('SELECT -(1, 2)', []);
 
         self::assertCount(1, $query->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
@@ -87,16 +86,16 @@ final class UnaryTest extends TestCase
 
     public function testRenderWritesNotAsAKeywordAndTheOthersAsSymbols(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select not a AS c1, -a AS c2, +a AS c3, ~a AS c4 from t');
+        $query = (new Semantics())->inspect('select not a AS c1, -a AS c2, +a AS c3, ~a AS c4 from t');
 
         self::assertSame('SELECT NOT a AS c1, - a AS c2, + a AS c3, ~ a AS c4 FROM t', $query->toString());
     }
 
     public function testRenderCoversTheTighterOperatorsThatFollowThePrefix(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $negation = $semantics->analyze('SELECT NOT a = b AS c1 FROM t');
-        $collated = $semantics->analyze('SELECT -a COLLATE nocase AS c1 FROM t');
+        $semantics = new Semantics();
+        $negation = $semantics->inspect('SELECT NOT a = b AS c1 FROM t');
+        $collated = $semantics->inspect('SELECT -a COLLATE nocase AS c1 FROM t');
         $operand = $negation->field(0)->expression;
 
         self::assertInstanceOf(Unary::class, $operand);
@@ -109,7 +108,7 @@ final class UnaryTest extends TestCase
 
     public function testRenderWritesANewlyBuiltNegationOverASum(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $sum = new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('2'));
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Unary(UnaryOperator::Not, $sum))]));
 

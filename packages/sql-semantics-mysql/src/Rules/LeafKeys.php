@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules;
 
 use SqlParser\Lexer\Token;
-use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Rules\Noise\AccountNoise;
 use SqlSemantics\Platform\MySql\Rules\Noise\CallNoise;
 use SqlSemantics\Platform\MySql\Rules\Noise\DispatchNoise;
@@ -41,7 +41,7 @@ use SqlSemantics\Platform\MySql\Rules\Noise\UtilityNoise;
  *
  * @visibility SqlSemantics\Platform\MySql
  */
-final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
+final class LeafKeys implements \SqlSemantics\Platform\MySql\Model\Contract\LeafKeys
 {
     /**
      * The rules whose single token is a name whatever its terminal.

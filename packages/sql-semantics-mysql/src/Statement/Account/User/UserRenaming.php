@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `old_user TO new_user` pair of RENAME USER.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding a renaming
- *     $pair = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('b')));
+ *     $pair = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b')));
  *     $pair->to instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName // => true
  */
 final class UserRenaming implements Node

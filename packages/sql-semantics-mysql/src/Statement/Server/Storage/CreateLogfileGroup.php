@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE LOGFILE GROUP name ADD {UNDOFILE | REDOFILE} 'file' [option …]`: a request to create an NDB log file group.
@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Creating a log file group
- *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
+ *     $statement = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("create logfile group lg add undofile 'u.log' undo_buffer_size = 8M engine = ndb");
  *     [$statement->toString(), $statement->statement->file->file->value] // => ["CREATE LOGFILE GROUP lg ADD UNDOFILE 'u.log' UNDO_BUFFER_SIZE `8M` ENGINE `ndb`", 'u.log']
  */
 final class CreateLogfileGroup implements Statement

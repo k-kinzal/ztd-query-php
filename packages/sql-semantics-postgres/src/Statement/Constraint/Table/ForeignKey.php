@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Attributes;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\GeneratedColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\ForeignKeys;
@@ -16,11 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialAction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FOREIGN KEY table constraint: the referencing columns hold values of the referenced columns.
@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a foreign key
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
+ *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
  *     $create->toString() // => 'CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)'
  */
 final class ForeignKey implements Constraint

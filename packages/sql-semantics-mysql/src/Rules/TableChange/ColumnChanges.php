@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Resolution\ImplicitSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnFlags;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
@@ -20,13 +27,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Resolution\ImplicitSlot;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Applies the column actions of one ALTER TABLE to the row shape of its table.

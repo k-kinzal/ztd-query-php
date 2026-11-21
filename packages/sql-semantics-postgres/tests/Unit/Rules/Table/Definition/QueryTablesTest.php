@@ -14,15 +14,15 @@ final class QueryTablesTest extends TestCase
 {
     public function testNameIsTheSchemaOfAnEnclosingCreateSchema(): void
     {
-        self::assertSame('s', (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables())->name(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), \SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence::Permanent, new \SqlSemantics\Statement\Identifier\Name('s'))->schema?->value);
+        self::assertSame('s', (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables())->name(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('v')), \SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence::Permanent, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'))->schema?->value);
     }
 
     public function testTableTurnsUnknownIntoText(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
-        $statement = $semantics->analyze('CREATE TABLE n (x, y, z) AS SELECT \'a\', a FROM t', $context);
+        array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        $statement = $semantics->inspect('CREATE TABLE n (x, y, z) AS SELECT \'a\', a FROM t', $context);
         self::assertSame([
           0 =>
            [
@@ -38,7 +38,7 @@ final class QueryTablesTest extends TestCase
 
     public function testTableDeclaresEveryNamedColumnOfADependentType(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE x AS SELECT f(1) AS a, NULL AS b, 2 AS c', []);
+        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE x AS SELECT f(1) AS a, NULL AS b, 2 AS c', []);
         $table = $operation->declarations()[0];
         self::assertTrue($table->complete);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined::class, $table->columns[0]->type);
@@ -47,18 +47,18 @@ final class QueryTablesTest extends TestCase
 
     public function testTableIsIncompleteAtAnOpenRow(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE VIEW w AS SELECT 1 AS k, * FROM zz');
+        $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE VIEW w AS SELECT 1 AS k, * FROM zz');
         self::assertFalse($operation->declarations()[0]->complete);
         self::assertCount(1, $operation->declarations()[0]->columns);
     }
 
     public function testTableDeclaresTheKind(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
-        $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')->declarations()[0];
-        $table = $semantics->analyze('CREATE TABLE c AS SELECT 1 AS a')->declarations()[0];
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $view = $semantics->inspect('CREATE VIEW v AS SELECT 1 AS a')->declarations()[0];
+        $table = $semantics->inspect('CREATE TABLE c AS SELECT 1 AS a')->declarations()[0];
         self::assertSame(
-            [\SqlSemantics\Statement\Declaration\RelationKind::View, [], \SqlSemantics\Statement\Declaration\RelationKind::BaseTable, \SqlSemantics\Statement\Type\Nullability::Nullable],
+            [\SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind::View, [], \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind::BaseTable, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable],
             [$view->kind, $view->implicit, $table->kind, $table->columns[0]->nullability],
         );
     }

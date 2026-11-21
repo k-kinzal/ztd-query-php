@@ -14,7 +14,7 @@ final class ChangeRuleTest extends TestCase
 {
     public function testUpdateLowersEveryClause(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('WITH w AS (SELECT 1) UPDATE t SET a = 1 FROM u, w WHERE u.c RETURNING *');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -23,14 +23,14 @@ final class ChangeRuleTest extends TestCase
 
     public function testDeleteLowersEveryClause(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('DELETE FROM t USING u WHERE CURRENT OF c RETURNING 1');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $query->statement);
     }
 
     public function testUsingIsNullWithoutClause(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('DELETE FROM t');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
@@ -39,7 +39,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testTargetLowersAnAliasWithoutAs(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('UPDATE ONLY t x SET a = 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -48,7 +48,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testAssignmentsLowersBothForms(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a = 1, (b, c) = (SELECT 1, 2)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -57,7 +57,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testColumnsLowersTheTargetList(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('UPDATE t SET (a, b, c) = ROW(1, 2, 3)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -68,7 +68,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testColumnLowersTheSteps(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a[1] = 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -79,7 +79,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testWhereLowersTheCursor(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('UPDATE t SET a = 1 WHERE CURRENT OF c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update::class, $statement);
@@ -88,7 +88,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testReturningLowersTheTargets(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('DELETE FROM t RETURNING a, b AS c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
@@ -97,7 +97,7 @@ final class ChangeRuleTest extends TestCase
 
     public function testCursorLowersTheName(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics('pg-17.2');
         $query = $semantics->analyze('DELETE FROM t WHERE CURRENT OF "C"');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);

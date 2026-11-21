@@ -7,22 +7,21 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(ColumnUse::class)]
 #[Medium]
@@ -30,9 +29,9 @@ final class ColumnUseTest extends TestCase
 {
     public function testDeriveScalarResolvesADeclaredColumnWithItsFacts(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT a, t.b, main.t.a FROM t', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT a, t.b, main.t.a FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -53,9 +52,9 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarReportsAMissingColumn(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT nope, t.nope FROM t', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT nope, t.nope FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -70,7 +69,7 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRelation(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, u.a FROM u');
+        $operation = (new Semantics())->inspect('SELECT a, u.a FROM u');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -85,9 +84,9 @@ final class ColumnUseTest extends TestCase
 
     public function testDeriveScalarResolvesAResultAliasInTheOrdering(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT b AS c FROM t ORDER BY c', [$create]);
+        $semantics = new Semantics();
+        $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
+        $operation = $semantics->inspect('SELECT b AS c FROM t ORDER BY c', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -99,14 +98,14 @@ final class ColumnUseTest extends TestCase
 
     public function testRenderWritesTheQualifierPartsAndTheName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
+        $operation = (new Semantics())->inspect('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
 
         self::assertSame('SELECT a AS c1, t.b AS c2, main.t.a AS c3, c AS c4, d AS c5 FROM t', $operation->toString());
     }
 
     public function testRenderQuotesANameThatNeedsIt(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('select'), new QualifiedName(new Name('my table'), new Name('main'))))]));
 
         self::assertSame('SELECT main.`my table`.`select`', $operation->toString());

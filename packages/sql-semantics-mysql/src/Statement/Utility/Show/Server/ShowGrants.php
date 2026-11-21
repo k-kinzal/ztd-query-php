@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW GRANTS: the GRANT statements that reproduce the privileges of an account or role.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the column named after the account
- *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
+ *     $show = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR u@localhost USING r']
  */
 final class ShowGrants implements Statement

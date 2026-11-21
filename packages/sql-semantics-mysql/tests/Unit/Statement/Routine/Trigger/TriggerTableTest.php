@@ -8,25 +8,24 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(TriggerTable::class)]
 #[Medium]
@@ -34,12 +33,12 @@ final class TriggerTableTest extends TestCase
 {
     public function testDeriveRelationAnswersTheRowOfTheDeclaredTable(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
-        $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.a = NEW.b', [$table]);
+        $create = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.a = NEW.b', [$table]);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         $fact = $create->facts->relation($statement->table);
@@ -59,7 +58,7 @@ final class TriggerTableTest extends TestCase
 
     public function testDeriveRelationReportsATableTheCompleteContextLacks(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1', []);
+        $create = (new Semantics())->inspect('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1', []);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         $fact = $create->facts->relation($statement->table);
@@ -73,11 +72,11 @@ final class TriggerTableTest extends TestCase
 
     public function testDeriveRelationDoesNotFindATableOfAnotherDatabase(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
-        $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1', [$table]);
+        $create = $semantics->inspect('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1', [$table]);
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
 
@@ -90,7 +89,7 @@ final class TriggerTableTest extends TestCase
 
     public function testDeriveRelationLeavesTheShapeOpenForAnUndeclaredTable(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1');
+        $create = (new Semantics())->inspect('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         $fact = $create->facts->relation($statement->table);
@@ -120,12 +119,12 @@ final class TriggerTableTest extends TestCase
     #[DataProvider('providerRenderWritesTheTableName')]
     public function testRenderWritesTheTableName(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     public function testRenderWritesAConstructedTable(): void
     {
-        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $out = new Output(new Codec((new Semantics())->profile()->grammar));
         (new TriggerTable(new QualifiedName(new Name('t'), new Name('shop'))))->render($out);
 
         self::assertSame('shop.t', (new Lexical())->join($out->pieces()));

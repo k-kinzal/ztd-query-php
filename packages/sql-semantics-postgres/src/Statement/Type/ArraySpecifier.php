@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Type;
 
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * The array part of a type name: bracket pairs, or the keyword ARRAY with at most one size.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $array = new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound(), new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound()]);
  *     [count($array->bounds), $array->keyword] // => [2, false]
  * @example Rejecting brackets with no dimension
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class ArraySpecifier implements Node
 {

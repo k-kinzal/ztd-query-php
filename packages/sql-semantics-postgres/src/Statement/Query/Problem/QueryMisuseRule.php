@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
  *
  * @visibility public
  * @example Reading which rule a query breaks
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT *');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT *');
  *     $query->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule::StarWithoutTables
  */
 enum QueryMisuseRule: string

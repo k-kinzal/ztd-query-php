@@ -7,8 +7,12 @@ namespace Tests\Unit\Statement\Expression\Operator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -19,11 +23,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(NullTest::class)]
 #[Medium]
@@ -31,7 +30,7 @@ final class NullTestTest extends TestCase
 {
     public function testDeriveScalarIsAnIntegerThatIsNeverNull(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $query = $semantics->analyze('SELECT a ISNULL, b NOTNULL, b NOT NULL, NULL ISNULL, ? NOTNULL FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $nullability = array_map(static fn (Field $field): Nullability => $field->nullability, $query->fields()->items ?? []);
 
@@ -44,7 +43,7 @@ final class NullTestTest extends TestCase
 
     public function testDeriveScalarRecordsTheFactOfTheOperand(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $query = $semantics->analyze('SELECT b ISNULL FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
         $test = $query->field(0)->expression;
 
@@ -55,14 +54,14 @@ final class NullTestTest extends TestCase
 
     public function testRenderWritesEachForm(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select a isnull AS c1, a notnull AS c2, a not null AS c3 from t');
+        $query = (new Semantics())->analyze('select a isnull AS c1, a notnull AS c2, a not null AS c3 from t');
 
         self::assertSame('SELECT a ISNULL AS c1, a NOTNULL AS c2, a NOT NULL AS c3 FROM t', $query->toString());
     }
 
     public function testRenderAppliesToAnOperandOfTheEqualityGroup(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $membership = $semantics->analyze('SELECT 1 IN (2) ISNULL');
         $repeated = $semantics->analyze('SELECT 1 ISNULL ISNULL');
         $outer = $repeated->field(0)->expression;
@@ -77,7 +76,7 @@ final class NullTestTest extends TestCase
 
     public function testRenderWritesANewlyBuiltTest(): void
     {
-        $semantics = new Semantics(Dialect::Sqlite);
+        $semantics = new Semantics();
         $operation = new Operation($semantics->context(), new Select([new ResultColumn(new NullTest(new NullLiteral(), NullTestForm::NotNullWords))]));
 
         self::assertSame('SELECT NULL NOT NULL', $operation->toString());

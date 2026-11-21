@@ -14,12 +14,12 @@ final class XmlTableColumnTest extends TestCase
 {
     public function testOrdinalityTellsTheNumberingColumn(): void
     {
-        self::assertSame([true, false], [(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Statement\Identifier\Name('n')))->ordinality(), (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Boolean))))->ordinality()]);
+        self::assertSame([true, false], [(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('n')))->ordinality(), (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Boolean))))->ordinality()]);
     }
 
     public function testRenderWritesTheTypeAndOptions(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $query = $semantics->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text NULL)");
         self::assertSame("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text NULL)", $query->toString());
     }

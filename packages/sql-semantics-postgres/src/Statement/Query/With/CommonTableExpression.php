@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Query;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
  * One common table expression: a name, optional column names, and the statement that computes its rows.
@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a common table expression
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
- *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Statement\Identifier\Name('a')], \SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization::Materialized);
+ *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], \SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization::Materialized);
  *     [$table->name->value, $table->columns[0]->value, $table->materialization->value] // => ['x', 'a', 'MATERIALIZED']
  */
 final class CommonTableExpression implements RecursiveDefinition

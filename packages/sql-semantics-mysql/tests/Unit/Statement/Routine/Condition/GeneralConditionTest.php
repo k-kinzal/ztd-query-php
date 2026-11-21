@@ -8,17 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
 
 #[CoversClass(GeneralCondition::class)]
 #[Medium]
@@ -56,7 +55,7 @@ final class GeneralConditionTest extends TestCase
     #[DataProvider('providerRenderWritesTheClassesAHandlerNames')]
     public function testRenderWritesTheClassesAHandlerNames(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
+        $create = (new Semantics($release))->analyze('create procedure p() begin declare continue handler for sqlwarning, not   found, sqlexception begin end; end');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;

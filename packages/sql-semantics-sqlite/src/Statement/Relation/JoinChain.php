@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
+use SqlSemantics\Platform\Sqlite\Model\Resolution\Environment;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The terms of a FROM clause joined from left to right.
@@ -31,11 +31,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the terms of a join chain
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a, v');
+ *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a, v');
  *     [$query->statement->from->first->name->name->value, count($query->statement->from->steps), $query->statement->from->steps[1]->operator->comma] // => ['t', 2, true]
  * @example Refusing a chain that joins nothing and constrains nothing
- *     $table = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t')->statement->from;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain($table, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $table = (new \SqlSemantics\Platform\Sqlite\Semantics())->analyze('SELECT 1 FROM t')->statement->from;
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain($table, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  */
 final class JoinChain implements Relation
 {

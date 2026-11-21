@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnAction;
@@ -14,8 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\SetExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\TypeChange;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\RowShape;
 
 /**
  * Reports the ALTER TABLE column actions that do not fit whether the column is a generated column.

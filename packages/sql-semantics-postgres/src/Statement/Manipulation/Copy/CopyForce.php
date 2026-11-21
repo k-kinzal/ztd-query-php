@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\NameUse;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
  * A FORCE option of the old COPY syntax: FORCE QUOTE, FORCE NOT NULL or FORCE NULL with a column list or `*`.
@@ -21,10 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the columns of a FORCE option
- *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT CSV FORCE QUOTE a, b');
+ *     $copy = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('COPY t TO STDOUT CSV FORCE QUOTE a, b');
  *     [count($copy->statement->legacy[1]->columns), $copy->statement->legacy[1]->option()] // => [2, 'force_quote']
  * @example Refusing columns together with the star
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForce(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::Quote, [new \SqlSemantics\Statement\Identifier\Name('a')], true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForce(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyForceKind::Quote, [new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a')], true) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class CopyForce implements Node
 {

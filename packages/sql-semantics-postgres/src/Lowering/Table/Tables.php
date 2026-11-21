@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node as StatementNode;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\IndexElement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
-use SqlSemantics\Statement\Node as StatementNode;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry point of the table family: tables, sequences, indexes, views, statistics, rules, triggers and policies.

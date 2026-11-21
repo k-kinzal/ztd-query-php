@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Collation\CreateConversion;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Collation\RefreshCollationVersion;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\AlterTextSearchDictionary;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\DropTextSearch
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\MappingChange;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\MapTextSearchTokens;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\ReplaceTextSearchDictionary;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the text search, collation and conversion commands.
@@ -78,7 +78,7 @@ final class TextSearchRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function with(\SqlSemantics\Lowering\Form $form): void
+    public function with(\SqlSemantics\Platform\PostgreSql\Model\Lowering\Form $form): void
     {
         foreach ($form->node->children as $child) {
             if ($child instanceof Node && $child->name === 'any_with') {

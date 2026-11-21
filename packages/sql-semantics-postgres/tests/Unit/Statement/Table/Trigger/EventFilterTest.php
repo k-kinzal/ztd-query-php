@@ -14,7 +14,7 @@ final class EventFilterTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
         $statement = $semantics->analyze('CREATE EVENT TRIGGER e ON ddl_command_start WHEN tag IN (\'A\', \'B\') EXECUTE FUNCTION f()', []);
         self::assertSame('CREATE EVENT TRIGGER e ON ddl_command_start WHEN tag IN (\'A\', \'B\') EXECUTE FUNCTION f()', $statement->toString());
     }

@@ -8,13 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
-use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(ReturnStatement::class)]
 #[Medium]
@@ -22,7 +21,7 @@ final class ReturnStatementTest extends TestCase
 {
     public function testDeriveProgramResolvesTheParameter(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
+        $operation = (new Semantics())->inspect('CREATE FUNCTION f(a INT) RETURNS INT RETURN a');
         $create = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $create);
         $return = $create->body;
@@ -39,7 +38,7 @@ final class ReturnStatementTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAReturnOutsideAFunction')]
     public function testDeriveProgramReportsAReturnOutsideAFunction(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        $operation = (new Semantics())->inspect($sql);
 
         self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -59,7 +58,7 @@ final class ReturnStatementTest extends TestCase
     #[DataProvider('providerRenderWritesTheStatement')]
     public function testRenderWritesTheStatement(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+        self::assertSame($expected, (new Semantics($release))->inspect($sql)->toString());
     }
 
     /**

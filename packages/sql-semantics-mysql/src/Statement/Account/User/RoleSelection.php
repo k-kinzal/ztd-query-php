@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The roles SET ROLE, a DEFAULT ROLE clause or GRANT … AS … WITH ROLE select: `role, …`, `NONE`, `DEFAULT` or `ALL [EXCEPT role, …]`.
@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Selecting all roles but one
- *     $selection = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET ROLE ALL EXCEPT r')->statement->roles;
+ *     $selection = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('SET ROLE ALL EXCEPT r')->statement->roles;
  *     [$selection->set, $selection->roles[0]->user->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All, 'r']
  */
 final class RoleSelection implements Node

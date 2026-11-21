@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\Layouts;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Statement\Spelling\Layout;
-use SqlSemantics\Statement\Spelling\Spelled;
+use SqlSemantics\Platform\MySql\Model\Construction\Layouts;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Statement\Spelling\Layout;
+use SqlSemantics\Platform\MySql\Model\Statement\Spelling\Spelled;
 
 /**
  * Reads the layout of the expression of an unaliased select item as the server reads its text.
@@ -46,7 +46,7 @@ final class ItemLayout
     /**
      * Answers the layout of an expression node with its trivia as the preprocessed buffer holds it.
      *
-     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the node covers no token
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation When the node covers no token
      */
     public function of(Node $expression): Layout
     {

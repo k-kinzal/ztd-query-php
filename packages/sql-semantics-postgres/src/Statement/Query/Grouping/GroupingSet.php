@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\ClosedList;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A grouping set of GROUP BY: the empty set `()`, ROLLUP, CUBE or GROUPING SETS.
@@ -23,10 +23,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a ROLLUP
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 GROUP BY ROLLUP (1), ()');
+ *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1 GROUP BY ROLLUP (1), ()');
  *     [$query->statement->groupBy[0]->kind->value, count($query->statement->groupBy[1]->members)] // => ['ROLLUP', 0]
  * @example Refusing an empty ROLLUP
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind::Rollup) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind::Rollup) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */
 final class GroupingSet implements Node
 {

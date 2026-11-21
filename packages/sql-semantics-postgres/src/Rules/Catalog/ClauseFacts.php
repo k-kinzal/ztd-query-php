@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Resolution\Environment;
 
 /**
  * Derives the clauses of a catalog command that sees no relation.

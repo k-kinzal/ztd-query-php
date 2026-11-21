@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules;
 
-use SqlSemantics\Contract\AnalysisContext;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 
 /**
  * The current database of the session a context describes.

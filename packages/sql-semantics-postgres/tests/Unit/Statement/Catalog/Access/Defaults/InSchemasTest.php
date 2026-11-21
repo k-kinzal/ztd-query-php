@@ -14,12 +14,12 @@ final class InSchemasTest extends TestCase
 {
     public function testOption(): void
     {
-        self::assertSame('schemas', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\InSchemas([new \SqlSemantics\Statement\Identifier\Name('s')]))->option());
+        self::assertSame('schemas', (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\InSchemas([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s')]))->option());
     }
 
     public function testRenderWritesTheSchemas(): void
     {
-        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe')->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe')->toString());
     }
 
     public function testRejectsNoSchema(): void

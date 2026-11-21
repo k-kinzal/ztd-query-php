@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Dml;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
-use SqlSemantics\Statement\Node;
 
 #[CoversNothing]
 #[Small]

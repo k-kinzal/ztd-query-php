@@ -103,13 +103,14 @@ jobs:
           <?php
           require 'vendor/autoload.php';
           $dialect = getenv('SQL_SEMANTICS_DIALECT');
-          $class = 'SqlSemantics\\Platform\\' . $dialect . '\\Dialect';
-          $semantics = new SqlSemantics\Facade\Semantics(constant($class . '::' . $dialect));
-          if ($semantics->analyze('SELECT 42')->toString() !== 'SELECT 42') {
+          $class = 'SqlSemantics\\Platform\\' . $dialect . '\\Semantics';
+          $semantics = new $class();
+          $query = $semantics->analyze('SELECT 42');
+          if (!$query instanceof SqlSemantics\Query || $query->toString() !== 'SELECT 42') {
               throw new RuntimeException('The installed statement models must reconstruct SQL.');
           }
           foreach (array_diff(['MySql', 'PostgreSql', 'Sqlite'], [$dialect]) as $other) {
-              if (enum_exists('SqlSemantics\\Platform\\' . $other . '\\Dialect')) {
+              if (class_exists('SqlSemantics\\Platform\\' . $other . '\\Semantics')) {
                   throw new RuntimeException('Installing one database must not install another implementation.');
               }
           }
@@ -172,7 +173,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [sql-semantics, sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
+        package: [sql-semantics-mysql, sql-semantics-postgres, sql-semantics-sqlite]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

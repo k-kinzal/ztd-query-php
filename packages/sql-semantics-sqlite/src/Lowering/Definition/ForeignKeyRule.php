@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\Deferrability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\InitialMode;

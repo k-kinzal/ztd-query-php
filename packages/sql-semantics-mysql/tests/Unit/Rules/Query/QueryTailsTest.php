@@ -7,7 +7,9 @@ namespace Tests\Unit\Rules\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Rendering\Piece;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -22,8 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Rendering\Piece;
 
 #[CoversClass(QueryTails::class)]
 #[Small]

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Group;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START GROUP_REPLICATION [USER = …, PASSWORD = …, DEFAULT_AUTH = …]`: starts group replication (MySQL 5.7 and later).
@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Starting with credentials
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
+ *     (new \SqlSemantics\Platform\MySql\Semantics())->analyze("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
  */
 final class StartGroupReplication implements Statement
 {

@@ -7,9 +7,12 @@ namespace Tests\Unit\Statement\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\MySql\Model\Statement\Operation;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -18,10 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(StringLiteral::class)]
 #[Medium]
@@ -29,7 +28,7 @@ final class StringLiteralTest extends TestCase
 {
     public function testValueConcatenatesTheAdjacentSegments(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
+        $operation = (new Semantics())->analyze("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -43,7 +42,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersVarCharOfNoCharacterSetThatIsNeverNull(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'a'");
+        $operation = (new Semantics())->analyze("SELECT 'a'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -66,7 +65,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheIntroducedCharacterSet(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _UTF8MB4'x'");
+        $operation = (new Semantics())->analyze("SELECT _UTF8MB4'x'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -85,7 +84,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheNationalCharacterSet(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT N'x' 'y'");
+        $operation = (new Semantics())->analyze("SELECT N'x' 'y'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -105,7 +104,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
     {
-        $context = (new Semantics(Dialect::MySql))->context();
+        $context = (new Semantics())->context();
         $statement = new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
 
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
@@ -115,7 +114,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
+        $semantics = new Semantics();
         $operation = $semantics->analyze("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
@@ -132,7 +131,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderKeepsBackslashesUnderTheVerbatimRule(): void
     {
-        $operation = (new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
+        $operation = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -147,7 +146,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderWritesADoubleQuotedStringInSingleQuotes(): void
     {
-        self::assertSame("SELECT 'q'", (new Semantics(Dialect::MySql))->analyze('SELECT "q"')->toString());
+        self::assertSame("SELECT 'q'", (new Semantics())->analyze('SELECT "q"')->toString());
     }
 
     public function testRejectsAnEmptySegmentList(): void

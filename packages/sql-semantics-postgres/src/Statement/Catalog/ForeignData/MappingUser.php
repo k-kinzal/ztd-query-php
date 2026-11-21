@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData;
 
-use SqlSemantics\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
 
 /**
  * The keyword USER naming the user of a user mapping: the current user.
@@ -16,7 +16,7 @@ use SqlSemantics\Rendering\Output;
  * @example Spelling the keyword
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User->value // => 'USER'
  */
-enum MappingUser: string implements \SqlSemantics\Statement\Node
+enum MappingUser: string implements \SqlSemantics\Platform\PostgreSql\Model\Statement\Node
 {
     case User = 'USER';
 

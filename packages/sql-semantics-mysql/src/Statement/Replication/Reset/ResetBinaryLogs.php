@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Replication\Reset;
 
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Rules\Replication\Magnitudes;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET BINARY LOGS AND GTIDS [TO n]`, written RESET MASTER in the legacy vocabulary.
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading RESET MASTER as its synonym
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
+ *     (new \SqlSemantics\Platform\MySql\Semantics('mysql-8.3.0'))->analyze('reset master to 5')->toString() // => 'RESET BINARY LOGS AND GTIDS TO 5'
  */
 final class ResetBinaryLogs implements ResetTarget
 {

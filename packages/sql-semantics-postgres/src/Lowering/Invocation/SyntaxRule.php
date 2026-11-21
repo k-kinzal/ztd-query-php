@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Invocation;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Form;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\CastSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\Coalesce;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\Normalize;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\Treat;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\ValueFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\ValueFunctionKind;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the SQL-syntax functions of `func_expr_common_subexpr` and routes the textual, XML and JSON ones to their rules.

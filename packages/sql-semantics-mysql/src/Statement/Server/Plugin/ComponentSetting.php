@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 
-use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Node;
+use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment of INSTALL COMPONENT … SET: `[GLOBAL | PERSIST] [component.]variable = value`.
@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Persisting a component variable
- *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
+ *     $install = (new \SqlSemantics\Platform\MySql\Semantics())->analyze("INSTALL COMPONENT 'file://c' SET PERSIST c.v = 4");
  *     [$install->statement->settings[0]->variable->scope, $install->statement->settings[0]->variable->instance?->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Persist, 'c']
  */
 final class ComponentSetting implements Node

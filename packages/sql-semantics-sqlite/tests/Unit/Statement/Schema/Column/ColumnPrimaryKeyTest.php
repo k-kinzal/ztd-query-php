@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Schema\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
@@ -20,14 +19,14 @@ final class ColumnPrimaryKeyTest extends TestCase
 {
     public function testDeriveConstraintRecordsNothing(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY)', []);
+        $operation = (new Semantics())->analyze('CREATE TABLE t (a PRIMARY KEY)', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testRenderKeepsTheSortOrderTheConflictResolutionAndAutoincrement(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (id integer primary key asc on conflict abort autoincrement)');
+        $operation = (new Semantics())->analyze('create table t (id integer primary key asc on conflict abort autoincrement)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -41,7 +40,7 @@ final class ColumnPrimaryKeyTest extends TestCase
 
     public function testRenderWritesABareKey(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id PRIMARY KEY)');
+        $operation = (new Semantics())->analyze('CREATE TABLE t (id PRIMARY KEY)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);

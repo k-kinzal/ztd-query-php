@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\DefaultExpression;
@@ -21,12 +27,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Validation\ValueGraph;
 
 /**
  * Reports the definitions PostgreSQL rejects because a column is, or is not, a generated column.
@@ -65,7 +65,7 @@ final class GeneratedColumns
     public function referenced(Derivation $derivation, Scalar $expression): ?Name
     {
         $facts = $derivation->facts();
-        foreach (array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($expression)) as $object) {
+        foreach (array_reverse((new ValueGraph(['SqlSemantics\\Platform\\PostgreSql\\Model\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($expression)) as $object) {
             $resolution = $object instanceof Scalar && $facts->covers($object) ? $facts->scalar($object)->resolution : null;
             $column = $resolution instanceof ResolvedColumn ? $resolution->declaration() : null;
             if ($column !== null && $column->generated) {

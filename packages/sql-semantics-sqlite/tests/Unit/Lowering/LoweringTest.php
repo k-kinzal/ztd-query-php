@@ -8,17 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Platform;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Lowering::class)]
 #[Medium]

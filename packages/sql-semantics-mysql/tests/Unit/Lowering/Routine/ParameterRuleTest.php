@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\ParameterRule;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
+use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ParameterRule::class)]
 #[Medium]
@@ -44,7 +43,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParametersLowersAProcedureListInOrder')]
     public function testParametersLowersAProcedureListInOrder(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(in a int, out b char(3) collate latin1_bin, inout c int, d int) select 1');
+        $create = (new Semantics($release))->analyze('create procedure p(in a int, out b char(3) collate latin1_bin, inout c int, d int) select 1');
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(['a', 'b', 'c', 'd'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));
@@ -67,7 +66,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParametersLowersAFunctionList')]
     public function testParametersLowersAFunctionList(string $release): void
     {
-        $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f(a int, b char(3) collate latin1_bin) returns int return a');
+        $create = (new Semantics($release))->analyze('create function f(a int, b char(3) collate latin1_bin) returns int return a');
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame(['a', 'b'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));
@@ -78,7 +77,7 @@ final class ParameterRuleTest extends TestCase
 
     public function testParametersLowersAnEmptyList(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $semantics = new Semantics('mysql-5.7.44');
         $procedure = $semantics->analyze('create procedure p() select 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         self::assertSame([], $procedure->parameters->parameters);
@@ -111,7 +110,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerParameterReadsTheModeNameAndType')]
     public function testParameterReadsTheModeNameAndType(string $release): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze('CREATE PROCEDURE p(OUT total INT) SELECT 1')->statement;
+        $statement = (new Semantics($release))->analyze('CREATE PROCEDURE p(OUT total INT) SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertEquals([new Parameter(new Name('total'), new Integral(IntegralKind::Int), null, ParameterMode::Out)], $statement->parameters->parameters);
     }
@@ -141,7 +140,7 @@ final class ParameterRuleTest extends TestCase
     #[DataProvider('providerDeclaredLowersATypeWithItsCollation')]
     public function testDeclaredLowersATypeWithItsCollation(string $release): void
     {
-        $semantics = new Semantics(Dialect::MySql, $release);
+        $semantics = new Semantics($release);
         $function = $semantics->analyze('create function f() returns char(3) collate latin1_bin return 1');
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertSame('latin1_bin', $function->statement->collation?->name?->value);

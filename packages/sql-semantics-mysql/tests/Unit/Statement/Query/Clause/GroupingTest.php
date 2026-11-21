@@ -7,8 +7,7 @@ namespace Tests\Unit\Statement\Query\Clause;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
@@ -20,15 +19,15 @@ final class GroupingTest extends TestCase
 {
     public function testRenderWritesTheItemsAndTheModifier(): void
     {
-        self::assertSame('SELECT a FROM t GROUP BY a, b WITH ROLLUP', (new Semantics(Dialect::MySql))->analyze('select a from t group by a, b with rollup')->toString());
-        self::assertSame('SELECT a FROM t GROUP BY ROLLUP (a, b)', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select a from t group by rollup (a, b)')->toString());
-        self::assertSame('SELECT a FROM t GROUP BY CUBE (a)', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select a from t group by cube (a)')->toString());
-        self::assertSame('SELECT a FROM t GROUP BY a DESC WITH CUBE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a from t group by a desc with cube')->toString());
+        self::assertSame('SELECT a FROM t GROUP BY a, b WITH ROLLUP', (new Semantics())->analyze('select a from t group by a, b with rollup')->toString());
+        self::assertSame('SELECT a FROM t GROUP BY ROLLUP (a, b)', (new Semantics('mysql-9.1.0'))->analyze('select a from t group by rollup (a, b)')->toString());
+        self::assertSame('SELECT a FROM t GROUP BY CUBE (a)', (new Semantics('mysql-9.1.0'))->analyze('select a from t group by cube (a)')->toString());
+        self::assertSame('SELECT a FROM t GROUP BY a DESC WITH CUBE', (new Semantics('mysql-5.6.51'))->analyze('select a from t group by a desc with cube')->toString());
     }
 
     public function testItemsKeepTheirWrittenOrderAndDirection(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t GROUP BY b DESC, a');
+        $operation = (new Semantics('mysql-5.7.44'))->analyze('SELECT a FROM t GROUP BY b DESC, a');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertNotNull($operation->statement->groupBy);

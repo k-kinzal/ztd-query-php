@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\User;
 
-use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `user ADD|MODIFY|DROP n FACTOR … [ADD|MODIFY|DROP m FACTOR …]`: an ALTER USER change of authentication factors.
@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Dropping the second factor
- *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER USER u DROP 2 FACTOR')->statement->users[0];
+ *     $change = (new \SqlSemantics\Platform\MySql\Semantics())->analyze('ALTER USER u DROP 2 FACTOR')->statement->users[0];
  *     $change->action // => \SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Drop
  */
 final class FactorChange implements UserAlteration

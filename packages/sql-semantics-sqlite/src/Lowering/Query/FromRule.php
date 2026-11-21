@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
@@ -19,8 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
 
 /**
  * Lowers FROM clauses into input relations.

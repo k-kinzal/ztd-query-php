@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
-use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\QueryFact;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Typing\Categories;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\ColumnTarget;
@@ -18,11 +23,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\Manipulation
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule;
-use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Shape\OutputSlot;
 
 /**
  * Derives the facts of an INSERT statement.
