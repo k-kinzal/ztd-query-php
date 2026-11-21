@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MySQL result-label refinement — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics/doc/assurance/server-projection-errata.md.html">
+<meta name="description" content="MySQL result-label refinement, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="MySQL result-label refinement — ZTD Query PHP">
+<meta property="og:description" content="MySQL result-label refinement, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics/doc/assurance/server-projection-errata.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/index.html" title="SqlSemantics">SqlSemantics</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Contract/index.html" title="SqlSemantics\Contract">SqlSemantics\Contract</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">assurance/server-projection-errata.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing a313b30f917 to working tree">a313b30f917 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between a313b30f917 and working tree." data-off="This page documents what a313b30f917 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>MySQL result-label refinement</h1><div class="symbol-meta"><span class="source-link">assurance/server-projection-errata.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to a313b30f917.</div>
+<section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>MySQL result-label refinement</h2>
+</div><div class="doc-block" data-diff="added"><p>Direct construction requires an output label to be representable exactly. On MySQL 9.1.0, both quoted identifiers and quoted strings in the result alias position discard leading SQL whitespace. For example, <code>SELECT 1 AS &#039; lead&#039;, 2 AS &#039;trail &#039;</code> reports the names <code>lead</code> and <code>trail </code>. The result constructor refuses a decoded label starting with an ASCII SQL space character. Analysis drops the leading whitespace when naming the result, so the SQL inputs remain accepted and the observed label is retained.</p>
+</div><div class="doc-block" data-diff="added"><p>This refines the local output-label condition in <code>server-projection-v1.json</code>. The identifier value remains applicable to schema objects and can carry leading whitespace when the object name rules allow it. No result observation, engine release, negative case or run budget is excluded. The server comparison covers the alias case and the list of negative cases includes direct construction with an unrepresentable label.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
