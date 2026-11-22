@@ -23,6 +23,26 @@ final class TextLiteral
      */
     public function __construct(public readonly string $value)
     {
-        Check::input(!str_contains($value, "\0") && preg_match('//u', $value) === 1, 'TEXT literal requires valid UTF-8 without NUL.');
+        Check::input(preg_match('//u', $value) === 1, 'TEXT literal requires valid UTF-8.');
+    }
+
+    /**
+     * Emits the same TEXT bytes with the absence of expression affinity.
+     */
+    public function toString(): string
+    {
+        return str_contains($this->value, "\0")
+            ? "(+CAST(X'" . bin2hex($this->value) . "' AS TEXT))"
+            : "'" . str_replace("'", "''", $this->value) . "'";
+    }
+
+    /**
+     * Measures the variable syntax payload admitted by the containing statement.
+     */
+    public function payloadBytes(): int
+    {
+        $length = strlen($this->value);
+
+        return str_contains($this->value, "\0") ? 2 * $length : $length + substr_count($this->value, "'");
     }
 }

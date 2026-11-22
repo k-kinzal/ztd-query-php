@@ -484,7 +484,7 @@ Run `run_sqlite_defaults.py` using the SQLite fixture options. The SQLite collec
 
 ## SQLite literals and scalar composition
 
-Run the [scalar contract](sqlite-scalars-v1.json) with the pinned SQLite library:
+Run the [scalar contract](sqlite-scalars-v2.json) with the pinned SQLite library:
 
 ```sh
 scalar_evidence=$(mktemp -d)/scalar-evidence
@@ -496,6 +496,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_sc
 ```
 
 The four new literal classes are under the SQLite IR namespace Literal. The runner checks literal storage classes, negative zero, ordered result labels and parameter slots. It covers the finite product of literal pairs and the recorded operators in SELECT and VALUES, and explores nested operands from the fixed seeds. Six persistent-state observations compare the three write forms through direct construction and analysis against a table with duplicates and mixed storage classes. Each write is rolled back to the original fixture. The mutations detect loss of the REAL or hexadecimal sign and a TEXT value emitted as BLOB.
+
+The second scalar revision keeps the finite product and adds exact TEXT bytes containing NUL. Its affinity control distinguishes the unary-plus representation from a plain TEXT cast in a numeric comparison. The former NUL rejection becomes a positive direct construction. A separate ill-formed UTF-8 input checks the retained encoding boundary.
+
+## SQLite built-in patterns
+
+The [pattern contract](sqlite-pattern-v1.json) distinguishes ASCII-insensitive LIKE, case-sensitive GLOB, their negation and the optional LIKE escape. The [observer policy](sqlite-pattern-observer-v1.json) permits those two built-in functions for these comparisons. The runner measures the native build settings, all finite identities, nested and escaped operands, nullable results and the specified invalid-escape evaluation error. Run `run_sqlite_pattern.py` with the SQLite fixture options. The SQLite collector requires and replays its receipt.
 
 ## SQLite conditional expressions
 

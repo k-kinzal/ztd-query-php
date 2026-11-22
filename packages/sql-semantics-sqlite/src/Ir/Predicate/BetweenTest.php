@@ -18,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -37,9 +38,9 @@ final class BetweenTest
      * Holds the tested scalar, both bound roles and the negation.
      */
     public function __construct(
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $operand,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $lower,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $upper,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $lower,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|self|TruthTest|UnaryExpression $upper,
         public readonly bool $negated = false,
     ) {
     }

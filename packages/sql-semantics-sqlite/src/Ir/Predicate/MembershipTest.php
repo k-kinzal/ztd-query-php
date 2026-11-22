@@ -18,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -43,7 +44,7 @@ final class MembershipTest
      * @param list<MembershipItem> $items The ordered list, which can be empty
      */
     public function __construct(
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|self|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|self|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
         array $items,
         public readonly bool $negated = false,
     ) {

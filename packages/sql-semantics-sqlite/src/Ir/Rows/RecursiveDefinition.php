@@ -24,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -53,7 +54,7 @@ final class RecursiveDefinition
     public function __construct(
         public readonly ValuesQuery $anchor,
         array $step,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         public readonly bool $unionAll = false,
     ) {
         $outputs = Check::listOf($step, RecursiveColumn::class, 'The recursive step needs checked output columns.', 1);

@@ -19,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -38,7 +39,7 @@ final class CollatedExpression
      * Retains the scalar and its explicit collation identity.
      */
     public function __construct(
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|self|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|self|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
         public readonly Collation $collation,
     ) {
     }

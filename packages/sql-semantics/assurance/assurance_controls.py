@@ -331,8 +331,8 @@ def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
     before = folder / "previous" / "packages/sql-semantics/assurance"
     after = folder / "current" / "packages/sql-semantics/assurance"
-    shutil.copytree(TOOL, before)
-    shutil.copytree(TOOL, after)
+    shutil.copytree(TOOL, before, copy_function=shutil.copyfile)
+    shutil.copytree(TOOL, after, copy_function=shutil.copyfile)
     healthy = review(before, after)
     require(healthy["status"] == "identical-measured-inputs" and not healthy["observedPotentialReductions"],
             "revision-control-healthy-mismatch")

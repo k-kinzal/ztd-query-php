@@ -19,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
@@ -92,6 +94,13 @@ final class SelectSqlTest extends TestCase
         $range = new BetweenTest(new Parameter('02'), new Parameter('3'), new Parameter('1'), true);
 
         self::assertSame('(?02 NOT BETWEEN ?3 AND ?1)', (new SelectSql())->between($range, null, []));
+    }
+
+    public function testPatternPreservesTheOperandAndEscapeOrder(): void
+    {
+        $test = new PatternTest(PatternKind::AsciiLike, new Parameter('02'), new Parameter('3'), true, new Parameter('1'));
+
+        self::assertSame('(?02 NOT LIKE ?3 ESCAPE ?1)', (new SelectSql())->pattern($test, null, []));
     }
 
     public function testTruthUsesTheNumberedOperandOnce(): void

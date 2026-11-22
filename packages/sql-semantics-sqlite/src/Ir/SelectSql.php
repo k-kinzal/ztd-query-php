@@ -21,6 +21,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
@@ -132,7 +133,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -143,6 +144,7 @@ final class SelectSql
             $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
             $expression instanceof FoldedMembership => $this->foldedMembership($expression),
             $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),
+            $expression instanceof PatternTest => $this->pattern($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
             $expression instanceof Concatenation => '(' . $this->expression($expression->left, $source, $joins)
                 . ' || ' . $this->expression($expression->right, $source, $joins) . ')',
@@ -153,11 +155,24 @@ final class SelectSql
             $expression instanceof IntegerLiteral => $expression->decimal,
             $expression instanceof HexIntegerLiteral => $expression->toString(),
             $expression instanceof RealLiteral => $expression->toString(),
-            $expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'",
+            $expression instanceof TextLiteral => $expression->toString(),
             $expression instanceof BlobLiteral => "X'" . $expression->hex . "'",
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Writes the built-in test, preserving its lexical parameter order.
+     * @param list<Join> $joins The joined scope
+     */
+    public function pattern(PatternTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    {
+        $subject = $this->expression($expression->subject, $source, $joins);
+        $pattern = $this->expression($expression->pattern, $source, $joins);
+        $escape = $expression->escape === null ? '' : ' ESCAPE ' . $this->expression($expression->escape, $source, $joins);
+
+        return '(' . $subject . ($expression->negated ? ' NOT ' : ' ') . $expression->kind->value . ' ' . $pattern . $escape . ')';
     }
 
     /**

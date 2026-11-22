@@ -70,6 +70,9 @@ def children(expression):
     elif expression[0] == "concat":
         yield from children(expression[1])
         yield from children(expression[2])
+    elif expression[0] == "pattern":
+        for term in expression[3:]:
+            yield from children(term)
     elif expression[0] == "case":
         yield from children(expression[1])
         for when, result in expression[2]:

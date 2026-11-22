@@ -18,13 +18,14 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int}
+ * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int}
  */
 final class ExpressionScope
 {
@@ -41,17 +42,14 @@ final class ExpressionScope
         while ($pending !== []) {
             [$expression, $height, $visibility] = array_pop($pending);
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-            if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership) {
+            if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest) {
                 foreach ($this->branches($expression, $height + 1, $visibility) as $operand) {
                     $pending[] = $operand;
                 }
                 continue;
             }
             match (true) {
-                $expression instanceof ColumnReference => Check::input(
-                    $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),
-                    'Column slot must belong to the statement source at a visible occurrence.',
-                ),
+                $expression instanceof ColumnReference => $this->checkReference($expression, $widths, $visibility),
                 $expression instanceof Parameter => $payloadBytes += strlen($expression->label),
                 $expression instanceof CastExpression, $expression instanceof CollatedExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression
                     => $pending[] = [$expression->operand, $height + 1, $visibility],
@@ -61,7 +59,7 @@ final class ExpressionScope
                     [$expression->lower, $height + 1, $visibility],
                     [$expression->operand, $height + 1, $visibility],
                 ),
-                $expression instanceof TextLiteral => $payloadBytes += strlen($expression->value) + substr_count($expression->value, "'"),
+                $expression instanceof TextLiteral => $payloadBytes += $expression->payloadBytes(),
                 $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),
                 $expression instanceof RealLiteral => $payloadBytes += strlen($expression->whole) + strlen($expression->fraction ?? '') + strlen($expression->exponent ?? ''),
                 $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Concatenation, $expression instanceof Logical
@@ -73,10 +71,22 @@ final class ExpressionScope
     }
 
     /**
+     * Checks one slot against the visible input prefix.
+     * @param list<int> $widths The widths of the declared input occurrences
+     */
+    public function checkReference(ColumnReference $expression, array $widths, int $visibility): void
+    {
+        Check::input(
+            $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),
+            'Column slot must belong to the statement source at a visible occurrence.',
+        );
+    }
+
+    /**
      * Enumerates typed children for variable-arity scalar roles.
      * @return list<ScopedExpression>
      */
-    public function branches(CaseExpression|FoldedMembership|MembershipTest $expression, int $height, int $visibility): array
+    public function branches(CaseExpression|FoldedMembership|MembershipTest|PatternTest $expression, int $height, int $visibility): array
     {
         if ($expression instanceof CaseExpression) {
             return $this->choice($expression, $height, $visibility);
@@ -84,10 +94,27 @@ final class ExpressionScope
         if ($expression instanceof MembershipTest) {
             return $this->members($expression, $height, $visibility);
         }
+        if ($expression instanceof PatternTest) {
+            return $this->pattern($expression, $height, $visibility);
+        }
 
         $operands = [];
         foreach ($expression->bindings as $binding) {
             $operands[] = [$binding, $height, $visibility];
+        }
+
+        return $operands;
+    }
+
+    /**
+     * Visits all pattern arguments in lexical order.
+     * @return non-empty-list<ScopedExpression>
+     */
+    public function pattern(PatternTest $expression, int $height, int $visibility): array
+    {
+        $operands = [[$expression->subject, $height, $visibility], [$expression->pattern, $height, $visibility]];
+        if ($expression->escape !== null) {
+            $operands[] = [$expression->escape, $height, $visibility];
         }
 
         return $operands;

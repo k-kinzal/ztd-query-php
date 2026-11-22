@@ -13,9 +13,11 @@ from sqlite_cast_semantics import comparison_values, convert, text_value
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 from sqlite_numeric_semantics import NUMERIC_OPERATORS, evaluate_numeric
+from sqlite_pattern_semantics import NO_ESCAPE, evaluate_pattern
 from sqlite_relational_cases import case as select_case, children, order_value, truth
 
-CONTRACT = "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f"
+CONTRACT_NAME = "sqlite-scalars-v2.json"
+CONTRACT = "79cf2debd501cb0f486a9d84876fd118d84fd580b60a022eeaba556d86cdf48e"
 DDL = "CREATE TABLE ir_scalars (id BLOB, value BLOB)"
 DATA = [(1, "keep"), (1, "keep"), (2, b"\xff"), (2, 1.5), (3, None)]
 FIXTURE = DDL + "; INSERT INTO ir_scalars VALUES (1,'keep'),(1,'keep'),(2,X'FF'),(2,1.5),(3,NULL);"
@@ -91,6 +93,12 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
             return None
         combined = text_value(left).encode(errors="surrogateescape") + text_value(right).encode(errors="surrogateescape")
         return combined.decode(errors="surrogateescape")
+    if kind == "pattern":
+        operation, negated, subject, pattern, escape = arguments
+        value = evaluate(subject, bindings, row, case_equal, comparison_inputs)
+        rule = evaluate(pattern, bindings, row, case_equal, comparison_inputs)
+        delimiter = NO_ESCAPE if escape is None else evaluate(escape, bindings, row, case_equal, comparison_inputs)
+        return evaluate_pattern(operation, value, rule, negated, delimiter)
     if kind == "collate":
         return evaluate(arguments[1], bindings, row, case_equal, comparison_inputs)
     if kind == "folded-membership":
@@ -267,7 +275,7 @@ def analyzed():
 
 
 def negatives():
-    yield ["text", "abc\0d"], "UTF-8 without NUL"
+    yield ["text-bytes", "FF"], "TEXT literal requires valid UTF-8"
     yield ["blob", "A"], "pairs of upper-case hexadecimal"
     yield ["blob", "X7"], "pairs of upper-case hexadecimal"
     yield ["real", "", "", None, False], "at least one significand digit"
@@ -380,6 +388,9 @@ def execute(args, specification, db, worker_factory=Worker):
                     {"missing": sorted(expected_ids - set(visited)), "extra": sorted(set(visited) - expected_ids)})
             require(set(forms) == {"integer", "null", "parameter", "text", "blob", "real", "hex", "comparison", "logical", "arithmetic"},
                     "scalar-unobserved-operands", dict(forms))
+            current = query("select", [[["text", "abc\0d"], ["comparison", "<", ["text", "1\0"], ["integer", "2"]]]])
+            ledger.record("boundary/nul-text", "attempted", input=current)
+            probe(current, worker.request(current), db, ledger, "boundary/nul-text")
             for index, (sql, expected_query) in enumerate(analyzed()):
                 current = {"sql": sql, "declarations": [], "bindings": expected_query["bindings"]}
                 key = f"analysis/{index}"
@@ -408,9 +419,11 @@ def check_mutations(args, db):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     real = "sql-semantics-sqlite/src/Ir/Literal/RealLiteral.php"
     hex_integer = "sql-semantics-sqlite/src/Ir/Literal/HexIntegerLiteral.php"
+    text = "sql-semantics-sqlite/src/Ir/Literal/TextLiteral.php"
     cases = [
-        ("text-to-blob", renderer, """$expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'", """.rstrip(),
-         """$expression instanceof TextLiteral => "CAST('" . str_replace("'", "''", $expression->value) . "' AS BLOB)", """.rstrip(), ["text", "it's"]),
+        ("text-to-blob", renderer, "$expression instanceof TextLiteral => $expression->toString(),",
+         "$expression instanceof TextLiteral => 'CAST(' . $expression->toString() . ' AS BLOB)',", ["text", "it's"]),
+        ("add-nul-text-affinity", text, '"(+CAST(X\'"', '"(CAST(X\'"', ["comparison", "<", ["text", "1\0"], ["integer", "2"]]),
         ("drop-real-sign", real, "($this->negative ? '-' : '') . $this->whole", "$this->whole", ["real", "0", "0", None, True]),
         ("drop-hex-sign", hex_integer, "($this->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
     ]
@@ -421,4 +434,4 @@ def check_mutations(args, db):
 
 
 if __name__ == "__main__":
-    run_domain("scalars", "sqlite-scalars-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("scalars", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_mutations)

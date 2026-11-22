@@ -18,10 +18,22 @@ final class TextLiteralTest extends TestCase
         self::assertSame("it's 雪", (new TextLiteral("it's 雪"))->value);
     }
 
-    public function testRejectsNul(): void
+    public function testRejectsIllFormedUtf8(): void
     {
-        $this->expectExceptionMessage('UTF-8 without NUL');
+        $this->expectExceptionMessage('TEXT literal requires valid UTF-8');
 
-        new TextLiteral("a\0b");
+        new TextLiteral("\xff");
+    }
+
+    public function testToStringUsesATextExpressionWithoutAffinity(): void
+    {
+        self::assertSame("(+CAST(X'610062' AS TEXT))", (new TextLiteral("a\0b"))->toString());
+        self::assertSame("'it''s'", (new TextLiteral("it's"))->toString());
+    }
+
+    public function testPayloadBytesCountsTheEscapedOrHexadecimalPayload(): void
+    {
+        self::assertSame(6, (new TextLiteral("a\0b"))->payloadBytes());
+        self::assertSame(5, (new TextLiteral("it's"))->payloadBytes());
     }
 }

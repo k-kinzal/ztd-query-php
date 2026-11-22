@@ -16,6 +16,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 
 #[CoversClass(ExpressionScope::class)]
 #[Small]
@@ -28,6 +30,13 @@ final class ExpressionScopeTest extends TestCase
         (new ExpressionScope())->check([1, 1], [[$column, 0, 2]]);
 
         self::assertSame(1, $column->source);
+    }
+
+    public function testCheckReferenceRejectsADeclaredButInvisibleOccurrence(): void
+    {
+        $this->expectExceptionMessage('must belong to the statement source');
+
+        (new ExpressionScope())->checkReference(new ColumnReference(0, 1), [1, 1], 1);
     }
 
     public function testChoiceListsDormantAndActiveOperandsInWrittenOrder(): void
@@ -56,5 +65,15 @@ final class ExpressionScopeTest extends TestCase
         $value = new FoldedMembership(true, [$a, $b]);
 
         self::assertSame([[$a, 2, 4], [$b, 2, 4]], (new ExpressionScope())->branches($value, 2, 4));
+    }
+
+    public function testPatternVisitsTheEscapeInTheSameScope(): void
+    {
+        $subject = new ColumnReference(0);
+        $pattern = new Parameter('02');
+        $escape = new Parameter('7');
+        $test = new PatternTest(PatternKind::AsciiLike, $subject, $pattern, false, $escape);
+
+        self::assertSame([[$subject, 3, 1], [$pattern, 3, 1], [$escape, 3, 1]], (new ExpressionScope())->pattern($test, 3, 1));
     }
 }

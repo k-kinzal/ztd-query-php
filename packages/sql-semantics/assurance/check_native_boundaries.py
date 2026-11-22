@@ -19,6 +19,10 @@ class Fault(NamedTuple):
 def faults(engine):
     if engine == "sqlite":
         return [
+            Fault("admit-glob-escape", "Predicate/Pattern/PatternTest::__construct",
+                  "$kind !== PatternKind::Glob || $escape === null,", "true,"),
+            Fault("skip-like-escape-scope", "Predicate/ExpressionScope::pattern",
+                  "$operands[] = [$expression->escape, $height, $visibility];", ""),
             Fault("discard-live-membership-operand", "Platform::discardedBindings",
                   "$object->items === []", "$object->items !== []", "src/Platform.php"),
             Fault("skip-full-syntax-audit", "Publication::facts",
@@ -205,7 +209,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v17.json", "postgres-mutation-returning-boundaries-v2.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v10.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
+                       "native-boundaries-v17.json", "postgres-mutation-returning-boundaries-v2.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

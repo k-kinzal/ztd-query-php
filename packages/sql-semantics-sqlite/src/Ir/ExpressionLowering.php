@@ -27,6 +27,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -49,6 +51,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch as ParsedPattern;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
@@ -68,7 +72,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -90,6 +94,7 @@ final class ExpressionLowering
                 $expression->negated,
             ),
             $expression instanceof ParsedMembership => $this->membership($expression, $binding),
+            $expression instanceof ParsedPattern => $this->pattern($expression, $binding),
             $expression instanceof ParsedCollate => $this->collated($expression, $binding),
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),
@@ -102,6 +107,24 @@ final class ExpressionLowering
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
+    }
+
+    /**
+     * Resolves the infix syntax to the fixed built-in pattern operation.
+     * @throws InvalidConstruction When a pattern routine has no resolved role
+     */
+    public function pattern(ParsedPattern $expression, SourceBinding $binding): PatternTest
+    {
+        $kind = match ($expression->operator) {
+            PatternOperator::Like => PatternKind::AsciiLike,
+            PatternOperator::Glob => PatternKind::Glob,
+            PatternOperator::Regexp, PatternOperator::Match => throw new InvalidConstruction('This pattern routine has no resolved SQLite profile.'),
+        };
+        $subject = $this->lower($expression->left, $binding);
+        $pattern = $this->lower($expression->right, $binding);
+        $escape = $expression->escape === null ? null : $this->lower($expression->escape, $binding);
+
+        return new PatternTest($kind, $subject, $pattern, $expression->negated, $escape);
     }
 
     /**

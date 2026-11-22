@@ -26,6 +26,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -99,7 +100,7 @@ final class QueryClauses
     /**
      * Converts a filter or ON expression into the closed predicate domain.
      */
-    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null
+    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null
     {
         return $scalar === null ? null : (new ExpressionLowering())->lower($scalar, $binding);
     }

@@ -349,6 +349,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-concatenation-evidence"
+      - name: Collect SQLite built-in pattern observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_pattern.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-pattern-evidence"
       - name: Collect SQLite literal default observations
         if: ${{ !cancelled() }}
         env:
@@ -479,6 +488,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-folded-membership-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-collation-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-concatenation-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-pattern-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/

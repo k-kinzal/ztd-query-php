@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\Concatenation', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\Concatenation', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\Pattern\\PatternTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -111,6 +111,11 @@ if ($dialect === 'sqlite') {
     $properties['Predicate\\FoldedMembership'] = ['matches' => ['bool'], 'bindings' => ['array']];
     $methods['Predicate\\FoldedMembership'] = ['__construct'];
     $internal[] = 'Predicate\\FoldedMembershipLowering';
+    $properties['Predicate\\Pattern\\PatternKind'] = $methods['Predicate\\Pattern\\PatternKind'] = [];
+    $enumCases['Predicate\\Pattern\\PatternKind'] = ['AsciiLike' => 'LIKE', 'Glob' => 'GLOB'];
+    $properties['Predicate\\Pattern\\PatternTest'] = ['kind' => ['Predicate\\Pattern\\PatternKind'], 'subject' => $operands,
+        'pattern' => $operands, 'escape' => [...$operands, 'null'], 'negated' => ['bool']];
+    $methods['Predicate\\Pattern\\PatternTest'] = ['__construct'];
     $properties['Predicate\\MembershipItem'] = ['expression' => $operands];
     $properties['Predicate\\MembershipTest'] = ['operand' => $operands, 'items' => ['array'], 'negated' => ['bool']];
     $methods['Predicate\\MembershipItem'] = $methods['Predicate\\MembershipTest'] = ['__construct'];
@@ -167,6 +172,7 @@ if ($dialect === 'sqlite') {
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
     $methods['Literal\\RealLiteral'][] = 'toString';
     $methods['Literal\\HexIntegerLiteral'][] = 'toString';
+    $methods['Literal\\TextLiteral'] = ['__construct', 'toString', 'payloadBytes'];
     $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
@@ -439,7 +445,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat','bin2hex'];
 
 function requireShape(bool $condition, string $detail): void
 {

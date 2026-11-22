@@ -22,6 +22,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -37,13 +38,13 @@ final class ValueRowOperand
      * Returns a checked scalar for the enclosing row scope.
      * @throws InvalidConstruction When the value is outside the row operand roles
      */
-    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         Check::input(
             $value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof BlobLiteral
             || $value instanceof CaseExpression || $value instanceof CastExpression || $value instanceof CollatedExpression
             || $value instanceof Comparison || $value instanceof Concatenation || $value instanceof FoldedMembership || $value instanceof HexIntegerLiteral
-            || $value instanceof IntegerLiteral || $value instanceof Logical || $value instanceof MembershipTest
+            || $value instanceof IntegerLiteral || $value instanceof Logical || $value instanceof MembershipTest || $value instanceof PatternTest
             || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral
             || $value instanceof TextLiteral || $value instanceof TruthTest || $value instanceof UnaryExpression,
             'A VALUES row needs a scalar operand independent of tables.'

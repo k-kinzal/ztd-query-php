@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-pattern-v1.json": "6385d9428e2767c4e0ac9d53a22b1e4b593af2b7ccd696cbd9f4fe34c5e91d1f",
     "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
     "postgres-update-returning-v2.json": "f5f5710892ada09c1ca26c102c6af730e4b9fbd5c077d2af0cb0847d8e5b0efa",
     "postgres-delete-returning-v1.json": "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6",
@@ -93,7 +94,7 @@ CONTRACTS = {
     "server-delete-v2.json": "3a5763e35bcea1af1f7f1127dd8a157349dd8b2e79451c61e2388ec9b4780858",
     "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",
     "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",
-    "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",
+    "sqlite-scalars-v2.json": "79cf2debd501cb0f486a9d84876fd118d84fd580b60a022eeaba556d86cdf48e",
     "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
     "sqlite-relational-v1.json": "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d",
@@ -108,11 +109,6 @@ CONTRACTS = {
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
 PUBLICATION = "7565f214ab112e451f0c0058185349c6a5a851af4c5f7500a1cc5ed3f4b75323"
-
-
-SQLITE_LITERAL_TYPES = {
-    role: "Literal/" + role for role in ("BlobLiteral", "HexIntegerLiteral", "RealLiteral", "TextLiteral")
-}
 
 
 def declared_constructors(dialects):
@@ -132,8 +128,6 @@ def declared_constructors(dialects):
             roots_by_dialect[dialect].extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
         for role, record in contract["constructors"].items():
             concrete = record.get("type", role)
-            if name == "sqlite-scalars-v1.json":
-                concrete = SQLITE_LITERAL_TYPES.get(concrete, concrete)
             concrete = concrete.replace("/", "\\")
             for dialect in platforms:
                 clas = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + concrete

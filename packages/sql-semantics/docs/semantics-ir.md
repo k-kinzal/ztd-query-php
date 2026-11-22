@@ -31,6 +31,8 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 - Binary addition, subtraction, multiplication, comparisons, AND, and OR compose as scalar expressions in projections, filters, join predicates, VALUES rows, and assignments.
 - Numeric scalar expressions preserve division, remainder, bitwise AND and OR, and signed shifts with their explicit operand order. SQLite supplies its native numeric coercion, storage class and NULL behavior.
 - SQLite `||` holds the left and right scalars in order. It preserves NULL and appends the exact TEXT bytes of the native conversions, including BLOB bytes and embedded NUL.
+- SQLite LIKE and GLOB retain the subject, pattern and negation. LIKE also retains its optional ESCAPE operand. The fixed built-ins use ASCII case folding for LIKE and case-sensitive character matching for GLOB.
+- A direct SQLite TEXT constant can hold a zero code point. Its SQL representation preserves the full TEXT bytes and the absence of literal affinity.
 - The SQLite `Collation` enum identifies `BINARY`, `NOCASE` and `RTRIM` for scalar `COLLATE`, grouping and distinct counts. A collated scalar keeps its own value and affinity.
 - Scalar `IN` and `NOT IN` retain the tested value and the ordered list, including duplicate members and an empty list. The renderer preserves numbered binding registration in the empty form. Analysis records the decided integer outcome and surviving numbered bindings when SQLite folds away an unused operand.
 - SQLite range tests retain one tested scalar, its inclusive lower and upper bounds, and negation. The two comparisons use their respective affinities and collations.

@@ -22,6 +22,7 @@ import run_sqlite_insert_query as insert_query
 import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
 import run_sqlite_numeric as numeric
+import run_sqlite_pattern as pattern
 import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
 import run_sqlite_result as result
@@ -62,8 +63,9 @@ DOMAINS = {
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
-    "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
+    "sqlite-scalars-v2.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
+    pattern.CONTRACT_NAME: (pattern, pattern.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
     concatenation.CONTRACT_NAME: (concatenation, concatenation.FIXTURE),
     collation.CONTRACT_NAME: (collation, collation.FIXTURE),
@@ -90,7 +92,7 @@ def replay(directory, contract_name, index, library):
         return transcript
 
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
-    factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase,
+    factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase, pattern: pattern.PatternDatabase,
                group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase}.get(module, Database)
     database = factory(library)
     try:

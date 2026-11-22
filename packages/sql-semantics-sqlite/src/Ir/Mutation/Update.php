@@ -24,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -64,7 +65,7 @@ final class Update implements SemanticsIR
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         public readonly UpdateConflict $conflict = UpdateConflict::Inherit,
         array $returning = [],
     ) {

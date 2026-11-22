@@ -22,10 +22,12 @@ use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
@@ -150,6 +152,21 @@ final class ExpressionLoweringTest extends TestCase
         self::assertSame(Collation::NoCase, $value->collation);
         self::assertInstanceOf(Parameter::class, $value->operand);
         self::assertSame('02', $value->operand->label);
+    }
+
+    public function testPatternSelectsNativeLikeAndRetainsTheEscape(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT ?02 NOT LIKE ?3 ESCAPE ?7');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $column = $operation->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(PatternMatch::class, $column->expression);
+        $value = (new ExpressionLowering())->pattern($column->expression, new SourceBinding($operation->binding(), null));
+
+        self::assertSame(PatternKind::AsciiLike, $value->kind);
+        self::assertTrue($value->negated);
+        self::assertInstanceOf(Parameter::class, $value->escape);
+        self::assertSame('7', $value->escape->label);
     }
 
     public function testNullTestUsesNullSafeComparison(): void

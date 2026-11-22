@@ -24,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -61,7 +62,7 @@ final class GroupedSelect implements SemanticsIR
         public readonly ?TableSource $source,
         array $keys,
         array $columns,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         public readonly ?CountComparison $having = null,
     ) {
         $grouping = Check::listOf($keys, GroupKey::class, 'A grouped query requires an owned key list.');

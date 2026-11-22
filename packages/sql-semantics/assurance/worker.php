@@ -47,6 +47,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
@@ -82,7 +84,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -91,6 +93,13 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
             $input[3] === null ? null : operand($input[3]),
         ),
         'concat' => new Concatenation(operand($input[1]), operand($input[2])),
+        'pattern' => new PatternTest(
+            PatternKind::from($input[1]),
+            operand($input[3]),
+            operand($input[4]),
+            $input[2],
+            $input[5] === null ? null : operand($input[5])
+        ),
         'collate' => new CollatedExpression(operand($input[2]), Collation::from($input[1])),
         'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
         'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
@@ -104,6 +113,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
         'truth' => new TruthTest(operand($input[3]), $input[1], $input[2]),
         'integer' => new IntegerLiteral($input[1]),
         'text' => new TextLiteral($input[1]),
+        'text-bytes' => new TextLiteral(hex2bin($input[1])),
         'blob' => new BlobLiteral($input[1]),
         'real' => new RealLiteral($input[1], $input[2], $input[3], $input[4]),
         'hex' => new HexIntegerLiteral($input[1], $input[2]),
@@ -116,7 +126,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
     };
 }
 
-function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -126,6 +136,8 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
             $value->otherwise === null ? null : observeOperand($value->otherwise),
         ],
         $value instanceof Concatenation => ['concat', observeOperand($value->left), observeOperand($value->right)],
+        $value instanceof PatternTest => ['pattern', $value->kind->value, $value->negated, observeOperand($value->subject),
+            observeOperand($value->pattern), $value->escape === null ? null : observeOperand($value->escape)],
         $value instanceof CollatedExpression => ['collate', $value->collation->value, observeOperand($value->operand)],
         $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
         $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],

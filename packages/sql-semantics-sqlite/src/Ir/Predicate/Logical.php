@@ -18,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
@@ -37,8 +38,8 @@ final class Logical
      */
     public function __construct(
         public readonly LogicalOperator $operator,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|self|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|self|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|self|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|self|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
     ) {
     }
 }
