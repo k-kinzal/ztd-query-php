@@ -22,6 +22,8 @@ def faults(engine):
                   "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("skip-group-row-filter-scope", "Aggregation/GroupedSelect::__construct", "$predicates[] = [$where, 0, count($widths)];", ""),
             Fault("ignore-having-count-slot", "Aggregation/GroupedSelect::__construct", "$argument === null || isset($source->columns[$argument->slot]),", "true,"),
+            Fault("substitute-numeric-operation", "Expression/BinaryOperatorLowering::lower",
+                  "BinaryOperator::Divide => ArithmeticOperator::Divide", "BinaryOperator::Divide => ArithmeticOperator::Remainder"),
             Fault("ignore-inserted-output-slot", "Mutation/Insert::__construct",
                   "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("allow-duplicate-insert-slot", "Mutation/Insert::__construct", "!isset($seen[$column->slot]),", "true,"),
@@ -163,7 +165,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v3.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v3.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v2.json", "sqlite-numeric-boundaries-v1.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

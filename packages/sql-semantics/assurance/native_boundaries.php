@@ -16,6 +16,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-grouped-boundaries-v3.json', 'a2a412c86bd0d805dea49b84a59887964d26353432d7dd7bc3cbfbeef17cac56'],
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
             ['sqlite-insert-slots-boundaries-v1.json', 'cde9f0df0d6f1ca8ff20ddac140fd96577cf456c2facfd00e809f5d89a717d9e'],
+            ['sqlite-numeric-boundaries-v1.json', '704e686c9ae139beee4418d5272114b3fa58faab587d23119e3d50e6ef4c8963'],
             ['sqlite-scalar-boundaries-v2.json', '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be'],
             ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
             ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
@@ -57,7 +58,7 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     if ($dialect === 'sqlite') {
-        foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\Predicate\\ComparisonOperator',
+        foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\ArithmeticOperator', 'Statement\\Expression\\Operator\\BinaryOperator', 'Ir\\Predicate\\ComparisonOperator',
             'Statement\\Expression\\FunctionCall', 'Statement\\Expression\\Operator\\Binary', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',

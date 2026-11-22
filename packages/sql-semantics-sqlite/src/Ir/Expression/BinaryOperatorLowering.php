@@ -28,6 +28,12 @@ final class BinaryOperatorLowering
             BinaryOperator::Add => ArithmeticOperator::Add,
             BinaryOperator::Subtract => ArithmeticOperator::Subtract,
             BinaryOperator::Multiply => ArithmeticOperator::Multiply,
+            BinaryOperator::Divide => ArithmeticOperator::Divide,
+            BinaryOperator::Modulo => ArithmeticOperator::Remainder,
+            BinaryOperator::BitAnd => ArithmeticOperator::BitAnd,
+            BinaryOperator::BitOr => ArithmeticOperator::BitOr,
+            BinaryOperator::ShiftLeft => ArithmeticOperator::ShiftLeft,
+            BinaryOperator::ShiftRight => ArithmeticOperator::ShiftRight,
             BinaryOperator::And => LogicalOperator::And,
             BinaryOperator::Or => LogicalOperator::Or,
             BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,
@@ -38,8 +44,6 @@ final class BinaryOperatorLowering
             BinaryOperator::LessOrEqual => ComparisonOperator::LessOrEqual,
             BinaryOperator::Greater => ComparisonOperator::Greater,
             BinaryOperator::GreaterOrEqual => ComparisonOperator::GreaterOrEqual,
-            BinaryOperator::Divide, BinaryOperator::Modulo,
-            BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight,
             BinaryOperator::Concat, BinaryOperator::Extract, BinaryOperator::ExtractValue
                 => throw new InvalidConstruction('This operation has no complete SQLite scalar representation.'),
         };

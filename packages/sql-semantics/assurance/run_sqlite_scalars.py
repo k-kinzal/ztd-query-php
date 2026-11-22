@@ -12,6 +12,7 @@ from run_sqlite_values import names
 from sqlite_cast_semantics import comparison_values, convert
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
+from sqlite_numeric_semantics import NUMERIC_OPERATORS, evaluate_numeric
 from sqlite_relational_cases import case as select_case, children, order_value, truth
 
 CONTRACT = "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f"
@@ -87,6 +88,8 @@ def evaluate(term, bindings, row=(), case_equal=None):
         return int({"=": p == q, "IS": p == q, "IS NOT": p != q, "<>": p != q,
                     "<": p < q, "<=": p <= q, ">": p > q, ">=": p >= q}[operator])
     assert kind == "arithmetic"
+    if operator in NUMERIC_OPERATORS:
+        return evaluate_numeric(operator, a, b)
     if a is None or b is None:
         return None
     p, q = numeric(a), numeric(b)

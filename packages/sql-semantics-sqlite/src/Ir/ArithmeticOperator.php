@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 /**
- * SQLite binary arithmetic operations available in a complete projection.
+ * SQLite binary numeric operations available in a checked scalar expression.
  *
  * @visibility public
  * @example Choosing a subtraction
@@ -16,4 +16,10 @@ enum ArithmeticOperator: string
     case Add = '+';
     case Subtract = '-';
     case Multiply = '*';
+    case Divide = '/';
+    case Remainder = '%';
+    case BitAnd = '&';
+    case BitOr = '|';
+    case ShiftLeft = '<<';
+    case ShiftRight = '>>';
 }

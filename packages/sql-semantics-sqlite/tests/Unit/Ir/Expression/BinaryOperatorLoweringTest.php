@@ -24,6 +24,12 @@ final class BinaryOperatorLoweringTest extends TestCase
         self::assertSame(ComparisonOperator::Equal, $operators->lower(BinaryOperator::DoubleEqual));
         self::assertSame(ComparisonOperator::IsNot, $operators->lower(BinaryOperator::IsDistinctFrom));
         self::assertSame(ArithmeticOperator::Multiply, $operators->lower(BinaryOperator::Multiply));
+        self::assertSame(ArithmeticOperator::Divide, $operators->lower(BinaryOperator::Divide));
+        self::assertSame(ArithmeticOperator::Remainder, $operators->lower(BinaryOperator::Modulo));
+        self::assertSame(ArithmeticOperator::BitAnd, $operators->lower(BinaryOperator::BitAnd));
+        self::assertSame(ArithmeticOperator::BitOr, $operators->lower(BinaryOperator::BitOr));
+        self::assertSame(ArithmeticOperator::ShiftLeft, $operators->lower(BinaryOperator::ShiftLeft));
+        self::assertSame(ArithmeticOperator::ShiftRight, $operators->lower(BinaryOperator::ShiftRight));
         self::assertSame(LogicalOperator::Or, $operators->lower(BinaryOperator::Or));
     }
 

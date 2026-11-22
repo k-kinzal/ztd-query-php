@@ -28,6 +28,8 @@ RELATED_SQLITE_DOMAINS = {
     "term: INTEGER": ("sqlite-scalars-v1.json",),
     "expr: expr AND expr": ("sqlite-scalars-v1.json",),
     "expr: expr OR expr": ("sqlite-scalars-v1.json",),
+    "expr: expr STAR|SLASH|REM expr": ("sqlite-scalars-v1.json", "sqlite-numeric-operators-v1.json"),
+    "expr: expr BITAND|BITOR|LSHIFT|RSHIFT expr": ("sqlite-numeric-operators-v1.json",),
     "expr: expr LT|GT|GE|LE expr": ("sqlite-scalars-v1.json",),
     "expr: expr EQ|NE expr": ("sqlite-scalars-v1.json",),
     "expr: expr IS expr": ("sqlite-scalars-v1.json",),

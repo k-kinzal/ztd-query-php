@@ -1,20 +1,17 @@
 """Compare checked SQLite CAST roles with typed independent observations."""
 
-import time
-from collections import Counter
-
-from run import Failure, Ledger, Worker, compare, require, write_json
+from run import Failure, Worker, compare, require
 from run_sqlite_case import probe
 from run_sqlite_scalars import query
 from sqlite_case_cases import FIXTURE, expected
 from sqlite_cast_cases import analyzed, boundaries, cast, finite_cases, finite_id, finite_ids, negatives, seeded
-from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
+from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_relational_cases import children
 from sqlite_result_cases import integer
+from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
 CONTRACT_NAME = "sqlite-cast-v1.json"
 CONTRACT = "0f90c2950f97a37ccc5f8628ac5c418e7dde88ec9d4d3be8601a808dab05cedd"
-EXCEPTION = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\"
 
 
 def controls():
@@ -61,45 +58,14 @@ def forms(reply):
                 yield "input/" + operand[2][0]
 
 
+def required(domain):
+    return {*("root/" + role for role in domain["roots"]), *("target/" + target for target in domain["targets"]),
+            "input/cast", "input/case", "input/parameter", "input/null", "input/blob", "input/text", "input/real", "input/integer"}
+
+
 def execute(args, specification, db, worker_factory=Worker):
-    domain, settings = specification["finite"], specification["exploration"]
-    seen, observed = Counter(), Counter()
-    comparator = controls()
-    key = current = None
-    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
-        ledger = Ledger(stream)
-        try:
-            for key, current, item in requests(specification):
-                ledger.record(key, "attempted", input=current, expected=item)
-                reply = worker.request(current)
-                probe(item, reply, db, ledger, key, original=current.get("sql"))
-                if key.startswith("finite/"):
-                    seen[finite_id(reply, domain)] += 1
-                if key.startswith("seed/"):
-                    observed.update(forms(reply))
-            for index, (current, status, reason) in enumerate(negatives()):
-                key = f"negative/{index}"
-                ledger.record(key, "attempted", input=current)
-                reply = worker.request(current)
-                exception = EXCEPTION + ("InvalidConstruction" if status == "rejected" else "SemanticException")
-                require(reply["status"] == status and reply["exception"] == exception and reason in reply["message"],
-                        "sqlite-cast-negative-boundary", reply)
-                ledger.record(key, "rejected", response=reply)
-            require(seen.keys() == finite_ids(domain) and set(seen.values()) == {1}, "sqlite-cast-finite-incomplete")
-            required = {*("root/" + role for role in domain["roots"]), *("target/" + target for target in domain["targets"]),
-                        "input/cast", "input/case", "input/parameter", "input/null", "input/blob", "input/text", "input/real", "input/integer"}
-            require(required <= observed.keys(), "sqlite-cast-unobserved-forms", sorted(required - observed.keys()))
-            counts = complete_observations(ledger, settings)
-        except Exception as error:
-            signal = error.signal if isinstance(error, Failure) else "unexpected-error"
-            detail = error.detail if isinstance(error, Failure) else None
-            if key in ledger.events and ledger.events[key][-1] not in ("compared", "rejected"):
-                ledger.record(key, "timeout" if signal == "timeout" else "failed", signal=signal, detail=detail)
-            write_json(args.out / "counterexample.json",
-                       {"id": key, "original": current, "signal": signal, "failure": str(error), "detail": detail, "shrunk": None})
-            raise
-        return {"counts": counts, "finiteIds": sorted(seen), "forms": dict(observed), "php": worker.environment,
-                "controls": comparator}
+    schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, controls)
+    return execute_schedule(args, specification, db, worker_factory, schedule)
 
 
 def check_faults(args, db):

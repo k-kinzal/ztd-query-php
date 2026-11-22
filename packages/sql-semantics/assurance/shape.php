@@ -78,6 +78,9 @@ $pureCollaborators = ['SelectBounds', 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
+    $enumCases['ArithmeticOperator'] += [
+        'Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'ShiftLeft' => '<<', 'ShiftRight' => '>>',
+    ];
     $roots[] = 'Aggregation\\GroupedSelect';
     $properties['Aggregation\\GroupedSelect'] = [
         'source' => ['?TableSource'], 'keys' => ['array'], 'columns' => ['array'], 'where' => [...$operands, 'null'],

@@ -21,6 +21,7 @@ import run_sqlite_insert_input as insert_input
 import run_sqlite_insert_query as insert_query
 import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
+import run_sqlite_numeric as numeric
 import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
 import run_sqlite_result as result
@@ -55,6 +56,7 @@ DOMAINS = {
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
+    numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
     group_filter.CONTRACT_NAME: (group_filter, group_filter.FIXTURE),

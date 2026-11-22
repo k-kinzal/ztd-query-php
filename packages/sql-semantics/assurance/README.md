@@ -308,6 +308,10 @@ The [INSERT input record](sqlite-insert-input-v2.json) checks a default-only row
 
 Run `run_sqlite_insert_input.py` with the SQLite fixture options. The collector replays typed rows, constraint outcomes, trigger effects and rollback.
 
+## SQLite numeric operators
+
+The [numeric operator record](sqlite-numeric-operators-v1.json) checks division, remainder, bitwise operators and shifts. The evaluator applies signed 64-bit and binary64 rules and compares exact storage classes and values. The finite cross product covers each operand order and root. The generated trees also exercise nested operations and table references. Run `run_sqlite_numeric.py` with the SQLite fixture options.
+
 ## SQLite INSERT RETURNING
 
 The [INSERT RETURNING record](sqlite-insert-returning-v1.json) checks an ordered list of supplied slots and a separate ordered result over one target. Its fixture computes defaults and generated values, records the inserted row, and then changes its payload with an AFTER trigger. Run `run_sqlite_insert_returning.py` with the SQLite fixture options to compare the immediate returned row, trigger state, stored state and rollback for all three input roles.
