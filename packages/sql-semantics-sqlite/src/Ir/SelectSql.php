@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -138,12 +139,13 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|DefinitionSource|null $source,
         array $joins = [],
     ): string {
         return match (true) {
             $expression instanceof ColumnReference => $this->column($expression, $source, $joins),
+            $expression instanceof Coalesce => $this->coalesce($expression, $source, $joins),
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
@@ -158,9 +160,8 @@ final class SelectSql
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
             $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
-            $expression instanceof HexIntegerLiteral => $expression->toString(),
-            $expression instanceof RealLiteral => $expression->toString(),
-            $expression instanceof TextLiteral => $expression->toString(),
+            $expression instanceof HexIntegerLiteral, $expression instanceof RealLiteral, $expression instanceof TextLiteral
+                => $expression->toString(),
             $expression instanceof BlobLiteral => "X'" . $expression->hex . "'",
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
@@ -178,6 +179,20 @@ final class SelectSql
         $escape = $expression->escape === null ? '' : ' ESCAPE ' . $this->expression($expression->escape, $source, $joins);
 
         return '(' . $subject . ($expression->negated ? ' NOT ' : ' ') . $expression->kind->value . ' ' . $pattern . $escape . ')';
+    }
+
+    /**
+     * Emits all arguments in their native evaluation and parameter order.
+     * @param list<Join> $joins
+     */
+    public function coalesce(Coalesce $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
+    {
+        $arguments = [];
+        foreach ($expression->arguments as $argument) {
+            $arguments[] = $this->expression($argument->expression, $source, $joins);
+        }
+
+        return 'COALESCE(' . implode(', ', $arguments) . ')';
     }
 
     /**

@@ -17,6 +17,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
@@ -100,7 +102,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -108,6 +110,10 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
             array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
             $input[3] === null ? null : operand($input[3]),
         ),
+        'coalesce' => new Coalesce(array_map(
+            static fn (array $value) => $value === ['wrong-argument'] ? new IntegerLiteral('3') : new CoalesceArgument(operand($value)),
+            $input[1],
+        )),
         'concat' => new Concatenation(operand($input[1]), operand($input[2])),
         'pattern' => new PatternTest(
             PatternKind::from($input[1]),
@@ -142,7 +148,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
     };
 }
 
-function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -151,6 +157,10 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
             array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
             $value->otherwise === null ? null : observeOperand($value->otherwise),
         ],
+        $value instanceof Coalesce => ['coalesce', array_map(
+            static fn (CoalesceArgument $argument): array => observeOperand($argument->expression),
+            $value->arguments,
+        )],
         $value instanceof Concatenation => ['concat', observeOperand($value->left), observeOperand($value->right)],
         $value instanceof PatternTest => ['pattern', $value->kind->value, $value->negated, observeOperand($value->subject),
             observeOperand($value->pattern), $value->escape === null ? null : observeOperand($value->escape)],

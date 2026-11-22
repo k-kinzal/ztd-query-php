@@ -169,6 +169,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-insert-query-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-insert-input-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-case-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-coalesce-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-cast-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-numeric-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-unary-evidence/

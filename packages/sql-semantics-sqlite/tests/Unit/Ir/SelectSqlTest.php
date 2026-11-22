@@ -10,8 +10,11 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
@@ -145,5 +148,12 @@ final class SelectSqlTest extends TestCase
 
         self::assertSame('SELECT 1 AS "first"', $renderer->render($select));
         self::assertSame('SELECT 1 AS "first" WHERE 1', $renderer->render($select, requireWhere: true));
+    }
+
+    public function testCoalesceEmitsARegisteredMarkerAfterTheNullOperand(): void
+    {
+        $call = new Coalesce([new CoalesceArgument(new NullLiteral()), new CoalesceArgument(new Parameter('007'))]);
+
+        self::assertSame('COALESCE(NULL, ?007)', (new SelectSql())->coalesce($call, null, []));
     }
 }

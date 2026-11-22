@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
@@ -97,5 +99,14 @@ final class ExpressionScopeTest extends TestCase
         $test = new PatternTest(PatternKind::AsciiLike, $subject, $pattern, false, $escape);
 
         self::assertSame([[$subject, 3, 1], [$pattern, 3, 1], [$escape, 3, 1]], (new ExpressionScope())->pattern($test, 3, 1));
+    }
+
+    public function testCoalesceVisitsDormantOperandsInTheSameScope(): void
+    {
+        $first = new IntegerLiteral('1');
+        $rest = new Parameter('07');
+        $operation = new Coalesce([new CoalesceArgument($first), new CoalesceArgument($rest)]);
+
+        self::assertSame([[$first, 3, 2], [$rest, 3, 2]], (new ExpressionScope())->coalesce($operation, 3, 2));
     }
 }

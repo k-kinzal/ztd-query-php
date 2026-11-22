@@ -33,7 +33,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\Concatenation', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\Pattern\\PatternTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\Nulls\\Coalesce', 'Expression\\Concatenation', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\Pattern\\PatternTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -217,6 +217,10 @@ if ($dialect === 'sqlite') {
     $methods['Expression\\CollatedExpression'] = ['__construct'];
     $internal[] = 'Rows\\ValueRowOperand';
     $pureCollaborators[] = 'Rows\\ValueRowOperand';
+    $properties['Expression\\Nulls\\Coalesce'] = ['arguments' => ['array']];
+    $properties['Expression\\Nulls\\CoalesceArgument'] = ['expression' => $operands];
+    $methods['Expression\\Nulls\\Coalesce'] = $methods['Expression\\Nulls\\CoalesceArgument'] = ['__construct'];
+    $internal[] = 'Expression\\Nulls\\CoalesceLowering';
     $properties['Expression\\CastExpression'] = ['target' => ['Expression\\CastTarget'], 'operand' => $operands];
     $methods['Expression\\CastExpression'] = ['__construct'];
     $properties['Expression\\CastTarget'] = $methods['Expression\\CastTarget'] = [];
@@ -762,9 +766,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v25.json';
+    $storagePath = __DIR__ . '/value-storage-v26.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '533c69d3a151f0b197a78e92e84ab8569442ba75b9c9cac22d604b4206bbb4cf',
+        hash_file('sha256', $storagePath) === '3a2bc040b3940ae0867315d4d3ad372b6a2f2192b5c55e142dac5b032a8d4223',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -857,6 +861,7 @@ try {
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DeclaredDatatypeLowering' => 'Schema\\DeclaredDatatypeName',
+                'Expression\\Nulls\\CoalesceLowering' => 'Expression\\Nulls\\Coalesce',
                 'Schema\\Generation\\GeneratedLowering' => 'Schema\\Generation\\ColumnGeneration',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',

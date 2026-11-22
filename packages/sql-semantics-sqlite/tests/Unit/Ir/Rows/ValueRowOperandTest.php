@@ -22,4 +22,11 @@ final class ValueRowOperandTest extends TestCase
 
         self::assertSame($operand, (new ValueRowOperand())->checked($operand));
     }
+
+    public function testAtomRetainsTheExactNativeMarker(): void
+    {
+        $operand = new \SqlSemantics\Platform\Sqlite\Ir\Parameter('03');
+
+        self::assertSame($operand, (new ValueRowOperand())->atom($operand));
+    }
 }

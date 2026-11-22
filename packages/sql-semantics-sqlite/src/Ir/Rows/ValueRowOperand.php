@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -38,16 +39,29 @@ final class ValueRowOperand
      * Returns a checked scalar for the enclosing row scope.
      * @throws InvalidConstruction When the value is outside the row operand roles
      */
-    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    {
+        if ($value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof CaseExpression
+            || $value instanceof CastExpression || $value instanceof Coalesce || $value instanceof CollatedExpression
+            || $value instanceof Comparison || $value instanceof Concatenation || $value instanceof FoldedMembership
+            || $value instanceof Logical || $value instanceof MembershipTest || $value instanceof PatternTest
+            || $value instanceof TruthTest || $value instanceof UnaryExpression) {
+            return $value;
+        }
+
+        return $this->atom($value);
+    }
+
+    /**
+     * Checks a source-free atomic operand, including its marker role.
+     * @throws InvalidConstruction When the input has no source-free role
+     */
+    public function atom(object $value): BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|Parameter|RealLiteral|TextLiteral
     {
         Check::input(
-            $value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof BlobLiteral
-            || $value instanceof CaseExpression || $value instanceof CastExpression || $value instanceof CollatedExpression
-            || $value instanceof Comparison || $value instanceof Concatenation || $value instanceof FoldedMembership || $value instanceof HexIntegerLiteral
-            || $value instanceof IntegerLiteral || $value instanceof Logical || $value instanceof MembershipTest || $value instanceof PatternTest
-            || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral
-            || $value instanceof TextLiteral || $value instanceof TruthTest || $value instanceof UnaryExpression,
-            'A VALUES row needs a scalar operand independent of tables.'
+            $value instanceof BlobLiteral || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral
+                || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral,
+            'A VALUES row needs a scalar operand independent of tables.',
         );
 
         return $value;

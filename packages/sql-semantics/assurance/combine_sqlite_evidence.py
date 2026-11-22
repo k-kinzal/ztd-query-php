@@ -67,6 +67,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-grouped-evidence", "sqlite-grouped-v2.json", 80, 159, 9, 4),
     Domain("semantics-ir-sqlite-group-filter-evidence", "sqlite-group-filter-v1.json", 384, 476, 6, 4),
     Domain("semantics-ir-sqlite-transaction-evidence", "sqlite-transaction-v1.json", 80, 213, 6, 3),
+    Domain("semantics-ir-sqlite-coalesce-evidence", "sqlite-coalesce-v1.json", 48, 180, 7, 4),
     Domain("semantics-ir-sqlite-case-evidence", "sqlite-case-v1.json", 400, 503, 5, 4),
     Domain("semantics-ir-sqlite-cast-evidence", "sqlite-cast-v1.json", 140, 219, 4, 3),
     Domain("semantics-ir-sqlite-defaults-evidence", "sqlite-defaults-v3.json", 280, 345, 5, 3),

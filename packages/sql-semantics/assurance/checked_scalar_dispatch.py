@@ -6,8 +6,8 @@ import json
 from checked_value_graph import DIALECTS
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "scalar-dispatch-v1.json"
-CONTRACT_DIGEST = "1a2b9ffd8090d4f1501703ec3af12e9534d981c559d88e8ed29ae12477da6cf6"
+CONTRACT = "scalar-dispatch-v2.json"
+CONTRACT_DIGEST = "a329ef2ec9ef4a4d6f33f15adc945a1b258e42bb587e2959f92d888e31689115"
 
 
 def verify(outcomes, value_graph, specification):

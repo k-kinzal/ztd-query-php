@@ -17,6 +17,7 @@ class Fault(NamedTuple):
     before: str
     after: str
     artifact: Optional[str] = None
+    message: Optional[str] = None
 
 
 def faults(engine):
@@ -126,6 +127,12 @@ def faults(engine):
             Fault("allow-automatic-inline-descending-key", "Schema/Key/PrimaryKey::__construct",
                   "!$autoIncrement || !$inline || !$checked[0]->descending,", "true,"),
             Fault("replace-declared-default", "Schema/CreateColumnLowering::lower", "$default === null,", "true,"),
+            Fault("admit-excessive-coalesce-arity", "Expression/Nulls/Coalesce::__construct", "count($arguments) <= 127", "true"),
+            Fault("skip-coalesce-argument-scope", "Predicate/ExpressionScope::coalesce",
+                  "$operands[] = [$argument->expression, $height, $visibility];", ""),
+            Fault("omit-coalesce-branch", "SelectSql::expression",
+                  "$expression instanceof Coalesce => $this->coalesce($expression, $source, $joins),", "",
+                  message="Incomplete scalar dispatch in expression"),
             Fault("allow-excessive-case-branches", "Expression/CaseExpression::__construct", "count($branches) <= 32,", "true,"),
             Fault("skip-conditional-result-scope", "Predicate/ExpressionScope::choice",
                   "$operands[] = [$branch->then, $height, $visibility];", ""),
@@ -302,7 +309,7 @@ def check_fault(args, engine, fault, distribution):
     except Failure as failure:
         label = {"sqlite": "Folded binding", "postgres": "Integer binding"}.get(engine)
         message = f"{label} source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
-        expected = {"status": "shape-mismatch", "message": message}
+        expected = {"status": "shape-mismatch", "message": fault.message or message}
         require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
                 {"fault": fault.name, "response": failure.detail})
         record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative.as_posix(),
@@ -344,7 +351,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "native-boundaries-v27.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v2.json", "sqlite-insert-slots-boundaries-v4.json", "sqlite-scalar-boundaries-v14.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v2.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v1.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "native-boundaries-v27.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v2.json", "sqlite-insert-slots-boundaries-v4.json", "sqlite-scalar-boundaries-v15.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v2.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v26.json", "value-primitives.json")},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},
     })

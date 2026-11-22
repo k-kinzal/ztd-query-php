@@ -331,7 +331,7 @@ The evaluator treats outer joins as filtered products with unmatched-row extensi
 
 The [closed value contract](closed-value-graph-v1.json) fixes the static argument for declared fields and retained children. The source audit requires each nonpromoted readonly field to receive one unconditional constructor initialization. The bundle reconciles the audited fields with the independently extracted inventory, verified list copies and pinned release enums. Its machine-readable graph records the argument's premises and the omission, open-edge, unchecked-list, external-definition and initialization controls.
 
-The [scalar dispatch contract](scalar-dispatch-v1.json) checks that each admitted operand type reaches one explicit branch or a typed delegation. The audit compares the renderer's PHP argument union with the checked fields of the listed callers. Removing a branch, adding a fallback, or narrowing both the signature and dispatch while still accepting a wider field fails the corresponding check. This evidence concerns coverage of the dispatch, with SQL semantics checked by the native comparisons.
+The [scalar dispatch contract](scalar-dispatch-v2.json) checks that each admitted operand type reaches one explicit branch or a typed delegation. The audit compares the renderer's PHP argument union with the checked fields of the listed callers. Removing a branch, adding a fallback, or narrowing both the signature and dispatch while still accepting a wider field fails the corresponding check. This evidence concerns coverage of the dispatch, with SQL semantics checked by the native comparisons.
 
 The source audit also checks the baseline digests of the value primitives used by all three dialects. A change to list copying, constructor checks, name comparison or the snapshot restoration guard is visible to the verifier. Any intentional revision of those primitives belongs in the review of the assurance mechanism.
 
@@ -573,6 +573,8 @@ The [default record](sqlite-defaults-v3.json) extends the ordinary declaration w
 Run `run_sqlite_defaults.py` using the SQLite fixture options. The SQLite collector requires and replays the default receipt.
 
 The [column policy record](sqlite-not-null-conflict-v2.json) checks INSERT and UPDATE behavior after the declaration is installed. It crosses all five algorithms, explicit statement overrides, absence of the constraint, three fixed defaults and two transaction states. The explorer varies column count, storage type and the column receiving NULL. Run `run_sqlite_not_null_conflict.py` with the same options and retain the catalog, conflict write and transaction records.
+
+The [SQLite first non-NULL contract](sqlite-coalesce-v1.json) checks COALESCE and binary IFNULL, including ordered arguments, all-NULL results and deferred evaluation errors. It compares implicit and explicit collation, marker registration, filters and schema expressions. Run `run_sqlite_coalesce.py` with the pinned native fixture and standard options.
 
 ## SQLite literals and scalar composition
 

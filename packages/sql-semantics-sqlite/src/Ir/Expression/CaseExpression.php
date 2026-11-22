@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Expression;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -40,14 +41,14 @@ final class CaseExpression
     public readonly array $branches;
 
     /**
-     * @param Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base The base evaluated once in a simple CASE
+     * @param Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base The base evaluated once in a simple CASE
      * @param list<CaseBranch> $branches The branches in evaluation order
-     * @param Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise The result selected when every branch misses
+     * @param Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise The result selected when every branch misses
      */
     public function __construct(
-        public readonly Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base,
         array $branches,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise = null,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|self|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise = null,
     ) {
         Check::input(count($branches) <= 32, 'A CASE expression can have at most 32 branches.');
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression needs at least one checked branch.', 1);

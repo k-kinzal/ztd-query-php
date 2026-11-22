@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v13.json"
-CONTRACT = "3f88d2975abd88e28aced74b63d8d41a386471380f4f84d0988415456c90a48d"
+CONTRACT_NAME = "release-layout-v14.json"
+CONTRACT = "0467a2b0b81d50deda5146b6d7530eead87da47cfaa86f78f31f696a0463c259"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -202,6 +202,8 @@ def verify_probe(raw, catalog):
                 "unexpected-installed-publication", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Select"):
             require(item.get("joinedLocal") == [True, 0, 1, 1], "installed-joined-local-source-mismatch", item)
+            require(item.get("coalesce") == [2, "007", 'SELECT COALESCE(NULL, ?007) AS "chosen"'],
+                    "installed-coalesce-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):

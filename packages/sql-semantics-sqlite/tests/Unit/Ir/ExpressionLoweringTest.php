@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
@@ -26,6 +27,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternKind;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
@@ -177,5 +179,19 @@ final class ExpressionLoweringTest extends TestCase
 
         self::assertInstanceOf(Comparison::class, $value);
         self::assertSame(ComparisonOperator::Is, $value->operator);
+    }
+
+    public function testConditionalConvertsAnOrdinaryBuiltinToAnOrderedRole(): void
+    {
+        $inspected = (new Inspection())->inspect('SELECT COALESCE(NULL,7) AS n');
+        self::assertInstanceOf(Select::class, $inspected->statement);
+        $field = $inspected->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $field);
+        self::assertInstanceOf(FunctionCall::class, $field->expression);
+        $binding = $inspected->binding();
+        $operation = (new ExpressionLowering())->conditional($field->expression, new SourceBinding($binding, null));
+
+        self::assertInstanceOf(Coalesce::class, $operation);
+        self::assertCount(2, $operation->arguments);
     }
 }

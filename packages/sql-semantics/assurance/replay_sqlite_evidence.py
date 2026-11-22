@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import run
 import run_sqlite_auto_rowid as auto_rowid
 import run_sqlite_case as choice
+import run_sqlite_coalesce as coalesce
 import run_sqlite_cast as cast
 import run_sqlite_compound as compound
 import run_sqlite_create_table as create
@@ -62,6 +63,7 @@ from sqlite_engine import Database
 
 DOMAINS = {
     choice.CONTRACT_NAME: (choice, choice.FIXTURE),
+    coalesce.CONTRACT_NAME: (coalesce, coalesce.FIXTURE),
     cast.CONTRACT_NAME: (cast, cast.FIXTURE),
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
     not_null_conflict.CONTRACT_NAME: (not_null_conflict, not_null_conflict.FIXTURE),
@@ -131,7 +133,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                implicit_checks: implicit_checks.ImplicitCheckDatabase,
                generated_columns: generated_columns.GeneratedColumnDatabase,
                rename: rename.RenameDatabase, drop_view: drop_view.DropViewDatabase,
-               joined_local: joined_local.JoinedLocalDatabase}.get(module, Database)
+               joined_local: joined_local.JoinedLocalDatabase, coalesce: coalesce.CoalesceDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

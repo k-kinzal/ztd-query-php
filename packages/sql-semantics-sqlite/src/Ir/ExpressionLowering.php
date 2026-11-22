@@ -11,6 +11,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -39,6 +41,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast as ParsedCast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate as ParsedCollate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral as ParsedBlob;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral as ParsedHex;
@@ -72,7 +75,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -96,7 +99,7 @@ final class ExpressionLowering
             $expression instanceof ParsedMembership => $this->membership($expression, $binding),
             $expression instanceof ParsedPattern => $this->pattern($expression, $binding),
             $expression instanceof ParsedCollate => $this->collated($expression, $binding),
-            $expression instanceof ParsedCase => $this->choice($expression, $binding),
+            $expression instanceof ParsedCase, $expression instanceof FunctionCall => $this->conditional($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),
             $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
             $expression instanceof ParsedText => new TextLiteral($expression->value),
@@ -107,6 +110,17 @@ final class ExpressionLowering
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
+    }
+
+    /**
+     * Resolves conditional evaluation over ordered branches or builtin arguments.
+     * @throws InvalidConstruction When the conditional operation or its operands have no checked representation
+     */
+    public function conditional(ParsedCase|FunctionCall $expression, SourceBinding $binding): CaseExpression|Coalesce
+    {
+        return $expression instanceof ParsedCase
+            ? $this->choice($expression, $binding)
+            : (new CoalesceLowering())->lower($expression, $binding);
     }
 
     /**

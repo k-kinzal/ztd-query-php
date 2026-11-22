@@ -23,7 +23,7 @@ from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as R
 
 SQLITE = {
     "sqlite-pattern-v1.json", "sqlite-mutation-conflicts-v2.json", "sqlite-upsert-nothing-v1.json",
-    "sqlite-case-v1.json", "sqlite-cast-v1.json", "sqlite-defaults-v3.json", "sqlite-not-null-conflict-v2.json", "sqlite-delete-returning-v1.json", "sqlite-group-filter-v1.json",
+    "sqlite-case-v1.json", "sqlite-coalesce-v1.json", "sqlite-cast-v1.json", "sqlite-defaults-v3.json", "sqlite-not-null-conflict-v2.json", "sqlite-delete-returning-v1.json", "sqlite-group-filter-v1.json",
     "sqlite-update-returning-v1.json", "sqlite-insert-returning-v1.json", "sqlite-numeric-operators-v1.json", "sqlite-unary-v1.json",
     "sqlite-truth-v2.json", "sqlite-between-v1.json", "sqlite-membership-v1.json", "sqlite-folded-membership-v1.json", "sqlite-collation-v1.json", "sqlite-concatenation-v1.json",
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v3.json", "sqlite-create-as-v5.json", "sqlite-strict-tables-v2.json", "sqlite-primary-keys-v2.json", "sqlite-auto-rowid-v1.json", "sqlite-unique-keys-v1.json", "sqlite-named-checks-v4.json", "sqlite-folded-checks-v1.json", "sqlite-implicit-checks-v1.json", "sqlite-generated-columns-v2.json", "sqlite-rename-v4.json", "sqlite-delete-v1.json",

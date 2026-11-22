@@ -187,6 +187,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $joined->source === $joined->joins[0]->source, $joined->columns[0]->expression->source,
                 $joined->columns[1]->expression->source, substr_count($joined->toString(), '?02'),
             ];
+            $selection = $semantics->analyze('SELECT IFNULL(NULL, ?007) AS chosen');
+            $expression = $selection->columns[0]->expression;
+            if ($expression::class !== $namespace . 'Ir\\Expression\\Nulls\\Coalesce'
+                || $expression->arguments[0]::class !== $namespace . 'Ir\\Expression\\Nulls\\CoalesceArgument'
+                || $expression->arguments[0]->expression::class !== $namespace . 'Ir\\NullLiteral'
+                || $expression->arguments[1]->expression::class !== $namespace . 'Ir\\Parameter') {
+                throw new RuntimeException('The installed first non-NULL scalar lost its ordered operand roles.');
+            }
+            $details['coalesce'] = [count($expression->arguments), $expression->arguments[1]->expression->label, $selection->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [

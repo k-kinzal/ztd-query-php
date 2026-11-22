@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -25,7 +26,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int, 3?: true}
+ * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int, 3?: true}
  */
 final class ExpressionScope
 {
@@ -46,7 +47,7 @@ final class ExpressionScope
             $frame = array_pop($pending);
             [$expression, $height, $visibility] = $frame;
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-            if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest) {
+            if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest || $expression instanceof Coalesce) {
                 foreach ($this->branches($expression, $height + 1, $visibility) as $operand) {
                     $pending[] = $operand;
                 }
@@ -104,10 +105,13 @@ final class ExpressionScope
      * Enumerates typed children for variable-arity scalar roles.
      * @return list<ScopedExpression>
      */
-    public function branches(CaseExpression|FoldedMembership|MembershipTest|PatternTest $expression, int $height, int $visibility): array
+    public function branches(CaseExpression|Coalesce|FoldedMembership|MembershipTest|PatternTest $expression, int $height, int $visibility): array
     {
         if ($expression instanceof CaseExpression) {
             return $this->choice($expression, $height, $visibility);
+        }
+        if ($expression instanceof Coalesce) {
+            return $this->coalesce($expression, $height, $visibility);
         }
         if ($expression instanceof MembershipTest) {
             return $this->members($expression, $height, $visibility);
@@ -119,6 +123,20 @@ final class ExpressionScope
         $operands = [];
         foreach ($expression->bindings as $binding) {
             $operands[] = [$binding, $height, $visibility, true];
+        }
+
+        return $operands;
+    }
+
+    /**
+     * Visits each ordered conditional argument in the enclosing scope.
+     * @return non-empty-list<ScopedExpression>
+     */
+    public function coalesce(Coalesce $expression, int $height, int $visibility): array
+    {
+        $operands = [];
+        foreach ($expression->arguments as $argument) {
+            $operands[] = [$argument->expression, $height, $visibility];
         }
 
         return $operands;
