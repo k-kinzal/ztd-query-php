@@ -1,0 +1,76 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-grouped-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters/grouped-builtin",
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "Define an explicitly addressed SQLite view with an existing checked GroupedSelect query as its body.",
+      "structure": "A GroupedSelect with its resolved input slot, key collations, ordered projections and optional WHERE and HAVING, inside the effective view naming boundary.",
+      "conditions": "The view conditions apply to the whole group query. Its optional input is an ordinary base-table occurrence and belongs to a persistent view's schema. Each scalar condition, including a HAVING threshold or an inert registration in WHERE, contains no parameter. Every effective view column matches one grouped result position.",
+      "meaning": "Register a view evaluated over the current input. Preserve partition keys, COUNT modes, optional pre-group filtering and HAVING, output names and position, and declared column types. A global empty group, no groups, and groups containing NULL values are distinct.",
+      "externalInterpretation": "Use identical external schema and table identities, slots, collation semantics, input values, relevant profile, and view catalog state.",
+      "sql": "Append the checked grouped query to the same CREATE VIEW prefix and effective column list.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Use the CREATE VIEW catalog, guard, typed column and deferred row observations already fixed for projection and VALUES bodies.",
+    "Observe named key columns and COUNT(*) versus COUNT(column) and COUNT(DISTINCT column), pre-group and post-group filtering, global empty groups, duplicate and NULL inputs, and changes in counts following source inserts.",
+    "The fixtures use exact integer keys for key projections, so no representative choice under case-insensitive equality is needed. The grouped body guarantees no row order."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "bodies": ["global-count", "grouped-count", "having"],
+    "guard": [false, true],
+    "occupied": [false, true],
+    "identity": "Compare all 24 combinations, using the actual body shape and the observed native catalog pre-state."
+  },
+  "exploration": {
+    "seeds": [6197, 27109, 54347],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary view names, data, parameter-free WHERE thresholds, HAVING comparisons, COUNT arguments and distinctness, group keys, and the source schema of temporary views."
+  },
+  "analysis": [
+    "Global COUNT(*) over an implicit row.",
+    "Global COUNT(*) over an empty filtered input.",
+    "Main view groups main rows under temp shadowing and has COUNT(column).",
+    "A temp view reads main with COUNT(DISTINCT column).",
+    "HAVING explicitly compares an integer threshold before COUNT.",
+    "A temp view explicitly names grouped output above its count."
+  ],
+  "negative": [
+    "Effective names do not match grouped width.",
+    "Persistent view has a temp grouped input.",
+    "WHERE contains a live parameter.",
+    "WHERE contains a folded parameter registration.",
+    "HAVING has a parameter threshold."
+  ],
+  "faults": [
+    "Erase the grouped view's IF NOT EXISTS policy.",
+    "Redirect a grouped view to the other schema.",
+    "Erase the group partitioning clause.",
+    "Erase the HAVING filter."
+  ],
+  "evidence": {
+    "Q01": "Check the exact group view construction and cause typed rejection on distinct invalid placements.",
+    "Q02": "Consume the 24 fixed direct cases and six analysis controls.",
+    "Q03": "Check resolved source occurrence and marker rules for grouped scalar clauses.",
+    "Q04": "Compute expected groups and aggregate results independently and compare native view metadata and reads.",
+    "Q05": "Check the same dispatched role and grouped body installed from the exact candidate Composer split."
+  },
+  "open": [
+    "Compound and WITH view bodies remain separate composition cases."
+  ],
+  "trust": [
+    "The SQLite native fixture, declared schema identities and the pinned CREATE VIEW, grouping and COUNT rules.",
+    "The fixed native view observation kernel and shared independent group value and collation model."
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createview.html",
+    "https://sqlite.org/lang_select.html",
+    "https://sqlite.org/lang_aggfunc.html"
+  ]
+}
