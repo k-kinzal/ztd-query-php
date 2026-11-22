@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(CreateIndex::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class CreateIndexTest extends TestCase
 {
     public function testDeriveStatementResolvesTheKeyPartsInTheTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $index = $semantics->diagnose('CREATE INDEX i ON t (c, (b * 2))', [$table]);
         $indexStatement = $index->statement;
@@ -36,7 +36,7 @@ final class CreateIndexTest extends TestCase
 
     public function testDeriveRelationResolvesTheIndexedTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $index = $semantics->diagnose('CREATE FULLTEXT INDEX i ON t (a)', [$table]);
         $indexStatement = $index->statement;
@@ -49,12 +49,12 @@ final class CreateIndexTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics())->diagnose('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
+        self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Inspection())->diagnose('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
     }
 
     public function testDeriveStatementRefusesAView(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 

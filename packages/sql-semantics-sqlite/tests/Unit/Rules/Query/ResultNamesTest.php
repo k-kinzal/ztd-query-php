@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Spelled;
 use SqlSemantics\Platform\Sqlite\Rules\Query\ResultNames;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -31,6 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use Tests\Support\Inspection;
 
 #[CoversClass(ResultNames::class)]
 #[Medium]
@@ -48,7 +48,7 @@ final class ResultNamesTest extends TestCase
 
     public function testOutputNamesAColumnByItsAliasItsColumnOrItsText(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('SELECT (t.A), oid, b AS x, 1+1, "zz", true, nosuch, A COLLATE nocase, "a" FROM t', [$create]);
 
@@ -57,7 +57,7 @@ final class ResultNamesTest extends TestCase
 
     public function testResolvedLeavesAWordConditionalOnAMissingDeclarationUnnamed(): void
     {
-        $query = (new Semantics())->diagnose('SELECT "zz", nosuch, true FROM t');
+        $query = (new Inspection())->diagnose('SELECT "zz", nosuch, true FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $column = $query->statement->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);
@@ -72,7 +72,7 @@ final class ResultNamesTest extends TestCase
 
     public function testUnnamedAnswersTheInputsAnUndecidedNameDependsOn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->diagnose('SELECT "zz", nosuch, 1+1 FROM t');
         self::assertInstanceOf(Select::class, $query->statement);
         $columns = $query->statement->columns;
@@ -109,7 +109,7 @@ final class ResultNamesTest extends TestCase
 
     public function testDeclaredLooksThroughCollateAndTheLikelihoodFunctions(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT A COLLATE nocase, likely(B), likelihood((a), 0.5), "zz", true, 1+1, a AS x FROM t', [$create]);
 
@@ -132,7 +132,7 @@ final class ResultNamesTest extends TestCase
 
     public function testLeftmostFindsTheArmThatNamesTheColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $compound = $semantics->diagnose('WITH c AS (SELECT 1) VALUES (1) UNION SELECT 2')->statement;
         $select = $semantics->diagnose('SELECT 1')->statement;
 
@@ -146,7 +146,7 @@ final class ResultNamesTest extends TestCase
 
     public function testColumnFindsTheResultColumnOfAFieldAndNoneForAStar(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('SELECT a + 1, * FROM t', [$create]);
         $select = $query->statement;

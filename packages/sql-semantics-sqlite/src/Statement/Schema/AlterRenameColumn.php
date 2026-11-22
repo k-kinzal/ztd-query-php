@@ -29,10 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Source: https://sqlite.org/lang_altertable.html#alter_table_rename_column.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a column rename
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t RENAME COLUMN a TO b');
- *     [$alter->statement->column->value, $alter->statement->newName->value, $alter->toString()] // => ['a', 'b', 'ALTER TABLE t RENAME a TO b']
+ * @visibility SqlSemantics
  */
 final class AlterRenameColumn implements Statement
 {

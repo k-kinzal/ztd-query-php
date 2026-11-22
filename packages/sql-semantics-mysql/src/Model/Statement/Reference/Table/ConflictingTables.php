@@ -13,11 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A relation name that several distinct declarations of the context claim; none is chosen.
  *
- * @visibility public
- * @example Keeping conflicting declarations
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $declarations = $semantics->context([$semantics->inspect('CREATE TABLE t (a INTEGER)'), $semantics->inspect('CREATE TABLE t (b TEXT)')]);
- *     $semantics->inspect('SELECT 1 FROM t', $declarations) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Relation t has conflicting declarations.
+ * @visibility SqlSemantics
  */
 final class ConflictingTables implements TableResolution, Diagnostic
 {

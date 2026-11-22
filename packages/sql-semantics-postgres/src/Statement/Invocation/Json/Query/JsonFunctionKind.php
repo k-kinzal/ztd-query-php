@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * which is a relation).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the default result type of JSON_VALUE
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonFunctionKind::Value->builtin() // => \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text
  */

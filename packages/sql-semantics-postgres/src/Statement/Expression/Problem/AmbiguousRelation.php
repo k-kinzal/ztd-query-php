@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-TABLE-ALIASES.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\AmbiguousRelation('t'))->message() // => 'Table reference t is ambiguous.'
  */

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
  * Each case holds its keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-objects-security.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a context
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext::Invoker->value // => 'INVOKER'
  */

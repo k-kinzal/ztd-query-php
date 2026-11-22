@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * be schema-qualified without the `OPERATOR(...)` syntax.
  * Source: https://www.postgresql.org/docs/17/sql-dropoperator.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a prefix operator signature
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('int4')])));
  *     $signature = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature(new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('-')), \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity::Prefix, [$type]);

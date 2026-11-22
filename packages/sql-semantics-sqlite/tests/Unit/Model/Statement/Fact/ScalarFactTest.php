@@ -11,8 +11,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(ScalarFact::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ScalarFactTest extends TestCase
 {
     public function testResolutionIsNullForAnExpressionThatIsNoNameUse(): void
     {
-        $query = (new Semantics())->inspect("SELECT 'a'");
+        $query = (new Inspection())->inspect("SELECT 'a'");
         $expression = $query->field(0)->expression;
 
         self::assertNotNull($expression);
@@ -33,7 +33,7 @@ final class ScalarFactTest extends TestCase
 
     public function testResolutionIsKeptForANameUse(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t WHERE a > 1', [$table]);
         $expression = $query->field('a')->expression;

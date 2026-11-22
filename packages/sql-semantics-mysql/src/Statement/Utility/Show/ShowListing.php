@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-tables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-columns.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a listing
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowListing::ExtendedFull->value // => 'EXTENDED FULL'
  */

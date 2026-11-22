@@ -14,11 +14,11 @@ final class CreateTablespaceTest extends TestCase
 {
     public function testRenderWritesOwnerLocationAndParameters(): void
     {
-        self::assertSame('CREATE TABLESPACE fast OWNER app LOCATION \'/ssd\' WITH (random_page_cost = 1)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLESPACE fast OWNER app LOCATION \'/ssd\' WITH (random_page_cost = 1)')->toString());
+        self::assertSame('CREATE TABLESPACE fast OWNER app LOCATION \'/ssd\' WITH (random_page_cost = 1)', (new \Tests\Support\Inspection())->inspect('CREATE TABLESPACE fast OWNER app LOCATION \'/ssd\' WITH (random_page_cost = 1)')->toString());
     }
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLESPACE fast LOCATION \'/ssd\'')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('CREATE TABLESPACE fast LOCATION \'/ssd\'')->facts->diagnostics);
     }
 }

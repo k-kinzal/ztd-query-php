@@ -19,7 +19,7 @@ final class InSchemasTest extends TestCase
 
     public function testRenderWritesTheSchemas(): void
     {
-        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe')->toString());
+        self::assertSame('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe', (new \Tests\Support\Inspection())->inspect('ALTER DEFAULT PRIVILEGES IN SCHEMA a, "B" GRANT SELECT ON TABLES TO joe')->toString());
     }
 
     public function testRejectsNoSchema(): void

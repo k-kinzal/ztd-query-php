@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Session;
  * the server does not implement it; ALL adds every group.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-profile.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a section
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection::ContextSwitches->value // => 'CONTEXT SWITCHES'
  */

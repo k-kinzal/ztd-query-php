@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use Tests\Support\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering
@@ -21,12 +22,12 @@ final class LocalSourceLoweringTest extends TestCase
     public function testLowerBindsBothSpellingsToTheSameLocalSlot(): void
     {
         $semantics = new Semantics();
-        $external = $semantics->inspect('CREATE TABLE c (a, b)');
+        $external = (new Inspection())->inspect('CREATE TABLE c (a, b)');
         $sql = 'WITH c(a, b) AS (VALUES (1, 9)) SELECT b AS first, v.b AS second FROM c AS v';
-        $checked = $semantics->inspect($sql, [$external]);
+        $checked = (new Inspection())->inspect($sql, [$external]);
         self::assertInstanceOf(WithQuery::class, $checked->statement);
-        $source = (new LocalSourceLowering())->lower($checked, $checked->statement);
-        $query = $semantics->analyze($sql, [$external]);
+        $source = (new LocalSourceLowering())->lower($checked->binding(), $checked->statement);
+        $query = $semantics->analyze($sql, $semantics->context(['CREATE TABLE c (a, b)']));
 
         self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(LocalSource::class, $query->source);

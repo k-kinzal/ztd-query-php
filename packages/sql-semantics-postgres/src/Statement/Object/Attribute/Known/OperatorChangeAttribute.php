@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * attribute is an error.
  * Source: https://www.postgresql.org/docs/17/sql-alteroperator.html, `AlterOperator` in `src/backend/commands/operatorcmds.c` of PostgreSQL 16 and 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorChangeAttribute::from('negator')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Operator
  */

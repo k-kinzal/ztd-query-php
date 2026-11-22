@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
  * https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a hash partitioning into four partitions
  *     $clause = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4'), null, []);
  *     $clause->partitions?->text // => '4'

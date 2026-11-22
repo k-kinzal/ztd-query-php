@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Trigger\TriggerRule;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
+use Tests\Support\Inspection;
 
 #[CoversClass(TriggerRule::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class TriggerRuleTest extends TestCase
 {
     public function testCreateLowersTheDeclarationAndTheProgram(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TRIGGER IF NOT EXISTS main.tr BEFORE UPDATE OF a, b ON u FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; SELECT 2; END');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER IF NOT EXISTS main.tr BEFORE UPDATE OF a, b ON u FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; SELECT 2; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         self::assertSame('main', $operation->statement->name->schema?->value);
@@ -49,7 +49,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testCreateLeavesEveryOptionalPartEmptyWhenNotWritten(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TEMP TRIGGER tr DELETE ON t BEGIN SELECT 1; END');
+        $operation = (new Inspection())->diagnose('CREATE TEMP TRIGGER tr DELETE ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         self::assertTrue($operation->statement->temporary);
@@ -64,7 +64,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testTimingLowersBeforeAfterInsteadOfAndNone(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $before = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT 1; END')->statement;
         $after = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END')->statement;
         $instead = $semantics->diagnose('CREATE TRIGGER tr INSTEAD OF INSERT ON v BEGIN SELECT 1; END')->statement;
@@ -83,7 +83,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testEventLowersDeleteInsertUpdateAndUpdateOf(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $delete = $semantics->diagnose('CREATE TRIGGER tr DELETE ON t BEGIN SELECT 1; END')->statement;
         $insert = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
         $update = $semantics->diagnose('CREATE TRIGGER tr UPDATE ON t BEGIN SELECT 1; END')->statement;
@@ -103,7 +103,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testWhenIsNullWithoutTheClause(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $bare = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
         $guarded = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t WHEN new.a > 1 BEGIN SELECT 1; END')->statement;
 
@@ -115,7 +115,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testProgramLowersEveryStatementInWrittenOrder(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO u VALUES (1); UPDATE u SET a = 1; DELETE FROM u; SELECT 1; INSERT INTO u SELECT 1; END');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO u VALUES (1); UPDATE u SET a = 1; DELETE FROM u; SELECT 1; INSERT INTO u SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         self::assertSame([InsertRows::class, Update::class, Delete::class, Select::class, InsertSelect::class], array_map(static fn (object $step): string => $step::class, $operation->statement->steps));
@@ -124,7 +124,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testStepLowersAnUpdateWithEveryClause(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE OR IGNORE u SET a = 1, b = 2 FROM w WHERE u.b = w.b; END');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE OR IGNORE u SET a = 1, b = 2 FROM w WHERE u.b = w.b; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         $update = $operation->statement->steps[0];
@@ -141,7 +141,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testStepLowersAnInsertWithItsUpsertAndADeleteWithItsPredicate(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT OR REPLACE INTO u (a) VALUES (1) ON CONFLICT DO NOTHING; DELETE FROM u WHERE a = 1; END');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT OR REPLACE INTO u (a) VALUES (1) ON CONFLICT DO NOTHING; DELETE FROM u WHERE a = 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         $insert = $operation->statement->steps[0];
@@ -158,7 +158,7 @@ final class TriggerRuleTest extends TestCase
 
     public function testTargetLowersTheWrittenTableWithItsIndexChoiceAndReportsWhatSqliteRefuses(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE u INDEXED BY i SET a = 1; DELETE FROM u NOT INDEXED; DELETE FROM main.u; END');
+        $operation = (new Inspection())->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN UPDATE u INDEXED BY i SET a = 1; DELETE FROM u NOT INDEXED; DELETE FROM main.u; END');
 
         self::assertInstanceOf(CreateTrigger::class, $operation->statement);
         $indexed = $operation->statement->steps[0];

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * that depend on this missing part. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/with.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the missing part
  *     (new \SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c')))->describe() // => 'the nonrecursive part of recursive common table c'
  */

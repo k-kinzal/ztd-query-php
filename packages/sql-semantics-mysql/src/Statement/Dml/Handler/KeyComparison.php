@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
  * Each case holds the operator it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the operator of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::GreaterOrEqual->value // => '>='
  */

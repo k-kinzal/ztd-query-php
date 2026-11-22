@@ -25,10 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  * operand stays NULL, so the NULL fact is that of the operand.
  * Source: https://sqlite.org/lang_expr.html#castexpr. Status: Implemented.
  *
- * @visibility public
- * @example Reading the type of a CAST
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT CAST(a AS VARCHAR(10)) FROM t');
- *     [$query->statement->columns[0]->expression->target->text(), $query->field(0)->type->descriptor] // => ['VARCHAR', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
+ * @visibility SqlSemantics
  */
 final class Cast implements Scalar
 {

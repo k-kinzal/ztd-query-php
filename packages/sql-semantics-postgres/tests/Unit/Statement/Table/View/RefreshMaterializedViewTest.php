@@ -14,7 +14,7 @@ final class RefreshMaterializedViewTest extends TestCase
 {
     public function testDeriveStatementResolvesTheView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('REFRESH MATERIALIZED VIEW t', $context);
@@ -27,7 +27,7 @@ final class RefreshMaterializedViewTest extends TestCase
 
     public function testDeriveRelationResolvesTheView(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('REFRESH MATERIALIZED VIEW t', $context);
@@ -38,14 +38,14 @@ final class RefreshMaterializedViewTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('REFRESH MATERIALIZED VIEW CONCURRENTLY s.m WITH NO DATA', []);
         self::assertSame('REFRESH MATERIALIZED VIEW CONCURRENTLY s.m WITH NO DATA', $statement->toString());
     }
 
     public function testDeriveStatementReportsAnotherKind(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
         self::assertSame(['"t" is not a materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('REFRESH MATERIALIZED VIEW t', $context)->facts->diagnostics));
         self::assertSame(['"v" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('REFRESH MATERIALIZED VIEW v', $context)->facts->diagnostics));

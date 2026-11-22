@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
  * restrict the statements of the routine.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Listing the levels
  *     count(\SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel::cases()) // => 4
  */

@@ -19,11 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
  * column; a slot a join re-exposes refers to the input slot it comes from and
  * carries its own NULL fact, so an outer join never changes a declaration.
  *
- * @visibility public
- * @example Reading the slot of a query field
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
- *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->slot->nullability // => \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::NotNull
+ * @visibility SqlSemantics
  */
 final class OutputSlot
 {

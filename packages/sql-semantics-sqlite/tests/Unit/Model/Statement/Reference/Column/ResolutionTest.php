@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalCol
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\Resolution;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(Resolution::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class ResolutionTest extends TestCase
 {
     public function testTheFiveOutcomesAreTheOnlyResolutions(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $declarations = [$semantics->diagnose('CREATE TABLE t (a INTEGER, b INTEGER)'), $semantics->diagnose('CREATE TABLE u (a INTEGER)')];
         $query = $semantics->diagnose('SELECT t.b AS x, a, c FROM t, u ORDER BY x', $declarations);
         $statement = $query->statement;

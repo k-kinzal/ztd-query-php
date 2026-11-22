@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\TableResolution;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableResolution::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class TableResolutionTest extends TestCase
 {
     public function testTheOutcomesDependOnTheDeclarationsAndTheCompletenessOfTheContext(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $first = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $second = $semantics->diagnose('CREATE TABLE t (b TEXT)');
         $qualified = $semantics->diagnose('CREATE TABLE main.u (a INTEGER)');

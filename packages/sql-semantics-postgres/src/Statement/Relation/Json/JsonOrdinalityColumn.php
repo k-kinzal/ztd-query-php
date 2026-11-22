@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an ordinality column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonOrdinalityColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('n')))->name->value // => 'n'
  */

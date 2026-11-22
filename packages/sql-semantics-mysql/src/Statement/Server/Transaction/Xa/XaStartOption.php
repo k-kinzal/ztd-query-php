@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
  * the server answers ER_XAER_INVAL when it executes either.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStartOption::Resume->value // => 'RESUME'
  */

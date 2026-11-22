@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable;
+use Tests\Support\Inspection;
 
 #[CoversClass(ShowCreateTable::class)]
 #[Medium]
@@ -16,21 +16,21 @@ final class ShowCreateTableTest extends TestCase
 {
     public function testDeriveStatementLeavesTheShapeOpen(): void
     {
-        $show = (new Semantics())->diagnose('SHOW CREATE TABLE t');
+        $show = (new Inspection())->diagnose('SHOW CREATE TABLE t');
         self::assertInstanceOf(ShowCreateTable::class, $show->statement);
-        $missing = (new Semantics())->diagnose('SHOW CREATE TABLE t', []);
+        $missing = (new Inspection())->diagnose('SHOW CREATE TABLE t', []);
         self::assertSame('Relation t does not exist.', $missing->facts->diagnostics[0]->message());
         self::assertFalse($show->shape()?->complete());
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW CREATE TABLE t', (new Semantics())->diagnose('SHOW CREATE TABLE t')->toString());
+        self::assertSame('SHOW CREATE TABLE t', (new Inspection())->diagnose('SHOW CREATE TABLE t')->toString());
     }
 
     public function testDeriveStatementAnswersTheColumnsOfTheDeclaredKind(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 

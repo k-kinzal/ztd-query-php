@@ -8,7 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
 
 /**
@@ -21,7 +21,7 @@ final class DeleteLowering
     /**
      * Constructs the write only after resolving its target and predicate.
      */
-    public function lower(Operation $operation, ParsedDelete $statement): Delete
+    public function lower(BoundStatement $operation, ParsedDelete $statement): Delete
     {
         Check::input($statement->with === null && $statement->returning === [], 'Complete SQLite DELETE requires a single target without WITH or RETURNING.');
         $binding = new SourceBinding($operation, $statement->target);

@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * passed as a `text` constant). The result column is named `normalize`.
  * Source: https://www.postgresql.org/docs/17/functions-string.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a normalization
  *     $normalize = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\Normalize(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\PostgreSql\Statement\Option\NormalForm::Nfkc);
  *     [$normalize->form->value, $normalize->outputName()->value] // => ['NFKC', 'normalize']

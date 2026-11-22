@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query;
  * treats as EMPTY ARRAY, is a distinct spelling and kept.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the behavior returning an empty object
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorKind::EmptyObject->value // => 'EMPTY OBJECT'
  */

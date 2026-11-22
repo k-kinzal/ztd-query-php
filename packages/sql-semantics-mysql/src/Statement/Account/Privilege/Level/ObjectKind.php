@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
  * Mirrors Acl_type. `ON TABLE` and `ON` without a kind are the same request.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-object-quoting.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a kind
  *     [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure->keyword(), \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table->keyword()] // => ['PROCEDURE', null]
  */

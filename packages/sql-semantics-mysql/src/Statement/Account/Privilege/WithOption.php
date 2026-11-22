@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/5.7/en/grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the grant option apart
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight() instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption // => true
  */

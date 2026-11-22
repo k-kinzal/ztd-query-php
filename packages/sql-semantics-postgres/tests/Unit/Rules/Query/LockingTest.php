@@ -13,10 +13,10 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Locking;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
+use Tests\Support\Inspection;
 
 #[CoversClass(Locking::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class LockingTest extends TestCase
 {
     public function testCheckReportsANamedItemThatCannotBeLocked(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             ['FOR UPDATE cannot be applied to a function', 'FOR SHARE cannot be applied to a WITH query', 'FOR KEY SHARE cannot be applied to a join', 'FOR UPDATE cannot be applied to a table function'],
             array_map(static fn (Diagnostic $problem): string => $problem->message(), [
@@ -38,7 +38,7 @@ final class LockingTest extends TestCase
 
     public function testCheckReportsATableOnTheNullableSideOfAnOuterJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a int4)', []), $semantics->diagnose('CREATE TABLE u (a int4)', [])];
         self::assertSame(
             ['FOR UPDATE cannot be applied to the nullable side of an outer join', 'FOR SHARE cannot be applied to the nullable side of an outer join', 'FOR UPDATE cannot be applied to the nullable side of an outer join'],
@@ -52,7 +52,7 @@ final class LockingTest extends TestCase
 
     public function testCheckAdmitsTheOtherSideAndASkippedItem(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a int4)', []), $semantics->diagnose('CREATE TABLE u (a int4)', [])];
         self::assertSame([], [
             ...$semantics->diagnose('SELECT 1 FROM t LEFT JOIN u ON true FOR UPDATE OF t', $context)->facts->diagnostics,
@@ -62,7 +62,7 @@ final class LockingTest extends TestCase
 
     public function testNamedAnswersTheItemWithTheName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->diagnose('SELECT 1 FROM t AS x', []);
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(Relation::class, $query->statement->from);
@@ -74,7 +74,7 @@ final class LockingTest extends TestCase
 
     public function testRefusedAnswersTheRuleOfAnItemThatCannotBeLocked(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $function = $semantics->diagnose('SELECT 1 FROM generate_series(1, 2) AS f', []);
         $table = $semantics->diagnose('SELECT 1 FROM t', []);
         self::assertInstanceOf(Select::class, $function->statement);
@@ -90,7 +90,7 @@ final class LockingTest extends TestCase
 
     public function testTablesMarksTheNullableSides(): void
     {
-        $query = (new Semantics())->diagnose('SELECT 1 FROM a LEFT JOIN (b RIGHT JOIN c ON true) ON true, d', []);
+        $query = (new Inspection())->diagnose('SELECT 1 FROM a LEFT JOIN (b RIGHT JOIN c ON true) ON true, d', []);
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(Relation::class, $query->statement->from);
         $pairs = (new Locking())->tables($query->statement->from);
@@ -101,7 +101,7 @@ final class LockingTest extends TestCase
 
     public function testKindsReportsTheRowMarksOfASequenceAndALockedMaterializedView(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a int)'), $semantics->diagnose('CREATE SEQUENCE s'), $semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS b')];
         self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('SELECT * FROM t, s, m FOR UPDATE OF t', $context)->facts->diagnostics));
         self::assertSame(['cannot lock rows in materialized view "m"'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('SELECT * FROM t, m FOR SHARE', $context)->facts->diagnostics));

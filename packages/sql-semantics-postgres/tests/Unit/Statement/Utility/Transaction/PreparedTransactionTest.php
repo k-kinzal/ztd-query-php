@@ -14,11 +14,11 @@ final class PreparedTransactionTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('PREPARE TRANSACTION \'x\'')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('PREPARE TRANSACTION \'x\'')->facts->diagnostics);
     }
 
     public function testRenderWritesTheIdentifierAsAString(): void
     {
-        self::assertSame(["PREPARE TRANSACTION 'it''s'", "COMMIT PREPARED 'x'", "ROLLBACK PREPARED 'x'"], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("PREPARE TRANSACTION 'it''s'")->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("COMMIT PREPARED 'x'")->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect("ROLLBACK PREPARED 'x'")->toString()]);
+        self::assertSame(["PREPARE TRANSACTION 'it''s'", "COMMIT PREPARED 'x'", "ROLLBACK PREPARED 'x'"], [(new \Tests\Support\Inspection())->inspect("PREPARE TRANSACTION 'it''s'")->toString(), (new \Tests\Support\Inspection())->inspect("COMMIT PREPARED 'x'")->toString(), (new \Tests\Support\Inspection())->inspect("ROLLBACK PREPARED 'x'")->toString()]);
     }
 }

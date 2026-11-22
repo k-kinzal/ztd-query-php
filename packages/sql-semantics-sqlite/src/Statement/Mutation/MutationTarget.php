@@ -25,12 +25,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
  * Source: https://sqlite.org/lang_insert.html, https://sqlite.org/lang_update.html,
  * https://sqlite.org/lang_delete.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the table a statement writes to
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
- *     $delete = $semantics->inspect('DELETE FROM t AS x WHERE x.a = 1', [$table]);
- *     [$delete->statement->target->alias()->value, $delete->facts->relation($delete->statement->target)->table->table === $table->declarations()[0]] // => ['x', true]
+ * @visibility SqlSemantics
  */
 final class MutationTarget implements NamedRelation
 {

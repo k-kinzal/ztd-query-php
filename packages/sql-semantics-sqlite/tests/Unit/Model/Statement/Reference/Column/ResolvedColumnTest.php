@@ -13,9 +13,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(ResolvedColumn::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class ResolvedColumnTest extends TestCase
 {
     public function testDeclarationReachesTheSuppliedColumnThroughTheOccurrence(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
@@ -38,7 +38,7 @@ final class ResolvedColumnTest extends TestCase
 
     public function testDeclarationIsNullForASlotOfADerivedQuery(): void
     {
-        $query = (new Semantics())->inspect('SELECT x FROM (SELECT 1 AS x)');
+        $query = (new Inspection())->inspect('SELECT x FROM (SELECT 1 AS x)');
 
         $resolution = $query->field('x')->resolution;
 

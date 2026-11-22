@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * Mirrors PostgreSQL's `RangeTableFuncCol`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PROCESSING-XMLTABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an ordinality column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('n')))->ordinality() // => true
  */

@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\View;
  * Each case holds the keyword written between WITH and CHECK, if any.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/view-check-option.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption::Local->value // => 'LOCAL'
  */

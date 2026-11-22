@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlSemantics\Platform\PostgreSql\Semantics;
+use Tests\Support\Inspection;
 
 /**
  * Measures analyzing a PostgreSQL statement into its semantic model and back to SQL.
  */
 final class AnalyzeBench
 {
-    private Semantics $semantics;
+    private Inspection $semantics;
 
     /**
      * Loads the profile and the parser before measurement.
      */
     public function setUp(): void
     {
-        $this->semantics = new Semantics();
+        $this->semantics = new Inspection();
     }
 
     /**

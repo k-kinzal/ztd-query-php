@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/privileges-provided.html,
  * https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-privileges.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Asking where a privilege can be granted
  *     [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Reload->database(), \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Execute->routine()] // => [false, true]
  */

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * another value with ER_INVALID_THREAD_PRIORITY.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-resource-group.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange('USER', '-5'))->message() // => 'Thread priority -5 is outside the range of a USER resource group (ER_INVALID_THREAD_PRIORITY).'
  */

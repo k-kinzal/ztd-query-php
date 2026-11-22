@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * renamed away counts as absent.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('c')))->message() // => 'Column c does not exist in the table.'
  */

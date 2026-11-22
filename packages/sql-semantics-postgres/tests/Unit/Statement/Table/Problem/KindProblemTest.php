@@ -18,7 +18,7 @@ final class KindProblemTest extends TestCase
 {
     public function testMessageNamesTheRelation(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('DROP TABLE v', [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')]);
         $problem = $statement->facts->diagnostics[0];
         self::assertInstanceOf(KindProblem::class, $problem);

@@ -14,12 +14,12 @@ final class ExtensionRuleTest extends TestCase
 {
     public function testStatementLowersCreateLanguage(): void
     {
-        self::assertSame('CREATE LANGUAGE l HANDLER h', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE LANGUAGE l HANDLER h')->toString());
+        self::assertSame('CREATE LANGUAGE l HANDLER h', (new \Tests\Support\Inspection())->inspect('CREATE LANGUAGE l HANDLER h')->toString());
     }
 
     public function testContentsLowersAnAggregate(): void
     {
-        self::assertSame('ALTER EXTENSION e ADD AGGREGATE agg (*)', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER EXTENSION e ADD AGGREGATE agg(*)')->toString());
+        self::assertSame('ALTER EXTENSION e ADD AGGREGATE agg (*)', (new \Tests\Support\Inspection())->inspect('ALTER EXTENSION e ADD AGGREGATE agg(*)')->toString());
     }
 
     public function testOptionsLowersEveryItem(): void

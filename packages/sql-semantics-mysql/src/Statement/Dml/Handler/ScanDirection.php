@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/handler.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::Next->value // => 'NEXT'
  */

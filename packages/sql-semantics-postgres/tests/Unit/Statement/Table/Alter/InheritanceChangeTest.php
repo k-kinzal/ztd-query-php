@@ -14,7 +14,7 @@ final class InheritanceChangeTest extends TestCase
 {
     public function testDeriveClauseResolvesTheParent(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t INHERIT p', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
@@ -27,7 +27,7 @@ final class InheritanceChangeTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t NO INHERIT s.p', []);
         self::assertSame('ALTER TABLE t NO INHERIT s.p', $statement->toString());
     }

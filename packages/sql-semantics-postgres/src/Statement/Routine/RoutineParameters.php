@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\ParameterDeclarations;
  * parameter, named when the parameter is named; a parameter can be NULL.
  * Source: https://www.postgresql.org/docs/17/xfunc-sql.html#XFUNC-SQL-FUNCTION-ARGUMENTS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the parameters of an empty list
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters([]))->parameters) // => 0
  */

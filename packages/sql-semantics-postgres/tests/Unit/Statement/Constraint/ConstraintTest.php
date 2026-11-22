@@ -14,7 +14,7 @@ final class ConstraintTest extends TestCase
 {
     public function testKindIsTheConstraintType(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('CREATE TABLE t (a int, EXCLUDE USING gist (a WITH =))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);

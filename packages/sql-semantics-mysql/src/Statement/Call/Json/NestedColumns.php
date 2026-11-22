@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the nested columns
  *     $nested = new \SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['$.b[*]']), [new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('n'))]);
  *     count($nested->columns) // => 1

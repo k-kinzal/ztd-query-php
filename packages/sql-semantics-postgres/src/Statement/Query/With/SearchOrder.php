@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\With;
  *
  * Source: https://www.postgresql.org/docs/17/queries-with.html#QUERIES-WITH-SEARCH.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the breadth-first order
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\With\SearchOrder::Breadth->value // => 'BREADTH'
  */

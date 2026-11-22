@@ -14,8 +14,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(RowShape::class)]
 #[Medium]
@@ -46,7 +46,7 @@ final class RowShapeTest extends TestCase
 
     public function testCompleteOfAnAnalyzedStarOverDeclaredTables(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
 
         $shape = $semantics->inspect('SELECT * FROM t', [$table])->shape();

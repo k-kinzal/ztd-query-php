@@ -11,8 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
  * Semantic problems established while analyzing grammatical SQL.
  *
  * @visibility public
- * @example Rejecting a query that names a missing relation
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT * FROM t', []) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

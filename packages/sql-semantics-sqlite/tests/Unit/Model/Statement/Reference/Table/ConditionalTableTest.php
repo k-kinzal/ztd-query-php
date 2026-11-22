@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\ConditionalTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(ConditionalTable::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ConditionalTableTest extends TestCase
 {
     public function testCandidatesAreKeptWhileAnEarlierSchemaIsUnknown(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t', $semantics->context([$table], false));
 
@@ -34,7 +34,7 @@ final class ConditionalTableTest extends TestCase
 
     public function testCandidatesAreNotNeededWhenTheContextIsComplete(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE main.t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t', [$table]);
 

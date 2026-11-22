@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AbsentRelation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
@@ -26,7 +26,7 @@ final class DropTableLowering
      * Constructs the drop only when the schema and table identity are fixed.
      * @throws InvalidConstruction When the target does not resolve to an ordinary table location
      */
-    public function lower(Operation $operation, Drop $statement): DropTable
+    public function lower(BoundStatement $operation, Drop $statement): DropTable
     {
         Check::input($statement->object === SchemaObjectKind::Table, 'The complete DROP currently requires the TABLE object kind.');
         $comparison = Comparison::AsciiInsensitive;

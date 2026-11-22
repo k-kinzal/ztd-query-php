@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * relation fact of this node.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a table name with its database
  *     $target = new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')));
  *     $target->name->schema?->value // => 'shop'

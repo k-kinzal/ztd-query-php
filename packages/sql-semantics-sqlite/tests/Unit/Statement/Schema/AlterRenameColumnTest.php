@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterRenameColumn::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class AlterRenameColumnTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableAndProvidesNoDeclaration(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a, b)');
         $operation = $semantics->diagnose('ALTER TABLE t RENAME COLUMN a TO c', [$table]);
 
@@ -31,7 +31,7 @@ final class AlterRenameColumnTest extends TestCase
 
     public function testDeriveStatementReportsAnUnknownOldNameAndATakenNewName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a, b)');
 
         self::assertInstanceOf(UnknownColumn::class, $semantics->diagnose('ALTER TABLE t RENAME x TO c', [$table])->facts->diagnostics[0]);
@@ -40,7 +40,7 @@ final class AlterRenameColumnTest extends TestCase
 
     public function testDeriveStatementAcceptsANewNameThatOnlyChangesTheCase(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a, b)');
 
         self::assertSame([], $semantics->diagnose('ALTER TABLE t RENAME a TO A', [$table])->facts->diagnostics);
@@ -48,7 +48,7 @@ final class AlterRenameColumnTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->diagnose('alter table t rename column a to b');
+        $operation = (new Inspection())->diagnose('alter table t rename column a to b');
 
         self::assertInstanceOf(AlterRenameColumn::class, $operation->statement);
         self::assertSame('ALTER TABLE t RENAME a TO b', $operation->toString());

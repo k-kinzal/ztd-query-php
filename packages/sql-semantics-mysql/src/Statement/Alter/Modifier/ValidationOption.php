@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/partitioning-management-exchange.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Skipping the row validation
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(false))->validate // => false
  */

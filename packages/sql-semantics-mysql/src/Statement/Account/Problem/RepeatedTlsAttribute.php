@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute;
  * The server rejects the statement while parsing it with ER_DUP_ARGUMENT.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute(\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute::Issuer))->message() // => 'ISSUER is required more than once (ER_DUP_ARGUMENT).'
  */

@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -26,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(QueryExpression::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class QueryExpressionTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsOfTheBody(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -51,7 +51,7 @@ final class QueryExpressionTest extends TestCase
 
     public function testDeriveQueryResolvesOrdinalsAgainstTheOutput(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 UNION SELECT 2 ORDER BY 1');
+        $operation = (new Inspection())->inspect('SELECT 1 UNION SELECT 2 ORDER BY 1');
         $ordinal = $operation->statement instanceof QueryExpression ? $operation->statement->orderBy[0]->expression : null;
 
         self::assertInstanceOf(OutputOrdinal::class, $ordinal);
@@ -61,7 +61,7 @@ final class QueryExpressionTest extends TestCase
 
     public function testDeriveQueryBindsTheCommonTablesForTheBody(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->inspect('WITH c (x) AS (SELECT 1) SELECT x FROM c', []);
 
         self::assertInstanceOf(QueryExpression::class, $operation->statement);
@@ -72,7 +72,7 @@ final class QueryExpressionTest extends TestCase
 
     public function testRenderWritesTheWithClauseTheBodyTheOrderingAndTheLimit(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('WITH c AS (SELECT 1) SELECT * FROM c ORDER BY 1 LIMIT 2', $semantics->inspect('with c as (select 1) select * from c order by 1 limit 2')->toString());
         self::assertSame('(SELECT 1) ORDER BY 1', $semantics->inspect('(select 1) order by 1')->toString());

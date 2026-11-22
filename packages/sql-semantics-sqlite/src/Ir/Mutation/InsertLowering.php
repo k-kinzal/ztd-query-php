@@ -10,8 +10,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 
@@ -27,7 +27,7 @@ final class InsertLowering
      *
      * @throws InvalidConstruction When the INSERT is outside this domain
      */
-    public function lower(Operation $operation, InsertRows $statement): Insert
+    public function lower(BoundStatement $operation, InsertRows $statement): Insert
     {
         $into = $statement->into;
         Check::input(

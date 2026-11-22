@@ -14,7 +14,7 @@ final class TablePrimaryKeyTest extends TestCase
 {
     public function testKindIsPrimaryKey(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, PRIMARY KEY (a))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -27,7 +27,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testDeriveClauseReportsAMissingKeyColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, PRIMARY KEY (a, zz))', []);
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
@@ -36,7 +36,7 @@ final class TablePrimaryKeyTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, b int, CONSTRAINT k PRIMARY KEY (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE s INITIALLY DEFERRED)', []);
         self::assertSame('CREATE TABLE t (a INT, b INT, CONSTRAINT k PRIMARY KEY (a) INCLUDE (b) WITH (fillfactor = 70) USING INDEX TABLESPACE s INITIALLY DEFERRED)', $statement->toString());
     }

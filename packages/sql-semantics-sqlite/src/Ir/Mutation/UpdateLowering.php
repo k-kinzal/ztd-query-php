@@ -10,7 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
@@ -26,7 +26,7 @@ final class UpdateLowering
      * Builds the single-target UPDATE in assignment order.
      * @throws InvalidConstruction When the conflict policy is outside the complete UPDATE domain
      */
-    public function lower(Operation $operation, ParsedUpdate $statement): Update
+    public function lower(BoundStatement $operation, ParsedUpdate $statement): Update
     {
         Check::input(
             $statement->with === null && $statement->from === null && $statement->returning === [],

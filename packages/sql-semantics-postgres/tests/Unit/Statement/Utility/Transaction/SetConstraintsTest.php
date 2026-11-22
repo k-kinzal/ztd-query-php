@@ -14,11 +14,11 @@ final class SetConstraintsTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET CONSTRAINTS a IMMEDIATE')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('SET CONSTRAINTS a IMMEDIATE')->facts->diagnostics);
     }
 
     public function testRenderWritesAllOrTheNames(): void
     {
-        self::assertSame(['SET CONSTRAINTS ALL DEFERRED', 'SET CONSTRAINTS s.a, b IMMEDIATE'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET CONSTRAINTS ALL DEFERRED')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET CONSTRAINTS s.a, b IMMEDIATE')->toString()]);
+        self::assertSame(['SET CONSTRAINTS ALL DEFERRED', 'SET CONSTRAINTS s.a, b IMMEDIATE'], [(new \Tests\Support\Inspection())->inspect('SET CONSTRAINTS ALL DEFERRED')->toString(), (new \Tests\Support\Inspection())->inspect('SET CONSTRAINTS s.a, b IMMEDIATE')->toString()]);
     }
 }

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS,
  * https://www.postgresql.org/docs/17/sql-set.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that a signed number is an option value
  *     $number = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $number instanceof \SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument // => true

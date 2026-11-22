@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the kinds of condition apart
  *     $state = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('45000'));
  *     $state instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition // => true

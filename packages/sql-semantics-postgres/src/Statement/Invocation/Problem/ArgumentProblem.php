@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * Arguments named in a way every routine rejects: a positional argument after a named one, or a name used twice.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a repeated parameter name
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblem(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\ArgumentProblemKind::RepeatedName,

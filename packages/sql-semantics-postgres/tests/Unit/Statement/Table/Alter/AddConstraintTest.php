@@ -14,7 +14,7 @@ final class AddConstraintTest extends TestCase
 {
     public function testDeriveClauseDerivesTheConstraintAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ADD CHECK (zz > 0)', $context);
@@ -25,7 +25,7 @@ final class AddConstraintTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ADD CONSTRAINT k UNIQUE (a) DEFERRABLE', []);
         self::assertSame('ALTER TABLE t ADD CONSTRAINT k UNIQUE (a) DEFERRABLE', $statement->toString());
     }

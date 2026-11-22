@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
  * optional noise word. `WINDOW` is accepted by CREATE only.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the attribute a keyword sets
  *     \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineAttribute::ReturnsNullOnNullInput->setting() // => 'strict'
  */

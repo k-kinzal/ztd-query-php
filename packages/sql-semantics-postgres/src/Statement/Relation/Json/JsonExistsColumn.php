@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  * the NESTED PATH of a nested column (NESTED has a lower precedence than PATH).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an EXISTS column
  *     $column = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonExistsColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('e'), new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Boolean)));
  *     $column->path // => null

@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpressi
  * Mirrors PostgreSQL's `JsonArgument` node.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a path variable
  *     $argument = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'));
  *     $argument->name->value // => 'x'

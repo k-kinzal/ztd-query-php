@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Renamings;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
+use Tests\Support\Inspection;
 
 #[CoversClass(Renamings::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class RenamingsTest extends TestCase
 {
     public function testDeriveResolvesANameAnEarlierRenameProduced(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $rename = $semantics->diagnose('RENAME TABLE t TO u, u TO v', [$table]);
 
@@ -30,7 +30,7 @@ final class RenamingsTest extends TestCase
 
     public function testVacatedMakesAMovedNameMissing(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $rename = $semantics->diagnose('RENAME TABLE t TO u, t TO v', [$table]);
 
@@ -40,7 +40,7 @@ final class RenamingsTest extends TestCase
 
     public function testExistsReportsANewNameThatIsTaken(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
 
         self::assertSame(['Relation t does not exist.', 'Table y already exists.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('RENAME TABLE t TO x, x TO y, t TO y', [$table])->facts->diagnostics));

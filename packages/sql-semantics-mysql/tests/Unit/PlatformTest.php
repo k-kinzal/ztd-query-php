@@ -17,8 +17,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(Platform::class)]
 #[Medium]
@@ -59,7 +59,7 @@ final class PlatformTest extends TestCase
     {
         $this->expectExceptionMessage('MySQL reads SQL under a MySQL session mode');
 
-        new Semantics(null, new class () implements \SqlSemantics\Contract\Mode {
+        new Inspection(null, new class () implements \SqlSemantics\Contract\Mode {
             public function toString(): string
             {
                 return '';
@@ -107,7 +107,7 @@ final class PlatformTest extends TestCase
 
         self::assertSame('`order`', $codec->name(new Name('order'), NameUse::Column));
         self::assertSame('t', $codec->name(new Name('t'), NameUse::Relation));
-        self::assertSame('SELECT `rank`, `order` FROM t', (new Semantics('mysql-8.4.7'))->inspect('SELECT `rank`, `order` FROM t')->toString());
+        self::assertSame('SELECT `rank`, `order` FROM t', (new Inspection('mysql-8.4.7'))->inspect('SELECT `rank`, `order` FROM t')->toString());
     }
 
     public function testLeafKeysReadTokensUnderTheLexicalSettings(): void

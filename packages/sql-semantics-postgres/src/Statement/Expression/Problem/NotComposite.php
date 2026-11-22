@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * Source: https://www.postgresql.org/docs/17/rowtypes.html#ROWTYPES-ACCESSING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\NotComposite('a', 'integer'))->message() // => 'Column notation .a applied to type integer, which is not a composite type.'
  */

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml;
  *
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLPARSE (and `xml_whitespace_option` of the grammar).
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the preserving option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlWhitespace::Preserve->value // => 'PRESERVE'
  */

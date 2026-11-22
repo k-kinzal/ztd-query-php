@@ -19,17 +19,17 @@ final class RolePasswordTest extends TestCase
 
     public function testRenderDropsTheNoiseWordEncrypted(): void
     {
-        self::assertSame('ALTER ROLE r PASSWORD \'x\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('ALTER ROLE r ENCRYPTED PASSWORD \'x\'')->toString());
+        self::assertSame('ALTER ROLE r PASSWORD \'x\'', (new \Tests\Support\Inspection())->diagnose('ALTER ROLE r ENCRYPTED PASSWORD \'x\'')->toString());
     }
 
     public function testRenderWritesNull(): void
     {
-        self::assertSame('ALTER ROLE r PASSWORD NULL', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('ALTER ROLE r PASSWORD NULL')->toString());
+        self::assertSame('ALTER ROLE r PASSWORD NULL', (new \Tests\Support\Inspection())->diagnose('ALTER ROLE r PASSWORD NULL')->toString());
     }
 
     public function testRenderKeepsUnencrypted(): void
     {
-        self::assertSame('ALTER ROLE r UNENCRYPTED PASSWORD \'x\'', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('ALTER ROLE r UNENCRYPTED PASSWORD \'x\'')->toString());
+        self::assertSame('ALTER ROLE r UNENCRYPTED PASSWORD \'x\'', (new \Tests\Support\Inspection())->diagnose('ALTER ROLE r UNENCRYPTED PASSWORD \'x\'')->toString());
     }
 
     public function testRejectsUnencryptedWithoutAPassword(): void

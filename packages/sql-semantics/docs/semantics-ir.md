@@ -6,10 +6,10 @@
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 $sqlite = new Semantics();
-$accounts = $sqlite->inspect('CREATE TABLE accounts (Id INTEGER, balance INTEGER)');
+$catalog = $sqlite->context(['CREATE TABLE accounts (Id INTEGER, balance INTEGER)']);
 $ir = $sqlite->analyze(
     'SELECT id, accounts.id, balance - ?2 AS remaining FROM accounts',
-    [$accounts],
+    $catalog,
 );
 
 assert($ir->columns[0]->expression->slot === $ir->columns[1]->expression->slot);
@@ -41,9 +41,9 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 - CREATE TABLE for an ordinary rowid table with ordered columns, optional NOT NULL, and optional declared INTEGER, TEXT, REAL or BLOB types. The IR resolves the creation schema, preserves IF NOT EXISTS, and keeps an untyped column distinct from a declared BLOB column. Keys, defaults, additional types, table options and constraints remain open.
 - BEGIN with its effective lock mode, COMMIT, ROLLBACK, SAVEPOINT, RELEASE and ROLLBACK TO. The value identifies the transition and carries the decoded checkpoint label when needed. The same connection is responsible for its transaction stack and lock state. RELEASE and ROLLBACK TO address the most recent matching checkpoint at execution.
 
-`Semantics::analyze()` returns the complete value. Handle `SqlSemantics\\AnalysisException` for malformed, unresolved or unsupported input. `analyzeAll()` applies the same contract to each statement against the same explicit context.
+`Semantics::analyze()` returns the complete value. Handle `SqlSemantics\AnalysisException` for malformed, unresolved or unsupported input. `analyzeAll()` applies the same contract to each statement against the same explicit context.
 
-Use `Semantics::inspect()` to read the existing `Operation` model, including diagnostic facts and table declarations. For example, inspect a CREATE statement and pass its declarations as the context of a subsequent `analyze()`. Migrate callers that consume `Operation`, its fields or its original structure to `inspect()`. For a script of inspected operations, split it and inspect each statement. Call `analyze()` directly when migrating from the opt-in IR API.
+Use `Semantics::context()` to provide a catalog of relation definitions for name resolution. Each call to `analyzeAll()` binds against the same context. The result contains the complete statements in script order.
 
 ## MySQL and PostgreSQL projections
 

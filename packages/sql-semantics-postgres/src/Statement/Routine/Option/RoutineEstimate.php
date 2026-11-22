@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the estimated cost
  *     $estimate = new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineEstimate(\SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\EstimateKind::Cost, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('100')));
  *     [$estimate->setting(), $estimate->value->magnitude->digits] // => ['cost', '100']

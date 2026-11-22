@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
  * Mirrors PostgreSQL's `LockWaitPolicy` (the absence is kept as null).
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FOR-UPDATE-SHARE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the policy that skips locked rows
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockWait::SkipLocked->value // => 'SKIP LOCKED'
  */

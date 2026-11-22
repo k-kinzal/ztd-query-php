@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query;
  * word, noise: WITH WRAPPER is the unconditional wrapper.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the conditional wrapper
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonWrapperKind::Conditional->value // => 'WITH CONDITIONAL'
  */

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-type-syntax.html,
  * https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a named character set with the binary attribute
  *     $attribute = new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4'), \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing);
  *     [$attribute->charset?->value, $attribute->binary()] // => ['utf8mb4', true]

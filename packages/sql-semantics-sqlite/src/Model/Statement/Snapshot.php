@@ -9,7 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 /**
  * Closes the PHP paths that would change or re-create a semantic value without its constructor.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Refusing to copy a semantic value
  *     clone new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('id') // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a dynamic property

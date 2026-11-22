@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Server\Database;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
+use Tests\Support\Inspection;
 
 #[CoversClass(DatabaseEncryption::class)]
 #[Medium]
@@ -16,6 +16,6 @@ final class DatabaseEncryptionTest extends TestCase
 {
     public function testRenderWritesDefaultEncryption(): void
     {
-        self::assertSame("ALTER DATABASE d DEFAULT ENCRYPTION 'N'", (new Semantics())->inspect("alter database d encryption = 'N'")->toString());
+        self::assertSame("ALTER DATABASE d DEFAULT ENCRYPTION 'N'", (new Inspection())->inspect("alter database d encryption = 'N'")->toString());
     }
 }

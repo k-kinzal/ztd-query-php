@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html,
  * https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword and the argument counts of a case
  *     [\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring->value, \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring->arity()] // => ['SUBSTRING', [2, 3]]
  */

@@ -23,11 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the parts of a floating point literal
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT 1.50E-3 AS r');
- *     $literal = $query->statement->columns[0]->expression;
- *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
+ * @visibility SqlSemantics
  * @example Refusing a literal with neither a decimal point nor an exponent
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
  * @example Refusing a point without any digit

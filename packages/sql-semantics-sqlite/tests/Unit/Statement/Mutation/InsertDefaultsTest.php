@@ -10,16 +10,16 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(InsertDefaults::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class InsertDefaultsTest extends TestCase
 {
     public function testDeriveStatementReturnsTheRowOfTheTarget(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $star = $semantics->diagnose('INSERT INTO t DEFAULT VALUES RETURNING *', [$t]);
         $plain = $semantics->diagnose('INSERT INTO t DEFAULT VALUES', [$t]);
@@ -45,7 +45,7 @@ final class InsertDefaultsTest extends TestCase
 
     public function testDeriveStatementReportsAColumnTheTableLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('INSERT INTO t (zz) DEFAULT VALUES', [$t]);
 
@@ -56,7 +56,7 @@ final class InsertDefaultsTest extends TestCase
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $statement = $semantics->diagnose('INSERT INTO t DEFAULT VALUES', [$t])->statement;
         $returning = $semantics->diagnose('INSERT INTO t DEFAULT VALUES RETURNING id', [$t])->statement;
@@ -70,8 +70,8 @@ final class InsertDefaultsTest extends TestCase
 
     public function testRenderWritesDefaultValuesAndReturning(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new InsertDefaults(new InsertInto(new MutationTarget(new QualifiedName(new Name('t')))), [new Star()]));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new InsertDefaults(new InsertInto(new MutationTarget(new QualifiedName(new Name('t')))), [new Star()]));
 
         self::assertSame('INSERT INTO t DEFAULT VALUES RETURNING *', $built->toString());
         self::assertSame('REPLACE INTO main.t (a) DEFAULT VALUES', $semantics->diagnose('replace into main.t (a) default values')->toString());

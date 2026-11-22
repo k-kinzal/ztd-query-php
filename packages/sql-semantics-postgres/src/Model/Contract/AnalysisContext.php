@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * Routines, data types and session variables are not declared in a version 1
  * context; facts that need them name them as missing inputs.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling an open context from a complete empty one
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
  *     [$semantics->context()->complete, $semantics->context([])->complete] // => [false, true]

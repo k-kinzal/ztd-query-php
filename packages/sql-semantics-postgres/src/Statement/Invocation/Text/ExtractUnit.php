@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text;
  * The server passes the field to `extract` as the lower-case string.
  * Source: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the field a keyword passes
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\ExtractUnit::Minute->field() // => 'minute'
  */

@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(SourceBinding::class)]
 #[Small]
@@ -18,7 +18,7 @@ final class SourceBindingTest extends TestCase
 {
     public function testReferenceAndSourceKeepTheBoundColumnName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE public.t ("A" INTEGER, b INTEGER)');
         $operation = $semantics->inspect('SELECT "A" FROM public.t', [$table]);
         $select = $operation->statement;
@@ -26,15 +26,15 @@ final class SourceBindingTest extends TestCase
         $result = $select->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $result);
 
-        $binding = new SourceBinding($operation, $select->from);
+        $binding = new SourceBinding($operation->binding(), $select->from);
         self::assertSame(0, $binding->reference($result->expression)->slot);
         self::assertSame('A', $binding->source()?->columns[0]->value);
     }
 
     public function testSourceIsOptional(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1');
+        $operation = (new Inspection())->inspect('SELECT 1');
 
-        self::assertNull((new SourceBinding($operation, null))->source());
+        self::assertNull((new SourceBinding($operation->binding(), null))->source());
     }
 }

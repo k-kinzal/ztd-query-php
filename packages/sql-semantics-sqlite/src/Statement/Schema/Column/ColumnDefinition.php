@@ -32,11 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
  * https://sqlite.org/lang_createtable.html#the_default_clause,
  * https://sqlite.org/gencol.html#limitations. Status: Implemented.
  *
- * @visibility public
- * @example Reading a column definition
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL DEFAULT 0)');
- *     $column = $create->statement->columns[0];
- *     [$column->name->value, $column->type?->text(), count($column->constraints), $column->notNull()] // => ['price', 'DECIMAL', 2, true]
+ * @visibility SqlSemantics
  */
 final class ColumnDefinition implements Node
 {

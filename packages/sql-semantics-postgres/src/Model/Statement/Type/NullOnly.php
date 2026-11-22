@@ -9,7 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * The type of an expression that can only be SQL NULL and has no other type yet.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Representing a value whose only possible value is NULL
  *     (new \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\NullOnly()) instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact // => true
  */

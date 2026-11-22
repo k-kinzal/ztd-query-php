@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * Each case holds the keywords written after the offset, if any.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-frames.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::UnboundedFollowing->value // => 'UNBOUNDED FOLLOWING'
  */

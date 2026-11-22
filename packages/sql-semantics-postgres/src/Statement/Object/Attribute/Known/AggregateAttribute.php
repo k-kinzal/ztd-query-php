@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * attribute draws a warning and is ignored.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `DefineAggregate` in `src/backend/commands/aggregatecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\AggregateAttribute::from('sfunc')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Function
  */

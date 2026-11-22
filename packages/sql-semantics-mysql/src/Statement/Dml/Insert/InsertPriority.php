@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
  * and ignores it; the request is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html, https://dev.mysql.com/doc/refman/8.4/en/replace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority::Low->value // => 'LOW_PRIORITY'
  */

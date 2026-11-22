@@ -14,11 +14,6 @@ use SqlSemantics\SemanticsIR;
  * A complete INSERT of ordered rows into declared writable column slots.
  *
  * @visibility public
- * @example Reading the inserted row and its target
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE accounts (id INTEGER)');
- *     $insert = $semantics->analyze('INSERT INTO accounts (id) VALUES (42)', [$table]);
- *     [$insert->target->table->value, $insert->input->rows[0]->values[0]->decimal] // => ['accounts', '42']
  */
 final class Insert implements SemanticsIR
 {

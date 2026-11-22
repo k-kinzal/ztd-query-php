@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING,
  * `transformJsonFuncExpr` and `transformJsonValueExpr` in `src/backend/parser/parse_expr.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of quotes with a wrapper
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKind::QuotesWithWrapper->value // => 'SQL/JSON QUOTES behavior must not be specified when WITH WRAPPER is used'
  */

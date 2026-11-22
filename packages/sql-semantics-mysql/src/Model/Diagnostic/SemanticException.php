@@ -11,8 +11,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
  * Semantic problems established while analyzing grammatical SQL.
  *
  * @visibility public
- * @example Rejecting a query that names a missing relation
- *     (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT * FROM t', []) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

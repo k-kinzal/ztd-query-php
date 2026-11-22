@@ -14,7 +14,7 @@ final class HashModulusTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH ("modulus" 2, remainder 0)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 2, remainder 0)', $statement->toString());
     }

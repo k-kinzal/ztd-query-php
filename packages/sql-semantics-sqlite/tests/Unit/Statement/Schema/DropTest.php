@@ -10,12 +10,12 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AbsentRelation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\WrongRelationKind;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(Drop::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class DropTest extends TestCase
 {
     public function testDeriveStatementResolvesADroppedTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a)');
         $operation = $semantics->diagnose('DROP TABLE t', [$table]);
         $resolution = $operation->facts->relation($operation->statement)->table;
@@ -36,7 +36,7 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementReportsAMissingTableUnlessIfExistsIsWritten(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $strict = $semantics->diagnose('DROP TABLE t', []);
         $tolerant = $semantics->diagnose('DROP VIEW IF EXISTS t', []);
 
@@ -47,7 +47,7 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementReportsTheDropOfARelationOfTheOtherKind(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $declarations = [$semantics->diagnose('CREATE TABLE t (a)'), $semantics->diagnose('CREATE VIEW v AS SELECT 1')];
         $table = $semantics->diagnose('DROP TABLE IF EXISTS v', $declarations);
         $view = $semantics->diagnose('DROP VIEW t', $declarations);
@@ -61,14 +61,14 @@ final class DropTest extends TestCase
 
     public function testDeriveStatementKeepsAnUndeclaredTableUndeclared(): void
     {
-        $operation = (new Semantics())->diagnose('DROP TABLE IF EXISTS t');
+        $operation = (new Inspection())->diagnose('DROP TABLE IF EXISTS t');
 
         self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
     }
 
     public function testDeriveStatementRecordsNothingForIndexesAndTriggers(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $index = $semantics->diagnose('DROP INDEX i', []);
         $trigger = $semantics->diagnose('DROP TRIGGER tr', []);
 
@@ -79,7 +79,7 @@ final class DropTest extends TestCase
 
     public function testRenderWritesTheObjectKindAndTheClause(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('drop trigger if exists main.tr');
 
         self::assertInstanceOf(Drop::class, $operation->statement);

@@ -21,6 +21,6 @@ final class CreateEnumTest extends TestCase
 
     public function testDeriveStatementReportsALongLabel(): void
     {
-        self::assertSame('invalid enum label "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('CREATE TYPE mood AS ENUM (\'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\')')->facts->diagnostics[0]->message());
+        self::assertSame('invalid enum label "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"', (new \Tests\Support\Inspection())->diagnose('CREATE TYPE mood AS ENUM (\'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\')')->facts->diagnostics[0]->message());
     }
 }

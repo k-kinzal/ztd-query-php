@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * changed. Any other property, `analyse` included, is an error.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html, `AlterType` in `src/backend/commands/typecmds.c` of PostgreSQL 16 and 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads a property
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::from('storage')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Storage
  */

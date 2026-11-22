@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createlanguage.html, https://www.postgresql.org/docs/17/sql-createforeigndatawrapper.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the validator role
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionRole::Validator->value // => 'VALIDATOR'
  */

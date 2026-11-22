@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Model\Statement\Node as StatementNode;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
@@ -36,6 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
+use Tests\Support\Inspection;
 
 #[CoversClass(StatementRule::class)]
 #[Medium]
@@ -55,7 +55,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerStatementRoutesEveryKindOfProgramStatement')]
     public function testStatementRoutesEveryKindOfProgramStatement(string $release): void
     {
-        $operation = (new Semantics($release))->inspect('create function f(x int) returns int begin declare a int; declare k cursor for select 1; set a = 1; if x then set a = 1; end if; case x when 1 then set a = 2; end case; b: begin leave b; end b; begin end; l: loop iterate l; end loop; while 0 do set a = 0; end while; open k; fetch k into a; close k; return a; end');
+        $operation = (new Inspection($release))->inspect('create function f(x int) returns int begin declare a int; declare k cursor for select 1; set a = 1; if x then set a = 1; end if; case x when 1 then set a = 2; end case; b: begin leave b; end b; begin end; l: loop iterate l; end loop; while 0 do set a = 0; end while; open k; fetch k into a; close k; return a; end');
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
@@ -93,7 +93,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerStatementsLowersTheListInOrder')]
     public function testStatementsLowersTheListInOrder(string $release): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $table = $semantics->inspect('CREATE TABLE t (a INT)');
         $operation = $semantics->inspect('create trigger tr before insert on t for each row begin set @a = 1; select 2 into @b; set new.a = 3; end', [$table]);
         $statement = $operation->statement;
@@ -124,7 +124,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerEventLowersTheStatementOfAnEvent')]
     public function testEventLowersTheStatementOfAnEvent(string $release, string $sql, string $class, string $rendering): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $create = $semantics->inspect('create event e on schedule every 1 day do ' . $sql);
         self::assertInstanceOf(CreateEvent::class, $create->statement);
         self::assertInstanceOf($class, $create->statement->body);
@@ -150,7 +150,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerBodyLowersAProgramStatement')]
     public function testBodyLowersAProgramStatement(string $release): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $procedure = $semantics->inspect('create procedure p() begin end');
         self::assertInstanceOf(CreateProcedure::class, $procedure->statement);
         self::assertEquals(new Block(), $procedure->statement->body);
@@ -175,7 +175,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerBodyLowersAnExternalBody')]
     public function testBodyLowersAnExternalBody(string $release): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $function = $semantics->inspect("create function f() returns int language javascript as 'return 1'");
         self::assertInstanceOf(CreateFunction::class, $function->statement);
         self::assertEquals(new ExternalBody(new Text('return 1')), $function->statement->body);
@@ -200,7 +200,7 @@ final class StatementRuleTest extends TestCase
     #[DataProvider('providerDollarQuotedSplitsTheTagAndTheText')]
     public function testDollarQuotedSplitsTheTagAndTheText(string $string, DollarQuotedText $expected, string $rendering): void
     {
-        $operation = (new Semantics())->inspect('create procedure p() language javascript as ' . $string);
+        $operation = (new Inspection())->inspect('create procedure p() language javascript as ' . $string);
         self::assertInstanceOf(CreateProcedure::class, $operation->statement);
 
         self::assertEquals(new ExternalBody($expected), $operation->statement->body);

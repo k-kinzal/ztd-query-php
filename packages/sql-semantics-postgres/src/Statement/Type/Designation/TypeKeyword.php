@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * the one written is kept. JSON is a keyword from PostgreSQL 17 on.
  * Source: https://www.postgresql.org/docs/17/datatype.html#DATATYPE-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the catalog type of a spelling
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::Int->builtin() // => \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4
  */

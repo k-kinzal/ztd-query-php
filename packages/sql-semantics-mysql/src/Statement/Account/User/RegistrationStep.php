@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
  * `UNREGISTER` removes the device.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-registration.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming a step
  *     \SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep::Finish->name // => 'Finish'
  */

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
  * window function and aggregates nothing.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling an aggregate from its windowed form
  *     $count = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count, []);
  *     $windowed = new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count, [], over: new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('w'));

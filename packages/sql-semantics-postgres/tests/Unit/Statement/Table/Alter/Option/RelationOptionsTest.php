@@ -14,7 +14,7 @@ final class RelationOptionsTest extends TestCase
 {
     public function testDeriveClauseDerivesTheParameters(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t SET (fillfactor = 70)', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
@@ -23,7 +23,7 @@ final class RelationOptionsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER INDEX i RESET (fillfactor)', []);
         self::assertSame('ALTER INDEX i RESET (fillfactor)', $statement->toString());
     }

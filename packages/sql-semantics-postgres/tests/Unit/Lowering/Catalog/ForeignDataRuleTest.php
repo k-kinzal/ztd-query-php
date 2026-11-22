@@ -14,7 +14,7 @@ final class ForeignDataRuleTest extends TestCase
 {
     public function testStatementLowersImportForeignSchema(): void
     {
-        self::assertSame('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l')->toString());
+        self::assertSame('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l', (new \Tests\Support\Inspection())->inspect('IMPORT FOREIGN SCHEMA r FROM SERVER s INTO l')->toString());
     }
 
     public function testFunctionsLowersEveryClause(): void

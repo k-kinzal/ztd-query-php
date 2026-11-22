@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
+use Tests\Support\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Schema\DropTableLowering
@@ -19,17 +20,20 @@ final class DropTableLoweringTest extends TestCase
     {
         $semantics = new Semantics();
         $tables = [
-            $semantics->inspect('CREATE TABLE records (id INTEGER)'),
-            $semantics->inspect('CREATE TEMP TABLE records (id INTEGER)'),
+            (new Inspection())->inspect('CREATE TABLE records (id INTEGER)'),
+            (new Inspection())->inspect('CREATE TEMP TABLE records (id INTEGER)'),
         ];
-        $operation = $semantics->inspect('DROP TABLE records', $tables);
+        $operation = (new Inspection())->inspect('DROP TABLE records', $tables);
         self::assertInstanceOf(Drop::class, $operation->statement);
 
-        $drop = (new DropTableLowering())->lower($operation, $operation->statement);
+        $drop = (new DropTableLowering())->lower($operation->binding(), $operation->statement);
 
         self::assertSame('temp', $drop->schema->value);
         self::assertSame('records', $drop->table->value);
-        $published = $semantics->analyze('DROP TABLE records', $tables);
+        $published = $semantics->analyze('DROP TABLE records', $semantics->context([
+            'CREATE TABLE records (id INTEGER)',
+            'CREATE TEMP TABLE records (id INTEGER)',
+        ]));
         self::assertInstanceOf(DropTable::class, $published);
         self::assertEquals($drop, $published);
     }

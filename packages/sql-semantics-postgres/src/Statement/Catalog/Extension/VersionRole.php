@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createextension.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the role of an installed version
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\VersionRole::Target->value // => 'VERSION'
  */

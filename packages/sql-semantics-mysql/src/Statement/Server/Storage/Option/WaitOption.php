@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * NDB only; the default is to wait.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption(false))->keyword() // => 'WAIT'
  */

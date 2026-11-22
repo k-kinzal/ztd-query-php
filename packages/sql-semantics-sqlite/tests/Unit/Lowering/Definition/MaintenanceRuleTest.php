@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\MaintenanceRule;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Analyze;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
+use Tests\Support\Inspection;
 
 #[CoversClass(MaintenanceRule::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class MaintenanceRuleTest extends TestCase
 {
     public function testCommandLowersEachAdministrationCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertInstanceOf(Vacuum::class, $semantics->inspect('VACUUM')->statement);
         self::assertInstanceOf(Vacuum::class, $semantics->inspect('VACUUM main')->statement);
@@ -39,7 +39,7 @@ final class MaintenanceRuleTest extends TestCase
 
     public function testCommandReadsTheFirstNameOfAQualifiedPragmaAsItsSchema(): void
     {
-        $statement = (new Semantics())->inspect('PRAGMA aux.page_size')->statement;
+        $statement = (new Inspection())->inspect('PRAGMA aux.page_size')->statement;
 
         self::assertInstanceOf(Pragma::class, $statement);
         self::assertSame('aux', $statement->name->schema?->value);
@@ -49,7 +49,7 @@ final class MaintenanceRuleTest extends TestCase
 
     public function testIntoIsNullUnlessATargetIsWritten(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $plain = $semantics->inspect('VACUUM')->statement;
         $into = $semantics->inspect("VACUUM INTO 'f'")->statement;
 
@@ -61,7 +61,7 @@ final class MaintenanceRuleTest extends TestCase
 
     public function testValueKeepsEachOperandKindApart(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $number = $semantics->inspect('PRAGMA a = +5')->statement;
         $negative = $semantics->inspect('PRAGMA a = -5')->statement;
         $name = $semantics->inspect('PRAGMA a = full')->statement;

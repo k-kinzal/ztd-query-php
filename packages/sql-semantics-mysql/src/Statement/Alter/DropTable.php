@@ -29,11 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the dropped table to its declaration
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $drop = $semantics->inspect('drop tables if exists t, u cascade', []);
- *     [$drop->toString(), $drop->statement->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
+ * @visibility SqlSemantics
  */
 final class DropTable implements Statement
 {

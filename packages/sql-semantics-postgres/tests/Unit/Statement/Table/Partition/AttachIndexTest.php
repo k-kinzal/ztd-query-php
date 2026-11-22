@@ -14,7 +14,7 @@ final class AttachIndexTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER INDEX pi ATTACH PARTITION pi1', []);
         self::assertSame([
           0 => 'Relation pi does not exist.',
@@ -23,7 +23,7 @@ final class AttachIndexTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER INDEX pi ATTACH PARTITION s.pi1', []);
         self::assertSame('ALTER INDEX pi ATTACH PARTITION s.pi1', $statement->toString());
     }

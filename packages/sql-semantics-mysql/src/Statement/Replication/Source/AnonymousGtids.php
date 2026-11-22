@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Source;
  * LOCAL assigns GTIDs with the replica's own UUID.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html#crs-opt-assign_gtids_to_anonymous_transactions.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a setting
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Source\AnonymousGtids::Local->value // => 'LOCAL'
  */

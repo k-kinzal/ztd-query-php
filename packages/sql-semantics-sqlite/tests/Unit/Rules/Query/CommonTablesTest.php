@@ -16,12 +16,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Query\CommonTables;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(CommonTables::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class CommonTablesTest extends TestCase
 {
     public function testBindMakesEveryTableVisibleWhateverTheWrittenOrder(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $statement = $semantics->diagnose("WITH d(y) AS (SELECT x FROM c), c AS (SELECT 1 AS x, 'z') SELECT * FROM d")->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $derivation = new Derivation($semantics->context([]));
@@ -52,7 +52,7 @@ final class CommonTablesTest extends TestCase
 
     public function testBindReportsARepeatedNameAndACircularReference(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $repeated = $semantics->diagnose('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT * FROM c')->statement;
         $circular = $semantics->diagnose('WITH c AS (SELECT * FROM d), d AS (SELECT * FROM c) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $repeated);
@@ -71,7 +71,7 @@ final class CommonTablesTest extends TestCase
 
     public function testBindTypesARecursiveReferenceAsAnyStorageClass(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $statement = $semantics->diagnose('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $derivation = new Derivation($semantics->context([]));
@@ -87,7 +87,7 @@ final class CommonTablesTest extends TestCase
 
     public function testUsesAnswersTheUnqualifiedTableNamesFolded(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $statement = $semantics->diagnose('WITH c AS (SELECT (SELECT 1 FROM Nested) FROM T JOIN main.u, v AS w) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
 
@@ -99,7 +99,7 @@ final class CommonTablesTest extends TestCase
 
     public function testProvisionalHasOneSlotPerListedColumnThatCanHoldAnything(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $statement = $semantics->diagnose('WITH c(x, y) AS (SELECT 1, 2), d AS (SELECT 3) SELECT * FROM c')->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
 
@@ -116,7 +116,7 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeRenamesTheColumnsByTheListAndReportsAnotherLength(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->diagnose("WITH c(x, y, z) AS (SELECT 1 AS a, 'b') SELECT * FROM c", []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
@@ -141,7 +141,7 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeKeepsTheQueryNamesWithoutAListAndReportsADecoratedName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->diagnose('WITH c AS (SELECT 1 AS a, 2 AS a), d(x COLLATE nocase) AS (SELECT 3) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
@@ -158,7 +158,7 @@ final class CommonTablesTest extends TestCase
 
     public function testShapeDependsOnTheMissingInputsOfAnOpenQuery(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->diagnose('WITH c(x, y) AS (SELECT * FROM t) SELECT * FROM c');
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);

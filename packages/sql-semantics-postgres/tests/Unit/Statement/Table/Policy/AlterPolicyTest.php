@@ -14,7 +14,7 @@ final class AlterPolicyTest extends TestCase
 {
     public function testDeriveStatementDerivesTheConditionsAgainstTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER POLICY p ON t USING (zz > 0) WITH CHECK (a)', $context);
@@ -26,7 +26,7 @@ final class AlterPolicyTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER POLICY p ON t TO bob', $context);
@@ -37,7 +37,7 @@ final class AlterPolicyTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER POLICY p ON s.t TO CURRENT_USER, bob USING (a > 0) WITH CHECK (b > 0)', []);
         self::assertSame('ALTER POLICY p ON s.t TO CURRENT_USER, bob USING (a > 0) WITH CHECK (b > 0)', $statement->toString());
     }

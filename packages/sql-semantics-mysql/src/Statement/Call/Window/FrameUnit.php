@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * not support it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-frames.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Range->value // => 'RANGE'
  */

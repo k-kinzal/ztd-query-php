@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine;
  * are one keyword of the lexer.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-function-loadable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a return type
  *     \SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult::Integer->value // => 'INTEGER'
  */

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch;
  *
  * Source: https://www.postgresql.org/docs/17/sql-altertsconfig.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the replacing change
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\TextSearch\MappingChange::Alter->value // => 'ALTER'
  */

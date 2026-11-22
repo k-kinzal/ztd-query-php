@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine;
  * Each case holds the keyword that names the kind in CREATE, ALTER and DROP.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-objects.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a kind
  *     \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger->value // => 'TRIGGER'
  */

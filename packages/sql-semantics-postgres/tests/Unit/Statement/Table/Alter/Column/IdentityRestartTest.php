@@ -14,7 +14,7 @@ final class IdentityRestartTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER a RESTART WITH 7', []);
         self::assertSame('ALTER TABLE t ALTER a RESTART 7', $statement->toString());
     }

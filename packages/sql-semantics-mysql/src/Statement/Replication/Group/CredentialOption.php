@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-group-replication.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a user option
  *     (new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::User, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('rpl')))->value->value // => 'rpl'
  */

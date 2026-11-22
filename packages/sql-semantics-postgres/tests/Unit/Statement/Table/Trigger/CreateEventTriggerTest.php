@@ -14,7 +14,7 @@ final class CreateEventTriggerTest extends TestCase
 {
     public function testDeriveStatementReportsAnUnknownEventAndVariable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE EVENT TRIGGER e ON ddl_command_middle WHEN size IN (\'x\') EXECUTE FUNCTION f()', []);
         self::assertSame([
           0 => 'unrecognized event name "ddl_command_middle"',
@@ -24,7 +24,7 @@ final class CreateEventTriggerTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE EVENT TRIGGER e ON ddl_command_end WHEN tag IN (\'CREATE TABLE\') AND TAG IN (\'DROP TABLE\') EXECUTE PROCEDURE s.f()', []);
         self::assertSame('CREATE EVENT TRIGGER e ON ddl_command_end WHEN tag IN (\'CREATE TABLE\') AND tag IN (\'DROP TABLE\') EXECUTE FUNCTION s.f()', $statement->toString());
     }

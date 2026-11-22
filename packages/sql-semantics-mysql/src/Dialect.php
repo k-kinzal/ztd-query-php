@@ -8,9 +8,6 @@ namespace SqlSemantics\Platform\MySql;
  * Selects MySQL for semantic analysis.
  *
  * @visibility public
- * @example Analyzing MySQL SQL
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $semantics->inspect('select a from t')->toString() // => 'SELECT a FROM t'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect
 {

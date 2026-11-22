@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * of column values each.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-columns-list.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the tuples of a list columns partition
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     count((new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesInRows([$row]))->rows) // => 1

@@ -14,7 +14,7 @@ final class CreateTableAsExecuteTest extends TestCase
 {
     public function testDeriveStatementDeclaresAnIncompleteTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('CREATE TABLE n AS EXECUTE q', []);
         self::assertSame([
           0 => false,
@@ -24,7 +24,7 @@ final class CreateTableAsExecuteTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('CREATE TEMP TABLE IF NOT EXISTS n (x) AS EXECUTE q (1, 2) WITH DATA', []);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS n (x) AS EXECUTE q (1, 2) WITH DATA', $statement->toString());
     }

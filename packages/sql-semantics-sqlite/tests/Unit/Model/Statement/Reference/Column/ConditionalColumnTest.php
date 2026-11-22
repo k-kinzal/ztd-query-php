@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
+use Tests\Support\Inspection;
 
 #[CoversClass(ConditionalColumn::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ConditionalColumnTest extends TestCase
 {
     public function testRelationsAndMissingNameTheUndeclaredOccurrence(): void
     {
-        $query = (new Semantics())->inspect('SELECT a FROM t');
+        $query = (new Inspection())->inspect('SELECT a FROM t');
 
         $resolution = $query->field('a')->resolution;
 
@@ -34,7 +34,7 @@ final class ConditionalColumnTest extends TestCase
 
     public function testCandidatesKeepAKnownSlotWhileANearerOccurrenceIsUnknown(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TEMP TABLE t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t, u', $semantics->context([$table], false));
         $join = $query->inputRelation();

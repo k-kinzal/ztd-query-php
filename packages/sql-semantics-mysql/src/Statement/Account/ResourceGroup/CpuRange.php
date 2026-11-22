@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * machine the server runs on, which a declaration context does not hold.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-resource-group.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a range
  *     $range = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3'));
  *     [$range->first->text, $range->last?->text] // => ['0', '3']

@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Query\SortScopes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -30,6 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(SortScopes::class)]
 #[Medium]
@@ -37,7 +37,7 @@ final class SortScopesTest extends TestCase
 {
     public function testDeriveLetsABareAliasWinOnlyWhenAskedTo(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->inspect('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
         $select = $query->statement;
@@ -65,7 +65,7 @@ final class SortScopesTest extends TestCase
 
     public function testDeriveResolvesAnOrdinalAgainstTheProjectionAndReportsARowValue(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $query = $semantics->inspect("SELECT 1 AS a, 'x' AS b");
         $select = $query->statement;
         $output = $query->facts->output;

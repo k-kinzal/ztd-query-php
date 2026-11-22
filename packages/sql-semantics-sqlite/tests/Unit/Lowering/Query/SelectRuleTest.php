@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\SelectRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
@@ -20,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\Inspection;
 
 #[CoversClass(SelectRule::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class SelectRuleTest extends TestCase
 {
     public function testSelectLowersAPlainQueryAndAQueryWithCommonTables(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $plain = $semantics->inspect('SELECT 1')->statement;
         $with = $semantics->inspect('WITH c AS (SELECT 1) SELECT * FROM c')->statement;
         $recursive = $semantics->inspect('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c')->statement;
@@ -43,7 +43,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLowersACompoundQueryWithItsArmsInOrderAndTheTrailingOrderByAndLimit(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
+        $operation = (new Inspection())->inspect('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(Select::class, $operation->statement->first);
@@ -60,7 +60,7 @@ final class SelectRuleTest extends TestCase
 
     public function testBodyLeavesACompoundThatEndsInValuesWithoutOrderByAndLimit(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 UNION VALUES (2)');
+        $operation = (new Inspection())->inspect('SELECT 1 UNION VALUES (2)');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertInstanceOf(ValuesClause::class, $operation->statement->steps[0]->query);
@@ -71,7 +71,7 @@ final class SelectRuleTest extends TestCase
 
     public function testOperatorLowersEveryCompoundOperatorAsWritten(): void
     {
-        $operation = (new Semantics())->inspect('select 1 union select 2 union all select 3 except select 4 intersect select 5');
+        $operation = (new Inspection())->inspect('select 1 union select 2 union all select 3 except select 4 intersect select 5');
 
         self::assertInstanceOf(Compound::class, $operation->statement);
         self::assertSame(['UNION', 'UNION ALL', 'EXCEPT', 'INTERSECT'], array_map(static fn (CompoundStep $step): string => $step->operator->value, $operation->statement->steps));
@@ -80,7 +80,7 @@ final class SelectRuleTest extends TestCase
 
     public function testArmLowersASelectionOrAValuesClause(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $compound = $semantics->inspect('VALUES (1) UNION SELECT 2')->statement;
         $rows = $semantics->inspect('VALUES (1), (2)')->statement;
 
@@ -93,7 +93,7 @@ final class SelectRuleTest extends TestCase
 
     public function testSelectionLowersEveryClauseInGrammarOrder(): void
     {
-        $operation = (new Semantics())->inspect('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
+        $operation = (new Inspection())->inspect('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
@@ -113,7 +113,7 @@ final class SelectRuleTest extends TestCase
 
     public function testGroupsTurnsAnIntegerConstantIntoAResultColumnPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $grouped = $semantics->inspect('SELECT a, count(*) FROM t GROUP BY 1, a')->statement;
         $plain = $semantics->inspect('SELECT a FROM t')->statement;
 
@@ -128,7 +128,7 @@ final class SelectRuleTest extends TestCase
 
     public function testHavingIsNullWithoutTheClause(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $bare = $semantics->inspect('SELECT a FROM t GROUP BY a')->statement;
         $filtered = $semantics->inspect('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->statement;
 
@@ -141,7 +141,7 @@ final class SelectRuleTest extends TestCase
 
     public function testLimitKeepsTheSpellingOfTheOffset(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $plain = $semantics->inspect('SELECT 1 LIMIT 5');
         $offset = $semantics->inspect('SELECT 1 LIMIT 5 OFFSET 2');
         $comma = $semantics->inspect('SELECT 1 LIMIT 2, 5');

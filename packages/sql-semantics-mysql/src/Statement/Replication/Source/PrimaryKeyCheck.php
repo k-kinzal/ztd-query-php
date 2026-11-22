@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Source;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html#crs-opt-require_table_primary_key_check.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a setting
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Source\PrimaryKeyCheck::Generate->value // => 'GENERATE'
  */

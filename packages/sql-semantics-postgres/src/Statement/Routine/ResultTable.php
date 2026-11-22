@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Counting the result columns
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('int4')])));
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\ResultTable([new \SqlSemantics\Platform\PostgreSql\Statement\Routine\ResultColumn(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('id'), $type)]))->columns) // => 1

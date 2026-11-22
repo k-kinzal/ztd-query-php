@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlSemantics\Platform\MySql\Model\Validation\Equivalence;
-use SqlSemantics\Platform\MySql\Semantics;
+use Tests\Support\Inspection;
 use Throwable;
 
 /**
@@ -14,7 +14,7 @@ use Throwable;
  */
 final class SchemaTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
+    public function __construct(private readonly Inspection $semantics, private readonly string $grammarVersion)
     {
     }
 

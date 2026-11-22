@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * current row does not end at or before it.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a frame with a start only
  *     $frame = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowFrame(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode::Rows,

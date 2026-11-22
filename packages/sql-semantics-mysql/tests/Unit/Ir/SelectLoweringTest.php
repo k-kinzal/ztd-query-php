@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
-use SqlSemantics\Platform\MySql\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(SelectLowering::class)]
 #[Small]
@@ -17,9 +17,9 @@ final class SelectLoweringTest extends TestCase
 {
     public function testLowerSharesTheResolvedSlot(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE ir_fixture.accounts (Id INTEGER, unused INTEGER)');
-        $value = (new SelectLowering())->lower($semantics->inspect('SELECT id, accounts.id FROM ir_fixture.accounts', [$table]));
+        $value = (new SelectLowering())->lower($semantics->inspect('SELECT id, accounts.id FROM ir_fixture.accounts', [$table])->binding());
         $unqualified = $value->columns[0]->expression;
         $qualified = $value->columns[1]->expression;
 
@@ -35,6 +35,6 @@ final class SelectLoweringTest extends TestCase
     {
         $this->expectExceptionMessage('resolved, complete base table');
 
-        (new SelectLowering())->lower((new Semantics())->inspect('SELECT id FROM ir_fixture.accounts'));
+        (new SelectLowering())->lower((new Inspection())->inspect('SELECT id FROM ir_fixture.accounts')->binding());
     }
 }

@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
  *
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the peer-group mode
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode::Groups->value // => 'GROUPS'
  */

@@ -30,10 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
  * declaration of the context.
  * Source: https://www.postgresql.org/docs/17/sql-droptable.html, https://www.postgresql.org/docs/17/sql-dropfunction.html.
  *
- * @visibility public
- * @example Reading the dropped tables
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP TABLE IF EXISTS a, b CASCADE');
- *     [$operation->statement->kind->value, count($operation->statement->objects), $operation->statement->ifExists] // => ['TABLE', 2, true]
+ * @visibility SqlSemantics
  */
 final class Drop implements Statement
 {

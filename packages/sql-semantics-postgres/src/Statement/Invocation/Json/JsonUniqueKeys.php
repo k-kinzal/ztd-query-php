@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * The optional KEYS word is noise. Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE,
  * https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-MISC.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a uniqueness requirement
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys(true))->unique // => true
  */

@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(AnalysisException::class)]
 #[Medium]
@@ -18,19 +18,19 @@ final class AnalysisExceptionTest extends TestCase
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics())->diagnose('SELEC 1');
+        (new Inspection())->diagnose('SELEC 1');
     }
 
     public function testSplitRejectsATailOutsideTheGrammar(): void
     {
         $this->expectException(AnalysisException::class);
 
-        (new Semantics())->split('SELECT 1; SELEC 2');
+        (new Inspection())->split('SELECT 1; SELEC 2');
     }
 
     public function testSemanticProblemsAreFactsAndNotRejections(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT b FROM t', []);
+        $operation = (new Inspection())->diagnose('SELECT b FROM t', []);
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertSame('SELECT b FROM t', $operation->toString());

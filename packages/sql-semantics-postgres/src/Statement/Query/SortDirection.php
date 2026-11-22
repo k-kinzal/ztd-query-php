@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
  * No direction sorts ascending; the absence is kept as null by the sort item.
  * Source: https://www.postgresql.org/docs/17/queries-order.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the descending direction
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection::Descending->value // => 'DESC'
  */

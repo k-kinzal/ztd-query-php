@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
  * Without the clause NULLs sort as larger than any other value.
  * Source: https://www.postgresql.org/docs/17/queries-order.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the choice that puts NULLs first
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder::First->value // => 'FIRST'
  */

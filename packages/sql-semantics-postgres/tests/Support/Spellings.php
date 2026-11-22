@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Model\Validation;
+namespace Tests\Support;
 
 use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
-use SqlSemantics\Platform\Sqlite\Model\Contract\LeafKeys;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvariantViolation;
-use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LeafKeys;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
 
 /**
  * Checks that the layouts of a rendering only re-spelled the rendered tokens.

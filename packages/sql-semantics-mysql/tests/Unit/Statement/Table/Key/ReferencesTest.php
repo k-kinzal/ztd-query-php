@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
+use Tests\Support\Inspection;
 
 #[CoversClass(References::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class ReferencesTest extends TestCase
 {
     public function testDeriveReferencesResolvesTheTableBeingDefined(): void
     {
-        $create = (new Semantics())->inspect('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
+        $create = (new Inspection())->inspect('CREATE TABLE c (id INT, p INT REFERENCES c (id))');
         $statement = $create->statement;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
@@ -38,7 +38,7 @@ final class ReferencesTest extends TestCase
 
     public function testDeriveReferencesResolvesAnotherTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $parent = $semantics->inspect('CREATE TABLE p (id INT)');
         $child = $semantics->inspect('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id))', [$parent]);
         $childStatement = $child->statement;
@@ -53,6 +53,6 @@ final class ReferencesTest extends TestCase
 
     public function testRenderWritesTheClause(): void
     {
-        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Semantics())->inspect('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
+        self::assertSame('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)', (new Inspection())->inspect('CREATE TABLE c (p INT REFERENCES shop.p (id, x) MATCH PARTIAL ON DELETE RESTRICT ON UPDATE NO ACTION)')->toString());
     }
 }

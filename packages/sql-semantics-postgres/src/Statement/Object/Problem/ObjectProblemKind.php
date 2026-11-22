@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Problem;
  * `get_object_address` in `src/backend/catalog/objectaddress.c` and
  * `RemoveRelations` in `src/backend/commands/tablecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of an unqualified column
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind::UnqualifiedColumn->value // => 'column name must be qualified'
  */

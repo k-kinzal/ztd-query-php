@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege;
  * spelling is kept as written.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that OPTION turns the membership option on
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\MembershipSetting::Option->enabled() // => true
  */

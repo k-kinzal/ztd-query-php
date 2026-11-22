@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-privilege-levels.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the global level apart
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel() instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel // => true
  */

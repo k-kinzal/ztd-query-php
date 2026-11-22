@@ -14,7 +14,7 @@ final class LikeClauseTest extends TestCase
 {
     public function testDeriveClauseResolvesTheSourceTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (LIKE t)', $context);
@@ -31,14 +31,14 @@ final class LikeClauseTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (LIKE s.t INCLUDING ALL EXCLUDING STATISTICS)', []);
         self::assertSame('CREATE TABLE n (LIKE s.t INCLUDING ALL EXCLUDING STATISTICS)', $statement->toString());
     }
 
     public function testDeriveClauseReportsASequence(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [$semantics->diagnose('CREATE SEQUENCE s'), $semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
         self::assertSame(['relation "s" is invalid in LIKE clause'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (LIKE s)', $context)->facts->diagnostics));
         self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (LIKE v)', $context)->facts->diagnostics));

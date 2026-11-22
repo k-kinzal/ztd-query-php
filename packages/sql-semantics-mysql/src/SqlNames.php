@@ -16,11 +16,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
  * assembled with its help is unchecked until it is analyzed.
  *
  * @visibility public
- * @example Spelling a relation name read from one query for another statement
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $input = $semantics->inspect('SELECT a FROM `order items`')->singleNamedInput();
- *     $table = \SqlSemantics\Platform\MySql\SqlNames::table($input->name(), $semantics->profile());
- *     $semantics->inspect("SELECT * FROM {$table}")->singleNamedInput()->name()->name->value // => 'order items'
  */
 final class SqlNames
 {

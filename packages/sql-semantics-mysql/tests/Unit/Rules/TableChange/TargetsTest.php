@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
+use Tests\Support\Inspection;
 
 #[CoversClass(Targets::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class TargetsTest extends TestCase
 {
     public function testTargetAnswersTheDeclaredColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
         $truncate = $semantics->inspect('TRUNCATE t', [$table]);
 
@@ -29,7 +29,7 @@ final class TargetsTest extends TestCase
 
     public function testOptionalResolvesAMissingTableToAbsent(): void
     {
-        $drop = (new Semantics())->inspect('DROP TABLE IF EXISTS t', []);
+        $drop = (new Inspection())->inspect('DROP TABLE IF EXISTS t', []);
 
         self::assertInstanceOf(DropTable::class, $drop->statement);
         self::assertInstanceOf(AbsentTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
@@ -37,7 +37,7 @@ final class TargetsTest extends TestCase
 
     public function testSameComparesTheCurrentDatabase(): void
     {
-        $context = (new Semantics())->context([]);
+        $context = (new Inspection())->context([]);
         $current = $context->searchPath[0];
 
         self::assertTrue((new Targets())->same($context, new QualifiedName(new Name('t')), new QualifiedName(new Name('t'), $current)));

@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Load;
  * Each case holds the keywords it is written with before BY.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::OptionallyEnclosed->value // => 'OPTIONALLY ENCLOSED'
  */

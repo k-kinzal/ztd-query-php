@@ -14,11 +14,11 @@ final class ForeignOptionsTest extends TestCase
 {
     public function testWriteOmitsAnEmptyList(): void
     {
-        self::assertSame('CREATE SERVER s FOREIGN DATA WRAPPER w', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE SERVER s FOREIGN DATA WRAPPER w')->toString());
+        self::assertSame('CREATE SERVER s FOREIGN DATA WRAPPER w', (new \Tests\Support\Inspection())->inspect('CREATE SERVER s FOREIGN DATA WRAPPER w')->toString());
     }
 
     public function testFunctionsAcceptsOneOfEachRole(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('CREATE FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
     }
 }

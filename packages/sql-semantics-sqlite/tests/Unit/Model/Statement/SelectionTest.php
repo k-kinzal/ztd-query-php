@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Selection;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\Inspection;
 
 #[CoversClass(Selection::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class SelectionTest extends TestCase
 {
     public function testInputAnswersTheRelationStructureOrNull(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $withInput = $semantics->inspect('SELECT a FROM t')->statement;
         $withoutInput = $semantics->inspect('SELECT 1')->statement;
 

@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(ViewColumns::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class ViewColumnsTest extends TestCase
 {
     public function testNamesRenamesGeneratedNamesThatAreNotValidOrRepeated(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $view = $semantics->inspect("CREATE VIEW v AS SELECT 'a ', 1+1, '', 'b', 1+1 AS c, ' x', 'Name_exp_1'", []);
         $query = $semantics->inspect('SELECT * FROM v', [$view]);
 
@@ -29,7 +29,7 @@ final class ViewColumnsTest extends TestCase
 
     public function testNamesUsesTheLegacyPrefixIn57(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
+        $semantics = new Inspection('mysql-5.7.44');
         $view = $semantics->inspect("CREATE VIEW v AS SELECT 'Name_exp_2', ''", []);
 
         self::assertSame(['Name_exp_2', 'My_exp_'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->inspect('SELECT * FROM v', [$view])->fields()->items ?? []));
@@ -37,7 +37,7 @@ final class ViewColumnsTest extends TestCase
 
     public function testGeneratedTellsTheFieldsWithoutAliasThatAreNoColumns(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a, b AS c, 1+1 FROM t');
+        $operation = (new Inspection())->inspect('SELECT a, b AS c, 1+1 FROM t');
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);
@@ -46,8 +46,8 @@ final class ViewColumnsTest extends TestCase
 
     public function testBlockAnswersTheFirstQueryBlock(): void
     {
-        $operation = (new Semantics())->inspect('(SELECT 1 AS a) UNION SELECT 2');
-        $values = (new Semantics())->inspect('VALUES ROW(1)')->statement;
+        $operation = (new Inspection())->inspect('(SELECT 1 AS a) UNION SELECT 2');
+        $values = (new Inspection())->inspect('VALUES ROW(1)')->statement;
         $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
 
         self::assertInstanceOf(Query::class, $operation->statement);
@@ -58,7 +58,7 @@ final class ViewColumnsTest extends TestCase
 
     public function testUniqueAddsTheCounterWhenTheNameIsTaken(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1');
+        $operation = (new Inspection())->inspect('SELECT 1');
         $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
 
         self::assertSame('Name_exp_1_a', $columns->unique(['Name_exp_a', 'a', 'a'], 2, 2, 'a'));
@@ -66,7 +66,7 @@ final class ViewColumnsTest extends TestCase
 
     public function testCutKeepsSixtyFourCharactersOrTheLegacyBytes(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1');
+        $operation = (new Inspection())->inspect('SELECT 1');
         $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
 
         self::assertSame(str_repeat('a', 64), $columns->cut(str_repeat('a', 70), false));

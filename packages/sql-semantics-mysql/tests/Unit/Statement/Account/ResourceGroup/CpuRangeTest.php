@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Account\ResourceGroup;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange;
+use Tests\Support\Inspection;
 
 #[CoversClass(CpuRange::class)]
 #[Medium]
@@ -16,6 +16,6 @@ final class CpuRangeTest extends TestCase
 {
     public function testRenderWritesNumbersAndRanges(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 0, 2 - 5', (new Semantics())->inspect('alter resource group g vcpu 0 2-5')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU = 0, 2 - 5', (new Inspection())->inspect('alter resource group g vcpu 0 2-5')->toString());
     }
 }

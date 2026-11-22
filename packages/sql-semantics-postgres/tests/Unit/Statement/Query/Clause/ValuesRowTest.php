@@ -14,7 +14,7 @@ final class ValuesRowTest extends TestCase
 {
     public function testRenderWritesTheValuesInParentheses(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $query = $semantics->inspect("VALUES (1, 'a', NULL)");
         self::assertSame("VALUES (1, 'a', NULL)", $query->toString());
     }

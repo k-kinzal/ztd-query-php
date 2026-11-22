@@ -14,7 +14,7 @@ final class SetExpressionTest extends TestCase
 {
     public function testDeriveClauseResolvesTheExpression(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int GENERATED ALWAYS AS (a) STORED, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ALTER b SET EXPRESSION AS (a + zz)', $context);
@@ -25,7 +25,7 @@ final class SetExpressionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)', []);
         self::assertSame('ALTER TABLE t ALTER b SET EXPRESSION AS (a * 2)', $statement->toString());
     }

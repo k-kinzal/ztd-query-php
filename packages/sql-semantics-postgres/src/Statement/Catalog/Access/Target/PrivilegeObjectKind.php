@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target;
  * foreign tables; for compatibility it also accepts a sequence.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the server names a kind in its messages
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::ForeignDataWrapper->subject() // => 'foreign-data wrapper'
  */

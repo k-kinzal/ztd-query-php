@@ -14,7 +14,7 @@ final class DefinitionProblemTest extends TestCase
 {
     public function testMessageNamesTheSubject(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, a int)', []);
         $n1 = $statement->facts->diagnostics[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem::class, $n1);

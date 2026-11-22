@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Type;
  *
  * Source: https://sqlite.org/datatype3.html#determination_of_column_affinity.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Deriving the affinity of a declared type
  *     (new \SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain('VARCHAR(10)'))->affinity // => \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Text
  */

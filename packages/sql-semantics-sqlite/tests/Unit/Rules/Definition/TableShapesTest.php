@@ -19,9 +19,9 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class TableShapesTest extends TestCase
 {
     public function testShapeHasOneSlotPerDeclaredColumn(): void
     {
-        $table = (new Semantics())->inspect('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
+        $table = (new Inspection())->inspect('CREATE TABLE t (a INTEGER NOT NULL, b)')->declarations()[0];
         $shape = (new TableShapes())->shape($table);
 
         self::assertCount(2, $shape->slots);
@@ -40,7 +40,7 @@ final class TableShapesTest extends TestCase
 
     public function testShapeOfAnIncompleteDeclarationIsOpen(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new ColumnDomain(''))], [], false);
         $shape = (new TableShapes())->shape($table);
 
@@ -51,7 +51,7 @@ final class TableShapesTest extends TestCase
     public function testImplicitPointsAnAliasAtTheSlotOfItsDeclaredColumn(): void
     {
         $shapes = new TableShapes();
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $aliased = $semantics->inspect('CREATE TABLE t (a, id INTEGER PRIMARY KEY)')->declarations()[0];
         $plain = $semantics->inspect('CREATE TABLE t (a)')->declarations()[0];
         $shape = $shapes->shape($aliased);
@@ -63,7 +63,7 @@ final class TableShapesTest extends TestCase
 
     public function testTargetResolvesADeclaredAMissingAndAnUndeclaredTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a, b)');
         $shapes = new TableShapes();
         $declared = $shapes->target(new Derivation($semantics->context([$table])), new QualifiedName(new Name('T')));
@@ -80,7 +80,7 @@ final class TableShapesTest extends TestCase
 
     public function testImplicitOfAnswersTheRowIdentifierOfAResolvedTableOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a)');
         $shapes = new TableShapes();
 
@@ -90,7 +90,7 @@ final class TableShapesTest extends TestCase
 
     public function testScopeSeesTheRowIdentifierOnlyAtTheRowPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a)');
         $index = $semantics->inspect('CREATE INDEX i ON t (a)')->statement;
         $derivation = new Derivation($semantics->context([$table]));

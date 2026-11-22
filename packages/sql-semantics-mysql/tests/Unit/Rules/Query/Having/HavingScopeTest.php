@@ -15,10 +15,10 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(HavingScope::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class HavingScopeTest extends TestCase
 
     public function testGroupingAnswersTheColumnsAsTheHavingPositionSeesThem(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT NOT NULL)');
         $plain = $semantics->diagnose('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
         $rollup = $semantics->diagnose('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
@@ -62,7 +62,7 @@ final class HavingScopeTest extends TestCase
 
     public function testUndecidedAnswersTheColumnsOfIncompletelyKnownOccurrences(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $grouped = $semantics->diagnose('SELECT 1 FROM u GROUP BY c HAVING c > 0');
         $selected = $semantics->diagnose('SELECT a AS x FROM u HAVING a > 0');
         $missing = $semantics->diagnose('SELECT a AS x FROM u HAVING b > 0');
@@ -82,7 +82,7 @@ final class HavingScopeTest extends TestCase
 
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->diagnose('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);

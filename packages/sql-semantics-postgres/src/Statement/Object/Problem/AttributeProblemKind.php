@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Problem;
  * `DefineType` and `DefineRange` in `src/backend/commands/typecmds.c`, `DefineCollation` in `src/backend/commands/collationcmds.c`,
  * the text search commands in `src/backend/commands/tsearchcmds.c` and `src/backend/commands/define.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling a warning from an error
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblemKind::UnrecognizedOperatorAttribute->warning(), \SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblemKind::UnrecognizedRangeAttribute->warning()] // => [true, false]
  */

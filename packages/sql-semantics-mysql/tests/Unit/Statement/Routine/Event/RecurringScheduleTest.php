@@ -13,13 +13,13 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
+use Tests\Support\Inspection;
 
 #[CoversClass(RecurringSchedule::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class RecurringScheduleTest extends TestCase
 {
     public function testDeriveScheduleDerivesTheQuantityAndBothTimes(): void
     {
-        $create = (new Semantics())->diagnose("CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS NOW() ENDS '2030-01-01' DO SELECT 1", []);
+        $create = (new Inspection())->diagnose("CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS NOW() ENDS '2030-01-01' DO SELECT 1", []);
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         $schedule = $statement->schedule;
@@ -48,7 +48,7 @@ final class RecurringScheduleTest extends TestCase
 
     public function testDeriveScheduleReportsAColumnInEveryExpressionEvenWhenATableHasIt(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->diagnose('CREATE EVENT e ON SCHEDULE EVERY b MINUTE STARTS a ENDS zz DO SELECT a FROM t', [$table]);
 
@@ -57,7 +57,7 @@ final class RecurringScheduleTest extends TestCase
 
     public function testDeriveScheduleDerivesAnEndWithoutAStart(): void
     {
-        $create = (new Semantics())->diagnose('CREATE EVENT e ON SCHEDULE EVERY 1 MINUTE ENDS zz DO SELECT 1', []);
+        $create = (new Inspection())->diagnose('CREATE EVENT e ON SCHEDULE EVERY 1 MINUTE ENDS zz DO SELECT 1', []);
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
@@ -68,7 +68,7 @@ final class RecurringScheduleTest extends TestCase
 
     public function testDeriveScheduleResolvesALocalVariableOfTheEnclosingProcedure(): void
     {
-        $create = (new Semantics())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE n INT DEFAULT 1; ALTER EVENT e ON SCHEDULE EVERY n DAY; END', []);
+        $create = (new Inspection())->diagnose('CREATE PROCEDURE p() BEGIN DECLARE n INT DEFAULT 1; ALTER EVENT e ON SCHEDULE EVERY n DAY; END', []);
 
         self::assertSame([], $create->facts->diagnostics);
     }
@@ -91,12 +91,12 @@ final class RecurringScheduleTest extends TestCase
     #[DataProvider('providerRenderWritesTheIntervalAndTheTimes')]
     public function testRenderWritesTheIntervalAndTheTimes(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedSchedule(): void
     {
-        $codec = new Codec((new Semantics())->profile()->grammar);
+        $codec = new Codec((new Inspection())->profile()->grammar);
         $bare = new Output($codec);
         (new RecurringSchedule(new NumberLiteral('2'), IntervalUnit::DayHour))->render($bare);
         $bounded = new Output($codec);

@@ -11,9 +11,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(ExpressionLowering::class)]
 #[Small]
@@ -21,13 +21,13 @@ final class ExpressionLoweringTest extends TestCase
 {
     public function testLowerPreservesArithmeticOperation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT (2 - 3)');
+        $operation = (new Inspection())->inspect('SELECT (2 - 3)');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $result = $select->columns[0];
         self::assertInstanceOf(ResultColumn::class, $result);
 
-        $value = (new ExpressionLowering())->lower($result->expression, new SourceBinding($operation, $select->from));
+        $value = (new ExpressionLowering())->lower($result->expression, new SourceBinding($operation->binding(), $select->from));
         self::assertInstanceOf(Arithmetic::class, $value);
         self::assertSame(ArithmeticOperator::Subtract, $value->operator);
     }

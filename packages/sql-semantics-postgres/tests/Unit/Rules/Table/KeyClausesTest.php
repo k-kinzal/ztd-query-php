@@ -14,7 +14,7 @@ final class KeyClausesTest extends TestCase
 {
     public function testDeriveChecksTheColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (a int, PRIMARY KEY (zz) INCLUDE (yy))', $context);
@@ -26,7 +26,7 @@ final class KeyClausesTest extends TestCase
 
     public function testWriteWritesTheColumnsAndParameters(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int, b int, UNIQUE (a) INCLUDE (b) WITH (fillfactor = 70))', []);
         self::assertSame('CREATE TABLE n (a INT, b INT, UNIQUE (a) INCLUDE (b) WITH (fillfactor = 70))', $statement->toString());
     }

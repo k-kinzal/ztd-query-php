@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Trigger;
  * Each case holds its keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a time
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before->value // => 'BEFORE'
  */

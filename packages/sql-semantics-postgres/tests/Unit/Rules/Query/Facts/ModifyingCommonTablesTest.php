@@ -14,14 +14,14 @@ final class ModifyingCommonTablesTest extends TestCase
 {
     public function testCheckReportsAModifyingTableInASubquery(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $query = $semantics->diagnose('SELECT * FROM (WITH x AS (DELETE FROM t) SELECT 1) AS s');
         self::assertSame('WITH clause containing a data-modifying statement must be at the top level', $query->facts->diagnostics[0]->message());
     }
 
     public function testTopFindsTheWithClauseInsideGroupingParentheses(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $query = $semantics->diagnose('(WITH x AS (SELECT 1) SELECT 2)');
         self::assertNotNull((new \SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\ModifyingCommonTables())->top($query->statement));
     }

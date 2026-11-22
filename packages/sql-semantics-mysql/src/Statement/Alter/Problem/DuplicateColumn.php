@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * compared without regard to case.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')))->message() // => 'Column a would be defined more than once.'
  */

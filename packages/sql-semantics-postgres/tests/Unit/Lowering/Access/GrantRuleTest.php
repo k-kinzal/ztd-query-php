@@ -52,7 +52,7 @@ final class GrantRuleTest extends TestCase
 
     public function testTargetLowersEveryNamedKind(): void
     {
-        self::assertSame('GRANT ALL ON TABLESPACE a TO u', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('GRANT ALL ON TABLESPACE a TO u; ')->toString());
+        self::assertSame('GRANT ALL ON TABLESPACE a TO u', (new \Tests\Support\Inspection())->inspect('GRANT ALL ON TABLESPACE a TO u; ')->toString());
     }
 
     public function testParametersLowersDottedNames(): void

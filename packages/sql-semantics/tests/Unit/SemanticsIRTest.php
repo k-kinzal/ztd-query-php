@@ -13,9 +13,19 @@ use SqlSemantics\SemanticsIR;
 #[Small]
 final class SemanticsIRTest extends TestCase
 {
-    public function testProfileIdAndSqlAreAvailableOnTheContract(): void
+    public function testProfileIdIsAvailableOnTheContract(): void
     {
-        $value = new class () implements SemanticsIR {
+        self::assertSame('test-profile', $this->value()->profileId());
+    }
+
+    public function testToStringIsAvailableOnTheContract(): void
+    {
+        self::assertSame('SELECT 1', $this->value()->toString());
+    }
+
+    private function value(): SemanticsIR
+    {
+        return new class () implements SemanticsIR {
             public function profileId(): string
             {
                 return 'test-profile';
@@ -26,8 +36,5 @@ final class SemanticsIRTest extends TestCase
                 return 'SELECT 1';
             }
         };
-
-        self::assertSame('test-profile', $value->profileId());
-        self::assertSame('SELECT 1', $value->toString());
     }
 }

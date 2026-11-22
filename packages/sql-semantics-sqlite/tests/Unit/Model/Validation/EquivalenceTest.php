@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Model\Validation\Equivalence;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Equivalence;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
+use Tests\Support\Inspection;
 
 #[CoversClass(Equivalence::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class EquivalenceTest extends TestCase
 {
     public function testDifferenceIsNullForTwoAnalysesOfTheSameRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         $difference = (new Equivalence())->difference($semantics->inspect('select a, b from t where a > 1')->statement, $semantics->inspect('SELECT a, b FROM t WHERE a > 1')->statement);
 

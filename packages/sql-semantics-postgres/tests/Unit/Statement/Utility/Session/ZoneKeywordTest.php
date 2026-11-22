@@ -14,6 +14,6 @@ final class ZoneKeywordTest extends TestCase
 {
     public function testDefaultAndLocalAreKeywords(): void
     {
-        self::assertSame(['SET TIME ZONE DEFAULT', 'SET TIME ZONE LOCAL'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET TIME ZONE DEFAULT')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SET TIME ZONE LOCAL')->toString()]);
+        self::assertSame(['SET TIME ZONE DEFAULT', 'SET TIME ZONE LOCAL'], [(new \Tests\Support\Inspection())->inspect('SET TIME ZONE DEFAULT')->toString(), (new \Tests\Support\Inspection())->inspect('SET TIME ZONE LOCAL')->toString()]);
     }
 }

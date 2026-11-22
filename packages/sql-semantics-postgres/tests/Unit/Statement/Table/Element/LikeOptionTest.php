@@ -14,7 +14,7 @@ final class LikeOptionTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (LIKE t INCLUDING IDENTITY EXCLUDING GENERATED)', []);
         self::assertSame('CREATE TABLE n (LIKE t INCLUDING IDENTITY EXCLUDING GENERATED)', $statement->toString());
     }

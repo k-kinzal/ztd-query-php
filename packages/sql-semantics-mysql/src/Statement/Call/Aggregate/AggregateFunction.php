@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/spatial-aggregate-functions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading whether a function takes DISTINCT
  *     [\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum->value, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum->distinctive()] // => ['SUM', true]
  */

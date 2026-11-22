@@ -34,11 +34,11 @@ final class RoleAttributeTest extends TestCase
 
     public function testRenderQuotesAKeyword(): void
     {
-        self::assertSame('CREATE ROLE r "user" superuser', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('CREATE ROLE r "user" SUPERUSER')->toString());
+        self::assertSame('CREATE ROLE r "user" superuser', (new \Tests\Support\Inspection())->diagnose('CREATE ROLE r "user" SUPERUSER')->toString());
     }
 
     public function testRenderQuotesAnUnreservedKeyword(): void
     {
-        self::assertSame('ALTER ROLE r "inherit"', (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('ALTER ROLE r "inherit"')->toString());
+        self::assertSame('ALTER ROLE r "inherit"', (new \Tests\Support\Inspection())->diagnose('ALTER ROLE r "inherit"')->toString());
     }
 }

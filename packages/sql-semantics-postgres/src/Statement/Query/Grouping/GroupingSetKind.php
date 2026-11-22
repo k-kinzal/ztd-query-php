@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping;
  * expression itself.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-GROUPING-SETS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling a grouping set kind
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind::Sets->value // => 'GROUPING SETS'
  */

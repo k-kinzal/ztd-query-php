@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the destination kind
  *     in_array(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination::class, class_implements(\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile::class), true) // => true
  */

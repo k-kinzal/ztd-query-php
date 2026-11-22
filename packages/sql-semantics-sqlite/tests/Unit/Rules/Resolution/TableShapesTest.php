@@ -25,10 +25,10 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]
@@ -36,7 +36,7 @@ final class TableShapesTest extends TestCase
 {
     public function testFactAnswersTheDeclaredShapeWithItsColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $fact = (new TableShapes())->fact($derivation, new QualifiedName(new Name('T')), $derivation->environment());
@@ -54,7 +54,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactCopiesTheShapeOfACommonTableAndLinksItsSlots(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $with = $semantics->inspect('WITH w AS (SELECT a FROM t) SELECT 1', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
@@ -76,7 +76,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactAnswersAnOpenShapeForAnUndeclaredTableAndAnEmptyOneForAMissingTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $open = new Derivation($semantics->context());
         $closed = new Derivation($semantics->context([]));
         $shapes = new TableShapes();
@@ -94,7 +94,7 @@ final class TableShapesTest extends TestCase
 
     public function testFactMarksAnIncompleteDeclarationAsOpen(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new ColumnDomain('INTEGER'))], [], false);
         $derivation = new Derivation($semantics->context([$table]));
         $fact = (new TableShapes())->fact($derivation, new QualifiedName(new Name('t')), $derivation->environment());
@@ -107,7 +107,7 @@ final class TableShapesTest extends TestCase
 
     public function testImplicitListsTheRowIdentifierOfADeclaredTableOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $plain = $semantics->inspect('CREATE TABLE p (a)');
         $without = $semantics->inspect('CREATE TABLE w (a PRIMARY KEY) WITHOUT ROWID');

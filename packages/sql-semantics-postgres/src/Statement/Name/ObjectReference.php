@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * an operator signature or a more specific form. The object kind is held next
  * to the reference by the command, as PostgreSQL's parse nodes do.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that a dotted name refers to an object
  *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')]);
  *     $name instanceof \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference // => true

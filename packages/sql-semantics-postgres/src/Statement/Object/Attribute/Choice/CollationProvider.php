@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice;
  * unrecognized provider.
  * Source: https://www.postgresql.org/docs/17/sql-createcollation.html, `DefineCollation` in `src/backend/commands/collationcmds.c` of PostgreSQL 16 and 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a provider
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\CollationProvider::read('ICU')?->name // => 'Icu'
  */

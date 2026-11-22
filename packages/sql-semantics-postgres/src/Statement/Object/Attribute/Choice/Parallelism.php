@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice;
  * is folded to lower case and accepted.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `DefineAggregate` in `src/backend/commands/aggregatecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a parallel mode
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Parallelism::read('SAFE') // => null
  */

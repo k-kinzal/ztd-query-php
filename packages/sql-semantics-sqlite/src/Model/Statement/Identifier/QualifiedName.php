@@ -10,7 +10,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * A decoded object name with its optional schema and catalog qualifiers.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parts of a qualified name
  *     $name = new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('users'), new \SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name('app'));
  *     [$name->schema?->value, $name->name->value] // => ['app', 'users']

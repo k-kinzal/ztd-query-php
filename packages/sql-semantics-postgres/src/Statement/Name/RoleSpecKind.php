@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Name;
  *
  * Source: https://www.postgresql.org/docs/17/sql-grant.html and PostgreSQL's `RoleSpecType`.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the pseudo-role that stands for every role
  *     \SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpecKind::Everyone->name // => 'Everyone'
  */

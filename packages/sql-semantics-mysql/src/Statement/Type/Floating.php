@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
  * decides whether it is DOUBLE or FLOAT.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/floating-point-types.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an approximate type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float, '7', '3');
  *     [$type->name(), $type->precision, $type->scale] // => ['FLOAT', '7', '3']

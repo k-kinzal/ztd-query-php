@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
  * https://dev.mysql.com/doc/refman/8.4/en/window-functions-named-windows.html.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the parts of a window
  *     $order = [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b')))];
  *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(null, [], $order, new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::UnboundedPreceding)));

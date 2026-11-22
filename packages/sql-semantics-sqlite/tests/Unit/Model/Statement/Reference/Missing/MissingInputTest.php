@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(MissingInput::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class MissingInputTest extends TestCase
 {
     public function testDescribeNamesWhatADependentFactWaitsFor(): void
     {
-        $operation = (new Semantics())->inspect('SELECT a, ?2 FROM t');
+        $operation = (new Inspection())->inspect('SELECT a, ?2 FROM t');
 
         $first = $operation->field('a')->type;
         $second = $operation->field(1)->type;

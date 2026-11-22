@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
  * ends the connection.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/kill.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query->value // => 'QUERY'
  */

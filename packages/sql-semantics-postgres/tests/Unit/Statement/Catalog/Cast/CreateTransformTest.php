@@ -14,11 +14,11 @@ final class CreateTransformTest extends TestCase
 {
     public function testRenderKeepsTheOrder(): void
     {
-        self::assertSame('CREATE OR REPLACE TRANSFORM FOR t LANGUAGE l (TO SQL WITH FUNCTION b (internal), FROM SQL WITH FUNCTION a (internal))', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE OR REPLACE TRANSFORM FOR t LANGUAGE l (TO SQL WITH FUNCTION b(internal), FROM SQL WITH FUNCTION a(internal))')->toString());
+        self::assertSame('CREATE OR REPLACE TRANSFORM FOR t LANGUAGE l (TO SQL WITH FUNCTION b (internal), FROM SQL WITH FUNCTION a (internal))', (new \Tests\Support\Inspection())->inspect('CREATE OR REPLACE TRANSFORM FOR t LANGUAGE l (TO SQL WITH FUNCTION b(internal), FROM SQL WITH FUNCTION a(internal))')->toString());
     }
 
     public function testDeriveStatementDerivesTheFunctions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION a(internal))')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION a(internal))')->facts->diagnostics);
     }
 }

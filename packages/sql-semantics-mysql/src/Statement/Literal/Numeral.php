@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
  * number that the server then rejects; each is kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the exact text of a number
  *     $number = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('007');
  *     [$number->text, $number->hexadecimal] // => ['007', false]

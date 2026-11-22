@@ -29,9 +29,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * the query, so a grouping never encloses a scalar subquery.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html. Status: Implemented.
  *
- * @visibility public
- * @example Keeping the parentheses written
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT (1 + 2) * 3')->toString() // => 'SELECT (1 + 2) * 3'
+ * @visibility SqlSemantics
  */
 final class Grouped implements Scalar, OutputNaming
 {

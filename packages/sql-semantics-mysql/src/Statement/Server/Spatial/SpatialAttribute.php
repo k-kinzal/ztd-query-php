@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * the identifier the organization gives the system.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding an organization attribute
  *     $attribute = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('EPSG'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4326'));
  *     [$attribute->value->value, $attribute->identifier?->text] // => ['EPSG', '4326']

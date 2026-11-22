@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
@@ -20,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(ColumnDefinition::class)]
 #[Medium]
@@ -50,7 +50,7 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testDeriveColumnDerivesTheTypeArgumentsAndTheConstraints(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TABLE t (a DECIMAL(10, 2) DEFAULT 0)', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a DECIMAL(10, 2) DEFAULT 0)', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
@@ -62,7 +62,7 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testDeriveColumnReportsADefaultNotConstantAndADefaultOnAGeneratedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $constant = $semantics->diagnose('CREATE TABLE t (a DEFAULT (abs(?)))', []);
         $generated = $semantics->diagnose('CREATE TABLE t (a, b AS (a) DEFAULT 1, c DEFAULT word AS (a))', []);
 
@@ -79,14 +79,14 @@ final class ColumnDefinitionTest extends TestCase
 
     public function testRenderWritesTheNameTheTypeAndTheConstraintsInOrder(): void
     {
-        $operation = (new Semantics())->diagnose('create table t ("my col" unsigned big int default 1 not null)');
+        $operation = (new Inspection())->diagnose('create table t ("my col" unsigned big int default 1 not null)');
 
         self::assertSame('CREATE TABLE t (`my col` unsigned big int DEFAULT 1 NOT NULL)', $operation->toString());
     }
 
     public function testRenderKeepsTheQuotingOfTypeWords(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TABLE t (a "big int", b [x] INT, c \'text\')');
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a "big int", b [x] INT, c \'text\')');
 
         self::assertSame('CREATE TABLE t (a "big int", b [x] INT, c \'text\')', $operation->toString());
     }

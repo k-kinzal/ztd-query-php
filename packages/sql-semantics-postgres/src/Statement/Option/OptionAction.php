@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Option;
  * ADD is assumed when no action is written.
  * Source: https://www.postgresql.org/docs/17/sql-alterforeigndatawrapper.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the action that removes an option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Drop->value // => 'DROP'
  */

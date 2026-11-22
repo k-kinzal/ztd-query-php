@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Operation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
@@ -38,7 +38,7 @@ final class SourceBinding
     /**
      * Resolves the source from the analysis before any slots can be allocated.
      */
-    public function __construct(private readonly Operation $operation, private readonly ?Relation $source)
+    public function __construct(private readonly BoundStatement $operation, private readonly ?Relation $source)
     {
         $resolution = null;
         if ($source !== null) {

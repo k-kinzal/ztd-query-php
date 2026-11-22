@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * type its context decides; it can be NULL. Source:
  * https://www.postgresql.org/docs/17/sql-insert.html, https://www.postgresql.org/docs/17/sql-update.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading DEFAULT
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest()) instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar // => true
  */

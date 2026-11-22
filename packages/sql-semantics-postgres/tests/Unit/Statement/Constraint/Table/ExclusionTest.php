@@ -14,7 +14,7 @@ final class ExclusionTest extends TestCase
 {
     public function testKindIsExclusion(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, EXCLUDE (a WITH =))', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -27,7 +27,7 @@ final class ExclusionTest extends TestCase
 
     public function testDeriveClauseDerivesTheElementsAndThePredicate(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, EXCLUDE (zz WITH =) INCLUDE (yy) WHERE (a) NOT VALID)', []);
         self::assertSame([
           0 => 'Column zz does not exist.',
@@ -39,7 +39,7 @@ final class ExclusionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int, CONSTRAINT x EXCLUDE USING gist (a WITH =, (a + 1) WITH OPERATOR(pg_catalog.=)) INCLUDE (a) WITH (fillfactor = 70) USING INDEX TABLESPACE s WHERE (a > 0) DEFERRABLE)', []);
         self::assertSame('CREATE TABLE t (a INT, CONSTRAINT x EXCLUDE USING gist (a WITH =, (a + 1) WITH OPERATOR (pg_catalog.=)) INCLUDE (a) WITH (fillfactor = 70) USING INDEX TABLESPACE s WHERE (a > 0) DEFERRABLE)', $statement->toString());
     }

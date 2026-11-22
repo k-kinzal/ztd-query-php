@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(DeclaredTable::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class DeclaredTableTest extends TestCase
 {
     public function testTableIsTheDeclarationObjectOfTheContext(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM t', [$table]);
 
@@ -28,7 +28,7 @@ final class DeclaredTableTest extends TestCase
 
     public function testTableIsFoundThroughAQualifiedName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $query = $semantics->inspect('SELECT a FROM main.t', [$table]);
 

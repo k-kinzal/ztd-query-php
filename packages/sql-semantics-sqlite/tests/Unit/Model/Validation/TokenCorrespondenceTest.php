@@ -7,9 +7,9 @@ namespace Tests\Unit\Model\Validation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Validation\TokenCorrespondence;
+use Tests\Support\TokenCorrespondence;
 use SqlSemantics\Platform\Sqlite\Platform;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(TokenCorrespondence::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class TokenCorrespondenceTest extends TestCase
     public function testKeysListTheSignificantTokensInOrder(): void
     {
         $platform = Platform::shared();
-        $profile = (new Semantics())->profile();
+        $profile = (new Inspection())->profile();
         $tree = $platform->parser($profile)->parse("select A, 'x' as y from t;");
 
         $keys = (new TokenCorrespondence())->keys($tree, $platform->productions($profile), $platform->leafKeys($profile));
@@ -29,7 +29,7 @@ final class TokenCorrespondenceTest extends TestCase
     public function testKeysIgnoreKeywordCaseWhitespaceAndQuoteStyle(): void
     {
         $platform = Platform::shared();
-        $profile = (new Semantics())->profile();
+        $profile = (new Inspection())->profile();
         $correspondence = new TokenCorrespondence();
 
         $source = $correspondence->keys($platform->parser($profile)->parse('select  `a`  from [t]'), $platform->productions($profile), $platform->leafKeys($profile));
@@ -50,7 +50,7 @@ final class TokenCorrespondenceTest extends TestCase
     public function testDifferenceOfARenderedStatementAgainstItsSourceIsNull(): void
     {
         $platform = Platform::shared();
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $profile = $semantics->profile();
         $correspondence = new TokenCorrespondence();
         $source = 'select a, count(*) from t where a is not null group by a having count(*) > 1 order by 2 desc limit 3';

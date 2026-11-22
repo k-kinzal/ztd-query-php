@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a cipher condition
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsCondition(\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute::Cipher, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('EDH-RSA-DES-CBC3-SHA')))->value->value // => 'EDH-RSA-DES-CBC3-SHA'
  */

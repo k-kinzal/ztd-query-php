@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Column\Kind;
  * Each case holds the keywords it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored->value // => 'STORED'
  */

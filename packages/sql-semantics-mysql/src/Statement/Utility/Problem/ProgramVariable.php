@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * https://dev.mysql.com/doc/refman/8.4/en/local-variable-scope.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the missing declarations
  *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('x')))->describe() // => 'the variable declarations of the enclosing stored program, which decide what x denotes'
  */

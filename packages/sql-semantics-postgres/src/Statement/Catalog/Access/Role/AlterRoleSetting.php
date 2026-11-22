@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
  * PUBLIC or a `pg_` name as the role.
  * Source: https://www.postgresql.org/docs/17/sql-alterrole.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that the request is a statement of its own
  *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterRoleSetting::class, \SqlSemantics\Platform\PostgreSql\Model\Statement\Statement::class) // => true
  */

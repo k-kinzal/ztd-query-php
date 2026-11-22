@@ -20,10 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
  * the changed table.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
- * @example Adding an index
- *     $alter = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('ALTER TABLE t ADD INDEX i (a)');
- *     $alter->toString() // => 'ALTER TABLE t ADD INDEX i (a)'
+ * @visibility SqlSemantics
  */
 final class AddConstraint implements AlterCommand
 {

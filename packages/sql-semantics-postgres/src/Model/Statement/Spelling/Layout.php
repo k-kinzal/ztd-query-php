@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * never stands for structure, and nothing is rendered from it alone.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the text a region was written as
  *     $layout = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Spelling\Layout([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Spelling\Spelled('', '1'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Spelling\Spelled('', '+'), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Spelling\Spelled('', '1')]);
  *     $layout->text() // => '1+1'

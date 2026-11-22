@@ -2,43 +2,28 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Model\Statement;
+namespace Tests\Support;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Selection;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\FieldLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Fields;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\UniqueField;
-use SqlSemantics\Platform\PostgreSql\Model\Validation\Publication;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
 
 /**
- * One analyzed statement: its structure, the facts derived against a fixed context, and its SQL.
- *
- * The constructor is the only way to obtain an operation and it is a checking
- * boundary. It audits the structure, derives every fact, renders the SQL, and
- * confirms that the rendered SQL has the same structure. Nothing is filled in
- * afterwards and nothing can be changed. A different statement is a new
- * operation built from explicit inputs or from newly analyzed SQL; it has no
- * guaranteed relation to this one.
- *
- * @visibility public
- * @example Analyzing against the declaration another statement provides
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $bar = $semantics->inspect('CREATE TABLE bar (foo INTEGER, baz TEXT)');
- *     $query = $semantics->inspect('SELECT foo FROM bar', [$bar]);
- *     [$query->field('foo')->column() === $bar->declarations()[0]->columns[0], $query->toString()] // => [true, 'SELECT foo FROM bar']
- * @example Building a new root from explicit structure
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $query = $semantics->inspect('SELECT foo FROM bar WHERE foo > 1');
- *     $other = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Operation($query->context, $semantics->inspect('SELECT baz FROM bar')->statement);
- *     $other->toString() // => 'SELECT baz FROM bar'
+ * Test fixture for grammar, facts and parser round-trip checks.
  */
-final class Operation implements \SqlSemantics\Query
+final class InspectedStatement
 {
     use Snapshot;
 
@@ -62,9 +47,14 @@ final class Operation implements \SqlSemantics\Query
      */
     public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement)
     {
-        [$facts, $sql] = (new Publication())->establish($context, $statement);
+        [$facts, $sql] = (new RenderAudit())->establish($context, $statement);
         $this->facts = $facts;
         $this->sql = $sql;
+    }
+
+    public function binding(): \SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement
+    {
+        return new \SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement($this->context, $this->statement);
     }
 
     /**

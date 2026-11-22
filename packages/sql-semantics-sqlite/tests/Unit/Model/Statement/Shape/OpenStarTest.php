@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\IncompleteMem
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(OpenStar::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class OpenStarTest extends TestCase
 {
     public function testMissingNamesTheUndeclaredRelationBehindAStar(): void
     {
-        $fact = (new Semantics())->inspect('SELECT t.*, u.a FROM t, u')->facts->output;
+        $fact = (new Inspection())->inspect('SELECT t.*, u.a FROM t, u')->facts->output;
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);
@@ -30,7 +30,7 @@ final class OpenStarTest extends TestCase
 
     public function testMissingNamesTheIncompleteMemberListOfADeclaredRelation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $view = $semantics->inspect('CREATE VIRTUAL TABLE v USING fts5(a)');
 
         $fact = $semantics->inspect('SELECT * FROM v', [$view])->facts->output;

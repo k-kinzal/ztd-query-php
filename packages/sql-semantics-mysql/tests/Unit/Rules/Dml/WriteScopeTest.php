@@ -14,11 +14,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Dml\WriteScope;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(WriteScope::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class WriteScopeTest extends TestCase
 {
     public function testFieldTakesTheColumnFact(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->diagnose('UPDATE t SET b = 1', [$t]);
         self::assertInstanceOf(Update::class, $operation->statement);
@@ -39,7 +39,7 @@ final class WriteScopeTest extends TestCase
 
     public function testValueDerivesDefaultAsTheColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->diagnose('UPDATE t SET a = DEFAULT', [$t]);
         self::assertInstanceOf(Update::class, $operation->statement);
@@ -49,14 +49,14 @@ final class WriteScopeTest extends TestCase
 
     public function testValueReportsARowAsTheWrittenValue(): void
     {
-        $operation = (new Semantics())->diagnose('UPDATE t SET a = (1, 2)');
+        $operation = (new Inspection())->diagnose('UPDATE t SET a = (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testAssignAnswersTheAssignedColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->diagnose('INSERT INTO t SET b = 1, z = 2', [$t]);
 
@@ -66,7 +66,7 @@ final class WriteScopeTest extends TestCase
 
     public function testDistinctReportsAColumnWrittenTwice(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->diagnose('INSERT INTO t (b, t.b) VALUES (1, 2)', [$t]);
 

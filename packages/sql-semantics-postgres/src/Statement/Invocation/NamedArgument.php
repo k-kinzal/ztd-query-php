@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * designates is decided by the routine's declaration.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-calling-funcs.html#SQL-SYNTAX-CALLING-FUNCS-NAMED.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a named argument
  *     $argument = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\NamedArgument(
  *         new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('days'),

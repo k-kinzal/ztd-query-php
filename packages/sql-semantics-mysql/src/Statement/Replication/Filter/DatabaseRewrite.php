@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding both database names
  *     $pair = new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('b'));
  *     [$pair->from->value, $pair->to->value] // => ['a', 'b']

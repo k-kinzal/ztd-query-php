@@ -14,7 +14,7 @@ final class ParentTableTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int) INHERITS (s.p)', []);
         self::assertSame('CREATE TABLE t (a INT) INHERITS (s.p)', $statement->toString());
     }

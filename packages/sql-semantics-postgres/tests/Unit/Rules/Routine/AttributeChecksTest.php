@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeChecks;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\Dictionary
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Define;
+use Tests\Support\Inspection;
 
 #[CoversClass(AttributeChecks::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class AttributeChecksTest extends TestCase
 {
     public function testDeriveReportsUnrecognizedUnreadableAndRepeatedAttributes(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             [['operator attribute "colour" not recognized', 'argument of function must be a name'], ['type attribute "foo" not recognized', 'conflicting or redundant options'], []],
             [
@@ -56,7 +56,7 @@ final class AttributeChecksTest extends TestCase
 
     public function testValueReportsSetofInAnOperatorArgument(): void
     {
-        self::assertSame('SETOF type not allowed for operator argument', (new Semantics())->diagnose('CREATE OPERATOR === (leftarg = SETOF int4, rightarg = int4, function = f)')->facts->diagnostics[0]->message());
+        self::assertSame('SETOF type not allowed for operator argument', (new Inspection())->diagnose('CREATE OPERATOR === (leftarg = SETOF int4, rightarg = int4, function = f)')->facts->diagnostics[0]->message());
     }
 
     public function testRejectedAnswersTheMessageOfEachReading(): void
@@ -91,8 +91,8 @@ final class AttributeChecksTest extends TestCase
 
     public function testDeriveIgnoresTheValueOfAnObsoleteOperatorAttribute(): void
     {
-        self::assertSame([], (new Semantics())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1, ltcmp)')->facts->diagnostics);
-        $define = (new Semantics())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1)')->statement;
+        self::assertSame([], (new Inspection())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1, ltcmp)')->facts->diagnostics);
+        $define = (new Inspection())->diagnose('CREATE OPERATOR === (rightarg = int4, function = f, sort1 = 1)')->statement;
         self::assertInstanceOf(Define::class, $define);
         self::assertSame(OperatorAttribute::Sort1, ($define->definition ?? [])[2]->known);
     }

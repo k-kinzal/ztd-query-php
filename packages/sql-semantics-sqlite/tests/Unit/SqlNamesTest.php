@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\SqlNames;
+use Tests\Support\Inspection;
 
 #[CoversClass(SqlNames::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class SqlNamesTest extends TestCase
 {
     public function testTableSpellsEveryQualifierForTheProfile(): void
     {
-        $profile = (new Semantics())->profile();
+        $profile = (new Inspection())->profile();
 
         self::assertSame('t', SqlNames::table(new QualifiedName(new Name('t')), $profile));
         self::assertSame('main.`order items`', SqlNames::table(new QualifiedName(new Name('order items'), new Name('main')), $profile));
@@ -27,7 +27,7 @@ final class SqlNamesTest extends TestCase
 
     public function testTableSpellingDecodesToTheSameNameWhenAnalyzed(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $input = $semantics->inspect('SELECT a FROM main."select"')->singleNamedInput();
 
         $spelling = SqlNames::table($input->name(), $semantics->profile());

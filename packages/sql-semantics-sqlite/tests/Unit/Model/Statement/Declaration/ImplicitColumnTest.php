@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\ImplicitColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(ImplicitColumn::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class ImplicitColumnTest extends TestCase
 {
     public function testEveryNameFindsTheColumnAndItIsNotPartOfTheStar(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a TEXT)')->declarations()[0];
 
         $query = $semantics->inspect('SELECT *, oid FROM t', [$table]);

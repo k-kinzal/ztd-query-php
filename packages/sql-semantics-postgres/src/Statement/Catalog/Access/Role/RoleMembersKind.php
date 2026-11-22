@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
  * IN ROLE; each spelling is kept as written.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option an obsolete spelling fills
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleMembersKind::InGroup->option() // => 'addroleto'
  */

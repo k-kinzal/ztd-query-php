@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlSemantics\Platform\Sqlite\Model\Validation\Equivalence;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Equivalence;
+use Tests\Support\Inspection;
 use Throwable;
 
 /**
@@ -14,7 +14,7 @@ use Throwable;
  */
 final class RoundTripTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
+    public function __construct(private readonly Inspection $semantics, private readonly string $grammarVersion)
     {
     }
 

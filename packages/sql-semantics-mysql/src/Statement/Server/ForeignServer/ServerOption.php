@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-server.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the port of a server
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3307'));
  *     $option->value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Numeral // => true

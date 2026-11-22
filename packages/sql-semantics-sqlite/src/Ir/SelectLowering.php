@@ -8,7 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn as ParsedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
@@ -25,7 +25,7 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(Operation $operation, ?ParsedSelect $arm = null): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $arm = null): Select
     {
         $statement = $arm ?? $operation->statement;
         $local = null;
@@ -40,7 +40,7 @@ final class SelectLowering
         );
         $binding = new SourceBinding($operation, $statement->from, $local);
         $expressions = new ExpressionLowering();
-        $fields = $arm === null ? $operation->fields() : $operation->facts->query($arm)->fields();
+        $fields = $arm === null ? $operation->facts->output?->fields() : $operation->facts->query($arm)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->columns as $index => $column) {

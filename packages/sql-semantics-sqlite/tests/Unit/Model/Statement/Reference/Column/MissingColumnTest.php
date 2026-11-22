@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(MissingColumn::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class MissingColumnTest extends TestCase
 {
     public function testMessageNamesTheUnqualifiedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
         $resolution = $semantics->diagnose('SELECT b FROM t', [$table])->field('b')->resolution;
@@ -29,7 +29,7 @@ final class MissingColumnTest extends TestCase
 
     public function testMessageNamesTheQualifierTheUseWrote(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
         $resolution = $semantics->diagnose('SELECT t.b FROM t', [$table])->field('b')->resolution;
@@ -41,7 +41,7 @@ final class MissingColumnTest extends TestCase
 
     public function testMessageIsAlsoADiagnosticOfTheOperation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
 
         $query = $semantics->diagnose('SELECT b FROM t', [$table]);

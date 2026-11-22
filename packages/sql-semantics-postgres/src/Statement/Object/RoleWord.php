@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
  * that the statement is written back as it was.
  * Source: https://www.postgresql.org/docs/17/sql-alterrole.html, https://www.postgresql.org/docs/17/sql-altergroup.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the group word
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord::Group->value // => 'GROUP'
  */

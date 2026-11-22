@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
  * answers ER_XAER_INVAL when it executes either.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEndOption::SuspendForMigrate->value // => 'SUSPEND FOR MIGRATE'
  */

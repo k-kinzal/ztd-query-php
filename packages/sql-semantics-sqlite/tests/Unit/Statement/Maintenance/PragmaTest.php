@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Pragma;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\PragmaKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(Pragma::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class PragmaTest extends TestCase
 {
     public function testDeriveStatementRecordsNoOutputAndNoDiagnostic(): void
     {
-        $operation = (new Semantics())->inspect('PRAGMA table_info(users)', []);
+        $operation = (new Inspection())->inspect('PRAGMA table_info(users)', []);
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
@@ -33,7 +33,7 @@ final class PragmaTest extends TestCase
 
     public function testDeriveStatementDerivesTheNumberOfASignedValue(): void
     {
-        $operation = (new Semantics())->inspect('PRAGMA cache_size = -2000');
+        $operation = (new Inspection())->inspect('PRAGMA cache_size = -2000');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Pragma::class, $statement);
@@ -44,7 +44,7 @@ final class PragmaTest extends TestCase
 
     public function testRenderWritesBothValueNotationsWithAnEqualSign(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('PRAGMA foreign_keys', $semantics->inspect('pragma foreign_keys')->toString());
         self::assertSame('PRAGMA main.cache_size = 4000', $semantics->inspect('PRAGMA main.cache_size(4000)')->toString());
@@ -53,7 +53,7 @@ final class PragmaTest extends TestCase
 
     public function testRenderKeepsTheKindOfEachValue(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $keyword = $semantics->inspect('PRAGMA journal_mode = delete');
         $name = $semantics->inspect("PRAGMA journal_mode = 'delete'");
         $word = $semantics->inspect('PRAGMA journal_mode = wal');
@@ -71,8 +71,8 @@ final class PragmaTest extends TestCase
 
     public function testRenderWritesANewlyBuiltPragma(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Pragma(new QualifiedName(new Name('synchronous'), new Name('aux')), PragmaKeyword::On));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Pragma(new QualifiedName(new Name('synchronous'), new Name('aux')), PragmaKeyword::On));
 
         self::assertSame('PRAGMA aux.synchronous = ON', $operation->toString());
     }

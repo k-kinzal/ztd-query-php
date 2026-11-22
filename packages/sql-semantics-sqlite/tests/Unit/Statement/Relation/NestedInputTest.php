@@ -9,17 +9,17 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(NestedInput::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class NestedInputTest extends TestCase
 {
     public function testDeriveRelationExposesTheJoinWrittenInParentheses(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->diagnose('SELECT * FROM (t JOIN u USING (a))', [$t, $u]);
@@ -46,7 +46,7 @@ final class NestedInputTest extends TestCase
 
     public function testDeriveRelationRenamesASingleTableByTheAlias(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $aliased = $semantics->diagnose('SELECT x.a FROM (t) AS x', [$t]);
         $original = $semantics->diagnose('SELECT t.a FROM (t) AS x', [$t]);
@@ -62,7 +62,7 @@ final class NestedInputTest extends TestCase
 
     public function testDeriveRelationQualifiesAJoinedPairByTheAlias(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $qualified = $semantics->diagnose('SELECT j.a, j.c FROM (t JOIN u USING (a)) AS j', [$t, $u]);
@@ -76,8 +76,8 @@ final class NestedInputTest extends TestCase
 
     public function testRenderWritesParenthesesAndTheAlias(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new Select([new Star()], new NestedInput(new TableInput(new QualifiedName(new Name('t'))), new Name('x'))));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new NestedInput(new TableInput(new QualifiedName(new Name('t'))), new Name('x'))));
 
         self::assertSame('SELECT * FROM (t) AS x', $built->toString());
         self::assertSame('SELECT * FROM (t JOIN u USING (a)) j, u u2', $semantics->diagnose('select * from (t join u using (a)) j, u u2')->toString());

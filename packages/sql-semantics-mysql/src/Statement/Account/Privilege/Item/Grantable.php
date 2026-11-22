@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  * does; the model holds each item as what the statement reads it as.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling a static privilege apart
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select) instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable // => true
  */

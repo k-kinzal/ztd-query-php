@@ -173,6 +173,33 @@ def storage_controls(args):
     return results
 
 
+def publication_controls(args):
+    results = []
+    for dialect in ("sqlite", "mysql", "postgres"):
+        shape(args, dialect=dialect)
+        relative = Path(f"sql-semantics-{dialect}/src/Semantics.php")
+        source = args.candidate / "packages" / relative
+        text = source.read_text()
+        require(text.endswith("\n}\n"), "publication-control-anchor-mismatch", dialect)
+        mutated = text[:-2] + "    public function inspect(): mixed\n    {\n        return null;\n    }\n}\n"
+        overlay = args.out / "additional-publication-route" / dialect
+        target = overlay / relative
+        target.parent.mkdir(parents=True)
+        target.write_text(mutated)
+        (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
+            text.splitlines(keepends=True), mutated.splitlines(keepends=True),
+            f"a/{relative}", f"b/{relative}",
+        )))
+        failure = observe_rejection(lambda: shape(args, overlay, dialect), "shape-mismatch")
+        require(failure.detail["message"] == "Unexpected public façade methods", "wrong-publication-control-detail", failure.detail)
+        results.append({
+            "case": "additional-publication-route", "dialect": dialect,
+            "original": digest(source), "mutated": digest(target), "control": "passed",
+            "expected": "shape-mismatch", "signal": failure.signal, "detail": failure.detail,
+        })
+    return results
+
+
 def quote_path(path):
     return "'" + path.as_posix().replace("'", "''") + "'"
 
@@ -228,7 +255,7 @@ def main():
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
-              + storage_controls(args) + observer_controls(args))
+              + storage_controls(args) + publication_controls(args) + observer_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

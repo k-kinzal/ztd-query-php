@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A relation an open context has no declaration for.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming an undeclared relation
  *     $name = new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'));
  *     (new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation($name))->describe() // => 'the declaration of relation t'

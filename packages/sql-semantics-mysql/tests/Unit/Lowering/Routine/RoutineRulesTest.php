@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
@@ -26,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
+use Tests\Support\Inspection;
 
 #[CoversClass(RoutineRules::class)]
 #[Medium]
@@ -33,7 +33,7 @@ final class RoutineRulesTest extends TestCase
 {
     public function testStatementLowersSignalResignalAndGetDiagnostics(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertInstanceOf(Signal::class, $semantics->inspect("SIGNAL SQLSTATE '45000'")->statement);
         self::assertInstanceOf(Resignal::class, $semantics->inspect('RESIGNAL')->statement);
         self::assertInstanceOf(GetDiagnostics::class, $semantics->inspect('GET DIAGNOSTICS @n = NUMBER')->statement);
@@ -54,7 +54,7 @@ final class RoutineRulesTest extends TestCase
 
     public function testDefinitionRoutesAlterAndDropForms(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
+        $semantics = new Inspection('mysql-5.7.44');
         self::assertSame('ALTER FUNCTION db.f NO SQL', $semantics->inspect('alter function db.f no sql')->toString());
         self::assertInstanceOf(AlterEvent::class, $semantics->inspect('ALTER EVENT e ENABLE')->statement);
         self::assertSame('DROP PROCEDURE IF EXISTS p', $semantics->inspect('drop procedure if exists p')->toString());
@@ -73,7 +73,7 @@ final class RoutineRulesTest extends TestCase
 
     public function testCreateLowersEveryKindOfStoredProgram(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertInstanceOf(CreateProcedure::class, $semantics->inspect('CREATE PROCEDURE p() SELECT 1')->statement);
         self::assertInstanceOf(CreateFunction::class, $semantics->inspect('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement);
         self::assertInstanceOf(CreateLoadableFunction::class, $semantics->inspect("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'")->statement);

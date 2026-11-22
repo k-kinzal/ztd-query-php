@@ -199,11 +199,33 @@ try {
     requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
         && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
-    requireShape($facade->getMethod('ir') === null, 'The façade must publish IR directly');
+    $publication = __DIR__ . '/publication-v3.json';
+    requireShape(
+        hash_file('sha256', $publication) === '2db9cf3b281a06db68f38492c93fa464bd0126f9afebe15cbb3d61b2974d0a2a',
+        'Publication contract differs from the recorded revision'
+    );
+    $surface = json_decode(file_get_contents($publication), true, 512, JSON_THROW_ON_ERROR)['surface'];
+    $publicMethods = array_values(array_map(
+        static fn ($method) => $method->name->toString(),
+        array_filter($facade->getMethods(), static fn ($method) => $method->isPublic())
+    ));
+    requireShape($publicMethods === $surface, 'Unexpected public façade methods');
+    requireShape(!is_file($root . '/packages/' . $package . '/src/Model/Statement/Operation.php')
+        && !is_file($root . '/packages/sql-semantics/src/Query.php'), 'Obsolete publication type is present');
     $printer = new Standard();
-    $analyze = 'return (new \\' . $prefix . 'SelectLowering())->lower($this->inspect($sql, $context));';
+    $constructor = '$platform = \\' . $platform . '\\Platform::shared();'
+        . '$this->profile = $platform->profile($grammarVersion, $mode, $parameters);'
+        . '$this->parser = $platform->parser($this->profile);'
+        . '$platform->context($this->profile, $searchPath?->schemas, [], false);'
+        . '$this->catalog = new \\' . $platform . '\\Model\\Facade\\Catalog($this->profile, $searchPath?->schemas, $this->parser);'
+        . '$this->binder = new \\' . $platform . '\\Model\\Facade\\StatementBinder($this->parser);';
+    requireShape($printer->prettyPrint($facade->getMethod('__construct')->stmts)
+        === $printer->prettyPrint($parser->parse('<?php ' . $constructor)), 'Unexpected façade initialization');
+    $resolve = '$declarations = $this->catalog->resolve($context);';
+    $bind = '$this->binder->resolve($sql, $declarations)';
+    $analyze = $resolve . ' return (new \\' . $prefix . 'SelectLowering())->lower(' . $bind . ');';
     if ($dialect === 'sqlite') {
-        $analyze = '$operation = $this->inspect($sql, $context); $statement = $operation->statement; return match (true) {'
+        $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Compound => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
@@ -217,7 +239,8 @@ try {
     sort($roots);
     $routes = [
         'analyze' => [$roots, $analyze],
-        'analyzeAll' => [['array'], '$declarations = $this->context($context); $results = [];'
+        'context' => [['SqlSemantics\\AnalysisContext'], 'return $this->catalog->build($declarations, $complete);'],
+        'analyzeAll' => [['array'], $resolve . ' $results = [];'
             . 'foreach ($this->split($sql) as $statement) { $results[] = $this->analyze($statement, $declarations); } return $results;'],
     ];
     foreach ($routes as $name => [$return, $body]) {

@@ -9,14 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame;
@@ -31,6 +29,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(FunctionCall::class)]
 #[Medium]
@@ -38,7 +38,7 @@ final class FunctionCallTest extends TestCase
 {
     public function testDeriveScalarReadsThePartsOfAnAggregateCall(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose('SELECT count(DISTINCT a ORDER BY b) FILTER (WHERE a > 0), count(*) FROM t', [$create]);
         $statement = $operation->statement;
@@ -64,7 +64,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarGivesTheDocumentedResultOfBuiltInFunctions(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose('SELECT abs(a), length(b), total(a), coalesce(b, 1), upper(b), typeof(b), max(a), sum(a) FROM t', [$create]);
 
@@ -85,7 +85,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAWrongArgumentCount(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT abs(1, 2), abs()', []);
+        $operation = (new Inspection())->diagnose('SELECT abs(1, 2), abs()', []);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -100,7 +100,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarDependsOnAnUndeclaredRoutine(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT foo(1)', []);
+        $operation = (new Inspection())->diagnose('SELECT foo(1)', []);
 
         self::assertEquals(new Dependent([new UndeclaredRoutine(new QualifiedName(new Name('foo')))]), $operation->field(0)->type);
         self::assertSame(Nullability::Dependent, $operation->field(0)->nullability);
@@ -109,7 +109,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAWindowFunctionWithoutOver(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT row_number()', []);
+        $operation = (new Inspection())->diagnose('SELECT row_number()', []);
 
         self::assertEquals([new CallMisuse(CallMisuseRule::WindowWithoutOver, new Name('row_number'))], $operation->facts->diagnostics);
         self::assertSame('misuse of window function row_number()', $operation->facts->diagnostics[0]->message());
@@ -117,7 +117,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAScalarFunctionUsedAsAWindow(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT abs(1) OVER ()', []);
+        $operation = (new Inspection())->diagnose('SELECT abs(1) OVER ()', []);
 
         self::assertEquals([new CallMisuse(CallMisuseRule::ScalarAsWindow, new Name('abs'))], $operation->facts->diagnostics);
         self::assertSame('abs() may not be used as a window function', $operation->facts->diagnostics[0]->message());
@@ -125,7 +125,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAFilterOnAScalarFunction(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT abs(1) FILTER (WHERE 1)', []);
+        $operation = (new Inspection())->diagnose('SELECT abs(1) FILTER (WHERE 1)', []);
 
         self::assertEquals([new CallMisuse(CallMisuseRule::FilterWithoutAggregate, new Name('abs'))], $operation->facts->diagnostics);
         self::assertSame('FILTER may not be used with non-aggregate abs()', $operation->facts->diagnostics[0]->message());
@@ -133,7 +133,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAFilterOnAWindowOnlyFunction(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose('SELECT rank() FILTER (WHERE 1) OVER () FROM t', [$create]);
 
@@ -143,14 +143,14 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsAnOrderingInsideAScalarCall(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT abs(1 ORDER BY 1)', []);
+        $operation = (new Inspection())->diagnose('SELECT abs(1 ORDER BY 1)', []);
 
         self::assertEquals([new CallMisuse(CallMisuseRule::OrderByWithoutAggregate, new Name('abs'))], $operation->facts->diagnostics);
     }
 
     public function testDeriveScalarReportsDistinctInAWindow(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose('SELECT sum(DISTINCT a) OVER () FROM t', [$create]);
 
@@ -160,7 +160,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarReportsDistinctWithSeveralArguments(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose("SELECT group_concat(DISTINCT a, ',') FROM t", [$create]);
 
@@ -171,7 +171,7 @@ final class FunctionCallTest extends TestCase
 
     public function testDeriveScalarAcceptsAggregatesUsedAsWindowsAndNamedWindows(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->diagnose('SELECT sum(a) FILTER (WHERE a > 0) OVER (PARTITION BY b), rank() OVER w, lag(a, 1, 0) OVER (ORDER BY a) FROM t WINDOW w AS (ORDER BY a)', [$create]);
         $statement = $operation->statement;
@@ -189,16 +189,16 @@ final class FunctionCallTest extends TestCase
 
     public function testRenderWritesEveryPartInOrder(): void
     {
-        $operation = (new Semantics())->diagnose('select count(*) AS c1, count(distinct a order by b desc) filter (where a > 0) AS c2, group_concat(b, \',\') over (partition by a) AS c3, rank() over w AS c4, foo() AS c5 from t window w as ()');
+        $operation = (new Inspection())->diagnose('select count(*) AS c1, count(distinct a order by b desc) filter (where a > 0) AS c2, group_concat(b, \',\') over (partition by a) AS c3, rank() over w AS c4, foo() AS c5 from t window w as ()');
 
         self::assertSame('SELECT count(*) AS c1, count(DISTINCT a ORDER BY b DESC) FILTER (WHERE a > 0) AS c2, group_concat(b, \',\') OVER (PARTITION BY a) AS c3, rank() OVER w AS c4, foo() AS c5 FROM t WINDOW w AS ()', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltCall(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $frame = new Frame(FrameUnit::Rows, new FrameBound(FrameBoundKind::UnboundedPreceding), new FrameBound(FrameBoundKind::CurrentRow));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame))), new ResultColumn(new FunctionCall(new Name('count'), [], true))]));
+        $operation = new InspectedStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame))), new ResultColumn(new FunctionCall(new Name('count'), [], true))]));
 
         self::assertSame('SELECT sum(1) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), count(*)', $operation->toString());
         self::assertSame([], $operation->facts->diagnostics);

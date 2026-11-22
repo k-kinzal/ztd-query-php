@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeOb
  * procedures; each spelling is kept as written.
  * Source: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the kind of object ROUTINES stands for
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Defaults\DefaultObjectKind::Routines->object() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Function
  */

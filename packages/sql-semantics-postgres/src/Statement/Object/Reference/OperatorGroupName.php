@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * Operator classes and families are named per access method.
  * Source: https://www.postgresql.org/docs/17/sql-dropopclass.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the access method
  *     $name = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\OperatorGroupName(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('int4_ops')]), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('btree'));
  *     $name->method->value // => 'btree'

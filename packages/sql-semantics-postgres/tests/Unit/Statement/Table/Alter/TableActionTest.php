@@ -14,7 +14,7 @@ final class TableActionTest extends TestCase
 {
     public function testDeriveClauseHasNoOperand(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t SET WITHOUT CLUSTER', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
@@ -23,7 +23,7 @@ final class TableActionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t DISABLE TRIGGER USER, NO FORCE ROW LEVEL SECURITY', []);
         self::assertSame('ALTER TABLE t DISABLE TRIGGER USER, NO FORCE ROW LEVEL SECURITY', $statement->toString());
     }

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * Source: https://www.postgresql.org/docs/17/sql-alterforeigndatawrapper.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Dropping an option
  *     $change = new \SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption(\SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction::Drop, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('host'));
  *     $change->value // => null

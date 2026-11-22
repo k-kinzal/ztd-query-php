@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  *
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a wrapper clause
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonWrapping(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonWrapperKind::Unconditional))->kind->wraps() // => true
  */

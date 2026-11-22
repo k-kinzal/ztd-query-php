@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Form;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -27,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use Tests\Support\Inspection;
 
 #[CoversClass(EventRule::class)]
 #[Medium]
@@ -46,7 +46,7 @@ final class EventRuleTest extends TestCase
     #[DataProvider('providerCreateLowersAnEventOfEveryLayout')]
     public function testCreateLowersAnEventOfEveryLayout(string $release): void
     {
-        $create = (new Semantics($release))->inspect("create definer = current_user event if not exists db.e on schedule every 1 hour starts '2020-01-01' ends '2021-01-01' on completion not preserve disable comment 'c' do select 1");
+        $create = (new Inspection($release))->inspect("create definer = current_user event if not exists db.e on schedule every 1 hour starts '2020-01-01' ends '2021-01-01' on completion not preserve disable comment 'c' do select 1");
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertSame('e', $statement->name->name->value);
@@ -63,7 +63,7 @@ final class EventRuleTest extends TestCase
 
     public function testCreateLeavesTheOptionalClausesAbsent(): void
     {
-        $create = (new Semantics('mysql-5.6.51'))->inspect("create event e on schedule at '2020-01-01' do begin select 1; end");
+        $create = (new Inspection('mysql-5.6.51'))->inspect("create event e on schedule at '2020-01-01' do begin select 1; end");
         $statement = $create->statement;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(OnceSchedule::class, $statement->schedule);
@@ -103,7 +103,7 @@ final class EventRuleTest extends TestCase
     #[DataProvider('providerAlterLowersEveryChange')]
     public function testAlterLowersEveryChange(string $release, string $sql, string $expected): void
     {
-        $alter = (new Semantics($release))->inspect($sql);
+        $alter = (new Inspection($release))->inspect($sql);
         self::assertInstanceOf(AlterEvent::class, $alter->statement);
         self::assertSame('e', $alter->statement->name->name->value);
         self::assertSame($expected, $alter->toString());
@@ -111,7 +111,7 @@ final class EventRuleTest extends TestCase
 
     public function testAlterLowersTheStructure(): void
     {
-        $alter = (new Semantics('mysql-5.6.51'))->inspect("alter definer = root@localhost event e on schedule every 1 day on completion preserve rename to db.e2 disable comment 'x' do select 2");
+        $alter = (new Inspection('mysql-5.6.51'))->inspect("alter definer = root@localhost event e on schedule every 1 day on completion preserve rename to db.e2 disable comment 'x' do select 2");
         $statement = $alter->statement;
         self::assertInstanceOf(AlterEvent::class, $statement);
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
@@ -123,7 +123,7 @@ final class EventRuleTest extends TestCase
         self::assertInstanceOf(Select::class, $statement->body);
         self::assertNotNull($statement->definer);
 
-        $bare = (new Semantics())->inspect('alter event e on completion preserve')->statement;
+        $bare = (new Inspection())->inspect('alter event e on completion preserve')->statement;
         self::assertInstanceOf(AlterEvent::class, $bare);
         self::assertNull($bare->schedule);
         self::assertSame(Completion::Preserve, $bare->completion);
@@ -158,7 +158,7 @@ final class EventRuleTest extends TestCase
     #[DataProvider('providerScheduleLowersAtAndEvery')]
     public function testScheduleLowersAtAndEvery(string $release): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $once = $semantics->inspect("create event e on schedule at '2020-01-01' do select 1")->statement;
         self::assertInstanceOf(CreateEvent::class, $once);
         self::assertInstanceOf(OnceSchedule::class, $once->schedule);
@@ -186,7 +186,7 @@ final class EventRuleTest extends TestCase
 
     public function testBoundLowersStartsAndEnds(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
+        $semantics = new Inspection('mysql-5.7.44');
         $starts = $semantics->inspect("create event e on schedule every 1 day starts '2020-01-01' do select 1");
         self::assertInstanceOf(CreateEvent::class, $starts->statement);
         self::assertInstanceOf(RecurringSchedule::class, $starts->statement->schedule);
@@ -227,7 +227,7 @@ final class EventRuleTest extends TestCase
     #[DataProvider('providerCompletionLowersPreserveAndNotPreserve')]
     public function testCompletionLowersPreserveAndNotPreserve(string $release, string $clause, Completion $completion): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $create = $semantics->inspect('CREATE EVENT e ON SCHEDULE AT 1 ' . $clause . ' DO SELECT 1');
         self::assertInstanceOf(CreateEvent::class, $create->statement);
         self::assertSame($completion, $create->statement->completion);
@@ -267,7 +267,7 @@ final class EventRuleTest extends TestCase
     #[DataProvider('providerStatusLowersEveryStatus')]
     public function testStatusLowersEveryStatus(string $release, string $clause, ?EventStatus $status): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $create = $semantics->inspect('CREATE EVENT e ON SCHEDULE AT 1' . $clause . ' DO SELECT 1');
         self::assertInstanceOf(CreateEvent::class, $create->statement);
         self::assertSame($status, $create->statement->status);
@@ -291,7 +291,7 @@ final class EventRuleTest extends TestCase
 
     public function testCommentLowersTheText(): void
     {
-        $semantics = new Semantics('mysql-8.0.44');
+        $semantics = new Inspection('mysql-8.0.44');
         $create = $semantics->inspect('create event e on schedule at 1 comment "it\'s" do select 1');
         self::assertInstanceOf(CreateEvent::class, $create->statement);
         self::assertSame("it's", $create->statement->comment?->value);

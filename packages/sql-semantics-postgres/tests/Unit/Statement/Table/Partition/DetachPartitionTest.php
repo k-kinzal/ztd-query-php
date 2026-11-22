@@ -14,7 +14,7 @@ final class DetachPartitionTest extends TestCase
 {
     public function testDeriveClauseResolvesThePartition(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE p DETACH PARTITION p1', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
@@ -27,7 +27,7 @@ final class DetachPartitionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE p DETACH PARTITION p1 CONCURRENTLY', []);
         self::assertSame('ALTER TABLE p DETACH PARTITION p1 CONCURRENTLY', $statement->toString());
     }

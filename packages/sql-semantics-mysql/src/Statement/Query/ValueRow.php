@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The VALUES statement that holds the row derives its values.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/values.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the values of a row
  *     $row = new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
  *     count($row->values) // => 2

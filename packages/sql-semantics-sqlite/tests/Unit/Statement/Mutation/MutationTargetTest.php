@@ -9,15 +9,15 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(MutationTarget::class)]
 #[Medium]
@@ -25,7 +25,7 @@ final class MutationTargetTest extends TestCase
 {
     public function testNameAnswersTheWrittenTableName(): void
     {
-        $query = (new Semantics())->diagnose('UPDATE main.t AS x INDEXED BY i SET a = 1');
+        $query = (new Inspection())->diagnose('UPDATE main.t AS x INDEXED BY i SET a = 1');
 
         self::assertInstanceOf(Update::class, $query->statement);
         self::assertSame('t', $query->statement->target->name()->name->value);
@@ -35,7 +35,7 @@ final class MutationTargetTest extends TestCase
 
     public function testAliasAnswersTheCorrelationNameOrNull(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $aliased = $semantics->diagnose('UPDATE main.t AS x SET a = 1');
         $plain = $semantics->diagnose('UPDATE t SET a = 1');
 
@@ -47,7 +47,7 @@ final class MutationTargetTest extends TestCase
 
     public function testDeriveRelationResolvesAmongDeclaredTablesOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $shadowed = $semantics->diagnose('WITH t AS (SELECT 1 AS q) UPDATE t SET a = 1', [$t]);
         $common = $semantics->diagnose('WITH w AS (SELECT 1 AS q) UPDATE w SET q = 1', [$t]);
@@ -67,7 +67,7 @@ final class MutationTargetTest extends TestCase
 
     public function testDeriveRelationLeavesAnUndeclaredTargetOpen(): void
     {
-        $query = (new Semantics())->diagnose('DELETE FROM t RETURNING *');
+        $query = (new Inspection())->diagnose('DELETE FROM t RETURNING *');
 
         self::assertInstanceOf(Delete::class, $query->statement);
         $fact = $query->facts->relation($query->statement->target);
@@ -79,8 +79,8 @@ final class MutationTargetTest extends TestCase
 
     public function testRenderWritesSchemaAliasAndIndexChoice(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice(new Name('i')))));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice(new Name('i')))));
 
         self::assertSame('DELETE FROM main.t AS x INDEXED BY i', $built->toString());
         self::assertSame('UPDATE t AS x NOT INDEXED SET a = 1', $semantics->diagnose('update t as x not indexed set a = 1')->toString());

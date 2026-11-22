@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Source: https://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_weight-string.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a range of levels
  *     $range = new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevelRange(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3'));
  *     [$range->from->text, $range->to->text] // => ['1', '3']

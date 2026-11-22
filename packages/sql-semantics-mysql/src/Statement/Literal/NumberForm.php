@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Literal;
  * with an exponent is a floating-point number.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Classifying the text of a number
  *     [\SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::of('18446744073709551616'), \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::of('1e3')] // => [\SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal, \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Float]
  */

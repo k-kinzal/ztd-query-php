@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
  * read the time the statement started; SYSDATE reads the time it executes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Clock::Now->value // => 'NOW'
  */

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html#crs-opt-ignore_server_ids.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the identifiers in order
  *     (new \SqlSemantics\Platform\MySql\Statement\Replication\Source\ServerIds([new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2')]))->ids[0]->text // => '2'
  */

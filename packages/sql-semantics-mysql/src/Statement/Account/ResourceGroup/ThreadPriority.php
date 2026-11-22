@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-resource-group.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a negative priority
  *     $priority = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(true, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('5'));
  *     $priority->describe() // => '-5'

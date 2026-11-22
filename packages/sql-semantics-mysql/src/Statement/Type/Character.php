@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
  * `LONG VARCHAR` request MEDIUMTEXT.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-type-syntax.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a character type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar, '255');
  *     [$type->name(), $type->length, $type->national] // => ['VARCHAR', '255', false]

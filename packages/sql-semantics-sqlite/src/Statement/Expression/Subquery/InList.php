@@ -28,13 +28,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the values of a membership test
- *     $query = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a NOT IN (1, 2) FROM t');
- *     [$query->statement->columns[0]->expression->negated, count($query->statement->columns[0]->expression->items)] // => [true, 2]
- * @example Refusing an operand that the test would not cover when written
- *     $or = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('SELECT a OR b FROM t')->statement->columns[0]->expression;
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList($or, []) // throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction
+ * @visibility SqlSemantics
  */
 final class InList implements Scalar
 {

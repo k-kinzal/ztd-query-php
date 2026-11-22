@@ -14,7 +14,7 @@ final class TargetsTest extends TestCase
 {
     public function testResolveAnswersTheDeclaredTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->inspect('SELECT 1', $context);
@@ -27,7 +27,7 @@ final class TargetsTest extends TestCase
 
     public function testShapeHasASlotPerColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->inspect('SELECT 1', $context);
@@ -37,7 +37,7 @@ final class TargetsTest extends TestCase
 
     public function testImplicitAnswersTheSystemColumns(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->inspect('SELECT 1', $context);
@@ -47,7 +47,7 @@ final class TargetsTest extends TestCase
 
     public function testScopeMakesTheTableTheOnlyVisibleRelation(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->inspect('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->inspect('CREATE INDEX ON t (a, ctid)', $context);
@@ -57,7 +57,7 @@ final class TargetsTest extends TestCase
 
     public function testExistingOpensTheShapeOfAMissingRelationUnderIfExists(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('SELECT 1', []);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $name = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('nope'));

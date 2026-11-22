@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
@@ -22,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(CreateTrigger::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class CreateTriggerTest extends TestCase
 {
     public function testDeriveStatementResolvesTheNewRowAndLocalVariablesInEveryBodyStatement(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a INT, b INT)'), $semantics->diagnose('CREATE TABLE u (c INT)')];
         $create = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT NEW.a; '
             . 'SET NEW.b = v + NEW.a; UPDATE u SET c = NEW.a WHERE c = v; INSERT INTO u (c) VALUES (NEW.b); END', $context);
@@ -42,7 +42,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementResolvesBothRowsOfAnUpdateTriggerWhateverTheirCase(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
 
         self::assertSame([], $semantics->diagnose('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.a = old.b + NEW.b', [$table])->facts->diagnostics);
@@ -50,7 +50,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementResolvesTheOldRowOfADeleteTrigger(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $context = [$semantics->diagnose('CREATE TABLE t (a INT, b INT)'), $semantics->diagnose('CREATE TABLE u (c INT)')];
 
         self::assertSame([], $semantics->diagnose('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW DELETE FROM u WHERE c = OLD.a', $context)->facts->diagnostics);
@@ -58,7 +58,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementReportsAColumnTheRowLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1', [$table]);
 
@@ -67,7 +67,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementReportsATableTheContextLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON u FOR EACH ROW SET @x = 1', [$table]);
 
@@ -88,7 +88,7 @@ final class CreateTriggerTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAnAssignmentToARowItMayNotChange')]
     public function testDeriveStatementReportsAnAssignmentToARowItMayNotChange(string $timing, string $row, ProgramRule $rule, string $message): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->diagnose('CREATE TRIGGER tr ' . $timing . ' ON t FOR EACH ROW SET ' . $row . '.a = 1', [$table]);
         $problem = $create->facts->diagnostics[0] ?? null;
@@ -116,7 +116,7 @@ final class CreateTriggerTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementATriggerMayNotContain')]
     public function testDeriveStatementReportsAStatementATriggerMayNotContain(string $body, string $message): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW ' . $body, [$table]);
 
@@ -153,7 +153,7 @@ final class CreateTriggerTest extends TestCase
     #[DataProvider('providerRenderWritesTheDefinition')]
     public function testRenderWritesTheDefinition(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     public function testANameWithACatalogIsRejected(): void

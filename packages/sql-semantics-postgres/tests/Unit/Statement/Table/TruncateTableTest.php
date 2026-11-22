@@ -14,7 +14,7 @@ final class TruncateTableTest extends TestCase
 {
     public function testDeriveStatementResolvesEachTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('TRUNCATE t, u', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\TruncateTable::class, $n1);
@@ -25,14 +25,14 @@ final class TruncateTableTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('TRUNCATE TABLE ONLY t, s.u CONTINUE IDENTITY RESTRICT', []);
         self::assertSame('TRUNCATE ONLY t, s.u CONTINUE IDENTITY RESTRICT', $statement->toString());
     }
 
     public function testDeriveStatementReportsANonTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE FOREIGN TABLE f (a int) SERVER x')];
         self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('TRUNCATE v, f', $context)->facts->diagnostics));
     }

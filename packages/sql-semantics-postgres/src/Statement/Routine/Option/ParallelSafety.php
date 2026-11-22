@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * `unsafe` only, which is checked when the statement is derived.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling an accepted level
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\ParallelSafety(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('safe')))->valid() // => true
  */

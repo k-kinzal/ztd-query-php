@@ -31,10 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
  * by the server; they are kept as written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-view.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the views to drop
- *     $drop = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('DROP VIEW IF EXISTS v, shop.w');
- *     [count($drop->statement->views), $drop->statement->ifExists] // => [2, true]
+ * @visibility SqlSemantics
  */
 final class DropView implements Statement
 {

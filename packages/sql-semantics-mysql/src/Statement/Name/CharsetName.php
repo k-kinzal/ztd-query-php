@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * `binary`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-charsets.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a character set name and the default
  *     $named = new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('utf8mb4'));
  *     [$named->name?->value, (new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null))->name] // => ['utf8mb4', null]

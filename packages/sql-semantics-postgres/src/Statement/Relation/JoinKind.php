@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Relation;
  * because it is written so. INNER and OUTER are optional words.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-JOIN.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling which sides a join can extend with NULLs
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind::Left->extendsRight(), \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind::Left->extendsLeft()] // => [true, false]
  */

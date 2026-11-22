@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Problem;
  * Each case holds the server error it mirrors.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the server error of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageRule::RepeatedOption->value // => 'ER_FILEGROUP_OPTION_ONLY_ONCE'
  */

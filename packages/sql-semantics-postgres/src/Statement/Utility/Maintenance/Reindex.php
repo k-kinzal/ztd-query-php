@@ -37,10 +37,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKin
  * take; SYSTEM rebuilt concurrently, by the word or by the option.
  * Source: https://www.postgresql.org/docs/17/sql-reindex.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a concurrent REINDEX of a table
- *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('REINDEX (VERBOSE) TABLE CONCURRENTLY app.t');
- *     [$operation->statement->target, $operation->statement->concurrently, $operation->statement->object->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Table, true, 't']
+ * @visibility SqlSemantics
  * @example Refusing a schema named like a relation
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Schema, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'))) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

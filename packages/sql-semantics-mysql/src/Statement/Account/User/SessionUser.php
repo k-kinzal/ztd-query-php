@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * apply to itself.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Rendering the session account
  *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser())->render($out);

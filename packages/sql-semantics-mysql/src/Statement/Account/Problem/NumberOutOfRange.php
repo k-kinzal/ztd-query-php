@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-password-management,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-multifactor.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange('DAY', '0', 'ER_WRONG_VALUE'))->message() // => 'The value 0 is not accepted for DAY (ER_WRONG_VALUE).'
  */

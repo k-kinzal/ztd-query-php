@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
  * PG-COMMON-TABLE-001.
  * Source: https://www.postgresql.org/docs/17/queries-with.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a recursive WITH clause
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
  *     $with = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause([new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'), $one)], true);

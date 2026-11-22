@@ -8,12 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
+use Tests\Support\Inspection;
 
 #[CoversClass(Upsert::class)]
 #[Medium]
@@ -21,7 +21,7 @@ final class UpsertTest extends TestCase
 {
     public function testRenderWritesDoNothingOrDoUpdateWithItsPredicate(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $nothing = $semantics->inspect('insert into t values (1) on conflict do nothing');
         $update = $semantics->inspect('insert into t values (1) on conflict (id) do update set a = 1, (b, a) = (2, 3) where a > 0');
 
@@ -39,7 +39,7 @@ final class UpsertTest extends TestCase
 
     public function testAssignmentsAndPredicateSeeTheTableAndExcluded(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->inspect('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a WHERE b > excluded.b', [$t]);
 

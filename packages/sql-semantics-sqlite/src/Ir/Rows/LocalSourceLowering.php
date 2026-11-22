@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
@@ -23,7 +23,7 @@ final class LocalSourceLowering
     /**
      * Converts the definition only after checking that the body resolves to it.
      */
-    public function lower(Operation $operation, WithQuery $statement): LocalSource
+    public function lower(BoundStatement $operation, WithQuery $statement): LocalSource
     {
         Check::input(!$statement->with->recursive && count($statement->with->tables) === 1, 'Complete SQLite IR currently supports one nonrecursive local source.');
         $definition = $statement->with->tables[0];

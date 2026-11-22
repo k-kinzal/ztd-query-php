@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * (PT_role_or_privilege::get_user and get_privilege).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-roles.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch('SELECT', true))->message() // => 'SELECT is not a role: illegal authorization identifier.'
  */

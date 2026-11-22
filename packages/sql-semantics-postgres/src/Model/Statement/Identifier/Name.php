@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * is already applied. Encoding a name for a position is the job of the
  * profile codec, never string concatenation.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a decoded name
  *     (new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('order items'))->value // => 'order items'
  */

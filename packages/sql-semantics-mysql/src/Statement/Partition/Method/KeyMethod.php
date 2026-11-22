@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * completely known table does not have is a diagnostic.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-key.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a linear key partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')]);
  *     [$method->linear, $method->columns[0]->value] // => [true, 'id']

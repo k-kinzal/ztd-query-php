@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterEvent::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class AlterEventTest extends TestCase
 {
     public function testDeriveStatementResolvesTheLocalVariablesOfTheBody(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->diagnose('ALTER EVENT e ON SCHEDULE EVERY 1 HOUR DO BEGIN DECLARE v INT DEFAULT 1; UPDATE t SET b = v WHERE a = v; END', [$table]);
 
@@ -39,7 +39,7 @@ final class AlterEventTest extends TestCase
 
     public function testDeriveStatementReportsUnknownNamesOfTheScheduleAndTheBody(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->diagnose('ALTER EVENT e ON SCHEDULE AT a DO DELETE FROM t WHERE zz = 1', [$table]);
 
@@ -48,7 +48,7 @@ final class AlterEventTest extends TestCase
 
     public function testDeriveStatementAcceptsAnAlterationWithoutClauses(): void
     {
-        $alter = (new Semantics())->diagnose('ALTER EVENT e');
+        $alter = (new Inspection())->diagnose('ALTER EVENT e');
         $statement = $alter->statement;
         self::assertInstanceOf(AlterEvent::class, $statement);
 
@@ -69,14 +69,14 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $alter = (new Semantics())->diagnose('ALTER EVENT e DO ' . $body);
+        $alter = (new Inspection())->diagnose('ALTER EVENT e DO ' . $body);
 
         self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
     public function testDeriveStatementAcceptsANestedAlterationWithoutABody(): void
     {
-        self::assertSame([], (new Semantics())->diagnose('ALTER EVENT e DO ALTER EVENT f ENABLE')->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose('ALTER EVENT e DO ALTER EVENT f ENABLE')->facts->diagnostics);
     }
 
     /**
@@ -98,12 +98,12 @@ final class AlterEventTest extends TestCase
     #[DataProvider('providerRenderWritesTheChanges')]
     public function testRenderWritesTheChanges(string $release, string $sql, string $expected): void
     {
-        self::assertSame($expected, (new Semantics($release))->diagnose($sql)->toString());
+        self::assertSame($expected, (new Inspection($release))->diagnose($sql)->toString());
     }
 
     public function testRenderWritesAConstructedAlteration(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec($semantics->profile()->grammar));
         (new AlterEvent(new QualifiedName(new Name('e')), null, null, null, EventStatus::Disable))->render($out);
 

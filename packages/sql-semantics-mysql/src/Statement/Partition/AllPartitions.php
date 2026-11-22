@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Selecting every partition
  *     (new \SqlSemantics\Platform\MySql\Statement\Partition\AllPartitions()) instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection // => true
  */

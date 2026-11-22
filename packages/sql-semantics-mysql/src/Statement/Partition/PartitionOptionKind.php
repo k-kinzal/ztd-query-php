@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition;
  * STORAGE before ENGINE does not change the option.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind::DataDirectory->value // => 'DATA DIRECTORY'
  */

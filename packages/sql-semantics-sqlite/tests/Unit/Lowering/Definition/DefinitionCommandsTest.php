@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\DefinitionCommands;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
@@ -17,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
+use Tests\Support\Inspection;
 
 #[CoversClass(DefinitionCommands::class)]
 #[Medium]
@@ -24,12 +24,12 @@ final class DefinitionCommandsTest extends TestCase
 {
     public function testCommandLowersATransactionCommand(): void
     {
-        self::assertInstanceOf(Begin::class, (new Semantics())->inspect('BEGIN')->statement);
+        self::assertInstanceOf(Begin::class, (new Inspection())->inspect('BEGIN')->statement);
     }
 
     public function testCommandLowersACommandOfEveryFamily(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertInstanceOf(Pragma::class, $semantics->inspect('PRAGMA a')->statement);
         self::assertInstanceOf(Detach::class, $semantics->inspect('DETACH a')->statement);
@@ -40,7 +40,7 @@ final class DefinitionCommandsTest extends TestCase
 
     public function testExplainedWrapsTheCommandInTheWrittenRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $program = $semantics->inspect('EXPLAIN BEGIN')->statement;
         $plan = $semantics->inspect('EXPLAIN QUERY PLAN BEGIN')->statement;
 

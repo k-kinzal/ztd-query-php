@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * result column is named `json_array`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the class plays the expression role
  *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayQuery::class, \SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar::class) // => true
  */

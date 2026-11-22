@@ -7,8 +7,8 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\NotNull;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 
@@ -23,7 +23,7 @@ final class CreateTableLowering
      * Resolves the location and records the native column declarations.
      * @throws InvalidConstruction When the statement uses an unknown schema
      */
-    public function lower(Operation $operation, ParsedCreateTable $statement): CreateTable
+    public function lower(BoundStatement $operation, ParsedCreateTable $statement): CreateTable
     {
         Check::input($statement->constraints === [] && $statement->options === [], 'Complete SQLite CREATE TABLE currently requires an ordinary rowid table without table constraints.');
         $schemaName = $statement->name->schema->value ?? ($statement->temporary ? 'temp' : 'main');

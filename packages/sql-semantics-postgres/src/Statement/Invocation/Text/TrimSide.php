@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text;
  * function the server calls.
  * Source: https://www.postgresql.org/docs/17/functions-string.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the function trimming the start calls
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\TrimSide::Leading->function() // => 'ltrim'
  */

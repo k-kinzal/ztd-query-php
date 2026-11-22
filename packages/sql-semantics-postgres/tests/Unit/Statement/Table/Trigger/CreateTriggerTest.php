@@ -14,7 +14,7 @@ final class CreateTriggerTest extends TestCase
 {
     public function testCreatedSchemaIsTheSchemaOfTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TRIGGER g AFTER INSERT ON s.t EXECUTE FUNCTION f()', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger::class, $n1);
@@ -23,7 +23,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementSeesOldAndNewInARowTriggerCondition(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TRIGGER g BEFORE UPDATE ON t FOR EACH ROW WHEN (old.a <> new.a OR b > 0) EXECUTE FUNCTION f()', $context);
@@ -34,7 +34,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->diagnose('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()');
+        $statement = (new \Tests\Support\Inspection())->diagnose('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
         $derivation = new \SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation($statement->context);
         $statement->statement->deriveElement($derivation, new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('s'));
@@ -47,7 +47,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TRIGGER g AFTER INSERT ON t EXECUTE FUNCTION f()', $context);
@@ -58,7 +58,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE OR REPLACE TRIGGER g INSTEAD OF DELETE OR TRUNCATE ON v REFERENCING OLD TABLE AS o FOR STATEMENT WHEN (true) EXECUTE FUNCTION s.f(1, 2.5, \'x\', w)', []);
         self::assertSame('CREATE OR REPLACE TRIGGER g INSTEAD OF DELETE OR TRUNCATE ON v REFERENCING OLD TABLE o FOR EACH STATEMENT WHEN (TRUE) EXECUTE FUNCTION s.f(1, 2.5, \'x\', w)', $statement->toString());
     }

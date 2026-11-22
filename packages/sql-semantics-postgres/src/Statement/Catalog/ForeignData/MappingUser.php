@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
  * The grammar reads USER here as CURRENT_USER; the spelling is kept.
  * Source: https://www.postgresql.org/docs/17/sql-createusermapping.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the keyword
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User->value // => 'USER'
  */

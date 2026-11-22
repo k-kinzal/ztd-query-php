@@ -12,13 +12,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(Cast::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class CastTest extends TestCase
 {
     public function testDeriveScalarGivesTheStorageClassOfTheAffinity(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->inspect('SELECT CAST(a AS VARCHAR(10)), CAST(1 AS INT), CAST(1 AS BLOB), CAST(1 AS REAL), CAST(b AS DOUBLE PRECISION) FROM t', [$create]);
 
@@ -40,7 +40,7 @@ final class CastTest extends TestCase
 
     public function testDeriveScalarGivesIntegerOrRealForNumericAffinity(): void
     {
-        $operation = (new Semantics())->inspect("SELECT CAST('1.5' AS NUMERIC), CAST('1.5' AS)", []);
+        $operation = (new Inspection())->inspect("SELECT CAST('1.5' AS NUMERIC), CAST('1.5' AS)", []);
 
         self::assertEquals(new Choice([Storage::Integer, Storage::Real]), $operation->field(0)->type);
         self::assertEquals(new Choice([Storage::Integer, Storage::Real]), $operation->field(1)->type);
@@ -49,7 +49,7 @@ final class CastTest extends TestCase
 
     public function testDeriveScalarKeepsTheNullFactOfTheOperand(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->inspect('SELECT CAST(a AS TEXT), CAST(b AS INT), CAST(? AS TEXT) FROM t', [$create]);
 
@@ -61,7 +61,7 @@ final class CastTest extends TestCase
 
     public function testDeriveScalarLeavesANullOperandNull(): void
     {
-        $operation = (new Semantics())->inspect('SELECT CAST(NULL AS INT)', []);
+        $operation = (new Inspection())->inspect('SELECT CAST(NULL AS INT)', []);
 
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
@@ -69,7 +69,7 @@ final class CastTest extends TestCase
 
     public function testDeriveScalarReadsTheTypeNameAndItsArguments(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->inspect('SELECT CAST(a AS VARCHAR(10)), CAST(1 AS) FROM t', [$create]);
         $statement = $operation->statement;
@@ -93,7 +93,7 @@ final class CastTest extends TestCase
 
     public function testRenderWritesTheConversionWithAndWithoutATypeName(): void
     {
-        $operation = (new Semantics())->inspect('select cast(a as varchar(10)) AS c1, cast(1 as) AS c2, cast(b as "int") AS c3 from t');
+        $operation = (new Inspection())->inspect('select cast(a as varchar(10)) AS c1, cast(1 as) AS c2, cast(b as "int") AS c3 from t');
 
         self::assertSame('SELECT CAST(a AS varchar(10)) AS c1, CAST(1 AS) AS c2, CAST(b AS "int") AS c3 FROM t', $operation->toString());
     }

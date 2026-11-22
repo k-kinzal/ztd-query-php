@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
  * keyword of an unbounded frame (`%nonassoc UNBOUNDED` in gram.y).
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an offset bound
  *     $bound = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind::OffsetPreceding,

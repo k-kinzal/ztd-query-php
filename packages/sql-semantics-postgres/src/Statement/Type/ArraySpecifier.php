@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * dimension.
  * Source: https://www.postgresql.org/docs/17/arrays.html#ARRAYS-DECLARATION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the dimensions of a bracket form
  *     $array = new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound(), new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound()]);
  *     [count($array->bounds), $array->keyword] // => [2, false]

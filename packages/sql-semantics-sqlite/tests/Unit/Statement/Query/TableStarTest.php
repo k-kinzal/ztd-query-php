@@ -9,12 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableStar::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class TableStarTest extends TestCase
 {
     public function testRenderWritesTheQualifierAndSelectsTheColumnsOfThatRelation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $tables = [$semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)'), $semantics->inspect('CREATE TABLE u (c TEXT)')];
         $query = $semantics->inspect('select u.*, "t".* from t join u', $tables);
 
@@ -35,8 +35,8 @@ final class TableStarTest extends TestCase
 
     public function testRenderWritesANewlyBuiltQualifiedStarAndReportsAnUnknownQualifier(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new TableStar(new Name('x'))], new TableInput(new QualifiedName(new Name('t')))));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new TableStar(new Name('x'))], new TableInput(new QualifiedName(new Name('t')))));
 
         self::assertSame('SELECT x.* FROM t', $operation->toString());
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);

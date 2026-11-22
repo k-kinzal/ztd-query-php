@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
  *
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PROCESSING-XMLTABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a namespace
  *     $namespace = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlNamespace(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('http://example.com')), new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('x'));
  *     $namespace->prefix->value // => 'x'

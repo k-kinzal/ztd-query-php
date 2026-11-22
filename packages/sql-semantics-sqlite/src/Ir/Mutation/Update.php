@@ -26,11 +26,6 @@ use SqlSemantics\SemanticsIR;
  * A complete UPDATE over a single resolved base table.
  *
  * @visibility public
- * @example Reading a local read and write slot
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE entries (votes INTEGER)');
- *     $update = $semantics->analyze('UPDATE entries SET votes = entries.votes + 1', [$table]);
- *     $update->assignments[0]->targetSlot === $update->assignments[0]->value->left->slot // => true
  */
 final class Update implements SemanticsIR
 {

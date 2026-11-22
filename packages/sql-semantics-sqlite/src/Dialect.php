@@ -8,9 +8,6 @@ namespace SqlSemantics\Platform\Sqlite;
  * Selects SQLite for semantic analysis.
  *
  * @visibility public
- * @example Analyzing SQLite SQL
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $semantics->inspect('SELECT 42')->toString() // => 'SELECT 42'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect
 {

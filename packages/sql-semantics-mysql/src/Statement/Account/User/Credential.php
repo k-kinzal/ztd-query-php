@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\User;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-authentication,
  * https://dev.mysql.com/doc/refman/5.7/en/create-user.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the credential of a random password
  *     \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword->name // => 'RandomPassword'
  */

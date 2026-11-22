@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `xmlpi`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLPI. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a processing instruction without content
  *     $pi = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlProcessingInstruction(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('php'));
  *     [$pi->target->value, $pi->content] // => ['php', null]

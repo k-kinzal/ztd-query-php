@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
  * not begin with `00`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Listing the classes
  *     count(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::cases()) // => 3
  */

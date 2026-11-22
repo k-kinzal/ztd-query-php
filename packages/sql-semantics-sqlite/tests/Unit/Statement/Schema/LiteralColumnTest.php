@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(LiteralColumn::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class LiteralColumnTest extends TestCase
 
     public function testDeriveScalarResolvesTheColumnOfTheTableBeingDefined(): void
     {
-        $create = (new Semantics())->diagnose("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
+        $create = (new Inspection())->diagnose("CREATE TABLE t (a INTEGER, b, UNIQUE ('b'), PRIMARY KEY ('A'))");
         $statement = $create->statement;
         $table = $create->declarations()[0];
 
@@ -51,7 +51,7 @@ final class LiteralColumnTest extends TestCase
 
     public function testDeriveScalarReportsANameThatIsNoColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a)');
         $create = $semantics->diagnose("CREATE TABLE u (a, UNIQUE ('zz'))");
         $index = $semantics->diagnose("CREATE INDEX i ON t ('zz')", [$table]);
@@ -64,7 +64,7 @@ final class LiteralColumnTest extends TestCase
 
     public function testRenderWritesTheLiteralAsWritten(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $index = $semantics->diagnose("create index i on t ('a' collate nocase desc, (('b')))");
 
         self::assertInstanceOf(CreateIndex::class, $index->statement);

@@ -20,13 +20,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(Joining::class)]
 #[Medium]
@@ -34,7 +34,7 @@ final class JoiningTest extends TestCase
 {
     public function testJoinHidesTheRightUsingColumnAndKeepsTheLeftSide(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
@@ -56,7 +56,7 @@ final class JoiningTest extends TestCase
 
     public function testJoinMergesEveryCommonNameOfANaturalJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();
@@ -72,7 +72,7 @@ final class JoiningTest extends TestCase
 
     public function testJoinExtendsTheRightSideOfALeftJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
@@ -94,7 +94,7 @@ final class JoiningTest extends TestCase
 
     public function testJoinCoalescesTheMergedColumnAndExtendsTheLeftSideOfARightJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
@@ -116,7 +116,7 @@ final class JoiningTest extends TestCase
 
     public function testJoinReportsAUsingColumnThatAClosedSideLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
@@ -167,7 +167,7 @@ final class JoiningTest extends TestCase
 
     public function testLocateFindsTheFirstVisibleSlotByName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->inspect('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $derivation = new Derivation($semantics->context([$t, $u]));
@@ -188,7 +188,7 @@ final class JoiningTest extends TestCase
 
     public function testClosedIsTrueOnlyForCompleteFullyNamedShapes(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
@@ -206,7 +206,7 @@ final class JoiningTest extends TestCase
 
     public function testExtendMakesEverySlotAndImplicitNullableAndKeepsOrigins(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $shapes = new TableShapes();

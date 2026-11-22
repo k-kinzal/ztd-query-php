@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Query;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(Query::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class QueryTest extends TestCase
 {
     public function testDeriveQueryRecordsTheOutputOfANestedQueryAtItsPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)');
         $operation = $semantics->inspect('SELECT (SELECT t.a FROM t AS inner_t) FROM t', [$table]);
         $statement = $operation->statement;
@@ -40,7 +40,7 @@ final class QueryTest extends TestCase
 
     public function testDeriveQueryOfTheRootIsTheOutputOfTheOperation(): void
     {
-        $operation = (new Semantics())->inspect('SELECT 1 AS one');
+        $operation = (new Inspection())->inspect('SELECT 1 AS one');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Query::class, $statement);

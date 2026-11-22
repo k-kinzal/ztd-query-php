@@ -33,12 +33,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the dropped table to its declaration
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a)');
- *     $drop = $semantics->inspect('DROP TABLE IF EXISTS main.t', [$table]);
- *     [$drop->statement->ifExists, $drop->facts->relation($drop->statement)->table->table === $table->declarations()[0]] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class Drop implements Statement
 {

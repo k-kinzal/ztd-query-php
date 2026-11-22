@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
  * states the default explicitly and changes nothing.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming one table without its descendants
  *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('t')), true);
  *     [$table->name->name->value, $table->only] // => ['t', true]

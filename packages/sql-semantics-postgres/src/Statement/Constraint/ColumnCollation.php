@@ -19,10 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * declares no collations.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/collation.html.
  *
- * @visibility public
- * @example Reading the collation of a column
- *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('CREATE TABLE t (a text COLLATE "C")');
- *     $create->statement->definition->elements[0]->qualifiers[0]->collation->last()->value // => 'C'
+ * @visibility SqlSemantics
  */
 final class ColumnCollation implements Clause
 {

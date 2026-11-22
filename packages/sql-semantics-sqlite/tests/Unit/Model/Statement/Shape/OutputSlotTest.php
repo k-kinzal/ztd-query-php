@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(OutputSlot::class)]
 #[Medium]
@@ -42,7 +42,7 @@ final class OutputSlotTest extends TestCase
 
     public function testDeclarationOfAnOuterJoinSlotIsTheUnchangedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
         $u = $semantics->inspect('CREATE TABLE u (a INTEGER)')->declarations()[0];
 

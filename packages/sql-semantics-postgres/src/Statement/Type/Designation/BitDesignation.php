@@ -27,7 +27,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
  * unlimited. Facts: PG-TYPE-MODIFIER-001.
  * Source: https://www.postgresql.org/docs/17/datatype-bit.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the default length of a bit type
  *     $designation = new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\BitDesignation(false);
  *     $analysis = (new \SqlSemantics\Platform\PostgreSql\Semantics())->context([]);

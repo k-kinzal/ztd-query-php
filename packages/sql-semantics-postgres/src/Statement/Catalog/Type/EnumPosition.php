@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  * Without a position the label is added at the end of the sort order.
  * Source: https://www.postgresql.org/docs/17/sql-altertype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Placing a label after another
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\EnumPosition(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('ok')))->after // => true
  */

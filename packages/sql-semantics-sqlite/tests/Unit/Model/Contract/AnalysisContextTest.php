@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(AnalysisContext::class)]
 #[Medium]
@@ -109,7 +109,7 @@ final class AnalysisContextTest extends TestCase
 
     public function testDeclaredFindsTheTableAStatementProvidedToTheFacade(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)')->declarations()[0];
 
         $context = $semantics->context([$table]);

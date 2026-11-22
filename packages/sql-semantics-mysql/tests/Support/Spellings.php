@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Model\Validation;
+namespace Tests\Support;
 
 use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;

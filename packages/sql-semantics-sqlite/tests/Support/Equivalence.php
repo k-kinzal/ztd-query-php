@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Model\Validation;
+namespace Tests\Support;
 
 use ReflectionClass;
 use ReflectionProperty;

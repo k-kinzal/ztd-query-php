@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The server rejects the statement with ER_INVALID_USER_ATTRIBUTE_JSON.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-comments-attributes.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute('[1]'))->message() // => 'The user attribute [1] is not a JSON object (ER_INVALID_USER_ATTRIBUTE_JSON).'
  */

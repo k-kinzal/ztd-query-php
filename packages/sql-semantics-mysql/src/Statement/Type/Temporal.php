@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
  * 6. YEAR takes a display width and, by the grammar, numeric attributes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-type-syntax.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a temporal type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::DateTime, '6');
  *     [$type->name(), $type->precision] // => ['DATETIME', '6']

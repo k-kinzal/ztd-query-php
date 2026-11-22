@@ -14,7 +14,7 @@ final class TypeChangeTest extends TestCase
 {
     public function testDeriveClauseResolvesTheConversion(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ALTER b TYPE text USING zz', $context);
@@ -25,7 +25,7 @@ final class TypeChangeTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER COLUMN b SET DATA TYPE varchar(10) COLLATE "C" USING b::text', []);
         self::assertSame('ALTER TABLE t ALTER b TYPE VARCHAR (10) COLLATE "C" USING b :: text', $statement->toString());
     }

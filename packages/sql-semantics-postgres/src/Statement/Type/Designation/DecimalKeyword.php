@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
  * The three spellings denote the same type.
  * Source: https://www.postgresql.org/docs/17/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the short form
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\DecimalKeyword::Dec->value // => 'DEC'
  */

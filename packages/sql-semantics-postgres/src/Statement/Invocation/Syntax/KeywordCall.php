@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * arguments are left to the routine. JSON_OBJECT takes at least one argument.
  * Source: https://www.postgresql.org/docs/17/functions-string.html, https://www.postgresql.org/docs/17/functions-json.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a keyword call
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordCall(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction::Substring, []);
  *     [$call->function->value, $call->outputName()->value] // => ['SUBSTRING', 'substring']

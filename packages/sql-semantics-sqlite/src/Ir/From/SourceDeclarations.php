@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\From;
 
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
@@ -27,7 +27,7 @@ final class SourceDeclarations
      *
      * @return list<array{TableInput|MutationTarget, Table}>
      */
-    public function bind(Operation $operation, ?Relation $source): array
+    public function bind(BoundStatement $operation, ?Relation $source): array
     {
         if ($source === null) {
             return [];

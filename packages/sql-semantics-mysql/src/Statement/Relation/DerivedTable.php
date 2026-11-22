@@ -32,10 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
  * https://dev.mysql.com/doc/refman/8.4/en/lateral-derived-tables.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading a derived table
- *     $query = (new \SqlSemantics\Platform\MySql\Semantics())->inspect('SELECT x FROM (SELECT 1) AS d (x)');
- *     [$query->statement->from->alias?->value, $query->statement->from->columns[0]->value] // => ['d', 'x']
+ * @visibility SqlSemantics
  */
 final class DerivedTable implements Relation
 {

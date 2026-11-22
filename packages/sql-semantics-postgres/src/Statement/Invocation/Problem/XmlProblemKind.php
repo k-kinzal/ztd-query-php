@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML,
  * `transformXmlExpr` and `transformXmlSerialize` in `src/backend/parser/parse_expr.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of an unnamed attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\XmlProblemKind::UnnamedAttribute->value // => 'unnamed XML attribute value must be a column reference'
  */

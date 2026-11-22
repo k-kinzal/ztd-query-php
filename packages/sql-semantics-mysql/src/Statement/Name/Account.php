@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Node;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/account-names.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the two kinds of account apart
  *     $account = new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser();
  *     $account instanceof \SqlSemantics\Platform\MySql\Statement\Name\Account // => true

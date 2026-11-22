@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * qualifier names. The statement that contains it derives the expansion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a qualified star
  *     $star = new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')));
  *     [$star->table->schema?->value, $star->table->name->value] // => ['shop', 't']

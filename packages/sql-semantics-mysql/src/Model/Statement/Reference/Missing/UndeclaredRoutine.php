@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 /**
  * A function or procedure whose signature is neither fixed by the language profile nor declared in the context.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming an undeclared routine
  *     $name = new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('score'));
  *     (new \SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRoutine($name))->describe() // => 'the signature of routine score'

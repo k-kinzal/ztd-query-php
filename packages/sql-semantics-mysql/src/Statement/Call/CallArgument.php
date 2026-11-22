@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  * derives its expression.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/udf-arguments.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an argument and its alias
  *     $argument = new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('total'));
  *     [$argument->expression->name->value, $argument->alias?->value] // => ['a', 'total']

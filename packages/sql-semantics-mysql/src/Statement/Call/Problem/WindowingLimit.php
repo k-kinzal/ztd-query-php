@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Problem;
  * Each case holds the words the server names the feature with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-restrictions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the words of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit::IgnoreNulls->value // => 'IGNORE NULLS'
  */

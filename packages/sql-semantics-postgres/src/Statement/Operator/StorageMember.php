@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createopclass.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the storage type
  *     $type = new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('int4')])));
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Operator\StorageMember($type))->type === $type // => true

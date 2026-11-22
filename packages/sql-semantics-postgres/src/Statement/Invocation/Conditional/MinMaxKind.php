@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional;
  * Mirrors PostgreSQL's `MinMaxOp`.
  * Source: https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-GREATEST-LEAST.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the smallest-value function
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\MinMaxKind::Least->value // => 'LEAST'
  */

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#function_json-value,
  * https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a default response
  *     $response = new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse(\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind::Default, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0'));
  *     $response->default?->text // => '0'

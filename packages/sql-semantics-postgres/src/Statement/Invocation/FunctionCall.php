@@ -40,7 +40,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
  * https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-AGGREGATES,
  * https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the parts of an aggregate call
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('count')]),

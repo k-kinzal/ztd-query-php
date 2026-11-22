@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * where it is.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-redefine-column.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Placing a column after another
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')))->after?->value // => 'id'
  */

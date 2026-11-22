@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * fact derived against the context.
  * Source: https://www.postgresql.org/docs/17/datatype.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the catalog name of a keyword spelling
  *     $designation = new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword::DoublePrecision);
  *     $designation->catalogName()->value // => 'float8'

@@ -26,12 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
  * and ignored by InnoDB. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving the parent table
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $parent = $semantics->inspect('CREATE TABLE p (id INT PRIMARY KEY)');
- *     $child = $semantics->inspect('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id) ON DELETE CASCADE)', [$parent]);
- *     $child->facts->relation($child->statement->elements[1]->references)->table->table === $parent->declarations()[0] // => true
+ * @visibility SqlSemantics
  */
 final class References implements Node
 {

@@ -14,11 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
  *
  * Resolved references point to this object itself; it is never copied.
  *
- * @visibility public
- * @example Reaching the declared column from a query field
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL)')->declarations()[0];
- *     $semantics->inspect('SELECT a FROM t', [$table])->field('a')->column() === $table->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class Column
 {

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
  * a target kind, and so does this class.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a cast target
  *     $target = new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Decimal, '10', '2');
  *     [$target->name(), $target->length, $target->scale] // => ['DECIMAL', '10', '2']

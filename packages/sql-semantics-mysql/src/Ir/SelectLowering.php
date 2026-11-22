@@ -8,7 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
+use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression as ParsedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
@@ -24,9 +24,9 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(Operation $operation): Select
+    public function lower(BoundStatement $operation): Select
     {
-        $profile = $operation->profile();
+        $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
         Check::input($profile->lexical->equals(new LexicalSettings()), 'This projection profile requires the default lexical settings.');
         $statement = $operation->statement;
@@ -41,10 +41,12 @@ final class SelectLowering
         );
         $binding = new SourceBinding($operation, $statement->from);
         $expressions = new ExpressionLowering();
+        $fields = $operation->facts->output?->fields();
+        Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->items as $index => $column) {
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $operation->field($index)->name;
+            $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier(ltrim($name->value, " \t\r\n\v\f")));
         }

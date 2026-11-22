@@ -14,7 +14,7 @@ final class CreateForeignTableTest extends TestCase
 {
     public function testDeriveStatementDeclaresThePartition(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE FOREIGN TABLE f PARTITION OF t FOR VALUES IN (1) SERVER s', $context);
@@ -27,7 +27,7 @@ final class CreateForeignTableTest extends TestCase
 
     public function testDeriveRelationAnswersTheNewTable(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE FOREIGN TABLE f (a int) SERVER s', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateForeignTable::class, $n1);
@@ -36,7 +36,7 @@ final class CreateForeignTableTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE FOREIGN TABLE IF NOT EXISTS f (a int OPTIONS (x \'y\') NOT NULL) INHERITS (p) SERVER s OPTIONS (t \'u\')', []);
         self::assertSame('CREATE FOREIGN TABLE IF NOT EXISTS f (a INT OPTIONS (x \'y\') NOT NULL) INHERITS (p) SERVER s OPTIONS (t \'u\')', $statement->toString());
     }

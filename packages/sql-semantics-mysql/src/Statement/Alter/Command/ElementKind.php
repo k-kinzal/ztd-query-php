@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Command;
  * it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::ForeignKey->value // => 'FOREIGN KEY'
  */

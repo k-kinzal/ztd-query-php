@@ -9,10 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(StringLiteral::class)]
 #[Medium]
@@ -28,7 +28,7 @@ final class StringLiteralTest extends TestCase
 {
     public function testValueConcatenatesTheAdjacentSegments(): void
     {
-        $operation = (new Semantics())->inspect("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
+        $operation = (new Inspection())->inspect("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
@@ -42,7 +42,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersVarCharOfNoCharacterSetThatIsNeverNull(): void
     {
-        $operation = (new Semantics())->inspect("SELECT 'a'");
+        $operation = (new Inspection())->inspect("SELECT 'a'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -65,7 +65,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheIntroducedCharacterSet(): void
     {
-        $operation = (new Semantics())->inspect("SELECT _UTF8MB4'x'");
+        $operation = (new Inspection())->inspect("SELECT _UTF8MB4'x'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -84,7 +84,7 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarAnswersTheNationalCharacterSet(): void
     {
-        $operation = (new Semantics())->inspect("SELECT N'x' 'y'");
+        $operation = (new Inspection())->inspect("SELECT N'x' 'y'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -104,17 +104,17 @@ final class StringLiteralTest extends TestCase
 
     public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
     {
-        $context = (new Semantics())->context();
+        $context = (new Inspection())->context();
         $statement = new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
 
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
 
-        new Operation($context, $statement);
+        new InspectedStatement($context, $statement);
     }
 
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->inspect("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
@@ -131,7 +131,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderKeepsBackslashesUnderTheVerbatimRule(): void
     {
-        $operation = (new Semantics(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->inspect("SELECT 'a\\nb'");
+        $operation = (new Inspection(null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->inspect("SELECT 'a\\nb'");
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -146,7 +146,7 @@ final class StringLiteralTest extends TestCase
 
     public function testRenderWritesADoubleQuotedStringInSingleQuotes(): void
     {
-        self::assertSame("SELECT 'q'", (new Semantics())->inspect('SELECT "q"')->toString());
+        self::assertSame("SELECT 'q'", (new Inspection())->inspect('SELECT "q"')->toString());
     }
 
     public function testRejectsAnEmptySegmentList(): void

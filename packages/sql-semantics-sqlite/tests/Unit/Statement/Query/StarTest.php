@@ -7,11 +7,11 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(Star::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class StarTest extends TestCase
 {
     public function testRenderWritesTheStarAmongOtherColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->inspect('select *, a, * from t', [$create]);
 
@@ -31,8 +31,8 @@ final class StarTest extends TestCase
 
     public function testRenderWritesANewlyBuiltStarWithoutInput(): void
     {
-        $semantics = new Semantics();
-        $operation = new Operation($semantics->context(), new Select([new Star()]));
+        $semantics = new Inspection();
+        $operation = new InspectedStatement($semantics->context(), new Select([new Star()]));
 
         self::assertSame('SELECT *', $operation->toString());
         self::assertSame(MisuseRule::StarWithoutTables->value, $operation->facts->diagnostics[0]->message());

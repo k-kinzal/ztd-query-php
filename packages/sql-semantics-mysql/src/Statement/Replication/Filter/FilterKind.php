@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * database names.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a filter
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind::RewriteDb->value // => 'REPLICATE_REWRITE_DB'
  */

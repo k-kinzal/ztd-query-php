@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
  * written.
  * Source: https://www.postgresql.org/docs/17/sql-dropschema.html, https://www.postgresql.org/docs/17/sql-comment.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the name
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('app')))->name->value // => 'app'
  */

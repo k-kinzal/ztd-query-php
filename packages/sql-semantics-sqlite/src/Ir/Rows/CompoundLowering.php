@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator as ParsedOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
@@ -22,7 +22,7 @@ final class CompoundLowering
     /**
      * Lowers the arms with their own output names and scoped column slots.
      */
-    public function lower(Operation $operation, ParsedCompound $query): Compound
+    public function lower(BoundStatement $operation, ParsedCompound $query): Compound
     {
         $selects = new SelectLowering();
         $values = new ValuesLowering();

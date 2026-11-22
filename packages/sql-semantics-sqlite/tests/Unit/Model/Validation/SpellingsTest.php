@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Platform\Sqlite\Model\Validation\Spellings;
+use Tests\Support\Spellings;
 use SqlSemantics\Platform\Sqlite\Platform;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Semantics;

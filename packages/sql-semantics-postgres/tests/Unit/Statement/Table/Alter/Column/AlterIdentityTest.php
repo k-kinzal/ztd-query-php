@@ -14,7 +14,7 @@ final class AlterIdentityTest extends TestCase
 {
     public function testDeriveClauseChecksTheColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ALTER zz RESTART', $context);
@@ -25,7 +25,7 @@ final class AlterIdentityTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER a SET GENERATED ALWAYS RESTART WITH 3 SET NO CYCLE', []);
         self::assertSame('ALTER TABLE t ALTER a SET GENERATED ALWAYS RESTART 3 SET NO CYCLE', $statement->toString());
     }

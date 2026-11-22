@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\InsertFacts;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
@@ -31,6 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
+use Tests\Support\Inspection;
 
 #[CoversClass(InsertFacts::class)]
 #[Medium]
@@ -38,7 +38,7 @@ final class InsertFactsTest extends TestCase
 {
     public function testDeriveCountsTheSourceColumnsAgainstTheTarget(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $rows = $semantics->diagnose('INSERT INTO t VALUES (1, 2)', [$t])->statement;
         $listed = $semantics->diagnose('INSERT INTO t (a) VALUES (1, 2)', [$t])->statement;
@@ -63,7 +63,7 @@ final class InsertFactsTest extends TestCase
     #[TestWith(['INSERT INTO t SELECT * FROM t', 3, 'table t has 1 columns but 3 values were supplied'])]
     public function testDeriveCountsTheColumnsThatAreNotGeneratedWhenNoListIsWritten(string $sql, int $actual, string $message): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
         $operation = $semantics->diagnose($sql, [$t]);
         $database = new PDO('sqlite::memory:');
@@ -81,7 +81,7 @@ final class InsertFactsTest extends TestCase
 
     public function testDeriveSkipsTheCountWhenEitherSideIsOpen(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $open = $semantics->diagnose('INSERT INTO t SELECT * FROM u', [$t], );
         $undeclared = $semantics->diagnose('INSERT INTO u VALUES (1)', [$t], );
@@ -97,7 +97,7 @@ final class InsertFactsTest extends TestCase
 
     public function testDeriveLetsUpsertsSeeTheTargetAndExcludedInTheRightPlaces(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $into = new InsertInto(new MutationTarget(new QualifiedName(new Name('t'))), [new Name('a')]);
@@ -121,7 +121,7 @@ final class InsertFactsTest extends TestCase
 
     public function testDeriveBindsTheWithClauseAndReturnsTheTargetRow(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $statement = $semantics->diagnose('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));

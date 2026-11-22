@@ -10,7 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A named data type that is neither fixed by the language profile nor declared in the context.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming an undeclared data type
  *     $name = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('mood'));
  *     (new \SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Missing\UndeclaredDomain($name))->describe() // => 'the definition of data type mood'

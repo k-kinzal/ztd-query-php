@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\DefineChecks;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument;
@@ -19,6 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Collation
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
+use Tests\Support\Inspection;
 
 #[CoversClass(DefineChecks::class)]
 #[Medium]
@@ -26,13 +26,13 @@ final class DefineChecksTest extends TestCase
 {
     public function testDeriveAcceptsTheAlternativeSpellings(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame([[], []], [$semantics->diagnose('CREATE AGGREGATE a (basetype = int4, SFUNC1 = f, stype1 = int4)')->facts->diagnostics, $semantics->diagnose('CREATE OPERATOR + (rightarg = int4, procedure = f)')->facts->diagnostics]);
     }
 
     public function testDeriveReportsTheProblemsOfEachKind(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             [
                 ['aggregate stype must be specified', 'aggregate sfunc must be specified'],
@@ -57,7 +57,7 @@ final class DefineChecksTest extends TestCase
 
     public function testRangeReportsTheMissingSubtype(): void
     {
-        self::assertSame(['type attribute "subtype" is required'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics())->diagnose('CREATE TYPE r AS RANGE (subtype_diff = float8mi)')->facts->diagnostics));
+        self::assertSame(['type attribute "subtype" is required'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Inspection())->diagnose('CREATE TYPE r AS RANGE (subtype_diff = float8mi)')->facts->diagnostics));
     }
 
     public function testPresentKeepsTheLastRecognizedAttributeOfEachName(): void
@@ -77,7 +77,7 @@ final class DefineChecksTest extends TestCase
 
     public function testAggregateReportsMovingSerializationHypotheticalAndBaseType(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             [
                 ['aggregate msfunc must not be specified without mstype', 'aggregate msspace must not be specified without mstype', 'only ordered-set aggregates can be hypothetical', 'basetype is redundant with aggregate input type specification', 'must specify both or neither of serialization and deserialization functions'],
@@ -100,7 +100,7 @@ final class DefineChecksTest extends TestCase
 
     public function testCollationFollowsTheProvider(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertSame(
             [['conflicting or redundant options'], ['conflicting or redundant options'], ['nondeterministic collations not supported with this provider'], ['parameter "locale" must be specified'], []],
             [

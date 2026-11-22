@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-range.html,
  * https://dev.mysql.com/doc/refman/8.4/en/partitioning-list.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a range partitioning by an expression
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('id')));
  *     $method->kind // => \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range

@@ -14,11 +14,11 @@ final class DiscardTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD ALL')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('DISCARD ALL')->facts->diagnostics);
     }
 
     public function testRenderKeepsTheSpelling(): void
     {
-        self::assertSame(['DISCARD TEMP', 'DISCARD TEMPORARY', 'DISCARD PLANS', 'DISCARD SEQUENCES', 'DISCARD ALL'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD TEMP')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD TEMPORARY')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD PLANS')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD SEQUENCES')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DISCARD ALL')->toString()]);
+        self::assertSame(['DISCARD TEMP', 'DISCARD TEMPORARY', 'DISCARD PLANS', 'DISCARD SEQUENCES', 'DISCARD ALL'], [(new \Tests\Support\Inspection())->inspect('DISCARD TEMP')->toString(), (new \Tests\Support\Inspection())->inspect('DISCARD TEMPORARY')->toString(), (new \Tests\Support\Inspection())->inspect('DISCARD PLANS')->toString(), (new \Tests\Support\Inspection())->inspect('DISCARD SEQUENCES')->toString(), (new \Tests\Support\Inspection())->inspect('DISCARD ALL')->toString()]);
     }
 }

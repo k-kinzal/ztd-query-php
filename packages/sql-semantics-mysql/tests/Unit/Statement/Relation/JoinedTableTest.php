@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(JoinedTable::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class JoinedTableTest extends TestCase
 {
     public function testDeriveRelationMergesUsingColumnsAndExtendsTheOuterSide(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -50,7 +50,7 @@ final class JoinedTableTest extends TestCase
 
     public function testDeriveRelationMergesTheCommonColumnsOfANaturalJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -67,7 +67,7 @@ final class JoinedTableTest extends TestCase
 
     public function testDeriveRelationReportsAUsingColumnAnOperandLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -84,7 +84,7 @@ final class JoinedTableTest extends TestCase
 
     public function testDeriveRelationNestsLikeTheParseOfTheRelease(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -94,7 +94,7 @@ final class JoinedTableTest extends TestCase
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $modern = $semantics->diagnose('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
-        $legacy = (new Semantics('mysql-5.7.44'))->diagnose('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
+        $legacy = (new Inspection('mysql-5.7.44'))->diagnose('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
         self::assertInstanceOf(Select::class, $modern->statement);
         self::assertInstanceOf(JoinedTable::class, $modern->statement->from);
@@ -107,11 +107,11 @@ final class JoinedTableTest extends TestCase
 
     public function testRenderWritesTheOperatorAndTheCondition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u ON t.a = u.a NATURAL RIGHT OUTER JOIN v CROSS JOIN w STRAIGHT_JOIN x INNER JOIN y USING (a, b)', $semantics->diagnose('select 1 from t left outer join u on t.a = u.a natural right outer join v cross join w straight_join x inner join y using (a, b)')->toString());
         self::assertSame('SELECT 1 FROM t NATURAL INNER JOIN u', $semantics->diagnose('select 1 from t natural inner join u')->toString());
-        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u USING (a)', (new Semantics('mysql-5.6.51'))->diagnose('select 1 from t left outer join u using (a)')->toString());
+        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u USING (a)', (new Inspection('mysql-5.6.51'))->diagnose('select 1 from t left outer join u using (a)')->toString());
     }
 
     public function testAConditionOnANaturalJoinIsRejected(): void

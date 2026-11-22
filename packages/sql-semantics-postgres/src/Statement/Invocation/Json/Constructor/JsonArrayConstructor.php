@@ -28,7 +28,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * otherwise `json`; never NULL. The result column is named `json_array`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an array constructor
  *     $array = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonArrayConstructor([new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral())], \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling::Keep);
  *     [count($array->values), $array->nulls->value] // => [1, 'NULL']

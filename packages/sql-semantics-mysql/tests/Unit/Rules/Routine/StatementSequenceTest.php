@@ -12,10 +12,10 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use Tests\Support\Inspection;
 
 #[CoversClass(StatementSequence::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class StatementSequenceTest extends TestCase
 {
     public function testMembersKeepsProgramStatementsAndSqlStatementsInOrder(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $procedure = $semantics->inspect('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $select = $semantics->inspect('SELECT 1')->statement;
@@ -50,12 +50,12 @@ final class StatementSequenceTest extends TestCase
     {
         $this->expectExceptionMessage('A statement list holds statements.');
 
-        (new StatementSequence())->members(['first' => (new Semantics())->inspect('SELECT 1')->statement]);
+        (new StatementSequence())->members(['first' => (new Inspection())->inspect('SELECT 1')->statement]);
     }
 
     public function testMemberAcceptsAProgramStatementAndAnSqlStatement(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $procedure = $semantics->inspect('CREATE PROCEDURE p() BEGIN END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $procedure);
         $block = $procedure->body;
@@ -75,7 +75,7 @@ final class StatementSequenceTest extends TestCase
 
     public function testWriteEndsEveryStatementWithASemicolon(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $out = new Output(new Codec(GrammarRelease::MySql910));
         (new StatementSequence())->write($out, [$semantics->inspect('SELECT 1')->statement, $semantics->inspect('SET @a = 1')->statement]);
 

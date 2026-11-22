@@ -23,7 +23,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
@@ -33,6 +32,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use Tests\Support\Inspection;
 
 #[CoversClass(ColumnFacts::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class ColumnFactsTest extends TestCase
 {
     public function testOfAnswersTheSlotOfAResolvedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('SELECT b FROM t', [$t]);
         $resolution = $query->field(0)->resolution;
@@ -57,7 +57,7 @@ final class ColumnFactsTest extends TestCase
 
     public function testOfAnswersTheFieldOfAnAliasTarget(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('SELECT a AS q FROM t WHERE q = 1', [$t]);
 
@@ -74,7 +74,7 @@ final class ColumnFactsTest extends TestCase
 
     public function testOfDependsOnTheMissingInputsOfAConditionalColumn(): void
     {
-        $query = (new Semantics())->diagnose('SELECT a FROM t');
+        $query = (new Inspection())->diagnose('SELECT a FROM t');
         $resolution = $query->field(0)->resolution;
 
         self::assertInstanceOf(ConditionalColumn::class, $resolution);
@@ -87,7 +87,7 @@ final class ColumnFactsTest extends TestCase
 
     public function testOfIsInvalidForAProblemResolution(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $ambiguous = $semantics->diagnose('SELECT a FROM t, t AS t2', [$t])->field(0)->resolution;
         $missing = new MissingColumn(new Name('zz'));
@@ -105,7 +105,7 @@ final class ColumnFactsTest extends TestCase
 
     public function testDenotedLooksThroughGroupingsToTheNameUse(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('SELECT ((b)), ("a"), (zz), b COLLATE nocase, (1), ("zz"), (true) FROM t', [$t]);
 
@@ -123,7 +123,7 @@ final class ColumnFactsTest extends TestCase
 
     public function testDenotedAnswersTheOutcomeOfAnUngroupedNameUse(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
         $input = new TableInput(new QualifiedName(new Name('t')));

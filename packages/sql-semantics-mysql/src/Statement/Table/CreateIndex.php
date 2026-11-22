@@ -40,12 +40,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
  * not part of a declaration context: the statement provides no declaration.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html. Status: Implemented.
  *
- * @visibility public
- * @example Resolving the indexed table
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INT, b INT)');
- *     $index = $semantics->inspect('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->diagnostics] // => [true, []]
+ * @visibility SqlSemantics
  */
 final class CreateIndex implements Statement, Relation
 {

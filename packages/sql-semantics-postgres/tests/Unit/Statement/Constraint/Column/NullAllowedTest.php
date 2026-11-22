@@ -14,7 +14,7 @@ final class NullAllowedTest extends TestCase
 {
     public function testKindIsNull(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int NULL)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -29,7 +29,7 @@ final class NullAllowedTest extends TestCase
 
     public function testDeriveClauseConflictsWithNotNull(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int NULL NOT NULL)', []);
         self::assertSame([
           0 => 'conflicting NULL/NOT NULL declarations for column "a"',
@@ -38,7 +38,7 @@ final class NullAllowedTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int NULL)', []);
         self::assertSame('CREATE TABLE t (a INT NULL)', $statement->toString());
     }

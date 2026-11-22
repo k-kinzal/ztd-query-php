@@ -14,7 +14,7 @@ final class ColumnForeignOptionsTest extends TestCase
 {
     public function testDeriveClauseChecksTheColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE FOREIGN TABLE t (a int NOT NULL, b int, c text) SERVER x')->declarations());
         $statement = $semantics->diagnose('ALTER FOREIGN TABLE t ALTER zz OPTIONS (ADD x \'y\')', $context);
@@ -25,7 +25,7 @@ final class ColumnForeignOptionsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER FOREIGN TABLE f ALTER a OPTIONS (SET x \'y\', DROP z)', []);
         self::assertSame('ALTER FOREIGN TABLE f ALTER a OPTIONS (SET x \'y\', DROP z)', $statement->toString());
     }

@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
  * one.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling the star form
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments([]))->star() // => true
  */

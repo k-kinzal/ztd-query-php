@@ -14,12 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A shape is open when missing inputs prevent listing every position. The
  * known positions are then still exact, but more may exist.
  *
- * @visibility public
- * @example Reading a complete shape
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $operation = $semantics->inspect('SELECT * FROM t', [$table]);
- *     [$operation->shape()->complete(), count($operation->shape()->slots)] // => [true, 2]
+ * @visibility SqlSemantics
  */
 final class RowShape
 {

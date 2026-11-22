@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
  * Each case holds its keyword.
  * Source: https://dev.mysql.com/doc/refman/9.1/en/select.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a sampling method
  *     \SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli->value // => 'BERNOULLI'
  */

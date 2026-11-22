@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics;
  * Each case holds its keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/diagnostics-area.html#diagnostics-area-information-items.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of an item
  *     \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName::RowCount->value // => 'ROW_COUNT'
  */

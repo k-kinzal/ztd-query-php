@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\SemanticsIR;
+use Tests\Support\Inspection;
 
 #[CoversClass(Semantics::class)]
 #[Medium]
@@ -26,8 +27,7 @@ final class SemanticsTest extends TestCase
     public function testAnalyzeReturnsTheCompleteValueThroughTheCommonInterface(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
-        $context = $semantics->context([$table]);
+        $context = $semantics->context(['CREATE TABLE t (id INTEGER)']);
         $analyze = static fn (Analyzer $analyzer): SemanticsIR => $analyzer->analyze('SELECT id, t.id FROM t', $context);
         $query = $analyze($semantics);
 
@@ -53,7 +53,7 @@ final class SemanticsTest extends TestCase
 
     public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void
     {
-        $query = (new Semantics())->inspect('SELECT id FROM t');
+        $query = (new Inspection())->inspect('SELECT id FROM t');
 
         $type = $query->field(0)->type;
         self::assertInstanceOf(Dependent::class, $type);
@@ -71,10 +71,10 @@ final class SemanticsTest extends TestCase
     public function testThrowsAnExceptionWithTheSemanticDiagnostics(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
+        $context = $semantics->context(['CREATE TABLE t (id INTEGER)']);
 
         try {
-            $semantics->analyze('SELECT missing FROM t', [$table]);
+            $semantics->analyze('SELECT missing FROM t', $context);
             self::fail('Expected a semantic error.');
         } catch (AnalysisException $error) {
             self::assertInstanceOf(SemanticException::class, $error);
@@ -85,7 +85,7 @@ final class SemanticsTest extends TestCase
 
     public function testKeepsWarningsOnTheQuery(): void
     {
-        $query = (new Semantics())->inspect('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
+        $query = (new Inspection())->inspect('CREATE OPERATOR === (rightarg = int4, function = int4eq, colour = red)');
 
         self::assertSame('operator attribute "colour" not recognized', $query->facts->diagnostics[0]->message());
     }
@@ -102,7 +102,7 @@ final class SemanticsTest extends TestCase
     {
         $this->expectException(SemanticException::class);
 
-        (new Semantics())->analyzeAll('SELECT 1; SELECT id FROM t', []);
+        (new Semantics())->analyzeAll('SELECT 1; SELECT id FROM t', (new Semantics())->context([]));
     }
 
     public function testProfileIsFixedForAnAnalyzer(): void
@@ -114,7 +114,7 @@ final class SemanticsTest extends TestCase
 
     public function testContextPreparesDeclarationsAndChecksPreparedContexts(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $declaration = $semantics->inspect('CREATE TABLE t (id INTEGER)');
         $context = $semantics->context([$declaration]);
 
@@ -131,7 +131,7 @@ final class SemanticsTest extends TestCase
 
     public function testDiagnoseRetainsDiagnosticsForStatementValidation(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT * FROM t', []);
+        $operation = (new Inspection())->diagnose('SELECT * FROM t', []);
 
         self::assertSame('SELECT * FROM t', $operation->toString());
         self::assertNotEmpty($operation->facts->diagnostics);

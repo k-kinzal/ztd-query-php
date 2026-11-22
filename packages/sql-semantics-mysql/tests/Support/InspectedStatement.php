@@ -2,43 +2,28 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Model\Statement;
+namespace Tests\Support;
 
-use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
-use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\FieldLookup;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Fields;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
-use SqlSemantics\Platform\Sqlite\Model\Validation\Publication;
+use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\MySql\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\MySql\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\MySql\Model\Statement\Relation;
+use SqlSemantics\Platform\MySql\Model\Statement\Selection;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\FieldLookup;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\Fields;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\MySql\Model\Statement\Shape\UniqueField;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 
 /**
- * One analyzed statement: its structure, the facts derived against a fixed context, and its SQL.
- *
- * The constructor is the only way to obtain an operation and it is a checking
- * boundary. It audits the structure, derives every fact, renders the SQL, and
- * confirms that the rendered SQL has the same structure. Nothing is filled in
- * afterwards and nothing can be changed. A different statement is a new
- * operation built from explicit inputs or from newly analyzed SQL; it has no
- * guaranteed relation to this one.
- *
- * @visibility public
- * @example Analyzing against the declaration another statement provides
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $bar = $semantics->inspect('CREATE TABLE bar (foo INTEGER, baz TEXT)');
- *     $query = $semantics->inspect('SELECT foo FROM bar', [$bar]);
- *     [$query->field('foo')->column() === $bar->declarations()[0]->columns[0], $query->toString()] // => [true, 'SELECT foo FROM bar']
- * @example Building a new root from explicit structure
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $query = $semantics->inspect('SELECT foo FROM bar WHERE foo > 1');
- *     $other = new \SqlSemantics\Platform\Sqlite\Model\Statement\Operation($query->context, $semantics->inspect('SELECT baz FROM bar')->statement);
- *     $other->toString() // => 'SELECT baz FROM bar'
+ * Test fixture for grammar, facts and parser round-trip checks.
  */
-final class Operation implements \SqlSemantics\Query
+final class InspectedStatement
 {
     use Snapshot;
 
@@ -62,9 +47,14 @@ final class Operation implements \SqlSemantics\Query
      */
     public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement)
     {
-        [$facts, $sql] = (new Publication())->establish($context, $statement);
+        [$facts, $sql] = (new RenderAudit())->establish($context, $statement);
         $this->facts = $facts;
         $this->sql = $sql;
+    }
+
+    public function binding(): \SqlSemantics\Platform\MySql\Model\Facade\BoundStatement
+    {
+        return new \SqlSemantics\Platform\MySql\Model\Facade\BoundStatement($this->context, $this->statement);
     }
 
     /**
@@ -115,7 +105,7 @@ final class Operation implements \SqlSemantics\Query
      * This is a convenience for the unique case; use lookupField() to tell
      * absent, ambiguous and dependent lookups apart.
      *
-     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When no field or more than one field answers the key
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When no field or more than one field answers the key
      */
     public function field(string|int $key): Field
     {
@@ -134,7 +124,7 @@ final class Operation implements \SqlSemantics\Query
     /**
      * Looks an output field up by name, distinguishing unique, absent, ambiguous and dependent results.
      *
-     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the statement returns no rows
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the statement returns no rows
      */
     public function lookupField(string $name): FieldLookup
     {
@@ -154,7 +144,7 @@ final class Operation implements \SqlSemantics\Query
     /**
      * Answers the input when it is exactly one plainly named relation.
      *
-     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the input is a join, a derived relation, several relations, or absent
+     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the input is a join, a derived relation, several relations, or absent
      */
     public function singleNamedInput(): NamedRelation
     {

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
  * The server records the size but does not enforce it.
  * Source: https://www.postgresql.org/docs/17/arrays.html#ARRAYS-DECLARATION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a declared size
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('3')))->size->digits // => '3'
  */

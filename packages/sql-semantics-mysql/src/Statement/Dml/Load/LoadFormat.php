@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Load;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html, https://dev.mysql.com/doc/refman/8.4/en/load-xml.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a case
  *     \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Xml->value // => 'XML'
  */

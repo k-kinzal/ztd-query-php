@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\MySql\Model\Statement\Operation;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(UserVariable::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class UserVariableTest extends TestCase
 {
     public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
     {
-        $operation = (new Semantics())->inspect('SELECT @total');
+        $operation = (new Inspection())->inspect('SELECT @total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -38,7 +38,7 @@ final class UserVariableTest extends TestCase
 
     public function testDeriveScalarKeepsTheNameAsWritten(): void
     {
-        $operation = (new Semantics())->inspect('SELECT @Total');
+        $operation = (new Inspection())->inspect('SELECT @Total');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -52,7 +52,7 @@ final class UserVariableTest extends TestCase
 
     public function testRenderWritesTheAtSignGluedToTheName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('SELECT @Total', $semantics->inspect('select @Total')->toString());
         self::assertSame('SELECT a FROM t WHERE a = @total', $semantics->inspect('SELECT a FROM t WHERE a = @total')->toString());
@@ -60,7 +60,7 @@ final class UserVariableTest extends TestCase
 
     public function testRenderQuotesANameThatNeedsIt(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('SELECT @`my var` AS v', $semantics->inspect("SELECT @'my var' AS v")->toString());
         self::assertSame('SELECT @x AS v', $semantics->inspect('SELECT @`x` AS v')->toString());
@@ -69,9 +69,9 @@ final class UserVariableTest extends TestCase
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $variable = new UserVariable(new Name('my var'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = new InspectedStatement($semantics->context(), new Select([], [new SelectExpression($variable)]));
 
         self::assertSame('SELECT @`my var`', $operation->toString());
         self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);

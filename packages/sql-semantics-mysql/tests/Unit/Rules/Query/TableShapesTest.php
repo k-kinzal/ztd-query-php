@@ -17,11 +17,11 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]
@@ -29,7 +29,7 @@ final class TableShapesTest extends TestCase
 {
     public function testNamedPrefersACommonTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -45,7 +45,7 @@ final class TableShapesTest extends TestCase
 
     public function testImplicitFindsInvisibleColumnsByNameOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $hidden = new Column(new Name('h'), new Integral(IntegralKind::Int), Nullability::Nullable);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)], [new ImplicitColumn([new Name('h')], $hidden)]);
         $named = $semantics->inspect('SELECT h FROM t', [$table]);
@@ -61,7 +61,7 @@ final class TableShapesTest extends TestCase
 
     public function testExplicitAnswersEveryColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -79,7 +79,7 @@ final class TableShapesTest extends TestCase
 
     public function testExplicitKeepsTheInputsAnUnnamedColumnDependsOn(): void
     {
-        $operation = (new Semantics())->inspect("WITH c AS (SELECT 'é') TABLE c");
+        $operation = (new Inspection())->inspect("WITH c AS (SELECT 'é') TABLE c");
 
         self::assertSame(1, $operation->fields()?->count());
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);

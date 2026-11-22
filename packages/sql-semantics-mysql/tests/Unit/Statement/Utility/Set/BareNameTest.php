@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
+use Tests\Support\Inspection;
 
 #[CoversClass(BareName::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class BareNameTest extends TestCase
 {
     public function testDeriveScalarIsTextForASystemVariable(): void
     {
-        $set = (new Semantics())->diagnose('SET @@sql_mode = a.b');
+        $set = (new Inspection())->diagnose('SET @@sql_mode = a.b');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         $item = $set->statement->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment::class, $item);
@@ -32,7 +32,7 @@ final class BareNameTest extends TestCase
 
     public function testDeriveScalarDependsOnTheProgramOtherwise(): void
     {
-        $set = (new Semantics())->diagnose('SET x = y');
+        $set = (new Inspection())->diagnose('SET x = y');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
         $item = $set->statement->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment::class, $item);
@@ -45,12 +45,12 @@ final class BareNameTest extends TestCase
 
     public function testRenderWritesEveryNamePart(): void
     {
-        self::assertSame('SET @@x = a.b.c', (new Semantics('mysql-5.7.44'))->diagnose('set @@x = a.b.c')->toString());
+        self::assertSame('SET @@x = a.b.c', (new Inspection('mysql-5.7.44'))->diagnose('set @@x = a.b.c')->toString());
     }
 
     public function testDeriveScalarResolvesARowOfATriggerAsAColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (b INT)');
         $known = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = new.b', [$table]);
         $missing = $semantics->diagnose('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = NEW.zz', [$table]);

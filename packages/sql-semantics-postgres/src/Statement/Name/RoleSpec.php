@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * the name of a named role.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html, https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Designating the current user
  *     $role = new \SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec(\SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpecKind::CurrentUser);
  *     $role->name // => null

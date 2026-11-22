@@ -9,11 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(JoinUsing::class)]
 #[Medium]
@@ -28,9 +28,9 @@ final class JoinUsingTest extends TestCase
 {
     public function testRenderWritesTheColumnsInParentheses(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $step = new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a'), new Name('b')]));
-        $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step])));
         $query = $semantics->diagnose('select * from t join u using(a,b)');
 
         self::assertSame('SELECT * FROM t JOIN u USING (a, b)', $built->toString());
@@ -43,7 +43,7 @@ final class JoinUsingTest extends TestCase
 
     public function testColumnsResolveToTheLeftSideUnlessQualified(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->diagnose('SELECT a, u.a FROM t LEFT JOIN u USING (a)', [$t, $u]);
@@ -65,7 +65,7 @@ final class JoinUsingTest extends TestCase
 
     public function testColumnsMustBePresentOnBothSidesWhenTheyAreKnown(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $closed = $semantics->diagnose('SELECT * FROM t JOIN u USING (zz)', [$t, $u]);

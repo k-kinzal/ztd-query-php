@@ -105,6 +105,11 @@ jobs:
           $dialect = getenv('SQL_SEMANTICS_DIALECT');
           $class = 'SqlSemantics\\Platform\\' . $dialect . '\\Semantics';
           $semantics = new $class();
+          if (method_exists($semantics, 'inspect') || method_exists($semantics, 'diagnose')
+              || class_exists('SqlSemantics\\Platform\\' . $dialect . '\\Model\\Statement\\Operation')
+              || interface_exists('SqlSemantics\\Query') || class_exists('Tests\\Support\\Inspection')) {
+              throw new RuntimeException('The runtime installation exposes a non-IR analysis route.');
+          }
           $query = $semantics->analyze('SELECT 42 AS answer');
           $expected = match ($dialect) {
               'MySql' => 'SELECT 42 AS `answer`',

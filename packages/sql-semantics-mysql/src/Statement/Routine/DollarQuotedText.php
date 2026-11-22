@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * delimiter.
  * Source: https://dev.mysql.com/doc/refman/9.1/en/create-procedure.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding dollar-quoted code
  *     $quoted = new \SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText('return 1', 'js');
  *     [$quoted->tag, $quoted->text] // => ['js', 'return 1']

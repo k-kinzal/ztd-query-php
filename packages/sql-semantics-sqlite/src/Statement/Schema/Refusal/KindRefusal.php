@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
  * https://sqlite.org/lang_altertable.html, https://sqlite.org/lang_createindex.html,
  * https://sqlite.org/lang_createtrigger.html#instead_of_triggers, https://sqlite.org/lang_upsert.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the relation kind a request needs
  *     \SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal::DropView->required() // => \SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind::View
  */

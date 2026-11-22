@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * rename runs, as the relation fact of this node.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Moving a table to another database
  *     $renaming = new \SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('archive')));
  *     $renaming->to->schema?->value // => 'archive'

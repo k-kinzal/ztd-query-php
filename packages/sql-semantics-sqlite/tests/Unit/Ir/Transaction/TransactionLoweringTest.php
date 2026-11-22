@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionCommand;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(TransactionLowering::class)]
 #[Small]
@@ -19,7 +20,7 @@ final class TransactionLoweringTest extends TestCase
 {
     public function testLowerUsesTheEffectiveBeginMode(): void
     {
-        $operation = (new Semantics())->inspect('BEGIN TRANSACTION ignored');
+        $operation = (new Inspection())->inspect('BEGIN TRANSACTION ignored');
 
         self::assertEquals(
             new Transaction(TransactionCommand::BeginDeferred),

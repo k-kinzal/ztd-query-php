@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Statement;
  * the SET or RESET request of the utility family, which is derived as the
  * request it is. Source: https://www.postgresql.org/docs/17/sql-alterdatabase.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling that the request is a statement of its own
  *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\AlterDatabaseSetting::class, \SqlSemantics\Platform\PostgreSql\Model\Statement\Statement::class) // => true
  */

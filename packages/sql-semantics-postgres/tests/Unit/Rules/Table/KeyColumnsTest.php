@@ -14,7 +14,7 @@ final class KeyColumnsTest extends TestCase
 {
     public function testPositionFindsTheSlotOfAName(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('SELECT 1', $context);
@@ -24,7 +24,7 @@ final class KeyColumnsTest extends TestCase
 
     public function testReportReportsANameAShapeLacks(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (a int, UNIQUE (a, zz))', $context);

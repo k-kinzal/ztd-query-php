@@ -8,9 +8,6 @@ namespace SqlSemantics\Platform\PostgreSql;
  * Selects PostgreSQL for semantic analysis.
  *
  * @visibility public
- * @example Analyzing PostgreSQL SQL
- *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $semantics->inspect('SELECT 42')->toString() // => 'SELECT 42'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect
 {

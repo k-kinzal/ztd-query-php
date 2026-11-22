@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
  * attribute is an error.
  * Source: https://www.postgresql.org/docs/17/sql-createcollation.html, `DefineCollation` in `src/backend/commands/collationcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how the command reads an attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\CollationAttribute::from('provider')->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Provider
  */

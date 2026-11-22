@@ -15,10 +15,15 @@ namespace SqlSemantics;
  *     $profile = static fn (\SqlSemantics\SemanticsIR $statement): string => $statement->profileId();
  *     is_callable($profile) // => true
  */
-interface SemanticsIR extends Query
+interface SemanticsIR
 {
     /**
      * Identifies the dialect, release and language settings of this value.
      */
     public function profileId(): string;
+
+    /**
+     * Emits SQL with the meaning represented by this value.
+     */
+    public function toString(): string;
 }

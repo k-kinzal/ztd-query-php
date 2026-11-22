@@ -14,7 +14,7 @@ final class ColumnStatisticsTest extends TestCase
 {
     public function testDeriveClauseChecksANamedColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ALTER zz SET STATISTICS 10', $context);
@@ -25,7 +25,7 @@ final class ColumnStatisticsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('ALTER INDEX i ALTER COLUMN 2 SET STATISTICS DEFAULT', []);
         self::assertSame('ALTER INDEX i ALTER 2 SET STATISTICS DEFAULT', $statement->toString());
     }

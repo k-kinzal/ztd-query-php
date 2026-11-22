@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterDropColumn::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class AlterDropColumnTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableAndProvidesNoDeclaration(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a, b)');
         $operation = $semantics->diagnose('ALTER TABLE t DROP COLUMN B', [$table]);
 
@@ -31,7 +31,7 @@ final class AlterDropColumnTest extends TestCase
 
     public function testDeriveStatementReportsAColumnTheTableDoesNotHave(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a, b)');
 
         self::assertInstanceOf(UnknownColumn::class, $semantics->diagnose('ALTER TABLE t DROP c', [$table])->facts->diagnostics[0]);
@@ -39,7 +39,7 @@ final class AlterDropColumnTest extends TestCase
 
     public function testDeriveStatementReportsTheRemovalOfTheOnlyColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a)');
 
         self::assertInstanceOf(AlterationRefused::class, $semantics->diagnose('ALTER TABLE t DROP a', [$table])->facts->diagnostics[0]);
@@ -47,12 +47,12 @@ final class AlterDropColumnTest extends TestCase
 
     public function testDeriveStatementReportsNothingAboutColumnsOfAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics())->diagnose('ALTER TABLE t DROP COLUMN c')->facts->diagnostics);
+        self::assertSame([], (new Inspection())->diagnose('ALTER TABLE t DROP COLUMN c')->facts->diagnostics);
     }
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->diagnose('alter table main.t drop column b');
+        $operation = (new Inspection())->diagnose('alter table main.t drop column b');
 
         self::assertInstanceOf(AlterDropColumn::class, $operation->statement);
         self::assertSame('ALTER TABLE main.t DROP b', $operation->toString());

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\Inspection;
 
 #[CoversClass(Update::class)]
 #[Medium]
@@ -28,7 +28,7 @@ final class UpdateTest extends TestCase
 {
     public function testInputAnswersTheFromRelation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $joined = $semantics->diagnose('UPDATE t SET a = u.a FROM u');
         $plain = $semantics->diagnose('UPDATE t SET a = 1');
 
@@ -42,7 +42,7 @@ final class UpdateTest extends TestCase
 
     public function testDeriveWithinSeesTheTargetAndTheFromTablesInAssignmentsAndWhere(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->diagnose('UPDATE t SET a = u.a FROM u WHERE u.c = t.b', [$t, $u]);
@@ -62,7 +62,7 @@ final class UpdateTest extends TestCase
 
     public function testDeriveWithinLetsReturningSeeTheTargetOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $star = $semantics->diagnose('UPDATE t SET a = u.a FROM u WHERE u.a = t.a RETURNING *', [$t, $u]);
@@ -76,7 +76,7 @@ final class UpdateTest extends TestCase
 
     public function testDeriveStatementReportsAnAssignmentToAColumnTheTableLacks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->diagnose('UPDATE t SET zz = 1', [$t]);
 
@@ -87,7 +87,7 @@ final class UpdateTest extends TestCase
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $statement = $semantics->diagnose('UPDATE t SET a = 1 WHERE b IS NULL', [$t])->statement;
         $derivation = new Derivation($semantics->context([$t]));
@@ -100,7 +100,7 @@ final class UpdateTest extends TestCase
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
-        $query = (new Semantics())->diagnose('UPDATE t SET a = RAISE(IGNORE)');
+        $query = (new Inspection())->diagnose('UPDATE t SET a = RAISE(IGNORE)');
 
         self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
         self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
@@ -108,7 +108,7 @@ final class UpdateTest extends TestCase
 
     public function testRenderWritesEveryClauseInGrammarOrder(): void
     {
-        $query = (new Semantics())->diagnose("with w as (select 1 as q) update or fail main.t indexed by i set a = 1, (b, a) = ('x', 2) from u, w where u.a = t.a returning id");
+        $query = (new Inspection())->diagnose("with w as (select 1 as q) update or fail main.t indexed by i set a = 1, (b, a) = ('x', 2) from u, w where u.a = t.a returning id");
 
         self::assertSame("WITH w AS (SELECT 1 AS q) UPDATE OR FAIL main.t INDEXED BY i SET a = 1, (b, a) = ('x', 2) FROM u, w WHERE u.a = t.a RETURNING id", $query->toString());
     }

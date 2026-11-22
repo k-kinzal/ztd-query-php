@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * STORAGE and the equals sign are optional and not written. The server resolves the name against the engines it has.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('InnoDB')))->engine->value // => 'InnoDB'
  */

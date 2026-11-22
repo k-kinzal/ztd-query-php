@@ -12,10 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
  * table are not part of a declaration context.
  * Source: https://sqlite.org/lang_altertable.html.
  *
- * @visibility public
- * @example Naming the obstacle of adding a primary key column
- *     $alter = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('ALTER TABLE t ADD COLUMN id INTEGER PRIMARY KEY');
- *     $alter->facts->diagnostics[0]->obstacle // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle::PrimaryKeyColumn
+ * @visibility SqlSemantics
  */
 enum AlterationObstacle: string
 {

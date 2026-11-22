@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\TypeDescriptor;
  * on session settings, such as REAL under REAL_AS_FLOAT, is not decided here.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/data-types.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming a type by its base keywords
  *     (new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, '11'))->name() // => 'INT'
  */

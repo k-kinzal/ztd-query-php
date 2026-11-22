@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterationProblems::class)]
 #[Medium]
@@ -31,7 +31,7 @@ final class AlterationProblemsTest extends TestCase
 {
     public function testOccurrencesCountsTheColumnsWithANameWithoutRegardToCase(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
 
@@ -41,7 +41,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testOccurrencesIsNullWhileTheColumnsAreNotKnown(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $open = new Derivation($semantics->context());
         $missing = new Derivation($semantics->context([]));
 
@@ -51,7 +51,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testStrictIsReadFromTheDeclaredColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $strict = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a INT) STRICT')]));
         $plain = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a INT)')]));
 
@@ -61,7 +61,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testSlotHasTheRecordedTypeAndTheNullFactOfTheNewColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a)')]));
         $statement = $semantics->diagnose('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
 
@@ -75,7 +75,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testAddedReportsEveryObstacleOfTheNewColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT) STRICT');
         $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->diagnose($sql, [$table])->facts->diagnostics);
 
@@ -101,7 +101,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testDroppedReportsAnUnknownColumnAndTheOnlyColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $one = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a)')]));
         $fact = (new TableShapes())->target($one, new QualifiedName(new Name('t')));
         (new AlterationProblems())->dropped($fact, new Name('zz'), $one);
@@ -115,7 +115,7 @@ final class AlterationProblemsTest extends TestCase
 
     public function testRenamedReportsAnUnknownOldNameAndATakenNewName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context([$semantics->diagnose('CREATE TABLE t (a, b)')]));
         $fact = (new TableShapes())->target($derivation, new QualifiedName(new Name('t')));
         (new AlterationProblems())->renamed($fact, new Name('zz'), new Name('c'), $derivation);

@@ -14,7 +14,7 @@ final class ColumnCompressionTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('CREATE TABLE t (a text COMPRESSION pglz)', []);
         self::assertSame('CREATE TABLE t (a text COMPRESSION pglz)', $statement->toString());
     }

@@ -23,11 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
  * Source: https://sqlite.org/lang_createtable.html#check_constraints.
  * Status: Implemented.
  *
- * @visibility public
- * @example Resolving a column inside a CHECK constraint to the column being defined
- *     $create = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('CREATE TABLE t (a INT CHECK (a > 0))');
- *     $check = $create->statement->columns[0]->constraints[0];
- *     $create->facts->scalar($check->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @visibility SqlSemantics
  */
 final class ColumnCheck implements ColumnConstraint
 {

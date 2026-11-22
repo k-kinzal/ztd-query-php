@@ -25,10 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC,
  * `makeFloat` and `NumericOnly` in `src/backend/parser/gram.y` of PostgreSQL 17.
  *
- * @visibility public
- * @example Reading the text of a numeric constant
- *     $query = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('SELECT 1_0.50e-3');
- *     $query->statement->targets[0]->expression->value->text // => '1_0.50e-3'
+ * @visibility SqlSemantics
  * @example Rejecting an integer the scanner reads as an integer constant
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('100') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction
  */

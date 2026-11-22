@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createforeigntable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a foreign-data option
  *     $option = new \SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('host'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('db1'));
  *     [$option->name->value, $option->value->value] // => ['host', 'db1']

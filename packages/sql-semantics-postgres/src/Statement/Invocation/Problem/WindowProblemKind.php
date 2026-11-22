@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS,
  * `transformWindowDefinitions` in `src/backend/parser/parse_clause.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a GROUPS frame without an ordering
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblemKind::GroupsWithoutOrder->value // => 'GROUPS mode requires an ORDER BY clause'
  */

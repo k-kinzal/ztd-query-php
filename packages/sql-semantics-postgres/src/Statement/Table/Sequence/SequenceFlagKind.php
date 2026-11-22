@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createsequence.html, https://www.postgresql.org/docs/17/sql-altersequence.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the spelling of a flag
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::NoMaxValue->value // => 'NO MAXVALUE'
  */

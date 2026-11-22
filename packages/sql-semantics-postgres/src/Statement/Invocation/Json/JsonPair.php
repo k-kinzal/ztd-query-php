@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * is a primary expression; a key that would need parentheses is rejected.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a key and value pair
  *     $pair = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()));
  *     $pair->spelling->value // => ':'

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  * The number is kept as written; the server accepts only `2` and `3`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-multifactor.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the second factor
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\User\FactorStep(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2')))->factor->text // => '2'
  */

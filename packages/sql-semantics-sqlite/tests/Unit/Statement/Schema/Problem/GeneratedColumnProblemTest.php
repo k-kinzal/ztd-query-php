@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
+use Tests\Support\Inspection;
 
 #[CoversClass(GeneratedColumnProblem::class)]
 #[Medium]
@@ -26,7 +26,7 @@ final class GeneratedColumnProblemTest extends TestCase
 
     public function testMessageIsReportedForEachWrongUseOfAGeneratedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $flaw = static fn (string $sql): array => array_map(static fn (object $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->diagnose($sql, [])->facts->diagnostics);
 
         self::assertSame([['WithDefault', 'b']], $flaw('CREATE TABLE t (a, b DEFAULT 1 AS (a))'));

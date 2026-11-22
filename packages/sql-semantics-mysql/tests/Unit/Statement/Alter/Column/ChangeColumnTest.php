@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Alter\Column;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(ChangeColumn::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class ChangeColumnTest extends TestCase
 {
     public function testChangedAnswersTheRedefinedColumn(): void
     {
-        $alter = (new Semantics())->diagnose('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
+        $alter = (new Inspection())->diagnose('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
 
         self::assertInstanceOf(AlterTable::class, $alter->statement);
         [$modify, $change] = $alter->statement->commands;
@@ -28,7 +28,7 @@ final class ChangeColumnTest extends TestCase
 
     public function testDeriveCommandDerivesTheDefinition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->diagnose('ALTER TABLE t MODIFY a INT DEFAULT (x)', [$table]);
 
@@ -37,6 +37,6 @@ final class ChangeColumnTest extends TestCase
 
     public function testRenderWritesChangeOrModify(): void
     {
-        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics())->diagnose('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
+        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Inspection())->diagnose('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
     }
 }

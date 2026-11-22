@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type\Designation;
  * different type in PostgreSQL.
  * Source: https://www.postgresql.org/docs/17/datatype-character.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the national form
  *     \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterKeyword::NationalCharacter->value // => 'NATIONAL CHARACTER'
  */

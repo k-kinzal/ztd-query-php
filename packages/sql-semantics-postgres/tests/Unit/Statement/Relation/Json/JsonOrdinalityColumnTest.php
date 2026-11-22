@@ -14,7 +14,7 @@ final class JsonOrdinalityColumnTest extends TestCase
 {
     public function testRenderWritesForOrdinality(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $query = $semantics->inspect("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (n FOR ORDINALITY))");
         self::assertSame("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (n FOR ORDINALITY))", $query->toString());
     }

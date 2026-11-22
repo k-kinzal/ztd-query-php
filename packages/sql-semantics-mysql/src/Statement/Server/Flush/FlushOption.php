@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Flush;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html,
  * https://dev.mysql.com/doc/refman/5.7/en/flush.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::BinaryLogs->value // => 'BINARY LOGS'
  */

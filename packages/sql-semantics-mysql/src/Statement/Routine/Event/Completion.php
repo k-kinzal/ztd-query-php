@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Event;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Listing the cases
  *     count(\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion::cases()) // => 2
  */

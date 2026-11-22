@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Operation;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
@@ -22,9 +22,9 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(Operation $operation): Select
+    public function lower(BoundStatement $operation): Select
     {
-        $profile = $operation->profile();
+        $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
@@ -38,10 +38,12 @@ final class SelectLowering
         $expressions = new ExpressionLowering();
         $searchPath = $operation->context->searchPath;
         $operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;
+        $fields = $operation->facts->output?->fields();
+        Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->targets as $index => $column) {
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $operation->field($index)->name;
+            $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding, $operators === 'pg_catalog'), new Identifier($name->value));
         }

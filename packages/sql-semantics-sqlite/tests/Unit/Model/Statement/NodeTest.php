@@ -13,8 +13,8 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Piece;
 use SqlSemantics\Platform\Sqlite\Model\Rendering\PieceKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
 use SqlSemantics\Platform\Sqlite\Platform;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use Tests\Support\Inspection;
 
 #[CoversClass(Node::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class NodeTest extends TestCase
 {
     public function testRenderWritesTypedPiecesOnly(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $output = new Output(Platform::shared()->codec($semantics->profile()));
 
         $semantics->inspect("select a, 'x' from t")->statement->render($output);
@@ -33,7 +33,7 @@ final class NodeTest extends TestCase
 
     public function testRenderOfAChildIsReachedThroughTheOutput(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $output = new Output(Platform::shared()->codec($semantics->profile()));
 
         $statement = $semantics->inspect('SELECT a FROM t WHERE a > 1')->statement;

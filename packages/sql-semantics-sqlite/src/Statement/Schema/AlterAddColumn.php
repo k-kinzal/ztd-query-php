@@ -39,12 +39,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Source: https://sqlite.org/lang_altertable.html#alter_table_add_column.
  * Status: Implemented.
  *
- * @visibility public
- * @example Deriving the shape the new column definition sees
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
- *     $alter = $semantics->inspect('ALTER TABLE t ADD COLUMN b TEXT CHECK (b <> a)', [$table]);
- *     [count($alter->facts->relation($alter->statement)->shape->slots), $alter->toString()] // => [2, 'ALTER TABLE t ADD b TEXT CHECK (b <> a)']
+ * @visibility SqlSemantics
  */
 final class AlterAddColumn implements Statement, Relation
 {

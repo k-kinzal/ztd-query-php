@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
  * Mirrors `AT_DropOids`, `AT_DropCluster`, `AT_SetLogged`, `AT_SetUnLogged`, `AT_DropOf`, the row security actions and the trigger actions on all or all user triggers.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a relation action
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind::NotOf->keywords() // => ['NOT', 'OF']
  */

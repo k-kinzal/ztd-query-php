@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
  * kept as written; the keyword DEFAULT is the absent name.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Requesting an in-place change
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('INPLACE'));
  *     $option->algorithm?->value // => 'INPLACE'

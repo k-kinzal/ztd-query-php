@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The server rejects the statement with ER_NONUNIQ_TABLE.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'))))->message() // => 'Table t is named more than once.'
  */

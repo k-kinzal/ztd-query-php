@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\AmbiguousFields;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\FieldLookup;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(FieldLookup::class)]
 #[Medium]
@@ -20,7 +20,7 @@ final class FieldLookupTest extends TestCase
 {
     public function testTheFourOutcomesAreTheOnlyLookupResults(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $complete = $semantics->inspect('SELECT 1 AS a, 2 AS b, 3 AS b');
 
         self::assertInstanceOf(UniqueField::class, $complete->lookupField('a'));

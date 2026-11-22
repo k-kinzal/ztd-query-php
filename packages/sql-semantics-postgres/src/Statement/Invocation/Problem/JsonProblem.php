@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * An SQL/JSON expression the server rejects.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing an invalid ON ERROR behavior
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblem(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKind::InvalidBehavior, ['ON ERROR']))->message() // => 'invalid ON ERROR behavior'
  */

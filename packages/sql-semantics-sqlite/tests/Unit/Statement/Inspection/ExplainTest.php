@@ -7,15 +7,15 @@ namespace Tests\Unit\Statement\Inspection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(Explain::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class ExplainTest extends TestCase
 {
     public function testDeriveStatementReturnsTheRowsOfTheReportAndNotThoseOfTheQuery(): void
     {
-        $operation = (new Semantics())->diagnose('EXPLAIN SELECT 1 AS one');
+        $operation = (new Inspection())->diagnose('EXPLAIN SELECT 1 AS one');
 
         self::assertCount(8, $operation->fields() ?? []);
         self::assertSame('opcode', $operation->field(1)->name?->value);
@@ -31,7 +31,7 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementDerivesTheWrappedStatement(): void
     {
-        $operation = (new Semantics())->diagnose('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
+        $operation = (new Inspection())->diagnose('EXPLAIN QUERY PLAN SELECT a FROM missing', []);
 
         self::assertCount(4, $operation->fields() ?? []);
         self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
@@ -39,14 +39,14 @@ final class ExplainTest extends TestCase
 
     public function testDeriveStatementReportsOnAStatementThatReturnsNoRows(): void
     {
-        $operation = (new Semantics())->diagnose('EXPLAIN BEGIN');
+        $operation = (new Inspection())->diagnose('EXPLAIN BEGIN');
 
         self::assertCount(8, $operation->fields() ?? []);
     }
 
     public function testDeriveStatementDiscardsTheRowsAndTheDeclarationOfTheInspectedStatement(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $returning = $semantics->diagnose('EXPLAIN INSERT INTO t (a) VALUES (1) RETURNING a, b', [$table]);
         $create = $semantics->diagnose('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
@@ -73,7 +73,7 @@ final class ExplainTest extends TestCase
 
     public function testRenderWritesThePrefixOfEachMode(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('EXPLAIN SELECT 1', $semantics->diagnose('explain select 1')->toString());
         self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $semantics->diagnose('explain query plan select 1')->toString());
@@ -81,7 +81,7 @@ final class ExplainTest extends TestCase
 
     public function testRenderWritesANewlyBuiltRequest(): void
     {
-        $operation = new Operation((new Semantics())->context(), new Explain(ExplainMode::QueryPlan, new Begin()));
+        $operation = new InspectedStatement((new Inspection())->context(), new Explain(ExplainMode::QueryPlan, new Begin()));
 
         self::assertSame('EXPLAIN QUERY PLAN BEGIN', $operation->toString());
     }

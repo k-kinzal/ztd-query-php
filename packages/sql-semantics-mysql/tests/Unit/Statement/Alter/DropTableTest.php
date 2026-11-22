@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
+use Tests\Support\Inspection;
 
 #[CoversClass(DropTable::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class DropTableTest extends TestCase
 {
     public function testDeriveStatementResolvesEveryTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $drop = $semantics->diagnose('DROP TABLE t, u, t', [$table]);
 
@@ -31,12 +31,12 @@ final class DropTableTest extends TestCase
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Semantics())->diagnose('drop temporary tables if exists t restrict')->toString());
+        self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Inspection())->diagnose('drop temporary tables if exists t restrict')->toString());
     }
 
     public function testDeriveStatementRefusesAViewWithoutIfExists(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 

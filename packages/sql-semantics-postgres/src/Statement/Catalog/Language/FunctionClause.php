@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
  * none. Source: https://www.postgresql.org/docs/17/sql-createforeigndatawrapper.html,
  * https://www.postgresql.org/docs/17/sql-alterforeigndatawrapper.html, https://www.postgresql.org/docs/17/sql-createlanguage.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Stating that there is no validator
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionRole::Validator))->function // => null
  */

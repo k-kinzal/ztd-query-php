@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Type\Kind;
  * select list expression after.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-type-syntax.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named->value // => 'CHARSET'
  */

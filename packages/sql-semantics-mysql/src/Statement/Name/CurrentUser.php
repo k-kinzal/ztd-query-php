@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_current-user.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Rendering the current user
  *     $out = new \SqlSemantics\Platform\MySql\Model\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql847));
  *     (new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())->render($out);

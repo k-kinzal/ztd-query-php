@@ -32,7 +32,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * identifier there.
  * Source: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the field of an extraction
  *     $extract = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Extract(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('epoch'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     [$extract->fieldName(), $extract->outputName()->value] // => ['epoch', 'extract']

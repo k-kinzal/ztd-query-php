@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Group;
  * Each case holds the keyword it is written with.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-group-replication.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of an option
  *     \SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::DefaultAuth->value // => 'DEFAULT_AUTH'
  */

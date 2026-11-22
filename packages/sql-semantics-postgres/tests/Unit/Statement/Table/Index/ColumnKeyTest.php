@@ -14,7 +14,7 @@ final class ColumnKeyTest extends TestCase
 {
     public function testDeriveScalarResolvesTheColumn(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE INDEX ON t (b)', $context);
@@ -29,7 +29,7 @@ final class ColumnKeyTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE INDEX ON t ("A b")', []);
         self::assertSame('CREATE INDEX ON t ("A b")', $statement->toString());
     }

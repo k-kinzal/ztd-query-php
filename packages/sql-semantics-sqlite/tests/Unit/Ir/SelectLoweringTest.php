@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
-use SqlSemantics\Platform\Sqlite\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(SelectLowering::class)]
 #[Small]
@@ -18,9 +18,9 @@ final class SelectLoweringTest extends TestCase
 {
     public function testLowerSharesTheResolvedSlot(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE accounts (Id INTEGER, unused INTEGER)');
-        $value = (new SelectLowering())->lower($semantics->inspect('SELECT id, accounts.id FROM accounts', [$table]));
+        $value = (new SelectLowering())->lower($semantics->inspect('SELECT id, accounts.id FROM accounts', [$table])->binding());
         $unqualified = $value->columns[0]->expression;
         $qualified = $value->columns[1]->expression;
 
@@ -37,6 +37,6 @@ final class SelectLoweringTest extends TestCase
     {
         $this->expectExceptionMessage('resolved, complete base table');
 
-        (new SelectLowering())->lower((new Semantics())->inspect('SELECT id FROM accounts'));
+        (new SelectLowering())->lower((new Inspection())->inspect('SELECT id FROM accounts')->binding());
     }
 }

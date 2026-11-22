@@ -13,13 +13,13 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(DefaultRequest::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class DefaultRequestTest extends TestCase
 {
     public function testDeriveScalarTakesTheAssignedColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->diagnose('INSERT INTO t (b, a) VALUES (DEFAULT, DEFAULT)', [$t]);
         self::assertInstanceOf(InsertRows::class, $operation->statement);
@@ -40,7 +40,7 @@ final class DefaultRequestTest extends TestCase
 
     public function testDeriveScalarReportsDefaultOutsideAnAssignment(): void
     {
-        $operation = (new Semantics())->diagnose('VALUES ROW(DEFAULT)');
+        $operation = (new Inspection())->diagnose('VALUES ROW(DEFAULT)');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(WriteMisuse::class, $operation->facts->diagnostics[0]);
@@ -49,6 +49,6 @@ final class DefaultRequestTest extends TestCase
 
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('UPDATE t SET a = DEFAULT', (new Semantics())->diagnose('update t set a = default')->toString());
+        self::assertSame('UPDATE t SET a = DEFAULT', (new Inspection())->diagnose('update t set a = default')->toString());
     }
 }

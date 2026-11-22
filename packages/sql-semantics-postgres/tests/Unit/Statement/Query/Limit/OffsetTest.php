@@ -14,7 +14,7 @@ final class OffsetTest extends TestCase
 {
     public function testRenderDropsTheNoiseWord(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $query = $semantics->inspect('SELECT 1 OFFSET 2 ROW');
         self::assertSame('SELECT 1 OFFSET 2', $query->toString());
     }

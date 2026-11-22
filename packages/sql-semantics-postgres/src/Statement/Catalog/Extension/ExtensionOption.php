@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  *
  * Source: https://www.postgresql.org/docs/17/sql-createextension.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option name the server receives
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\ExtensionCascade::Cascade->option() // => 'cascade'
  */

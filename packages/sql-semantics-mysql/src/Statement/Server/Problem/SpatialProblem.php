@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
  * The server rejects the statement with the error of the rule.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a missing attribute
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::MissingAttribute, \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition))->message() // => 'Missing mandatory attribute DEFINITION (ER_SRS_MISSING_MANDATORY_ATTRIBUTE).'
  */

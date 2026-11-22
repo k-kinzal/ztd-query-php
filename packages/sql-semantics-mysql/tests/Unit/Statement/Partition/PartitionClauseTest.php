@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
+use Tests\Support\Inspection;
 
 #[CoversClass(PartitionClause::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class PartitionClauseTest extends TestCase
 {
     public function testDerivePartitioningDerivesTheMethodAndTheValues(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $alter = $semantics->diagnose('ALTER TABLE t PARTITION BY RANGE (b) (PARTITION p VALUES LESS THAN (c))', [$table]);
 
@@ -26,6 +26,6 @@ final class PartitionClauseTest extends TestCase
 
     public function testRenderWritesTheCountsAndTheDefinitions(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)', (new Semantics())->diagnose('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)', (new Inspection())->diagnose('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)')->toString());
     }
 }

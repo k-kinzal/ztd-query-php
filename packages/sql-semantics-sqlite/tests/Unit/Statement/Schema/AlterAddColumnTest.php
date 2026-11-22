@@ -13,13 +13,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterAddColumn::class)]
 #[Medium]
@@ -27,7 +27,7 @@ final class AlterAddColumnTest extends TestCase
 {
     public function testDeriveStatementResolvesTheTableAndProvidesNoDeclaration(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $operation = $semantics->diagnose('ALTER TABLE t ADD COLUMN b TEXT', [$table]);
         $resolution = $operation->facts->relation($operation->statement)->table;
@@ -41,7 +41,7 @@ final class AlterAddColumnTest extends TestCase
 
     public function testDeriveStatementDerivesTheConstraintsAgainstTheTableWithTheNewColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $operation = $semantics->diagnose('ALTER TABLE t ADD b TEXT CHECK (b <> a)', [$table]);
         $statement = $operation->statement;
@@ -63,7 +63,7 @@ final class AlterAddColumnTest extends TestCase
 
     public function testDeriveStatementReportsWhatRulesTheAdditionOut(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $duplicate = $semantics->diagnose('ALTER TABLE t ADD A TEXT', [$table]);
         $key = $semantics->diagnose('ALTER TABLE t ADD b INTEGER PRIMARY KEY', [$table]);
@@ -77,7 +77,7 @@ final class AlterAddColumnTest extends TestCase
 
     public function testDeriveRelationAppendsTheNewColumnToTheShapeOfTheTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INTEGER)');
         $statement = $semantics->diagnose('ALTER TABLE t ADD b TEXT NOT NULL DEFAULT 0')->statement;
         $derivation = new Derivation($semantics->context([$table]));
@@ -91,7 +91,7 @@ final class AlterAddColumnTest extends TestCase
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
-        $operation = (new Semantics())->diagnose('alter table main.t add column b text default 0');
+        $operation = (new Inspection())->diagnose('alter table main.t add column b text default 0');
 
         self::assertSame('ALTER TABLE main.t ADD b text DEFAULT 0', $operation->toString());
     }

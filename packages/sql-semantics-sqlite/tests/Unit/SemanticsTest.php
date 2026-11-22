@@ -24,6 +24,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\SemanticsIR;
+use Tests\Support\Inspection;
 
 #[CoversClass(Semantics::class)]
 #[Medium]
@@ -35,8 +36,7 @@ final class SemanticsTest extends TestCase
     public function testAnalyzeReturnsTheCompleteValueThroughTheCommonInterface(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
-        $context = $semantics->context([$table]);
+        $context = $semantics->context(['CREATE TABLE t (id INTEGER)']);
         $analyze = static fn (Analyzer $analyzer): SemanticsIR => $analyzer->analyze('SELECT id, t.id FROM t', $context);
         $query = $analyze($semantics);
 
@@ -62,7 +62,7 @@ final class SemanticsTest extends TestCase
 
     public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void
     {
-        $query = (new Semantics())->inspect('SELECT id FROM t');
+        $query = (new Inspection())->inspect('SELECT id FROM t');
 
         $type = $query->field(0)->type;
         self::assertInstanceOf(Dependent::class, $type);
@@ -80,10 +80,10 @@ final class SemanticsTest extends TestCase
     public function testThrowsAnExceptionWithTheSemanticDiagnostics(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (id INTEGER)');
+        $context = $semantics->context(['CREATE TABLE t (id INTEGER)']);
 
         try {
-            $semantics->analyze('SELECT missing FROM t', [$table]);
+            $semantics->analyze('SELECT missing FROM t', $context);
             self::fail('Expected a semantic error.');
         } catch (AnalysisException $error) {
             self::assertInstanceOf(SemanticException::class, $error);
@@ -104,7 +104,7 @@ final class SemanticsTest extends TestCase
     {
         $this->expectException(SemanticException::class);
 
-        (new Semantics())->analyzeAll('SELECT 1; SELECT id FROM t', []);
+        (new Semantics())->analyzeAll('SELECT 1; SELECT id FROM t', (new Semantics())->context([]));
     }
 
     public function testProfileIsFixedByTheDialectAndTheParameterStyle(): void
@@ -119,16 +119,22 @@ final class SemanticsTest extends TestCase
     public function testContextIsOpenWithoutDeclarationsAndCompleteWithAList(): void
     {
         $semantics = new Semantics();
+        $open = $semantics->context();
+        $complete = $semantics->context([]);
+        $partial = $semantics->context([], false);
 
-        self::assertFalse($semantics->context()->complete);
-        self::assertTrue($semantics->context([])->complete);
-        self::assertFalse($semantics->context([], false)->complete);
-        self::assertSame([], $semantics->context()->tables);
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $open);
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $complete);
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $partial);
+        self::assertFalse($open->complete);
+        self::assertTrue($complete->complete);
+        self::assertFalse($partial->complete);
+        self::assertSame([], $open->tables);
     }
 
     public function testContextCollectsTheDeclarationsOfOperationsAndTables(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->inspect('CREATE TABLE t (a INTEGER)');
         $table = $semantics->inspect('CREATE TABLE u (b TEXT)')->declarations()[0];
 
@@ -139,8 +145,8 @@ final class SemanticsTest extends TestCase
 
     public function testContextRefusesAnOperationOfAnotherProfile(): void
     {
-        $native = new Semantics();
-        $named = new Semantics(null, null, ParameterStyle::Named);
+        $native = new Inspection();
+        $named = new Inspection(null, null, ParameterStyle::Named);
         $operation = $named->inspect('CREATE TABLE t (a INTEGER)');
 
         $this->expectExceptionMessage('A declaring operation must belong to the selected language profile.');
@@ -150,7 +156,7 @@ final class SemanticsTest extends TestCase
 
     public function testInspectReturnsAnOperationBoundToTheGivenDeclarations(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
 
         $declared = $semantics->inspect('SELECT a FROM t', [$table]);
@@ -165,7 +171,7 @@ final class SemanticsTest extends TestCase
 
     public function testInspectRendersFromTheStructureAndChecksTheTokens(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         $operation = $semantics->inspect("select   t.a as \"x\", 'it''s' from t as T /* note */ where a is not null");
 
@@ -175,7 +181,7 @@ final class SemanticsTest extends TestCase
 
     public function testInspectRefusesAContextOfAnotherProfile(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $foreign = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472, new LexicalSettings(), ParameterStyle::Named), [new Name('main')]);
 
         $this->expectExceptionMessage('The context must match the selected language profile.');
@@ -193,9 +199,9 @@ final class SemanticsTest extends TestCase
     public function testAnalyzeAllPublishesCompleteValuesAgainstTheSameContext(): void
     {
         $semantics = new Semantics();
-        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $context = $semantics->context(['CREATE TABLE t (a INTEGER)']);
 
-        $results = $semantics->analyzeAll('SELECT a FROM t; SELECT a AS value FROM t', [$table]);
+        $results = $semantics->analyzeAll('SELECT a FROM t; SELECT a AS value FROM t', $context);
 
         self::assertCount(2, $results);
         self::assertInstanceOf(Select::class, $results[0]);
@@ -223,7 +229,7 @@ final class SemanticsTest extends TestCase
 
     public function testDiagnoseRetainsDiagnosticsForStatementValidation(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT * FROM t', []);
+        $operation = (new Inspection())->diagnose('SELECT * FROM t', []);
 
         self::assertSame('SELECT * FROM t', $operation->toString());
         self::assertNotEmpty($operation->facts->diagnostics);

@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Account;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Account\DropRole;
+use Tests\Support\Inspection;
 
 #[CoversClass(DropRole::class)]
 #[Medium]
@@ -16,11 +16,11 @@ final class DropRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics())->inspect('DROP ROLE r')->facts->diagnostics);
+        self::assertSame([], (new Inspection())->inspect('DROP ROLE r')->facts->diagnostics);
     }
 
     public function testRenderWritesTheRoles(): void
     {
-        self::assertSame('DROP ROLE IF EXISTS r1, r2', (new Semantics())->inspect('drop role if exists r1, r2')->toString());
+        self::assertSame('DROP ROLE IF EXISTS r1, r2', (new Inspection())->inspect('drop role if exists r1, r2')->toString());
     }
 }

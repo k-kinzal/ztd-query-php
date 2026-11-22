@@ -19,12 +19,12 @@ use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(Joining::class)]
 #[Medium]
@@ -32,7 +32,7 @@ final class JoiningTest extends TestCase
 {
     public function testJoinMergesTheUsingColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -48,7 +48,7 @@ final class JoiningTest extends TestCase
 
     public function testNamesAnswersNothingForANaturalJoinOverUndeclaredColumns(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT * FROM t NATURAL JOIN u');
+        $operation = (new Inspection())->diagnose('SELECT * FROM t NATURAL JOIN u');
 
         self::assertNull($operation->fields());
         self::assertSame([], $operation->facts->diagnostics);
@@ -56,7 +56,7 @@ final class JoiningTest extends TestCase
 
     public function testLocateReportsAColumnSelectedTwice(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
         $operation = $semantics->diagnose('SELECT 1 FROM (t AS x, t AS y) JOIN t USING (a)', [$t]);
 
@@ -90,7 +90,7 @@ final class JoiningTest extends TestCase
 
     public function testLocateLeavesAUsingColumnAnUnnamedColumnMayBe(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
 
         self::assertSame([], $semantics->diagnose("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);

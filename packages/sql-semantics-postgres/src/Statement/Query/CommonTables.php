@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
  * clause answers, where the common tables are visible.
  * Source: https://www.postgresql.org/docs/17/queries-with.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the contract a WITH clause fulfils
  *     interface_exists(\SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables::class) // => true
  */

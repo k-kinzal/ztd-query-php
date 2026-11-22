@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(Column::class)]
 #[Medium]
@@ -34,7 +34,7 @@ final class ColumnTest extends TestCase
 
     public function testAResolvedReferenceReachesTheDeclarationObjectItself(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')->declarations()[0];
 
         $query = $semantics->inspect('SELECT b, a FROM t', [$table]);

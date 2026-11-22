@@ -44,11 +44,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
  * https://dev.mysql.com/doc/refman/5.6/en/alter-table.html.
  * Status: Implemented.
  *
- * @visibility public
- * @example Reading the actions of a table change
- *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a INT)');
- *     $semantics->inspect('ALTER TABLE t DROP COLUMN b, ALGORITHM = INPLACE', [$table]) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException: Column b does not exist in the table.
+ * @visibility SqlSemantics
  */
 final class AlterTable implements Statement, Relation
 {

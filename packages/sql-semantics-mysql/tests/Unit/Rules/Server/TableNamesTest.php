@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableNames::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class TableNamesTest extends TestCase
 {
     public function testRecordResolvesAndReportsARepeatedName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $lock = $semantics->diagnose('LOCK TABLES t READ, t AS u WRITE, t AS u READ', [$table]);
         self::assertInstanceOf(LockTables::class, $lock->statement);

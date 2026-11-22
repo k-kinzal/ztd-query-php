@@ -14,7 +14,7 @@ final class HashBoundTest extends TestCase
 {
     public function testDeriveClauseReportsAnUnknownItem(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, rest 1)', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
@@ -24,7 +24,7 @@ final class HashBoundTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (MODULUS 4, REMAINDER 1)', []);
         self::assertSame('CREATE TABLE p1 PARTITION OF p FOR VALUES WITH (modulus 4, remainder 1)', $statement->toString());
     }

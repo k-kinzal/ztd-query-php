@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnNames;
-use SqlSemantics\Platform\MySql\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(ColumnNames::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class ColumnNamesTest extends TestCase
 {
     public function testCheckReportsEveryAbsentName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
 
         self::assertSame(['Column x does not exist in the table.', 'Column y does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t PARTITION BY KEY (a, x, y)', [$table])->facts->diagnostics));
@@ -25,14 +25,14 @@ final class ColumnNamesTest extends TestCase
 
     public function testPresentLeavesAnUndeclaredTableUndecided(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->diagnose('ALTER TABLE t PARTITION BY KEY (x)')->facts->diagnostics));
     }
 
     public function testCountComparesWithoutRegardToCase(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
 
         self::assertSame([], $semantics->diagnose('ALTER TABLE t PARTITION BY KEY (A)', [$table])->facts->diagnostics);
@@ -40,6 +40,6 @@ final class ColumnNamesTest extends TestCase
 
     public function testWriteWritesTheParenthesizedNames(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY KEY (`a b`, c)', (new Semantics())->diagnose('ALTER TABLE t PARTITION BY KEY (`a b`, c)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY KEY (`a b`, c)', (new Inspection())->diagnose('ALTER TABLE t PARTITION BY KEY (`a b`, c)')->toString());
     }
 }

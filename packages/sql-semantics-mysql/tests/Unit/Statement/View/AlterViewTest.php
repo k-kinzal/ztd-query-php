@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
+use Tests\Support\Inspection;
 
 #[CoversClass(AlterView::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class AlterViewTest extends TestCase
 {
     public function testDeriveStatementResolvesTheViewAndDeclaresNothing(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a');
         $alter = $semantics->diagnose('ALTER VIEW v AS SELECT 2 AS b', [$view]);
         $fact = $alter->facts->relation($alter->statement)->table;
@@ -29,12 +29,12 @@ final class AlterViewTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('ALTER ALGORITHM = MERGE VIEW v (x) AS SELECT 1 WITH CASCADED CHECK OPTION', (new Semantics())->diagnose('ALTER ALGORITHM = MERGE VIEW v (x) AS SELECT 1 WITH CASCADED CHECK OPTION')->toString());
+        self::assertSame('ALTER ALGORITHM = MERGE VIEW v (x) AS SELECT 1 WITH CASCADED CHECK OPTION', (new Inspection())->diagnose('ALTER ALGORITHM = MERGE VIEW v (x) AS SELECT 1 WITH CASCADED CHECK OPTION')->toString());
     }
 
     public function testDeriveStatementRefusesABaseTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT)');
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT a FROM t', [$table]);
 

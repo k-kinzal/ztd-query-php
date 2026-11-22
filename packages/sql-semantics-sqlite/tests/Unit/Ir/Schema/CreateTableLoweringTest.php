@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
+use Tests\Support\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering
@@ -20,10 +21,10 @@ final class CreateTableLoweringTest extends TestCase
     {
         $semantics = new Semantics();
         $sql = 'CREATE TEMP TABLE data (s "tExT" NOT NULL, n integer, raw)';
-        $operation = $semantics->inspect($sql);
+        $operation = (new Inspection())->inspect($sql);
         self::assertInstanceOf(ParsedCreateTable::class, $operation->statement);
 
-        $value = (new CreateTableLowering())->lower($operation, $operation->statement);
+        $value = (new CreateTableLowering())->lower($operation->binding(), $operation->statement);
 
         self::assertSame('temp', $value->schema->value);
         self::assertSame(DeclaredDatatypeName::Text, $value->columns[0]->type);

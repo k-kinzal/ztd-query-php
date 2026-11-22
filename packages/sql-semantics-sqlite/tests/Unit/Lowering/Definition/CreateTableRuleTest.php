@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\CreateTableRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
+use Tests\Support\Inspection;
 
 #[CoversClass(CreateTableRule::class)]
 #[Medium]
@@ -19,7 +19,7 @@ final class CreateTableRuleTest extends TestCase
 {
     public function testCommandLowersBothFormsOfATableDefinition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertInstanceOf(CreateTable::class, $semantics->diagnose('CREATE TABLE t (a)')->statement);
         self::assertInstanceOf(CreateTableAs::class, $semantics->diagnose('CREATE TABLE t AS SELECT 1')->statement);
@@ -27,7 +27,7 @@ final class CreateTableRuleTest extends TestCase
 
     public function testCommandKeepsTheHeaderFlagsAndTheName(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $plain = $semantics->diagnose('CREATE TABLE t (a)')->statement;
         $full = $semantics->diagnose('CREATE TEMP TABLE IF NOT EXISTS aux.t (a)')->statement;
 
@@ -43,12 +43,12 @@ final class CreateTableRuleTest extends TestCase
 
     public function testCreatedAcceptsTheCreateKeywordOfEveryDefinition(): void
     {
-        self::assertInstanceOf(CreateView::class, (new Semantics())->diagnose('CREATE VIEW v AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateView::class, (new Inspection())->diagnose('CREATE VIEW v AS SELECT 1')->statement);
     }
 
     public function testColumnsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics())->diagnose('CREATE TABLE t (c, a, b)')->statement;
+        $statement = (new Inspection())->diagnose('CREATE TABLE t (c, a, b)')->statement;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame(['c', 'a', 'b'], array_map(static fn (object $column): string => $column->name->value, $statement->columns));

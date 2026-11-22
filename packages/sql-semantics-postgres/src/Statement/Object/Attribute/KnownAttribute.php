@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute;
  * command has its own set: the cases of the enum for that command.
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html, `DefineOperator` in `src/backend/commands/operatorcmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading how an operator reads its function attribute
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::named('function')?->reading() // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading::Function
  */

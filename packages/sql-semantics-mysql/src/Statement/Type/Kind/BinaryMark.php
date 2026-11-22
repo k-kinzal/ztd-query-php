@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Type\Kind;
  * Each case names a placement; the keyword itself is BINARY.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keywords of a case
  *     \SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Trailing->value // => 'trailing'
  */

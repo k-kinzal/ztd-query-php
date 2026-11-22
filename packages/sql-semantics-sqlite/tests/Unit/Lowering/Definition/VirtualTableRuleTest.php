@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\VirtualTableRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\ModuleArgument;
+use Tests\Support\Inspection;
 
 #[CoversClass(VirtualTableRule::class)]
 #[Medium]
@@ -18,7 +18,7 @@ final class VirtualTableRuleTest extends TestCase
 {
     public function testCommandLowersBothFormsOfAVirtualTableDefinition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $bare = $semantics->inspect('CREATE VIRTUAL TABLE t USING m')->statement;
         $argued = $semantics->inspect('CREATE VIRTUAL TABLE t USING m(a)')->statement;
 
@@ -30,7 +30,7 @@ final class VirtualTableRuleTest extends TestCase
 
     public function testTableKeepsTheNameTheModuleAndTheFlag(): void
     {
-        $statement = (new Semantics())->inspect('CREATE VIRTUAL TABLE IF NOT EXISTS aux.t USING "my module"')->statement;
+        $statement = (new Inspection())->inspect('CREATE VIRTUAL TABLE IF NOT EXISTS aux.t USING "my module"')->statement;
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
         self::assertTrue($statement->ifNotExists);
@@ -40,7 +40,7 @@ final class VirtualTableRuleTest extends TestCase
 
     public function testArgumentsAreTheExactTextsBetweenTheTopLevelCommas(): void
     {
-        $statement = (new Semantics())->inspect("CREATE VIRTUAL TABLE t USING m(a INT  PRIMARY KEY, f(1, (2, 3)), 'x,y' , )")->statement;
+        $statement = (new Inspection())->inspect("CREATE VIRTUAL TABLE t USING m(a INT  PRIMARY KEY, f(1, (2, 3)), 'x,y' , )")->statement;
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
         self::assertSame(['a INT  PRIMARY KEY', 'f(1, (2, 3))', "'x,y'", ''], array_map(static fn (ModuleArgument $argument): string => $argument->text, $statement->arguments ?? []));

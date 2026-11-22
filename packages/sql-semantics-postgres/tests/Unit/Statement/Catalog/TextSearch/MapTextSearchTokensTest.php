@@ -14,11 +14,11 @@ final class MapTextSearchTokensTest extends TestCase
 {
     public function testRenderWritesTokensAndDictionaries(): void
     {
-        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple, s.english', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple, s.english')->toString());
+        self::assertSame('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple, s.english', (new \Tests\Support\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word, asciiword WITH simple, s.english')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word WITH simple')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('ALTER TEXT SEARCH CONFIGURATION c ADD MAPPING FOR word WITH simple')->facts->diagnostics);
     }
 }

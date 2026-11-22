@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice;
  * `read_write` exactly.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, `extractModify` in `src/backend/commands/aggregatecmds.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a modification mode
  *     \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\FinalModification::read('read_write')?->name // => 'ReadWrite'
  */

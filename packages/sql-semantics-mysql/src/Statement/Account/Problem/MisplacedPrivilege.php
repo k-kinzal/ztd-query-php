@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-privilege-levels,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('RELOAD', 'database shop', 'ER_WRONG_USAGE'))->message() // => 'RELOAD cannot be granted at database shop (ER_WRONG_USAGE).'
  */

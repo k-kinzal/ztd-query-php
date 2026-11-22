@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Session;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
+use Tests\Support\Inspection;
 
 #[CoversClass(ShowErrors::class)]
 #[Medium]
@@ -16,13 +16,13 @@ final class ShowErrorsTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics('mysql-5.6.51'))->inspect('SHOW ERRORS');
+        $show = (new Inspection('mysql-5.6.51'))->inspect('SHOW ERRORS');
         self::assertInstanceOf(ShowErrors::class, $show->statement);
         self::assertSame('Level', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW ERRORS', (new Semantics('mysql-5.6.51'))->inspect('SHOW ERRORS')->toString());
+        self::assertSame('SHOW ERRORS', (new Inspection('mysql-5.6.51'))->inspect('SHOW ERRORS')->toString());
     }
 }

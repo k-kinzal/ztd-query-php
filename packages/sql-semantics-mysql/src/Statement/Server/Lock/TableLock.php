@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
  * by later statements of the session only through that alias.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a table, its alias and the lock
  *     $lock = new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write);
  *     [$lock->table->name->value, $lock->alias?->value, $lock->mode] // => ['t', 'a', \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write]

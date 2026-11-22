@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
  * expression in the environment its position is evaluated in.
  * Source: https://www.postgresql.org/docs/17/queries-order.html, https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a descending sort key
  *     $item = new \SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')),

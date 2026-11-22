@@ -48,12 +48,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
  * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,
  * https://sqlite.org/expridx.html. Status: Implemented.
  *
- * @visibility public
- * @example Resolving the indexed table and an indexed column
- *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();
- *     $table = $semantics->inspect('CREATE TABLE t (a, b)');
- *     $index = $semantics->inspect('CREATE UNIQUE INDEX i ON t (b DESC) WHERE a IS NOT NULL', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->scalar($index->statement->terms[0]->expression)->resolution->slot->column === $table->declarations()[0]->columns[1]] // => [true, true]
+ * @visibility SqlSemantics
  */
 final class CreateIndex implements Statement, Relation
 {

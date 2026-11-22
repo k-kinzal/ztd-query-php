@@ -9,7 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 /**
  * Connection state the context does not fix, such as a user variable or a server setting.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming session state a fact depends on
  *     (new \SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\SessionState('user variable @total'))->describe() // => 'the session state: user variable @total'
  */

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * meaning depends on the release (PasswordFunction).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-password.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a password written with PASSWORD()
  *     $password = new \SqlSemantics\Platform\MySql\Statement\Account\Password(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('pw'), \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::Password);
  *     [$password->text->value, $password->function?->value] // => ['pw', 'PASSWORD']

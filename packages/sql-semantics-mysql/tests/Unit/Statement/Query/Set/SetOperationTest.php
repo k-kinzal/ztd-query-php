@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -33,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(SetOperation::class)]
 #[Medium]
@@ -40,7 +40,7 @@ final class SetOperationTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -59,7 +59,7 @@ final class SetOperationTest extends TestCase
 
     public function testDeriveQueryNamesTheColumnsAfterTheFirstOperandAndCombinesNullability(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
@@ -82,7 +82,7 @@ final class SetOperationTest extends TestCase
 
     public function testDeriveQueryReportsOperandsOfDifferentLengths(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT 1 UNION SELECT 1, 2');
+        $operation = (new Inspection())->diagnose('SELECT 1 UNION SELECT 1, 2');
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
@@ -91,7 +91,7 @@ final class SetOperationTest extends TestCase
 
     public function testDeriveQueryLeavesTheOutputOpenOverAnUndeclaredFirstOperand(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT * FROM t UNION SELECT 1');
+        $operation = (new Inspection())->diagnose('SELECT * FROM t UNION SELECT 1');
 
         self::assertNull($operation->fields());
         self::assertNotNull($operation->shape());
@@ -100,7 +100,7 @@ final class SetOperationTest extends TestCase
 
     public function testRenderWritesTheOperandsLeftDeepAndKeepsParentheses(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertSame('SELECT 1 UNION SELECT 2 EXCEPT DISTINCT SELECT 3', $semantics->diagnose('select 1 union select 2 except distinct select 3')->toString());
         self::assertSame('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3', $semantics->diagnose('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3')->toString());

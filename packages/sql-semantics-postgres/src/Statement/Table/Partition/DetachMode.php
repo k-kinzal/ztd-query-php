@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Partition;
  *
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a detach mode
  *     \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\DetachMode::Concurrently->value // => 'CONCURRENTLY'
  */

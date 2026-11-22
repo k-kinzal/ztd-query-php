@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignatu
  * The obsolete trailing RECHECK is ignored by the server and not kept.
  * Source: https://www.postgresql.org/docs/17/sql-createopclass.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the strategy number
  *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorMember(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'), new \SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('<')));
  *     $member->strategy->digits // => '1'

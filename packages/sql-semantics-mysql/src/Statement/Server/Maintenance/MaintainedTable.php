@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * relation fact of this node (MYSQL-SERVER-TABLES-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/table-maintenance-statements.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding a table name with its database
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')));
  *     $table->name->schema?->value // => 'shop'

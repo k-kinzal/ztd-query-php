@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege;
  * one, the privilege list of the statement is empty.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the privilege name the server receives
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\PrivilegeKeyword::AlterSystem->privilege() // => 'alter system'
  */

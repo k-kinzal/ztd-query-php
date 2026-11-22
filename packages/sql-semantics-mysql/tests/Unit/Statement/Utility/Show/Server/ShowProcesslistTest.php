@@ -7,8 +7,8 @@ namespace Tests\Unit\Statement\Utility\Show\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
+use Tests\Support\Inspection;
 
 #[CoversClass(ShowProcesslist::class)]
 #[Medium]
@@ -16,13 +16,13 @@ final class ShowProcesslistTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRows(): void
     {
-        $show = (new Semantics())->inspect('SHOW PROCESSLIST');
+        $show = (new Inspection())->inspect('SHOW PROCESSLIST');
         self::assertInstanceOf(ShowProcesslist::class, $show->statement);
         self::assertSame('Id', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW PROCESSLIST', (new Semantics())->inspect('SHOW PROCESSLIST')->toString());
+        self::assertSame('SHOW PROCESSLIST', (new Inspection())->inspect('SHOW PROCESSLIST')->toString());
     }
 }

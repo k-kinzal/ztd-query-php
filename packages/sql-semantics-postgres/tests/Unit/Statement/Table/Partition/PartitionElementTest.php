@@ -14,7 +14,7 @@ final class PartitionElementTest extends TestCase
 {
     public function testDeriveClauseResolvesTheKey(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (a int) PARTITION BY RANGE (zz)', $context);
@@ -25,7 +25,7 @@ final class PartitionElementTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a text) PARTITION BY LIST (a COLLATE "C" text_ops, (a || \'x\'), lower(a))', []);
         self::assertSame('CREATE TABLE n (a text) PARTITION BY list (a COLLATE "C" text_ops, (a || \'x\'), lower(a))', $statement->toString());
     }

@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
  * Source: https://dev.mysql.com/doc/refman/5.6/en/set-password.html,
  * https://dev.mysql.com/doc/refman/5.7/en/set-password.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the keyword of a function
  *     \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::OldPassword->value // => 'OLD_PASSWORD'
  */

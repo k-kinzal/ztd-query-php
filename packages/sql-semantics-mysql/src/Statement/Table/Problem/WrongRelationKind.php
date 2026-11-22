@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The server refuses the statement (MYSQL-RELATION-KIND-001).
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a base table that a view statement names
  *     (new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('shop')), \SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView))->message() // => 'shop.t is not VIEW.'
  */

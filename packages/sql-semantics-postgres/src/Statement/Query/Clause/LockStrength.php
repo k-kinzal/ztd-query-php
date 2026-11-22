@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Clause;
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FOR-UPDATE-SHARE,
  * https://www.postgresql.org/docs/17/explicit-locking.html#LOCKING-ROWS.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling a lock strength
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockStrength::NoKeyUpdate->value // => 'NO KEY UPDATE'
  */

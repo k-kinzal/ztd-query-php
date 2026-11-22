@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
@@ -21,6 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownTableOption;
+use Tests\Support\Inspection;
 
 #[CoversClass(TableProblems::class)]
 #[Medium]
@@ -28,21 +28,21 @@ final class TableProblemsTest extends TestCase
 {
     public function testReportFindsNothingInASoundDefinition(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT) STRICT', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT) STRICT', []);
 
         self::assertSame([], $operation->facts->diagnostics);
     }
 
     public function testReportFindsAnUnknownOptionAndANonStandardStrictType(): void
     {
-        $operation = (new Semantics())->diagnose('CREATE TABLE t (a VARCHAR(10), b) STRICT, fast', []);
+        $operation = (new Inspection())->diagnose('CREATE TABLE t (a VARCHAR(10), b) STRICT, fast', []);
 
         self::assertSame([UnknownTableOption::class, StrictTypeViolation::class, StrictTypeViolation::class], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic::class, $operation->facts->diagnostics));
     }
 
     public function testReportFindsEveryPrimaryKeyFlaw(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $flaw = static fn (string $sql): ?PrimaryKeyFlaw => array_map(static fn (Diagnostic $diagnostic): ?PrimaryKeyFlaw => $diagnostic instanceof PrimaryKeyProblem ? $diagnostic->flaw : null, $semantics->diagnose($sql, [])->facts->diagnostics)[0] ?? null;
 
         self::assertSame(PrimaryKeyFlaw::Repeated, $flaw('CREATE TABLE t (a PRIMARY KEY, b PRIMARY KEY)'));
@@ -53,7 +53,7 @@ final class TableProblemsTest extends TestCase
 
     public function testGeneratedReportsAKeyColumnThatIsGeneratedAndATableWithoutAPlainColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $problems = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->diagnose($sql, [])->facts->diagnostics);
 
         self::assertSame([['InPrimaryKey', 'b']], $problems('CREATE TABLE t (a, b AS (a) PRIMARY KEY)'));
@@ -64,7 +64,7 @@ final class TableProblemsTest extends TestCase
 
     public function testTemporaryReportsOnlyAQualifierOtherThanTemp(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertInstanceOf(QualifiedTemporaryName::class, $semantics->diagnose('CREATE TEMP TABLE main.t (a)')->facts->diagnostics[0]);
         self::assertSame([], $semantics->diagnose('CREATE TEMP TABLE TEMP.t (a)')->facts->diagnostics);
@@ -73,7 +73,7 @@ final class TableProblemsTest extends TestCase
 
     public function testTemporaryReportsThroughTheDerivation(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new TableProblems())->temporary(new QualifiedName(new Name('t'), new Name('aux')), true, $derivation);
 
         self::assertInstanceOf(QualifiedTemporaryName::class, $derivation->facts()->diagnostics[0]);
@@ -81,7 +81,7 @@ final class TableProblemsTest extends TestCase
 
     public function testDuplicatesReportsEachLaterColumnWithATakenName(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new TableProblems())->duplicates([new ColumnDefinition(new Name('a')), new ColumnDefinition(new Name('b')), new ColumnDefinition(new Name('A')), new ColumnDefinition(new Name('a'))], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
 

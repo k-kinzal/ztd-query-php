@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Problem;
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-GROUPBY, https://www.postgresql.org/docs/17/sql-select.html#SQL-DISTINCT.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the clause
  *     \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause::GroupBy->value // => 'GROUP BY'
  */

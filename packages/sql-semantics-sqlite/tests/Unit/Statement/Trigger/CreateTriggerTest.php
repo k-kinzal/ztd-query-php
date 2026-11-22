@@ -9,10 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
@@ -34,6 +32,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(CreateTrigger::class)]
 #[Medium]
@@ -41,7 +41,7 @@ final class CreateTriggerTest extends TestCase
 {
     public function testDeriveStatementResolvesNewAndOldToTheWatchedTable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $trigger = $semantics->diagnose('CREATE TRIGGER tr AFTER UPDATE ON t WHEN new.a > old.a BEGIN UPDATE u SET a = new.a WHERE a = old.rowid; END', [$t, $u]);
@@ -68,7 +68,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementHidesTheRowThatTheEventDoesNotProvide(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $delete = $semantics->diagnose('CREATE TRIGGER tr AFTER DELETE ON t BEGIN SELECT new.a; END', [$t]);
         $insert = $semantics->diagnose('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT old.a; END', [$t]);
@@ -84,7 +84,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementReportsWhatSqliteForbidsInsideATrigger(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $qualified = $semantics->diagnose('CREATE TRIGGER tr INSERT ON t BEGIN INSERT INTO main.u VALUES (1, 2); END', [$t, $u]);
@@ -103,7 +103,7 @@ final class CreateTriggerTest extends TestCase
 
     public function testDeriveStatementChecksTheColumnsOfAnUpdateOfTrigger(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $known = $semantics->diagnose('CREATE TRIGGER tr UPDATE OF a, b ON t BEGIN SELECT 1; END', [$t]);
         $unknown = $semantics->diagnose('CREATE TRIGGER tr UPDATE OF zz ON t BEGIN SELECT 1; END', [$t]);
@@ -117,9 +117,9 @@ final class CreateTriggerTest extends TestCase
 
     public function testRenderWritesEveryPartInGrammarOrder(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $trigger = $semantics->diagnose('create temp trigger if not exists tr instead of update of a, b on t for each row when new.a > 1 begin select 1; delete from u; insert into u values (1) on conflict do nothing; values (1); end');
-        $built = new Operation($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr'), new Name('main')), TriggerEvent::Delete, new TriggerTable(new QualifiedName(new Name('t'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])], TriggerTiming::Before));
+        $built = new InspectedStatement($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr'), new Name('main')), TriggerEvent::Delete, new TriggerTable(new QualifiedName(new Name('t'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])], TriggerTiming::Before));
 
         self::assertSame('CREATE TEMP TRIGGER IF NOT EXISTS tr INSTEAD OF UPDATE OF a, b ON t FOR EACH ROW WHEN new.a > 1 BEGIN SELECT 1; DELETE FROM u; INSERT INTO u VALUES (1) ON CONFLICT DO NOTHING; VALUES (1); END', $trigger->toString());
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);

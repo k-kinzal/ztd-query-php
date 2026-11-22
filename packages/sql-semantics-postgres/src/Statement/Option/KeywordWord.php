@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Keywords;
  * or `(analyze = true)`.
  * Source: https://www.postgresql.org/docs/17/sql-createoperator.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the text of a keyword value
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('none')))->word->value // => 'none'
  * @example Rejecting a word that is not a reserved keyword

@@ -14,11 +14,11 @@ final class DropSubscriptionTest extends TestCase
 {
     public function testRenderWritesTheBehavior(): void
     {
-        self::assertSame('DROP SUBSCRIPTION IF EXISTS s CASCADE', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP SUBSCRIPTION IF EXISTS s CASCADE')->toString());
+        self::assertSame('DROP SUBSCRIPTION IF EXISTS s CASCADE', (new \Tests\Support\Inspection())->inspect('DROP SUBSCRIPTION IF EXISTS s CASCADE')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('DROP SUBSCRIPTION s')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('DROP SUBSCRIPTION s')->facts->diagnostics);
     }
 }

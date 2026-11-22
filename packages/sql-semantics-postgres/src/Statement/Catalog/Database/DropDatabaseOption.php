@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database;
  * FORCE terminates the existing connections to the database first.
  * Source: https://www.postgresql.org/docs/17/sql-dropdatabase.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling the option
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DropDatabaseOption::Force->value // => 'FORCE'
  */

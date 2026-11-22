@@ -9,9 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
@@ -20,6 +18,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\RowAssignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(RowAssignment::class)]
 #[Medium]
@@ -27,9 +27,9 @@ final class RowAssignmentTest extends TestCase
 {
     public function testRenderWritesTheColumnListAndTheValue(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $assignment = new RowAssignment([new Name('a'), new Name('b')], new RowExpression([new IntegerLiteral('1'), new TextLiteral('x')]));
-        $built = new Operation($semantics->context(), new Update(new MutationTarget(new QualifiedName(new Name('t'))), [$assignment]));
+        $built = new InspectedStatement($semantics->context(), new Update(new MutationTarget(new QualifiedName(new Name('t'))), [$assignment]));
         $query = $semantics->diagnose("update t set (a, b) = (1, 'x'), (a) = (2)");
 
         self::assertSame("UPDATE t SET (a, b) = (1, 'x')", $built->toString());
@@ -42,7 +42,7 @@ final class RowAssignmentTest extends TestCase
 
     public function testColumnsMustMatchTheWidthOfTheValue(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $wide = $semantics->diagnose('UPDATE t SET (a, b) = (1, 2, 3)', [$t]);
         $narrow = $semantics->diagnose('UPDATE t SET (a) = (1, 2)', [$t]);

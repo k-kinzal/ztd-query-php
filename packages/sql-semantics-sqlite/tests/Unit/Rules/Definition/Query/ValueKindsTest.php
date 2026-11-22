@@ -9,12 +9,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\DerivedAffinity;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\ValueKinds;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
+use Tests\Support\Inspection;
 
 #[CoversClass(ValueKinds::class)]
 #[Medium]
@@ -22,7 +22,7 @@ final class ValueKindsTest extends TestCase
 {
     public function testOfClassifiesEachKindOfExpression(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a TEXT, b INTEGER, c)');
         $query = $semantics->diagnose("SELECT NULL, 'x', x'00', a || b, ?, abs(1), CURRENT_TIME, CASE WHEN 1 THEN 'x' ELSE 1 END, CASE WHEN 1 THEN NULL END, a, b, c, CAST(1 AS TEXT), (SELECT b FROM t), (a, b), \"zz\", +(a), a COLLATE nocase, (b), 1, TRUE, EXISTS (SELECT 1), -1, zz FROM t", [$table]);
         $select = $query->statement;
@@ -35,7 +35,7 @@ final class ValueKindsTest extends TestCase
 
     public function testResultsUnitesTheKindsOfEveryResultOfACase(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
         $query = $semantics->diagnose("SELECT CASE a WHEN 1 THEN x'00' WHEN 2 THEN 1 ELSE a END, CASE WHEN 1 THEN zz END FROM t", [$table]);
         $select = $query->statement;
@@ -66,7 +66,7 @@ final class ValueKindsTest extends TestCase
 
     public function testArmReadsAnExpandedStarAndAnAbsentPosition(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a TEXT)');
         $query = $semantics->diagnose('SELECT * FROM t', [$table]);
         $rows = $semantics->diagnose("VALUES (1, 'a')");

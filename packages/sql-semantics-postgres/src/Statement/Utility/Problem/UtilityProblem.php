@@ -11,9 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A utility command that PostgreSQL rejects because it breaks a rule of the command.
  *
- * @visibility public
- * @example Reading the problem of an unknown EXPLAIN option
- *     (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('EXPLAIN (fast) SELECT 1') // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: unrecognized EXPLAIN option "fast"
+ * @visibility SqlSemantics
  */
 final class UtilityProblem implements Diagnostic
 {

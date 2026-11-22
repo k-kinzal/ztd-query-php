@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * error instead.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables(2))->message() // => 'A histogram request names one table, not 2.'
  */

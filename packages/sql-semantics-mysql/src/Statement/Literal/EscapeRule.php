@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
  * operation is constructed.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_no_backslash_escapes.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Choosing the rule of a profile
  *     \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::under(new \SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES')) // => \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Verbatim
  */

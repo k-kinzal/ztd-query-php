@@ -21,10 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
  * name in it is a missing column.
  * Source: https://sqlite.org/lang_vacuum.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading the schema and the target of a vacuum
- *     $vacuum = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect("VACUUM main INTO 'backup.db'");
- *     [$vacuum->statement->schema?->value, $vacuum->statement->into !== null] // => ['main', true]
+ * @visibility SqlSemantics
  */
 final class Vacuum implements Statement
 {

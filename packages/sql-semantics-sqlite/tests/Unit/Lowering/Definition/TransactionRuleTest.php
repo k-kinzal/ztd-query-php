@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\TransactionRule;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Commit;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Release;
@@ -16,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Transaction\Rollback;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\RollbackTo;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Savepoint;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
+use Tests\Support\Inspection;
 
 #[CoversClass(TransactionRule::class)]
 #[Medium]
@@ -23,7 +23,7 @@ final class TransactionRuleTest extends TestCase
 {
     public function testCommandLowersEachTransactionCommandToItsOwnRequest(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
 
         self::assertInstanceOf(Begin::class, $semantics->inspect('BEGIN')->statement);
         self::assertInstanceOf(Commit::class, $semantics->inspect('COMMIT')->statement);
@@ -36,7 +36,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testBehaviorKeepsTheWrittenWordAndItsAbsence(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $plain = $semantics->inspect('BEGIN')->statement;
         $deferred = $semantics->inspect('BEGIN DEFERRED')->statement;
         $immediate = $semantics->inspect('BEGIN IMMEDIATE')->statement;
@@ -54,7 +54,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testNameIsNullUnlessANameFollowsTheKeyword(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $bare = $semantics->inspect('ROLLBACK TRANSACTION')->statement;
         $named = $semantics->inspect('ROLLBACK TRANSACTION t1')->statement;
 
@@ -66,7 +66,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testSavepointReadsTheNameWithOrWithoutTheKeyword(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $short = $semantics->inspect('RELEASE s1')->statement;
         $long = $semantics->inspect('RELEASE SAVEPOINT s1')->statement;
 

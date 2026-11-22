@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Lowering\Routine\CharacteristicRule;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Characteristic;
@@ -26,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
+use Tests\Support\Inspection;
 
 #[CoversClass(CharacteristicRule::class)]
 #[Medium]
@@ -45,7 +45,7 @@ final class CharacteristicRuleTest extends TestCase
     #[DataProvider('providerCharacteristicsKeepTheWrittenOrderOfACreate')]
     public function testCharacteristicsKeepTheWrittenOrderOfACreate(string $release): void
     {
-        $create = (new Semantics($release))->inspect("create procedure p() comment 'x' language sql not deterministic deterministic contains sql no sql reads sql data modifies sql data sql security definer sql security invoker select 1");
+        $create = (new Inspection($release))->inspect("create procedure p() comment 'x' language sql not deterministic deterministic contains sql no sql reads sql data modifies sql data sql security definer sql security invoker select 1");
         $statement = $create->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(
@@ -71,7 +71,7 @@ final class CharacteristicRuleTest extends TestCase
     #[DataProvider('providerCharacteristicsKeepTheWrittenOrderOfAnAlter')]
     public function testCharacteristicsKeepTheWrittenOrderOfAnAlter(string $release): void
     {
-        $semantics = new Semantics($release);
+        $semantics = new Inspection($release);
         $alter = $semantics->inspect("alter function f sql security invoker comment 'a' no sql comment 'b'");
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
@@ -100,7 +100,7 @@ final class CharacteristicRuleTest extends TestCase
     #[DataProvider('providerCharacteristicLowersTheDataAccess')]
     public function testCharacteristicLowersTheDataAccess(string $release, string $clause, AccessLevel $level): void
     {
-        $statement = (new Semantics($release))->inspect('CREATE PROCEDURE p() ' . $clause . ' SELECT 1')->statement;
+        $statement = (new Inspection($release))->inspect('CREATE PROCEDURE p() ' . $clause . ' SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertEquals([new DataAccess($level)], $statement->characteristics);
     }
@@ -119,7 +119,7 @@ final class CharacteristicRuleTest extends TestCase
     #[DataProvider('providerCharacteristicLowersTheSecurityContext')]
     public function testCharacteristicLowersTheSecurityContext(string $release, string $clause, SecurityContext $context): void
     {
-        $alter = (new Semantics($release))->inspect('ALTER PROCEDURE p ' . $clause);
+        $alter = (new Inspection($release))->inspect('ALTER PROCEDURE p ' . $clause);
         $statement = $alter->statement;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         self::assertEquals([new SqlSecurity($context)], $statement->characteristics);
@@ -128,7 +128,7 @@ final class CharacteristicRuleTest extends TestCase
 
     public function testCharacteristicLowersTheDeterminismOfAFunction(): void
     {
-        $semantics = new Semantics('mysql-5.7.44');
+        $semantics = new Inspection('mysql-5.7.44');
         $statement = $semantics->inspect('create function f() returns int not deterministic deterministic return 1')->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertEquals([new Determinism(false), new Determinism(true)], $statement->characteristics);
@@ -136,7 +136,7 @@ final class CharacteristicRuleTest extends TestCase
 
     public function testCharacteristicLowersTheCommentText(): void
     {
-        $statement = (new Semantics())->inspect('CREATE PROCEDURE p() COMMENT "it\'s" SELECT 1')->statement;
+        $statement = (new Inspection())->inspect('CREATE PROCEDURE p() COMMENT "it\'s" SELECT 1')->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $comment = $statement->characteristics[0];
         self::assertInstanceOf(RoutineComment::class, $comment);
@@ -145,7 +145,7 @@ final class CharacteristicRuleTest extends TestCase
 
     public function testCharacteristicLowersTheLanguage(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->inspect("CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'");
         $statement = $create->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);

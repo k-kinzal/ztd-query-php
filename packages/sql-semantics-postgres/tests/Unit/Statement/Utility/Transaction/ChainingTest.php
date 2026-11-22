@@ -14,6 +14,6 @@ final class ChainingTest extends TestCase
 {
     public function testBothClausesAreKept(): void
     {
-        self::assertSame(['COMMIT AND CHAIN', 'COMMIT AND NO CHAIN'], [(new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('COMMIT AND CHAIN')->toString(), (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('COMMIT AND NO CHAIN')->toString()]);
+        self::assertSame(['COMMIT AND CHAIN', 'COMMIT AND NO CHAIN'], [(new \Tests\Support\Inspection())->inspect('COMMIT AND CHAIN')->toString(), (new \Tests\Support\Inspection())->inspect('COMMIT AND NO CHAIN')->toString()]);
     }
 }

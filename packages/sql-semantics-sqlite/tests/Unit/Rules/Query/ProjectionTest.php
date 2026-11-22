@@ -23,13 +23,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Projection;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(Projection::class)]
 #[Medium]
@@ -37,7 +37,7 @@ final class ProjectionTest extends TestCase
 {
     public function testItemsNamesEveryKindOfResultColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $create = $semantics->diagnose('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $select = $semantics->diagnose('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
         self::assertInstanceOf(Select::class, $select);
@@ -62,7 +62,7 @@ final class ProjectionTest extends TestCase
 
     public function testItemsReportsAStarWithoutInputAndAQualifierThatNamesNoRelation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $derivation = new Derivation($semantics->context([]));
         $relation = new VisibleRelation(new TableInput(new QualifiedName(new Name('t'))), new RowShape([new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull)]), new Name('x'));
 
@@ -80,7 +80,7 @@ final class ProjectionTest extends TestCase
 
     public function testItemsReportsARowValueResultColumn(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $select = $semantics->diagnose('SELECT (1, 2)')->statement;
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([]));

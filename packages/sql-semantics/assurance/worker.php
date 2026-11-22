@@ -193,12 +193,7 @@ function observeCompound(Compound $query): array
 function analyzed(array $input): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
 {
     $semantics = new Semantics();
-    $tables = [];
-    foreach ($input['declarations'] as $ddl) {
-        $tables[] = $semantics->inspect($ddl);
-    }
-
-    return $semantics->analyze($input['sql'], $tables === [] ? null : $tables);
+    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
 }
 
 function directDelete(array $input): Delete

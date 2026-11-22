@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
  * byte strings). The result column is named after the function called.
  * Source: https://www.postgresql.org/docs/17/functions-string.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a trim of the end
  *     $trim = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Trim(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\TrimSide::Trailing, null, [new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()]);
  *     $trim->outputName()->value // => 'rtrim'

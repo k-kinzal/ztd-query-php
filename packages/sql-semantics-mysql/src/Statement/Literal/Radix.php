@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Literal;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-value-literals.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Naming the digit system of a literal
  *     (new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit, '101'))->radix // => \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit
  */

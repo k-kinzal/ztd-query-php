@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing the problem
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('t')))->message() // => "Not unique table/alias: 't'."
  */

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\Sqlite\Model\Validation;
+namespace Tests\Support;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Platform\Sqlite\Model\Contract\LeafKeys;
-use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Model\Contract\LeafKeys;
+use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
 
 /**
  * Compares the significant tokens of the analyzed SQL with those of the rendered SQL.

@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
  * INHERIT is not in the list: it is a keyword with a production of its own.
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option a word fills and whether it turns the attribute on
  *     $flag = \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleFlag::NoLogin;
  *     [$flag->option(), $flag->enabled()] // => ['canlogin', false]

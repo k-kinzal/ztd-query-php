@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
-use SqlSemantics\Platform\MySql\Semantics;
+use Tests\Support\Inspection;
 
 #[CoversClass(ShowTargets::class)]
 #[Medium]
@@ -16,7 +16,7 @@ final class ShowTargetsTest extends TestCase
 {
     public function testDeriveResolvesTheTableWithItsColumns(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $table = $semantics->diagnose('CREATE TABLE t (a INT, b INT)');
         $show = $semantics->diagnose('SHOW COLUMNS FROM t', [$table]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns::class, $show->statement);

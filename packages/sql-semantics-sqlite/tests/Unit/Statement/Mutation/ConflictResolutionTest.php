@@ -7,10 +7,10 @@ namespace Tests\Unit\Statement\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
+use Tests\Support\Inspection;
 
 #[CoversClass(ConflictResolution::class)]
 #[Medium]
@@ -24,7 +24,7 @@ final class ConflictResolutionTest extends TestCase
 
     public function testCasesAreReadAfterOrInInsertAndUpdate(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $insert = $semantics->inspect('insert or replace into t values (1)');
         $update = $semantics->inspect('update or fail t set a = 1');
 

@@ -30,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `bit`). The result column is named `substring`.
  * Source: https://www.postgresql.org/docs/17/functions-string.html. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a substring with a count only
  *     $substring = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\Substring(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     [$substring->start, $substring->outputName()->value] // => [null, 'substring']

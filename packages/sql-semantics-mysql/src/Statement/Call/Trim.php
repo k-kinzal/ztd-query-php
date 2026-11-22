@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_trim.
  * Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the parts of TRIM(LEADING 'x' FROM a)
  *     $trim = new \SqlSemantics\Platform\MySql\Statement\Call\Trim(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('a')), \SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading, new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']));
  *     [$trim->side, $trim->removed !== null] // => [\SqlSemantics\Platform\MySql\Statement\Call\TrimSide::Leading, true]

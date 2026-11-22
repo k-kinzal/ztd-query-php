@@ -7,9 +7,9 @@ namespace Tests\Unit\Statement\Query\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuseRule;
+use Tests\Support\Inspection;
 
 #[CoversClass(CallMisuseRule::class)]
 #[Medium]
@@ -17,7 +17,7 @@ final class CallMisuseRuleTest extends TestCase
 {
     public function testCasesTellWhichRuleACallBreaks(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $window = $semantics->diagnose('SELECT row_number()')->facts->diagnostics[0];
         $scalar = $semantics->diagnose('SELECT abs(1) OVER ()')->facts->diagnostics[0];
         $filter = $semantics->diagnose('SELECT abs(1) FILTER (WHERE 1)')->facts->diagnostics[0];

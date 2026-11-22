@@ -9,11 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -24,6 +22,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(JoinChain::class)]
 #[Medium]
@@ -31,7 +31,7 @@ final class JoinChainTest extends TestCase
 {
     public function testDeriveRelationShowsAMergedColumnOnce(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $using = $semantics->diagnose('SELECT * FROM t JOIN u USING (a)', [$t, $u]);
@@ -51,7 +51,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationMakesTheExtendedSideNullable(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->diagnose('SELECT * FROM t LEFT JOIN u ON t.a = u.a', [$t, $u]);
@@ -66,7 +66,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationCoalescesTheMergedColumnOfARightOrFullJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $right = $semantics->diagnose('SELECT * FROM t RIGHT JOIN u USING (a)', [$t, $u]);
@@ -84,7 +84,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationReportsAConstraintWrittenWithoutAJoin(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $on = $semantics->diagnose('SELECT * FROM t ON 1', [$t]);
         $using = $semantics->diagnose('SELECT * FROM t USING (a)', [$t]);
@@ -102,7 +102,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationReportsAnUnknownJoinTypeAndANaturalJoinWithAConstraint(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $unknown = $semantics->diagnose('SELECT * FROM t INNER LEFT JOIN u', [$t, $u]);
@@ -121,7 +121,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationListsCommaSeparatedTablesSideBySide(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $u = $semantics->diagnose('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->diagnose('SELECT * FROM t, u', [$t, $u]);
@@ -135,7 +135,7 @@ final class JoinChainTest extends TestCase
 
     public function testDeriveRelationLeavesTheShapeOpenForUndeclaredTables(): void
     {
-        $query = (new Semantics())->diagnose('SELECT * FROM t JOIN u USING (a)');
+        $query = (new Inspection())->diagnose('SELECT * FROM t JOIN u USING (a)');
         $shape = $query->shape();
 
         self::assertNull($query->fields());
@@ -147,10 +147,10 @@ final class JoinChainTest extends TestCase
 
     public function testRenderWritesTheFirstTermItsConstraintAndEachStep(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $t = new TableInput(new QualifiedName(new Name('t')));
         $u = new TableInput(new QualifiedName(new Name('u')));
-        $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain($t, [new JoinStep(new JoinOperator(true), $u, new JoinUsing([new Name('a')]))])));
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new JoinChain($t, [new JoinStep(new JoinOperator(true), $u, new JoinUsing([new Name('a')]))])));
 
         self::assertSame('SELECT * FROM t, u USING (a)', $built->toString());
         self::assertSame('SELECT * FROM t LEFT OUTER JOIN u ON t.a = u.a CROSS JOIN t t2', $semantics->diagnose('select * from t left outer join u on t.a = u.a cross join t t2')->toString());

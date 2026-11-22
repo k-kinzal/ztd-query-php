@@ -10,7 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A window specification the server rejects.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a RANGE offset without a single ordering column
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblem(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblemKind::RangeOffsetOrder))->message() // => 'RANGE with offset PRECEDING/FOLLOWING requires exactly one ORDER BY column'
  */

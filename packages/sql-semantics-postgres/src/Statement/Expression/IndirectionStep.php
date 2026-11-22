@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-SUBSCRIPTS,
  * https://www.postgresql.org/docs/17/sql-expressions.html#FIELD-SELECTION.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the field a step selects
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('city')))->field()->value // => 'city'
  */

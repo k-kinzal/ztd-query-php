@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * The names are not resolved: a declaration context holds no partitions.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-partition-operations.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Selecting two partitions
  *     $partitions = new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('p0'), new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('p1')]);
  *     count($partitions->names) // => 2

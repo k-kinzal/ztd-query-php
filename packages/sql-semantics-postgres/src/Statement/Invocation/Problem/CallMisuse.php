@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 /**
  * A call that uses a clause the function called does not accept.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Describing a window function called without OVER
  *     (new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuse(
  *         \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuseKind::WindowWithoutOver,

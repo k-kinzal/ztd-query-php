@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html,
  * https://dev.mysql.com/doc/refman/5.7/en/change-master-to.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Spelling an option in both vocabularies
  *     [\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Host->keyword(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy), \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Host->value] // => ['MASTER_HOST', 'SOURCE_HOST']
  */

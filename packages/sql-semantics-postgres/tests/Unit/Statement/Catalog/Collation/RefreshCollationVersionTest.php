@@ -14,11 +14,11 @@ final class RefreshCollationVersionTest extends TestCase
 {
     public function testRenderQuotesTheName(): void
     {
-        self::assertSame('ALTER COLLATION "de_DE" REFRESH VERSION', (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER COLLATION "de_DE" REFRESH VERSION')->toString());
+        self::assertSame('ALTER COLLATION "de_DE" REFRESH VERSION', (new \Tests\Support\Inspection())->inspect('ALTER COLLATION "de_DE" REFRESH VERSION')->toString());
     }
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect('ALTER COLLATION c REFRESH VERSION')->facts->diagnostics);
+        self::assertSame([], (new \Tests\Support\Inspection())->inspect('ALTER COLLATION c REFRESH VERSION')->facts->diagnostics);
     }
 }

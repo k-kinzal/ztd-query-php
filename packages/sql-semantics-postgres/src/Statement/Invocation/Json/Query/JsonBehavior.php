@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * Mirrors PostgreSQL's `JsonBehavior` node.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-QUERYING.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a default behavior
  *     $behavior = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehavior(\SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonBehaviorKind::Default, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     $behavior->kind->value // => 'DEFAULT'

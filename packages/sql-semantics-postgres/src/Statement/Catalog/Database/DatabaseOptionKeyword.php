@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database;
  * into, so `CONNECTION LIMIT 5` and `connection_limit 5` request the same.
  * Source: https://www.postgresql.org/docs/17/sql-createdatabase.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the option a keyword spelling names
  *     \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DatabaseOptionKeyword::ConnectionLimit->option() // => 'connection_limit'
  */

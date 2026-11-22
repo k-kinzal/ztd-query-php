@@ -31,7 +31,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * `json_object`.
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-JSON-CREATION-TABLE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading an empty object constructor
  *     $object = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectConstructor([]);
  *     [$object->pairs, $object->outputName()->value] // => [[], 'json_object']

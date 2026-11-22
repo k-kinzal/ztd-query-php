@@ -20,8 +20,8 @@ final class DeleteLoweringTest extends TestCase
     public function testLowerBindsTheTargetAliasToItsColumnSlot(): void
     {
         $sqlite = new Semantics();
-        $table = $sqlite->inspect('CREATE TABLE entries (id INTEGER, active INTEGER)');
-        $result = $sqlite->analyze('DELETE FROM entries AS e WHERE e.active = 1', [$table]);
+        $context = $sqlite->context(['CREATE TABLE entries (id INTEGER, active INTEGER)']);
+        $result = $sqlite->analyze('DELETE FROM entries AS e WHERE e.active = 1', $context);
 
         self::assertInstanceOf(Delete::class, $result);
         self::assertSame('entries', $result->target->table->value);

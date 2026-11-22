@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem;
  * https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS,
  * `ParseFuncOrColumn` in `src/backend/parser/parse_func.c` of PostgreSQL 17.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a filter on a plain function
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\CallMisuseKind::FilterOnPlainFunction->value // => 'FILTER specified, but %s is not an aggregate function'
  */

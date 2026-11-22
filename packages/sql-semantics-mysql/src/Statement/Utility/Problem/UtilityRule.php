@@ -9,7 +9,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the message of a rule
  *     \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::UnknownExplainFormat->value // => 'Unknown EXPLAIN format name'
  */

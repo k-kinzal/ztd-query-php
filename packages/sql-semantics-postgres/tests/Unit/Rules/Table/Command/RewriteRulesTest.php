@@ -14,7 +14,7 @@ final class RewriteRulesTest extends TestCase
 {
     public function testDeriveReachesOldAndNewWithAQualifierInTheActions(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE RULE r AS ON INSERT TO t DO ALSO SELECT new.a, b', $context);
@@ -25,14 +25,14 @@ final class RewriteRulesTest extends TestCase
 
     public function testWriteWritesTheRule(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->diagnose('CREATE RULE r AS ON SELECT TO t DO INSTEAD SELECT 1', []);
         self::assertSame('CREATE RULE r AS ON SELECT TO t DO INSTEAD SELECT 1', $statement->toString());
     }
 
     public function testDeriveReportsARelationThatCannotHaveRules(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $context = [$semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a'), $semantics->diagnose('CREATE FOREIGN TABLE f (a int) SERVER x')];
         self::assertSame(['rules on materialized views are not supported'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE RULE r AS ON INSERT TO m DO INSTEAD NOTHING', $context)->facts->diagnostics));
         self::assertSame(['relation "f" cannot have rules'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE RULE r AS ON INSERT TO f DO INSTEAD NOTHING', $context)->facts->diagnostics));

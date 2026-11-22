@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
  * The equals sign is optional and not written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-tablespace.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\CommentOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('cold')))->comment->value // => 'cold'
  */

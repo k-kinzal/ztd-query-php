@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [direct publication record](publication-v2.json) supersedes the opt-in entry points in the original criteria. The shared analyzer and each database façade publish complete IR from `analyze()`. The source audit checks the façade's call to the checked lowering path and the `analyzeAll()` loop. The workers exercise the façade directly. The earlier criteria retain their semantic domains, observations, budgets and mandatory fault cases.
+The [publication contract](publication-v3.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 

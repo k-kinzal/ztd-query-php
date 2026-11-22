@@ -8,10 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineChecks;
-use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
+use Tests\Support\Inspection;
 
 #[CoversClass(RoutineChecks::class)]
 #[Medium]
@@ -19,13 +19,13 @@ final class RoutineChecksTest extends TestCase
 {
     public function testOptionsReportsInvalidParallelModes(): void
     {
-        $operation = (new Semantics())->diagnose('ALTER FUNCTION f() PARALLEL fast', []);
+        $operation = (new Inspection())->diagnose('ALTER FUNCTION f() PARALLEL fast', []);
         self::assertEquals([new RoutineProblem(RoutineProblemKind::ParallelLevel)], $operation->facts->diagnostics);
     }
 
     public function testBodyReportsBodyProblems(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::MissingBody)], [new RoutineProblem(RoutineProblemKind::DuplicateBody)], [new RoutineProblem(RoutineProblemKind::InlineBodyLanguage)]],
             [
@@ -38,7 +38,7 @@ final class RoutineChecksTest extends TestCase
 
     public function testBodyReportsALinkSymbolOutsideLanguageC(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::SingleDefinition, 'sql')], []],
             [$semantics->diagnose("CREATE FUNCTION f() RETURNS int4 LANGUAGE sql AS 'a', 'b'")->facts->diagnostics, $semantics->diagnose("CREATE FUNCTION f() RETURNS int4 LANGUAGE C AS 'a', 'b'")->facts->diagnostics],
@@ -47,7 +47,7 @@ final class RoutineChecksTest extends TestCase
 
     public function testParametersReportsParameterProblems(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertEquals(
             [
                 [new RoutineProblem(RoutineProblemKind::OutputInTableFunction)],
@@ -66,7 +66,7 @@ final class RoutineChecksTest extends TestCase
 
     public function testParameterReportsAnInputAfterVariadic(): void
     {
-        $operation = (new Semantics())->diagnose("CREATE FUNCTION f(VARIADIC a int4[], b int4) LANGUAGE sql AS 'x'");
+        $operation = (new Inspection())->diagnose("CREATE FUNCTION f(VARIADIC a int4[], b int4) LANGUAGE sql AS 'x'");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame([null, RoutineProblemKind::VariadicNotLast], [(new RoutineChecks())->parameter($statement, $statement->parameters->parameters[1], false, false), (new RoutineChecks())->parameter($statement, $statement->parameters->parameters[1], true, false)]);
@@ -74,7 +74,7 @@ final class RoutineChecksTest extends TestCase
 
     public function testNamesReportsSharedInputOrOutputNames(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         self::assertEquals(
             [[new RoutineProblem(RoutineProblemKind::DuplicateParameter, 'a')], [], [new RoutineProblem(RoutineProblemKind::OutputInTableFunction), new RoutineProblem(RoutineProblemKind::DuplicateParameter, 'a')]],
             [

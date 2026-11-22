@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\Equivalence;
-use SqlSemantics\Platform\PostgreSql\Semantics;
+use Tests\Support\Inspection;
 use Throwable;
 
 /**
@@ -14,7 +14,7 @@ use Throwable;
  */
 final class RoundTripTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
+    public function __construct(private readonly Inspection $semantics, private readonly string $grammarVersion)
     {
     }
 

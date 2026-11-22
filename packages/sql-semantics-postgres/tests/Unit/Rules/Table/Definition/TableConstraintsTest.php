@@ -22,7 +22,7 @@ final class TableConstraintsTest extends TestCase
 
     public function testTypedElementsRefusesAColumnDefinition(): void
     {
-        $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
+        $semantics = new \Tests\Support\Inspection();
         $statement = $semantics->inspect('CREATE TABLE n (a int)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);

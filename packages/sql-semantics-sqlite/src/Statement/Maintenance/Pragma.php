@@ -30,10 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
  * name is not an error in SQLite either.
  * Source: https://sqlite.org/pragma.html. Status: Implemented.
  *
- * @visibility public
- * @example Reading a pragma with a schema and a value
- *     $pragma = (new \SqlSemantics\Platform\Sqlite\Semantics())->inspect('PRAGMA main.cache_size(4000)');
- *     [$pragma->statement->name->schema?->value, $pragma->statement->name->name->value, $pragma->statement->value->number->digits, $pragma->toString()] // => ['main', 'cache_size', '4000', 'PRAGMA main.cache_size = 4000']
+ * @visibility SqlSemantics
  */
 final class Pragma implements Statement
 {

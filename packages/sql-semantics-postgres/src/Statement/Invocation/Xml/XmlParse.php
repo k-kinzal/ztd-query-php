@@ -26,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  * column is named `xmlparse`.
  * Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-PRODUCING-XML-XMLPARSE. Status: Implemented.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading a document parse
  *     $parse = new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Xml\XmlParse(\SqlSemantics\Platform\PostgreSql\Statement\Option\XmlOption::Document, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     [$parse->option->value, $parse->whitespace] // => ['DOCUMENT', null]

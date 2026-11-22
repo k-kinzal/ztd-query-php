@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Option;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-password-management,
  * https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-account-locking.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the words of an option
  *     \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::ReuseInterval->words() // => ['PASSWORD', 'REUSE', 'INTERVAL']
  */

@@ -12,12 +12,12 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\ScalarFact;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use Tests\Support\Inspection;
 
 #[CoversClass(Facts::class)]
 #[Medium]
@@ -49,7 +49,7 @@ final class FactsTest extends TestCase
 
     public function testScalarAnswersTheFactOfAnExpressionOfTheOperation(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT 1 + NULL');
+        $operation = (new Inspection())->diagnose('SELECT 1 + NULL');
         $expression = $operation->field(0)->expression;
 
         self::assertNotNull($expression);
@@ -58,7 +58,7 @@ final class FactsTest extends TestCase
 
     public function testScalarRefusesAnExpressionOfAnotherOperation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('SELECT 1');
         $foreign = $semantics->diagnose('SELECT 1')->field(0)->expression;
 
@@ -70,7 +70,7 @@ final class FactsTest extends TestCase
 
     public function testRelationAnswersTheFactOfAnOccurrenceOfTheOperation(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT a FROM t');
+        $operation = (new Inspection())->diagnose('SELECT a FROM t');
 
         $fact = $operation->facts->relation($operation->singleNamedInput());
 
@@ -80,7 +80,7 @@ final class FactsTest extends TestCase
 
     public function testRelationRefusesAnOccurrenceOfAnotherOperation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('SELECT a FROM t');
         $foreign = $semantics->diagnose('SELECT a FROM t')->singleNamedInput();
 
@@ -91,7 +91,7 @@ final class FactsTest extends TestCase
 
     public function testQueryAnswersTheFactOfAQueryOfTheOperation(): void
     {
-        $operation = (new Semantics())->diagnose('SELECT x FROM (SELECT 1 AS x, 2 AS y)');
+        $operation = (new Inspection())->diagnose('SELECT x FROM (SELECT 1 AS x, 2 AS y)');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -102,7 +102,7 @@ final class FactsTest extends TestCase
 
     public function testQueryRefusesAQueryOfAnotherOperation(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('SELECT 1');
         $foreign = $semantics->diagnose('SELECT 1')->statement;
 
@@ -114,7 +114,7 @@ final class FactsTest extends TestCase
 
     public function testCoversTellsNodesOfTheOperationFromOthers(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('SELECT a FROM t');
         $statement = $operation->statement;
 
@@ -129,7 +129,7 @@ final class FactsTest extends TestCase
 
     public function testDeclarationsAndDiagnosticsAreTypedLists(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $operation = $semantics->diagnose('CREATE TABLE t (a INTEGER, a TEXT)');
 
         self::assertCount(1, $operation->facts->declarations);

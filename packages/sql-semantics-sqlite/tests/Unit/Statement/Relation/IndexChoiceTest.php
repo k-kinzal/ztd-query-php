@@ -9,14 +9,14 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+use Tests\Support\InspectedStatement;
+use Tests\Support\Inspection;
 
 #[CoversClass(IndexChoice::class)]
 #[Medium]
@@ -24,8 +24,8 @@ final class IndexChoiceTest extends TestCase
 {
     public function testRenderWritesIndexedByWithTheIndexName(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t')), null, new IndexChoice(new Name('i')))));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t')), null, new IndexChoice(new Name('i')))));
         $query = $semantics->inspect('select * from t indexed by i');
 
         self::assertSame('SELECT * FROM t INDEXED BY i', $built->toString());
@@ -36,8 +36,8 @@ final class IndexChoiceTest extends TestCase
 
     public function testRenderWritesNotIndexedWhenNoIndexIsNamed(): void
     {
-        $semantics = new Semantics();
-        $built = new Operation($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t')), null, new IndexChoice())));
+        $semantics = new Inspection();
+        $built = new InspectedStatement($semantics->context(), new Delete(new MutationTarget(new QualifiedName(new Name('t')), null, new IndexChoice())));
         $query = $semantics->inspect('SELECT * FROM t NOT INDEXED');
 
         self::assertSame('DELETE FROM t NOT INDEXED', $built->toString());

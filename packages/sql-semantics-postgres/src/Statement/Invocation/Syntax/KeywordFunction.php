@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax;
  * plain argument list calls the legacy `pg_catalog.json_object`.
  * Source: https://www.postgresql.org/docs/17/functions-string.html, https://www.postgresql.org/docs/17/functions-json.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling which keyword call searches pg_catalog alone
  *     \SqlSemantics\Platform\PostgreSql\Statement\Invocation\Syntax\KeywordFunction::JsonObject->catalogOnly() // => true
  */

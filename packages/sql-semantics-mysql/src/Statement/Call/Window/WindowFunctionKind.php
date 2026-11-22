@@ -10,7 +10,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Window;
  * Each case holds the keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the argument counts of a case
  *     \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Lead->arity() // => [1, 3]
  */

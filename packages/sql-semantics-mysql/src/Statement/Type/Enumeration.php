@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/enum.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the members of an enumeration
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('s'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('m')]);
  *     [$type->name(), $type->members[1]->value] // => ['ENUM', 'm']

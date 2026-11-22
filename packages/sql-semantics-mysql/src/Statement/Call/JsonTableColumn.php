@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
  * deriveColumns().
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Reading the output a column contributes
  *     $column = new \SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn(new \SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name('n'));
  *     $column->name->value // => 'n'

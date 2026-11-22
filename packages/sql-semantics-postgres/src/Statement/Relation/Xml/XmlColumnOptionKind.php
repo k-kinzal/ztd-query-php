@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml;
  * keyword) and `default` written so as those options and rejects any other
  * word. Source: https://www.postgresql.org/docs/17/functions-xml.html#FUNCTIONS-XML-PROCESSING-XMLTABLE.
  *
- * @visibility public
+ * @visibility SqlSemantics
  * @example Telling which kinds carry a value
  *     [\SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlColumnOptionKind::Path->valued(), \SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlColumnOptionKind::NotNull->valued()] // => [true, false]
  */
