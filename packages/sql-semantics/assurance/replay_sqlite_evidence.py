@@ -27,6 +27,7 @@ import run_sqlite_relational as relational
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
+import run_sqlite_unary as unary
 import run_sqlite_update as update
 import run_sqlite_update_returning as update_returning
 import run_sqlite_values as values
@@ -57,6 +58,7 @@ DOMAINS = {
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
+    unary.CONTRACT_NAME: (unary, unary.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
     group_filter.CONTRACT_NAME: (group_filter, group_filter.FIXTURE),

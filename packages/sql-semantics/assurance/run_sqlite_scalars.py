@@ -22,7 +22,7 @@ FIXTURE = DDL + "; INSERT INTO ir_scalars VALUES (1,'keep'),(1,'keep'),(2,X'FF')
 PROFILE = "sqlite-3.47.2/utf8/short-column-names/numbered-parameters"
 
 
-def evaluate(term, bindings, row=(), case_equal=None):
+def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparison_values):
     kind, *arguments = term
     if kind == "integer":
         return int(arguments[0])
@@ -50,15 +50,24 @@ def evaluate(term, bindings, row=(), case_equal=None):
     if kind == "column":
         return row[arguments[0]]
 
+    if kind == "unary":
+        operator, operand = arguments
+        value = evaluate(operand, bindings, row, case_equal, comparison_inputs)
+        if operator == "+" or value is None:
+            return value
+        if operator == "NOT":
+            return int(not truth(value))
+        assert operator == "~"
+        return ~convert("INTEGER", value)
     if kind == "cast":
-        return convert(arguments[0], evaluate(arguments[1], bindings, row, case_equal))
+        return convert(arguments[0], evaluate(arguments[1], bindings, row, case_equal, comparison_inputs))
     if kind == "case":
         base, branches, fallback = arguments
-        value = None if base is None else evaluate(base, bindings, row, case_equal)
+        value = None if base is None else evaluate(base, bindings, row, case_equal, comparison_inputs)
         result = fallback
         if base is None or value is not None:
             for when, then in branches:
-                decision = evaluate(when, bindings, row, case_equal)
+                decision = evaluate(when, bindings, row, case_equal, comparison_inputs)
                 if base is None:
                     matches = truth(decision) is True
                 elif case_equal is None:
@@ -69,11 +78,11 @@ def evaluate(term, bindings, row=(), case_equal=None):
                 if matches:
                     result = then
                     break
-        return None if result is None else evaluate(result, bindings, row, case_equal)
+        return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
     operator, left, right = arguments
-    a = evaluate(left, bindings, row, case_equal)
-    b = evaluate(right, bindings, row, case_equal)
+    a = evaluate(left, bindings, row, case_equal, comparison_inputs)
+    b = evaluate(right, bindings, row, case_equal, comparison_inputs)
     if kind == "logical":
         p, q = truth(a), truth(b)
         if operator == "AND":
@@ -83,7 +92,7 @@ def evaluate(term, bindings, row=(), case_equal=None):
     if kind == "comparison":
         if operator not in ("IS", "IS NOT") and (a is None or b is None):
             return None
-        a, b = comparison_values(left, right, a, b)
+        a, b = comparison_inputs(left, right, a, b)
         p, q = order_value(a), order_value(b)
         return int({"=": p == q, "IS": p == q, "IS NOT": p != q, "<>": p != q,
                     "<": p < q, "<=": p <= q, ">": p > q, ">=": p >= q}[operator])

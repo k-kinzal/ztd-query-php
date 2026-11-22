@@ -25,15 +25,9 @@ final class BinaryOperatorLowering
     public function lower(BinaryOperator $operator): ArithmeticOperator|ComparisonOperator|LogicalOperator
     {
         return match ($operator) {
-            BinaryOperator::Add => ArithmeticOperator::Add,
-            BinaryOperator::Subtract => ArithmeticOperator::Subtract,
-            BinaryOperator::Multiply => ArithmeticOperator::Multiply,
-            BinaryOperator::Divide => ArithmeticOperator::Divide,
-            BinaryOperator::Modulo => ArithmeticOperator::Remainder,
-            BinaryOperator::BitAnd => ArithmeticOperator::BitAnd,
-            BinaryOperator::BitOr => ArithmeticOperator::BitOr,
-            BinaryOperator::ShiftLeft => ArithmeticOperator::ShiftLeft,
-            BinaryOperator::ShiftRight => ArithmeticOperator::ShiftRight,
+            BinaryOperator::Add, BinaryOperator::Subtract, BinaryOperator::Multiply, BinaryOperator::Divide, BinaryOperator::Modulo,
+            BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::ShiftLeft, BinaryOperator::ShiftRight
+                => ArithmeticOperator::from($operator->value),
             BinaryOperator::And => LogicalOperator::And,
             BinaryOperator::Or => LogicalOperator::Or,
             BinaryOperator::Equal, BinaryOperator::DoubleEqual => ComparisonOperator::Equal,

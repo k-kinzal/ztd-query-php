@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -21,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral, int, int}
+ * @phpstan-type ScopedExpression array{Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression, int, int}
  */
 final class ExpressionScope
 {
@@ -50,7 +51,7 @@ final class ExpressionScope
                     'Column slot must belong to the statement source at a visible occurrence.',
                 ),
                 $expression instanceof Parameter => $payloadBytes += strlen($expression->label),
-                $expression instanceof CastExpression => $pending[] = [$expression->operand, $height + 1, $visibility],
+                $expression instanceof CastExpression, $expression instanceof UnaryExpression => $pending[] = [$expression->operand, $height + 1, $visibility],
                 $expression instanceof TextLiteral => $payloadBytes += strlen($expression->value) + substr_count($expression->value, "'"),
                 $expression instanceof BlobLiteral => $payloadBytes += strlen($expression->hex),
                 $expression instanceof RealLiteral => $payloadBytes += strlen($expression->whole) + strlen($expression->fraction ?? '') + strlen($expression->exponent ?? ''),

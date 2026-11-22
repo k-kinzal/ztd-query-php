@@ -137,7 +137,7 @@ def equality(source, base, when, value, decision):
     return order_value(value) == order_value(decision)
 
 
-def expected(request):
+def expected(request, comparison_inputs=comparison_values):
     bindings = request["bindings"]
     if request.get("operation") == "values":
         sources = [()]
@@ -157,8 +157,8 @@ def expected(request):
     def compare(base, when, value, decision):
         return equality(source, base, when, value, decision)
 
-    rows = [[typed(evaluate(expr, bindings, row, compare)) for expr in fields]
-            for row in sources if predicate is None or truth(evaluate(predicate, bindings, row, compare)) is True
+    rows = [[typed(evaluate(expr, bindings, row, compare, comparison_inputs)) for expr in fields]
+            for row in sources if predicate is None or truth(evaluate(predicate, bindings, row, compare, comparison_inputs)) is True
             for fields in operands]
     return {"names": labels, "parameters": first, "parameterCount": max(map(int, first), default=0),
             "rows": sorted(rows), "readOnly": True, "changes": 0}

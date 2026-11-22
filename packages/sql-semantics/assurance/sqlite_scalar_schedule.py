@@ -19,7 +19,7 @@ class ScalarSchedule(NamedTuple):
     comparator_controls: Callable
 
 
-def execute_schedule(args, specification, db, worker_factory, schedule):
+def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe):
     domain, settings = specification["finite"], specification["exploration"]
     seen, observed = Counter(), Counter()
     comparator = schedule.comparator_controls()
@@ -30,7 +30,7 @@ def execute_schedule(args, specification, db, worker_factory, schedule):
             for key, current, item in schedule.requests(specification):
                 ledger.record(key, "attempted", input=current, expected=item)
                 reply = worker.request(current)
-                probe(item, reply, db, ledger, key, original=current.get("sql"))
+                observe(item, reply, db, ledger, key, original=current.get("sql"))
                 if key.startswith("finite/"):
                     seen[schedule.finite_id(reply, domain)] += 1
                 if key.startswith("seed/"):

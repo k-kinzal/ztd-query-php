@@ -9,6 +9,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\NumericLiteralLowering;
@@ -33,7 +35,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral as Par
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral as ParsedText;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
@@ -49,7 +54,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -67,10 +72,18 @@ final class ExpressionLowering
             };
         }
         if ($expression instanceof Unary) {
-            return (new NumericLiteralLowering())->signed($expression);
+            return $this->prefix($expression, $binding);
         }
 
         return match (true) {
+            $expression instanceof NullTest => new Comparison(
+                match ($expression->form) {
+                    NullTestForm::IsNull => ComparisonOperator::Is,
+                    NullTestForm::NotNull, NullTestForm::NotNullWords => ComparisonOperator::IsNot,
+                },
+                $this->lower($expression->operand, $binding),
+                new NullLiteral(),
+            ),
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),
             $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
@@ -80,6 +93,26 @@ final class ExpressionLowering
             $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
+        };
+    }
+
+    /**
+     * Selects the literal or computed role of a prefix operation.
+     * @throws InvalidConstruction When a signed literal or resolved operand is invalid
+     */
+    public function prefix(Unary $expression, SourceBinding $binding): Arithmetic|HexIntegerLiteral|IntegerLiteral|RealLiteral|UnaryExpression
+    {
+        $literal = (new NumericLiteralLowering())->signed($expression);
+        if ($literal !== null) {
+            return $literal;
+        }
+        $operand = $this->lower($expression->operand, $binding);
+
+        return match ($expression->operator) {
+            UnaryOperator::Plus => new UnaryExpression(UnaryKind::Plus, $operand),
+            UnaryOperator::Not => new UnaryExpression(UnaryKind::Not, $operand),
+            UnaryOperator::BitNot => new UnaryExpression(UnaryKind::Complement, $operand),
+            UnaryOperator::Minus => new Arithmetic(ArithmeticOperator::Subtract, new IntegerLiteral('0'), $operand),
         };
     }
 

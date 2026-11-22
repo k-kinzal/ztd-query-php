@@ -12,9 +12,12 @@ use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -62,5 +65,21 @@ final class ExpressionLoweringTest extends TestCase
 
         self::assertInstanceOf(CastExpression::class, $cast);
         self::assertSame(CastTarget::Integer, $cast->target);
+    }
+
+    public function testPrefixKeepsLogicalNegationAroundTheNumberedSlot(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT NOT ?02');
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $column = $select->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(Unary::class, $column->expression);
+        $value = (new ExpressionLowering())->prefix($column->expression, new SourceBinding($operation->binding(), $select->from));
+
+        self::assertInstanceOf(UnaryExpression::class, $value);
+        self::assertSame(UnaryKind::Not, $value->kind);
+        self::assertInstanceOf(Parameter::class, $value->operand);
+        self::assertSame(2, $value->operand->slot);
     }
 }

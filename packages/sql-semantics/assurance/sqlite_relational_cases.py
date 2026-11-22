@@ -73,7 +73,7 @@ def children(expression):
             yield from children(when)
             yield from children(result)
         yield from children(expression[3])
-    elif expression[0] == "cast":
+    elif expression[0] in ("cast", "unary"):
         yield from children(expression[2])
 
 

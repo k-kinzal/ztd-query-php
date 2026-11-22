@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral as ParsedHex;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as ParsedInteger;
@@ -45,25 +43,20 @@ final class NumericLiteralLowering
     }
 
     /**
-     * Resolves the sign of a grouped or ungrouped numeric literal.
-     *
-     * @throws InvalidConstruction When the operand or unary operation has another role
+     * Resolves a signed numeric literal through grouping and intervening plus operations.
      */
-    public function signed(Unary $expression): IntegerLiteral|HexIntegerLiteral|RealLiteral
+    public function signed(Unary $expression): IntegerLiteral|HexIntegerLiteral|RealLiteral|null
     {
-        Check::input(
-            in_array($expression->operator, [UnaryOperator::Plus, UnaryOperator::Minus], true),
-            'This expression has no complete SQLite scalar representation.',
-        );
+        if ($expression->operator !== UnaryOperator::Plus && $expression->operator !== UnaryOperator::Minus) {
+            return null;
+        }
         $operand = $expression->operand;
-        while ($operand instanceof Grouped) {
+        while ($operand instanceof Grouped || ($operand instanceof Unary && $operand->operator === UnaryOperator::Plus)) {
             $operand = $operand->operand;
         }
-        Check::input(
-            $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal,
-            'A complete signed literal requires a single numeric literal operand.',
-        );
 
-        return $this->lower($operand, $expression->operator === UnaryOperator::Minus);
+        return $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal
+            ? $this->lower($operand, $expression->operator === UnaryOperator::Minus)
+            : null;
     }
 }

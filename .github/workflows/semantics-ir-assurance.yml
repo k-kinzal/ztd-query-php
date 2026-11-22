@@ -286,6 +286,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-numeric-evidence"
+      - name: Collect SQLite prefix operator and NULL test observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_unary.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-unary-evidence"
       - name: Collect SQLite literal default observations
         if: ${{ !cancelled() }}
         env:
@@ -400,6 +409,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-case-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-cast-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-numeric-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-unary-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/

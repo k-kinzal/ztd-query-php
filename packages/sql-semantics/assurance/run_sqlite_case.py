@@ -16,7 +16,7 @@ CONTRACT = "a8a4eddad1e405a41566c48439c7b521f2c787a606d90b93b8fcbbf875fa9179"
 EXCEPTION = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\"
 
 
-def probe(item, reply, db, ledger=None, key=None, original=None):
+def probe(item, reply, db, ledger=None, key=None, original=None, prediction=expected):
     require(reply["status"] == "constructed" and reply["profile"] == PROFILE, "sqlite-case-positive-rejected", reply)
     fields = ["rows", "operation"] if item.get("operation") == "values" else ["source", "columns", "where", "orderBy", "joins"]
     require(all(reply[field] == item[field] for field in fields), "sqlite-case-structure-mismatch",
@@ -28,9 +28,9 @@ def probe(item, reply, db, ledger=None, key=None, original=None):
         observed["original"] = db.observe(original, item["bindings"])
     if ledger is not None:
         ledger.record(key, "observed", **observed)
-    prediction = expected(item)
+    reference = prediction(item)
     for observation in observed.values():
-        compare(prediction, observation)
+        compare(reference, observation)
     if ledger is not None:
         ledger.record(key, "compared")
 
