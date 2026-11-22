@@ -52,6 +52,7 @@
   },
   "negative": ["Nonpositive order position", "Order position beyond projection width", "A SQL sort expression outside the closed output roles", "A negative row count at direct construction", "An offset above the registered bound", "Non-order value in an order list"],
   "faults": ["Emit ALL in place of DISTINCT", "Reverse an effective order direction", "Swap row count and offset"],
+  "revisionNotes": "SELECT DISTINCT becomes a positive observation. Retain the projection runner's unsupported-clause rejection using GROUP BY instead. Keep the earlier finite domain, seed budget and required native releases.",
   "evidence": "Record raw engine row order and native metadata for direct and analyzed cases. Verify typed bags within independently computed bands and test over-selection, duplicate loss, reversed bands, ignored NULL placement and bounds with known counterexamples.",
   "trust": ["Closed runtime constructors, shape audit and emitter", "The native integer and Boolean semantics under the earlier profile", "An independent band-membership observation and pinned PDO database observer"],
   "sources": ["https://dev.mysql.com/doc/refman/8.4/en/select.html", "https://dev.mysql.com/doc/refman/8.4/en/working-with-null.html", "https://www.postgresql.org/docs/17/sql-select.html", "https://www.postgresql.org/docs/17/queries-order.html"]

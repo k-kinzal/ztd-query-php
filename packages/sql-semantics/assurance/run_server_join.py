@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 import time
 from collections import Counter
 from pathlib import Path
@@ -14,7 +15,8 @@ from server_cases import observation
 from server_join_cases import case, expected, finite_id, finite_ids, fixture, is_join, join, leaves, requests, slot, table
 from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, RenderFault, check_render_faults
 
-CONTRACT = "5b39afadadce8151ab181298a97955489a11919287b3b47566923468e7ee9554"
+LABEL = "join"
+CONTRACT = "1dd8c227ba1638bb1591d4f12c3f9f199ba85e50fc6d24fb9e03b57ff8705b71"
 
 
 def specifications():
@@ -30,15 +32,28 @@ def check_value(item, response):
             {"expected": item, "response": response})
 
 
-def probe(item, response, db):
-    check_value(item, response)
-    actual = observation(db.request({"sql": response["sql"]}))
-    require(actual["status"] == "rows", "server-join-native-rejection", {"sql": response["sql"], "observation": actual})
+def check_observation(item, actual, sql):
+    require(actual["status"] == "rows", "server-join-native-rejection", {"sql": sql, "observation": actual})
     prediction = expected(item)
     try:
         same(prediction, actual)
     except Failure as failure:
-        raise Failure(failure.signal, {"sql": response["sql"], "expected": prediction, "observed": actual}) from failure
+        raise Failure(failure.signal, {"sql": sql, "expected": prediction, "observed": actual}) from failure
+
+
+def check_fault_witness(item, witness):
+    same(expected(item), witness["expected"])
+    require(witness["observed"]["status"] == "rows", "server-join-fault-native")
+
+
+def controls():
+    return {}
+
+
+def probe(item, response, db, domain):
+    domain.check_value(item, response)
+    actual = domain.observation(db.request({"sql": response["sql"]}))
+    domain.check_observation(item, actual, response["sql"])
     return actual
 
 
@@ -48,7 +63,7 @@ def required_forms(engine):
             "projection/first", "projection/later", *("kind/" + kind for kind in kinds)}
 
 
-def sample_forms(forms, response):
+def sample_forms(forms, response, _):
     def operands(expression):
         if expression[0] == "slot":
             forms["projection/" + ("later" if len(expression) == 3 else "first")] += 1
@@ -72,42 +87,49 @@ def sample_forms(forms, response):
         operands(expression)
 
 
-def execute(args, specification, tag, worker, db):
+def execute(args, specification, tag, worker, db, domain=None):
+    if domain is None:
+        domain = sys.modules[__name__]
+    label = domain.LABEL
     seen, forms = Counter(), Counter()
-    current = None
+    key = current = None
     with (args.out / "events.jsonl").open("w") as output:
         ledger = Ledger(output)
         try:
-            for key, current, item, rejection in requests(args.engine, tag, specification):
+            for key, current, item, rejection in domain.requests(args.engine, tag, specification):
                 ledger.record(key, "attempted", input=current)
                 response = worker.request(current)
                 if rejection is not None:
-                    require(response["status"] == "rejected" and rejection in response["message"], "server-join-negative-boundary", response)
+                    require(response["status"] == "rejected" and rejection in response["message"], f"server-{label}-negative-boundary", response)
                     ledger.record(key, "rejected", response=response)
                     continue
-                check_value(item, response)
+                domain.check_value(item, response)
                 ledger.record(key, "constructed", response=response)
-                details = {"observation": probe(item, response, db)}
+                details = {"observation": probe(item, response, db, domain)}
                 if "sql" in current:
-                    original = observation(db.request({"sql": current["sql"]}))
-                    same(expected(item), original)
+                    original = domain.observation(db.request({"sql": current["sql"]}))
+                    domain.check_observation(item, original, current["sql"])
                     details["original"] = original
                 ledger.record(key, "compared", **details)
                 if key.startswith("finite/"):
-                    seen[finite_id(args.engine, response)] += 1
+                    seen[domain.finite_id(args.engine, response)] += 1
                 elif key.startswith("seed/"):
-                    sample_forms(forms, response)
-            require(set(seen) == finite_ids(args.engine, specification) and set(seen.values()) == {1},
-                    "server-join-finite-incomplete", list(seen.items()))
-            require(required_forms(args.engine) <= forms.keys(), "server-join-exploration-incomplete",
-                    sorted(required_forms(args.engine) - forms.keys()))
+                    domain.sample_forms(forms, response, args.engine)
+            require(set(seen) == domain.finite_ids(args.engine, specification) and set(seen.values()) == {1},
+                    f"server-{label}-finite-incomplete", list(seen.items()))
+            require(domain.required_forms(args.engine) <= forms.keys(), f"server-{label}-exploration-incomplete",
+                    sorted(domain.required_forms(args.engine) - forms.keys()))
             execution = ledger.verify()
-            require(execution["rejected"] == len(specification["negative"]), "server-join-rejections-incomplete")
+            require(execution["rejected"] == len(specification["negative"]), f"server-{label}-rejections-incomplete")
             return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution}
         except Exception as error:
+            signal = error.signal if isinstance(error, Failure) else "unexpected-error"
+            detail = error.detail if isinstance(error, Failure) else None
+            if key in ledger.events and ledger.events[key][-1] not in {"compared", "rejected"}:
+                ledger.record(key, "timeout" if signal == "timeout" else "failed", signal=signal, detail=detail)
             write_json(args.out / "counterexample.json", {
-                "original": current, "failure": str(error), "shrunk": None,
-                "signal": error.signal if isinstance(error, Failure) else "unexpected-error",
+                "id": key, "original": current, "failure": str(error), "detail": detail, "shrunk": None,
+                "signal": signal, "execution": dict(ledger.counts),
             })
             raise
 
@@ -127,8 +149,9 @@ def faults(engine, tag):
     ]
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(domain):
+    label = domain.LABEL
+    parser = argparse.ArgumentParser(description=domain.__doc__)
     parser.add_argument("--candidate", required=True, type=Path)
     parser.add_argument("--tool-autoload", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
@@ -139,39 +162,40 @@ def main():
     args.candidate, args.tool_autoload, args.out = args.candidate.resolve(), args.tool_autoload.resolve(), args.out.resolve()
     require(args.out != args.candidate and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True, exist_ok=False)
-    specification, profiles = specifications()
-    require(args.release in profiles[args.engine]["releases"], "server-join-release-not-registered", args.release)
+    specification, profiles = domain.specifications()
+    require(args.release in profiles[args.engine]["releases"], f"server-{label}-release-not-registered", args.release)
     commit, manifest = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", manifest)
     tag = version_tag(args.engine, args.release)
-    mutations = faults(args.engine, tag)
+    mutations = domain.faults(args.engine, tag)
     try:
+        comparator_controls = domain.controls()
         structure = shape(args, dialect=args.engine)
         deadline = time.monotonic() + specification["exploration"]["timeoutSecondsPerRelease"]
         with Observer(args.engine, deadline) as db:
             check_profile(args.engine, args.release, db)
             same({"status": "fixture"}, db.request({"fixture": fixture(args.engine)}))
             with Worker(args, deadline, script="server_worker.php") as php:
-                result = execute(args, specification, tag, php, db)
-                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment)
+                result = execute(args, specification, tag, php, db, domain)
+                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, comparatorControls=comparator_controls)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
-            result["faults"] = check_render_faults(args, db, mutations, probe, script="server_worker.php")
-            require(len(result["faults"]) == len(specification["faults"]), "server-join-faults-incomplete")
+            result["faults"] = check_render_faults(args, db, mutations, lambda item, value, db: probe(item, value, db, domain), script="server_worker.php")
+            require(len(result["faults"]) == len(specification["faults"]), f"server-{label}-faults-incomplete")
     except Exception as error:
         write_json(args.out / "run-failure.json", {
-            "candidate": commit, "contract": CONTRACT, "engine": args.engine, "release": args.release,
+            "candidate": commit, "contract": domain.CONTRACT, "engine": args.engine, "release": args.release,
             "signal": error.signal if isinstance(error, Failure) else "unexpected-error", "failure": str(error),
         })
         raise
     verify_candidate(args.candidate, commit, manifest)
     write_json(args.out / "index.json", {
-        "status": "provisional-server-join", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
-        "contract": CONTRACT, "distribution": digest(args.out / "distribution.json"), "toolDigests": tools(),
+        "status": f"provisional-server-{label}", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
+        "contract": domain.CONTRACT, "distribution": digest(args.out / "distribution.json"), "toolDigests": tools(),
         "engine": args.engine, "release": args.release, "isolation": "none" if args.local else IMAGE,
         "shape": structure, "eventsDigest": digest(args.out / "events.jsonl"), **result,
     })
     (args.out / "summary.md").write_text(
-        f"# Native {args.engine} {args.release} join evidence\n\nCandidate `{commit}`.\n\n"
+        f"# Native {args.engine} {args.release} {label} evidence\n\nCandidate `{commit}`.\n\n"
         f"All {len(result['finiteIds'])} finite identities observed. The ledger recorded "
         f"{result['execution']['compared']} comparisons and {result['execution']['rejected']} specified rejections. "
         f"All {len(result['faults'])} registered faults were detected.\n\n[Evidence index](index.json) · [Events](events.jsonl)\n"
@@ -180,4 +204,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.modules[__name__])

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -32,8 +33,9 @@ final class SelectLowering
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
         Check::input(
             $statement->groupBy === [] && $statement->having === null
-                && $statement->windows === [] && $statement->distinct === null && $statement->into === null && $statement->options === null,
-            'Complete PostgreSQL IR currently supports unordered bag projections.',
+                && $statement->windows === [] && ($statement->distinct?->on ?? []) === [] && $statement->into === null
+                && ($statement->options?->locking ?? []) === [] && !($statement->options?->readOnly ?? false),
+            'Complete PostgreSQL IR currently supports projections with positional result selection.',
         );
         Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');
         $expressions = new ExpressionLowering();
@@ -52,6 +54,12 @@ final class SelectLowering
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding, $catalogFirst), new Identifier($name->value));
         }
 
-        return new Select($results, $binding->source(), $profile->grammar, $where);
+        $result = new ResultLowering();
+        $order = [];
+        foreach ($statement->options?->order ?? [] as $key) {
+            $order[] = $result->order($key);
+        }
+
+        return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));
     }
 }

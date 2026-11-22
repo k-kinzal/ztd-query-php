@@ -90,12 +90,27 @@ function constructSelect(string $platform, array $input): SemanticsIR
     $column = $namespace . 'ResultColumn';
     $select = $namespace . 'Select';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $order = $namespace . 'Ordering\\Order';
+    $limit = $namespace . 'Ordering\\Limit';
+    $keys = [];
+    foreach ($input['orderBy'] ?? [] as $raw) {
+        $keys[] = $raw === null ? null : new $order($raw[0], $raw[1], ...($input['dialect'] === 'postgres' ? [$raw[2]] : []));
+    }
+    $bound = $input['limit'] ?? null;
     $from = $input['source'] === null ? null : constructSource($namespace, $input['source'], $input['dialect']);
     foreach ($input['columns'] as [$expr, $name]) {
         $columns[] = new $column(constructOperand($namespace, $expr), new $identifier($name));
     }
 
-    return new $select($columns ?? [], $from, $release::from($input['release']), constructPredicate($namespace, $input['where'] ?? null));
+    return new $select(
+        $columns ?? [],
+        $from,
+        $release::from($input['release']),
+        constructPredicate($namespace, $input['where'] ?? null),
+        $input['distinct'] ?? false,
+        $keys,
+        $bound === null ? null : new $limit($bound[0], $bound[1]),
+    );
 }
 
 function analyzeStatement(string $platform, array $input): SemanticsIR
@@ -196,6 +211,9 @@ function observeStatement(array $input): array
         'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
         'source' => $source === null ? null : observeSource($source, $input['dialect'], $namespace),
         'where' => observePredicate($namespace, $value->where),
+        'distinct' => $value->distinct,
+        'orderBy' => array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
+        'limit' => $value->limit === null ? null : [$value->limit->count, $value->limit->offset],
         'sql' => $value->toString(),
     ];
 }

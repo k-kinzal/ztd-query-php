@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\From\Join;
+use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
@@ -27,7 +28,7 @@ final class SelectSql
         foreach ($select->columns as $column) {
             $items[] = $this->expression($column->expression, $source) . ' AS ' . $column->name->quoted();
         }
-        $sql = 'SELECT ' . implode(', ', $items);
+        $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {
             $sql .= ' FROM ' . $this->from($source);
         }
@@ -35,7 +36,7 @@ final class SelectSql
             $sql .= ' WHERE ' . $this->predicate($select->where, $source);
         }
 
-        return $sql;
+        return $sql . (new ResultSql())->render($select);
     }
 
     /**

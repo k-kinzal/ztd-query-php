@@ -169,6 +169,12 @@ if ($dialect !== 'sqlite') {
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
     $properties['Select']['where'] = $conditions;
+    $properties['Select']['distinct'] = ['bool'];
+    $properties['Select']['orderBy'] = ['array'];
+    $properties['Select']['limit'] = ['?Ordering\\Limit'];
+    $properties['Ordering\\Order'] = ['position' => ['int'], 'descending' => ['bool'], 'nullsFirst' => ['bool']];
+    $properties['Ordering\\Limit'] = ['count' => [$dialect === 'mysql' ? 'int' : '?int'], 'offset' => ['int']];
+    $methods['Ordering\\Order'] = $methods['Ordering\\Limit'] = ['__construct'];
     $properties['From\\Join'] = [
         'kind' => ['From\\JoinKind'], 'left' => ['From\\Join', 'TableSource'],
         'right' => ['From\\Join', 'TableSource'], 'on' => $conditions,
@@ -179,8 +185,8 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         $enumCases['From\\JoinKind']['Full'] = 'FULL';
     }
-    array_push($internal, 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering');
-    $pureCollaborators[] = 'From\\OccurrenceScope';
+    array_push($internal, 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering', 'Ordering\\ResultLowering', 'Ordering\\ResultSql');
+    array_push($pureCollaborators, 'From\\OccurrenceScope', 'Ordering\\ResultSql');
     $internal[] = 'Mutation\\DeleteLowering';
     $properties['Mutation\\Delete'] = [
         'target' => ['TableSource'],
@@ -303,9 +309,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v3.json';
+    $storagePath = __DIR__ . '/value-storage-v4.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '1bde7a53b453c3bd9d263e6a25cd9b544cfe6ed536d33c12354fd628dd7d5e96',
+        hash_file('sha256', $storagePath) === '0d7b5e299ed28ce59f8185f302394706e3d100e05acd7f386de02e9e79d54abe',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

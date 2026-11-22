@@ -130,6 +130,8 @@ def fixture(dialect):
     if dialect == "postgres":
         setup += [f"CREATE TABLE {child} () INHERITS ({schema}.ir_join_accounts)",
                   f"INSERT INTO {child} VALUES (-1,2),(1,3)"]
+        setup.extend(f"ANALYZE {schema}.{name}" for name in NAMES_BY_TABLE.values())
+        setup.append(f"ANALYZE {child}")
     return setup
 
 
