@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/server-delete-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "All native releases pinned in server-projection-v1.json with the same default lexical and catalog profiles.",
+  "scope": "One top-level DELETE of a declared ordinary base table, with an optional truth condition based on Boolean constants, NULL, signed 32-bit comparisons, logical operators and scalar null tests. Preserve PostgreSQL ONLY and explicit inclusion of descendants.",
+  "open": ["Other mutation roots, WITH, table or partition lists, DELETE modifiers, ordered or bounded deletes", "USING, cursors, RETURNING and filter forms outside the described scalar roles"],
+  "constructors": {
+    "Delete": {
+      "type": "Mutation/Delete",
+      "fields": ["target", "where", "release"],
+      "invariants": ["Every predicate slot belongs to the one target occurrence", "Target identity is absolute", "The closed predicate role implies a native Boolean or unknown result"],
+      "sql": "Qualify the target name, emit ONLY for its scoped PostgreSQL case, and include the recorded filter if present. An alias on input may be removed after its references resolve.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "IntegerComparison": {
+      "type": "Predicate/IntegerComparison",
+      "fields": ["operator", "left", "right"],
+      "invariants": ["The operands are signed-32-bit literals or resolved target slots", "The operator is a closed alternative", "Either operand may evaluate to NULL when the referenced column is nullable"],
+      "sql": "Preserve both operand positions. Emit the qualified builtin operator in PostgreSQL and the native comparator in MySQL.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "IntegerOperator": {
+      "type": "Predicate/IntegerOperator",
+      "invariants": ["The six exact identities are =, <>, <, <=, > and >=."],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "additionalPublicRoots": ["Mutation/Delete"],
+  "analysis": "Bind a complete ordinary target declaration, including the inherited-table policy in PostgreSQL. Compare only two native signed integer operands. Resolve PostgreSQL operator identity from an explicit pg_catalog qualifier or a pg_catalog-first operator search path. Accept native predicates with absolute or unambiguous alias and column spellings.",
+  "externalInterpretation": "Evaluation uses the named initial table, the same triggers and descendants, and the profile of the observed server. No dynamic database, privilege or fixture state enters the IR.",
+  "observations": ["Command row count and no returned result columns", "Remaining parent, descendant and control rows by physical table, with duplicates and typed NULL preserved", "Recorded deletion log by row and target", "Rollback restores the fixture before the next candidate statement"],
+  "finite": {
+    "operands": ["target slot 0", "target slot 1", "literal 0"],
+    "operators": ["=", "<>", "<", "<=", ">", ">="],
+    "additionalFilters": ["omitted", "TRUE", "FALSE", "NULL"],
+    "composedFilters": ["NOT NULL", "target slot 0 IS NULL", "target slot 1 IS NULL AND target slot 0 < 2"],
+    "identitiesPerPolicy": 61,
+    "policies": {"mysql": ["single table"], "postgres": ["including descendants", "ONLY"]},
+    "completeness": "Each observed predicate shape and target policy maps to exactly one Cartesian identity. Check exact membership and uniqueness."
+  },
+  "exploration": {"seeds": [2089, 5107, 8221], "casesPerSeed": 30, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
+  "negative": ["Comparison left slot absent", "Comparison right slot absent", "Invisible occurrence nested in a null test", "Unresolved target", "Non-integer target slot", "Nonnative DELETE clause"],
+  "faults": ["Target the other fixture table", "Omit the filter", "Reverse the comparison operands", "Negate NULL as false"],
+  "dialectFaults": {"postgres": ["Omit ONLY"]},
+  "observer": "Run each candidate SQL statement on a dedicated disposable fixture server. Admit a single canonical DELETE against an approved fixture target. The observer accepts recursive truth syntax over the registered scalar tokens and rejects nested SQL queries and multiple statements. Establish fixture state through the trusted observer. Compare observed command count, all physical table contents, trigger records and restoration after rollback. Report authorization, execution errors and timeout separately from semantic mismatch.",
+  "evidence": "Preserve the exact native release, worker, tool and distribution digests, requests, state observations, and effective constraint and fault counts. Verify the result through independent replay of the recorded observations.",
+  "argument": "A complete value closes every column reference over the resolved target. A native predicate is evaluated on one target row and only true removes that row. NULL and duplicates are independent observations. The explicit ONLY operation excludes descendants. The database supplies permission, trigger and runtime semantics.",
+  "trust": ["Dialect profile and catalog binding", "Native server engine and disposable fixture custody", "PHP closed types, checked scope, and quoted native emitter", "Independent effect model, shape audit, comparator and replay"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/delete.html", "https://www.postgresql.org/docs/17/sql-delete.html"]
+}

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/server_connection.php';
+require __DIR__ . '/server_predicate_scope.php';
 
 $engine = $argv[1];
 [$pdo, $environment] = connectFixture($engine);
@@ -47,12 +48,11 @@ function admitUpdate(string $sql, string $schema): bool
     $integer = '-?[0-9]{1,10}';
     $operand = '(?:' . $column . '|NULL|' . $integer . '|CAST\\(' . $integer . ' AS pg_catalog\\.int4\\))';
     $operation = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
-    $condition = $operand . '\\h*' . $operation . '\\h*' . $operand;
-    $where = '(?:TRUE|FALSE|NULL|' . $condition . '|\\(' . $condition . '\\))';
     $assignment = $column . '\\h*=\\h*' . $operand;
 
     return preg_match('/\\AUPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET '
-        . $assignment . '(?:\\h*,\\h*' . $assignment . ')*(?: WHERE ' . $where . ')?\\z/iD', $sql) === 1;
+        . $assignment . '(?:\\h*,\\h*' . $assignment . ')*(?: WHERE (?&truth))?\\z'
+        . fixturePredicateDefinition($operand, $operation) . '/iD', $sql) === 1;
 }
 
 function updatedRows(PDO $pdo, string $engine, string $schema): array

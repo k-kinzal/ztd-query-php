@@ -8,6 +8,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Limit;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -47,7 +49,7 @@ final class Select implements SemanticsIR
         array $columns,
         public readonly TableSource|Join|null $source = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
-        public readonly BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly bool $distinct = false,
         array $orderBy = [],
         public readonly ?Limit $limit = null,

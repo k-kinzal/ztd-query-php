@@ -148,16 +148,27 @@ function observeSource(object $source, string $dialect, string $namespace): arra
 
 function constructPredicate(string $namespace, ?array $test): ?object
 {
+    if ($test === null) {
+        return null;
+    }
     $comparison = $namespace . 'Predicate\\IntegerComparison';
     $operator = $namespace . 'Predicate\\IntegerOperator';
-    return match (true) {
-        $test === null => null,
-        $test[0] === 'comparison' => new $comparison(
+    $logical = $namespace . 'Predicate\\LogicalPredicate';
+    $logicalOperator = $namespace . 'Predicate\\LogicalOperator';
+    $nullTest = $namespace . 'Predicate\\NullTest';
+    return match ($test[0]) {
+        'comparison' => new $comparison(
             $operator::from($test[1]),
             constructOperand($namespace, $test[2]),
             constructOperand($namespace, $test[3])
         ),
-        default => constructOperand($namespace, $test),
+        'logic' => new $logical(
+            $logicalOperator::from($test[1]),
+            constructPredicate($namespace, $test[2]),
+            constructPredicate($namespace, $test[3] ?? null),
+        ),
+        'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
+        'boolean', 'null', 'slot', 'integer' => constructOperand($namespace, $test),
     };
 }
 
@@ -348,11 +359,12 @@ function observePredicate(string $namespace, ?object $condition): ?array
     if ($condition === null) {
         return null;
     }
-    if ($condition::class === $namespace . 'Predicate\\IntegerComparison') {
-        return ['comparison', $condition->operator->value, observeOperand($namespace, $condition->left), observeOperand($namespace, $condition->right)];
-    }
-
-    return observeOperand($namespace, $condition);
+    return match ($condition::class) {
+        $namespace . 'Predicate\\IntegerComparison' => ['comparison', $condition->operator->value, observeOperand($namespace, $condition->left), observeOperand($namespace, $condition->right)],
+        $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
+        $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
+        $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'IntegerLiteral' => observeOperand($namespace, $condition),
+    };
 }
 
 function observeDelete(string $namespace, object $value, string $dialect): array

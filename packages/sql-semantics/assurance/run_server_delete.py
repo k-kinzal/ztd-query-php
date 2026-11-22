@@ -6,13 +6,15 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from evidence_transcript import canonical
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, Observer, check_profile, same
 from server_delete_cases import ROWS, case, expected, finite_id, finite_ids, literal, observation, ordered, requests
 from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, RenderFault, check_render_faults
 
-CONTRACT_NAME = "server-delete-v1.json"
-CONTRACT = "13b9d85f1893ef514ddedd636212b9bc8289980871139c4dad6176e4569b734a"
+LABEL = "delete"
+CONTRACT_NAME = "server-delete-v2.json"
+CONTRACT = "3a5763e35bcea1af1f7f1127dd8a157349dd8b2e79451c61e2388ec9b4780858"
 
 
 def specifications():
@@ -38,8 +40,20 @@ def check_value(item, response):
 def probe(item, response, db):
     check_value(item, response)
     actual = observation(db.request({"sql": response["sql"]}))
-    same(expected(item), actual)
+    check_observation(item, actual, response["sql"])
     return actual
+
+
+def check_observation(item, actual, sql):
+    prediction = expected(item)
+    require(actual["status"] == "deleted", "server-delete-fault-native", actual)
+    require(canonical(prediction) == canonical(actual), "meaning-mismatch",
+            {"sql": sql, "expected": prediction, "observed": actual})
+
+
+def check_fault_witness(item, witness):
+    same(expected(item), witness["expected"])
+    require(witness["observed"]["status"] == "deleted", "server-delete-fault-native")
 
 
 def required_forms(engine):
@@ -102,6 +116,7 @@ def execute(args, specification, engine, tag, worker, db):
 
 def faults(engine, tag):
     path = f"sql-semantics-{engine}/src/Ir/Mutation/Delete.php"
+    renderer = f"sql-semantics-{engine}/src/Ir/SelectSql.php"
     quote = chr(96) if engine == "mysql" else '"'
     fork = case(engine, tag, ["comparison", "<", ["slot", 0], literal(1)])
     result = [
@@ -109,8 +124,11 @@ def faults(engine, tag):
                     case(engine, tag, None), "meaning-mismatch"),
         RenderFault("omit-delete-filter", path, "if ($this->where === null)", "if (true)",
                     case(engine, tag, ["boolean", False]), "meaning-mismatch"),
-        RenderFault("reverse-delete-operands", path, "$operands[0] . ' ' . $operator . ' ' . $operands[1]",
-                    "$operands[1] . ' ' . $operator . ' ' . $operands[0]", fork, "meaning-mismatch"),
+        RenderFault("reverse-delete-operands", renderer, "$left . ' ' . $operator . ' ' . $right",
+                    "$right . ' ' . $operator . ' ' . $left", fork, "meaning-mismatch"),
+        RenderFault("delete-when-negating-null", renderer, "return '(NOT ' . $left . ')';",
+                    "return '(NOT ' . ($left === 'NULL' ? 'FALSE' : $left) . ')';",
+                    case(engine, tag, ["logic", "NOT", ["null"], None]), "meaning-mismatch"),
     ]
     if engine == "postgres":
         result.append(RenderFault("omit-delete-only", path, "($this->target->only ? 'ONLY ' : '')", "''",
@@ -123,6 +141,7 @@ def observer_probes(engine):
     return (
         "DELETE FROM " + schema + ".ir_unregistered WHERE FALSE",
         "DELETE FROM " + schema + ".ir_delete_target WHERE FALSE; DELETE FROM " + schema + ".ir_delete_control",
+        "DELETE FROM " + schema + ".ir_delete_target WHERE NOT EXISTS (SELECT id FROM " + schema + ".ir_delete_control)",
     )
 
 
@@ -165,6 +184,8 @@ def main():
                 result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, observerControls=protection)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
             result["faults"] = check_render_faults(args, db, mutations, probe, script="server_worker.php")
+            registered = len(specification["faults"]) + len(specification.get("dialectFaults", {}).get(args.engine, ()))
+            require(len(result["faults"]) == registered, "server-delete-faults-incomplete")
     except Exception as error:
         write_json(args.out / "run-failure.json", {
             "candidate": commit, "contract": CONTRACT, "engine": args.engine, "release": args.release,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Predicate;
 
+use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
@@ -15,6 +16,9 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison as ParsedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Logical as ParsedLogical;
+use SqlSemantics\Platform\MySql\Statement\Expression\Not as ParsedNot;
+use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
 
 /**
  * Resolves the closed Boolean, NULL and signed comparison roles.
@@ -26,15 +30,40 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|NullLiteral|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null
+    {
+        return $condition === null ? null : $this->lowerValue($condition, $binding);
+    }
+
+    /**
+     * Resolves a checked predicate or truth constant.
+     */
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
         }
-        if ($condition === null) {
-            return null;
+        if ($condition instanceof ParsedLogical) {
+            $operator = LogicalOperator::from($condition->operator->value);
+
+            return new LogicalPredicate($operator, $this->lowerValue($condition->left, $binding), $this->lowerValue($condition->right, $binding));
+        }
+        if ($condition instanceof ParsedNot) {
+            return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding));
         }
         $expression = new ExpressionLowering();
+        if ($condition instanceof ParsedNullTest) {
+            $operand = $condition->operand;
+            while ($operand instanceof Grouped) {
+                $operand = $operand->operand;
+            }
+            $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
+                ? $this->lowerValue($operand, $binding)
+                : $expression->lower($operand, $binding);
+            Check::input(!$tested instanceof Arithmetic, 'A null test needs a supported scalar value.');
+
+            return new NullTest($tested, $condition->negated);
+        }
         if ($condition instanceof ParsedComparison) {
             $operator = IntegerOperator::tryFrom($condition->operator->value);
             Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');

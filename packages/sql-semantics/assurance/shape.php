@@ -175,7 +175,8 @@ if ($dialect !== 'sqlite') {
     $internal[] = 'Binding\\ParameterLowering';
     array_push($roots, 'Rows\\Compound', 'Rows\\LocalProjection', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
-    $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
+    $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
+    $conditions = [...$truthValues, 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
     $properties['Select']['where'] = $conditions;
     $properties['Select']['distinct'] = ['bool'];
@@ -200,12 +201,25 @@ if ($dialect !== 'sqlite') {
     $properties['Mutation\\Delete'] = [
         'target' => ['TableSource'],
         'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
-        'where' => ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'],
+        'where' => $conditions,
     ];
     $properties['Predicate\\IntegerComparison'] = [
         'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
     ];
     $properties['Predicate\\IntegerOperator'] = [];
+    $properties['Predicate\\LogicalPredicate'] = [
+        'operator' => ['Predicate\\LogicalOperator'], 'left' => $truthValues, 'right' => $conditions,
+    ];
+    $properties['Predicate\\LogicalOperator'] = $methods['Predicate\\LogicalOperator'] = [];
+    $properties['Predicate\\NullTest'] = [
+        'operand' => ['BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'],
+        'negated' => ['bool'],
+    ];
+    $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];
+    $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR', 'Not' => 'NOT'];
+    if ($dialect === 'mysql') {
+        $enumCases['Predicate\\LogicalOperator']['Xor'] = 'XOR';
+    }
     $methods['Mutation\\Delete'] = $methods['Select'];
     $properties['Mutation\\Insert'] = [
         'target' => ['TableSource'], 'rows' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],

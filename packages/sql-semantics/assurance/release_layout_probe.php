@@ -45,6 +45,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
     } else {
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
+        $queries['Select'] = 'SELECT 42 AS answer WHERE (NOT NULL) IS NULL';
+        $predicate = $semantics->analyze($queries['Select'])->where;
+        if ($predicate::class !== $namespace . 'Ir\\Predicate\\NullTest'
+            || $predicate->operand::class !== $namespace . 'Ir\\Predicate\\LogicalPredicate'
+            || $predicate->operand->operator->value !== 'NOT') {
+            throw new RuntimeException('The installed analyzer lost the composed predicate.');
+        }
     }
 
     foreach ($queries as $role => $sql) {

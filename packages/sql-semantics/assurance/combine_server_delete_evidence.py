@@ -6,10 +6,12 @@ from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 
+import run_server_delete
+from combine_server_join_evidence import check_faults
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from run_server import check_profile, same
-from run_server_delete import CONTRACT, check_value, faults, observer_probes, required_forms, sample_forms, specifications, tools, version_tag
+from run_server_delete import CONTRACT, check_value, observer_probes, required_forms, sample_forms, specifications, tools, version_tag
 from server_delete_cases import ROWS, expected, finite_id, finite_ids, observation, ordered, requests
 
 
@@ -52,21 +54,6 @@ def replay(path, report, specification):
     return dict(execution)
 
 
-def check_faults(path, report, distribution):
-    definitions = {fault.name: fault for fault in faults(report["engine"], version_tag(report["engine"], report["release"]))}
-    records = {entry["case"]: entry for entry in report["faults"]}
-    require(len(records) == len(report["faults"]) and records.keys() == definitions.keys(), "server-delete-fault-set", str(path))
-    for name, rule in definitions.items():
-        record = records[name]
-        folder = path / "faults" / name
-        require(record == json.loads((folder / "result.json").read_text())
-                and record["control"] == "passed" and record["expected"] == record["observed"] == rule.signal
-                and record["file"] == rule.path and record["input"] == rule.item
-                and distribution[f"packages/{rule.path}"] == record["source"]
-                and record["source"] != record["mutation"] == digest(folder / rule.path)
-                and (folder / "injected.diff").is_file(), "server-delete-fault-evidence", name)
-
-
 def combine(candidate, checkout, paths, output):
     load_replay_contract()
     specification, profiles = specifications()
@@ -90,7 +77,7 @@ def combine(candidate, checkout, paths, output):
         same(ordered(ROWS), ordered(raw["observerEnvironment"]["initial"]))
         same({probe: "outside-observer-scope" for probe in observer_probes(raw["engine"])}, raw["observerControls"])
         results = replay(ledger, raw, specification)
-        check_faults(path.parent, raw, manifest)
+        check_faults(path.parent, raw, manifest, checkout, run_server_delete)
         counts.update(results)
         releases[role] = {"index": str(path), "indexDigest": digest(path), "eventsDigest": digest(ledger),
                           "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results}

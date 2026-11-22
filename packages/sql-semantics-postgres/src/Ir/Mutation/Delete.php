@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -32,14 +34,10 @@ final class Delete implements SemanticsIR
      */
     public function __construct(
         public readonly TableSource $target,
-        public readonly BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {
-        if ($where instanceof IntegerComparison) {
-            foreach ([$where->left, $where->right] as $operand) {
-                Check::input(!$operand instanceof ColumnReference || ($operand->occurrence === 0 && isset($target->columns[$operand->slot])), 'A DELETE predicate slot must belong to its target.');
-            }
-        }
+        (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
     }
 
     /**
@@ -59,19 +57,6 @@ final class Delete implements SemanticsIR
         if ($this->where === null) {
             return $sql;
         }
-        if ($this->where instanceof IntegerComparison) {
-            $operands = [];
-            foreach ([$this->where->left, $this->where->right] as $operand) {
-                $operands[] = $operand instanceof ColumnReference ? $this->target->columns[$operand->slot]->quoted() : 'CAST(' . $operand->decimal . ' AS pg_catalog.int4)';
-            }
-            $operator = 'OPERATOR(pg_catalog.' . $this->where->operator->value . ')';
-
-            return $sql . ' WHERE (' . $operands[0] . ' ' . $operator . ' ' . $operands[1] . ')';
-        }
-
-        return $sql . ' WHERE ' . match (true) {
-            $this->where instanceof NullLiteral => 'NULL',
-            $this->where instanceof BooleanLiteral => $this->where->value ? 'TRUE' : 'FALSE',
-        };
+        return $sql . ' WHERE ' . (new SelectSql())->predicate($this->where, $this->target, qualify: false);
     }
 }

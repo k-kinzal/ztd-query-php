@@ -39,17 +39,18 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-truth-v2.json": "8ecb535370bab902634dc06671fd19fecd1bc9d1e770e501a1cb212365738f61",
     "server-local-projection-v3.json": "70dbab57793ea2207c08636c1541b000c989b5c5f3b65ee7b5d1dfeccf35b0cb",
     "server-parameter-v1.json": "a25669b690cb52522a4fc0af7f35d6fee5cb3ac597dabd72383dee3f14d77052",
     "server-create-table-v1.json": "1b9ce10f3903792d68b307e0b92d0bf3008e3ff0af150bfc4b3d8438dde23b4f",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
     "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",
     "server-transaction-v1.json": "c0f7fb70d54ca3321d9104e0a239c62bdf24e48ce65febffb1906faae429dd09",
-    "server-update-v1.json": "23adce1af48b017804aacbfc7de5b2df8d650a59b9645be44ca70c85319a5933",
+    "server-update-v2.json": "38f94fa32e0e19ddbacfba57f71f45e2e0a4ab27b12a6d84b007599a7c142542",
     "server-insert-v1.json": "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79",
     "server-result-v1.json": "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c",
     "server-join-v1.json": "1dd8c227ba1638bb1591d4f12c3f9f199ba85e50fc6d24fb9e03b57ff8705b71",
-    "server-delete-v1.json": "13b9d85f1893ef514ddedd636212b9bc8289980871139c4dad6176e4569b734a",
+    "server-delete-v2.json": "3a5763e35bcea1af1f7f1127dd8a157349dd8b2e79451c61e2388ec9b4780858",
     "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",
     "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",
     "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",

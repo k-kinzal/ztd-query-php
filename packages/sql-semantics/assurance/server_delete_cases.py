@@ -2,16 +2,12 @@
 
 import itertools
 import json
-import operator
 import random
 
 from run import require
 from server_cases import SCHEMAS
+from server_truth_model import COMPARISONS as OPERATORS, admits
 
-OPERATORS = {
-    "=": operator.eq, "<>": operator.ne, "<": operator.lt, "<=": operator.le,
-    ">": operator.gt, ">=": operator.ge,
-}
 ROWS = {
     "target": [[-2, 1], [-1, -1], [0, 2], [0, 2], [None, -1], [1, None], [2, 0], [2147483647, -2147483648]],
     "child": [[-1, 5], [0, 2], [None, 3], [3, 3]],
@@ -26,6 +22,11 @@ def literal(value):
 
 ATOMS = (["slot", 0], ["slot", 1], literal(0))
 CONSTANTS = (None, ["boolean", True], ["boolean", False], ["null"])
+COMPOSED = (
+    ["logic", "NOT", ["null"], None],
+    ["null-test", False, ["slot", 0]],
+    ["logic", "AND", ["null-test", False, ["slot", 1]], ["comparison", "<", ["slot", 0], literal(2)]],
+)
 
 
 def target(dialect, only=False, columns=("id", "delta"), table="target"):
@@ -44,6 +45,8 @@ def finite_cases(dialect, tag):
     for only in policies:
         for predicate in CONSTANTS:
             yield case(dialect, tag, predicate, only)
+        for predicate in COMPOSED:
+            yield case(dialect, tag, predicate, only)
         for comparator, left, right in itertools.product(OPERATORS, ATOMS, ATOMS):
             yield case(dialect, tag, ["comparison", comparator, left, right], only)
 
@@ -53,6 +56,8 @@ def finite_id(response):
     policy = response["target"].get("only", False)
     if predicate in CONSTANTS:
         return policy, CONSTANTS.index(predicate)
+    if predicate in COMPOSED:
+        return policy, 58 + COMPOSED.index(predicate)
     _, comparator, left, right = predicate
     return policy, 4 + list(OPERATORS).index(comparator) * 9 + ATOMS.index(left) * 3 + ATOMS.index(right)
 
@@ -87,6 +92,9 @@ def analyzed(dialect, tag):
         (relation, " WHERE NULL", ["null"], False, []),
         (source, f" WHERE {reference} {operator_name} -1", ["comparison", ">=", ["slot", 0], literal(-1)],
          dialect == "postgres", ["delta"]),
+        (relation, " WHERE NOT (id < 1 OR delta IS NOT NULL)",
+         ["logic", "NOT", ["logic", "OR", ["comparison", "<", ["slot", 0], literal(1)], ["null-test", True, ["slot", 1]]], None],
+         False, ["id", "delta"]),
     ]
     for table, suffix, where, only, columns in examples:
         yield ({"dialect": dialect, "release": tag, "sql": "DELETE FROM " + table + suffix, "declarations": declarations},
@@ -99,6 +107,7 @@ def negatives(dialect, tag):
     base = f"CREATE TABLE {relation} (id INTEGER, delta INTEGER)"
     yield case(dialect, tag, ["comparison", "=", ["slot", 2], literal(0)]), "must belong to its target"
     yield case(dialect, tag, ["comparison", "=", literal(0), ["slot", 2]]), "must belong to its target"
+    yield case(dialect, tag, ["logic", "NOT", ["null-test", False, ["slot", 0, 1]], None]), "must belong to its target"
     yield {"dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}", "declarations": []}, "resolved, complete base table"
     yield {
         "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation} WHERE id = 1",
@@ -114,15 +123,7 @@ def matching(where, columns, row):
     def operand(term):
         return int(term[1]) if term[0] == "integer" else row[("id", "delta").index(columns[term[1]])]
 
-    if where is None:
-        return True
-    if where[0] == "boolean":
-        return where[1]
-    if where[0] == "null":
-        return False
-    _, symbol, left, right = where
-    lhs, rhs = operand(left), operand(right)
-    return lhs is not None and rhs is not None and OPERATORS[symbol](lhs, rhs)
+    return admits(where, operand)
 
 
 def ordered(tables):

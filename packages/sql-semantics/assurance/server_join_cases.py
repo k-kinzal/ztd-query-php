@@ -6,6 +6,7 @@ import random
 from run import require
 from server_cases import CHILD_ROWS, NAMES, ROWS, SCHEMAS, evaluate, observation, validate_width
 from server_delete_cases import OPERATORS, literal
+from server_truth_model import admits
 
 DATA = {"accounts": ROWS, "independent": [(3, 15), (2, 11), (2, 11), (None, 31)], "empty": []}
 NAMES_BY_TABLE = {"accounts": "ir_join_accounts", "independent": "ir_join_independent", "empty": "ir_join_empty"}
@@ -204,15 +205,7 @@ def value(expression, row, dialect):
 
 
 def truth(condition, row, dialect):
-    if condition is None:
-        return True
-    if condition[0] == "boolean":
-        return condition[1]
-    if condition[0] == "null":
-        return False
-    _, symbol, left, right = condition
-    a, b = value(left, row, dialect), value(right, row, dialect)
-    return a is not None and b is not None and OPERATORS[symbol](a, b)
+    return admits(condition, lambda operand: value(operand, row, dialect))
 
 
 def rows(source, dialect):

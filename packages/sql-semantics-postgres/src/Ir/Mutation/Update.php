@@ -9,6 +9,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
@@ -42,7 +44,7 @@ final class Update implements SemanticsIR
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
-        public readonly BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);

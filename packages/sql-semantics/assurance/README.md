@@ -76,7 +76,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v6.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v7.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -106,7 +106,7 @@ To join the independent evidence from all native server releases, run `combine_s
 
 ## Native DELETE effects
 
-The [native DELETE contract](server-delete-v1.json) covers single-target removal on the same pinned releases and profiles. Its observer runs one checked statement against disposable parent, descendant and control tables. It compares the affected-row count, remaining rows, deletion log and restored state. PostgreSQL observations distinguish ONLY from deletion through an inheritance hierarchy. The oracle models predicates independently of the emitted SQL and preserves typed NULLs and duplicate rows.
+The [native DELETE contract](server-delete-v2.json) covers single-target removal on the same pinned releases and profiles. Its observer runs one checked statement against disposable parent, descendant and control tables. It compares the affected-row count, remaining rows, deletion log and restored state. PostgreSQL observations distinguish ONLY from deletion through an inheritance hierarchy. The oracle models predicates independently of the emitted SQL and preserves typed NULLs and duplicate rows.
 
 Run `run_server_delete.py` with the same native fixture environment and `--candidate`, `--tool-autoload`, `--engine`, `--release` and `--out` as the projection runner. The observer requires a disposable `ir_fixture` database. The manual release matrix runs DELETE alongside the projection, join and row selection domains. Combine the per-release DELETE `index.json` paths using `combine_server_delete_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out delete-matrix.json`. The collector replays the state comparisons and verifies the recorded fault results for the tested distribution.
 
@@ -130,7 +130,7 @@ Use `run_server_insert.py` with the same native options and fixture connection s
 
 ## Native ordered UPDATE effects
 
-The [native UPDATE contract](server-update-v1.json) compares writes to declared writable signed integer slots. MySQL assigns in written order and counts changed rows in the fixture's client profile. PostgreSQL reads the old row for each assignment, counts updated rows and preserves ONLY. The observer records complete table contents, before and after values from the row trigger, and the state after rollback.
+The [native UPDATE contract](server-update-v2.json) compares writes to declared writable signed integer slots. MySQL assigns in written order and counts changed rows in the fixture's client profile. PostgreSQL reads the old row for each assignment, counts updated rows and preserves ONLY. The observer records complete table contents, before and after values from the row trigger, and the state after rollback.
 
 Use `run_server_update.py` with the same options and pinned fixture settings as the INSERT runner. Replay the release set with `combine_server_update_evidence.py` and the per-release `index.json` paths.
 
@@ -169,6 +169,12 @@ Run `run_server_parameter.py` with the same native fixture options. Replay all r
 The [local projection contract](server-local-projection-v3.json) specifies outer slot reads from a single independent SELECT. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, a one-use ordinary CTE that shadows a physical table. It also verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width.
 
 Run `run_server_local_projection.py` with the native fixture options. Replay all releases with `combine_server_local_projection_evidence.py` and the per-release `index.json` paths.
+
+## Native three-valued predicates
+
+The [truth contract](server-truth-v2.json) enumerates every constant input for the registered logic operators. Two row observations distinguish each of TRUE, FALSE and UNKNOWN. Seeded tests vary nesting, scope, nullable slot occurrences, and join type. The DELETE and UPDATE runners check the same predicates against physical target rows, trigger records and restored state.
+
+Run `run_server_truth.py` with the native fixture options and replay with `combine_server_truth_evidence.py`. Use the DELETE and UPDATE replay commands for the state changes.
 
 ## SQLite joins, filters and ordering
 

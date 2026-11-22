@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
@@ -27,5 +29,19 @@ final class PredicateLoweringTest extends TestCase
         $predicate = (new PredicateLowering())->lower($select->where, new SourceBinding($bound, null), true);
         self::assertInstanceOf(IntegerComparison::class, $predicate);
         self::assertSame('<', $predicate->operator->value);
+    }
+
+    public function testLowerValueResolvesNestedTruth(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1 WHERE (NOT NULL) IS NULL');
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        self::assertNotNull($select->where);
+        $bound = $operation->binding();
+
+        $predicate = (new PredicateLowering())->lowerValue($select->where, new SourceBinding($bound, null), true);
+        self::assertInstanceOf(NullTest::class, $predicate);
+        self::assertInstanceOf(LogicalPredicate::class, $predicate->operand);
+        self::assertSame('NOT', $predicate->operand->operator->value);
     }
 }

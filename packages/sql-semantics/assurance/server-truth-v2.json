@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/server-truth-2",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "Every release and language setting pinned by server-projection-v1.json. PostgreSQL comparisons resolve to pg_catalog.",
+  "scope": "Compose three-valued truth in SELECT WHERE, JOIN ON, DELETE WHERE and UPDATE WHERE. The leaf operands are checked truth constants, signed integer comparisons, and scalar null tests. Only TRUE admits a row or a match.",
+  "open": ["Truth expressions in result values", "Implicit MySQL conversion of ordinary scalar conditions", "Noninteger comparisons", "Row-valued null tests", "Truth tests IS TRUE, IS FALSE and IS UNKNOWN", "BETWEEN, IN, ANY and ALL", "PostgreSQL FULL join conditions other than the checked opposite-side equality"],
+  "constructors": {
+    "LogicalOperator": {
+      "type": "Predicate/LogicalOperator",
+      "role": "Select the native three-valued operation",
+      "structure": "AND, OR and NOT in both dialects. XOR in MySQL.",
+      "meaning": "AND is FALSE when either input is FALSE, TRUE when both are TRUE and UNKNOWN otherwise. OR is TRUE when either input is TRUE, FALSE when both are FALSE and UNKNOWN otherwise. NOT flips TRUE and FALSE and preserves UNKNOWN. XOR is UNKNOWN when either input is UNKNOWN and otherwise distinguishes different truth values.",
+      "sql": "Write the corresponding native operator.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "LogicalPredicate": {
+      "type": "Predicate/LogicalPredicate",
+      "role": "Apply a truth operator to typed predicate operands",
+      "fields": ["operator", "left", "right"],
+      "invariants": ["NOT has one operand. AND, OR and XOR have two operands.", "Operands are final constants, integer comparisons, null tests or composed truth predicates.",
+        "Each enclosing statement or join checks references against its exact visible occurrences and bounds every path to 32 edges and 8192 expanded nodes."],
+      "meaning": "Apply the operator's truth function to the operands' values.",
+      "sql": "Enclose each operation in parentheses. Put NOT before its one operand.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "NullTest": {
+      "type": "Predicate/NullTest",
+      "role": "Test whether one scalar value is NULL",
+      "fields": ["operand", "negated"],
+      "invariants": ["The operand is a signed integer literal or reference, a truth constant, a signed integer comparison, another null test or a logical predicate.", "The enclosing root closes references and bounds expanded operand size."],
+      "meaning": "Return TRUE for NULL and FALSE otherwise. Negation reverses the result. A null test always returns a known truth value.",
+      "sql": "Parenthesize the complete IS NULL or IS NOT NULL predicate.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "admission": "Direct construction accepts every combination of the listed operand types under its stated arity, size, depth and reference conditions. Analyze uses the identical constructors and the resolved external occurrence. An out-of-scope operand, invalid operator arity or invisible slot fails before publication.",
+  "finite": {
+    "values": ["true", "false", "unknown"],
+    "binary": {"mysql": ["AND", "OR", "XOR"], "postgres": ["AND", "OR"]},
+    "unary": ["NOT", "IS NULL", "IS NOT NULL"],
+    "observations": ["row selected by the predicate", "row selected by testing whether its result is NULL"],
+    "completeness": "Every unary value and binary ordered pair are consumed for each registered operator and both observation masks. Verify the exact identity set measured from constructed PHP values independently of the enumerator."
+  },
+  "exploration": {"seeds": [9323, 15901, 35053], "casesPerSeed": 30, "timeoutSecondsPerRelease": 200, "allowedExclusions": []},
+  "negative": ["Missing binary right operand", "Unexpected NOT right operand", "Predicate reference outside its owner", "Predicate reference beyond the source columns", "Predicate exceeding the depth bound", "Predicate exceeding the expanded node bound"],
+  "effects": {"delete": "server-delete-v2.json", "update": "server-update-v2.json"},
+  "observations": ["Output names, order and native field types", "Multiset of typed result rows, including duplicates and NULL", "Join admission and null extension", "Target and control contents, affected rows, trigger rows and rollback for mutations"],
+  "faults": ["Substitute OR for AND", "Treat unknown as false through NOT", "Reverse a scalar null test", "Use a different occurrence when evaluating a nested predicate"],
+  "guardFaults": ["Remove the check for the required right operand"],
+  "trust": ["The pinned relation declarations name the same signed native fields in the evaluator and DB.", "The structural observer and oracle read the same constructor vocabulary. The oracle computes truth tables and statement effects independently of the PHP methods and renderer."],
+  "changeFromRevision1": "Routes the arity fault to the structural guard checker and records both checked effect domains. The operator and scope rules are unchanged.",
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/logical-operators.html", "https://dev.mysql.com/doc/refman/8.4/en/working-with-null.html", "https://www.postgresql.org/docs/17/functions-logical.html", "https://www.postgresql.org/docs/17/functions-comparison.html"]
+}

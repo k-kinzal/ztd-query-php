@@ -15,11 +15,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "update"
 OBSERVER = "server_update_observer.php"
-CONTRACT = "23adce1af48b017804aacbfc7de5b2df8d650a59b9645be44ca70c85319a5933"
+CONTRACT = "38f94fa32e0e19ddbacfba57f71f45e2e0a4ab27b12a6d84b007599a7c142542"
 
 
 def specifications():
-    path, projection = TOOL / "server-update-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-update-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-update-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
@@ -92,6 +92,7 @@ def outsider_requests(engine):
         f"UPDATE {base}ir_unregistered SET id=1",
         f"UPDATE {base}ir_update_target SET id=1; UPDATE {base}ir_update_control SET id=2",
         f"DELETE FROM {base}ir_update_target",
+        f"UPDATE {base}ir_update_target SET id=1 WHERE id IN (SELECT id FROM {base}ir_update_control)",
     ]
 
 
@@ -113,6 +114,9 @@ def faults(engine, tag):
                     "$this->target->columns[1]", case(engine, tag, names, [[slot(0), literal(3)]]), "meaning-mismatch"),
         RenderFault("omit-update-where", path, "if ($this->where !== null)", "if (false)",
                     case(engine, tag, names, [[slot(0), literal(3)]], ["boolean", False]), "meaning-mismatch"),
+        RenderFault("invert-update-null-test", root + "SelectSql.php",
+                    "? ' IS NOT NULL)' : ' IS NULL)'", "? ' IS NULL)' : ' IS NOT NULL)'",
+                    case(engine, tag, names, [[slot(0), literal(3)]], ["null-test", False, slot(1)]), "meaning-mismatch"),
     ]
     if engine == "postgres":
         faults.append(RenderFault("omit-update-only", root + "SelectSql.php", "($source->only ? 'ONLY ' : '')",

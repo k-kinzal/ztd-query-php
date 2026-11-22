@@ -12,7 +12,11 @@ ASSIGNMENTS = [
     [[slot(0), literal(7)]], [[slot(1), slot(0)]], [[slot(0), ["null"]]],
     [[slot(0), literal(5)], [slot(1), slot(0)]],
 ]
-FILTERS = [None, ["comparison", "=", slot(0), literal(0)], ["comparison", "<", slot(1), literal(1)], ["boolean", False]]
+FILTERS = [
+    None, ["comparison", "=", slot(0), literal(0)], ["comparison", "<", slot(1), literal(1)], ["boolean", False],
+    ["null-test", False, slot(1)],
+    ["logic", "AND", ["logic", "NOT", ["null-test", False, slot(0)], None], ["comparison", "<", slot(1), literal(2)]],
+]
 
 
 def case(engine, tag, columns, assignments, where=None, only=False, table="target"):
@@ -60,6 +64,9 @@ def analyzed(engine, tag):
         (f"UPDATE {relation} AS r SET delta=r.id WHERE r.id<2", ["id", "delta"], [[slot(1), slot(0)]],
          ["comparison", "<", slot(0), literal(2)], False),
         (f"UPDATE {relation} SET id=id", ["id"], [[slot(0), slot(0)]], None, False),
+        (f"UPDATE {relation} SET id=7 WHERE (delta IS NULL OR NOT (id < 1))",
+         ["delta", "id"], [[slot(1), literal(7)]],
+         ["logic", "OR", ["null-test", False, slot(0)], ["logic", "NOT", ["comparison", "<", slot(1), literal(1)], None]], False),
     ]
     if engine == "postgres":
         examples.append((f"UPDATE ONLY {relation} SET delta=NULL", ["delta"], [[slot(0), ["null"]]], None, True))
@@ -77,6 +84,7 @@ def negatives(engine, tag):
     yield case(engine, tag, columns, [[slot(2), literal(1)]]), "write slot must belong"
     yield case(engine, tag, columns, [[slot(0, 1), literal(1)]]), "target slot must belong to occurrence zero"
     yield case(engine, tag, columns, [[slot(0), literal(1)]], ["comparison", "<", slot(2), literal(1)]), "predicate slot must belong"
+    yield case(engine, tag, columns, [[slot(0), literal(1)]], ["logic", "NOT", ["null-test", False, slot(0, 1)], None]), "predicate slot must belong"
     relation = SCHEMAS[engine] + ".ir_update_target"
     yield {"dialect": engine, "release": tag, "declarations": [f"CREATE TABLE {relation} (id INTEGER, delta INTEGER)"],
            "sql": f"UPDATE {relation} SET unknown_column=1"}, "unknown_column"

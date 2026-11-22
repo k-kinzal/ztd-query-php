@@ -8,6 +8,8 @@ use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -26,7 +28,7 @@ final class SelectBounds
     public function check(
         array $results,
         TableSource|Join|null $source,
-        BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
+        BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);

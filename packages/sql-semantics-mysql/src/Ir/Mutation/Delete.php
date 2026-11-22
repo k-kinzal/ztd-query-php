@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\MySql\Ir\SelectSql;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -32,14 +34,10 @@ final class Delete implements SemanticsIR
      */
     public function __construct(
         public readonly TableSource $target,
-        public readonly BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
-        if ($where instanceof IntegerComparison) {
-            foreach ([$where->left, $where->right] as $operand) {
-                Check::input(!$operand instanceof ColumnReference || ($operand->occurrence === 0 && isset($target->columns[$operand->slot])), 'A DELETE predicate slot must belong to its target.');
-            }
-        }
+        (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
     }
 
     /**
@@ -59,19 +57,6 @@ final class Delete implements SemanticsIR
         if ($this->where === null) {
             return $sql;
         }
-        if ($this->where instanceof IntegerComparison) {
-            $operands = [];
-            foreach ([$this->where->left, $this->where->right] as $operand) {
-                $operands[] = $operand instanceof ColumnReference ? $this->target->columns[$operand->slot]->quoted() : $operand->decimal;
-            }
-            $operator = $this->where->operator->value;
-
-            return $sql . ' WHERE (' . $operands[0] . ' ' . $operator . ' ' . $operands[1] . ')';
-        }
-
-        return $sql . ' WHERE ' . match (true) {
-            $this->where instanceof NullLiteral => 'NULL',
-            $this->where instanceof BooleanLiteral => $this->where->value ? 'TRUE' : 'FALSE',
-        };
+        return $sql . ' WHERE ' . (new SelectSql())->predicate($this->where, $this->target, qualify: false);
     }
 }

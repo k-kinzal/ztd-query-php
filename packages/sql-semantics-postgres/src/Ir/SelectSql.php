@@ -8,6 +8,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
 /**
@@ -52,18 +54,18 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0): string
+    public function expression(Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
             $input = $inputs[$expression->occurrence] ?? null;
             Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
 
-            return $this->alias($offset + $expression->occurrence) . '.' . $input->columns[$expression->slot]->quoted();
+            return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $input->columns[$expression->slot]->quoted();
         }
 
         return match (true) {
-            $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset) . ')',
+            $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
@@ -91,17 +93,31 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|IntegerComparison|NullLiteral $condition, TableSource|Join|null $source, int $offset = 0): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
-            $left = $this->expression($condition->left, $source, $offset);
-            $right = $this->expression($condition->right, $source, $offset);
+            $left = $this->expression($condition->left, $source, $offset, $qualify);
+            $right = $this->expression($condition->right, $source, $offset, $qualify);
             $operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';
 
             return '(' . $left . ' ' . $operator . ' ' . $right . ')';
         }
 
-        return $this->expression($condition, $source, $offset);
+        if ($condition instanceof LogicalPredicate) {
+            $left = $this->predicate($condition->left, $source, $offset, $qualify);
+            if ($condition->right === null) {
+                return '(NOT ' . $left . ')';
+            }
+
+            return '(' . $left . ' ' . $condition->operator->value . ' ' . $this->predicate($condition->right, $source, $offset, $qualify) . ')';
+        }
+        if ($condition instanceof NullTest) {
+            $operand = $this->predicate($condition->operand, $source, $offset, $qualify);
+
+            return '(' . $operand . ($condition->negated ? ' IS NOT NULL)' : ' IS NULL)');
+        }
+
+        return $this->expression($condition, $source, $offset, $qualify);
     }
 
     /**

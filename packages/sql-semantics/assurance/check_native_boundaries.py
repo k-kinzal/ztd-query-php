@@ -19,7 +19,7 @@ def faults(engine):
     shared = [
         Fault("ignore-negative-ordinal", "ColumnReference::__construct", "$occurrence >= 0,", "true,"),
         Fault("reverse-join-occurrences", "From/Join::inputs", "array_merge($left, $right)", "array_merge($right, $left)"),
-        Fault("ignore-join-scope", "From/OccurrenceScope::predicate", "isset($inputs[$operand->occurrence]->columns[$operand->slot])", "true"),
+        Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "isset($inputs[$operand->occurrence]->columns[$operand->slot])", "true"),
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct", "isset($target->columns[$slot]),", "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
@@ -35,6 +35,10 @@ def faults(engine):
         Fault("allow-zero-parameter-position", "Binding/Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
         Fault("allow-missing-local-slot", "Rows/LocalProjection::__construct", "isset($definition->columns[$column->slot]),", "true,"),
         Fault("allow-negative-local-slot", "Rows/LocalResultColumn::__construct", "$slot >= 0,", "true,"),
+        Fault("ignore-truth-operator-arity", "Predicate/LogicalPredicate::__construct",
+              "($operator === LogicalOperator::Not) === ($right === null),", "true,"),
+        Fault("ignore-expanded-predicate-size", "From/OccurrenceScope::checkTree",
+              "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
@@ -104,7 +108,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v6.json", "value_storage.php", "value-storage-v9.json", "value-primitives.json")},
+                       "native-boundaries-v7.json", "value_storage.php", "value-storage-v9.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

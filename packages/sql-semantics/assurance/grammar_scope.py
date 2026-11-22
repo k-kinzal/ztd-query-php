@@ -79,7 +79,7 @@ def inventory(root):
         rules = parse(root, path, record)
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
-            related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
+            related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("delete_stmt", [])}
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")
@@ -91,7 +91,7 @@ def inventory(root):
             selection = ("order_clause", "opt_order_clause", "limit_clause", "opt_limit_clause", "select_options", "select_option")
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
-            related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
+            related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("DeleteStmt", [])}
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")
@@ -116,7 +116,7 @@ def inventory(root):
                 related[alternative] = ("server-insert-v1.json",)
         for rule in update:
             for alternative in rules.get(rule, []):
-                related[alternative] = ("server-update-v1.json",)
+                related[alternative] = ("server-update-v2.json",)
         for rule in transaction:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("PREPARED", "PREPARE", "REPLICA", "SLAVE")):
@@ -154,6 +154,14 @@ def inventory(root):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v3.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
+        truth_signatures = {
+            "expr: expr or expr", "expr: expr XOR expr", "expr: expr and expr", "expr: NOT_SYM expr",
+            "bool_pri: bool_pri IS NULL_SYM", "bool_pri: bool_pri IS not NULL_SYM",
+            "a_expr: a_expr AND a_expr", "a_expr: a_expr OR a_expr", "a_expr: NOT a_expr",
+            "a_expr: a_expr IS NULL_P", "a_expr: a_expr IS NOT NULL_P", "a_expr: a_expr ISNULL", "a_expr: a_expr NOTNULL",
+        }
+        for alternative in sorted(truth_signatures & signatures):
+            related[alternative] = (*related.get(alternative, ()), "server-truth-v2.json")
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):
             raise ValueError(f"Unknown production or domain in scope correspondence: {path}")
