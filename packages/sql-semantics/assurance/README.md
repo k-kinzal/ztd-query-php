@@ -131,7 +131,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v23.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v24.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -288,6 +288,8 @@ The [null-safe int4 contract](postgres-int4-distinctness-v1.json) compares exact
 The [Boolean truth test contract](postgres-boolean-tests-v1.json) covers the six tests over TRUE, FALSE and NULL. The exploration also uses composed and nested predicates, typed NULL, scoped references, filters and CASE. Run `run_server_postgres_boolean_tests.py` on both releases and replay them with `combine_server_postgres_boolean_tests_evidence.py`.
 
 The [PostgreSQL built-in cast contract](postgres-builtin-casts-v2.json) checks explicit int4 and Boolean conversions, NULL result types, scoped inputs, nested target roles and DISTINCT. Run `run_server_postgres_builtin_casts.py` on each registered PostgreSQL release. Replay the closed finite identities and native recordings with `combine_server_postgres_builtin_casts_evidence.py`.
+
+The [MySQL signed cast contract](mysql-signed-casts-v1.json) compares binary protocol result type and signedness, names, values, NULL, multiplicity and native expression failures on all registered releases. Run `run_server_mysql_signed_casts.py` with the local disposable MySQL fixture and the mysqlnd-backed mysqli extension. Replay with `combine_server_mysql_signed_casts_evidence.py`.
 
 ## Native grouped projections
 

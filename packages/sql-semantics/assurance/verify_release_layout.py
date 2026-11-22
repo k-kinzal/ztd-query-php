@@ -197,6 +197,8 @@ def verify_probe(raw, catalog):
         path = f"/stage/vendor/k-kinzal/{package}/src/Ir/" + item["role"].replace("\\", "/") + ".php"
         require(item["path"] == path and isinstance(item["sql"], str) and item["sql"] and item["profile"],
                 "unexpected-installed-publication", item)
+        if (item["platform"], item["role"]) == ("MySql", "Select"):
+            require(item.get("signedCast") == "42", "installed-signed-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
         if item["role"] == "Schema\\Query\\CreateTableAs":

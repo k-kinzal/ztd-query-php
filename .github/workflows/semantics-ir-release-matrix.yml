@@ -102,7 +102,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.3'
-          extensions: pdo_mysql, pdo_pgsql
+          extensions: pdo_mysql, pdo_pgsql, mysqli
           coverage: none
       - name: Install locked audit dependencies from the acceptance revision
         working-directory: trusted/packages/sql-semantics-sqlite
@@ -338,6 +338,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-signed-range-evidence"
+      - name: Compare MySQL signed cast types and values
+        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_signed_casts.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-signed-casts-evidence"
       - name: Compare PostgreSQL int4 operator results
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -695,6 +710,12 @@ jobs:
         with:
           name: native-mysql-signed-range-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-signed-range-evidence/
+      - name: Preserve MySQL signed cast observations and any failure
+        if: ${{ always() && matrix.engine == 'mysql' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-signed-casts-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-signed-casts-evidence/
       - name: Preserve PostgreSQL int4 operator observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

@@ -136,6 +136,12 @@ $pureCollaborators = [$selectBounds, 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'mysql') {
+    $signedCast = 'Expression\\SignedCast';
+    $properties[$signedCast] = ['operand' => ['Arithmetic', 'BooleanLiteral', 'ColumnReference', $signedCast, 'IntegerLiteral', 'NullLiteral']];
+    $methods[$signedCast] = ['__construct'];
+    $properties['ResultColumn']['expression'][] = $signedCast;
+    sort($properties['ResultColumn']['expression']);
+    $internal[] = 'Expression\\SignedCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {

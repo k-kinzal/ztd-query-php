@@ -112,6 +112,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
     }
 
+    if ($platform === 'MySql') {
+        $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer WHERE (NOT NULL) IS NULL';
+    }
     if ($platform === 'PostgreSql') {
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer WHERE (NOT NULL) IS NULL';
     }
@@ -121,6 +124,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'MySql' && $role === 'Select') {
+            $value = $result->columns[0]->expression;
+            if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'
+                || $value->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost the signed conversion.');
+            }
+            $details['signedCast'] = $value->operand->decimal;
+        }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';
             $value = $result->columns[0]->expression;

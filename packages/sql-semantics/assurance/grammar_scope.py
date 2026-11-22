@@ -152,6 +152,12 @@ def inventory(root):
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")
+            cast_suffix = "" if "/mysql-5." in path else " opt_array_cast"
+            related.update({alternative: ("mysql-signed-casts-v1.json",) for alternative in (
+                f"simple_expr: CAST_SYM ( expr AS cast_type{cast_suffix} )",
+                "simple_expr: CONVERT_SYM ( expr , cast_type )",
+                "cast_type: SIGNED_SYM", "cast_type: SIGNED_SYM INT_SYM",
+            )})
             create = ("create_table_stmt", "create_table", "column_def", "field_def", "column_attribute")
             drop = ("drop_table_stmt", "drop")
             transaction = ("begin", "start", "commit", "rollback", "savepoint", "release", "opt_chain", "opt_release")
@@ -230,7 +236,7 @@ def inventory(root):
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
-                    related[alternative] = ("server-parameter-v1.json",)
+                    related[alternative] = (*related.get(alternative, ()), "server-parameter-v1.json")
         local_signatures = {
             "table_factor: select_derived_init get_select_lex select_derived2",
             "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",
