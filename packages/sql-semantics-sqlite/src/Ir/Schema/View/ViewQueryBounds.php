@@ -79,7 +79,9 @@ final class ViewQueryBounds
      */
     public function source(Identifier $schema, TableSource|LocalSource $source): void
     {
-        Check::input($source instanceof TableSource, 'A view projection requires external table occurrences.');
+        if ($source instanceof LocalSource) {
+            return;
+        }
         Check::input($schema->key() === 'temp' || $schema->key() === $source->schema->key(), 'A persistent view can only reference tables in its schema.');
     }
 }

@@ -180,8 +180,8 @@ def negatives():
     for operand in [["parameter", "1"], ["folded-membership", False, ["07"]]]:
         yield item("main", projection([[operand, "name"]]), ["name"]), "rejected", "cannot contain a parameter"
     yield item("main", values([[integer(1)], [["parameter", "1"]]]), ["x"]), "rejected", "cannot contain a parameter"
-    local = {**projection([[col(0), "x"]]), "local": {"names": ["a"], "rows": [[integer(1)]]}}
-    yield item("main", local, ["x"]), "rejected", "external table occurrences"
+    local = {**projection([[col(0), "x"]]), "local": {"names": ["a"], "rows": [[["parameter", "7"]]]}}
+    yield item("main", local, ["x"]), "rejected", "cannot contain a parameter"
     joined = deepcopy(make_query("joined-tables", "main"))
     joined["joins"][0][1][0] = "temp"
     yield item("main", joined, [f"x{index}" for index in range(width(joined))]), "rejected", "tables in its schema"

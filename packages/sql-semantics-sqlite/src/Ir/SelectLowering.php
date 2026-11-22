@@ -25,7 +25,7 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation, ?ParsedSelect $arm = null): Select
+    public function lower(BoundStatement $operation, ParsedSelect|WithQuery|null $arm = null): Select
     {
         $statement = $arm ?? $operation->statement;
         $local = null;

@@ -271,6 +271,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('Installed SQLite compound view lost its checked arm roles.');
             }
             $details['compoundView'] = [array_column($merged->columns, 'value'), $merged->query->steps[0]->operator->value, $merged->toString()];
+            $localView = $semantics->analyze('CREATE VIEW view_local AS WITH pair(n) AS (VALUES(4),(9)) SELECT a.n AS first, b.n AS second FROM pair a CROSS JOIN pair b');
+            if ($localView::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $localView->query::class !== $namespace . 'Ir\\Select'
+                || $localView->query->source === null || $localView->query->source::class !== $namespace . 'Ir\\Rows\\LocalSource') {
+                throw new RuntimeException('Installed SQLite view lost its local source role.');
+            }
+            $details['localView'] = [array_column($localView->columns, 'value'),
+                $localView->query->source === $localView->query->joins[0]->source,
+                $localView->query->columns[0]->expression->source, $localView->query->columns[1]->expression->source,
+                substr_count($localView->toString(), 'WITH ')];
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];

@@ -7,6 +7,7 @@ from itertools import product
 from run import Failure, Worker, compare, require
 from run_sqlite_compound import expected as compound_expected
 from run_sqlite_create_table import quoted
+from run_sqlite_recursive_source import expected as recursive_expected
 from run_sqlite_unique_keys import values_sql
 from sqlite_create_view_cases import SCHEMAS, TABLES, analyzed_cases, finite_case, finite_id, finite_ids, kind, negatives, requests, storage
 from sqlite_domain import RenderFault, check_render_faults, run_domain
@@ -14,8 +15,8 @@ from sqlite_engine import Database, ObserverAuthorizationError, typed
 from sqlite_grouped_cases import key_value, projected_count
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-create-view-v1.json"
-CONTRACT = "f65e11e8e603f7bd763a96c1ef60c0e0f25c9f0d98d906d8f60f642d513a468d"
+CONTRACT_NAME = "sqlite-create-view-v2.json"
+CONTRACT = "1526bf5dd496d8dd120c2f590f1a56a200abba6bd7a2a17865e2a1889f82359a"
 FIXTURE = ""
 READ_RESULT = {"parameters": {}, "parameterCount": 0, "readOnly": True, "changes": 0}
 DDL_RESULT = {**READ_RESULT, "readOnly": False, "names": [], "rows": []}
@@ -77,11 +78,19 @@ def inputs(data, descriptor):
 
 
 def projection(query, data):
-    occurrences = [()] if query["source"] is None else [(row,) for row in inputs(data, query["source"])]
+    local = query.get("locals", [query["local"]] if "local" in query else [])
+    first = ["local", 0] if "local" in query else query["source"]
+
+    def relation(source):
+        if source[0] == "local":
+            return [tuple(operand(expression, ()) for expression in row) for row in local[source[1]]["rows"]]
+        return inputs(data, source)
+
+    occurrences = [()] if first is None else [(row,) for row in relation(first)]
     for join_kind, source, on in query["joins"]:
-        require(join_kind == "INNER", "unmodeled-view-fixture-join", join_kind)
-        occurrences = [(*left, right) for left, right in product(occurrences, inputs(data, source))
-                       if operand(on, (*left, right))]
+        require(join_kind in ("INNER", "CROSS"), "unmodeled-view-fixture-join", join_kind)
+        occurrences = [(*left, right) for left, right in product(occurrences, relation(source))
+                       if on is None or operand(on, (*left, right))]
     columns = [expression for expression, _ in query["columns"]]
     rows = [[operand(expression, row) for expression in columns]
             for row in occurrences if query["where"] is None or operand(query["where"], row)]
@@ -132,7 +141,10 @@ def declared_type(query, expression):
     if expression[0] == "column":
         _, slot, *occurrences = expression
         sources = [query["source"], *(step[1] for step in query.get("joins", ()))]
-        schema, _, names = sources[occurrences[0] if occurrences else 0]
+        source = sources[occurrences[0] if occurrences else 0]
+        if source is None or source[0] == "local":
+            return ""
+        schema, _, names = source
         return "INTEGER" if names[slot] == "id" else storage(schema)
     return ""
 
@@ -171,7 +183,9 @@ def expected(item):
         changed[schema]["base"].append((EXTRA, EXTRA if schema == "main" else "new-value"))
     ordered = not exists and bool(query.get("orderBy"))
     def read(source_data):
-        if not exists and query["operation"] == "compound":
+        if not exists and "step" in query.get("local", {}):
+            result = sorted(recursive_expected({**query, "bindings": {}})["rows"])
+        elif not exists and query["operation"] == "compound":
             result = compound_expected({**query, "bindings": {}}, lambda arm: projection(arm, source_data))["rows"]
         else:
             result = sorted_rows(rows_for(item, source_data), ordered)

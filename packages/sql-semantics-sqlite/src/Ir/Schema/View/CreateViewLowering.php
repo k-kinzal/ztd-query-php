@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView as ParsedCreateView;
 
 /**
@@ -38,7 +39,7 @@ final class CreateViewLowering
             $query instanceof ParsedCompound => (new CompoundLowering())->lower($operation, $query),
             $query instanceof ValuesClause => (new ValuesLowering())->lower($operation, $query),
             $query instanceof ParsedSelect && (new GroupedLowering())->applies($query) => (new GroupedLowering())->lower($operation, $query),
-            $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),
+            $query instanceof ParsedSelect, $query instanceof WithQuery => (new SelectLowering())->lower($operation, $query),
             default => throw new InvalidConstruction('CREATE VIEW requires a checked query.'),
         };
         $declaration = $operation->facts->declarations[0] ?? null;

@@ -23,7 +23,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-scalar-boundaries-v16.json', 'ea516f9710372604edb7f0bf280eeba605ac692d4177e433336e0da7d7c8dd1c'],
             ['sqlite-default-boundaries-v10.json', 'c8f8df9a7f46f80a597729373e56e103d17fb025edc4213be5c4a51fd932725a'],
             ['sqlite-drop-view-boundaries-v1.json', '565bcb84c952123e8e1c311606be91b0f0e7a04e63833aa025ea883852df1f02'],
-            ['sqlite-create-view-boundaries-v3.json', 'a8d1269e1fe10f58953450e1ff055f8dc43b7947f5ab36501907165213f55f71'],
+            ['sqlite-create-view-boundaries-v4.json', '98fe27cbdbf1c468c1c633c8449ad89002257aaa2826fd1e9af60f114f11caaa'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
