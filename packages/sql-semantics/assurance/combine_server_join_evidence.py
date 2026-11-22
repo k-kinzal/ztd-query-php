@@ -108,6 +108,7 @@ def combine(candidate, checkout, paths, output, domain):
         require(raw["eventsDigest"] == digest(ledger), f"server-{label}-evidence-ledger-mismatch", str(path))
         check_profile(*role, SimpleNamespace(environment=raw["observerEnvironment"]))
         same(domain.controls(), raw["comparatorControls"])
+        domain.check_preparation(raw["engine"], raw["observerEnvironment"], raw["observerPreparation"])
         results = replay(ledger, raw, specification, domain)
         check_faults(path.parent, raw, manifest, checkout, domain)
         counts.update(results)

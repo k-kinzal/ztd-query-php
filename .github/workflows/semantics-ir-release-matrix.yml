@@ -182,6 +182,24 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-result-evidence"
+      - name: Compare native literal INSERT effects
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_insert.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-insert-evidence"
       - name: Preserve observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -206,6 +224,12 @@ jobs:
         with:
           name: native-result-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-result-evidence/
+      - name: Preserve native INSERT observations and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-insert-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-insert-evidence/
 
   collect:
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -251,6 +275,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh run download "$GITHUB_RUN_ID" --pattern 'native-result-*' --dir "$RUNNER_TEMP/result-matrix"
+      - name: Download the protected INSERT records
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'native-insert-*' --dir "$RUNNER_TEMP/insert-matrix"
       - name: Require all native projection releases
         if: ${{ !cancelled() }}
         env:
@@ -298,6 +328,17 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/combine_server_result_evidence.py \
             --candidate "$CANDIDATE" --candidate-root candidate \
             --out "$RUNNER_TEMP/result-matrix.json" "${indexes[@]}"
+      - name: Require all native INSERT releases
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          shopt -s nullglob
+          indexes=("$RUNNER_TEMP"/insert-matrix/*/index.json)
+          python3 trusted/packages/sql-semantics/assurance/combine_server_insert_evidence.py \
+            --candidate "$CANDIDATE" --candidate-root candidate \
+            --out "$RUNNER_TEMP/insert-matrix.json" "${indexes[@]}"
       - name: Preserve the native projection matrix report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -322,3 +363,9 @@ jobs:
         with:
           name: native-result-matrix
           path: ${{ runner.temp }}/result-matrix.json
+      - name: Preserve the native INSERT matrix report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-insert-matrix
+          path: ${{ runner.temp }}/insert-matrix.json

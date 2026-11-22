@@ -56,7 +56,8 @@ Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for th
 - PostgreSQL binds integer slots to `int4` declarations, preserves `ONLY`, and emits `pg_catalog`-qualified integer operators. Unqualified input operators require `pg_catalog` ahead of user schemas in the relevant search path. An explicitly qualified builtin operator can supply its identity directly.
 - Top-level DELETE supports one resolved ordinary target and an optional Boolean, NULL or signed-integer comparison filter. PostgreSQL preserves ONLY and includes descendant tables when ONLY is absent. The IR records the target and the filter slots. The database applies deletion and triggers when the SQL runs.
 - DISTINCT compares complete projected rows. ORDER BY uses one-based output ordinals and fixes direction and NULL placement for each key. Apply LIMIT and OFFSET after ordering. PostgreSQL accepts a standalone OFFSET. A row bound may cut through a tie, where each choice remains valid within the original bag of typed rows.
-- Parameters, additional relation and predicate forms, grouping, expression ordering, other row bounds, other DML, DDL and transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
+- Top-level INSERT writes one or more checked VALUES rows into one resolved table. The ordered targets are explicit writable signed integer columns. A supplied cell contains an integer or SQL NULL. Omitted columns use the same external defaults. The database applies constraints and triggers on execution.
+- Parameters, additional relation and predicate forms, grouping, expression ordering, other row bounds, further DML, DDL and transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
 
 ## Construction and evidence
 

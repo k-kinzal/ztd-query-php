@@ -108,4 +108,25 @@ final class SourceBinding
             $this->source->table->only,
         );
     }
+
+    /**
+     * Resolves the explicit write slots in their supplied order.
+     *
+     * @param list<string> $names
+     */
+    public function writeTarget(array $names): TableSource
+    {
+        $target = $this->source();
+        Check::input($this->table !== null && $target !== null, 'An INSERT requires a resolved write target.');
+        $columns = [];
+        foreach ($names as $name) {
+            $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
+            Check::input(count($matches) === 1, 'An INSERT column must resolve to a declared target slot.');
+            $column = $matches[0];
+            Check::input(!$column->generated && !$column->identity && $column->type === Builtin::Int4, 'An INSERT column must be a writable signed 32-bit integer.');
+            $columns[] = new Identifier($column->name->value);
+        }
+
+        return new TableSource($target->schema, $target->table, $columns);
+    }
 }

@@ -16,6 +16,7 @@ from server_join_cases import case, expected, finite_id, finite_ids, fixture, is
 from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, RenderFault, check_render_faults
 
 LABEL = "join"
+OBSERVER = "server_observer.php"
 CONTRACT = "1dd8c227ba1638bb1591d4f12c3f9f199ba85e50fc6d24fb9e03b57ff8705b71"
 
 
@@ -48,6 +49,16 @@ def check_fault_witness(item, witness):
 
 def controls():
     return {}
+
+
+def prepare(engine, db):
+    response = db.request({"fixture": fixture(engine)})
+    same({"status": "fixture"}, response)
+    return response
+
+
+def check_preparation(_, environment, preparation):
+    same({"status": "fixture"}, preparation)
 
 
 def probe(item, response, db, domain):
@@ -120,7 +131,10 @@ def execute(args, specification, tag, worker, db, domain=None):
             require(domain.required_forms(args.engine) <= forms.keys(), f"server-{label}-exploration-incomplete",
                     sorted(domain.required_forms(args.engine) - forms.keys()))
             execution = ledger.verify()
-            require(execution["rejected"] == len(specification["negative"]), f"server-{label}-rejections-incomplete")
+            registered = len(specification["negative"])
+            if args.engine == "postgres":
+                registered += len(specification.get("additionalPostgreSqlNegatives", ()))
+            require(execution["rejected"] == registered, f"server-{label}-rejections-incomplete")
             return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution}
         except Exception as error:
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"
@@ -172,12 +186,13 @@ def main(domain):
         comparator_controls = domain.controls()
         structure = shape(args, dialect=args.engine)
         deadline = time.monotonic() + specification["exploration"]["timeoutSecondsPerRelease"]
-        with Observer(args.engine, deadline) as db:
+        with Observer(args.engine, deadline, domain.OBSERVER) as db:
             check_profile(args.engine, args.release, db)
-            same({"status": "fixture"}, db.request({"fixture": fixture(args.engine)}))
+            preparation = domain.prepare(args.engine, db)
+            domain.check_preparation(args.engine, db.environment, preparation)
             with Worker(args, deadline, script="server_worker.php") as php:
                 result = execute(args, specification, tag, php, db, domain)
-                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, comparatorControls=comparator_controls)
+                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, comparatorControls=comparator_controls, observerPreparation=preparation)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
             result["faults"] = check_render_faults(args, db, mutations, lambda item, value, db: probe(item, value, db, domain), script="server_worker.php")
             require(len(result["faults"]) == len(specification["faults"]), f"server-{label}-faults-incomplete")

@@ -1,0 +1,54 @@
+{
+  "revision": "SemanticsIR/publication-5",
+  "approval": "pending-human-review",
+  "replaces": "publication-v4.json",
+  "analyzerInterface": "SqlSemantics\\Analyzer::analyze",
+  "interfaceResult": "SqlSemantics\\SemanticsIR",
+  "dialects": [
+    "MySql",
+    "PostgreSql",
+    "Sqlite"
+  ],
+  "single": {
+    "method": "Semantics::analyze",
+    "result": "Ir\\Select",
+    "boundary": "Bind a single SQL statement against a dialect context, reject semantic errors, and construct the registered final dialect value before returning it.",
+    "additionalDialectResults": {
+      "MySql": [
+        "Ir\\Mutation\\Delete",
+        "Ir\\Mutation\\Insert"
+      ],
+      "PostgreSql": [
+        "Ir\\Mutation\\Delete",
+        "Ir\\Mutation\\Insert"
+      ]
+    }
+  },
+  "batch": {
+    "method": "Semantics::analyzeAll",
+    "result": "list<SemanticsIR>",
+    "boundary": "Call analyze for each statement against the same supplied context. Rejection prevents publication of the batch."
+  },
+  "context": {
+    "method": "Semantics::context",
+    "input": "An ordered list of SQL relation definitions or null",
+    "result": "SqlSemantics\\AnalysisContext",
+    "boundary": "Build declaration facts from definitions. Reject inputs that do not provide a relation declaration. Null leaves the catalog open and an explicit list can establish a complete catalog. Contexts must belong to the same dialect and language profile."
+  },
+  "surface": [
+    "__construct",
+    "profile",
+    "context",
+    "analyze",
+    "analyzeAll",
+    "split"
+  ],
+  "forbidden": [
+    "ir",
+    "inspect",
+    "diagnose",
+    "SqlSemantics\\Query",
+    "Model\\Statement\\Operation"
+  ],
+  "construction": "The dialect value constructors remain public. Binding state is internal and carries no rendered statement. Previously fixed semantic domains, tests, observations, faults and budgets retain their requirements."
+}

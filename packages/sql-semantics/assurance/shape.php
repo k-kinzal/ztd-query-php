@@ -164,7 +164,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    $roots[] = 'Mutation\\Delete';
+    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -198,6 +198,14 @@ if ($dialect !== 'sqlite') {
     ];
     $properties['Predicate\\IntegerOperator'] = [];
     $methods['Mutation\\Delete'] = $methods['Select'];
+    $properties['Mutation\\Insert'] = [
+        'target' => ['TableSource'], 'rows' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $methods['Mutation\\Insert'] = $methods['Select'];
+    $properties['Mutation\\InsertRow'] = ['values' => ['array']];
+    $properties['Mutation\\InsertValue'] = ['value' => ['?IntegerLiteral']];
+    $methods['Mutation\\InsertRow'] = $methods['Mutation\\InsertValue'] = ['__construct', 'toString'];
+    $internal[] = 'Mutation\\InsertLowering';
     $methods['Predicate\\IntegerComparison'] = ['__construct'];
     $methods['Predicate\\IntegerOperator'] = [];
     $enumCases['Predicate\\IntegerOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -243,9 +251,9 @@ try {
     requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
         && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
-    $publication = __DIR__ . '/publication-v4.json';
+    $publication = __DIR__ . '/publication-v5.json';
     requireShape(
-        hash_file('sha256', $publication) === '1684d19b60c780dd84f56994283dcfe6913b6071de61dcdc418f7366fe25c5f5',
+        hash_file('sha256', $publication) === 'ae49925bf3e0c7d25f55bb15f318c6686e160285c44a3ae20a5349722f12ed67',
         'Publication contract differs from the recorded revision'
     );
     $surface = json_decode(file_get_contents($publication), true, 512, JSON_THROW_ON_ERROR)['surface'];
@@ -268,10 +276,11 @@ try {
     $resolve = '$declarations = $this->catalog->resolve($context);';
     $bind = '$this->binder->resolve($sql, $declarations)';
     $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
-    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement;'
-        . ' return $statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete'
-        . ' ? (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement)'
-        . ' : (new \\' . $prefix . 'SelectLowering())->lower($operation);';
+    $insert = $dialect === 'mysql' ? 'Dml\\Insert\\InsertRows' : 'Manipulation\\InsertRows';
+    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
+        . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
@@ -309,9 +318,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v4.json';
+    $storagePath = __DIR__ . '/value-storage-v5.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '0d7b5e299ed28ce59f8185f302394706e3d100e05acd7f386de02e9e79d54abe',
+        hash_file('sha256', $storagePath) === 'cde490ca32e7cf8a787d6376737028107f300d9fcf03551d34a73bd4ccdd5d71',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

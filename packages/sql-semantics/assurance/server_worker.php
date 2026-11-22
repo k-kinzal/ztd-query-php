@@ -154,6 +154,40 @@ function constructPredicate(string $namespace, ?array $test): ?object
     };
 }
 
+function constructInsert(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Mutation\\Insert';
+    $rowClass = $namespace . 'Mutation\\InsertRow';
+    $cellClass = $namespace . 'Mutation\\InsertValue';
+    $integer = $namespace . 'IntegerLiteral';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $target = constructSource($namespace, $input['target'], $input['dialect']);
+    $rows = [];
+    foreach ($input['rows'] as $entries) {
+        $values = [];
+        foreach ($entries as $cell) {
+            $values[] = new $cellClass($cell === null ? null : new $integer($cell));
+        }
+        $rows[] = new $rowClass($values);
+    }
+
+    return new $statement($target, $rows, $release::from($input['release']));
+}
+
+function observeInsert(string $namespace, object $value, string $dialect): array
+{
+    $rows = [];
+    foreach ($value->rows as $row) {
+        $rows[] = array_map(static fn ($cell): ?string => $cell->value?->decimal, $row->values);
+    }
+
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace),
+        'rows' => $rows, 'sql' => $value->toString(),
+    ];
+}
+
 function constructDelete(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -194,11 +228,15 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['target'], $input['rows']) => constructInsert($platform, $input),
             isset($input['target']) => constructDelete($platform, $input),
             default => constructSelect($platform, $input),
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Mutation\\Insert') {
+        return observeInsert($namespace, $value, $input['dialect']);
     }
     if ($value::class === $namespace . 'Mutation\\Delete') {
         return observeDelete($namespace, $value, $input['dialect']);

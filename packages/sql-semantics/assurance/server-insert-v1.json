@@ -5,6 +5,7 @@
   "profiles": "The releases and native language settings in server-projection-v1.json.",
   "scope": "One top-level INSERT with an explicit nonempty target column list and a nonempty list of VALUES rows. Target columns are declared ordinary writable signed 32-bit integers. Each supplied value is a signed integer literal or explicit NULL.",
   "open": ["Implicit column lists, DEFAULT as an operand, identity or generated target columns, additional target types and literal or expression roles", "WITH, RETURNING, conflict modifiers, REPLACE, INSERT from a query, row aliases and partition selection"],
+  "additionalPublicRoots": ["Mutation/Insert"],
   "constructors": {
     "Insert": {
       "type": "Mutation/Insert",
@@ -40,9 +41,10 @@
     "completeness": "Require the independent Cartesian product of target layout, row count and value vector observed from actual closed values exactly once."
   },
   "exploration": {"seeds": [1207, 3691, 7723], "casesPerSeed": 32, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
-  "negative": ["Missing target columns", "Empty row list", "Empty row cells", "Row width mismatch", "Duplicate target column", "Read-only generated target column", "Unresolved target column", "Signed integer value outside the profile"],
+  "negative": ["Missing target columns", "Empty row list", "Empty row cells", "Row width mismatch", "Duplicate target column", "Read-only generated target column where the release supports it, or a non-integer target in MySQL 5.6", "Unresolved target column", "Signed integer value outside the profile"],
+  "additionalPostgreSqlNegatives": ["A directly declared identity target", "An identity copied by LIKE INCLUDING IDENTITY", "An identity inherited by a partition"],
   "faults": ["Swap two target columns", "Drop the final row", "Redirect to the independent control table"],
   "evidence": "Capture the inputs, observed structures, emitted SQL, typed state before and after, trigger log, rollback state and exact distribution. Use deterministic defaults and distinct fixture rows. Preserve any counterexample and complete the same release matrix.",
   "trust": ["Closed runtime values and their snapshots", "Native declaration resolution and writable type checks", "Disposable transactional database and observer with fixed target boundaries", "Independent row-placement and default calculation"],
-  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/insert.html", "https://www.postgresql.org/docs/17/sql-insert.html"]
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/insert.html", "https://www.postgresql.org/docs/17/sql-insert.html", "https://www.postgresql.org/docs/17/ddl-identity-columns.html", "https://www.postgresql.org/docs/17/sql-createtable.html"]
 }

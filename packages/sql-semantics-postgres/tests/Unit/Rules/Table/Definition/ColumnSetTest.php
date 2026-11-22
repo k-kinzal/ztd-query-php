@@ -75,4 +75,14 @@ final class ColumnSetTest extends TestCase
         $set->inherit(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable, true));
         self::assertSame([true, \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability::Nullable], [$set->columns()[0]->generated, $set->columns()[0]->nullability]);
     }
+
+    public function testIdentifyMarksAnExplicitIdentitySequence(): void
+    {
+        $set = new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnSet();
+        $column = new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('n');
+        $set->add($column, \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, true);
+        $set->identify($column);
+
+        self::assertTrue($set->columns()[0]->identity);
+    }
 }

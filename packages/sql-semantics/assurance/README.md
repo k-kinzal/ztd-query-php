@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [publication contract](publication-v4.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v5.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -109,6 +109,12 @@ Run `run_server_join.py` with the native fixture environment and the same argume
 The [native result contract](server-result-v1.json) covers DISTINCT, output ordinals, native and explicit NULL placement, and literal row bounds. Run `run_server_result.py` with the same fixture arguments as the native join runner. The observer retains the database's actual row sequence and native metadata. The evaluator computes ordered equivalence bands and accepts each valid tie selection with its exact row multiplicities. Controls check duplicate loss, excess repetitions, wrong ordering bands, changed NULL placement, and differences in names and types.
 
 Replay the release matrix with `combine_server_result_evidence.py` and the same release paths and options as the native join collector.
+
+## Native literal INSERT effects
+
+The [native INSERT contract](server-insert-v1.json) covers ordinary writable signed-integer targets and literal integer or NULL values. The observer starts with different target and control data and observes all rows, affected-row counts, defaults on omitted columns, trigger events and restoration after rollback. It only admits the fixed fixture's literal INSERT forms.
+
+Use `run_server_insert.py` with the same native options and fixture connection settings as the DELETE runner. Replay the release set with `combine_server_insert_evidence.py` and the per-release `index.json` paths. PostgreSQL analysis distinguishes ordinary inherited columns, identity columns copied through LIKE, and inherited identities on partitions.
 
 ## SQLite joins, filters and ordering
 
