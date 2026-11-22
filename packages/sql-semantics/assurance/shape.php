@@ -114,7 +114,10 @@ if ($dialect === 'sqlite') {
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
-    $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates];
+    $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates, 'returning' => ['array']];
+    $properties['Mutation\\ReturnedColumn'] = ['reference' => ['ColumnReference'], 'name' => ['Identifier']];
+    $methods['Mutation\\ReturnedColumn'] = ['__construct'];
+    $internal[] = 'Mutation\\DeleteReturningLowering';
     $methods['Mutation\\Delete'] = $methods['Select'];
     $properties['Mutation\\Insert'] = ['target' => ['TableSource'], 'input' => ['Rows\\ValuesQuery', 'Select'], 'conflict' => ['Mutation\\InsertConflict']];
     $methods['Mutation\\Insert'] = $methods['Select'];
@@ -481,9 +484,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v13.json';
+    $storagePath = __DIR__ . '/value-storage-v14.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '8f2f8fc9bca25ef29a2a407cad68f3611a5f4e4d6cf2721d6dfd64d1b2f8eae2',
+        hash_file('sha256', $storagePath) === 'b16dedd2364d3d367b4f1dc9683b5533a3226747d4e82858b7b80f9d1afff3a1',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

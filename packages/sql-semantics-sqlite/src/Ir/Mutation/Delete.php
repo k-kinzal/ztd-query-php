@@ -19,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -35,13 +36,27 @@ final class Delete implements SemanticsIR
     use Snapshot;
 
     /**
-     * Checks the predicate against the single target occurrence.
+     * @var list<ReturnedColumn> The ordered output fields
+     */
+    public readonly array $returning;
+
+    /**
+     * Checks the predicate and return fields against the single target occurrence.
+     *
+     * @param list<ReturnedColumn> $returning The requested output fields in order
      */
     public function __construct(
         public readonly TableSource $target,
         public readonly Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
+        array $returning = [],
     ) {
+        $checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');
+        Check::input(count($checked) <= 2000, 'A DELETE can return at most 2000 fields in this profile.');
+        foreach ($checked as $column) {
+            Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the DELETE target.');
+        }
         (new ExpressionScope())->check([count($target->columns)], $where === null ? [] : [[$where, 0, 1]]);
+        $this->returning = $checked;
     }
 
     /**
@@ -61,6 +76,12 @@ final class Delete implements SemanticsIR
         $target = $renderer->source($this->target, 0);
         $where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);
 
-        return 'DELETE FROM ' . $target . $where;
+        $fields = [];
+        foreach ($this->returning as $column) {
+            $fields[] = $this->target->columns[$column->reference->slot]->quoted() . ' AS ' . $column->name->quoted();
+        }
+        $returning = $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);
+
+        return 'DELETE FROM ' . $target . $where . $returning;
     }
 }

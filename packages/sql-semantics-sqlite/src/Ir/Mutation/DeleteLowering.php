@@ -23,12 +23,13 @@ final class DeleteLowering
      */
     public function lower(BoundStatement $operation, ParsedDelete $statement): Delete
     {
-        Check::input($statement->with === null && $statement->returning === [], 'Complete SQLite DELETE requires a single target without WITH or RETURNING.');
+        Check::input($statement->with === null, 'Complete SQLite DELETE requires a single target without WITH.');
         $binding = new SourceBinding($operation, $statement->target);
         $where = (new QueryClauses())->predicate($statement->where, $binding);
+        $returning = (new DeleteReturningLowering())->lower($operation, $statement, $binding);
         $target = $binding->source();
         Check::invariant($target instanceof TableSource, 'A resolved DELETE has one external target.');
 
-        return new Delete($target, $where);
+        return new Delete($target, $where, $returning);
     }
 }

@@ -23,6 +23,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\ReturnedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateAssignment;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateConflict;
@@ -233,7 +234,14 @@ function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Upd
 
 function directDelete(array $input): Delete
 {
-    return new Delete(source($input['target']), isset($input['where']) ? operand($input['where']) : null);
+    return new Delete(
+        source($input['target']),
+        isset($input['where']) ? operand($input['where']) : null,
+        array_map(static fn (array $field): ReturnedColumn => new ReturnedColumn(
+            new ColumnReference($field[0][1], $field[0][2] ?? 0),
+            new Identifier($field[1]),
+        ), $input['returning'] ?? []),
+    );
 }
 
 function observeDelete(Delete $value): array
@@ -244,6 +252,10 @@ function observeDelete(Delete $value): array
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
         'where' => $value->where === null ? null : observeOperand($value->where),
+        'returning' => array_map(
+            static fn (ReturnedColumn $column): array => [observeOperand($column->reference), $column->name->value],
+            $value->returning,
+        ),
         'sql' => $value->toString(),
     ];
 }

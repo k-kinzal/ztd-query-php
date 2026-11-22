@@ -42,6 +42,11 @@ function nativeBoundaryContract(string $dialect): array
         $additional = json_decode(file_get_contents($defaults), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite defaults cannot replace a fixed boundary');
         $rules += $additional;
+        $returning = __DIR__ . '/sqlite-delete-returning-boundaries-v1.json';
+        requireShape(hash_file('sha256', $returning) === '692d0b9ef8a91b6e3cb4c8f09dbc5bcad3b9a985789a2e57480cce1bea1e1c4b', 'SQLite DELETE RETURNING boundary contract differs from the recorded revision');
+        $additional = json_decode(file_get_contents($returning), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite RETURNING cannot replace a fixed boundary');
+        $rules += $additional;
     } else {
         $extension = __DIR__ . '/native-insert-query-boundaries-v2.json';
         requireShape(
@@ -78,7 +83,7 @@ function checkNativeBoundaries(
     if ($dialect === 'sqlite') {
         foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
-            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Statement\\Schema\\Column\\NotNull',
+            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }

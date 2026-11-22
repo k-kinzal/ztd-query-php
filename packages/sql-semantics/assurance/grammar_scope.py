@@ -31,7 +31,7 @@ RELATED_SQLITE_DOMAINS = {
     "expr: expr IS NOT expr": ("sqlite-scalars-v1.json",),
     "cmd: select": ("contract-v1.json", "sqlite-relational-v1.json", "sqlite-result-v1.json",
                     "sqlite-values-v1.json", "sqlite-local-source-v1.json", "sqlite-recursive-source-v1.json"),
-    "cmd: with DELETE FROM xfullname indexed_opt where_opt_ret": ("sqlite-delete-v1.json",),
+    "cmd: with DELETE FROM xfullname indexed_opt where_opt_ret": ("sqlite-delete-v1.json", "sqlite-delete-returning-v1.json"),
     "cmd: with insert_cmd INTO xfullname idlist_opt select upsert": ("sqlite-insert-v1.json", "sqlite-insert-query-v1.json"),
     "cmd: with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret": ("sqlite-update-v1.json",),
     "cmd: DROP TABLE ifexists fullname": ("sqlite-drop-table-v1.json",),

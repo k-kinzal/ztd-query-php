@@ -1,16 +1,18 @@
 """Check observed SQLite DELETE effects using an independent row selection model."""
 
 import itertools
+import json
 import random
 import time
 from collections import Counter
 
-from run import Failure, Ledger, Worker, compare, require, write_json
+from run import TOOL, Failure, Ledger, Worker, compare, digest, require, write_json
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 from sqlite_relational_cases import children, evaluate, truth
 
 CONTRACT = "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b"
+RETURNING_CONTRACT = "fc81fff184fd532c12fde78b63740676c6d40678331597a75409c95bdb6e97b0"
 MAIN = [(0, "zero"), (1, "first"), (1, "first"), (None, "null"), (-1, b"minus"), ("1", "text"), (2.5, "real")]
 TEMP = [(1, "temp"), (2, "safe"), (None, "temp-null")]
 ROWS = {"main": MAIN, "temp": TEMP}
@@ -86,7 +88,7 @@ def typed_rows(rows):
     return sorted([typed(value) for value in row] for row in rows)
 
 
-def expected(request):
+def partition(request):
     schema, _, columns = request["target"]
     slots = [("key", "value").index(column) for column in columns]
     removed = []
@@ -96,6 +98,12 @@ def expected(request):
         where = request["where"]
         destinations = removed if where is None or truth(evaluate(where, projected, request["bindings"])) is True else remaining
         destinations.append(row)
+    return removed, remaining
+
+
+def expected(request):
+    schema, _, _ = request["target"]
+    removed, remaining = partition(request)
     names = parameter_names(request["where"])
     trigger_log = removed if schema == "main" else []
     return {
@@ -152,11 +160,18 @@ def analyzed():
                 {"2": None}, ("key",)))
 
 
+def returning_contract():
+    contract = TOOL / "sqlite-delete-returning-v1.json"
+    require(digest(contract) == RETURNING_CONTRACT, "sqlite-returning-contract-mismatch")
+    return json.loads(contract.read_text())
+
+
 def negatives():
     yield item(predicate=["column", 0, 1]), "rejected", "visible occurrence"
     yield item(predicate=["column", 2]), "rejected", "visible occurrence"
     yield {"sql": "DELETE FROM unavailable", "declarations": []}, "rejected", "resolved, complete base table"
-    yield {"sql": "DELETE FROM main.ir_delete RETURNING key", "declarations": DECLARATIONS}, "rejected", "without WITH or RETURNING"
+    transition = returning_contract()["baseSuiteTransition"]
+    yield {"sql": transition["negative"], "declarations": DECLARATIONS}, "rejected", "requires an unqualified target column"
 
 
 def execute(args, spec, db, worker_factory=Worker):

@@ -258,6 +258,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_de
 
 The independent evaluator partitions a fixed set of rows by the predicate's truth value. SQLite executes each observation inside a rolled-back savepoint and reports both target tables, the trigger log, change counts and native binding metadata. The main and temp tables share a name and have visibly different contents. Tests cover absence of a predicate, false and NULL conditions, duplicates, aliases and parameter labels. The runner injects changes to the target schema, predicate and column slot.
 
+## SQLite DELETE RETURNING
+
+The [RETURNING record](sqlite-delete-returning-v1.json) checks projection of old-row slots alongside row removal. The runner observes output names, exact typed values, repeated fields, the bag of deleted rows, parameter registration, trigger results and complete rollback. It checks that emitted fields resolve in the native RETURNING scope even when the WHERE clause uses a generated alias. It also runs the prior statement that the basic DELETE suite had recorded outside its domain.
+
+Run `run_sqlite_delete_returning.py` using the SQLite fixture options. The SQLite collector replays the result and effect observations.
+
 ## SQLite VALUES
 
 Run the [VALUES contract](sqlite-values-v1.json) against the same pinned engine:
