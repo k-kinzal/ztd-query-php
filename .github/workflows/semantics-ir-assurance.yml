@@ -295,6 +295,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-delete-returning-evidence"
+      - name: Collect SQLite UPDATE RETURNING observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_update_returning.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-update-returning-evidence"
       - name: Collect MySQL and PostgreSQL projection observations
         if: ${{ !cancelled() }}
         env:
@@ -374,6 +383,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-cast-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-index/
             ${{ runner.temp }}/semantics-ir-controls/
             ${{ runner.temp }}/semantics-ir-native-boundaries/

@@ -86,12 +86,15 @@ def physical_row(row):
     return (left, right, key, None if right is None else numeric(left) + numeric(right))
 
 
-def expected(request):
+def expected(request, after_main=None):
     schema, _, columns = request["target"]
     policy = request["conflict"]
     old = MAIN if schema == "main" else TEMP
     transformed = []
     count, log, error = 0, [], None
+    returning = request.get("returning", [])
+    returned = []
+    result_positions = [COLUMNS.index(columns[value[1]]) for value, _ in returning]
     for record in old:
         left, right, key, computed = physical_row(record)
         values = dict(zip(COLUMNS, (left, right, key, computed)))
@@ -108,16 +111,20 @@ def expected(request):
                 transformed.append(record)
                 continue
             error = {"code": 19, "message": "NOT NULL constraint failed: ir_update.left_value"}
-            count, log, transformed = 0, [], old
+            count, log, returned, transformed = 0, [], [], old
             break
-        transformed.append((new_left, new_right, key))
+        updated = (new_left, new_right, key)
+        if returning:
+            row = physical_row(updated)
+            returned.append(tuple(row[index] for index in result_positions))
+        transformed.append(after_main(updated) if schema == "main" and after_main is not None else updated)
         count += 1
         if schema == "main":
             log.append((key, left, right, new_left, new_right))
     labels = parameters(request["assignments"], request["where"])
     return {
-        "statement": {"names": [], "parameters": labels, "parameterCount": max(map(int, labels), default=0),
-                      "readOnly": False, "changes": count, "rows": [], "evaluationError": error},
+        "statement": {"names": [label for _, label in returning], "parameters": labels, "parameterCount": max(map(int, labels), default=0),
+                      "readOnly": False, "changes": count, "rows": typed_rows(returned), "evaluationError": error},
         "main": typed_rows(physical_row(row) for row in (transformed if schema == "main" else MAIN)),
         "temp": typed_rows(physical_row(row) for row in (transformed if schema == "temp" else TEMP)),
         "log": typed_rows(log),

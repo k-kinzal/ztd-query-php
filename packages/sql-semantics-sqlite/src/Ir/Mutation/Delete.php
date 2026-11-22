@@ -77,11 +77,7 @@ final class Delete implements SemanticsIR
         $target = $renderer->source($this->target, 0);
         $where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);
 
-        $fields = [];
-        foreach ($this->returning as $column) {
-            $fields[] = $this->target->columns[$column->reference->slot]->quoted() . ' AS ' . $column->name->quoted();
-        }
-        $returning = $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);
+        $returning = (new ReturningSql())->clause($this->target, $this->returning);
 
         return 'DELETE FROM ' . $target . $where . $returning;
     }

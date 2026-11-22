@@ -7,15 +7,15 @@ namespace Tests\Unit\Ir\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Ir\Mutation\DeleteReturningLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\ReturningLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
-#[CoversClass(DeleteReturningLowering::class)]
+#[CoversClass(ReturningLowering::class)]
 #[Small]
-final class DeleteReturningLoweringTest extends TestCase
+final class ReturningLoweringTest extends TestCase
 {
     public function testLowerKeepsTheExpandedTargetOrderAndExplicitLabel(): void
     {
@@ -25,7 +25,7 @@ final class DeleteReturningLoweringTest extends TestCase
         $operation = $statement->binding();
         $binding = new SourceBinding($operation, $statement->statement->target);
 
-        $columns = (new DeleteReturningLowering())->lower($operation, $statement->statement, $binding);
+        $columns = (new ReturningLowering())->lower($operation, $statement->statement->returning, $binding);
 
         self::assertSame(['id', 'value', 'extra'], array_map(static fn ($column): string => $column->name->value, $columns));
         self::assertSame([0, 1, 0], array_map(static fn ($column): int => $column->reference->slot, $columns));

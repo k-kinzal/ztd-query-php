@@ -243,10 +243,7 @@ function directDelete(array $input): Delete
     return new Delete(
         source($input['target']),
         isset($input['where']) ? operand($input['where']) : null,
-        array_map(static fn (array $field): ReturnedColumn => new ReturnedColumn(
-            new ColumnReference($field[0][1], $field[0][2] ?? 0),
-            new Identifier($field[1]),
-        ), $input['returning'] ?? []),
+        directReturning($input['returning'] ?? []),
     );
 }
 
@@ -258,12 +255,25 @@ function observeDelete(Delete $value): array
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
         'where' => $value->where === null ? null : observeOperand($value->where),
-        'returning' => array_map(
-            static fn (ReturnedColumn $column): array => [observeOperand($column->reference), $column->name->value],
-            $value->returning,
-        ),
+        'returning' => observeReturning($value->returning),
         'sql' => $value->toString(),
     ];
+}
+
+function directReturning(array $fields): array
+{
+    return array_map(static fn (array $field): ReturnedColumn => new ReturnedColumn(
+        new ColumnReference($field[0][1], $field[0][2] ?? 0),
+        new Identifier($field[1]),
+    ), $fields);
+}
+
+function observeReturning(array $fields): array
+{
+    return array_map(
+        static fn (ReturnedColumn $column): array => [observeOperand($column->reference), $column->name->value],
+        $fields,
+    );
 }
 
 function directInsert(array $input): Insert
@@ -301,6 +311,7 @@ function directUpdate(array $input): Update
         array_map(static fn (array $pair): UpdateAssignment => new UpdateAssignment($pair[0], operand($pair[1])), $input['assignments']),
         isset($input['where']) ? operand($input['where']) : null,
         UpdateConflict::from($input['conflict']),
+        directReturning($input['returning'] ?? []),
     );
 }
 
@@ -317,6 +328,7 @@ function observeUpdate(Update $value): array
             $value->assignments,
         ),
         'where' => $value->where === null ? null : observeOperand($value->where),
+        'returning' => observeReturning($value->returning),
         'sql' => $value->toString(),
     ];
 }

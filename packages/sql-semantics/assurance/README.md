@@ -308,6 +308,10 @@ The [INSERT input record](sqlite-insert-input-v2.json) checks a default-only row
 
 Run `run_sqlite_insert_input.py` with the SQLite fixture options. The collector replays typed rows, constraint outcomes, trigger effects and rollback.
 
+## SQLite UPDATE RETURNING
+
+The [UPDATE RETURNING record](sqlite-update-returning-v1.json) observes the new row after assignments and generated columns are computed. The fixture changes the updated row in an AFTER trigger and records the arguments received by that trigger. The oracle compares the returned rows, persisted rows and trigger effects separately, and confirms that rollback restores all three tables. Run `run_sqlite_update_returning.py` with the SQLite fixture options.
+
 ## SQLite grouped counts
 
 The [SQLite grouping record](sqlite-grouped-v1.json) fixes builtin text collations, grouping and COUNT argument alternatives. The independent observer compares exact storage classes, result names and one representative row per group. The case generator includes equal numeric values with different storage classes, repeated rows, NULLs, mixed storage classes, trailing spaces and text containing NUL. The [grouped observer policy](sqlite-grouped-observer-v1.json) limits native statements to reads and builtin COUNT.

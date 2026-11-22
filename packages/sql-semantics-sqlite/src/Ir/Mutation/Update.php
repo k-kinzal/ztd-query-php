@@ -43,16 +43,23 @@ final class Update implements SemanticsIR
     public readonly array $assignments;
 
     /**
+     * @var list<ReturnedColumn> The ordered fields of the directly updated rows
+     */
+    public readonly array $returning;
+
+    /**
      * Checks every write and read against the target occurrence.
      *
      * @param TableSource $target The absolute table and the named read or write slots
      * @param list<UpdateAssignment> $assignments The explicitly writable slots and their values
+     * @param list<ReturnedColumn> $returning The ordered fields of the updated row
      */
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
         public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
         public readonly UpdateConflict $conflict = UpdateConflict::Inherit,
+        array $returning = [],
     ) {
         $checked = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty ordered assignment list.', 1);
         Check::input(count($checked) <= 2000, 'An UPDATE can have at most 2000 assignments in this profile.');
@@ -62,7 +69,13 @@ final class Update implements SemanticsIR
             $pending[] = [$assignment->value, 0, 1];
         }
         (new ExpressionScope())->check([count($target->columns)], $pending);
+        $output = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');
+        Check::input(count($output) <= 2000, 'An UPDATE can return at most 2000 fields in this profile.');
+        foreach ($output as $column) {
+            Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the UPDATE target.');
+        }
         $this->assignments = $checked;
+        $this->returning = $output;
     }
 
     /**
@@ -91,7 +104,8 @@ final class Update implements SemanticsIR
             $assignments[] = $column . ' = ' . $renderer->expression($assignment->value, $this->target);
         }
         $where = $this->where === null ? '' : ' WHERE ' . $renderer->expression($this->where, $this->target);
+        $returning = (new ReturningSql())->clause($this->target, $this->returning);
 
-        return 'UPDATE' . $conflict . ' ' . $target . ' SET ' . implode(', ', $assignments) . $where;
+        return 'UPDATE' . $conflict . ' ' . $target . ' SET ' . implode(', ', $assignments) . $where . $returning;
     }
 }

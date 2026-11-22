@@ -23,7 +23,7 @@ final class ReturnedColumn
     use Snapshot;
 
     /**
-     * Checks the statement-local occurrence. The owning DELETE checks the slot.
+     * Checks the statement-local occurrence. The owning mutation checks the slot.
      *
      * @param ColumnReference $reference The target field
      * @param Identifier $name The result label

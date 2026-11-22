@@ -29,8 +29,8 @@ final class UpdateLowering
     public function lower(BoundStatement $operation, ParsedUpdate $statement): Update
     {
         Check::input(
-            $statement->with === null && $statement->from === null && $statement->returning === [],
-            'Complete SQLite UPDATE requires one table without WITH, FROM or RETURNING.',
+            $statement->with === null && $statement->from === null,
+            'Complete SQLite UPDATE requires one table without WITH or FROM.',
         );
         $conflict = match ($statement->resolution) {
             null => UpdateConflict::Inherit,
@@ -47,9 +47,10 @@ final class UpdateLowering
             $assignments[] = new UpdateAssignment($binding->write($assignment->column), $lowering->lower($assignment->value, $binding));
         }
         $where = (new QueryClauses())->predicate($statement->where, $binding);
+        $returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);
         $target = $binding->source();
         Check::invariant($target instanceof TableSource, 'A resolved UPDATE has one external target.');
 
-        return new Update($target, $assignments, $where, $conflict);
+        return new Update($target, $assignments, $where, $conflict, $returning);
     }
 }

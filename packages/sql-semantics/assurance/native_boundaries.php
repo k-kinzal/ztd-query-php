@@ -18,7 +18,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-insert-input-boundaries-v2.json', 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f'],
             ['sqlite-scalar-boundaries-v2.json', '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be'],
             ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
-            ['sqlite-delete-returning-boundaries-v1.json', '692d0b9ef8a91b6e3cb4c8f09dbc5bcad3b9a985789a2e57480cce1bea1e1c4b'],
+            ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
         ],
         'mysql', 'postgres' => [
             ['native-boundaries-v13.json', '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3'],
@@ -60,7 +60,8 @@ function checkNativeBoundaries(
         foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\Predicate\\ComparisonOperator',
             'Statement\\Expression\\FunctionCall', 'Statement\\Expression\\Operator\\Binary', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
-            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
+            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
+            'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
