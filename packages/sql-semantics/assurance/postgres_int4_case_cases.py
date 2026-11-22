@@ -18,7 +18,7 @@ def result(value):
 
 
 def case(arms, otherwise=None):
-    return ["int4-case", list(arms), otherwise]
+    return ["int4-case", [list(arm) for arm in arms], otherwise]
 
 
 def fallback(form):
