@@ -541,7 +541,7 @@ The [SQLite unique-key contract](sqlite-unique-keys-v1.json) covers ordered inli
 
 The named CHECK fixture independently models slot comparisons, NULL propagation and ordered CHECK failures. It measures ordinary INSERT and conflict overrides, column rename and drop, and coexistence with NOT NULL and UNIQUE. The journal preserves the full ALTER diagnostic and compares the resolved column dependency. Run `run_sqlite_named_checks.py` with the same arguments. [SQLite named CHECK contract](sqlite-named-checks-v2.json)
 
-The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v3.json)
+The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v4.json)
 
 ## SQLite literal defaults
 

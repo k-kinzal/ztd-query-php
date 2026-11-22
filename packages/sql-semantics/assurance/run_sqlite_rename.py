@@ -15,8 +15,8 @@ from sqlite_rename_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-rename-v3.json"
-CONTRACT = "1b57e1bd67075672bedcb840b51bc0e289a4d71c63cea2f6323dc8cd05f6df64"
+CONTRACT_NAME = "sqlite-rename-v4.json"
+CONTRACT = "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861"
 CATALOG_NAMES = {b"main": b"sqlite_master", b"temp": b"sqlite_temp_master"}
 CATALOG_FIELDS = frozenset({b"name", b"sql", b"tbl_name", b"type"})
 RENAME_FUNCTIONS = frozenset({b"like", b"substr", b"sqlite_rename_table", b"sqlite_rename_column",

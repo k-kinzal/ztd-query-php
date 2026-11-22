@@ -750,8 +750,8 @@ try {
         $class = $classes[0];
         $observed[] = $short;
         if ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn') {
-            $lexical = __DIR__ . '/sqlite-rename-v3.json';
-            requireShape(hash_file('sha256', $lexical) === '1b57e1bd67075672bedcb840b51bc0e289a4d71c63cea2f6323dc8cd05f6df64', 'SQLite rename token contract differs');
+            $lexical = __DIR__ . '/sqlite-rename-v4.json';
+            requireShape(hash_file('sha256', $lexical) === '10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861', 'SQLite rename token contract differs');
             $required = json_decode(file_get_contents($lexical), true, 512, JSON_THROW_ON_ERROR)['lexicalDomain']['bareRejected'];
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $set = $constants[0]->consts[0] ?? null;

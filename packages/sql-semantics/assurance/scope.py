@@ -122,7 +122,7 @@ CONTRACTS = {
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v2.json": "be2c9f922e27b7106b63cd201b04cfecef60b035c27dd74366ad7b8b0650e99e",
-    "sqlite-rename-v3.json": "1b57e1bd67075672bedcb840b51bc0e289a4d71c63cea2f6323dc8cd05f6df64",
+    "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
 PUBLICATION = "6559f1ac44f78e8fa9412e602c7b2a1182a05d0aa02de7b0e03ffcfec9273718"
