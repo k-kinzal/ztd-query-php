@@ -3,7 +3,7 @@
 import argparse
 import difflib
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
 
@@ -13,11 +13,16 @@ class Fault(NamedTuple):
     role: str
     before: str
     after: str
+    artifact: Optional[str] = None
 
 
 def faults(engine):
     if engine == "sqlite":
         return [
+            Fault("discard-live-membership-operand", "Platform::discardedBindings",
+                  "$object->items === []", "$object->items !== []", "src/Platform.php"),
+            Fault("skip-full-syntax-audit", "Publication::facts",
+                  "$objects = $graph->objects($statement);", "$objects = [$statement];", "src/Model/Validation/Publication.php"),
             Fault("skip-sqlite-select-expression-scope", "From/SelectBounds::check", "(new ExpressionScope())->check($widths, $pending);", ""),
             Fault("skip-sqlite-select-boundary", "Select::__construct",
                   "(new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy, $limit);", ""),
@@ -138,7 +143,7 @@ def faults(engine):
 
 def check_fault(args, engine, fault, distribution):
     model, _ = fault.role.split("::")
-    relative = Path(f"sql-semantics-{engine}/src/Ir/{model}.php")
+    relative = Path(f"sql-semantics-{engine}") / (fault.artifact or f"src/Ir/{model}.php")
     original = args.candidate / "packages" / relative
     source = original.read_text()
     require(source.count(fault.before) == 1, "native-boundary-fault-anchor", fault.name)
@@ -157,7 +162,8 @@ def check_fault(args, engine, fault, distribution):
     try:
         shape(args, overlay, engine)
     except Failure as failure:
-        expected = {"status": "shape-mismatch", "message": f"Native boundary differs in {fault.role}"}
+        message = f"Folded binding source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
+        expected = {"status": "shape-mismatch", "message": message}
         require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
                 {"fault": fault.name, "response": failure.detail})
         record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative.as_posix(),
@@ -182,14 +188,16 @@ def main():
     for engine in ("mysql", "postgres", "sqlite"):
         healthy = shape(args, dialect=engine)
         cases = faults(engine)
-        require({fault.role for fault in cases} <= set(healthy["checkedBoundaries"]), "native-boundary-audit-incomplete", engine)
+        require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
+                and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
+                "native-boundary-audit-incomplete", engine)
         results[engine] = {"healthy": healthy, "faults": [check_fault(args, engine, fault, manifest) for fault in cases]}
     verify_candidate(args.candidate, identity, manifest)
     write_json(args.out / "index.json", {
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v16.json", "postgres-mutation-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "value_storage.php", "value-storage-v21.json", "value-primitives.json")},
+                       "native-boundaries-v16.json", "postgres-mutation-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v10.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v21.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

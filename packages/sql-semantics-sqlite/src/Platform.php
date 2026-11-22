@@ -18,10 +18,12 @@ use SqlSemantics\Platform\Sqlite\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 
 /**
  * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
@@ -101,6 +103,32 @@ final class Platform
     public function codec(LanguageProfile $profile): Codec
     {
         return new Codec();
+    }
+
+    /**
+     * Opens the transient syntax writer used to recover lexical parameter occurrences.
+     */
+    public function syntaxOutput(): Output
+    {
+        return new Output(new Codec());
+    }
+
+    /**
+     * Identifies the parsed operand edges discarded by SQLite's empty membership rule.
+     *
+     * @param list<object> $objects The already audited syntax graph
+     * @return array<int, string>
+     */
+    public function discardedBindings(array $objects): array
+    {
+        $discarded = [];
+        foreach ($objects as $object) {
+            if ($object instanceof InList && $object->items === []) {
+                $discarded[spl_object_id($object)] = 'operand';
+            }
+        }
+
+        return $discarded;
     }
 
     /**

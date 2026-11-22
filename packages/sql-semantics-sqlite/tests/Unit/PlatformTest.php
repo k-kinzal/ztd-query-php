@@ -14,6 +14,8 @@ use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Platform;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 
 #[CoversClass(Platform::class)]
@@ -78,6 +80,22 @@ final class PlatformTest extends TestCase
         $codec = $platform->codec($platform->profile(null, null, ParameterStyle::Native));
 
         self::assertSame('`select`', $codec->name(new Name('select'), NameUse::Column));
+    }
+
+    public function testSyntaxOutputUsesTheSqliteWriter(): void
+    {
+        $pieces = (new Platform())->syntaxOutput()->node(new IntegerLiteral('13'))->canonical();
+
+        self::assertSame('13', $pieces[0]->text);
+    }
+
+    public function testDiscardedBindingsSelectOnlyTheEmptyMembershipOperand(): void
+    {
+        $operand = new IntegerLiteral('17');
+        $empty = new InList($operand, []);
+        $nonempty = new InList($operand, [new IntegerLiteral('0')]);
+
+        self::assertSame([spl_object_id($empty) => 'operand'], (new Platform())->discardedBindings([$empty, $nonempty, $operand]));
     }
 
     public function testLeafKeysKeysSqliteTokens(): void

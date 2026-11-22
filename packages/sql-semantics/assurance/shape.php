@@ -558,6 +558,21 @@ try {
         $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
+    $checkedBindingSources = [];
+    if ($dialect === 'sqlite') {
+        $bindingRecord = __DIR__ . '/sqlite-folded-binding-sources-v1.json';
+        requireShape(
+            hash_file('sha256', $bindingRecord) === '6f4a8cd52c21e98df62677737256cb6155782256cae8fdbd49078f3ed637af75',
+            'Folded binding contract differs from its recorded revision'
+        );
+        $bindingSources = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
+        foreach ($bindingSources as $path => $approved) {
+            $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
+            $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
+            requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], "Folded binding source differs in $path");
+            $checkedBindingSources[$path] = $approved;
+        }
+    }
     $base = $package . '/src/Ir';
     $storagePath = __DIR__ . '/value-storage-v21.json';
     requireShape(
@@ -723,7 +738,8 @@ try {
     $expectedBoundaries = array_keys($boundaries);
     sort($expectedBoundaries);
     requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
-    echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries]) . "\n";
+    echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries,
+        'checkedBindingSources' => (object) $checkedBindingSources]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);

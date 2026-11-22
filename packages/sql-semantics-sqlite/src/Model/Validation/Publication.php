@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Platform;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 
 /**
  * Checks the internal statement graph and derives its binding facts.
@@ -30,11 +29,9 @@ final class Publication
         $platform = Platform::shared();
         $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', $platform->statementNamespace()]);
         $objects = $graph->objects($statement);
-        foreach ($objects as $object) {
-            if ($object instanceof InList && $object->items === []) {
-                $objects = $graph->objects($statement, includeDiscarded: false);
-                break;
-            }
+        $discarded = $platform->discardedBindings($objects);
+        if ($discarded !== []) {
+            $objects = $graph->objects($statement, $discarded);
         }
 
         $derivation = new Derivation($context);

@@ -96,6 +96,7 @@ def checked_methods(guard, dialect, role):
         "boundaryTemplates": [method for method in healthy["checkedBoundaries"] if method.startswith(prefix)],
         "checkedLists": healthy["checkedLists"].get(role, []),
         "faults": [fault["name"] for fault in audited["faults"] if fault["role"].startswith(prefix)],
+        **({"checkedBindingSources": healthy["checkedBindingSources"]} if dialect == "sqlite" and role == "Predicate/FoldedMembership" else {}),
     }
 
 

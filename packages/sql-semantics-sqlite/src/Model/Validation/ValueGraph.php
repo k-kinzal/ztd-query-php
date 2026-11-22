@@ -9,7 +9,6 @@ use ReflectionProperty;
 use ReflectionReference;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use UnitEnum;
 
 /**
@@ -39,12 +38,12 @@ final class ValueGraph
 
     /**
      * Answers reachable objects, including the root, after auditing each value.
-     * @param bool $includeDiscarded Follow operands that SQLite discards before binding
+     * @param array<int, string> $discarded Already audited edges to omit from the binding walk
      *
      * @return list<object>
      * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When a reachable value is outside the closed immutable domain
      */
-    public function objects(object $root, bool $includeDiscarded = true): array
+    public function objects(object $root, array $discarded = []): array
     {
         $objects = [];
         $seen = [];
@@ -62,14 +61,15 @@ final class ValueGraph
                 Check::input($value === null || is_bool($value) || is_int($value) || is_string($value), 'A semantic value holds null, booleans, integers, strings, lists and closed values only.');
                 continue;
             }
-            if (isset($seen[spl_object_id($value)])) {
+            $identity = spl_object_id($value);
+            if (isset($seen[$identity])) {
                 continue;
             }
-            $seen[spl_object_id($value)] = true;
+            $seen[$identity] = true;
             $objects[] = $value;
             foreach ($this->members($value) as $property) {
                 Check::input($property->isInitialized($value), 'A semantic value has no uninitialised property.');
-                if (!$includeDiscarded && $value instanceof InList && $value->items === [] && $property->getName() === 'operand') {
+                if ($property->getName() === ($discarded[$identity] ?? null)) {
                     continue;
                 }
                 $pending[] = $property->getValue($value);
