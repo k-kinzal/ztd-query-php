@@ -394,15 +394,17 @@ def execute(args, specification, db, worker_factory=Worker):
 
 
 def check_mutations(args, db):
+    renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
+    real = "sql-semantics-sqlite/src/Ir/Literal/RealLiteral.php"
     cases = [
-        ("text-to-blob", """$expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'", """.rstrip(),
+        ("text-to-blob", renderer, """$expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'", """.rstrip(),
          """$expression instanceof TextLiteral => "CAST('" . str_replace("'", "''", $expression->value) . "' AS BLOB)", """.rstrip(), ["text", "it's"]),
-        ("drop-real-sign", "($expression->negative ? '-' : '') . $expression->whole", "$expression->whole", ["real", "0", "0", None, True]),
-        ("drop-hex-sign", "($expression->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
+        ("drop-real-sign", real, "($this->negative ? '-' : '') . $this->whole", "$this->whole", ["real", "0", "0", None, True]),
+        ("drop-hex-sign", renderer, "($expression->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
     ]
     return check_render_faults(args, db, [
-        RenderFault(name, "sql-semantics-sqlite/src/Ir/SelectSql.php", before, after, query("select", [[term]]), "meaning-mismatch")
-        for name, before, after, term in cases
+        RenderFault(name, path, before, after, query("select", [[term]]), "meaning-mismatch")
+        for name, path, before, after, term in cases
     ], probe)
 
 
