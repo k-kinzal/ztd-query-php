@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\View;
 
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -36,7 +37,7 @@ final class CreateView implements SemanticsIR
         public readonly Identifier $schema,
         public readonly Identifier $view,
         array $columns,
-        public readonly Select|ValuesQuery $query,
+        public readonly GroupedSelect|Select|ValuesQuery $query,
         public readonly bool $ifNotExists = false,
     ) {
         Check::input($schema->value !== '', 'A CREATE VIEW needs a nonempty schema identifier.');

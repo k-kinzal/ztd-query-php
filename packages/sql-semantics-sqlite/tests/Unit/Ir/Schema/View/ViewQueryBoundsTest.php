@@ -7,6 +7,9 @@ namespace Tests\Unit\Ir\Schema\View;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
@@ -25,6 +28,16 @@ final class ViewQueryBoundsTest extends TestCase
         (new ViewQueryBounds())->check(new Identifier('main'), $select, 1);
 
         self::assertSame('answer', $select->columns[0]->name->value);
+    }
+
+    public function testGroupedAcceptsTheCountOfAnImplicitRow(): void
+    {
+        $name = new Identifier('main');
+        $query = new GroupedSelect(null, [], [new GroupColumn(new Count(), new Identifier('entries'))]);
+
+        (new ViewQueryBounds())->grouped($name, $query, 1);
+
+        self::assertSame('entries', $query->columns[0]->name->value);
     }
 
     public function testSourceAcceptsAnExplicitMainTableInATempView(): void

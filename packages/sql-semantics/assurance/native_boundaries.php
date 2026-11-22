@@ -23,7 +23,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-scalar-boundaries-v16.json', 'ea516f9710372604edb7f0bf280eeba605ac692d4177e433336e0da7d7c8dd1c'],
             ['sqlite-default-boundaries-v10.json', 'c8f8df9a7f46f80a597729373e56e103d17fb025edc4213be5c4a51fd932725a'],
             ['sqlite-drop-view-boundaries-v1.json', '565bcb84c952123e8e1c311606be91b0f0e7a04e63833aa025ea883852df1f02'],
-            ['sqlite-create-view-boundaries-v1.json', '5528ad853dba6e8e5f9043d88e116477a26c2e99b23c53bcafff92943aadb755'],
+            ['sqlite-create-view-boundaries-v2.json', '34ca5761af3701c6bf01ee13bc736b36d2f484f3bb426b5fbe8c951350438e37'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
@@ -111,6 +111,7 @@ function checkNativeBoundaries(
             'Ir\\Schema\\DeclaredDatatypeLowering', 'Statement\\Schema\\Column\\Generated', 'Statement\\Schema\\Column\\GeneratedStorage', 'Statement\\Type\\ColumnDomain',
             'Ir\\Schema\\CreateSchema', 'Ir\\Schema\\Query\\CreateTableAs', 'Ir\\Schema\\Query\\CreateAsAffinity',
             'Ir\\Schema\\Query\\CreateAsLayout', 'Ir\\Schema\\Query\\CreatedColumn', 'Ir\\Schema\\Query\\CreatedColumnDeclaration',
+            'Ir\\Aggregation\\GroupedSelect', 'Ir\\Aggregation\\GroupedLowering',
             'Ir\\Schema\\View\\ViewQueryBounds', 'Ir\\Schema\\View\\CreateView', 'Statement\\Schema\\CreateView as ParsedCreateView',
             'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";

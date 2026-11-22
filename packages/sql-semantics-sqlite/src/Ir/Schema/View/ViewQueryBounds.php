@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\View;
 
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\From\SelectBounds;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
@@ -23,8 +24,13 @@ final class ViewQueryBounds
     /**
      * Checks the body width, and every source and operand of the checked query.
      */
-    public function check(Identifier $schema, Select|ValuesQuery $query, int $width): void
+    public function check(Identifier $schema, GroupedSelect|Select|ValuesQuery $query, int $width): void
     {
+        if ($query instanceof GroupedSelect) {
+            $this->grouped($schema, $query, $width);
+
+            return;
+        }
         if ($query instanceof Select) {
             Check::input(count($query->columns) === $width, 'View columns must match the query width.');
             if ($query->source !== null) {
@@ -46,6 +52,26 @@ final class ViewQueryBounds
             }
         }
         (new ExpressionScope())->check([], $pending, false, false);
+    }
+
+    /**
+     * Checks the additional scope and marker requirements placed on a grouped view body.
+     */
+    public function grouped(Identifier $schema, GroupedSelect $query, int $width): void
+    {
+        Check::input(count($query->columns) === $width, 'View columns must match the query width.');
+        $widths = [];
+        if ($query->source !== null) {
+            $this->source($schema, $query->source);
+            $widths[] = count($query->source->columns);
+        }
+        $pending = [];
+        foreach ([$query->where, $query->having?->threshold] as $operand) {
+            if ($operand !== null) {
+                $pending[] = [$operand, 0, count($widths)];
+            }
+        }
+        (new ExpressionScope())->check($widths, $pending, false, false);
     }
 
     /**

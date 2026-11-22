@@ -7,9 +7,10 @@ from itertools import product
 from run import Failure, Worker, compare, require
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
-from sqlite_create_view_cases import SCHEMAS, TABLES, finite_case, finite_id, finite_ids, kind, negatives, requests, storage
+from sqlite_create_view_cases import SCHEMAS, TABLES, analyzed_cases, finite_case, finite_id, finite_ids, kind, negatives, requests, storage
 from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_engine import Database, ObserverAuthorizationError, typed
+from sqlite_grouped_cases import key_value, projected_count
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
 CONTRACT_NAME = "sqlite-create-view-v1.json"
@@ -42,6 +43,9 @@ class CreateViewDatabase(Database):
         finally:
             self.target = None
 
+    def read(self, sql, name, ordered):
+        return self.observe(sql, {}, preserve_order=ordered)
+
 
 def operand(expression, occurrences):
     tag, *arguments = expression
@@ -59,7 +63,8 @@ def operand(expression, occurrences):
     if tag in ("arithmetic", "comparison"):
         operator, left, right = arguments
         a, b = operand(left, occurrences), operand(right, occurrences)
-        operations = {"+": lambda: a + b, "-": lambda: a - b, "=": lambda: a == b, ">=": lambda: a >= b}
+        operations = {"+": lambda: a + b, "-": lambda: a - b, "=": lambda: a == b,
+                      ">=": lambda: a >= b, ">": lambda: a > b, "<=": lambda: a <= b, "<": lambda: a < b}
         return operations[operator]()
     raise AssertionError(f"Unspecified view test expression: {expression}")
 
@@ -91,12 +96,41 @@ def projection(query, data):
     return rows
 
 
+def grouped_rows(query, data):
+    entries = [()] if query["source"] is None else inputs(data, query["source"])
+    if query["where"] is not None:
+        entries = [row for row in entries if operand(query["where"], (row,))]
+    groups = {} if query["keys"] else {(): []}
+    for row in entries:
+        key = tuple(key_value(row[column[1]], collation) for column, collation in query["keys"])
+        groups.setdefault(key, []).append(row)
+    result = []
+    for group in groups.values():
+        if query["having"] is not None:
+            count, operator, threshold, threshold_first = query["having"]
+            measured = ["integer", str(projected_count(count, group))]
+            left, right = (threshold, measured) if threshold_first else (measured, threshold)
+            if not operand(["comparison", operator, left, right], ()):
+                continue
+        fields = []
+        for term, _ in query["columns"]:
+            if term[0] == "count":
+                fields.append(projected_count(term, group))
+            else:
+                candidates = {operand(term, (row,)) for row in group}
+                require(len(candidates) == 1, "ambiguous-grouped-view-fixture-representative", term)
+                fields.append(candidates.pop())
+        result.append(fields)
+
+    return result
+
+
 def declared_type(query, expression):
     if expression[0] == "cast":
         return expression[1]
     if expression[0] == "column":
         _, slot, *occurrences = expression
-        sources = [query["source"], *(step[1] for step in query["joins"])]
+        sources = [query["source"], *(step[1] for step in query.get("joins", ()))]
         schema, _, names = sources[occurrences[0] if occurrences else 0]
         return "INTEGER" if names[slot] == "id" else storage(schema)
     return ""
@@ -108,7 +142,7 @@ def rows_for(item, data):
     query = item["query"]
     if query["operation"] == "values":
         return [[operand(expression, ()) for expression in row] for row in query["rows"]]
-    return projection(query, data)
+    return grouped_rows(query, data) if query["operation"] == "grouped" else projection(query, data)
 
 
 def sorted_rows(rows, ordered=False):
@@ -196,9 +230,9 @@ def observe(db, item, sql):
         metadata = db.metadata("table_xinfo", schema=schema, table=name)
         base = {ns: db.observe(f"SELECT id,v FROM {ns}.base ORDER BY id", {}, preserve_order=True)["rows"] for ns in SCHEMAS}
         query = f"SELECT * FROM {target}"
-        first = db.observe(query, {}, preserve_order=ordered) if metadata else None
+        first = db.read(query, name, ordered) if metadata else None
         db.execute(f"INSERT INTO main.base VALUES ({EXTRA},{EXTRA}); INSERT INTO temp.base VALUES ({EXTRA},'new-value')")
-        reread = db.observe(query, {}, preserve_order=ordered) if metadata else None
+        reread = db.read(query, name, ordered) if metadata else None
         return {"before": before, "after": after, "create": creation,
                 "problem": f"SQLite 1: view {name} already exists" if error is not None else None,
                 "rawProblem": error, "metadata": metadata,
@@ -209,6 +243,10 @@ def observe(db, item, sql):
 
 def probe(item, reply, db, ledger=None, key=None, original=None):
     require(reply["status"] == "constructed", "sqlite-create-view-positive-rejected", reply)
+    profile = "sqlite-3.47.2/utf8/short-column-names/numbered-parameters"
+    if item["query"]["operation"] == "grouped":
+        profile += "/grouped-builtin"
+    require(reply["profile"] == profile, "sqlite-create-view-profile-mismatch", reply)
     fields = ("operation", "schema", "view", "ifNotExists", "columns", "query")
     require(all(reply[field] == item[field] for field in fields), "sqlite-create-view-structure-mismatch", reply)
     if ledger is not None:
@@ -246,7 +284,7 @@ def forms(measurement):
         yield f"rows/{len(query['rows'])}"
     else:
         yield f"width/{len(query['columns'])}"
-        sources = [query["source"], *(step[1] for step in query["joins"])]
+        sources = [query["source"], *(step[1] for step in query.get("joins", ()))]
         for source in sources:
             if source:
                 yield f"{measurement['schema']}-reads/{source[0]}"
@@ -277,6 +315,7 @@ def controls():
 
 
 def execute(args, contract, db, worker_factory=Worker):
+    require(len(list(analyzed_cases())) == len(contract["analysis"]), "incomplete-create-view-analysis-schedule")
     schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, controls)
     return execute_schedule(args, contract, db, worker_factory, schedule, probe, measured_input=actual_shape)
 

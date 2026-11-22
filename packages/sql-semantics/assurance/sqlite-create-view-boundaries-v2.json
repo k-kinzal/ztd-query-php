@@ -1,0 +1,113 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-boundaries-2",
+  "approval": "pending-human-review",
+  "scope": "Construct an immutable view with a checked projection, VALUES or grouped query, absolute source identities, effective names and no parameter registrations.",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "common": [
+        "Check::input($schema->value !== '', 'A CREATE VIEW needs a nonempty schema identifier.');",
+        "Check::input(!str_starts_with($view->key(), 'sqlite_'), 'A CREATE VIEW cannot use the reserved SQLite namespace.');",
+        "$names = Check::listOf($columns, Identifier::class, 'A CREATE VIEW needs effective column names.', 1);",
+        "(new ViewQueryBounds())->check($schema, $query, count($names));",
+        "$seen = [];",
+        "foreach ($names as $name) {",
+        "    $key = $name->key();",
+        "    Check::input($key !== 'true' && $key !== 'false', 'A view name list must use the effective name of a truth word.');",
+        "    Check::input(!isset($seen[$key]), 'Effective view column names must be unique.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $names;"
+      ]
+    },
+    "Schema/View/CreateView::profileId": {
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $name) {",
+        "    $columns[] = $name->quoted();",
+        "}",
+        "",
+        "return 'CREATE VIEW ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')",
+        "    . $this->schema->quoted() . '.' . $this->view->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') AS ' . $this->query->toString();"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::check": {
+      "common": [
+        "if ($query instanceof GroupedSelect) {",
+        "    $this->grouped($schema, $query, $width);",
+        "",
+        "    return;",
+        "}",
+        "if ($query instanceof Select) {",
+        "    Check::input(count($query->columns) === $width, 'View columns must match the query width.');",
+        "    if ($query->source !== null) {",
+        "        $this->source($schema, $query->source);",
+        "    }",
+        "    foreach ($query->joins as $join) {",
+        "        $this->source($schema, $join->source);",
+        "    }",
+        "    (new SelectBounds())->check($query->columns, $query->source, $query->joins, $query->where, $query->orderBy, $query->limit, false);",
+        "",
+        "    return;",
+        "}",
+        "",
+        "Check::input(count($query->rows[0]->values) === $width, 'View columns must match the query width.');",
+        "$pending = [];",
+        "foreach ($query->rows as $row) {",
+        "    foreach ($row->values as $value) {",
+        "        $pending[] = [$value, 0, 0];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check([], $pending, false, false);"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::source": {
+      "common": [
+        "Check::input($source instanceof TableSource, 'A view projection requires external table occurrences.');",
+        "Check::input($schema->key() === 'temp' || $schema->key() === $source->schema->key(), 'A persistent view can only reference tables in its schema.');"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "common": [
+        "$schema = (new CreateSchema())->resolve($operation, $statement->name, $statement->temporary);",
+        "$query = $statement->query;",
+        "$body = match (true) {",
+        "    $query instanceof ValuesClause => (new ValuesLowering())->lower($operation, $query),",
+        "    $query instanceof ParsedSelect && (new GroupedLowering())->applies($query) => (new GroupedLowering())->lower($operation, $query),",
+        "    $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),",
+        "    default => throw new InvalidConstruction('CREATE VIEW requires a checked SELECT or VALUES.'),",
+        "};",
+        "$declaration = $operation->facts->declarations[0] ?? null;",
+        "Check::invariant($declaration !== null && $declaration->kind === RelationKind::View, 'The view operation has a named view declaration.');",
+        "$columns = [];",
+        "foreach ($declaration->columns as $column) {",
+        "    $columns[] = new Identifier($column->name->value);",
+        "}",
+        "",
+        "return new CreateView($schema, new Identifier($statement->name->name->value), $columns, $body, $statement->ifNotExists);"
+      ]
+    },
+    "Schema/View/ViewQueryBounds::grouped": {
+      "common": [
+        "Check::input(count($query->columns) === $width, 'View columns must match the query width.');",
+        "$widths = [];",
+        "if ($query->source !== null) {",
+        "    $this->source($schema, $query->source);",
+        "    $widths[] = count($query->source->columns);",
+        "}",
+        "$pending = [];",
+        "foreach ([$query->where, $query->having?->threshold] as $operand) {",
+        "    if ($operand !== null) {",
+        "        $pending[] = [$operand, 0, count($widths)];",
+        "    }",
+        "}",
+        "(new ExpressionScope())->check($widths, $pending, false, false);"
+      ]
+    }
+  }
+}

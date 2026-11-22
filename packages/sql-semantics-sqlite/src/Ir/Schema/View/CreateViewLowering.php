@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\View;
 
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateSchema;
@@ -33,8 +34,9 @@ final class CreateViewLowering
         $query = $statement->query;
         $body = match (true) {
             $query instanceof ValuesClause => (new ValuesLowering())->lower($operation, $query),
+            $query instanceof ParsedSelect && (new GroupedLowering())->applies($query) => (new GroupedLowering())->lower($operation, $query),
             $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),
-            default => throw new InvalidConstruction('CREATE VIEW requires a checked SELECT projection or VALUES.'),
+            default => throw new InvalidConstruction('CREATE VIEW requires a checked SELECT or VALUES.'),
         };
         $declaration = $operation->facts->declarations[0] ?? null;
         Check::invariant($declaration !== null && $declaration->kind === RelationKind::View, 'The view operation has a named view declaration.');

@@ -253,6 +253,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['createView'] = [$view->schema->value, $view->view->value, array_column($view->columns, 'value'),
                 [$view->query->source->schema->value, $view->query->source->table->value], $view->ifNotExists];
+            $groupContext = $semantics->context(['CREATE TABLE main.accounts (id INTEGER, code TEXT)'], true);
+            $group = $semantics->analyze('CREATE VIEW view_group AS SELECT id, count(code) AS n FROM accounts GROUP BY id', $groupContext);
+            if ($group::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $group->query::class !== $namespace . 'Ir\\Aggregation\\GroupedSelect'
+                || $group->query->columns[1]->value::class !== $namespace . 'Ir\\Aggregation\\Count'
+                || $group->query->columns[1]->value->argument === null) {
+                throw new RuntimeException('Installed SQLite grouped view lost its checked aggregate and grouping roles.');
+            }
+            $details['groupedView'] = [array_column($group->columns, 'value'), $group->query->keys[0]->column->slot,
+                $group->query->columns[1]->value->argument->slot, $group->query->keys[0]->collation->value, $group->profileId()];
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];

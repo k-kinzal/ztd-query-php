@@ -615,7 +615,7 @@ function directCreateView(array $input): CreateView
         new Identifier($input['schema']),
         new Identifier($input['view']),
         array_map(static fn (string $name): Identifier => new Identifier($name), $input['columns']),
-        directArm($input['query']),
+        $input['query']['operation'] === 'grouped' ? directGrouped($input['query']) : directArm($input['query']),
         $input['ifNotExists'],
     );
 }
@@ -629,10 +629,21 @@ function observeCreateView(CreateView $value): array
         'schema' => $value->schema->value,
         'view' => $value->view->value,
         'ifNotExists' => $value->ifNotExists,
-        'query' => observeArm($value->query),
+        'query' => observeViewBody($value->query),
         'columns' => array_map(static fn (Identifier $name): string => $name->value, $value->columns),
         'sql' => $value->toString(),
     ];
+}
+
+function observeViewBody(GroupedSelect|Select|ValuesQuery $query): array
+{
+    if (!$query instanceof GroupedSelect) {
+        return observeArm($query);
+    }
+    $body = observeGrouped($query);
+    unset($body['status'], $body['profile'], $body['sql']);
+
+    return $body;
 }
 
 function directTransaction(array $input): Transaction

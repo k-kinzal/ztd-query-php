@@ -329,7 +329,7 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
     $properties['Schema\\View\\CreateView'] = [
         'schema' => ['Identifier'], 'view' => ['Identifier'], 'columns' => ['array'],
-        'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
+        'query' => ['Aggregation\\GroupedSelect', 'Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
     ];
     $methods['Schema\\View\\CreateView'] = $methods['Select'];
     $roots[] = 'Schema\\View\\CreateView';
@@ -756,6 +756,7 @@ try {
             requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite rename binding source differs: $path");
         }
     }
+    $checkedBindingSources = [];
     if ($dialect === 'sqlite') {
         $path = __DIR__ . '/sqlite-view-binding-sources-v1.json';
         requireShape(hash_file('sha256', $path) === 'bc8238f90755008a1b6a683216c264e5181bf9541bf5976a9707cedc053babc6', 'SQLite view binding contract differs from its fixed revision');
@@ -764,9 +765,9 @@ try {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $relative;
             $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $relative;
             requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite view binding source differs: $relative");
+            $checkedBindingSources[$relative] = ['sha256' => $expected, 'contract' => basename($path)];
         }
     }
-    $checkedBindingSources = [];
     $binding = match ($dialect) {
         'sqlite' => ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
         'postgres' => ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
