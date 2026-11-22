@@ -525,6 +525,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_cr
 
 The observer compares ordered native column metadata, implicit rowids and data writes through the created table. It checks typed affinity conversions, NOT NULL violations and the existing rows preserved by IF NOT EXISTS. Both main and temp catalogs contain a same-named sentinel table. The structural explorer varies type, column count, target identifiers, nullability and collision handling.
 
+The [SQLite STRICT table contract](sqlite-strict-tables-v1.json) compares the catalog mode and declared names and measures each write's typed rows, change count and exact constraint errors. Its fixed storage values distinguish ordinary ANY from STRICT ANY, BLOB from untyped and INT from INTEGER. Run `run_sqlite_strict_tables.py` with the same fixture options. The original and emitted declarations are compared independently for analyzed cases.
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v2.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

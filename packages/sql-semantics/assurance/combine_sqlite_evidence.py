@@ -38,6 +38,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-update-returning-evidence", "sqlite-update-returning-v1.json", 72, 149, 5, 4),
     Domain("semantics-ir-sqlite-drop-table-evidence", "sqlite-drop-table-v1.json", 12, 89, 5, 2),
     Domain("semantics-ir-sqlite-create-table-evidence", "sqlite-create-table-v1.json", 40, 117, 5, 4),
+    Domain("semantics-ir-sqlite-strict-tables-evidence", "sqlite-strict-tables-v1.json", 312, 390, 4, 4),
     Domain("semantics-ir-sqlite-scalars-evidence", "sqlite-scalars-v2.json", 2280, 2483, 8, 4),
     Domain("semantics-ir-sqlite-numeric-evidence", "sqlite-numeric-operators-v1.json", 1728, 1832, 4, 4),
     Domain("semantics-ir-sqlite-mutation-conflicts-evidence", "sqlite-mutation-conflicts-v2.json", 96, 197, 3, 4),

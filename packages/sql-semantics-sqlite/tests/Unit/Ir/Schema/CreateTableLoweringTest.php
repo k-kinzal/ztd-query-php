@@ -36,4 +36,14 @@ final class CreateTableLoweringTest extends TestCase
         self::assertInstanceOf(CreateTable::class, $published);
         self::assertEquals($value, $published);
     }
+
+    public function testAnalyzeKeepsStrictStorageAndEachNativeTypeName(): void
+    {
+        $value = (new Semantics())->analyze('CREATE TABLE data (i INT, j INTEGER, v ANY) STRICT, STRICT');
+
+        self::assertInstanceOf(CreateTable::class, $value);
+        self::assertTrue($value->strict);
+        self::assertSame([DeclaredDatatypeName::Int, DeclaredDatatypeName::Integer, DeclaredDatatypeName::Any], array_column($value->columns, 'type'));
+        self::assertSame('CREATE TABLE "main"."data" ("i" INT, "j" INTEGER, "v" ANY) STRICT', $value->toString());
+    }
 }

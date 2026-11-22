@@ -33,4 +33,15 @@ final class CreateTableTest extends TestCase
 
         self::assertSame('CREATE TABLE IF NOT EXISTS "temp"."records" ("value" TEXT NOT NULL, "id" INTEGER)', $table->toString());
     }
+
+    public function testToStringAddsStrictAfterAllTheColumns(): void
+    {
+        $columns = [
+            new TableColumn(new Identifier('value'), DeclaredDatatypeName::Any),
+            new TableColumn(new Identifier('id'), DeclaredDatatypeName::Int),
+        ];
+        $table = new CreateTable(new Identifier('main'), new Identifier('records'), $columns, strict: true);
+
+        self::assertSame('CREATE TABLE "main"."records" ("value" ANY, "id" INT) STRICT', $table->toString());
+    }
 }

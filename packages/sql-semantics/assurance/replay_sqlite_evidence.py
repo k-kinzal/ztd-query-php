@@ -35,6 +35,7 @@ import run_sqlite_collation as collation
 import run_sqlite_folded_membership as folded_membership
 import run_sqlite_membership as membership
 import run_sqlite_between as between
+import run_sqlite_strict_tables as strict_tables
 import run_sqlite_truth as truth
 import run_sqlite_unary as unary
 import run_sqlite_update as update
@@ -68,6 +69,7 @@ DOMAINS = {
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
+    strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     "sqlite-scalars-v2.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     pattern.CONTRACT_NAME: (pattern, pattern.FIXTURE),

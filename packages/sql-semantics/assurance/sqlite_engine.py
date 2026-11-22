@@ -127,9 +127,9 @@ class Database:
                 raise ObserverAuthorizationError(*self.denied)
 
     def metadata(self, name, *, schema=None, table=None):
-        if name == "table_xinfo" and schema in ("main", "temp") and table is not None:
+        if name in ("table_xinfo", "table_list") and schema in ("main", "temp") and table is not None:
             identifier = table.replace('"', '""')
-            sql = f'PRAGMA {schema}.table_xinfo("{identifier}")'
+            sql = f'PRAGMA {schema}.{name}("{identifier}")'
         elif name in ("compile_options", "foreign_keys", "journal_mode") and schema is None and table is None:
             sql = f"PRAGMA {name}"
         else:

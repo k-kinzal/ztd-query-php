@@ -240,7 +240,7 @@ if ($dialect === 'sqlite') {
     $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $properties['Schema\\DropTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'ifExists' => ['bool']];
     $methods['Schema\\DropTable'] = $methods['Select'];
-    $properties['Schema\\CreateTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool']];
+    $properties['Schema\\CreateTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'], 'strict' => ['bool']];
     $methods['Schema\\CreateTable'] = $methods['Select'];
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
@@ -277,7 +277,7 @@ if ($dialect === 'sqlite') {
     ];
     $enumCases['Schema\\NotNullConflict'] = ['Abort' => 'ABORT', 'Fail' => 'FAIL', 'Ignore' => 'IGNORE',
         'Replace' => 'REPLACE', 'Rollback' => 'ROLLBACK'];
-    $enumCases['Schema\\DeclaredDatatypeName'] = ['Untyped' => '', 'Integer' => 'INTEGER', 'Text' => 'TEXT', 'Real' => 'REAL', 'Blob' => 'BLOB'];
+    $enumCases['Schema\\DeclaredDatatypeName'] = ['Untyped' => '', 'Int' => 'INT', 'Integer' => 'INTEGER', 'Text' => 'TEXT', 'Real' => 'REAL', 'Blob' => 'BLOB', 'Any' => 'ANY'];
     $enumCases['Predicate\\ComparisonOperator'] = [
         'Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=',
         'Greater' => '>', 'GreaterOrEqual' => '>=', 'Is' => 'IS', 'IsNot' => 'IS NOT',

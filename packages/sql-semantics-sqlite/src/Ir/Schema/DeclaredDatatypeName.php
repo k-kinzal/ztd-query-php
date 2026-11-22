@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 /**
- * The native declared type of an ordinary column in the complete table domain.
+ * The native declared type of a column in a checked SQLite rowid table.
  *
  * @visibility public
  * @example Reading the catalog spelling
@@ -14,8 +14,10 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 enum DeclaredDatatypeName: string
 {
     case Untyped = '';
+    case Int = 'INT';
     case Integer = 'INTEGER';
     case Text = 'TEXT';
     case Real = 'REAL';
     case Blob = 'BLOB';
+    case Any = 'ANY';
 }

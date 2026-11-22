@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A complete ordinary SQLite table declaration.
+ * A complete SQLite rowid table declaration.
  *
  * @visibility public
  * @example Reading the resolved location of a temporary table
@@ -31,12 +31,14 @@ final class CreateTable implements SemanticsIR
      * Checks the location and ordered columns before making the declaration available.
      *
      * @param list<TableColumn> $columns The declared columns
+     * @param bool $strict Whether the table applies SQLite strict typing
      */
     public function __construct(
         public readonly Identifier $schema,
         public readonly Identifier $table,
         array $columns,
         public readonly bool $ifNotExists = false,
+        public readonly bool $strict = false,
     ) {
         Check::input($schema->value !== '', 'A CREATE TABLE needs a nonempty schema identifier.');
         Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A CREATE TABLE cannot use the reserved SQLite namespace.');
@@ -45,6 +47,7 @@ final class CreateTable implements SemanticsIR
         $seen = [];
         $defaults = [];
         foreach ($checked as $column) {
+            Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT table requires every column to declare a datatype.');
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
@@ -75,6 +78,7 @@ final class CreateTable implements SemanticsIR
         }
 
         return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')
-            . $this->schema->quoted() . '.' . $this->table->quoted() . ' (' . implode(', ', $columns) . ')';
+            . $this->schema->quoted() . '.' . $this->table->quoted() . ' (' . implode(', ', $columns) . ')'
+            . ($this->strict ? ' STRICT' : '');
     }
 }

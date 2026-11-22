@@ -426,6 +426,7 @@ function directCreateTable(array $input): CreateTable
             isset($slot[3]) ? operand($slot[3]) : null,
         ), $input['columns']),
         $input['ifNotExists'],
+        $input['strict'] ?? false,
     );
 }
 
@@ -450,6 +451,7 @@ function observeCreateTable(CreateTable $value): array
             $value->columns,
         ),
         'ifNotExists' => $value->ifNotExists,
+        'strict' => $value->strict,
         'sql' => $value->toString(),
     ];
 }
