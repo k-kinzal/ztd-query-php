@@ -8,8 +8,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
@@ -32,5 +34,22 @@ final class InsertLoweringTest extends TestCase
         $published = $semantics->analyze($sql, $semantics->context(['CREATE TABLE records (Item INTEGER, Cost INTEGER)']));
         self::assertInstanceOf(Insert::class, $published);
         self::assertEquals($insert, $published);
+    }
+
+    public function testLowerRetainsTheSignedSourceProjection(): void
+    {
+        $inspection = new Inspection();
+        $target = $inspection->inspect('CREATE TABLE main.received (id INTEGER, payload BLOB)');
+        $scan = $inspection->inspect('CREATE TABLE main.source_rows (id INTEGER, payload BLOB)');
+        $operation = $inspection->inspect(
+            'INSERT INTO main.received (payload, id) SELECT payload AS value, id AS key FROM main.source_rows',
+            [$target, $scan],
+        );
+        self::assertInstanceOf(InsertSelect::class, $operation->statement);
+        $statement = (new InsertLowering())->lower($operation->binding(), $operation->statement);
+        self::assertInstanceOf(Select::class, $statement->input);
+
+        self::assertSame('payload', $statement->target->columns[0]->value);
+        self::assertSame('value', $statement->input->columns[0]->name->value);
     }
 }

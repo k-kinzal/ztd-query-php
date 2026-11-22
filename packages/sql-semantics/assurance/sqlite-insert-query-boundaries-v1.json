@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-query-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Width, source closure and SQL emission of either SQLite insertion input.",
+  "rules": {
+    "Mutation/Insert::__construct": {
+      "common": [
+        "$width = count($target->columns);",
+        "Check::input($width !== 0, 'An INSERT must name at least one target column.');",
+        "if ($input instanceof Select) {",
+        "    Check::input(!$input->source instanceof LocalSource, 'The INSERT projection requires an independent source without a local definition.');",
+        "}",
+        "$inputWidth = $input instanceof ValuesQuery ? count($input->rows[0]->values) : count($input->columns);",
+        "Check::input($width === $inputWidth, 'INSERT target width must match the input rows.');"
+      ]
+    },
+    "Mutation/Insert::profileId": {
+      "common": [
+        "return $this->input->profileId();"
+      ]
+    },
+    "Mutation/Insert::toString": {
+      "common": [
+        "$columns = [];",
+        "foreach ($this->target->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "$conflict = match ($this->conflict) {",
+        "    InsertConflict::Inherit => '',",
+        "    InsertConflict::Abort => ' OR ABORT',",
+        "    InsertConflict::Ignore => ' OR IGNORE',",
+        "};",
+        "",
+        "return 'INSERT' . $conflict . ' INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') ' . $this->input->toString();"
+      ]
+    }
+  }
+}

@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-insert-query-v1.json": "009a9763066a4f9bd707f389f002f30dd9ca71382d5693318dbd7656ac077699",
     "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
     "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
     "sqlite-grouped-v1.json": "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1",
@@ -83,7 +84,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "6d948741da233f1ad266239c276ae5caf9c02fe72469e0fb43ad59aef402ba07"
+PUBLICATION = "f96ab824cc268c7240b70c21d58585b3601f2ce726b901c924553194058486d9"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -94,7 +95,7 @@ SQLITE_LITERAL_TYPES = {
 def constructor_scope(by_class):
     definitions = {}
     supplemental = {}
-    publication = (TOOL / "publication-v15.json").read_bytes()
+    publication = (TOOL / "publication-v16.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)

@@ -9,8 +9,10 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 /**
@@ -33,5 +35,13 @@ final class InsertTest extends TestCase
         $insert = new Insert($target, $rows, InsertConflict::Abort);
 
         self::assertSame('INSERT OR ABORT INTO "temp"."records" ("b", "a") VALUES (3, 4)', $insert->toString());
+    }
+
+    public function testToStringUsesTheCheckedProjectionInput(): void
+    {
+        $target = new TableSource(new Identifier('main'), new Identifier('items'), [new Identifier('id')]);
+        $query = new Select([new ResultColumn(new IntegerLiteral('7'), new Identifier('answer'))]);
+
+        self::assertSame('INSERT INTO "main"."items" ("id") SELECT 7 AS "answer"', (new Insert($target, $query))->toString());
     }
 }

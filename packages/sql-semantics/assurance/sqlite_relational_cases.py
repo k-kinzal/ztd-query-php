@@ -140,6 +140,8 @@ def evaluate(expression, row, bindings):
         return int(expression[1])
     if kind == "null":
         return None
+    if kind == "text":
+        return expression[1]
     if kind == "parameter":
         return bindings.get(str(int(expression[1])))
     operator = expression[1]

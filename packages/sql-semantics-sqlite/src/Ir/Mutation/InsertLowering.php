@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
+use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -14,6 +15,8 @@ use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 
 /**
  * Resolves the writable slots and the conflict policy of a checked INSERT.
@@ -27,7 +30,7 @@ final class InsertLowering
      *
      * @throws InvalidConstruction When the INSERT is outside this domain
      */
-    public function lower(BoundStatement $operation, InsertRows $statement): Insert
+    public function lower(BoundStatement $operation, InsertRows|InsertSelect $statement): Insert
     {
         $into = $statement->into;
         Check::input(
@@ -59,6 +62,14 @@ final class InsertLowering
             $columns,
         );
 
-        return new Insert($target, (new ValuesLowering())->lower($operation, $statement->rows), $policy);
+        if ($statement instanceof InsertRows) {
+            $input = (new ValuesLowering())->lower($operation, $statement->rows);
+        } else {
+            $query = $statement->query;
+            Check::input($query instanceof Select, 'A query INSERT requires an independent ordinary SELECT.');
+            $input = (new SelectLowering())->lower($operation, $query);
+        }
+
+        return new Insert($target, $input, $policy);
     }
 }

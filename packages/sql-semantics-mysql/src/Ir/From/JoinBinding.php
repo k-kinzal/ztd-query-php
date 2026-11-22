@@ -93,6 +93,8 @@ final class JoinBinding
 
     /**
      * Allocates a checked field in the join occurrence containing its resolved input.
+     *
+     * @throws InvalidConstruction When the field is outside the checked input scope
      */
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {

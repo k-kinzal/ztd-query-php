@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v15.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v16.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -286,6 +286,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_lo
 ```
 
 The evaluator supplies the definition's independently evaluated rows as the local input to the projection. The observed dimensions include width, height, typed multiplicity, result names, order, binding labels and read-only execution. The direct construction probes vary the operand graphs and exercise filtering, duplicate elimination and bounds. Analyzed statements run with a same-named physical table holding deliberately different rows. The mutations reverse the definition's column order and alter the first native parameter label.
+
+## SQLite INSERT from a checked projection
+
+The [query INSERT record](sqlite-insert-query-v1.json) checks the composed source query, writable target positions and conflict policy. It evaluates the typed input independently, including DISTINCT, bounds and binding positions, and compares affected rows, generated columns, shadowed tables, triggers and rollback.
+
+Run `run_sqlite_insert_query.py` using the SQLite fixture options. The SQLite collector requires its finite cases and replays the statement effects alongside the other domains.
 
 ## SQLite grouped counts
 

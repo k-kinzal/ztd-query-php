@@ -112,7 +112,7 @@ if ($dialect === 'sqlite') {
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
     $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates];
     $methods['Mutation\\Delete'] = $methods['Select'];
-    $properties['Mutation\\Insert'] = ['target' => ['TableSource'], 'input' => ['Rows\\ValuesQuery'], 'conflict' => ['Mutation\\InsertConflict']];
+    $properties['Mutation\\Insert'] = ['target' => ['TableSource'], 'input' => ['Rows\\ValuesQuery', 'Select'], 'conflict' => ['Mutation\\InsertConflict']];
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\Update'] = ['target' => ['TableSource'], 'assignments' => ['array'], 'where' => $nullablePredicates, 'conflict' => ['Mutation\\UpdateConflict']];
     $methods['Mutation\\Update'] = $methods['Select'];
@@ -440,7 +440,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Compound => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertSelect => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'

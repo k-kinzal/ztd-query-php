@@ -67,6 +67,8 @@ final class SourceBinding
 
     /**
      * Allocates the occurrence slot of an already resolved projection field.
+     *
+     * @throws InvalidConstruction When the field is outside the checked input scope
      */
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {

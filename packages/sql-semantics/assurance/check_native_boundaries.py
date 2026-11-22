@@ -18,6 +18,8 @@ class Fault(NamedTuple):
 def faults(engine):
     if engine == "sqlite":
         return [
+            Fault("ignore-query-write-width", "Mutation/Insert::__construct", "$width === $inputWidth,", "true,"),
+            Fault("allow-local-write-query", "Mutation/Insert::__construct", "!$input->source instanceof LocalSource,", "true,"),
             Fault("allow-distinct-count-star", "Aggregation/Count::__construct", "$argument !== null || $distinctCollation === null,", "true,"),
             Fault("allow-group-key-other-occurrence", "Aggregation/GroupKey::__construct", "$column->source === 0,", "true,"),
             Fault("ignore-absent-count-slot", "Aggregation/GroupedSelect::__construct",
@@ -143,7 +145,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v2.json", "sqlite-wildcard-boundaries-v1.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v2.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-query-boundaries-v1.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

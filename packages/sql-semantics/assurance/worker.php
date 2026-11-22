@@ -237,7 +237,9 @@ function observeDelete(Delete $value): array
 
 function directInsert(array $input): Insert
 {
-    return new Insert(source($input['target']), directValues($input), InsertConflict::from($input['conflict']));
+    $rows = isset($input['query']) ? direct($input['query']) : directValues($input);
+
+    return new Insert(source($input['target']), $rows, InsertConflict::from($input['conflict']));
 }
 
 function observeInsert(Insert $value): array
@@ -248,7 +250,7 @@ function observeInsert(Insert $value): array
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
         'conflict' => $value->conflict->value,
-        'rows' => valueRows($value->input),
+        ...($value->input instanceof Select ? ['query' => observeArm($value->input)] : ['rows' => valueRows($value->input)]),
         'sql' => $value->toString(),
     ];
 }
