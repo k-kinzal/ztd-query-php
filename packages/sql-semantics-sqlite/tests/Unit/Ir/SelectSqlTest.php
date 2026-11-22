@@ -15,6 +15,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
@@ -95,5 +97,16 @@ final class SelectSqlTest extends TestCase
         $test = new TruthTest(new Parameter('02'), false, true);
 
         self::assertSame('(CASE WHEN (NOT ?02) THEN 0 ELSE 1 END)', (new SelectSql())->truth($test, null, []));
+    }
+
+    public function testMembershipPreservesOrderAndTheEmptyOperand(): void
+    {
+        $operand = new Parameter('02');
+        $one = new MembershipItem(new Parameter('1'));
+        $three = new MembershipItem(new Parameter('3'));
+        $renderer = new SelectSql();
+
+        self::assertSame('(?02 NOT IN (?3, ?1))', $renderer->membership(new MembershipTest($operand, [$three, $one], true), null, []));
+        self::assertSame('(?02 IN ())', $renderer->membership(new MembershipTest($operand, []), null, []));
     }
 }

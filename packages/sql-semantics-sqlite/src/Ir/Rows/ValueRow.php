@@ -19,6 +19,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -37,7 +38,7 @@ final class ValueRow
     use Snapshot;
 
     /**
-     * @var non-empty-list<Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression>
+     * @var non-empty-list<Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression>
      */
     public readonly array $values;
 
@@ -54,7 +55,7 @@ final class ValueRow
         foreach ($values as $value) {
             Check::input($value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof BlobLiteral || $value instanceof CaseExpression || $value instanceof CastExpression || $value instanceof Comparison
                 || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral || $value instanceof Logical
-                || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral
+                || $value instanceof MembershipTest || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral
                 || $value instanceof TruthTest || $value instanceof UnaryExpression, 'A VALUES row needs a scalar operand independent of tables.');
             $closed[] = $value;
             $pending[] = [$value, 0, 0];

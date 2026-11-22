@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\Logical', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -91,6 +91,9 @@ if ($dialect === 'sqlite') {
     $methods['Expression\\UnaryExpression'] = ['__construct'];
     $properties['Expression\\UnaryKind'] = $methods['Expression\\UnaryKind'] = [];
     $enumCases['Expression\\UnaryKind'] = ['Plus' => '+', 'Not' => 'NOT', 'Complement' => '~'];
+    $properties['Predicate\\MembershipItem'] = ['expression' => $operands];
+    $properties['Predicate\\MembershipTest'] = ['operand' => $operands, 'items' => ['array'], 'negated' => ['bool']];
+    $methods['Predicate\\MembershipItem'] = $methods['Predicate\\MembershipTest'] = ['__construct'];
     $properties['Predicate\\BetweenTest'] = ['operand' => $operands, 'lower' => $operands, 'upper' => $operands, 'negated' => ['bool']];
     $methods['Predicate\\BetweenTest'] = ['__construct'];
     $properties['Predicate\\TruthTest'] = ['operand' => $operands, 'desired' => ['bool'], 'negated' => ['bool']];
@@ -519,9 +522,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v16.json';
+    $storagePath = __DIR__ . '/value-storage-v17.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '954a0f714bb57f75872f9c85cac7ddc53908d1860fe6baf83a8f155f0995e475',
+        hash_file('sha256', $storagePath) === 'f72fc20a87dfbf36cedfefa13be0c7ed8d30a209bf051bfd62f0600f60b9d143',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

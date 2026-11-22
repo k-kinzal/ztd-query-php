@@ -12,6 +12,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 
 #[CoversClass(ExpressionScope::class)]
 #[Small]
@@ -33,5 +35,15 @@ final class ExpressionScopeTest extends TestCase
         $value = new CaseExpression($column, [new CaseBranch($one, $column)], $one);
 
         self::assertSame([[$column, 2, 3], [$one, 2, 3], [$column, 2, 3], [$one, 2, 3]], (new ExpressionScope())->choice($value, 2, 3));
+    }
+
+    public function testMembersExposeTheTestedValueAndEveryCandidate(): void
+    {
+        $operand = new IntegerLiteral('1');
+        $first = new ColumnReference(3);
+        $second = new ColumnReference(8);
+        $test = new MembershipTest($operand, [new MembershipItem($first), new MembershipItem($second)]);
+
+        self::assertSame([[$operand, 2, 4], [$first, 2, 4], [$second, 2, 4]], (new ExpressionScope())->members($test, 2, 4));
     }
 }

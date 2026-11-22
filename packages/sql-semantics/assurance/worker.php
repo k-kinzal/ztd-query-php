@@ -41,6 +41,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
@@ -77,7 +79,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -87,6 +89,11 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
         ),
         'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
         'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
+        'membership' => new MembershipTest(
+            operand($input[2]),
+            array_map(static fn (array $item) => $item === ['nonmember'] ? new IntegerLiteral('3') : new MembershipItem(operand($item)), $input[3]),
+            $input[1],
+        ),
         'between' => new BetweenTest(operand($input[2]), operand($input[3]), operand($input[4]), $input[1]),
         'truth' => new TruthTest(operand($input[3]), $input[1], $input[2]),
         'integer' => new IntegerLiteral($input[1]),
@@ -103,7 +110,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
     };
 }
 
-function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -114,6 +121,8 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
         ],
         $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
         $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],
+        $value instanceof MembershipTest => ['membership', $value->negated, observeOperand($value->operand),
+            array_map(static fn (MembershipItem $item): array => observeOperand($item->expression), $value->items)],
         $value instanceof BetweenTest => ['between', $value->negated, observeOperand($value->operand), observeOperand($value->lower), observeOperand($value->upper)],
         $value instanceof TruthTest => ['truth', $value->desired, $value->negated, observeOperand($value->operand)],
         $value instanceof IntegerLiteral => ['integer', $value->decimal],

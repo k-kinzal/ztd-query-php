@@ -77,6 +77,10 @@ def children(expression):
         yield from children(expression[2])
     elif expression[0] == "truth":
         yield from children(expression[3])
+    elif expression[0] == "membership":
+        yield from children(expression[2])
+        for term in expression[3]:
+            yield from children(term)
     elif expression[0] == "between":
         for term in expression[2:]:
             yield from children(term)

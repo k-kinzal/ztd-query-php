@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-membership-v1.json": "a4164002596a004a50c1d2d0a85fa0a4578a18980415a0dfc59784c76854dcf7",
     "sqlite-between-v1.json": "8cf61799f6bd352e6b182ce1c8e9fc1f43d2015b1c9b3b7fa835fd38920cd639",
     "mysql-signed-quotient-v1.json": "66925621bd8a6e02a6e006be1163f34622ba75af77497f1958e052b7f9097996",
     "postgres-int4-operators-v1.json": "7b47e38df2f8e6947ecdeff7c78e0fb86306b5d795d24a2754bbb0ce8450c94f",

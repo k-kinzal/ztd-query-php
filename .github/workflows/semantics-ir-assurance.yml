@@ -313,6 +313,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-between-evidence"
+      - name: Collect SQLite scalar membership and empty-list binding observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_membership.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-membership-evidence"
       - name: Collect SQLite literal default observations
         if: ${{ !cancelled() }}
         env:
@@ -439,6 +448,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-unary-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-truth-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-between-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-membership-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/

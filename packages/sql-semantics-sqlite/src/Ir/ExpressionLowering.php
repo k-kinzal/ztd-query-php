@@ -21,6 +21,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
@@ -43,6 +45,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList as ParsedMembership;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
@@ -58,7 +61,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -86,6 +89,7 @@ final class ExpressionLowering
                 $this->lower($expression->high, $binding),
                 $expression->negated,
             ),
+            $expression instanceof ParsedMembership => $this->membership($expression, $binding),
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),
             $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
@@ -97,6 +101,21 @@ final class ExpressionLowering
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
+    }
+
+    /**
+     * Resolves the tested value followed by every ordered list member.
+     * @throws InvalidConstruction When a member or tested value is unsupported or unresolved
+     */
+    public function membership(ParsedMembership $expression, SourceBinding $binding): MembershipTest
+    {
+        $operand = $this->lower($expression->operand, $binding);
+        $members = [];
+        foreach ($expression->items as $item) {
+            $members[] = new MembershipItem($this->lower($item, $binding));
+        }
+
+        return new MembershipTest($operand, $members, $expression->negated);
     }
 
     /**

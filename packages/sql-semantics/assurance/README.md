@@ -337,6 +337,8 @@ The [unary record](sqlite-unary-v1.json) tests direct prefix expressions, comput
 
 ## SQLite truth tests
 
+The [membership record](sqlite-membership-v1.json) covers scalar IN and NOT IN with ordered candidate expressions. It compares the numbered binding count and first labels for empty lists, where SQLite folds the result. The observer distinguishes left affinity and collation from a list member's discarded affinity and implicit collation. Run `run_sqlite_membership.py` with the SQLite fixture options.
+
 The [range test record](sqlite-between-v1.json) covers positive and negated scalar BETWEEN in the same projection and VALUES roles. The independent evaluator applies affinity and collation to each comparison before combining the two truth values. Run `run_sqlite_between.py` with the SQLite fixture options. The recorded faults erase a bound, move the bounds or omit negation.
 
 The [truth record](sqlite-truth-v2.json) distinguishes lookup of truth-word columns, integer literal roles and Boolean tests. The observer checks all four Boolean tests, NULL behavior and equivalent group filters on nonnull counts. The collision fixture pairs each result with its source value, which distinguishes the faulty binding even when result counts match. Run `run_sqlite_truth.py` with the SQLite fixture options.

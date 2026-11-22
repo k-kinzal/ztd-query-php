@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
@@ -128,7 +129,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -143,6 +144,7 @@ final class SelectSql
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
+            $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
             $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
@@ -155,6 +157,21 @@ final class SelectSql
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Emits membership syntax and visits every written candidate in order.
+     * @param list<Join> $joins The remaining source occurrences
+     */
+    public function membership(MembershipTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    {
+        $operand = $this->expression($expression->operand, $source, $joins);
+        $members = [];
+        foreach ($expression->items as $item) {
+            $members[] = $this->expression($item->expression, $source, $joins);
+        }
+
+        return '(' . $operand . ($expression->negated ? ' NOT IN (' : ' IN (') . implode(', ', $members) . '))';
     }
 
     /**

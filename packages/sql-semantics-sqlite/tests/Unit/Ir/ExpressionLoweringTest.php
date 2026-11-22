@@ -21,6 +21,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -112,5 +113,23 @@ final class ExpressionLoweringTest extends TestCase
 
         self::assertInstanceOf(IntegerLiteral::class, $value);
         self::assertSame('1', $value->decimal);
+    }
+
+    public function testMembershipRetainsTheNegationAndWrittenCandidates(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT ?02 NOT IN (?3, ?1)');
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $column = $select->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(InList::class, $column->expression);
+
+        $test = (new ExpressionLowering())->membership($column->expression, new SourceBinding($operation->binding(), $select->from));
+
+        self::assertTrue($test->negated);
+        self::assertInstanceOf(Parameter::class, $test->operand);
+        self::assertSame('02', $test->operand->label);
+        self::assertInstanceOf(Parameter::class, $test->items[0]->expression);
+        self::assertSame('3', $test->items[0]->expression->label);
     }
 }

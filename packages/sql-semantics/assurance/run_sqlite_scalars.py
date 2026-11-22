@@ -84,6 +84,24 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
                     break
         return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
+    if kind == "membership":
+        negated, operand, items = arguments
+        if not items:
+            return int(negated)
+        value = evaluate(operand, bindings, row, case_equal, comparison_inputs)
+        if value is None:
+            return None
+        undecided = False
+        for member in items:
+            candidate = evaluate(member, bindings, row, case_equal, comparison_inputs)
+            if candidate is None:
+                undecided = True
+                continue
+            left, right = comparison_inputs(operand, ("membership-item",), value, candidate)
+            if order_value(left) == order_value(right):
+                return int(not negated)
+        return None if undecided else int(negated)
+
     if kind == "between":
         negated, operand, lower, upper = arguments
         value = evaluate(operand, bindings, row, case_equal, comparison_inputs)

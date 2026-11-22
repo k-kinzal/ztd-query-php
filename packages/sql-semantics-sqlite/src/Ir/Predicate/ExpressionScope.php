@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int}
+ * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int}
  */
 final class ExpressionScope
 {
@@ -39,8 +39,11 @@ final class ExpressionScope
         while ($pending !== []) {
             [$expression, $height, $visibility] = array_pop($pending);
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-            if ($expression instanceof CaseExpression) {
-                foreach ($this->choice($expression, $height + 1, $visibility) as $operand) {
+            if ($expression instanceof CaseExpression || $expression instanceof MembershipTest) {
+                $operands = $expression instanceof CaseExpression
+                    ? $this->choice($expression, $height + 1, $visibility)
+                    : $this->members($expression, $height + 1, $visibility);
+                foreach ($operands as $operand) {
                     $pending[] = $operand;
                 }
                 continue;
@@ -68,6 +71,20 @@ final class ExpressionScope
             };
             Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');
         }
+    }
+
+    /**
+     * Lists the tested value followed by every ordered membership candidate.
+     * @return list<ScopedExpression>
+     */
+    public function members(MembershipTest $expression, int $height, int $visibility): array
+    {
+        $operands = [[$expression->operand, $height, $visibility]];
+        foreach ($expression->items as $item) {
+            $operands[] = [$item->expression, $height, $visibility];
+        }
+
+        return $operands;
     }
 
     /**
