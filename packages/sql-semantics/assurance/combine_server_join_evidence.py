@@ -9,9 +9,9 @@ from types import SimpleNamespace
 
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from run_server import check_profile, same
+from run_server import check_profile, check_transport, same
 import run_server_join
-from run_server_join import tools, version_tag
+from run_server_join import request_batches, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -28,24 +28,32 @@ def replay(path, report, specification, domain=run_server_join):
         execution[kind] += 1
         return frame
 
-    for key, request, item, rejection in domain.requests(engine, tag, specification):
-        require(canonical(matched(key, "attempted")["input"]) == canonical(request), f"server-{label}-replay-request", key)
-        if rejection is not None:
+    transport = check_transport()
+    same(transport, report["transport"])
+    for batch in request_batches(domain.requests(engine, tag, specification), transport["maximumBatch"]):
+        for key, request, _, _ in batch:
+            require(canonical(matched(key, "attempted")["input"]) == canonical(request), f"server-{label}-replay-request", key)
+        if batch[0][3] is not None:
+            key, _, _, rejection = batch[0]
             response = matched(key, "rejected")["response"]
             require(response["status"] == "rejected" and rejection in response["message"], f"server-{label}-replay-rejection", key)
             continue
-        response = matched(key, "constructed")["response"]
-        domain.check_value(item, response)
-        compared = matched(key, "compared")
-        witness = domain.observation(compared["observation"])
-        domain.check_observation(item, witness, response["sql"])
-        require(("sql" in request) == ("original" in compared), f"server-{label}-replay-original-missing", key)
-        if "sql" in request:
-            domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
-        if key.startswith("finite/"):
-            seen[domain.finite_id(engine, response)] += 1
-        elif key.startswith("seed/"):
-            domain.sample_forms(forms, response, engine)
+        replies = []
+        for key, _, item, _ in batch:
+            response = matched(key, "constructed")["response"]
+            domain.check_value(item, response)
+            replies.append(response)
+        for (key, request, item, _), response in zip(batch, replies):
+            compared = matched(key, "compared")
+            witness = domain.observation(compared["observation"])
+            domain.check_observation(item, witness, response["sql"])
+            require(("sql" in request) == ("original" in compared), f"server-{label}-replay-original-missing", key)
+            if "sql" in request:
+                domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
+            if key.startswith("finite/"):
+                seen[domain.finite_id(engine, response)] += 1
+            elif key.startswith("seed/"):
+                domain.sample_forms(forms, response, engine)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
     require(set(seen) == domain.finite_ids(engine, specification) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
     require(domain.required_forms(engine) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")

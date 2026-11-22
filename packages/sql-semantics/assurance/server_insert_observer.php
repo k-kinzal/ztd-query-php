@@ -89,5 +89,10 @@ insertFixture($pdo, $engine, $schema);
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => insertedRows($pdo, $schema)], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $item = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
-    echo json_encode(insertEffect($pdo, $schema, $item['sql']), JSON_THROW_ON_ERROR) . "\n";
+    $requests = array_is_list($item) ? $item : [$item];
+    $responses = [];
+    foreach ($requests as $request) {
+        $responses[] = insertEffect($pdo, $schema, $request['sql']);
+    }
+    echo json_encode(array_is_list($item) ? $responses : $responses[0], JSON_THROW_ON_ERROR) . "\n";
 }

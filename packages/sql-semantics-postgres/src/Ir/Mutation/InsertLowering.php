@@ -46,7 +46,7 @@ final class InsertLowering
             foreach ($row->values as $value) {
                 $item = $expression->lower($value, $empty, $catalogFirst);
                 Check::input($item instanceof IntegerLiteral || $item instanceof NullLiteral, 'A supplied INSERT value requires an integer or NULL literal.');
-                $values[] = new InsertValue($item instanceof NullLiteral ? null : $item);
+                $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);
             }
             $rows[] = new InsertRow($values);
         }

@@ -14,7 +14,7 @@
       },
       "Mutation/InsertRow": {
         "values": [
-          "Mutation/InsertValue",
+          "Mutation/InsertCell",
           1
         ]
       },
@@ -44,7 +44,7 @@
       },
       "Mutation/InsertRow": {
         "values": [
-          "Mutation/InsertValue",
+          "Mutation/InsertCell",
           1
         ]
       },
@@ -134,5 +134,6 @@
   "exclusions": "External schema truth, SQL fidelity, root clause constraints beyond list storage, and privileged reflection remain separate obligations.",
   "extends": "SemanticsIR/value-storage-2",
   "requirements": "A published array is assigned in its constructor from a copy of the admitted list elements. Its member type and minimum length are checked. All implicit and explicit constructor paths are free of reference parameters, array aliases and early successful exits. Non-array edges use closed readonly PHP property types. Restoration is blocked by the pinned Snapshot primitive.",
-  "revision": "SemanticsIR/value-storage-3"
+  "revision": "SemanticsIR/value-storage-5",
+  "replaces": "value-storage-v4.json"
 }

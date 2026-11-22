@@ -27,7 +27,7 @@ ROOTS = {
 
 
 CONTRACTS = {
-    "server-insert-v1.json": "adc0f6a8ed68c71a20c79ba5eea1cfcdde8615b21223b210f461a19fd1b38230",
+    "server-insert-v1.json": "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79",
     "server-result-v1.json": "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c",
     "server-join-v1.json": "1dd8c227ba1638bb1591d4f12c3f9f199ba85e50fc6d24fb9e03b57ff8705b71",
     "server-delete-v1.json": "13b9d85f1893ef514ddedd636212b9bc8289980871139c4dad6176e4569b734a",

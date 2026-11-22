@@ -9,7 +9,7 @@ from pathlib import Path
 
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION
-from run_server import Observer, check_profile, same
+from run_server import Observer, check_profile, check_transport, responses, same
 from run_server_delete import tools, version_tag
 from server_cases import observation
 from server_join_cases import case, expected, finite_id, finite_ids, fixture, is_join, join, leaves, requests, slot, table
@@ -98,34 +98,70 @@ def sample_forms(forms, response, _):
         operands(expression)
 
 
+def request_batches(cases, maximum):
+    pending = []
+    for case in cases:
+        _, request, _, rejection = case
+        if rejection is not None or "sql" in request:
+            if pending:
+                yield pending
+                pending = []
+            yield [case]
+            continue
+        pending.append(case)
+        if len(pending) == maximum:
+            yield pending
+            pending = []
+    if pending:
+        yield pending
+
+
 def execute(args, specification, tag, worker, db, domain=None):
     if domain is None:
         domain = sys.modules[__name__]
     label = domain.LABEL
+    transport = check_transport()
     seen, forms = Counter(), Counter()
     key = current = None
+    batch = []
     with (args.out / "events.jsonl").open("w") as output:
         ledger = Ledger(output)
         try:
-            for key, current, item, rejection in domain.requests(args.engine, tag, specification):
-                ledger.record(key, "attempted", input=current)
-                response = worker.request(current)
-                if rejection is not None:
+            for batch in request_batches(domain.requests(args.engine, tag, specification), transport["maximumBatch"]):
+                for key, current, _, _ in batch:
+                    ledger.record(key, "attempted", input=current)
+                inputs = [entry[1] for entry in batch]
+                if len(inputs) == 1:
+                    replies = [worker.request(inputs[0])]
+                else:
+                    replies = responses(worker.request, inputs, "server-worker-batch-mismatch")
+                if batch[0][3] is not None:
+                    key, current, _, rejection = batch[0]
+                    response = replies[0]
                     require(response["status"] == "rejected" and rejection in response["message"], f"server-{label}-negative-boundary", response)
                     ledger.record(key, "rejected", response=response)
                     continue
-                domain.check_value(item, response)
-                ledger.record(key, "constructed", response=response)
-                details = {"observation": probe(item, response, db, domain)}
-                if "sql" in current:
-                    original = domain.observation(db.request({"sql": current["sql"]}))
-                    domain.check_observation(item, original, current["sql"])
-                    details["original"] = original
-                ledger.record(key, "compared", **details)
-                if key.startswith("finite/"):
-                    seen[domain.finite_id(args.engine, response)] += 1
-                elif key.startswith("seed/"):
-                    domain.sample_forms(forms, response, args.engine)
+                for (key, current, item, _), response in zip(batch, replies):
+                    domain.check_value(item, response)
+                    ledger.record(key, "constructed", response=response)
+                statements = [{"sql": response["sql"]} for response in replies]
+                if len(statements) == 1:
+                    native = [db.request(statements[0])]
+                else:
+                    native = responses(db.request, statements, "server-observer-batch-mismatch")
+                for (key, current, item, _), response, raw in zip(batch, replies, native):
+                    actual = domain.observation(raw)
+                    domain.check_observation(item, actual, response["sql"])
+                    details = {"observation": actual}
+                    if "sql" in current:
+                        original = domain.observation(db.request({"sql": current["sql"]}))
+                        domain.check_observation(item, original, current["sql"])
+                        details["original"] = original
+                    ledger.record(key, "compared", **details)
+                    if key.startswith("finite/"):
+                        seen[domain.finite_id(args.engine, response)] += 1
+                    elif key.startswith("seed/"):
+                        domain.sample_forms(forms, response, args.engine)
             require(set(seen) == domain.finite_ids(args.engine, specification) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
             require(domain.required_forms(args.engine) <= forms.keys(), f"server-{label}-exploration-incomplete",
@@ -135,15 +171,17 @@ def execute(args, specification, tag, worker, db, domain=None):
             if args.engine == "postgres":
                 registered += len(specification.get("additionalPostgreSqlNegatives", ()))
             require(execution["rejected"] == registered, f"server-{label}-rejections-incomplete")
-            return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution}
+            return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution, "transport": transport}
         except Exception as error:
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"
             detail = error.detail if isinstance(error, Failure) else None
-            if key in ledger.events and ledger.events[key][-1] not in {"compared", "rejected"}:
-                ledger.record(key, "timeout" if signal == "timeout" else "failed", signal=signal, detail=detail)
+            for pending, _, _, _ in batch:
+                if pending in ledger.events and ledger.events[pending][-1] not in {"compared", "rejected"}:
+                    ledger.record(pending, "timeout" if signal == "timeout" else "failed", signal=signal, detail=detail)
             write_json(args.out / "counterexample.json", {
                 "id": key, "original": current, "failure": str(error), "detail": detail, "shrunk": None,
                 "signal": signal, "execution": dict(ledger.counts),
+                "attemptedBatch": [entry[1] for entry in batch],
             })
             raise
 

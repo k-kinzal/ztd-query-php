@@ -12,9 +12,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing an explicit NULL cell
- *     (new \SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertValue(null))->toString() // => 'NULL'
+ *     (new \SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertCell(null))->toString() // => 'NULL'
  */
-final class InsertValue
+final class InsertCell
 {
     use Snapshot;
 

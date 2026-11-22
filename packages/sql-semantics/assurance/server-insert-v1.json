@@ -19,11 +19,11 @@
       "type": "Mutation/InsertRow",
       "fields": ["values"],
       "role": "One owned nonempty list of inserted cells in target order",
-      "invariants": ["Each cell is an InsertValue", "The owning INSERT matches the row width to the target slots"],
+      "invariants": ["Each cell is an InsertCell", "The owning INSERT matches the row width to the target slots"],
       "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
     },
-    "InsertValue": {
-      "type": "Mutation/InsertValue",
+    "InsertCell": {
+      "type": "Mutation/InsertCell",
       "fields": ["value"],
       "role": "An exact signed integer value or SQL NULL",
       "invariants": ["An integer is carried by the existing closed IntegerLiteral role", "A null value supplies explicit SQL NULL"],

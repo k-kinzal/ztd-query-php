@@ -203,8 +203,8 @@ if ($dialect !== 'sqlite') {
     ];
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\InsertRow'] = ['values' => ['array']];
-    $properties['Mutation\\InsertValue'] = ['value' => ['?IntegerLiteral']];
-    $methods['Mutation\\InsertRow'] = $methods['Mutation\\InsertValue'] = ['__construct', 'toString'];
+    $properties['Mutation\\InsertCell'] = ['value' => ['?IntegerLiteral']];
+    $methods['Mutation\\InsertRow'] = $methods['Mutation\\InsertCell'] = ['__construct', 'toString'];
     $internal[] = 'Mutation\\InsertLowering';
     $methods['Predicate\\IntegerComparison'] = ['__construct'];
     $methods['Predicate\\IntegerOperator'] = [];
@@ -320,7 +320,7 @@ try {
     $base = $package . '/src/Ir';
     $storagePath = __DIR__ . '/value-storage-v5.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'cde490ca32e7cf8a787d6376737028107f300d9fcf03551d34a73bd4ccdd5d71',
+        hash_file('sha256', $storagePath) === 'b65707c979811d42ce85733c705f391efe9a71e7fe97c356a2b8cfb33ff232cc',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

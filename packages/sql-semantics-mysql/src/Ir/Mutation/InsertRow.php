@@ -12,25 +12,25 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing a single-cell row
- *     (new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertRow([new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertValue(null)]))->toString() // => '(NULL)'
+ *     (new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertRow([new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertCell(null)]))->toString() // => '(NULL)'
  */
 final class InsertRow
 {
     use Snapshot;
 
     /**
-     * @var non-empty-list<InsertValue> The cells in target column order
+     * @var non-empty-list<InsertCell> The cells in target column order
      */
     public readonly array $values;
 
     /**
      * Creates an owned row of checked, explicit values.
      *
-     * @param non-empty-list<InsertValue> $values
+     * @param list<InsertCell> $values
      */
     public function __construct(array $values)
     {
-        $this->values = Check::listOf($values, InsertValue::class, 'An inserted row needs nonempty cells.', 1);
+        $this->values = Check::listOf($values, InsertCell::class, 'An inserted row needs nonempty cells.', 1);
     }
 
     /**

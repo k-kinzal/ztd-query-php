@@ -12,9 +12,9 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Writing an explicit NULL cell
- *     (new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertValue(null))->toString() // => 'NULL'
+ *     (new \SqlSemantics\Platform\MySql\Ir\Mutation\InsertCell(null))->toString() // => 'NULL'
  */
-final class InsertValue
+final class InsertCell
 {
     use Snapshot;
 

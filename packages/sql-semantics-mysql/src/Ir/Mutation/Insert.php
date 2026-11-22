@@ -31,7 +31,7 @@ final class Insert implements SemanticsIR
     /**
      * Establishes the target and shape conditions before publishing this write.
      *
-     * @param non-empty-list<InsertRow> $rows
+     * @param list<InsertRow> $rows
      */
     public function __construct(
         public readonly TableSource $target,

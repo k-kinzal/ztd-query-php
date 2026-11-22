@@ -13,7 +13,7 @@ from sqlite_domain import RenderFault
 
 LABEL = "insert"
 OBSERVER = "server_insert_observer.php"
-CONTRACT = "adc0f6a8ed68c71a20c79ba5eea1cfcdde8615b21223b210f461a19fd1b38230"
+CONTRACT = "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79"
 
 
 def specifications():

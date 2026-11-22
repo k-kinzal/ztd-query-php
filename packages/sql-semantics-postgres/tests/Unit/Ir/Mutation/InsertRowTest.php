@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertRow;
-use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertValue;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertCell;
 
 #[CoversClass(InsertRow::class)]
 #[Small]
@@ -17,7 +17,7 @@ final class InsertRowTest extends TestCase
 {
     public function testToStringKeepsTheCellPositions(): void
     {
-        $values = [new InsertValue(new IntegerLiteral('-2')), new InsertValue(null)];
+        $values = [new InsertCell(new IntegerLiteral('-2')), new InsertCell(null)];
         $row = new InsertRow($values);
         array_pop($values);
 

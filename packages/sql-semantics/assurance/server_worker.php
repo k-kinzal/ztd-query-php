@@ -159,7 +159,7 @@ function constructInsert(string $platform, array $input): SemanticsIR
     $namespace = $platform . 'Ir\\';
     $statement = $namespace . 'Mutation\\Insert';
     $rowClass = $namespace . 'Mutation\\InsertRow';
-    $cellClass = $namespace . 'Mutation\\InsertValue';
+    $cellClass = $namespace . 'Mutation\\InsertCell';
     $integer = $namespace . 'IntegerLiteral';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $target = constructSource($namespace, $input['target'], $input['dialect']);
