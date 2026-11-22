@@ -219,7 +219,7 @@ class Evidence:
             if success:
                 require(re.fullmatch(r"sha256:[a-f0-9]{64}", result["imageIdentity"])
                         and result["architecture"] in {"amd64", "arm64"}
-                        and 0 <= result["startupSeconds"] <= FIXTURE_STARTUP_SECONDS + 120,
+                        and 0 <= result["startupSeconds"] <= FIXTURE_STARTUP_SECONDS,
                         "bundle-native-launch-fixture-identity", key)
             else:
                 failed.append(key)

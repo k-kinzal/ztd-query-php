@@ -11,6 +11,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from uuid import uuid4
 
 from native_schedule import NATIVE, SINGLE_ENGINE
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
@@ -73,11 +74,16 @@ def image_identity(name):
     return identity, architecture
 
 
-def ready(engine, port):
-    deadline = time.monotonic() + FIXTURE_STARTUP_SECONDS
+def startup_remaining(deadline):
+    remaining = deadline - time.monotonic()
+    require(remaining > 0, "native-launch-fixture-timeout")
+    return remaining
+
+
+def ready(engine, port, deadline):
     while time.monotonic() < deadline:
         try:
-            with socket.create_connection(("127.0.0.1", port), timeout=2) as connection:
+            with socket.create_connection(("127.0.0.1", port), timeout=min(2, startup_remaining(deadline))) as connection:
                 if engine == "postgres":
                     connection.sendall(struct.pack(">II", 8, 80877103))
                     if connection.recv(1) in (b"S", b"N"):
@@ -89,7 +95,7 @@ def ready(engine, port):
                             return
         except OSError:
             pass
-        time.sleep(1)
+        time.sleep(min(1, max(0, deadline - time.monotonic())))
     raise Failure("native-launch-fixture-timeout", {"engine": engine, "port": port})
 
 
@@ -133,6 +139,8 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
     receipt = {"fixture": fixture, "runnerTimeoutSeconds": RUNNER_SECONDS, "setupTimeoutSeconds": FIXTURE_STARTUP_SECONDS,
                "planned": [domain for domain, _, _ in jobs], "executions": [], "failure": None}
     container = None
+    phase = "fixture-image"
+    launch_name = f"ztd-ir-fixture-{uuid4().hex}"
     try:
         identity, arch = image_identity(image)
         receipt.update(imageIdentity=identity, architecture=arch)
@@ -142,20 +150,35 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         ]
         port = fixture["port"]
         start = time.monotonic()
-        container = docker("run", "--rm", "--pull=never", "--platform", f"linux/{arch}", "--detach",
-                           "--publish", f"127.0.0.1::{port}", *flags, image)
-        require(docker("inspect", "--format", "{{.Image}}", container) == identity, "native-launch-running-image", key)
-        address = docker("port", container, f"{port}/tcp")
+        deadline = start + FIXTURE_STARTUP_SECONDS
+        phase = "container-launch"
+        container = docker("run", "--rm", "--pull=never", "--name", launch_name, "--platform", f"linux/{arch}", "--detach",
+                           "--publish", f"127.0.0.1::{port}", *flags, image, timeout=startup_remaining(deadline))
+        phase = "fixture-ready"
+        require(docker("inspect", "--format", "{{.Image}}", container, timeout=startup_remaining(deadline)) == identity,
+                "native-launch-running-image", key)
+        address = docker("port", container, f"{port}/tcp", timeout=startup_remaining(deadline))
         local = re.fullmatch(r"127\.0\.0\.1:([0-9]+)", address)
         require(local is not None, "native-launch-unexpected-port", address)
         external = int(local[1])
-        ready(engine, external)
+        ready(engine, external, deadline)
+        startup_remaining(deadline)
         receipt["startupSeconds"] = round(time.monotonic() - start, 3)
+        phase = "execution"
         run_jobs(jobs, args, raw, logs, connection(engine, external), receipt["executions"])
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
-        receipt["failure"] = {"type": type(error).__name__, "detail": str(error)}
+        receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
+        if container is None and phase == "container-launch":
+            # The daemon may have assigned the known name before the client timed out.
+            try:
+                container = docker("inspect", "--format", "{{.Id}}", launch_name)
+            except subprocess.CalledProcessError as lookup:
+                if "No such object" not in lookup.stderr and "No such container" not in lookup.stderr:
+                    receipt["cleanupFailure"] = lookup.stderr
+            except (OSError, subprocess.SubprocessError) as cleanup:
+                receipt["cleanupFailure"] = str(cleanup)
     finally:
-        if container is not None:
+        if container:
             try:
                 docker("rm", "-f", "-v", container)
             except (OSError, subprocess.SubprocessError) as error:
