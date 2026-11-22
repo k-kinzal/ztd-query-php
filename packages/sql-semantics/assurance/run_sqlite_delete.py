@@ -224,7 +224,7 @@ def check_mutations(args, db):
     fixtures = [
         RenderFault("schema", delete, "$renderer->source($this->target, 0)", "'\"temp\".\"ir_delete\" AS \"__ztd_source\"'",
                     item(predicate=PREDICATES[4], bindings={"2": 1}), "meaning-mismatch"),
-        RenderFault("predicate", delete, "return 'DELETE FROM ' . $target . $where;", "return 'DELETE FROM ' . $target;",
+        RenderFault("predicate", delete, "return 'DELETE FROM ' . $target . $where . $returning;", "return 'DELETE FROM ' . $target . $returning;",
                     item(predicate=["comparison", "=", ["column", 0], ["integer", "1"]]), "meaning-mismatch"),
         RenderFault("slot", renderer, "$source->columns[$expression->slot]->quoted()", "$source->columns[1 - $expression->slot]->quoted()",
                     item(predicate=["column", 0]), "meaning-mismatch"),
