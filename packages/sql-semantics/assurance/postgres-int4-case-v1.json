@@ -1,0 +1,52 @@
+{
+  "revision": "SemanticsIR/postgres-int4-case-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2 under the registered int4 projection and predicate profiles.",
+  "scope": "A searched CASE with a resolved int4 result and ordered Boolean branches.",
+  "constructors": {
+    "Expression/IntegerCaseArm": {
+      "role": "One Boolean decision and its signed int4 or NULL result.",
+      "structure": "One checked Boolean predicate and one checked int4 scalar or explicit NULL.",
+      "conditions": "The enclosing SELECT validates every reference in both operands, including an arm never selected for the fixture data.",
+      "meaning": "When the predicate is true, supply the associated result. FALSE and NULL continue the CASE search.",
+      "externalInterpretation": "Use the checked pg_catalog operators and the same external input slots.",
+      "sql": "Emit one WHEN predicate and THEN value. Spell a NULL result as typed int4 in a direct case.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Expression/IntegerCase": {
+      "role": "One fixed int4 domain searched CASE expression.",
+      "structure": "An owned nonempty list of at most 32 ordered IntegerCaseArm values and an optional int4 or NULL fallback.",
+      "conditions": "The scope checks both conditions and values of all arms and the fallback within the shared projection envelope. Analysis requires PostgreSQL resolution to int4. Direct construction specifies int4 even when every result is NULL.",
+      "meaning": "Choose the result of the first true condition, else the fallback or NULL. Value types remain int4. PostgreSQL retains its normal rules for errors during planning or evaluation of subexpressions.",
+      "externalInterpretation": "Keep the same release, predicate mode and referenced physical columns. The profile allows a row-dependent guarded calculation.",
+      "sql": "Emit a parenthesized searched CASE, list the arms in order, and type each written NULL result as pg_catalog.int4. An absent fallback has native CASE semantics. If all result operands are NULL, the explicit int4 annotation fixes the result type.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Arithmetic", "ColumnReference", "Predicate/IntegerComparison", "Predicate/LogicalPredicate", "NullLiteral"],
+  "observations": [
+    "Exact int4 metadata, result labels, overlapping true conditions, NULL decisions and fallbacks, nesting, reference identity, duplicate rows and native evaluation outcomes.",
+    "The source resolves differently for the competing arms and for inherited rows. A guard prevents a row-dependent zero division when the branch is skipped.",
+    "An original all-unknown CASE resolves to text under PostgreSQL type resolution. The int4 analyzer rejects that input in this domain."
+  ],
+  "finite": {
+    "armCounts": [1, 2],
+    "conditions": [false, true, null],
+    "results": [-2, 0, 7, null],
+    "fallbacks": ["omitted", "integer", "null"],
+    "identity": "Cross every condition and result and all ordered one- and two-arm lists with the three fallback forms. Exhaust 468 measured direct constructions under each release."
+  },
+  "exploration": {
+    "seeds": [13691, 26489, 39113],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Generate bounded repeated and nested branches, ordered nullable decisions and typed int4 results. Vary literal and source-column operands, inherited and ONLY modes, selected and discarded computations, and result labels."
+  },
+  "negative": ["Empty arms", "Invisible condition slot", "Invisible result slot", "Invisible fallback slot", "All-unknown analyzed CASE", "Simple CASE", "Mixed result categories"],
+  "faults": ["Reverse the branch order", "Treat an unknown predicate as true", "Drop the else expression", "Widen the selected result to int8"],
+  "open": ["Simple CASE, CASE result families beyond int4, and general planning-time error rules for constant expressions."],
+  "trust": ["Pinned native PostgreSQL result and type observer", "Independent ordered decision rules", "Exact binding and branch traversal checks"],
+  "sources": ["https://www.postgresql.org/docs/17/functions-conditional.html#FUNCTIONS-CASE", "https://www.postgresql.org/docs/17/typeconv-union-case.html"]
+}
