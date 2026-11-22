@@ -131,7 +131,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "6559f1ac44f78e8fa9412e602c7b2a1182a05d0aa02de7b0e03ffcfec9273718"
+PUBLICATION = "8e42fe4d44c35abe8a00a7d106403b0643eec7bdf507d289d7f2a1d9a923c214"
 
 
 def declared_constructors(dialects):
@@ -161,7 +161,7 @@ def declared_constructors(dialects):
 
 
 def constructor_scope(by_class):
-    publication = (TOOL / "publication-v21.json").read_bytes()
+    publication = (TOOL / "publication-v22.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -188,6 +188,11 @@ def constructor_scope(by_class):
         owner, _, _ = route.partition("::")
         if owner not in definitions or not members or members[0] != "array" or set(members[1:]) - definitions.keys():
             raise ValueError(f"Array publication route has unregistered roles: {route}")
+    typed_value_routes = publication["typedValueRoutes"]
+    for route, members in typed_value_routes.items():
+        owner, _, member = route.partition("::")
+        if owner not in definitions or not member or not members or set(members) - definitions.keys():
+            raise ValueError(f"Typed publication route has unregistered roles: {route}")
     generic = publication["unconstrainedReturns"]
     generic_types = {kind.lower() for kind in generic["intrinsicKinds"]}
     non_ir_routes = {platform + "\\" + role: expected for platform in prefixes
@@ -213,6 +218,7 @@ def constructor_scope(by_class):
 
     routes.update(batch_routes)
     routes.update(array_routes)
+    routes.update(typed_value_routes)
     unexpected_unconstrained = {
         name: unconstrained.get(name) for name in sorted(set(expected_unconstrained) | set(unconstrained))
         if expected_unconstrained.get(name) != unconstrained.get(name)
