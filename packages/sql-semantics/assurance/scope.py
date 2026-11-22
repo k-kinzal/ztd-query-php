@@ -105,23 +105,17 @@ SQLITE_LITERAL_TYPES = {
 }
 
 
-def constructor_scope(by_class):
+def declared_constructors(dialects):
     definitions = {}
     supplemental = {}
-    publication = (TOOL / "publication-v17.json").read_bytes()
-    if hashlib.sha256(publication).hexdigest() != PUBLICATION:
-        raise ValueError("Publication contract differs from its recorded revision")
-    publication = json.loads(publication)
-    prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
-    routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
-    roots_by_dialect = {dialect: [] for dialect in publication["dialects"]}
+    roots_by_dialect = {dialect: [] for dialect in dialects}
     for name, sha256 in CONTRACTS.items():
         raw = (TOOL / name).read_bytes()
         if hashlib.sha256(raw).hexdigest() != sha256:
             raise ValueError(f"Constructor contract differs from its recorded revision: {name}")
         contract = json.loads(raw)
-        dialects = contract.get("dialects", ("MySql", "PostgreSql") if name == "server-projection-v1.json" else ("Sqlite",))
-        for dialect in dialects:
+        platforms = contract.get("dialects", ("MySql", "PostgreSql") if name == "server-projection-v1.json" else ("Sqlite",))
+        for dialect in platforms:
             for role in contract.get("existingRoles", []):
                 concrete = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + role.replace("/", "\\")
                 supplemental.setdefault(concrete, []).append(name)
@@ -131,9 +125,22 @@ def constructor_scope(by_class):
             if name == "sqlite-scalars-v1.json":
                 concrete = SQLITE_LITERAL_TYPES.get(concrete, concrete)
             concrete = concrete.replace("/", "\\")
-            for dialect in dialects:
+            for dialect in platforms:
                 clas = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
+    if not supplemental.keys() <= definitions.keys():
+        raise ValueError("An evidence supplement references an unregistered constructor")
+    return definitions, supplemental, roots_by_dialect
+
+
+def constructor_scope(by_class):
+    publication = (TOOL / "publication-v17.json").read_bytes()
+    if hashlib.sha256(publication).hexdigest() != PUBLICATION:
+        raise ValueError("Publication contract differs from its recorded revision")
+    publication = json.loads(publication)
+    prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
+    routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
+    definitions, supplemental, roots_by_dialect = declared_constructors(publication["dialects"])
     for platform, dialect in zip(prefixes, publication["dialects"]):
         additions = roots_by_dialect[dialect]
         if sorted(additions) != sorted(publication["single"]["additionalDialectResults"].get(dialect, [])):
@@ -148,8 +155,6 @@ def constructor_scope(by_class):
         if record["visibility"] == "public" and record["kind"] in ("Stmt_Class", "Stmt_Enum")
         and clas.startswith(tuple(prefix + "\\Ir\\" for prefix in prefixes))
     }
-    if not supplemental.keys() <= definitions.keys():
-        raise ValueError("An evidence supplement references an unregistered constructor")
     publication_types = set(definitions) | {kind for cases in routes.values() for kind in cases}
     found = {}
     for clas, record in by_class.items():

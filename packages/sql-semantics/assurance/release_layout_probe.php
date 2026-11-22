@@ -4,6 +4,23 @@ declare(strict_types=1);
 
 require '/stage/vendor/autoload.php';
 
+$roles = json_decode(file_get_contents('/roles.json'), true, 512, JSON_THROW_ON_ERROR);
+foreach (array_keys($roles) as $name) {
+    $role = new ReflectionClass($name);
+    $path = $role->getFileName();
+    if ($path === false) {
+        throw new RuntimeException('An installed role has no source file.');
+    }
+    echo json_encode([
+        'probe' => 'role',
+        'name' => $role->getName(),
+        'kind' => $role->isInterface() ? 'interface' : ($role->isEnum() ? 'enum' : 'class'),
+        'final' => $role->isFinal(),
+        'path' => $path,
+        'sha256' => hash_file('sha256', $path),
+    ], JSON_THROW_ON_ERROR) . "\n";
+}
+
 foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $platform => $schema) {
     $namespace = 'SqlSemantics\\Platform\\' . $platform . '\\';
     $analyzer = $namespace . 'Semantics';
@@ -63,6 +80,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         echo json_encode([
+            'probe' => 'publication',
             'platform' => $platform,
             'role' => $role,
             'profile' => $result->profileId(),

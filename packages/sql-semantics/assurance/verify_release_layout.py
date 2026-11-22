@@ -10,8 +10,10 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
+from scope import declared_constructors
 
-CONTRACT = "3cd8905bf72414457cea1458b392c29dbb3aa7d6b4a33521ae47e66778585aef"
+CONTRACT_NAME = "release-layout-v2.json"
+CONTRACT = "f47b620b5d45795ee5144a1321798c5db4828dc99e6aeee7f9e5c5ee734e6a17"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -92,14 +94,69 @@ def stage_packages(candidate, stage, manifest, transform, constraint, version):
     return expected
 
 
-def probe(stage, evidence):
+def runtime_catalog(specification, manifest):
+    declared, _, _ = declared_constructors(DIALECTS)
+    interfaces = specification["runtimeRoles"]["interfaces"]
+    paths = {name: ("sql-semantics", path, True) for name, path in interfaces.items()}
+    for name in declared:
+        _, _, platform, *role = name.split("\\")
+        paths[name] = ("sql-semantics-" + DIALECTS[platform], "src/" + "/".join(role) + ".php", False)
+    return {name: {"path": f"/stage/vendor/k-kinzal/{package}/{source}", "sha256": manifest[f"packages/{package}/{source}"],
+                   "interface": interface}
+            for name, (package, source, interface) in sorted(paths.items())}
+
+
+def checked_roles(catalog, observations):
+    names = {item["name"] for item in observations}
+    require(names == catalog.keys() and len(observations) == len(catalog), "incomplete-installed-roles",
+            {"missing": sorted(catalog.keys() - names), "unexpected": sorted(names - catalog.keys())})
+    measured = {}
+    for item in observations:
+        name = item["name"]
+        expected = catalog[name]
+        kind = item["kind"]
+        require((kind == "interface" if expected["interface"] else kind in ("class", "enum") and item["final"])
+                and item["path"] == expected["path"] and item["sha256"] == expected["sha256"],
+                "installed-role-source-mismatch", {"expected": expected, "observed": item})
+        measured[name] = {"kind": kind, "final": item["final"], "path": item["path"], "sha256": item["sha256"]}
+    return measured
+
+
+def role_controls(catalog, observations):
+    first, second = observations[:2]
+    trials = {
+        "omitted-role": (observations[1:], "incomplete-installed-roles"),
+        "wrong-source": ([{**first, "path": second["path"]}, *observations[1:]], "installed-role-source-mismatch"),
+    }
+    controls = {}
+    for name, (altered, expected) in trials.items():
+        try:
+            checked_roles(catalog, altered)
+        except Failure as error:
+            require(error.signal == expected, "installed-role-control-wrong-signal", name)
+            controls[name] = {"role": first["name"], "signal": error.signal, "detail": error.detail}
+        else:
+            raise Failure("installed-role-control-accepted", name)
+    return controls
+
+
+def probe(stage, evidence, catalog, catalog_path):
     script = TOOL / "release_layout_probe.php"
     arguments = ["docker", "run", "--pull", "never", "--rm", "--network", "none", "--read-only",
                  "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--user", "65534:65534",
                  "--pids-limit", "64", "--memory", "256m", "-v", f"{stage / 'vendor'}:/stage/vendor:ro", "-v", f"{script}:/probe.php:ro",
+                 "-v", f"{catalog_path}:/roles.json:ro",
                  IMAGE, "php", "/probe.php"]
     raw = command(arguments, stage, evidence / "probe.log")
-    results = [json.loads(line) for line in raw.splitlines()]
+
+    return verify_probe(raw, catalog)
+
+
+def verify_probe(raw, catalog):
+    frames = [json.loads(line) for line in raw.splitlines()]
+    results = [item for item in frames if item["probe"] == "publication"]
+    role_observations = [item for item in frames if item["probe"] == "role"]
+    require(len(frames) == len(results) + len(role_observations), "unexpected-installed-probe")
     pairs = {(item["platform"], item["role"]) for item in results}
     expected = {(platform, role) for platform in DIALECTS for role in COMMON}
     expected.update((platform, "Aggregation\\GroupedSelect") for platform in DIALECTS)
@@ -113,7 +170,7 @@ def probe(stage, evidence):
         path = f"/stage/vendor/k-kinzal/{package}/src/Ir/" + item["role"].replace("\\", "/") + ".php"
         require(item["path"] == path and isinstance(item["sql"], str) and item["sql"] and item["profile"],
                 "unexpected-installed-publication", item)
-    return results
+    return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)
 
 
 def digest_fault(installed, expected, directory):
@@ -140,12 +197,15 @@ def digest_fault(installed, expected, directory):
 
 
 def verify(candidate, out):
-    path = TOOL / "release-layout-v1.json"
+    path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "release-layout-contract-mismatch")
     specification = json.loads(path.read_bytes())
     sha, manifest = candidate_distribution(candidate)
     write_json(out / "distribution.json", manifest)
     transform = checked_recipe(candidate, specification, out)
+    catalog = runtime_catalog(specification, manifest)
+    catalog_path = out / "runtime-catalog.json"
+    write_json(catalog_path, catalog)
     report = {}
     for profile, settings in specification["profiles"].items():
         evidence = out / profile
@@ -168,15 +228,18 @@ def verify(candidate, out):
                 metadata[package] = digest(target / "composer.json")
                 require(metadata[package] == digest(stage / "packages" / package / "composer.json"),
                         "installed-metadata-mismatch", package)
+            roots, roles, controls = probe(stage, evidence, catalog, catalog_path)
+            digest_fault(installed, expected, evidence)
             report[profile] = {"versions": locked, "packageManifests": metadata,
                                "checkedFiles": {package: len(files) for package, files in expected.items()},
-                               "runtime": probe(stage, evidence)}
-            digest_fault(installed, expected, evidence)
+                               "runtime": roots, "roles": roles, "roleControls": controls, "probeDigest": digest(evidence / "probe.log"),
+                               "installedMutation": {name: digest(evidence / name) for name in ("installed-mutation.diff", "installed-mutation.json")}}
     verify_candidate(candidate, sha, manifest)
     write_json(out / "index.json", {"status": "provisional-staged-composer-layout", "candidate": sha,
                                    "distribution": digest(out / "distribution.json"), "contract": CONTRACT,
                                    "recipe": specification["recipe"], "workerImage": IMAGE,
-                                   "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php")},
+                                   "runtimeCatalog": digest(catalog_path),
+                                   "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php", "scope.py")},
                                    "composer": command(["composer", "--version"], out).strip(), "profiles": report})
 
 

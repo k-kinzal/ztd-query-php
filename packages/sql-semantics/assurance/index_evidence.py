@@ -7,6 +7,7 @@ from pathlib import Path
 from constructor_trace import check_scope, trace
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
+from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
 
 
 NATIVE = {
@@ -190,6 +191,32 @@ class Evidence:
         return item
 
 
+def replay_staged(evidence, artifact, manifest):
+    if artifact is None:
+        return None
+    path, origin, report = artifact
+    require(report["contract"] == RELEASE_LAYOUT == evidence.tools[RELEASE_LAYOUT_NAME], "bundle-release-layout-contract", origin)
+    specification = json.loads((evidence.tool_root / RELEASE_LAYOUT_NAME).read_text())
+    expected = runtime_catalog(specification, manifest)
+    catalog, catalog_link = evidence.checked(path.parent / "runtime-catalog.json", report["runtimeCatalog"])
+    require(json.loads(catalog.read_text()) == expected, "bundle-installed-role-catalog-mismatch", catalog_link)
+    require(report["profiles"].keys() == specification["profiles"].keys(), "bundle-installed-profile-mismatch", origin)
+    for profile, record in report["profiles"].items():
+        raw, _ = evidence.checked(path.parent / profile / "probe.log", record["probeDigest"])
+        roots, roles, controls = verify_probe(raw.read_text(), expected)
+        require(roots == record["runtime"] and roles == record["roles"] and controls == record["roleControls"],
+                "bundle-installed-probe-replay-mismatch", profile)
+        mutation = record["installedMutation"]
+        require(set(mutation) == {"installed-mutation.diff", "installed-mutation.json"}, "bundle-installed-fault-artifacts", profile)
+        files = {name: evidence.checked(path.parent / profile / name, checksum)[0] for name, checksum in mutation.items()}
+        fault = json.loads(files["installed-mutation.json"].read_text())
+        source = "packages/" + fault["package"] + "/" + fault["path"]
+        require(fault["injection"] == "installed-mutation.diff" and fault["control"] == "verified"
+                and fault["detected"] == "installed-distribution-mismatch" and fault["before"] == manifest[source]
+                and fault["after"] != fault["before"], "bundle-installed-fault-result", profile)
+    return artifact
+
+
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--candidate", required=True, type=Path)
@@ -229,7 +256,7 @@ def main():
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
-    staged = evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True)
+    staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)

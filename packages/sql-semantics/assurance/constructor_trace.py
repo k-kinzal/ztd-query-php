@@ -118,6 +118,23 @@ def installed_roots(staged, roots, manifest):
     return installed
 
 
+def installed_roles(staged, constructors):
+    if staged is None:
+        return {}
+    _, origin, report = staged
+    installed = {name: [] for name in constructors}
+    for profile, evidence in report["profiles"].items():
+        values = {name: record for name, record in evidence["roles"].items() if record["kind"] != "interface"}
+        require(values.keys() == constructors.keys(), "trace-installed-role-scope", profile)
+        for name, actual in values.items():
+            declared = constructors[name]
+            expected = "/stage/vendor/k-kinzal/" + declared["source"].removeprefix("packages/")
+            require(actual["path"] == expected and actual["sha256"] == declared["sha256"],
+                    "trace-installed-role-mismatch", {"role": name, "profile": profile})
+            installed[name].append({"stagedInstallation": origin, "profile": profile, **actual})
+    return installed
+
+
 def trace(scope, manifest, tools, sqlite, native, guards, staged):
     declared = declaration_contract(tools / DECLARATIONS)
     supplements = declared["additions"]
@@ -152,6 +169,7 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
                                "evidenceKind": "required-criteria", "domainEvidence": {}}
     values = scope["registeredConstructors"]
     installed = installed_roots(staged, {name: values[name] for name in scope["completeRootTypes"]}, manifest)
+    measured = installed_roles(staged, values)
     constructors = {}
     for name, item in values.items():
         _, _, dialect, _, role = name.split("\\", 4)
@@ -164,6 +182,7 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
             "supplementalContracts": item["supplementalEvidence"],
             "auditedShape": checked_methods(guards, DIALECTS[dialect], role),
             "installedRootExamples": installed.get(name, []),
+            "installedRoleSources": measured.get(name, []),
         }
     return {"obligations": OBLIGATIONS, "contracts": contracts, "constructors": constructors,
             "status": "provisional-constructor-trace"}
