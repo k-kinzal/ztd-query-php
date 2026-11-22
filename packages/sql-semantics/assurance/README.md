@@ -390,7 +390,7 @@ The result, DELETE and VALUES suites share evidence setup, ledger checks and ren
 
 ## SQLite local row sources
 
-Run the [local source contract](sqlite-local-source-v1.json) with the same engine:
+Run the [local source contract](sqlite-local-source-v2.json) with the same engine:
 
 ```sh
 local_source_evidence=$(mktemp -d)/sqlite-local-source-evidence

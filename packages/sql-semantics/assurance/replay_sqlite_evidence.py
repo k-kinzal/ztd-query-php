@@ -70,7 +70,7 @@ DOMAINS = {
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),
     "sqlite-values-v1.json": (values, ""),
-    "sqlite-local-source-v1.json": (local, local.DATA),
+    "sqlite-local-source-v2.json": (local, local.DATA),
     joined_local.CONTRACT_NAME: (joined_local, joined_local.FIXTURE),
     recursive.CONTRACT_NAME: (recursive, recursive.FIXTURE),
     "sqlite-insert-v1.json": (insert, insert.FIXTURE),

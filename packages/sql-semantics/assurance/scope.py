@@ -7,47 +7,6 @@ from pathlib import Path
 
 TOOL = Path(__file__).resolve().parent
 
-ROOTS = {
-    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\InsertQuery",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\InsertQuery",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Aggregation\\GroupedSelect",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedSelect",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Aggregation\\GroupedSelect",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\RecursiveSeries",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CreateTable",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTable",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Insert",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Update",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Transaction\\Transaction",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Delete",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Compound",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\LocalProjection",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\RecursiveSeries",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTable",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Insert",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Update",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Transaction\\Transaction",
-    "SqlSemantics\\Platform\\MySql\\Ir\\Select",
-    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Select",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Select",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Delete",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Insert",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Update",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\ValuesQuery",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\Compound",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\CreateTable",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Query\\CreateTableAs",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\RenameTable",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\RenameColumn",
-    "SqlSemantics\\Platform\\Sqlite\\Ir\\Transaction\\Transaction",
-}
-
-
 CONTRACTS = {
     "sqlite-pattern-v1.json": "6385d9428e2767c4e0ac9d53a22b1e4b593af2b7ccd696cbd9f4fe34c5e91d1f",
     "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
@@ -114,7 +73,7 @@ CONTRACTS = {
     "sqlite-delete-v1.json": "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b",
     "sqlite-values-v1.json": "2c1f212e5fae261258dc8c0fb450fd663a41fffc965c7988346b6dcfa39c6ad3",
     "sqlite-joined-local-source-v1.json": "8fbd98e0fb1f51a16b7e0aa992967b177d2c3a502ec248d330c8b6435253a2a8",
-    "sqlite-local-source-v1.json": "d177e36ff5d5bf4d5de779b9f91d69f91f459c41715a73228ec7c655703829bd",
+    "sqlite-local-source-v2.json": "8ab3e4c2986b7c9eb88beab723422db103913de303c57f11c25059553d9e0ea1",
     "sqlite-mutation-conflicts-v2.json": "083319fa81636593499d85ac4420ef701acbf9cdbc275c1fa7f64a2d92d84ada",
     "sqlite-upsert-nothing-v1.json": "2247a27e0acf8b29c247fecbd880d6dd7254e92adf9f3c952fe9c00d4d873c1a",
     "sqlite-insert-v1.json": "a6ce28637ff31c61eb636d0e14170aea7c6dff83a2365c98bbdad94f8ec955da",
@@ -177,6 +136,7 @@ def constructor_scope(by_class):
             raise ValueError(f"Publication contract does not match the recorded roots for {dialect}")
         roles = [publication["single"]["result"], *additions]
         routes[platform + "\\" + publication["single"]["method"]] = sorted(platform + "\\" + role for role in roles)
+    root_types = {role for route, roles in routes.items() if route != publication["analyzerInterface"] for role in roles}
     batch_routes = {
         platform + "\\" + publication["batch"]["method"]: ["array"] for platform in prefixes
     }
@@ -227,6 +187,7 @@ def constructor_scope(by_class):
         if expected_unconstrained.get(name) != unconstrained.get(name)
     }
     return {
+        "registeredRootTypes": sorted(root_types),
         "registeredConstructors": {name: {
             "contracts": definitions[name], "supplementalEvidence": supplemental.get(name, []), "source": by_class[name]["file"],
             "sha256": by_class[name]["sha256"], "paths": by_class[name]["public_and_magic_signatures"],
@@ -260,18 +221,20 @@ def public_scope(packages, distribution):
 
     concrete = {name: record for name, record in by_class.items() if not record["abstract"] and record["kind"] == "Stmt_Class"}
     all_roots = {name for name in concrete if implements_ir(name, set())}
+    declared = constructor_scope(by_class)
+    required_roots = set(declared["registeredRootTypes"])
     graph_candidates = sorted(name for name, record in by_class.items()
                               if not record["abstract"] and record["kind"] in ("Stmt_Class", "Stmt_Enum")
                               and record["visibility"] == "public" and "\\Ir\\" not in name)
     return {
-        **constructor_scope(by_class),
+        **declared,
         "requiredGrammarArtifacts": required,
         "changedGrammarArtifacts": changed,
         "completeRootTypes": sorted(all_roots),
-        "unregisteredRootTypes": sorted(all_roots - ROOTS),
-        "missingRootTypes": sorted(ROOTS - all_roots),
+        "unregisteredRootTypes": sorted(all_roots - required_roots),
+        "missingRootTypes": sorted(required_roots - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal and query INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE, DROP TABLE and checked table and column renames, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal and query INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE, DROP TABLE, DROP VIEW and checked table and column renames, ordinary and joined local VALUES, one recursive self source, builtin grouped counts, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

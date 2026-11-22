@@ -1,0 +1,78 @@
+{
+  "revision": "SemanticsIR/sqlite-local-source-2",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "approval": "pending-human-review",
+  "requiredScope": "General CTE dependencies, multiple definitions, recursive joins and materialization hints remain open. The fixed joined local-source contract covers shared definitions and joined occurrences.",
+  "constructors": {
+    "Rows/LocalSource": {
+      "role": "An immutable ordinary VALUES definition used by local input occurrences.",
+      "structure": "A checked VALUES query and an ordered explicit list of unique SQLite column identifiers.",
+      "boundary": "The name list width matches every operand row. The SELECT checks occurrence scope and the expanded statement budget, including the definition once.",
+      "meaning": "The definition supplies the row bag. An occurrence-zero column slot denotes its position in the explicit output list. CTE source names are local identifiers without external identity.",
+      "sql": "Emit the definition before the body with an unambiguous generated CTE name. Preserve the definition's column order and lexical parameter order.",
+      "assurance": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "analysis": "Recognize one nonrecursive CTE with an explicit column list and VALUES definition, no materialization hint, and a single projection FROM occurrence that resolves to exactly that definition. Its projection, filter, ordinal ordering, DISTINCT and bounds retain the existing SELECT rules.",
+  "observations": [
+    "Ordered result column names",
+    "Typed row bag and guaranteed ordering",
+    "Native parameter labels and count",
+    "Read-only effect",
+    "External shadowing and qualified local references"
+  ],
+  "finite": {
+    "definitionAtoms": [
+      "0",
+      "-2",
+      "NULL"
+    ],
+    "definitionShapes": [
+      "one row of two cells",
+      "two rows of two cells"
+    ],
+    "projectionSlots": [
+      0,
+      1
+    ],
+    "completeness": "Each pair of row shape and slot must return every base-three placement of operand indices exactly once."
+  },
+  "exploration": {
+    "seeds": [
+      928,
+      1449,
+      3392
+    ],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 240,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Name list width mismatch",
+    "Case-insensitive duplicate names",
+    "Invalid reference slot",
+    "Referenced input occurrence outside the consumer scope"
+  ],
+  "faults": [
+    "Reverse the definition's column names",
+    "Change the first parameter label in the CTE"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_with.html",
+    "https://sqlite.org/lang_select.html#the_values_clause"
+  ],
+  "replaces": "sqlite-local-source-v1.json",
+  "positiveAdmission": "The exact historical direct join described in the earlier refusal now has a native positive witness using its original two-column fixture."
+}

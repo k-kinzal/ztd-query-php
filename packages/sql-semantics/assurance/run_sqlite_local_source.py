@@ -5,14 +5,14 @@ import random
 import time
 from collections import Counter
 
-from run import Ledger, Worker, require, write_json
+from run import Ledger, Worker, compare, require, write_json
 from run_sqlite_values import names as definition_parameters, seeded as seeded_values
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 from sqlite_relational_cases import evaluate, truth
 from sqlite_result_cases import GRAPH_FIELDS, allowed_result, bound_value, integer, result_parameters
 
-CONTRACT = "d177e36ff5d5bf4d5de779b9f91d69f91f459c41715a73228ec7c655703829bd"
+CONTRACT = "8ab3e4c2986b7c9eb88beab723422db103913de303c57f11c25059553d9e0ea1"
 ATOMS = [integer(0), integer(-2), ["null"]]
 SCHEMA = "CREATE TABLE c (a, b)"
 DATA = SCHEMA + "; INSERT INTO c VALUES (542, 918), (83, 43);"
@@ -115,7 +115,24 @@ def negatives():
     yield case([[ATOMS[0], ATOMS[1]]], names=("a",)), "must match the VALUES width"
     yield case([[ATOMS[0], ATOMS[1]]], names=("a", "A")), "cannot repeat a column name"
     yield case([[ATOMS[0], ATOMS[1]]], slot=2), "visible occurrence"
-    yield case([[ATOMS[0], ATOMS[1]]], joins=[["INNER", ["main", "c", ["a", "b"]], None]]), "without joins"
+    yield case([[ATOMS[0], ATOMS[1]]], columns=[[["column", 0, 1], "answer"]]), "visible occurrence"
+
+
+def expanded_admission(db, worker, ledger):
+    item = case([[ATOMS[0], ATOMS[1]]], joins=[["INNER", ["main", "c", ["a", "b"]], None]])
+    key = "join/previously-refused"
+    ledger.record(key, "attempted", input=item)
+    response = worker.request(item)
+    require(response["status"] == "constructed" and response["source"] == ["local", 0]
+            and response["locals"] == [item["local"]] and response["joins"] == item["joins"]
+            and response["columns"] == item["columns"], "joined-local-admission-mismatch", response)
+    ledger.record(key, "constructed", response=response)
+    result = db.observe(response["sql"], {})
+    ledger.record(key, "observed", observation=result)
+    compare({"names": ["answer"], "parameters": {}, "parameterCount": 0,
+             "rows": [[typed(0)], [typed(0)]], "readOnly": True, "changes": 0}, result)
+    ledger.record(key, "compared")
+
 
 
 def execute(args, specification, db, worker_factory=Worker):
@@ -153,11 +170,14 @@ def execute(args, specification, db, worker_factory=Worker):
                 key = f"analysis/{index}"
                 ledger.record(key, "attempted", input=current, expected=item)
                 probe(item, worker.request(current), db, ledger, key, original=sql)
+            expanded_admission(db, worker, ledger)
             for index, (current, message) in enumerate(negatives()):
                 key = f"negative/{index}"
                 ledger.record(key, "attempted", input=current)
                 response = worker.request(current)
-                require(response["status"] == "rejected" and message in response["message"], "local-source-negative-boundary-mismatch", response)
+                require(response["status"] == "rejected" and message in response["message"] and
+                        response["exception"] == r"SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction",
+                        "local-source-negative-boundary-mismatch", response)
                 ledger.record(key, "rejected", response=response)
             counts = complete_observations(ledger, settings)
         except Exception as failure:
@@ -180,4 +200,4 @@ def check_faults(args, db, runner=check_render_faults):
 
 
 if __name__ == "__main__":
-    run_domain("local source", "sqlite-local-source-v1.json", CONTRACT, DATA, execute, check_faults)
+    run_domain("local source", "sqlite-local-source-v2.json", CONTRACT, DATA, execute, check_faults)
