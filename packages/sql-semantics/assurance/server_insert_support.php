@@ -5,6 +5,9 @@ declare(strict_types=1);
 function insertFixture(PDO $pdo, string $engine, string $schema): void
 {
     $prefix = $schema . '.ir_insert_';
+    foreach (['target', 'control', 'events'] as $old) {
+        $pdo->exec('DROP TABLE IF EXISTS ' . $prefix . $old);
+    }
     $engineClause = $engine === 'mysql' ? ' ENGINE=InnoDB' : '';
     $pdo->exec('CREATE TABLE ' . $prefix . 'events (source VARCHAR(32), id INTEGER, delta INTEGER, stamp INTEGER)' . $engineClause);
     foreach (['target', 'control'] as $name) {

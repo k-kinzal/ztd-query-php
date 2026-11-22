@@ -48,6 +48,7 @@ function queryInsertState(PDO $pdo, string $schema): array
 
 insertFixture($pdo, $engine, $schema);
 foreach (['scan', 'zero'] as $table) {
+    $pdo->exec('DROP TABLE IF EXISTS ' . $schema . '.ir_insert_' . $table);
     $pdo->exec('CREATE TABLE ' . $schema . '.ir_insert_' . $table . ' (id INTEGER, delta INTEGER)');
 }
 $pdo->exec('INSERT INTO ' . $schema . '.ir_insert_scan VALUES (2,3),(2,3),(2,7),(-1,4),(3,NULL),(NULL,8)');
