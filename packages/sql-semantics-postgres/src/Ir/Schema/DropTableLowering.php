@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
-use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -36,6 +35,10 @@ final class DropTableLowering
         $profile = $context->profile;
         Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'DROP TABLE requires the default native profile.');
         Check::input($statement->kind === ObjectKind::Table, 'The complete DROP requires the TABLE object kind.');
+        $schemas = [$context->declarationSchema->value => true];
+        foreach ($context->tables as $table) {
+            $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;
+        }
         $targets = [];
         foreach ($statement->objects as $target) {
             Check::input($target instanceof DottedName && count($target->parts) <= 2, 'DROP TABLE needs an ordinary table identity.');
@@ -45,7 +48,7 @@ final class DropTableLowering
                 $schema = ($name->schema ?? $context->declarationSchema)->value;
             } elseif ($statement->ifExists && $resolution === null) {
                 $name = $target->qualified();
-                Check::input($name !== null && $name->schema !== null && $this->knownSchema($context, $name->schema->value), 'Optional DROP TABLE needs a known explicit schema.');
+                Check::input($name !== null && $name->schema !== null && isset($schemas[$name->schema->value]), 'Optional DROP TABLE needs a known explicit schema.');
                 $schema = $name->schema->value;
             } else {
                 throw new InvalidConstruction('DROP TABLE requires an ordinary table or a known schema-qualified absence.');
@@ -55,19 +58,5 @@ final class DropTableLowering
         }
 
         return new DropTable($targets, $statement->ifExists, $statement->behavior === DropBehavior::Cascade, $profile->grammar);
-    }
-
-    private function knownSchema(AnalysisContext $context, string $schema): bool
-    {
-        if ($schema === $context->declarationSchema->value) {
-            return true;
-        }
-        foreach ($context->tables as $table) {
-            if ($table->name->schema?->value === $schema) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

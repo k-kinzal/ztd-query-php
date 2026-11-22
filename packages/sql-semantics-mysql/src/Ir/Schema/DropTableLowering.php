@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
-use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -38,6 +37,10 @@ final class DropTableLowering
             && $context->relationNames === Comparison::Sensitive, 'DROP TABLE requires the default native profile.');
         Check::input(!$statement->temporary, 'DROP TABLE requires a persistent table target.');
 
+        $schemas = [$context->declarationSchema->value => true];
+        foreach ($context->tables as $table) {
+            $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;
+        }
         $targets = [];
         foreach ($statement->tables as $target) {
             $resolution = $operation->facts->relation($target)->table;
@@ -46,7 +49,7 @@ final class DropTableLowering
                 $schema = ($name->schema ?? $context->declarationSchema)->value;
             } elseif ($statement->ifExists && $resolution instanceof AbsentTable) {
                 $name = $resolution->name;
-                Check::input($name->schema !== null && $this->knownSchema($context, $name->schema->value), 'Optional DROP TABLE needs a known explicit schema.');
+                Check::input($name->schema !== null && isset($schemas[$name->schema->value]), 'Optional DROP TABLE needs a known explicit schema.');
                 $schema = $name->schema->value;
             } else {
                 throw new InvalidConstruction('DROP TABLE requires an ordinary table or a known schema-qualified absence.');
@@ -56,19 +59,5 @@ final class DropTableLowering
         }
 
         return new DropTable($targets, $statement->ifExists, $profile->grammar);
-    }
-
-    private function knownSchema(AnalysisContext $context, string $schema): bool
-    {
-        if ($schema === $context->declarationSchema->value) {
-            return true;
-        }
-        foreach ($context->tables as $table) {
-            if ($table->name->schema?->value === $schema) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

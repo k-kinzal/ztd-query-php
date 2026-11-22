@@ -21,7 +21,9 @@ final class DropTable implements SemanticsIR
 {
     use Snapshot;
 
-    /** @var non-empty-list<TableName> Targets in statement order */
+    /**
+     * @var non-empty-list<TableName> Targets in statement order
+     */
     public readonly array $targets;
 
     /**
