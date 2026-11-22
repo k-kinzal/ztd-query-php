@@ -82,6 +82,13 @@ function checkValueStorage(
     NodeFinder $finder,
 ): void {
     $lists = array_keys(array_filter($propertyDomain, static fn (array $types): bool => $types === ['array']));
+    $explicit = [];
+    foreach ($class->getProperties() as $property) {
+        foreach ($property->props as $field) {
+            requireShape($field->default === null, "Unexpected readonly field initializer in $short");
+            $explicit[] = $field->name->toString();
+        }
+    }
     requireShape(
         array_diff($lists, array_keys($contracts)) === [] && count($lists) === count($contracts),
         "List storage coverage differs in $short"
@@ -89,7 +96,7 @@ function checkValueStorage(
 
     $constructor = $class->getMethod('__construct');
     if ($constructor === null) {
-        requireShape($lists === [], "List stored without a constructor in $short");
+        requireShape($explicit === [], "An explicit value field needs its constructor in $short");
 
         return;
     }
@@ -106,6 +113,16 @@ function checkValueStorage(
                 $top[$name] = [$index, $statement->expr];
             }
         }
+    }
+
+    foreach ($explicit as $property) {
+        $location = '$this->' . $property;
+        [, $write] = $top[$location] ?? [null, null];
+        requireShape(
+            $write instanceof Expr\Assign && $write->var instanceof Expr\PropertyFetch
+                && storageWrites($finder, $body, $location) === [$write],
+            "Value field needs one unconditional initialization in $short::$property"
+        );
     }
 
     foreach ($contracts as $property => $rule) {

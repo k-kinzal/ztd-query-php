@@ -736,6 +736,7 @@ try {
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
     $listFields = [];
+    $checkedValues = [];
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
@@ -893,6 +894,7 @@ try {
                 $operators[$case->name->toString()] = $case->expr->value;
             }
             requireShape($operators === $enumCases[$short], "Operator meanings differ in $short");
+            $checkedValues[$short] = ['kind' => 'enum', 'fields' => (object) $actual, 'lists' => (object) []];
             continue;
         }
         requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open value class $short");
@@ -902,6 +904,7 @@ try {
         $role = str_replace('\\', '/', $short);
         $arrays = $storage[$role] ?? [];
         checkValueStorage($class, $expected, $arrays, $short, $prefix, $platform . '\\Model\\Diagnostic\\Check', $parser, $printer, $finder);
+        $checkedValues[$short] = ['kind' => 'final-readonly-fields', 'fields' => (object) $actual, 'lists' => (object) $arrays];
         if ($arrays !== []) {
             $listFields[$role] = array_keys($arrays);
         }
@@ -909,13 +912,14 @@ try {
     requireShape(array_diff([...array_keys($properties), ...$internal], $observed) === [] && count($observed) === count($properties) + count($internal), 'Closed IR inventory differs');
     sort($observed);
     ksort($listFields);
+    ksort($checkedValues);
     requireShape(array_keys($listFields) === array_keys($storage), 'List storage catalogue is incomplete');
     sort($checkedBoundaries);
     $expectedBoundaries = array_keys($boundaries);
     sort($expectedBoundaries);
     requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
     echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries,
-        'checkedBindingSources' => (object) $checkedBindingSources]) . "\n";
+        'checkedBindingSources' => (object) $checkedBindingSources, 'checkedValues' => (object) $checkedValues]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);

@@ -5,6 +5,8 @@ import difflib
 from pathlib import Path
 from typing import NamedTuple, Optional
 
+from checked_value_graph import DIALECTS, certificate
+from scope import declared_constructors
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
 
 
@@ -305,13 +307,17 @@ def main():
                 and {fault.artifact for fault in cases if fault.artifact} <= healthy["checkedBindingSources"].keys(),
                 "native-boundary-audit-incomplete", engine)
         results[engine] = {"healthy": healthy, "faults": [check_fault(args, engine, fault, manifest) for fault in cases]}
+    constructors, _, _ = declared_constructors(DIALECTS.values())
+    values = certificate(manifest, constructors, {engine: result["healthy"] for engine, result in results.items()})
+    path = args.out / "value-closure.json"
+    write_json(path, {"candidate": identity, "distribution": digest(args.out / "distribution.json"), "certificate": values})
     verify_candidate(args.candidate, identity, manifest)
     write_json(args.out / "index.json", {
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v27.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v13.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v2.json", "postgres-integer-binding-sources-v1.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
-        "results": results,
+                       "native-boundaries-v27.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v13.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v2.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
+        "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
     })
     print(args.out)
 

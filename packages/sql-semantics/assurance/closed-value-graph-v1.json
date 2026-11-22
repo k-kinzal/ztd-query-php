@@ -85,5 +85,12 @@
   ],
   "open": [
     "Semantic correctness of field contents, completeness of admissible SQL and behavior of runtime interpretation. PHP reflection and the ability to rewrite trusted code are outside normal construction paths."
-  ]
+  ],
+  "internalValues": {
+    "mysql": [],
+    "postgres": [],
+    "sqlite": [
+      "Schema/Predicate/DefinitionSource"
+    ]
+  }
 }

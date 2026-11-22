@@ -260,33 +260,41 @@ def identity_controls(args):
     return results
 
 
+def storage_mutation(args, dialect, file, name, original, replacement, detail):
+    relative = Path(f"sql-semantics-{dialect}/src/Ir/{file}")
+    source = args.candidate / "packages" / relative
+    text = source.read_text()
+    require(text.count(original) == 1, "storage-control-anchor-mismatch", [dialect, name])
+    overlay = args.out / name / dialect
+    target = overlay / relative
+    target.parent.mkdir(parents=True)
+    mutated = text.replace(original, replacement, 1)
+    target.write_text(mutated)
+    (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
+        text.splitlines(keepends=True), mutated.splitlines(keepends=True), f"a/{relative}", f"b/{relative}",
+    )))
+    failure = observe_rejection(lambda: shape(args, overlay, dialect), "shape-mismatch")
+    require(detail in failure.detail["message"], "wrong-storage-control-detail", failure.detail)
+    return {"case": name, "dialect": dialect, "control": "passed", "original": digest(source), "mutated": digest(target),
+            "expected": "shape-mismatch", "signal": failure.signal, "detail": failure.detail}
+
+
 def storage_controls(args):
     results = []
     for dialect in ("sqlite", "mysql", "postgres"):
         shape(args, dialect=dialect)
-        relative = Path(f"sql-semantics-{dialect}/src/Ir/TableSource.php")
-        source = args.candidate / "packages" / relative
-        text = source.read_text()
-        original = "$this->columns = $names;"
-        require(text.count(original) == 1, "storage-control-anchor-mismatch", dialect)
-        for name, replacement, detail in (
-            ("store-unchecked-list", "$this->columns = $columns;", "List was not assigned from one checked local"),
-            ("rewrite-checked-list", "[$names] = [$columns];\n        $this->columns = $names;", "List was not assigned from one checked local"),
+        for name, replacement in (
+            ("store-unchecked-list", "$this->columns = $columns;"),
+            ("rewrite-checked-list", "[$names] = [$columns];\n        $this->columns = $names;"),
         ):
-            overlay = args.out / name / dialect
-            target = overlay / relative
-            target.parent.mkdir(parents=True)
-            mutated = text.replace(original, replacement, 1)
-            target.write_text(mutated)
-            (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
-                text.splitlines(keepends=True), mutated.splitlines(keepends=True), f"a/{relative}", f"b/{relative}",
-            )))
-            failure = observe_rejection(lambda: shape(args, overlay, dialect), "shape-mismatch")
-            require(detail in failure.detail["message"], "wrong-storage-control-detail", failure.detail)
-            results.append({
-                "case": name, "dialect": dialect, "control": "passed", "original": digest(source),
-                "mutated": digest(target), "expected": "shape-mismatch", "signal": failure.signal, "detail": failure.detail,
-            })
+            results.append(storage_mutation(args, dialect, "TableSource.php", name, "$this->columns = $names;",
+                                            replacement, "List was not assigned from one checked local"))
+        name = "Ordering/Order.php"
+        location = args.candidate / f"packages/sql-semantics-{dialect}/src/Ir" / name
+        assignments = [line for line in location.read_text().splitlines(keepends=True) if line.startswith("        $this->nullsFirst = ")]
+        require(len(assignments) == 1, "uninitialized-field-control-anchor", dialect)
+        results.append(storage_mutation(args, dialect, name, "leave-readonly-field-uninitialized", assignments[0], "",
+                                        "Value field needs one unconditional initialization in Ordering\\Order::nullsFirst"))
     return results
 
 

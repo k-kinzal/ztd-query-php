@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 
 from compare_assurance_revisions import review
+from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
 from grammar_scope import inventory as grammar_inventory
@@ -459,6 +460,21 @@ def main():
         report["assuranceChanges"] = evidence.checked(revision)[1]
     else:
         report["assuranceChanges"] = None
+    report["valueClosure"] = None
+    if guards:
+        sources = {dialect: result["healthy"] for dialect, result in guards[2]["results"].items()}
+        graph = certificate(manifest, roles["registeredConstructors"], sources)
+        reference = guards[2]["valueClosure"]
+        recorded, _ = evidence.checked(guards[0].parent / reference["path"], reference["sha256"])
+        require(json.loads(recorded.read_text()) == {
+            "candidate": identity, "distribution": evidence.distribution, "certificate": graph,
+        }, "bundle-value-closure-mismatch", str(recorded))
+        graph["candidate"] = identity
+        graph["distribution"] = report["distribution"]
+        graph["sourceAudit"] = guards[1]
+        closure = output / "value-closure.json"
+        write_json(closure, graph)
+        report["valueClosure"] = evidence.checked(closure)[1]
     write_json(output / "constructors.json", role_trace)
     report["constructorTrace"] = evidence.checked(output / "constructors.json")[1]
     write_json(output / "index.json", report)
@@ -474,6 +490,8 @@ def main():
         "", "The [machine-readable index](index.json) links to the source inventory, replay summaries, original requests and recorded database observations.",
         "The [constructor trace](constructors.json) identifies contract fields, required obligations, related domain receipts and audited methods for each public role.",
     ]
+    if report["valueClosure"] is not None:
+        lines.append("The [checked value graph](value-closure.json) records the static closure of retained fields under the listed PHP and source-audit premises.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")
