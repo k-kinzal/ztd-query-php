@@ -8,6 +8,8 @@ from pathlib import Path
 TOOL = Path(__file__).resolve().parent
 
 ROOTS = {
+    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\InsertQuery",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\InsertQuery",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Aggregation\\GroupedSelect",
@@ -44,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
     "sqlite-grouped-v1.json": "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1",
 
     "server-grouped-v2.json": "9bbd02f35dced65558725061c0b5b796d5856e60791190ef931b58ff999a927b",
@@ -79,7 +82,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "42ebb4cf40c861b0e43a6bacccfe2c89b11c59840beb509d707dd7ff3e965284"
+PUBLICATION = "6d948741da233f1ad266239c276ae5caf9c02fe72469e0fb43ad59aef402ba07"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -89,7 +92,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v14.json").read_bytes()
+    publication = (TOOL / "publication-v15.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -182,7 +185,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal and query INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

@@ -21,6 +21,15 @@ function nativeBoundaryContract(string $dialect): array
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 
+    if ($dialect !== 'sqlite') {
+        $extension = __DIR__ . '/native-insert-query-boundaries-v1.json';
+        requireShape(hash_file('sha256', $extension) === '014c93bc01fee8b088b1fffb9eda93aa1da5a242e031eabf0a4b5a3308f0f4f1',
+            'Native query INSERT boundary contract differs from the recorded revision');
+        $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape(array_intersect_key($additional, $rules) === [], 'Native query INSERT cannot replace a fixed boundary');
+        $rules += $additional;
+    }
+
     return array_filter($rules, static fn (array $rule): bool => !isset($rule['dialects']) || in_array($dialect, $rule['dialects'], true));
 }
 
@@ -35,7 +44,7 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\Ordering\\ResultSql', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
         'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
         'Model\\Contract\\GrammarRelease', 'Statement\\Query\\ParenthesizedQuery', 'Statement\\Relation\\DerivedTable',

@@ -103,6 +103,7 @@ def probe(stage, evidence):
     pairs = {(item["platform"], item["role"]) for item in results}
     expected = {(platform, role) for platform in DIALECTS for role in COMMON}
     expected.update((platform, "Aggregation\\GroupedSelect") for platform in DIALECTS)
+    expected.update((platform, "Mutation\\InsertQuery") for platform in ("MySql", "PostgreSql"))
     expected.add(("Sqlite", "Rows\\ValuesQuery"))
     expected.update((platform, "Rows\\LocalProjection") for platform in ("MySql", "PostgreSql"))
     expected.update((platform, "Rows\\RecursiveSeries") for platform in ("MySql", "PostgreSql"))

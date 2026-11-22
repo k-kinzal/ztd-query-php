@@ -25,13 +25,17 @@ final class SelectSql
     /**
      * Renders the result columns in order, then the optional source and filter.
      */
-    public function render(Select $select, bool $localNames = false): string
+    public function render(Select $select, bool $localNames = false, bool $integerAssignment = false): string
     {
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
             $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();
-            $items[] = $this->expression($column->expression, $source) . ' AS ' . $name;
+            $expression = $column->expression;
+            $value = $integerAssignment && $expression instanceof NullLiteral
+                ? 'CAST(NULL AS pg_catalog.int4)'
+                : $this->expression($expression, $source);
+            $items[] = $value . ' AS ' . $name;
         }
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {

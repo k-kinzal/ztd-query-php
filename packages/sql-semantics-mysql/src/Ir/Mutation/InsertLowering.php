@@ -7,13 +7,15 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery as ParsedQueryInsert;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
-use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 /**
  * Resolves the target and closes literal VALUES at the write boundary.
@@ -33,13 +35,7 @@ final class InsertLowering
         $into = $statement->into;
         Check::input(!$into->replace && !$into->ignore && $into->priority === null && $statement->alias === null
             && $statement->onDuplicate === [], 'A complete INSERT requires the ordinary VALUES operation.');
-        Check::input($into->columns !== null && $into->columns->columns !== [], 'An INSERT requires explicit target columns.');
-        $names = [];
-        foreach ($into->columns->columns as $column) {
-            Check::input($column instanceof ColumnUse, 'An INSERT column must name a declared target slot.');
-            $names[] = $column->name->value;
-        }
-        $target = (new SourceBinding($operation, $into->table))->writeTarget($names);
+        $target = (new InsertTargetBinding())->lower($operation, $into);
         $expression = new ExpressionLowering();
         $empty = new SourceBinding($operation, null);
         $rows = [];
@@ -54,5 +50,20 @@ final class InsertLowering
         }
 
         return new Insert($target, $rows, $profile->grammar);
+    }
+
+    /**
+     * Publishes the query write after resolving its independent input and writable targets.
+     */
+    public function lowerQuery(BoundStatement $operation, ParsedQueryInsert $statement): InsertQuery
+    {
+        $source = $statement->source;
+        Check::input($source instanceof Select, 'The INSERT query requires a simple SELECT.');
+        $into = $statement->into;
+        Check::input(!$into->replace && !$into->ignore && $into->priority === null
+            && $statement->onDuplicate === [], 'A query INSERT requires an ordinary write without conflict modifiers.');
+        $query = (new SelectLowering())->lower($operation, $source);
+
+        return new InsertQuery((new InsertTargetBinding())->lower($operation, $into), $query);
     }
 }

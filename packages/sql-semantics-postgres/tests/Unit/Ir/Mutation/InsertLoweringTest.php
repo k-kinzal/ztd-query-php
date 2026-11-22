@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedInsertQuery;
 use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(InsertLowering::class)]
@@ -27,5 +28,17 @@ final class InsertLoweringTest extends TestCase
         self::assertSame('id', $value->target->columns[1]->value);
         self::assertNull($value->rows[0]->values[0]->value);
         self::assertSame('-2', $value->rows[0]->values[1]->value?->decimal);
+    }
+
+    public function testLowerQueryRetainsTheInputProjection(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE app.events (id INT, amount INT)');
+        $operation = $inspection->inspect('INSERT INTO app.events (amount, id) SELECT 7 AS value, 5 AS id', [$declaration]);
+        self::assertInstanceOf(ParsedInsertQuery::class, $operation->statement);
+
+        $query = (new InsertLowering())->lowerQuery($operation->binding(), $operation->statement);
+        self::assertSame('amount', $query->target->columns[0]->value);
+        self::assertSame('value', $query->query->columns[0]->name->value);
     }
 }

@@ -155,6 +155,10 @@ def inventory(root):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v4.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
+        for alternative in sorted(signatures):
+            if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
+                    or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):
+                related[alternative] = (*related.get(alternative, ()), "server-insert-query-v2.json")
         grouped_signatures = {
             "opt_group_clause: GROUP_SYM BY group_list olap_opt",
             "opt_group_clause: GROUP_SYM BY group_list",

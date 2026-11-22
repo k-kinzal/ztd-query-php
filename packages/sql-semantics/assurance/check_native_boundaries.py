@@ -40,6 +40,10 @@ def faults(engine):
               "$resolution->relation === $this->input,", "true,"),
         Fault("ignore-derived-profile", "Select::__construct",
               "!$input instanceof DerivedSource || $input->definition->release === $release,", "true,"),
+        Fault("ignore-query-insert-width", "Mutation/InsertQuery::__construct",
+              "count($query->columns) === $width,", "true,"),
+        Fault("allow-foreign-query-insert-field", "Mutation/InsertQuery::__construct",
+              "$value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,", "true,"),
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct", "isset($target->columns[$slot]),", "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
@@ -134,7 +138,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v12.json", "sqlite-grouped-boundaries-v2.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
+                       "native-boundaries-v12.json", "native-insert-query-boundaries-v1.json", "sqlite-grouped-boundaries-v2.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

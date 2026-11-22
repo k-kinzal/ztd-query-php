@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Delete;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Update;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\UpdateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Compound;
@@ -44,6 +45,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\Splitter;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDelete;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows as ParsedInsert;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedInsertQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update as ParsedUpdate;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery as ParsedParenthesized;
@@ -131,7 +133,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|Select|Transaction|Update
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -145,6 +147,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop => (new DropTableLowering())->lower($operation, $statement),
+            $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
             $statement instanceof ParsedBegin, $statement instanceof ParsedCommit, $statement instanceof ParsedRollback, $statement instanceof ParsedSavepointCommand => (new TransactionLowering())->lower($operation),
@@ -157,7 +160,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update>
+     * @return list<Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|Select|Transaction|Update>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

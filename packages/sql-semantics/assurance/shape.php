@@ -252,6 +252,10 @@ if ($dialect !== 'sqlite') {
     $properties['Mutation\\Insert'] = [
         'target' => ['TableSource'], 'rows' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
     ];
+    $roots[] = 'Mutation\\InsertQuery';
+    $properties['Mutation\\InsertQuery'] = ['target' => ['TableSource'], 'query' => ['Select']];
+    $methods['Mutation\\InsertQuery'] = $methods['Select'];
+    $internal[] = 'Mutation\\InsertTargetBinding';
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\InsertRow'] = ['values' => ['array']];
     $properties['Mutation\\InsertCell'] = ['value' => ['?IntegerLiteral']];
@@ -420,6 +424,9 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\'
+        . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
+        . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lowerQuery($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
         . $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),'

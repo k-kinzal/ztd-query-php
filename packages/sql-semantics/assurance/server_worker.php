@@ -402,6 +402,22 @@ function observeUpdate(string $namespace, object $value, string $dialect): array
     ];
 }
 
+function constructInsertQuery(string $platform, array $input): SemanticsIR
+{
+    $type = $platform . 'Ir\\Mutation\\InsertQuery';
+
+    return new $type(constructSource($platform, $input['target'], $input['dialect']), constructSelect($platform, $input['insertQuery']));
+}
+
+function observeInsertQuery(string $namespace, object $value, string $dialect): array
+{
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'target' => observeSource($value->target, $dialect, $namespace),
+        'insertQuery' => observeSetQuery($namespace, $value->query, $dialect),
+    ];
+}
+
 function constructInsert(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -485,6 +501,7 @@ function observeStatement(array $input): array
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
+            isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
             isset($input['target'], $input['rows']) => constructInsert($platform, $input),
             isset($input['target']) => constructDelete($platform, $input),
             default => constructSelect($platform, $input),
@@ -541,6 +558,9 @@ function observeStatement(array $input): array
     }
     if ($value::class === $namespace . 'Mutation\\Update') {
         return observeUpdate($namespace, $value, $input['dialect']);
+    }
+    if ($value::class === $namespace . 'Mutation\\InsertQuery') {
+        return observeInsertQuery($namespace, $value, $input['dialect']);
     }
     if ($value::class === $namespace . 'Mutation\\Insert') {
         return observeInsert($namespace, $value, $input['dialect']);
