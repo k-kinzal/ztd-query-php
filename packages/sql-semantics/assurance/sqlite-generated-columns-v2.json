@@ -1,0 +1,137 @@
+{
+  "revision": "SemanticsIR/sqlite-generated-columns-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with ordinary and STRICT declarations and builtin scalar evaluation.",
+  "scope": "Resolved SQLite generated columns, their storage mode, checked expression, dependency order and effects on writes.",
+  "constructors": {
+    "Schema/Generation/ColumnGeneration": {
+      "role": "The expression and native storage of a generated column.",
+      "structure": "One storage mode and a closed checked scalar graph over declaration slots.",
+      "conditions": "Forbid live markers. Retain registrations from discarded empty membership. Check all column sources against the owning declaration. The parent table checks the complete dependency graph and primary key roles.",
+      "meaning": "Evaluate the resolved expression with SQLite affinity and the mode the column declares. VIRTUAL computes on read. STORED computes when the row changes. The generated field participates in constraints but is outside the explicit write targets.",
+      "externalInterpretation": "Use the proven owning column layout, the native affinity and collation rules, and the pinned SQLite language profile.",
+      "sql": "Render the resolved expression within GENERATED ALWAYS AS and emit the selected VIRTUAL or STORED token.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Schema/Generation/Storage": {
+      "role": "The native mode for a generated column.",
+      "structure": "VIRTUAL or STORED. The omitted SQL mode maps to VIRTUAL before publication.",
+      "conditions": "Use only the admitted native enum cases.",
+      "meaning": "Record whether SQLite computes the value on read or stores it when the row is written.",
+      "externalInterpretation": "Use the fixed physical declaration rules and catalog role of SQLite 3.47.2.",
+      "sql": "Emit the explicit selected keyword after the generation expression.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "ColumnReference",
+    "Arithmetic",
+    "Predicate/FoldedMembership"
+  ],
+  "conditions": [
+    "Each generated declaration has exactly one mode and computation. A generated column cannot specify DEFAULT or belong to a PRIMARY KEY.",
+    "The table has at least one ordinary column. A generated expression cannot read a pseudo-slot. A declared integer primary-key alias may be read by its own resolved column slot.",
+    "All declaration slots exist. Reject cycles in the generated-to-generated dependency graph before publishing the table. Forward references and multiple generated parents are allowed.",
+    "One structural envelope charges scalar height and expanded node count for the full declaration, including generated fields."
+  ],
+  "observations": [
+    "Compare generated column metadata and storage kind with native table_xinfo, result names, typed data and NULL. Preserve values across insertion and update through ordinary columns.",
+    "Separate explicit write rejection from effects of constraints on generated values. Compare what native schema rename and dependent column removal do.",
+    "Preserve registered marker slots and spellings when SQLite discards an operand of empty membership before evaluating the generated expression."
+  ],
+  "finite": {
+    "storage": [
+      "VIRTUAL",
+      "STORED"
+    ],
+    "strict": [
+      false,
+      true
+    ],
+    "dependencies": [
+      "single",
+      "linear",
+      "forward",
+      "multiple"
+    ],
+    "expressions": [
+      "reference",
+      "sum",
+      "difference"
+    ],
+    "affinity": [
+      "INTEGER",
+      "TEXT"
+    ],
+    "identity": "Independently identify the full 96-case product through the actual value graph and execute every case against SQLite."
+  },
+  "exploration": {
+    "seeds": [
+      41819,
+      49891,
+      69031
+    ],
+    "casesPerSeed": 36,
+    "timeoutSeconds": 230,
+    "allowedExclusions": [],
+    "structure": "Generate dependency DAGs, vary declaration order separately from the topological order, and vary reference occurrences, modes, inputs and output affinities. Include dependent updates and storage metadata."
+  },
+  "negative": [
+    "A self reference",
+    "A cycle across multiple generated columns",
+    "A table without an ordinary column",
+    "A generated declaration with a DEFAULT",
+    "A generated primary-key member",
+    "A reference outside the declared slots",
+    "A live marker in a generation expression",
+    "An analyzed generated reference to the hidden rowid"
+  ],
+  "faults": [
+    "Replace STORED with VIRTUAL",
+    "Read a different ordinary slot",
+    "Lose a generated dependency",
+    "Treat a generated declaration as an ordinary column"
+  ],
+  "open": [
+    "Generated expressions requiring unavailable scalar roles, other ALTER TABLE effects, additional SQLite release profiles and schema functions outside the closed value contract."
+  ],
+  "trust": [
+    "Native generated-column and affinity rules",
+    "Independent generated-value evaluator and native catalog observation",
+    "Checked PHP shape and dependency graph"
+  ],
+  "sources": [
+    "https://sqlite.org/gencol.html",
+    "https://sqlite.org/datatype3.html",
+    "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip"
+  ]
+}
