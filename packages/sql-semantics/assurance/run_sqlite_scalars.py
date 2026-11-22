@@ -420,9 +420,12 @@ def check_faults(args, db, runner=check_render_faults):
     real = "sql-semantics-sqlite/src/Ir/Literal/RealLiteral.php"
     hex_integer = "sql-semantics-sqlite/src/Ir/Literal/HexIntegerLiteral.php"
     text = "sql-semantics-sqlite/src/Ir/Literal/TextLiteral.php"
+    grouped = ("$expression instanceof HexIntegerLiteral, $expression instanceof RealLiteral, $expression instanceof TextLiteral"
+               "\n                => $expression->toString(),")
+    changed = ("$expression instanceof HexIntegerLiteral, $expression instanceof RealLiteral => $expression->toString(),"
+               "\n            $expression instanceof TextLiteral => 'CAST(' . $expression->toString() . ' AS BLOB)',")
     cases = [
-        ("text-to-blob", renderer, "$expression instanceof TextLiteral => $expression->toString(),",
-         "$expression instanceof TextLiteral => 'CAST(' . $expression->toString() . ' AS BLOB)',", ["text", "it's"]),
+        ("text-to-blob", renderer, grouped, changed, ["text", "it's"]),
         ("add-nul-text-affinity", text, '"(+CAST(X\'"', '"(CAST(X\'"', ["comparison", "<", ["text", "1\0"], ["integer", "2"]]),
         ("drop-real-sign", real, "($this->negative ? '-' : '') . $this->whole", "$this->whole", ["real", "0", "0", None, True]),
         ("drop-hex-sign", hex_integer, "($this->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
