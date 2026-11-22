@@ -11,6 +11,7 @@ from pathlib import Path
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, digest, manifest, require, shape, write_json
+from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
 
 def observe_rejection(test, expected):
@@ -172,6 +173,50 @@ def storage_controls(args):
     return results
 
 
+def quote_path(path):
+    return "'" + path.as_posix().replace("'", "''") + "'"
+
+
+def observer_controls(args):
+    directory = args.out / "sqlite-observer"
+    directory.mkdir()
+    database = Database(args.sqlite_library)
+    result = []
+    select = "SELECT value FROM fixture"
+    attach = directory / "attached.sqlite"
+    copy = directory / "copied.sqlite"
+    cases = (
+        ("attach-file", f"ATTACH DATABASE {quote_path(attach)} AS external", 24, attach),
+        ("vacuum-into-file", f"VACUUM INTO {quote_path(copy)}", 24, copy),
+        ("unregistered-pragma", "PRAGMA writable_schema=ON", 19, None),
+        ("unregistered-function", "SELECT abs(value) FROM fixture", 31, None),
+    )
+    try:
+        database.execute("CREATE TABLE fixture (value); INSERT INTO fixture VALUES (7)")
+        healthy = database.observe(select, {})
+        require(healthy["rows"] == [[["integer", "7"]]], "sqlite-observer-positive-control-failed", healthy)
+        result.append({"case": "ordinary-select", "sql": select, "observation": healthy, "control": "passed"})
+        for case, sql, action, path in cases:
+            try:
+                database.observe(sql, {}, capture_evaluation_error=True)
+            except ObserverAuthorizationError as denial:
+                require(denial.action == action, "sqlite-observer-wrong-denial", str(denial))
+                result.append({
+                    "case": case, "sql": sql, "expectedAction": action, "action": denial.action,
+                    "arguments": denial.arguments, "control": "passed",
+                })
+            else:
+                raise Failure("sqlite-observer-accepted-forbidden-action", case)
+            require(path is None or not path.exists(), "sqlite-observer-created-file", case)
+            require(database.observe(select, {}) == healthy, "sqlite-observer-fixture-changed", case)
+        require({record["case"] for record in result} == observer_policy()["controls"].keys(),
+                "sqlite-observer-control-set-mismatch")
+        write_json(directory / "index.json", {"policy": OBSERVER_CONTRACT, "engine": database.version, "controls": result})
+        return result
+    finally:
+        database.close(database.db)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("root", "candidate", "tool-autoload", "sqlite-library", "out"):
@@ -182,7 +227,8 @@ def main():
     require(args.candidate != args.out and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
-    result = evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args) + storage_controls(args)
+    result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
+              + storage_controls(args) + observer_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

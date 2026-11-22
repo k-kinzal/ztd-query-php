@@ -8,7 +8,7 @@ import time
 
 from sqlite_relational_mutations import check as check_mutations
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
-from sqlite_engine import Database
+from sqlite_engine import OBSERVER_CONTRACT, Database
 from sqlite_relational_cases import (
     DECLARATIONS, EMPTY, LEFT, RIGHT, SCHEMA, case, children, expected,
     explore, finite_cases, finite_id, finite_ids, ordered, untyped,
@@ -216,7 +216,7 @@ def main():
         "status": "provisional-sqlite-relational-domain", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "contract": CONTRACT, "distribution": digest(args.out / "distribution.json"),
         "isolation": "none" if args.local else IMAGE,
-        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},
+        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": OBSERVER_CONTRACT},
         "toolDigests": {p.name: digest(p) for p in TOOL.iterdir() if p.suffix in (".py", ".php", ".json")},
         "shape": scope, "checks": results, "mutations": mutations,
         "sources": ["events.jsonl", "distribution.json", "relational-faults/"],

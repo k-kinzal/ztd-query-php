@@ -15,12 +15,13 @@ import run_sqlite_local_source as local
 import run_sqlite_relational as relational
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
+import run_sqlite_transaction as transaction
 import run_sqlite_update as update
 import run_sqlite_values as values
 from cases import SCHEMA
 from evidence_transcript import Transcript, canonical, require_reproduced
 from run import TOOL, require
-from sqlite_engine import Database
+from sqlite_engine import OBSERVER_CONTRACT, Database
 
 DOMAINS = {
     "sqlite-relational-v1.json": (relational, relational.SCHEMA),
@@ -34,6 +35,7 @@ DOMAINS = {
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
+    "sqlite-transaction-v1.json": (transaction, transaction.FIXTURE),
 }
 
 
@@ -51,6 +53,7 @@ def replay(directory, contract_name, index, library):
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]
                 and database.digest == index["engine"]["libraryDigest"], "evidence-replay-engine-mismatch", contract_name)
+        require(index["engine"].get("observerPolicy") == OBSERVER_CONTRACT, "evidence-observer-policy-mismatch", contract_name)
         module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
         if fixture:
             database.execute(fixture)

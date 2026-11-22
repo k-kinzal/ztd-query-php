@@ -40,6 +40,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\SavepointName;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionCommand;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
@@ -187,7 +190,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
+function analyzed(array $input): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
 {
     $semantics = new Semantics();
     $tables = [];
@@ -308,6 +311,13 @@ function observeCreateTable(CreateTable $value): array
     ];
 }
 
+function directTransaction(array $input): Transaction
+{
+    $name = isset($input['nameHex']) ? hex2bin($input['nameHex']) : ($input['name'] ?? null);
+
+    return new Transaction(TransactionCommand::from($input['command']), $name === null ? null : new SavepointName($name));
+}
+
 function runCase(array $input): array
 {
     try {
@@ -319,6 +329,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
+            ($input['operation'] ?? null) === 'transaction' => directTransaction($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
@@ -353,6 +364,16 @@ function runCase(array $input): array
     }
     if ($value instanceof CreateTable) {
         return observeCreateTable($value);
+    }
+    if ($value instanceof Transaction) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'transaction',
+            'profile' => $value->profileId(),
+            'command' => $value->command->value,
+            'name' => $value->name?->value,
+            'sql' => $value->toString(),
+        ];
     }
     if ($value instanceof ValuesQuery) {
         return observeValues($value);

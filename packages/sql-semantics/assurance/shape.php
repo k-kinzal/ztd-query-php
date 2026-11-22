@@ -144,6 +144,19 @@ if ($dialect === 'sqlite') {
     }
     array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropTableLowering', 'Schema\\CreateTableLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
+    $roots[] = 'Transaction\\Transaction';
+    $internal[] = 'Transaction\\TransactionLowering';
+    $properties['Transaction\\Transaction'] = ['command' => ['Transaction\\TransactionCommand'], 'name' => ['?Transaction\\SavepointName']];
+    $properties['Transaction\\SavepointName'] = ['value' => ['string']];
+    $properties['Transaction\\TransactionCommand'] = [];
+    $methods['Transaction\\Transaction'] = $methods['Select'];
+    $methods['Transaction\\SavepointName'] = ['__construct', 'quoted'];
+    $methods['Transaction\\TransactionCommand'] = [];
+    $enumCases['Transaction\\TransactionCommand'] = [
+        'BeginDeferred' => 'BEGIN DEFERRED', 'BeginImmediate' => 'BEGIN IMMEDIATE', 'BeginExclusive' => 'BEGIN EXCLUSIVE',
+        'Commit' => 'COMMIT', 'Rollback' => 'ROLLBACK', 'Savepoint' => 'SAVEPOINT', 'Release' => 'RELEASE SAVEPOINT',
+        'RollbackTo' => 'ROLLBACK TO SAVEPOINT',
+    ];
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
@@ -199,7 +212,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
-            . 'default => throw new \\' . $platform . "\\Model\\Diagnostic\\InvalidConstruction('This SQLite statement has no complete IR representation.'), };";
+            . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
     $routes = [
@@ -261,13 +274,18 @@ try {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open IR collaborator $short");
             $interfaces = array_map(static fn ($interface) => $interface->toString(), $class->implements);
             requireShape($interfaces === [], "Unexpected collaborator interface in $short");
-            if ($short === 'SelectLowering') {
+            $loweringRole = match ($short) {
+                'SelectLowering' => 'Select',
+                'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
+                default => null,
+            };
+            if ($loweringRole !== null) {
                 $publicMethods = array_values(array_map(
                     static fn ($method) => $method->name->toString(),
                     array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
                 ));
-                requireShape($publicMethods === ['lower'], 'Unexpected projection lowering entry point');
-                requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . 'Select', 'Projection lowering return role differs');
+                requireShape($publicMethods === ['lower'], "Unexpected lowering entry point in $short");
+                requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
             }
         }
         if (in_array($short, $internal, true) && !in_array($short, $pureCollaborators, true)) {

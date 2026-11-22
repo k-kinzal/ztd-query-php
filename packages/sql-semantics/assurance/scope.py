@@ -18,6 +18,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\CreateTable",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Transaction\\Transaction",
 }
 
 
@@ -35,6 +36,7 @@ CONTRACTS = {
     "sqlite-update-v1.json": "71d081d6b35c5b38855b343617660ebb07e49f5aeb5775c6feed047208478f1d",
     "sqlite-drop-table-v1.json": "622ae8a9601acc4c63f10e7151891dc6289062c9c3393ec78e6c6eb1a1fff0c2",
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
+    "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
 PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
@@ -136,7 +138,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, and one ordinary local VALUES source",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, one ordinary local VALUES source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

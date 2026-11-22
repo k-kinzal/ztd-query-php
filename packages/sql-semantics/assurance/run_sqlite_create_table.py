@@ -95,7 +95,7 @@ def observe(db, request, sql):
                 raise
             error, statement = "table-already-exists", None
         schema = request["schema"]
-        columns = db.observe(f"PRAGMA {schema}.table_xinfo({quoted(table)})", {}, preserve_order=True)["rows"]
+        columns = db.metadata("table_xinfo", schema=schema, table=table)
         writes = None
         if table != EXISTING and columns:
             width = len(request["columns"])

@@ -26,6 +26,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
@@ -157,7 +159,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable
+    public function analyze(string $sql, array|Context|null $context = null): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
     {
         $operation = $this->inspect($sql, $context);
         $statement = $operation->statement;
@@ -171,7 +173,7 @@ final class Semantics implements Analyzer
             $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
             $statement instanceof Drop => (new DropTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
-            default => throw new InvalidConstruction('This SQLite statement has no complete IR representation.'),
+            default => (new TransactionLowering())->lower($statement),
         };
     }
 
@@ -232,7 +234,7 @@ final class Semantics implements Analyzer
      * No statement is executed for the ones after it.
      *
      * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable>
+     * @return list<Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

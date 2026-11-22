@@ -167,7 +167,7 @@ def negatives():
 
 def execute(args, specification, db, worker_factory=Worker):
     settings = specification["exploration"]
-    enabled = db.observe("PRAGMA foreign_keys", {})["rows"]
+    enabled = db.metadata("foreign_keys")
     require(enabled == [[["integer", "1"]]], "drop-table-foreign-key-mode-mismatch", enabled)
     items = [(f"finite/{index}", item) for index, item in enumerate(finite_cases())]
     items.extend((f"seed/{seed}/{index}", item) for seed in settings["seeds"]

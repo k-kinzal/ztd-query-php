@@ -18,7 +18,7 @@ from cases import (
 from grammar_scope import inventory as grammar_inventory
 from runtime_distribution import IDENTITY_CONTRACT, PACKAGE_FILES, checked_bytes, checked_commit, checked_paths
 from scope import public_scope
-from sqlite_engine import Database
+from sqlite_engine import OBSERVER_CONTRACT, Database
 
 TOOL = Path(__file__).resolve().parent
 CONTRACT_DIGEST = "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849"
@@ -480,8 +480,9 @@ def main():
         "grammarScope": {"record": grammar_path.name, "sha256": digest(grammar_path),
                          "totalAlternatives": grammar_scope["totalAlternatives"], "emptyAlternatives": grammar_scope["emptyAlternatives"]},
         "engine": {
+            "observerPolicy": OBSERVER_CONTRACT,
             "version": db.version, "source": db.source, "libraryDigest": db.digest,
-            "compileOptions": db.observe("PRAGMA compile_options", {})["rows"],
+            "compileOptions": db.metadata("compile_options"),
         },
         "candidateIsolation": {"mode": "none"} if args.local else {
             "mode": "container", "image": IMAGE, "network": "none",

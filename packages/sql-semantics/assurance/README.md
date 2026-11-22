@@ -28,7 +28,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run.py \
   --out "$evidence"
 ```
 
-The host owns the case generation, comparator, SQLite database, and evidence path. The candidate worker mounts the verified source and resource trees read-only. It has no network, no added capabilities, and memory and process limits. The static inventory reads PHP as data. It does not use the candidate's Composer autoloader. `--local` disables worker isolation for debugging. The evidence records the actual isolation mode.
+The host owns the case generation, comparator, SQLite database, and evidence path. The candidate worker mounts the verified source and resource trees read-only. It has no network, no added capabilities, and memory and process limits. The [SQLite observer policy](sqlite-observer-v1.json) permits the registered fixture operations during preparation and evaluation. Authorization failures abort the observation. Separate controls check that a healthy query succeeds and that database attachment, file output, an unregistered PRAGMA and an unregistered function are denied. The static inventory reads PHP as data without loading the candidate's Composer autoloader. `--local` disables worker isolation for debugging. The evidence records the actual isolation mode.
 
 Use `--verify-distribution "$evidence/distribution.json"` with the same arguments to compare a checkout with the captured files. The manifest covers source, resources and locked dependencies of the four Semantics packages and SQL Parser. These files must match the paths and blobs in the candidate commit before and after observation collection. An archive that omits locked files must restore them from the candidate commit first. It does not pin the contents of a downstream Composer installation. Use the library and tool digests recorded in the evidence when comparing runs.
 
@@ -274,3 +274,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_co
 ```
 
 The runner checks SELECT and VALUES operands, all four operations, and mixed chains. The independent evaluator reduces typed rows in lexical order and checks ordinal sorting, row bounds, parameter labels and the names of the first arm. The exact 500-arm boundary and placement errors exercise the composition checks. Additional analyzed inputs compare collated and numerically equivalent rows with the original native execution. Faults change duplicate handling, operand order, and the outer ordering clause.
+
+## SQLite transaction state
+
+Run the [transaction contract](sqlite-transaction-v1.json) with the pinned SQLite library.
+
+```sh
+transaction_evidence=$(mktemp -d)/transaction-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_transaction.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$transaction_evidence"
+```
+
+The reference state machine tracks fixture rows, the outer transaction and the ordered savepoint stack. The native observer reads autocommit, rows, metadata and state-dependent errors after every operation in the fixture. A separate two-connection fixture observes the three BEGIN modes under DELETE journaling. A savepoint lookup is a named action on the connection's state at execution, so no declaration context or savepoint object is retained.

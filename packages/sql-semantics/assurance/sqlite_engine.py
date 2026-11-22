@@ -2,7 +2,25 @@
 
 import ctypes as c
 import hashlib
+import json
 from pathlib import Path
+
+OBSERVER_CONTRACT = "a3c8c144a57d14e01005bc7853ee084dff06ebed03bc4ebe69b2413c7eeb9250"
+AUTHORIZER = c.CFUNCTYPE(c.c_int, c.c_void_p, c.c_int, *([c.c_char_p] * 4))
+
+
+def observer_policy():
+    data = Path(__file__).with_name("sqlite-observer-v1.json").read_bytes()
+    if hashlib.sha256(data).hexdigest() != OBSERVER_CONTRACT:
+        raise ValueError("SQLite observer policy differs from its recorded revision")
+    return json.loads(data)
+
+
+class ObserverAuthorizationError(RuntimeError):
+    def __init__(self, action, arguments):
+        self.action = action
+        self.arguments = arguments
+        super().__init__(f"SQLite observer denied action {action}: {arguments}")
 
 
 def typed(value):
@@ -20,8 +38,10 @@ def typed(value):
 
 
 class Database:
-    def __init__(self, library):
+    def __init__(self, library, filename=b":memory:"):
+        self.library = library
         self.lib = c.CDLL(str(library))
+        self.allowed_actions = frozenset(observer_policy()["allowedActions"].values())
         self.digest = hashlib.sha256(Path(library).read_bytes()).hexdigest()
         p, i, s, q, f = c.c_void_p, c.c_int, c.c_char_p, c.c_int64, c.c_double
         for name, result, args in [
@@ -38,14 +58,26 @@ class Database:
             ("column_double", f, [p, i]), ("column_text", p, [p, i]),
             ("column_blob", p, [p, i]), ("column_bytes", i, [p, i]),
             ("stmt_readonly", i, [p]), ("total_changes", i, [p]), ("changes", i, [p]),
+            ("get_autocommit", i, [p]),
+            ("set_authorizer", i, [p, p, p]),
         ]:
             function = getattr(self.lib, "sqlite3_" + name)
             function.argtypes, function.restype = args, result
             setattr(self, name, function)
         self.db = p()
-        self.check(self.open(b":memory:", c.byref(self.db)))
+        self.check(self.open(filename, c.byref(self.db)))
         self.version = self.libversion().decode()
         self.source = self.sourceid().decode()
+        self.authorizer = AUTHORIZER(self.authorize)
+        self.denied = None
+
+    def authorize(self, _, action, first, second, schema, origin):
+        if action in self.allowed_actions and schema in (None, b"main", b"temp"):
+            return 0
+        if self.denied is None:
+            self.denied = (action, [value.decode(errors="replace") if value is not None else None
+                                    for value in (first, second, schema, origin)])
+        return 1
 
     def check(self, code, expected=0):
         if code != expected:
@@ -71,6 +103,26 @@ class Database:
         raise RuntimeError(f"Unknown SQLite storage class {storage}")
 
     def observe(self, sql, bindings, preserve_order=False, capture_evaluation_error=False):
+        self.denied = None
+        self.check(self.set_authorizer(self.db, self.authorizer, None))
+        try:
+            return self._observe(sql, bindings, preserve_order, capture_evaluation_error)
+        finally:
+            self.check(self.set_authorizer(self.db, None, None))
+            if self.denied is not None:
+                raise ObserverAuthorizationError(*self.denied)
+
+    def metadata(self, name, *, schema=None, table=None):
+        if name == "table_xinfo" and schema in ("main", "temp") and table is not None:
+            identifier = table.replace('"', '""')
+            sql = f'PRAGMA {schema}.table_xinfo("{identifier}")'
+        elif name in ("compile_options", "foreign_keys", "journal_mode") and schema is None and table is None:
+            sql = f"PRAGMA {name}"
+        else:
+            raise ValueError("Unknown SQLite fixture metadata query")
+        return self._observe(sql, {}, preserve_order=name == "table_xinfo")["rows"]
+
+    def _observe(self, sql, bindings, preserve_order=False, capture_evaluation_error=False):
         stmt, tail = c.c_void_p(), c.c_char_p()
         encoded = sql.encode()
         self.check(self.prepare_v2(self.db, encoded, len(encoded) + 1, c.byref(stmt), c.byref(tail)))

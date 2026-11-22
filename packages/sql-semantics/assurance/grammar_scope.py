@@ -28,6 +28,12 @@ RELATED_SQLITE_DOMAINS = {
     "cmd: with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret": ("sqlite-update-v1.json",),
     "cmd: DROP TABLE ifexists fullname": ("sqlite-drop-table-v1.json",),
     "cmd: create_table create_table_args": ("sqlite-create-table-v1.json",),
+    "cmd: BEGIN transtype trans_opt": ("sqlite-transaction-v1.json",),
+    "cmd: COMMIT|END trans_opt": ("sqlite-transaction-v1.json",),
+    "cmd: ROLLBACK trans_opt": ("sqlite-transaction-v1.json",),
+    "cmd: SAVEPOINT nm": ("sqlite-transaction-v1.json",),
+    "cmd: RELEASE savepoint_opt nm": ("sqlite-transaction-v1.json",),
+    "cmd: ROLLBACK trans_opt TO savepoint_opt nm": ("sqlite-transaction-v1.json",),
 }
 
 
