@@ -3,11 +3,13 @@
 import argparse
 import json
 from pathlib import Path
+import re
 
 from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
 from grammar_scope import inventory as grammar_inventory
-from native_schedule import NATIVE, reports as native_reports
+from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
+from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
@@ -102,6 +104,61 @@ class Evidence:
                                  "rejected": receipt["rejected"], "faults": receipt["faults"]}
         return {"replay": origin, "domains": domains}
 
+    def native_launch(self):
+        index = self.root / "native-launch/index.json"
+        if not index.is_file():
+            return None
+        path, origin, report = self.record(index)
+        workflow = self.tool_root.parents[2] / ".github/workflows/semantics-ir-release-matrix.yml"
+        series = self.tool_root / "server-recursive-series-v2.json"
+        fixtures = release_fixtures(workflow, self.tool_root / "server-projection-v1.json")
+        profiles = {f"{engine}-{release}": (engine, release) for engine, release in fixtures}
+        require(report["distribution"] == self.distribution
+                and report["workflowDigest"] == digest(workflow)
+                and report["recursiveContractDigest"] == CONTRACTS[series.name] == digest(series)
+                and report["launcherDigest"] == self.tools["run_native_matrix.py"],
+                "bundle-native-launch-identity", origin)
+        self.checked(path.parent / "distribution.json", self.distribution)
+        omitted = sorted(profiles.keys() - report["releases"].keys())
+        require(not report["releases"].keys() - profiles.keys() and report["omittedProfiles"] == omitted,
+                "bundle-native-launch-profile-set", origin)
+        contract = json.loads(series.read_text())
+        failed = []
+        for key, record in sorted(report["releases"].items()):
+            profile = profiles[key]
+            require(record["file"] == f"{key}/index.json", "bundle-native-launch-location", key)
+            source, _ = self.checked(path.parent / record["file"], record["sha256"])
+            result = json.loads(source.read_text())
+            planned = [(domain, runner) for domain, runner, _ in release_jobs(profile, contract)]
+            executed = [(entry["domain"], entry["runner"]) for entry in result["executions"]]
+            require(result["fixture"] == fixtures[profile] and result["planned"] == [domain for domain, _ in planned]
+                    and executed == planned[:len(executed)]
+                    and result["setupTimeoutSeconds"] == FIXTURE_STARTUP_SECONDS
+                    and result["runnerTimeoutSeconds"] == RUNNER_SECONDS,
+                    "bundle-native-launch-schedule", key)
+            success = (result["failure"] is None and "cleanupFailure" not in result and executed == planned
+                       and all(entry["outcome"] == "exited" and entry["exitCode"] == 0 for entry in result["executions"]))
+            require(result["status"] == record["status"] == ("observed" if success else "incomplete"),
+                    "bundle-native-launch-release-status", key)
+            if success:
+                require(re.fullmatch(r"sha256:[a-f0-9]{64}", result["imageIdentity"])
+                        and result["architecture"] in {"amd64", "arm64"}
+                        and 0 <= result["startupSeconds"] <= FIXTURE_STARTUP_SECONDS + 120,
+                        "bundle-native-launch-fixture-identity", key)
+            else:
+                failed.append(key)
+            for entry in result["executions"]:
+                require(entry["runnerDigest"] == self.tools[entry["runner"]]
+                        and entry["log"] == f"{entry['domain']}.log"
+                        and (entry["outcome"] == "exited" and type(entry["exitCode"]) is int
+                             or entry["outcome"] == "timeout" and entry["exitCode"] is None),
+                        "bundle-native-launch-execution", entry)
+                self.checked(source.parent / entry["log"], entry["logDigest"])
+        expected = "incomplete" if failed else "observed-subset" if omitted else "observed-matrix"
+        require(report["failed"] == failed and report["status"] == expected, "bundle-native-launch-balance", origin)
+        self.missing.extend(f"native-launch/{key}" for key in [*failed, *omitted])
+        return origin
+
     def native_collection(self):
         item = self.optional("native-replay/index.json")
         if item is None:
@@ -140,11 +197,7 @@ class Evidence:
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
-            single_engine = {"postgres_int4": "postgres", "postgres_int4_case": "postgres",
-                             "postgres_int4_range": "postgres",
-                             "postgres_delete_returning": "postgres", "postgres_update_returning": "postgres",
-                             "postgres_insert_returning": "postgres",
-                             "mysql_signed_quotient": "mysql"}.get(domain)
+            single_engine = SINGLE_ENGINE.get(domain)
             if single_engine:
                 registered = {single_engine: registered[single_engine]}
             unavailable = {}
@@ -280,6 +333,7 @@ def main():
     require(set(faults) == {f"F{number:02}" for number in range(1, 13)}, "bundle-missing-required-fault")
     profiles = json.loads((tools / "server-projection-v1.json").read_text())["profiles"]
     native_collection = evidence.native_collection()
+    native_launch = evidence.native_launch()
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
@@ -297,6 +351,7 @@ def main():
         "inventory": inventory, "scope": scope, "grammar": grammar, "initial": original,
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
         "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
+        "nativeLaunch": native_launch,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,

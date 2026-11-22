@@ -71,6 +71,17 @@ The [folded SQLite binding record](sqlite-folded-binding-sources-v1.json) ties t
 
 ### Compare assurance revisions
 
+To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
+
+```sh
+python3 "$verifier/run_native_matrix.py" --candidate "$candidate" --candidate-sha "$candidate_sha" \
+  --tool-autoload "$tool_autoload" --evidence-root "$evidence"
+python3 "$verifier/collect_native_replays.py" --layout release --candidate "$candidate_sha" \
+  --candidate-root "$candidate" --evidence-root "$evidence"
+```
+
+Use `--profile postgres-16.6` to diagnose a single release in a fresh evidence directory. The bundle lists every omitted profile. The local launcher and the manual workflow produce provisional evidence for the same native replay checks.
+
 Select the previous verifier archive independently of the candidate. Pass its assurance directory to the indexer with `--previous-verifier` to include the change record in the review bundle. To compare the verifier revisions before running the database matrix, use the standalone comparator.
 
 ```sh

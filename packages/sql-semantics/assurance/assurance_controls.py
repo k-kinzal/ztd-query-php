@@ -12,6 +12,7 @@ from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
 from index_evidence import replay_grammar
+from run_native_matrix import RELEASE_ROW, release_fixtures
 from replay_sqlite_evidence import replay
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
@@ -327,6 +328,29 @@ def grammar_control(args):
             "original": digest(source), "mutated": digest(target), "expected": expected, "signal": failure.signal}
 
 
+def native_schedule_control(args):
+    workflow = TOOL.parents[2] / ".github/workflows/semantics-ir-release-matrix.yml"
+    profile_contract = TOOL / "server-projection-v1.json"
+    healthy = release_fixtures(workflow, profile_contract)
+    original = workflow.read_text()
+    fixture = next(match for match in RELEASE_ROW.finditer(original) if match.group(1, 2) == ("postgres", "16.6"))
+    modified = original[:fixture.start()] + original[fixture.end():]
+    folder = args.out / "omitted-native-launch-release"
+    folder.mkdir()
+    target = folder / workflow.name
+    target.write_text(modified)
+    fault = observe_rejection(lambda: release_fixtures(target, profile_contract), "native-launch-fixture-release-set")
+    require(fault.detail == [("postgres", "16.6")], "native-launch-control-wrong-profile", fault.detail)
+    write_json(folder / "healthy.json", list(healthy.values()))
+    (folder / "injected.diff").write_text("".join(difflib.unified_diff(
+        original.splitlines(keepends=True), modified.splitlines(keepends=True),
+        "before/" + workflow.name, "after/" + workflow.name,
+    )))
+    return {"case": folder.name, "control": "passed", "original": digest(workflow), "mutated": digest(target),
+            "signal": fault.signal, "omitted": fault.detail}
+
+
+
 def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
     before = folder / "previous" / "packages/sql-semantics/assurance"
@@ -375,7 +399,7 @@ def main():
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
-              + [declaration_control(args), assurance_revision_control(args), grammar_control(args)])
+              + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)])
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

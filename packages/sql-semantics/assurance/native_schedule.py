@@ -30,6 +30,17 @@ NATIVE = {
 }
 
 
+SINGLE_ENGINE = {
+    "postgres_int4": "postgres",
+    "postgres_int4_case": "postgres",
+    "postgres_int4_range": "postgres",
+    "postgres_delete_returning": "postgres",
+    "postgres_update_returning": "postgres",
+    "postgres_insert_returning": "postgres",
+    "mysql_signed_quotient": "mysql",
+}
+
+
 def reports(raw, layout, domain):
     if layout == "release":
         for engine in ("mysql", "postgres"):
