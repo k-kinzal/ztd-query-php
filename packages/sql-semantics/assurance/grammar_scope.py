@@ -108,6 +108,9 @@ def inventory(root):
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
             related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("delete_stmt", [])}
+            related.update({alternative: ("mysql-signed-quotient-v1.json",) for alternative in (
+                "bit_expr: bit_expr % bit_expr", "bit_expr: bit_expr DIV_SYM bit_expr", "bit_expr: bit_expr MOD_SYM bit_expr",
+            )})
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

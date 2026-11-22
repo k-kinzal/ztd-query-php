@@ -16,4 +16,6 @@ enum ArithmeticOperator: string
     case Add = '+';
     case Subtract = '-';
     case Multiply = '*';
+    case IntegerDivide = 'DIV';
+    case Remainder = '%';
 }

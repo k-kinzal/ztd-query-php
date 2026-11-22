@@ -99,7 +99,7 @@ def validate_width(result, dialect):
     return result
 
 
-def evaluate(operand, row, dialect):
+def evaluate(operand, row, dialect, release=None):
     tag = operand[0]
     if tag == "slot":
         return row[operand[1]]
@@ -110,7 +110,7 @@ def evaluate(operand, row, dialect):
     if tag == "null":
         return None
     assert tag == "operation"
-    left, right = [evaluate(child, row, dialect) for child in operand[2:]]
+    left, right = [evaluate(child, row, dialect, release) for child in operand[2:]]
     if left is None or right is None:
         return None
     if operand[1] == "+":
@@ -118,9 +118,23 @@ def evaluate(operand, row, dialect):
     if operand[1] == "-":
         return validate_width(left - right, dialect)
     if operand[1] == "*":
-        return validate_width(left * right, dialect)
-    assert dialect == "postgres"
+        product = validate_width(left * right, dialect)
+        minimum = -(2 ** 63)
+        if dialect == "mysql" and release and not release.startswith("mysql-5.") and product == minimum and min(left, right) != minimum:
+            raise OverflowError("MySQL signed product magnitude")
+        return product
     operator = operand[1]
+    if dialect == "mysql":
+        assert operator in ("DIV", "%")
+        if right == 0:
+            return None
+        absolute = abs(left) // abs(right)
+        signed = -absolute if (left < 0) != (right < 0) else absolute
+        if operator == "%":
+            return left - right * signed
+        if absolute > (2 ** 63 - 1):
+            raise OverflowError("MySQL signed quotient magnitude")
+        return signed
     if operator in ("/", "%"):
         magnitude = abs(left) // abs(right)
         quotient = -magnitude if (left < 0) != (right < 0) else magnitude
@@ -147,7 +161,7 @@ def expected(item):
                else {"slot": "LONG", "null": "NULL"})
     default = "int4" if dialect == "postgres" else "LONGLONG"
     try:
-        values = [[evaluate(expression, row, dialect) for expression, _ in fields] for row in rows]
+        values = [[evaluate(expression, row, dialect, item["release"]) for expression, _ in fields] for row in rows]
     except OverflowError:
         return {"status": "db-error", "state": "22003"}
     except ZeroDivisionError:

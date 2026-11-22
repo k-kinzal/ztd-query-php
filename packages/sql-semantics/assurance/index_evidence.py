@@ -13,6 +13,7 @@ from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as R
 NATIVE = {
     "projection": "server-projection-v1.json",
     "postgres_int4": "postgres-int4-operators-v1.json",
+    "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v1.json",
     "result": "server-result-v1.json",
@@ -131,8 +132,9 @@ class Evidence:
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
-            if domain == "postgres_int4":
-                registered = {"postgres": registered["postgres"]}
+            single_engine = {"postgres_int4": "postgres", "mysql_signed_quotient": "mysql"}.get(domain)
+            if single_engine:
+                registered = {single_engine: registered[single_engine]}
             unavailable = {}
             if domain == "recursive_series":
                 series = json.loads((self.tool_root / "server-recursive-series-v2.json").read_text())

@@ -12,6 +12,10 @@ echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_
 function measure(PDO $pdo, array $input, bool &$readOnly): array
 {
     if (isset($input['fixture'])) {
+        if ($readOnly) {
+            $pdo->exec('ROLLBACK');
+            $readOnly = false;
+        }
         foreach ($input['fixture'] as $sql) {
             $pdo->exec($sql);
         }
@@ -20,6 +24,11 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
     if (!$readOnly) {
         $pdo->exec('START TRANSACTION READ ONLY');
         $readOnly = true;
+    }
+    $warnings = ($input['observeWarnings'] ?? false) === true;
+    if ($warnings) {
+        // MySQL 5.x can retain earlier diagnostics when a constant statement succeeds.
+        $pdo->query('SELECT 1 FROM ir_fixture.ir_evidence_accounts LIMIT 1')->closeCursor();
     }
     try {
         $statement = $pdo->prepare($input['sql']);
@@ -32,12 +41,29 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $rows = $statement->fetchAll(PDO::FETCH_NUM);
         $statement->closeCursor();
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
+        if ($warnings) {
+            $result['warningCount'] = warningCount($pdo);
+        }
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
         $pdo->exec('ROLLBACK');
         $readOnly = false;
     }
     return $result;
+}
+
+function warningCount(PDO $pdo): int
+{
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    try {
+        $count = $pdo->query('SHOW COUNT(*) WARNINGS')->fetchColumn();
+        if (!is_numeric($count)) {
+            throw new RuntimeException('Expected a server warning count.');
+        }
+        return (int) $count;
+    } finally {
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    }
 }
 
 $readOnly = false;

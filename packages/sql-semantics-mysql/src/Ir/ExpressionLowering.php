@@ -38,7 +38,7 @@ final class ExpressionLowering
         }
         if ($expression instanceof ParsedArithmetic) {
             $operator = ArithmeticOperator::tryFrom($expression->operator->value);
-            Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
+            Check::input($operator !== null, 'The operator has no checked MySQL signed arithmetic representation.');
             $left = $this->lower($expression->left, $binding);
             $right = $this->lower($expression->right, $binding);
             Check::input(

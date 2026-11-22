@@ -197,6 +197,12 @@ The [derived join record](server-derived-join-v2.json) checks external and indep
 
 Run `run_server_derived_join.py` with the native fixture options. Replay all releases with `combine_server_derived_join_evidence.py` and the per-release `index.json` paths. Its mutation probes change occurrence selection, field position and outer join behavior.
 
+## MySQL signed quotient and remainder
+
+The [signed quotient record](mysql-signed-quotient-v1.json) specifies ordered signed `DIV` and infix remainder operands, the signed result, NULL, zero-divisor diagnostics and the signed 64-bit boundaries. The runner compares signed values, ordered field names, native metadata, duplicates and warning counts. Its observer checks that enabling a different SQL mode actually makes a division warning visible before it restores the empty mode.
+
+Run `run_server_mysql_signed_quotient.py` on the nine pinned MySQL releases. Replay their reports with `combine_server_mysql_signed_quotient_evidence.py`. The original boundary failure resulted from evaluating a nested multiplication before DIV. The schedule retains that expression and also constructs the same minimum value by addition so the two behaviors can be compared independently.
+
 ## PostgreSQL int4 operators
 
 The [int4 operator record](postgres-int4-operators-v1.json) checks ordered int4 operands, type and result values, SQLSTATE 22012 for a zero divisor and SQLSTATE 22003 for division overflow. Each evaluation outcome is checked against the independent rules for its exact operands. The fixture sets a distinguishing search path with an identically named division operator and measures both operation identities. Run `run_server_postgres_int4.py` for both pinned PostgreSQL releases. Replay the exact reports with `combine_server_postgres_int4_evidence.py`.
