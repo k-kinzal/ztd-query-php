@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/postgres-insert-returning-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2 under the pinned native INSERT and independent SELECT profiles.",
+  "scope": "An ordinary INSERT with literal rows or a checked independent SELECT can return named int4 fields from each inserted target row. The ordered destination slots are separate from the external target layout and the returned result order.",
+  "constructors": {
+    "Mutation/Insert/Destination": {
+      "role": "One absolute INSERT relation with an ordered, resolved write layout.",
+      "structure": "One TableSource and a nonempty owned list of at most 1024 ColumnReference values for the written positions.",
+      "conditions": "The target has no ONLY policy. All write slots identify distinct declared columns of occurrence zero. Owning INSERT values require the checked input width to equal the ordered write width. Returned positions must read declared fields of this same target.",
+      "meaning": "Assign input cell or output position i to the i-th listed target slot. A declared target slot outside the written layout retains its database-supplied insertion value. Reading a returned slot does not introduce a write.",
+      "externalInterpretation": "Use the same physical relation, int4 columns, defaults, generated values, constraints and triggers under the recorded profile.",
+      "sql": "Emit the quoted absolute relation name followed by its quoted write columns in write order. Omit unused target layout columns from the write list.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Mutation/Insert", "Mutation/InsertQuery", "Mutation/InsertRow", "Mutation/InsertCell", "Mutation/ReturnedColumn"],
+  "composition": "Both INSERT roots own the checked destination and an optional ordered output layout. Literal VALUES retain source row order in SQL, and query INSERT retains its independent input semantics. RETURNING observes the new row after insertion and can include a field supplied by a database default.",
+  "observations": [
+    "Record the affected count, appended rows, trigger records, untouched control and input relations, and the exact restoration after rollback.",
+    "Preserve positional column names and native int4 types including empty query input, duplicates, NULL values, omitted writes and database defaults.",
+    "The row bag produced by RETURNING has no guaranteed order. Every returned result position and row multiplicity is observed.",
+    "Fixture rows distinguish physical target positions from the chosen write order and provide different defaults for omitted slots."
+  ],
+  "finite": {
+    "writeLayouts": [["id", "delta"], ["delta", "id"], ["id"], ["delta", "stamp"]],
+    "literalVariants": ["one row with NULL", "two identical rows"],
+    "queryVariants": ["unit", "scan with duplicate values", "empty scan"],
+    "outputLayouts": [
+      [["id", "id"]], [["delta", "delta"]], [["stamp", "stamp"]],
+      [["stamp", "same"], ["id", "same"]], [["delta", "first"], ["delta", "repeat"]]
+    ],
+    "identities": 100,
+    "completeness": "Cross every ordered write layout and result layout with each of the two literal or three query variants. Recover the input domain, written slots, requested outputs and variant from the checked value."
+  },
+  "exploration": {
+    "seeds": [3253, 8461, 15913],
+    "casesPerSeed": 30,
+    "timeoutSecondsPerRelease": 175,
+    "allowedExclusions": [],
+    "structure": "Generate write and return layouts separately with ordered positions, duplicate output labels, omitted fields, dynamic value positions and signed integer boundaries. Exercise both input roots, source scans, an empty query result and nullable operands."
+  },
+  "negative": ["Missing write slot", "Foreign write occurrence", "Repeated write slot", "Missing return slot", "Foreign return occurrence", "Mismatched VALUES width", "Mismatched SELECT width", "Missing analyzed output column", "Computed return expression"],
+  "faults": ["Write another declared target slot", "Reverse the destination order", "Drop RETURNING", "Read another declared target slot"],
+  "open": ["Implicit write columns, explicit DEFAULT cells, conflict operations, general returned expressions, wider target types and modification CTEs."],
+  "trust": ["Pinned native transactional fixture and PDO positional observations", "Independent insert row and projection models", "Exact PHP construction and renderer boundary checks"],
+  "sources": ["https://www.postgresql.org/docs/16/dml-returning.html", "https://www.postgresql.org/docs/17/dml-returning.html", "https://www.postgresql.org/docs/17/sql-insert.html"]
+}
