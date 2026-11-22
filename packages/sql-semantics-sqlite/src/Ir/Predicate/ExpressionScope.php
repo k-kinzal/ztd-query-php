@@ -25,7 +25,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int}
+ * @phpstan-type ScopedExpression array{Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression, int, int, 3?: true}
  */
 final class ExpressionScope
 {
@@ -34,16 +34,16 @@ final class ExpressionScope
      *
      * @param list<int> $widths The number of slots per occurrence
      * @param list<ScopedExpression> $pending The expressions with height and scope width
-     * @param bool $allowParameters Whether the owner accepts parameter markers
+     * @param bool $allowLiveParameters Whether the owner accepts parameters that are evaluated
      */
-    public function check(array $widths, array $pending, bool $allowParameters = true): void
+    public function check(array $widths, array $pending, bool $allowLiveParameters = true): void
     {
         $nodes = 0;
         $payloadBytes = 0;
         while ($pending !== []) {
-            [$expression, $height, $visibility] = array_pop($pending);
+            $frame = array_pop($pending);
+            [$expression, $height, $visibility] = $frame;
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-            Check::input($allowParameters || !$expression instanceof Parameter, 'A schema expression cannot contain a parameter.');
             if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest) {
                 foreach ($this->branches($expression, $height + 1, $visibility) as $operand) {
                     $pending[] = $operand;
@@ -52,7 +52,7 @@ final class ExpressionScope
             }
             match (true) {
                 $expression instanceof ColumnReference => $this->checkReference($expression, $widths, $visibility),
-                $expression instanceof Parameter => $payloadBytes += strlen($expression->label),
+                $expression instanceof Parameter => $payloadBytes += $this->parameterBytes($expression, $allowLiveParameters, isset($frame[3])),
                 $expression instanceof CastExpression, $expression instanceof CollatedExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression
                     => $pending[] = [$expression->operand, $height + 1, $visibility],
                 $expression instanceof BetweenTest => array_push(
@@ -70,6 +70,16 @@ final class ExpressionScope
             };
             Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');
         }
+    }
+
+    /**
+     * Checks the marker's role and counts its SQL payload.
+     */
+    public function parameterBytes(Parameter $parameter, bool $allowLiveParameters, bool $registration): int
+    {
+        Check::input($allowLiveParameters || $registration, 'A schema expression cannot contain a parameter.');
+
+        return strlen($parameter->label);
     }
 
     /**
@@ -102,7 +112,7 @@ final class ExpressionScope
 
         $operands = [];
         foreach ($expression->bindings as $binding) {
-            $operands[] = [$binding, $height, $visibility];
+            $operands[] = [$binding, $height, $visibility, true];
         }
 
         return $operands;

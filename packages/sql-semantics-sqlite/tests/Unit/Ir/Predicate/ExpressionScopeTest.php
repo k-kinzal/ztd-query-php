@@ -32,6 +32,28 @@ final class ExpressionScopeTest extends TestCase
         self::assertSame(1, $column->source);
     }
 
+    public function testCheckAdmitsDiscardedRegistrationsInASchemaExpression(): void
+    {
+        $binding = new Parameter('02');
+        $condition = new FoldedMembership(true, [$binding]);
+
+        (new ExpressionScope())->check([1], [[$condition, 0, 1]], false);
+
+        self::assertSame($binding, $condition->bindings[0]);
+    }
+
+    public function testParameterBytesCountsTheExactRegisteredLabel(): void
+    {
+        self::assertSame(3, (new ExpressionScope())->parameterBytes(new Parameter('007'), false, true));
+    }
+
+    public function testParameterBytesRejectsAParameterInALiveSchemaOperand(): void
+    {
+        $this->expectExceptionMessage('A schema expression cannot contain a parameter.');
+
+        (new ExpressionScope())->parameterBytes(new Parameter('7'), false, false);
+    }
+
     public function testCheckReferenceRejectsADeclaredButInvisibleOccurrence(): void
     {
         $this->expectExceptionMessage('must belong to the statement source');
@@ -64,7 +86,7 @@ final class ExpressionScopeTest extends TestCase
         $b = new Parameter('2');
         $value = new FoldedMembership(true, [$a, $b]);
 
-        self::assertSame([[$a, 2, 4], [$b, 2, 4]], (new ExpressionScope())->branches($value, 2, 4));
+        self::assertSame([[$a, 2, 4, true], [$b, 2, 4, true]], (new ExpressionScope())->branches($value, 2, 4));
     }
 
     public function testPatternVisitsTheEscapeInTheSameScope(): void

@@ -163,6 +163,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 }
                 return [$check->label->value, $check->column, $check->condition->slot];
             }, $result->checks);
+            $folded = $semantics->analyze('CREATE TABLE folded (code INTEGER, CONSTRAINT chk CHECK ((SELECT ?07 + ?1 + ?007) NOT IN ()))')->checks[0]->condition;
+            if ($folded::class !== $namespace . 'Ir\\Predicate\\FoldedMembership' || !$folded->matches) {
+                throw new RuntimeException('The installed declaration lost the folded empty membership.');
+            }
+            $details['foldedCheckBindings'] = array_column($folded->bindings, 'label');
         }
         if ($role === 'Schema\\Alter\\RenameTable') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];

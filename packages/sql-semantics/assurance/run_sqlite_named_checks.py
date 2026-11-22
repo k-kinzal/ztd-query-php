@@ -13,8 +13,8 @@ from sqlite_named_check_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-named-checks-v2.json"
-CONTRACT = "c02957de26dea63f4c5dcd93ed094775ca1948517bee0b722c964ba1be3ae2b6"
+CONTRACT_NAME = "sqlite-named-checks-v3.json"
+CONTRACT = "a2f895dcf0dded8c8db5eeddc9ac3fa1d6537cb4ab4852c8d0e2e39c096d9897"
 
 
 class NamedCheckDatabase(UniqueDatabase):

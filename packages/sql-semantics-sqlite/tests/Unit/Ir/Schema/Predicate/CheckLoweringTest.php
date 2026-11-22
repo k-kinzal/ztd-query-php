@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
@@ -34,6 +35,19 @@ final class CheckLoweringTest extends TestCase
         self::assertInstanceOf(Comparison::class, $first);
         self::assertInstanceOf(ColumnReference::class, $first->left);
         self::assertSame(1, $first->left->slot);
+    }
+
+    public function testLowerRetainsOnlyTheRegistrationsOfADiscardedSubquery(): void
+    {
+        $value = (new Semantics())->analyze(
+            'CREATE TABLE t (a INTEGER, CONSTRAINT dormant CHECK ((SELECT ?02 + ?1) NOT IN ()))'
+        );
+
+        self::assertInstanceOf(CreateTable::class, $value);
+        $folded = $value->checks[0]->condition;
+        self::assertInstanceOf(FoldedMembership::class, $folded);
+        self::assertTrue($folded->matches);
+        self::assertSame(['02', '1'], array_column($folded->bindings, 'label'));
     }
 
     public function testCollectAppliesTheLatestNameToEachFollowingClause(): void

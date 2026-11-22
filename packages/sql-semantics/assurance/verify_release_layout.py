@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v6.json"
-CONTRACT = "13d56c4767c308e6ec4057005a179dd870eec7db0ce3054e7c4db1888b8005b6"
+CONTRACT_NAME = "release-layout-v7.json"
+CONTRACT = "3eda05232b0f95904b3e6c38b20794ce15fa60edb37c930d458b51bfa4e79306"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -209,6 +209,7 @@ def verify_probe(raw, catalog):
                 ["unique", False, 1, True, "BINARY", "IGNORE"],
             ], "installed-table-key-layout-mismatch", item)
             require(item.get("namedChecks") == [["ref id", 1, 0]], "installed-table-check-mismatch", item)
+            require(item.get("foldedCheckBindings") == ["07", "1", "007"], "installed-folded-check-binding-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameTable":
             require(item.get("rename") == ["main", "accounts", "renamed"], "installed-table-rename-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameColumn":

@@ -705,9 +705,9 @@ try {
     }
     $checkedBindingSources = [];
     if ($dialect === 'sqlite') {
-        $bindingRecord = __DIR__ . '/sqlite-folded-binding-sources-v1.json';
+        $bindingRecord = __DIR__ . '/sqlite-folded-binding-sources-v2.json';
         requireShape(
-            hash_file('sha256', $bindingRecord) === '6f4a8cd52c21e98df62677737256cb6155782256cae8fdbd49078f3ed637af75',
+            hash_file('sha256', $bindingRecord) === 'd7cb693f8d7c41253b7eb0b5c5b3de0beda70c437d209795af10886d0750ba39',
             'Folded binding contract differs from its recorded revision'
         );
         $bindingSources = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR)['artifacts'];

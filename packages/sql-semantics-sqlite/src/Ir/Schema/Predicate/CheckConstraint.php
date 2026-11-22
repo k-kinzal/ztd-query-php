@@ -43,7 +43,7 @@ final class CheckConstraint
     use Snapshot;
 
     /**
-     * Checks the definition expression before it can enter a table declaration.
+     * Checks the definition expression, including any folded marker registrations.
      * @param int|null $column The owning declaration slot for an inline check
      */
     public function __construct(
