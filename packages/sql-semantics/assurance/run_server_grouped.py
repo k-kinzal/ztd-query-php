@@ -7,7 +7,7 @@ from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import same
 from run_server_join import OBSERVER, main, observer_request, specifications as join_specification
-from server_cases import SCHEMAS, observation as bag
+from server_cases import SCHEMAS, fixtures as projection_fixture, observation as bag
 from server_delete_cases import literal
 from server_grouped_cases import ADDITIONAL_ROWS, aggregate, case, expected, finite_id, finite_ids, ordered, requests
 from server_join_cases import NAMES_BY_TABLE, compare, fixture, slot, table
@@ -54,7 +54,7 @@ ROUTINE_PROBE = "SELECT count(delta) AS shadow, (SELECT pg_catalog.count(v) FROM
 
 def prepare(engine, db):
     values = ",".join(f"({key},{value})" for key, value in ADDITIONAL_ROWS)
-    statements = [*fixture(engine), f"INSERT INTO {SCHEMAS[engine]}.{NAMES_BY_TABLE['accounts']} VALUES {values}"]
+    statements = [*fixture(engine), *projection_fixture(engine), f"INSERT INTO {SCHEMAS[engine]}.{NAMES_BY_TABLE['accounts']} VALUES {values}"]
     if engine == "mysql":
         statements += [f"DROP TABLE IF EXISTS ir_fixture.{LABEL_RELATION}", LABEL_DDL,
                        f"INSERT INTO ir_fixture.{LABEL_RELATION} VALUES (1,2),(3,NULL),(1,2)"]

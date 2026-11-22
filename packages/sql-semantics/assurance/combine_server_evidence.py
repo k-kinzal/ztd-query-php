@@ -9,7 +9,7 @@ from pathlib import Path
 from evidence_transcript import REPLAY_CONTRACT, load_replay_contract
 from replay_server_evidence import replay
 from run import IDENTITY_CONTRACT, IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from run_server import CONTRACT
+from run_server import ADMISSION_CONTRACT, CONTRACT, grouped_admission
 from server_cases import finite_ids
 
 TOOL = Path(__file__).resolve().parent
@@ -17,6 +17,7 @@ TOOL = Path(__file__).resolve().parent
 
 def combine(candidate, candidate_root, input_paths, evidence_root):
     load_replay_contract()
+    grouped_admission()
     contract = TOOL / "server-projection-v1.json"
     require(digest(contract) == CONTRACT, "server-contract-mismatch")
     specification = json.loads(contract.read_text())
@@ -32,7 +33,8 @@ def combine(candidate, candidate_root, input_paths, evidence_root):
         require(path.is_file(), "server-evidence-file-missing", str(path))
         report = json.loads(path.read_text())
         require(report["status"] == "provisional-server-projections" and report["candidate"] == candidate
-                and report["contract"] == CONTRACT and report.get("candidateIdentityContract") == IDENTITY_CONTRACT, "server-evidence-target-mismatch", str(path))
+                and report["contract"] == CONTRACT and report["admissionContract"] == ADMISSION_CONTRACT
+                and report.get("candidateIdentityContract") == IDENTITY_CONTRACT, "server-evidence-target-mismatch", str(path))
         require(report["isolation"] == IMAGE, "server-evidence-not-isolated", str(path))
         require(digest(path.parent / "distribution.json") == report["distribution"], "server-manifest-mismatch", str(path))
         verify_distribution(json.loads((path.parent / "distribution.json").read_text()), actual)
@@ -65,7 +67,7 @@ def combine(candidate, candidate_root, input_paths, evidence_root):
     return {
         "status": "provisional-native-projection-matrix" if not missing else "incomplete",
         "candidate": candidate,
-        "contract": CONTRACT,
+        "contract": CONTRACT, "admissionContract": ADMISSION_CONTRACT,
         "replayContract": REPLAY_CONTRACT, "candidateIdentityContract": IDENTITY_CONTRACT,
         "distribution": comparable[0] if comparable else None,
         "replayTools": {name: digest(TOOL / name) for name in ["combine_server_evidence.py", "run_server.py", "run.py", "server_cases.py"]},

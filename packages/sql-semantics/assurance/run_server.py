@@ -15,6 +15,7 @@ from server_cases import (
 )
 
 CONTRACT = "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97"
+ADMISSION_CONTRACT = "cb6cb546e11007dcd00983f2f2ed0acf1d193cb7b17676b035b6384e4e2d46dd"
 DIALECTS = ("mysql", "postgres")
 TRANSPORT = "64a958eac4238161c3c1fb4242af55d7c4042ed1123d984e671e1b5338c9da1e"
 
@@ -127,8 +128,18 @@ def check_analyzed(dialect, tag, worker, db, ledger):
         ledger.record(key, "compared", original=before, observation=after)
 
 
+def grouped_admission():
+    contract = TOOL / "server-projection-admission-v1.json"
+    require(digest(contract) == ADMISSION_CONTRACT, "server-admission-contract-mismatch")
+    return json.loads(contract.read_text())
+
+
 def negatives(dialect):
     table = SCHEMAS[dialect] + ".ir_evidence_accounts"
+    rejection = grouped_admission()["reject"]
+    namespace = "MySql" if dialect == "mysql" else "PostgreSql"
+    grouped = analyzed(dialect, rejection["sql"].format(table=table))
+    exception = f"SqlSemantics\\Platform\\{namespace}\\Model\\Diagnostic\\{rejection['exception']}"
     invalid = [
         (case(dialect, None, []), "nonempty list"),
         (case(dialect, None, [["slot", 0]]), "belong to the SELECT source"),
@@ -138,14 +149,14 @@ def negatives(dialect):
         (case(dialect, None, [["integer", "1"]], ["n\0ame"]), "no NUL" if dialect == "mysql" else "without NUL"),
         (analyzed(dialect, f"SELECT id FROM {table}", schemas=False), "resolved, complete base table"),
         (analyzed(dialect, f"SELECT poison FROM {table}"), "signed 32-bit integer type"),
-        (analyzed(dialect, f"SELECT id FROM {table} GROUP BY id"), "projections with positional result selection"),
+        (grouped, rejection["message"]),
     ]
     if dialect == "mysql":
         invalid.append((case(dialect, None, [["integer", "1"]], [" before"]), "cannot start with SQL whitespace"))
     else:
         invalid.append((case(dialect, None, [["integer", "1"]], [""]), "nonempty"))
         invalid.append((analyzed(dialect, "SELECT 1 OPERATOR(public.+) 2"), "pg_catalog operator"))
-    return invalid
+    return [(item, signal, exception if item is grouped else None) for item, signal in invalid]
 
 
 def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, observer_factory=Observer):
@@ -188,12 +199,13 @@ def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, o
                 check_direct([(f"boundary/{index}", item)], worker, db, ledger, histogram)
             current_input = None
             check_analyzed(dialect, tag, worker, db, ledger)
-            for index, (current_input, signal) in enumerate(negatives(dialect)):
+            for index, (current_input, signal, exception) in enumerate(negatives(dialect)):
                 key = f"negative/{index}"
                 current_input["release"] = tag
                 ledger.record(key, "attempted", input=current_input)
                 response = worker.request(current_input)
-                require(response["status"] == "rejected" and signal in response["message"], "server-negative-mismatch", response)
+                require(response["status"] == "rejected" and signal in response["message"]
+                        and (exception is None or response["exception"] == exception), "server-negative-mismatch", response)
                 ledger.record(key, "rejected", response=response)
             require(histogram.keys() == {"integer", "boolean", "null", "slot", "operation"}, "server-unobserved-operands", dict(histogram))
         except Exception as error:
@@ -237,7 +249,7 @@ def main():
     verify_candidate(args.candidate, commit, distribution)
     index = {
         "status": "provisional-server-projections", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
-        "distribution": digest(args.out / "distribution.json"), "contract": CONTRACT,
+        "distribution": digest(args.out / "distribution.json"), "contract": CONTRACT, "admissionContract": ADMISSION_CONTRACT,
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".php", ".py", ".json", ".md"}},
         "isolation": "none" if args.local else IMAGE, "results": results,
         "open": ["other release and mode server comparisons", "other statement roles", "independently approved repository acceptance"],

@@ -78,7 +78,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v9.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v13.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -201,6 +201,8 @@ Run `run_server_derived_join.py` with the native fixture options. Replay all rel
 The [grouped projection record](server-grouped-v3.json) defines signed input slots, COUNT, SUM, MIN and MAX, argument duplicate policy and ordered grouping fields. Its oracle partitions the fixture by declared key tuples, computes typed aggregate outputs and exercises both keyed and global queries over empty inputs. The comparator preserves exact decimal text and native metadata. On PostgreSQL the observer supplies a competing `count(int4)` and measures the distinct results of qualified and unqualified calls.
 
 Run `run_server_grouped.py` using the native fixture options. Replay every release with `combine_server_grouped_evidence.py` and its `index.json` path. The faulty SQL probes change DISTINCT, NULL treatment, grouping fields, filter placement and PostgreSQL routine identity.
+
+The [grouping admission record](server-projection-admission-v1.json) preserves a construction rejection for a computed grouping key and requires independent comparison of the formerly unsupported named grouping. The projection and grouped suites replay those two cases with the unchanged release set and budgets.
 
 ## Native INSERT from SELECT
 

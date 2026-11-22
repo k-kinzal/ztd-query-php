@@ -3,7 +3,8 @@
 from itertools import product
 from random import Random
 
-from server_cases import NAMES, SCHEMAS, observation
+from run_server import grouped_admission
+from server_cases import CHILD_ROWS, NAMES, ROWS, SCHEMAS, analyzed as projection_request, observation, source as projection_source
 from server_compound_cases import legacy
 from server_delete_cases import literal
 from server_join_cases import NAMES_BY_TABLE, compare, declarations, rows, slot, table, truth
@@ -93,6 +94,12 @@ def analyzed(engine, tag):
                [aggregate("sum", slot(1)), "total"], [aggregate("min", slot(1)), "m"]]
     yield {"dialect": engine, "release": tag, "sql": query, "declarations": declarations(engine)}, case(
         engine, tag, source, [slot(0)], columns, compare(">", slot(1), literal(-5)))
+    admitted = grouped_admission()["admit"]
+    projection = projection_source(engine)
+    projection["columns"] = [key]
+    query = admitted["sql"].format(table=f"{schema}.{projection['table']}")
+    yield projection_request(engine, query, version=tag), case(
+        engine, tag, projection, [slot(0)], [[slot(0), admitted["name"]]])
     if engine == "mysql":
         role = {"schema": schema, "table": LABEL_RELATION, "columns": [" lead"]}
         word = chr(96) + " lead" + chr(96)
@@ -197,6 +204,10 @@ def expected(item):
 
 
 def fixture_rows(source, engine):
+    if source["table"] == projection_source(engine)["table"]:
+        data = ROWS + (CHILD_ROWS if engine == "postgres" else [])
+        yield from (((row[0],),) for row in data)
+        return
     if source["table"] == LABEL_RELATION:
         positions = [LABEL_SOURCE.index(name) for name in source["columns"]]
         yield from ((tuple(row[position] for position in positions),) for row in LABEL_ROWS)
