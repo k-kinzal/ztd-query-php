@@ -1,0 +1,153 @@
+{
+  "revision": "SemanticsIR/sqlite-recursive-source-1",
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "scope": "One SQLite common table with explicitly named columns, one independent VALUES anchor or one scalar SELECT anchor, and one recursive SELECT arm followed by a single-source consuming projection. The recursive arm has one self occurrence, explicit scalar output expressions and an optional scalar filter. UNION and UNION ALL are both represented.",
+  "open": [
+    "Multiple or mutually recursive definitions, implicit column names, materialization hints and other statement roots",
+    "Recursive joins, multiple anchors or steps, recursive queue order and row bounds",
+    "Anchor filtering, recursive DISTINCT, grouping, windows and unsupported scalar operators"
+  ],
+  "constructors": {
+    "RecursiveDefinition": {
+      "type": "Rows/RecursiveDefinition",
+      "role": "The anchor, ordered per-row successor expressions, optional filter and duplicate admission policy",
+      "fields": [
+        "anchor",
+        "step",
+        "where",
+        "unionAll"
+      ],
+      "local": [
+        "The step contains exactly as many checked scalar expressions as the nonempty anchor width",
+        "Step input storage is copied by value"
+      ],
+      "composition": "The anchor width fixes the step and predicate slot bounds. LocalSource names those slots. No anchor operand or descendant can read a recursive slot.",
+      "meaning": "Each dequeued row supplies the only recursive occurrence. The filter uses SQLite truth conversion and the projected row is enqueued according to the duplicate policy.",
+      "sql": "Render the anchor once, then UNION or UNION ALL and a SELECT from the same generated CTE binding with optional WHERE. Preserve operand order and explicit grouping.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "LocalSource": {
+      "type": "Rows/LocalSource",
+      "role": "The closed recursive definition and its ordered local schema",
+      "invariants": [
+        "Nonempty distinct ASCII-insensitive names with anchor width",
+        "Each successor and filter reference addresses an existing slot on the single self occurrence",
+        "Anchor and step count toward the complete SELECT expression and SQL size budgets"
+      ],
+      "sql": "WITH RECURSIVE defines the slots once. Both the recursive arm and consuming SELECT read the same binding. The original CTE identifier is local and may be alpha-renamed.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "RecursiveColumn": {
+      "type": "Rows/RecursiveColumn",
+      "role": "One successor output whose position determines the updated recursive slot",
+      "fields": [
+        "expression"
+      ],
+      "invariants": [
+        "Stores exactly one scalar operand of the closed role"
+      ],
+      "composition": "The owner checks this expression against the anchor width and the sole recursive occurrence.",
+      "sql": "Render the operand at its recorded position. The declared CTE supplies the output name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Require that both the recursive FROM and consumer FROM resolve to the exact same definition object in the analysis facts. A schema-qualified homonym is an external table and cannot substitute for the recursive binding. Recognize recursion by this relation identity. Honor SQLite's optional RECURSIVE marker and permit it on an ordinary VALUES CTE. Unsupported grammar is recorded in the wider required scope.",
+  "observations": [
+    "Ordered output names, position, SQLite storage class and value, NULL, repeated rows and guaranteed output order",
+    "Numbered parameter slots and the first registered spelling across anchor, successor, predicate and consumer",
+    "Read-only classification and zero changes"
+  ],
+  "meaning": "The anchor adds its rows to the queue. A step consumes one row, makes it available to the consumer, and can add one row back. UNION excludes equivalent whole rows at queue admission, including NULL-to-NULL equivalence. UNION ALL preserves multiplicity. The queue order is unspecified without its own ordering. The observed fixture is finite by construction. Evaluation of a structurally valid nonterminating input can fail at run time.",
+  "observer": {
+    "additionalAuthorizationAction": 33,
+    "scope": "Only this recursive domain authorizes SQLITE_RECURSIVE, alongside the same filesystem and action policy.",
+    "progressCallbackInterval": 1000,
+    "maxProgressCallbacksPerStatement": 100,
+    "failure": "Interrupting evaluation is an explicit observer-budget failure and never a passed comparison."
+  },
+  "finite": {
+    "anchorAtoms": [
+      -1,
+      0,
+      null
+    ],
+    "orderedAnchorLengths": [
+      1,
+      2
+    ],
+    "transitionIds": [
+      "increment",
+      "decrement",
+      "stop",
+      "collapse-to-null"
+    ],
+    "unionAll": [
+      false,
+      true
+    ],
+    "identities": 96,
+    "completeness": "Observed role shapes encode anchor atoms as radix-three digits. Check each length, code, transition and union combination exactly once against independently computed identifiers."
+  },
+  "exploration": {
+    "seeds": [
+      501,
+      2839,
+      19457
+    ],
+    "casesPerSeed": 48,
+    "timeoutSeconds": 240,
+    "requiredForms": "Both set policies; widths and anchor heights one through five; reference, arithmetic, literal, parameter and NULL nested successor operands; present and absent guards, consumer ordering and duplicate row outcomes.",
+    "allowedExclusions": []
+  },
+  "analyzedInputs": 8,
+  "negative": [
+    "Step width does not match anchor width",
+    "Step operand is outside the closed scalar roles",
+    "Step reference slot is outside the local schema",
+    "Filter reference addresses a different occurrence",
+    "CTE column list repeats a name",
+    "CTE column list does not fit the width",
+    "Analyzed recursive input is an external homonym",
+    "Analyzed compound operator is outside the recursive union roles",
+    "Analyzed queue clauses are outside the recursive role"
+  ],
+  "faults": [
+    "Toggle the duplicate admission policy",
+    "Read a different recursive slot in a successor expression",
+    "Drop the recursive filter from an otherwise terminating query"
+  ],
+  "evidence": "Retain original inputs, recorded construction and exact rejection messages, SQL, typed observations, finite identifiers, coverage of generated structures and independently replayed request accounting. Preserve mutation deltas, source digests and healthy controls. Ordinary CTE and earlier test obligations continue.",
+  "argument": "The finite structure contains no cyclic PHP pointers. Only the step has a reference to the current iteration via ordinal column slots. A parent validates the slot space before it can become available in a completed SELECT. Native evaluation supplies the queue semantics. Independent comparison covers only the fixed finite and seeded terminating cases.",
+  "trust": [
+    "Fixed SQLite build and native C observer",
+    "Slot closure, operand traversal and identifier quoting",
+    "Reference evaluator and immutable verifier selection"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_with.html#recursive_common_table_expressions",
+    "https://sqlite.org/c3ref/c_alter_table.html",
+    "https://sqlite.org/c3ref/progress_handler.html"
+  ]
+}
