@@ -392,6 +392,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-strict-tables-evidence"
+      - name: Collect SQLite primary key observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_primary_keys.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-primary-keys-evidence"
       - name: Collect SQLite DELETE RETURNING observations
         if: ${{ !cancelled() }}
         env:
@@ -535,6 +544,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-not-null-conflict-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-strict-tables-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-primary-keys-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/

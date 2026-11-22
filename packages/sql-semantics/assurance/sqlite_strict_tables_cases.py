@@ -88,7 +88,7 @@ def negatives():
     yield declaration([["value", "", False]], True), "rejected", "requires every column to declare a datatype"
     yield {"sql": "CREATE TABLE t (v) STRICT", "declarations": []}, "analysis-rejected", "STRICT"
     yield {"sql": "CREATE TABLE t (v VARCHAR) STRICT", "declarations": []}, "analysis-rejected", "STRICT"
-    yield {"sql": "CREATE TABLE t (v INT PRIMARY KEY) WITHOUT ROWID", "declarations": []}, "rejected", "supports only the STRICT table option"
+    yield {"sql": "CREATE TABLE t (v INT) WITHOUT ROWID", "declarations": []}, "analysis-rejected", "needs a primary key"
 
 
 def stored(value, kind, strict):

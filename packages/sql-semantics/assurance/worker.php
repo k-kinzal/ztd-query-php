@@ -62,6 +62,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
@@ -410,6 +413,30 @@ function valueRows(ValuesQuery $value): array
     return array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows);
 }
 
+function directPrimaryKey(?array $value): ?PrimaryKey
+{
+    if ($value === null) {
+        return null;
+    }
+    return new PrimaryKey(
+        array_map(static fn (array $term): KeyTerm => new KeyTerm($term[0], $term[1], Collation::from($term[2])), $value['terms']),
+        $value['inline'],
+        KeyConflict::from($value['conflict']),
+    );
+}
+
+function observePrimaryKey(?PrimaryKey $value): ?array
+{
+    if ($value === null) {
+        return null;
+    }
+    return [
+        'terms' => array_map(static fn (KeyTerm $term): array => [$term->slot, $term->descending, $term->collation->value], $value->terms),
+        'inline' => $value->inline,
+        'conflict' => $value->conflict->value,
+    ];
+}
+
 function directCreateTable(array $input): CreateTable
 {
     return new CreateTable(
@@ -427,6 +454,8 @@ function directCreateTable(array $input): CreateTable
         ), $input['columns']),
         $input['ifNotExists'],
         $input['strict'] ?? false,
+        $input['withoutRowid'] ?? false,
+        directPrimaryKey($input['primaryKey'] ?? null),
     );
 }
 
@@ -452,6 +481,8 @@ function observeCreateTable(CreateTable $value): array
         ),
         'ifNotExists' => $value->ifNotExists,
         'strict' => $value->strict,
+        'withoutRowid' => $value->withoutRowid,
+        'primaryKey' => observePrimaryKey($value->primaryKey),
         'sql' => $value->toString(),
     ];
 }

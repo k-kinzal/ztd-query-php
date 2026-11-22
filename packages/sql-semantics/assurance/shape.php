@@ -240,7 +240,20 @@ if ($dialect === 'sqlite') {
     $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $properties['Schema\\DropTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'ifExists' => ['bool']];
     $methods['Schema\\DropTable'] = $methods['Select'];
-    $properties['Schema\\CreateTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'], 'strict' => ['bool']];
+    $properties['Schema\\CreateTable'] = [
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'],
+        'strict' => ['bool'], 'withoutRowid' => ['bool'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
+    ];
+    $properties['Schema\\Key\\KeyTerm'] = ['slot' => ['int'], 'descending' => ['bool'], 'collation' => ['Collation']];
+    $properties['Schema\\Key\\PrimaryKey'] = [
+        'terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['Schema\\Key\\KeyConflict'],
+    ];
+    $methods['Schema\\Key\\KeyTerm'] = $methods['Schema\\Key\\PrimaryKey'] = ['__construct'];
+    $properties['Schema\\Key\\KeyConflict'] = $methods['Schema\\Key\\KeyConflict'] = [];
+    $enumCases['Schema\\Key\\KeyConflict'] = ['Abort' => 'ABORT', 'Fail' => 'FAIL', 'Ignore' => 'IGNORE',
+        'Replace' => 'REPLACE', 'Rollback' => 'ROLLBACK'];
+    array_push($internal, 'Schema\\Key\\PrimaryKeySql', 'Schema\\Key\\PrimaryKeyLowering', 'Schema\\Key\\KeyTermLowering');
+    $pureCollaborators[] = 'Schema\\Key\\PrimaryKeySql';
     $methods['Schema\\CreateTable'] = $methods['Select'];
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
@@ -642,9 +655,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v22.json';
+    $storagePath = __DIR__ . '/value-storage-v23.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'b634d606c8a95a1673e2201ce9cf79bc9ecdacbdcb31ec774ad40c86a7a83090',
+        hash_file('sha256', $storagePath) === 'c7e7c39048a4faa3a18d40b3a976549ac7bae54b807940927a96f9f130f8dcd8',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

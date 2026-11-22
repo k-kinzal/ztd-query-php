@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKeyLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -13,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTab
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
 
 /**
- * Converts a column-based rowid table declaration to a complete value.
+ * Converts a column-based table declaration to a complete value.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -25,9 +26,8 @@ final class CreateTableLowering
      */
     public function lower(BoundStatement $operation, ParsedCreateTable $statement): CreateTable
     {
-        Check::input($statement->constraints === [], 'Complete SQLite CREATE TABLE requires a rowid table without table constraints.');
         foreach ($statement->options as $option) {
-            Check::input($option->kind() === TableOptionKind::Strict, 'Complete SQLite CREATE TABLE supports only the STRICT table option.');
+            Check::input($option->kind() === TableOptionKind::Strict || $option->kind() === TableOptionKind::WithoutRowid, 'This table option has no complete CREATE TABLE representation.');
         }
         $schemaName = $statement->name->schema->value ?? ($statement->temporary ? 'temp' : 'main');
         $comparison = Comparison::AsciiInsensitive;
@@ -39,7 +39,15 @@ final class CreateTableLowering
         }
         foreach ($operation->context->searchPath as $schema) {
             if ($comparison->equal($schemaName, $schema->value)) {
-                return new CreateTable(new Identifier($schema->value), new Identifier($statement->name->name->value), $columns, $statement->ifNotExists, $statement->options !== []);
+                return new CreateTable(
+                    new Identifier($schema->value),
+                    new Identifier($statement->name->name->value),
+                    $columns,
+                    $statement->ifNotExists,
+                    $statement->strict(),
+                    $statement->withoutRowid(),
+                    (new PrimaryKeyLowering())->lower($statement)
+                );
             }
         }
 

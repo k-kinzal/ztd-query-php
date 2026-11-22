@@ -20,7 +20,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-insert-slots-boundaries-v3.json', 'ff1868cce0bf4174b3bbadde618f58a9383fa73c70c37ab300d83962aac00af4'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v11.json', 'c0774a7a164324280a42032b79ea1d4c58e22dd4eef0bdbe098edcecc0a8a949'],
-            ['sqlite-default-boundaries-v3.json', 'f60e156a48481c4d9687a33a0a10e99449347cced4e0696d632cc56e8f223467'],
+            ['sqlite-default-boundaries-v4.json', '6de6fb16238ea1488bca631de80c2558515acccb2f7e783d1ca1501abf4ebb2e'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
@@ -80,7 +80,11 @@ function checkNativeBoundaries(
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\NotNullConflict', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
             'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
-            'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Schema\\Table\\TableOptionKind', 'Statement\\Mutation\\MutationTarget'] as $name) {
+            'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Schema\\Table\\TableOptionKind', 'Statement\\Mutation\\MutationTarget',
+            'Ir\\Schema\\CreateTable', 'Ir\\Schema\\Key\\KeyConflict', 'Ir\\Schema\\Key\\KeyTerm', 'Ir\\Schema\\Key\\PrimaryKey',
+            'Ir\\Schema\\Key\\KeyTermLowering', 'Ir\\Schema\\Key\\PrimaryKeySql', 'Ir\\Schema\\Key\\PrimaryKeyLowering',
+            'Statement\\Schema\\LiteralColumn', 'Statement\\Query\\Ordering\\SortDirection',
+            'Statement\\Schema\\Column\\ColumnPrimaryKey', 'Statement\\Schema\\Table\\TablePrimaryKey'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
         $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";

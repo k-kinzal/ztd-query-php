@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
@@ -31,6 +32,9 @@ final class CreateColumnLowering
         $notNull = null;
         $default = null;
         foreach ($column->constraints as $constraint) {
+            if ($constraint instanceof ColumnPrimaryKey) {
+                continue;
+            }
             if ($constraint instanceof NotNull) {
                 Check::input($notNull === null, 'A checked CREATE TABLE column can declare one NOT NULL constraint.');
                 $notNull = $constraint->conflict === null ? NotNullConflict::Abort : NotNullConflict::from($constraint->conflict->value);

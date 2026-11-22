@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
@@ -45,5 +46,19 @@ final class CreateTableLoweringTest extends TestCase
         self::assertTrue($value->strict);
         self::assertSame([DeclaredDatatypeName::Int, DeclaredDatatypeName::Integer, DeclaredDatatypeName::Any], array_column($value->columns, 'type'));
         self::assertSame('CREATE TABLE "main"."data" ("i" INT, "j" INTEGER, "v" ANY) STRICT', $value->toString());
+    }
+
+    public function testAnalyzeKeepsTheResolvedPrimaryKeySlotsInDeclaredOrder(): void
+    {
+        $value = (new Semantics())->analyze(
+            'CREATE TEMP TABLE data (code TEXT, id INTEGER, PRIMARY KEY (ID DESC, code COLLATE NOCASE) ON CONFLICT FAIL) WITHOUT ROWID',
+        );
+
+        self::assertInstanceOf(CreateTable::class, $value);
+        self::assertNotNull($value->primaryKey);
+        self::assertTrue($value->withoutRowid);
+        self::assertSame([1, 0], array_column($value->primaryKey->terms, 'slot'));
+        self::assertSame(KeyConflict::Fail, $value->primaryKey->conflict);
+        self::assertSame('CREATE TABLE "temp"."data" ("code" TEXT, "id" INTEGER, PRIMARY KEY ("id" DESC, "code" COLLATE NOCASE) ON CONFLICT FAIL) WITHOUT ROWID', $value->toString());
     }
 }

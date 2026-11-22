@@ -12,8 +12,8 @@ from sqlite_strict_tables_cases import (
     EXISTING, FIXTURE, SAMPLES, declaration, expected, finite_id, finite_ids, negatives, requests,
 )
 
-CONTRACT_NAME = "sqlite-strict-tables-v1.json"
-CONTRACT = "7f4ad1594466bb3fad8c5ff79ea80ebb81ae976b0e07224ce05ca0b0d2d3da6c"
+CONTRACT_NAME = "sqlite-strict-tables-v2.json"
+CONTRACT = "0c9786f6e227573ed745d43d8b1c320b128b5b3fa4b23b3f6f40842098284302"
 
 
 class StrictDatabase(Database):
