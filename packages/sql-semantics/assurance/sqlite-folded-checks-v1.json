@@ -1,0 +1,61 @@
+{
+  "revision": "SemanticsIR/sqlite-folded-checks-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with numbered markers, UTF-8 and enabled CHECK constraints.",
+  "scope": "An explicitly named CHECK containing an empty IN or NOT IN. The discarded operand contributes the native bind-slot registrations and has no runtime evaluation role.",
+  "constructors": {},
+  "existingRoles": ["Schema/CreateTable", "Schema/Predicate/CheckConstraint", "Predicate/FoldedMembership", "Parameter", "ColumnReference"],
+  "rules": [
+    "FoldedMembership carries its decided truth value and the ordered lexical registrations of its discarded operand. A CHECK may contain these registrations inside that checked role. A live parameter or live subquery remains prohibited.",
+    "The outer CREATE TABLE verifies references, column placement, budgets and ordering through the same constructor checks as named CHECK. Folded bindings count toward the native parameter map and the expanded structural budget.",
+    "A discarded subquery or missing column need not resolve. Its semantics have already been decided by the empty set. The complete value keeps only the observable marker registrations, where present.",
+    "The renderer puts all observed markers inside operands SQLite discards during the empty membership reduction, in their original registration order. The condition retains the native true or false decision. The first lexical spelling for a numbered slot is observable."
+  ],
+  "observations": [
+    "Compare the prepared CREATE TABLE parameter count, numbered slot map and first spelling, resulting schema and ordered column metadata.",
+    "Use differing supplied marker values, including NULL, text and integer values. Compare created objects and writes that pass or fail the condition, including the exact failure label.",
+    "Compare analyzed original and emitted SQL for reordered slots, a repeated slot with different zero padding, a discarded subquery and a discarded unresolved name. Measure both inline and table placement."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "matches": [false, true],
+    "footprints": [[], ["7"], ["07", "1", "007"]],
+    "placements": ["first", "second", "table"],
+    "combination": ["alone", "and-positive-slot"],
+    "identity": "Observe all 72 schema, decision, footprint, placement and combination identities independently from the constructed values."
+  },
+  "exploration": {
+    "seeds": [47431, 59119, 62459],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 260,
+    "allowedExclusions": [],
+    "structure": "Vary the order and placement of several checks, marker count, sparse slot numbers and leading zeroes, and nested closed Boolean conditions using different column slots."
+  },
+  "negative": [
+    "A live parameter nested beside a folded parameter",
+    "A live subquery nested beside an empty membership",
+    "An analyzed live parameter in the same constraint as a folded marker",
+    "An analyzed folded marker outside the numbered profile"
+  ],
+  "faults": [
+    "Drop the folded marker registrations",
+    "Reverse registration order with competing spellings of one slot",
+    "Invert the decided empty membership result for a folded CHECK",
+    "Reverse the occurrence order of two checks registering the same slot"
+  ],
+  "open": [
+    "Implicit failure label formatting, other SQLite definition roles, other parameter styles and SQLite profiles."
+  ],
+  "trust": [
+    "Pinned native parameter registration, expression folding and CHECK evaluation",
+    "Independent marker projection and native write observation",
+    "Verified dispatch and value-structure checks"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_expr.html#the_in_and_not_in_operators",
+    "https://sqlite.org/c3ref/bind_parameter_name.html",
+    "https://sqlite.org/src/file/src/parse.y?ci=version-3.47.2",
+    "https://sqlite.org/lang_createtable.html#check_constraints"
+  ]
+}
