@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExplicitTable::class)]
 #[Medium]

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ResolvedColumn::class)]
 #[Medium]

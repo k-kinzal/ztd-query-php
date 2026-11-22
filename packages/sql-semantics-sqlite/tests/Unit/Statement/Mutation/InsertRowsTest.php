@@ -27,7 +27,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InsertRows::class)]
 #[Medium]

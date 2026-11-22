@@ -14,7 +14,7 @@ final class CreateTargetTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('CREATE TABLE n (x, y) USING heap WITH (fillfactor = 70) ON COMMIT PRESERVE ROWS TABLESPACE s AS SELECT 1, 2', []);
         self::assertSame('CREATE TABLE n (x, y) USING heap WITH (fillfactor = 70) ON COMMIT PRESERVE ROWS TABLESPACE s AS SELECT 1, 2', $statement->toString());
     }

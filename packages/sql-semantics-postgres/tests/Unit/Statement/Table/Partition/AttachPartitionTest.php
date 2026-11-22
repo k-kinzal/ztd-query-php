@@ -14,7 +14,7 @@ final class AttachPartitionTest extends TestCase
 {
     public function testDeriveClauseResolvesThePartition(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE p ATTACH PARTITION t DEFAULT', $context);
@@ -29,7 +29,7 @@ final class AttachPartitionTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES FROM (1) TO (10)', []);
         self::assertSame('ALTER TABLE p ATTACH PARTITION p1 FOR VALUES FROM (1) TO (10)', $statement->toString());
     }

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SetVariables::class)]
 #[Medium]

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Option\OwnerTo;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\TableActionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\AlterAction;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AlterKinds::class)]
 #[Medium]

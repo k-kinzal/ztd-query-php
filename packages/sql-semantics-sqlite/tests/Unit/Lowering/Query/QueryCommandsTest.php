@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(QueryCommands::class)]
 #[Medium]

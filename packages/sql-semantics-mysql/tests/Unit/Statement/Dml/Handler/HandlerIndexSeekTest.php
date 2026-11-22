@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(HandlerIndexSeek::class)]
 #[Medium]

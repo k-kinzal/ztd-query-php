@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateEvent::class)]
 #[Medium]

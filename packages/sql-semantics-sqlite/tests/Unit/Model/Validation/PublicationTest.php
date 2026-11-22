@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Publication::class)]
 #[Medium]
@@ -30,7 +30,7 @@ final class PublicationTest extends TestCase
         $use = new ColumnUse(new Name('a'));
         $statement = new Select([new ResultColumn($use, new Name('order'))], new TableInput(new QualifiedName(new Name('t'))));
 
-        [$facts, $sql] = (new \Tests\Support\RenderAudit())->establish($semantics->context([$table]), $statement);
+        [$facts, $sql] = (new \SqlSemantics\Testing\Sqlite\RenderAudit())->establish($semantics->context([$table]), $statement);
 
         self::assertSame('SELECT a AS `order` FROM t', $sql);
         self::assertInstanceOf(ResolvedColumn::class, $facts->scalar($use)->resolution);
@@ -54,7 +54,7 @@ final class PublicationTest extends TestCase
         $first = $semantics->inspect('SELECT 1')->statement;
         $second = $semantics->inspect('SELECT 2')->statement;
 
-        $publication = new \Tests\Support\RenderAudit();
+        $publication = new \SqlSemantics\Testing\Sqlite\RenderAudit();
 
         self::assertSame($first, $publication->root([$first]));
         $script = $publication->root([$first, $second]);

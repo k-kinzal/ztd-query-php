@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\ReturnStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AtomicBody::class)]
 #[Medium]

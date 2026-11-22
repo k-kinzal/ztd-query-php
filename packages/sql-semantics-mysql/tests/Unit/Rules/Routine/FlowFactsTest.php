@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FlowFacts::class)]
 #[Medium]

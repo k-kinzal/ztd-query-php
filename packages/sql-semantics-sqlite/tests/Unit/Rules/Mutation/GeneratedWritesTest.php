@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\GeneratedColumnWrite
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Problem\WriteKind;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(GeneratedWrites::class)]
 #[Medium]

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 use SqlSemantics\SemanticsIR;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Semantics::class)]
 #[Medium]

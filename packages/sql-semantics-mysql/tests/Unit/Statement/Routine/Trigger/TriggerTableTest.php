@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TriggerTable::class)]
 #[Medium]

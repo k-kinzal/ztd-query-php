@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(BareName::class)]
 #[Medium]

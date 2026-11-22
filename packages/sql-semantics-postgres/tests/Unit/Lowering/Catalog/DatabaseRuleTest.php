@@ -14,7 +14,7 @@ final class DatabaseRuleTest extends TestCase
 {
     public function testStatementLowersCreateDatabase(): void
     {
-        self::assertSame('CREATE DATABASE d', (new \Tests\Support\Inspection())->inspect('CREATE DATABASE d')->toString());
+        self::assertSame('CREATE DATABASE d', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE DATABASE d')->toString());
     }
 
     public function testOptionsLowersEveryItem(): void

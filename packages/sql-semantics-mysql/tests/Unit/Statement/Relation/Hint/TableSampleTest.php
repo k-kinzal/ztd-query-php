@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TableSample::class)]
 #[Medium]

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\AmbiguousFields;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\FieldLookup;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FieldLookup::class)]
 #[Medium]

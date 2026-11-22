@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FrameUnit::class)]
 #[Medium]

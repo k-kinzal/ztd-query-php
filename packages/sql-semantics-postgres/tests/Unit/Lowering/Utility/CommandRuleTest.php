@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Call;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\DoBlock;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\DoLanguage;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Notify;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(CommandRule::class)]
 #[Medium]

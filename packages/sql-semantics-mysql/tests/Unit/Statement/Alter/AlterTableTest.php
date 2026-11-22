@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterTable::class)]
 #[Medium]

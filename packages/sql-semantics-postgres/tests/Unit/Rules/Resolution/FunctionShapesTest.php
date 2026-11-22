@@ -14,14 +14,14 @@ final class FunctionShapesTest extends TestCase
 {
     public function testDeriveIsOpenForAnUndeclaredFunction(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT * FROM f()');
         self::assertNull($query->fields());
     }
 
     public function testFunctionNameIsTheCalledName(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT * FROM f() AS (a integer)');
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
@@ -32,21 +32,21 @@ final class FunctionShapesTest extends TestCase
 
     public function testDeriveReportsDefinitionsAfterSeveralFunctions(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT * FROM ROWS FROM (f(), g()) AS s (a int)');
         self::assertSame('ROWS FROM() with multiple functions cannot have a column definition list', $query->facts->diagnostics[0]->message());
     }
 
     public function testDeriveDerivesRepeatedDefinitions(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT * FROM ROWS FROM (f() AS (x int)) AS s (a b.c ((1 IS FALSE)))');
         self::assertSame('multiple column definition lists are not allowed for the same function', $query->facts->diagnostics[0]->message());
     }
 
     public function testDefinedHasTheDefinedTypes(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT * FROM f() AS (a boolean)');
         self::assertSame('boolean', ($query->field(0)->type instanceof \SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known ? $query->field(0)->type->descriptor->name() : null));
     }

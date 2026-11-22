@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TableProblems::class)]
 #[Medium]

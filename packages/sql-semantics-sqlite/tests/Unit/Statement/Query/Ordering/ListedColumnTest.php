@@ -20,8 +20,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\CommonTable;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ListedColumn::class)]
 #[Medium]

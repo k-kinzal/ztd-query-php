@@ -6,7 +6,7 @@ namespace Bench;
 
 use PhpBench\Attributes as Bench;
 use SqlSemantics\Platform\MySql\Mode;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 /**
  * Measures the analysis of a statement: parsing, lowering, derivation and rendering with its checks.

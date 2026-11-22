@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FromRule::class)]
 #[Medium]

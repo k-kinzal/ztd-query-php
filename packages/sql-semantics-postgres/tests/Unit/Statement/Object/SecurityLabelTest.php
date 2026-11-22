@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\SecurityLabel;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SecurityLabel::class)]
 #[Medium]

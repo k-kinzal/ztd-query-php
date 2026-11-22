@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateResourceGroup::class)]
 #[Medium]

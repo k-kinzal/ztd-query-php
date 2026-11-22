@@ -29,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InTable;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Precedence::class)]
 #[Medium]

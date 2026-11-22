@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ReplicationFilter::class)]
 #[Medium]

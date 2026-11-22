@@ -14,7 +14,7 @@ final class DropColumnTest extends TestCase
 {
     public function testDeriveClauseChecksTheColumnUnlessIfExists(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t DROP zz, DROP IF EXISTS yy', $context);
@@ -25,7 +25,7 @@ final class DropColumnTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t DROP COLUMN IF EXISTS b RESTRICT', []);
         self::assertSame('ALTER TABLE t DROP IF EXISTS b RESTRICT', $statement->toString());
     }

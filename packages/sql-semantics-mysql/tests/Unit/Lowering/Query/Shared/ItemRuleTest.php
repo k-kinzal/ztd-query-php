@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ItemRule::class)]
 #[Medium]

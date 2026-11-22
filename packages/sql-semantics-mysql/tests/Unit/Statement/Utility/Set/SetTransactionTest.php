@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\AccessMode;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SetTransaction::class)]
 #[Medium]

@@ -14,7 +14,7 @@ final class TriggerTransitionTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TRIGGER g AFTER UPDATE ON t REFERENCING OLD TABLE AS o NEW TABLE n FOR EACH STATEMENT EXECUTE FUNCTION f()', []);
         self::assertSame('CREATE TRIGGER g AFTER UPDATE ON t REFERENCING OLD TABLE o NEW TABLE n FOR EACH STATEMENT EXECUTE FUNCTION f()', $statement->toString());
     }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Bench;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
  * Measures the analysis of a statement: parsing, lowering, derivation and rendering with its checks.

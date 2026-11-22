@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(GeneratedColumn::class)]
 #[Medium]

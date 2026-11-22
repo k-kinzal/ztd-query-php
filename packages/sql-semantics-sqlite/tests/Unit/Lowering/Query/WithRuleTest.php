@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\CommonTable;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\Materialization;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(WithRule::class)]
 #[Medium]

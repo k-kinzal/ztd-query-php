@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Transaction\Rollback;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\RollbackTo;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Savepoint;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TransactionRule::class)]
 #[Medium]

@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SchemaRule::class)]
 #[Medium]

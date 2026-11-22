@@ -28,7 +28,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]

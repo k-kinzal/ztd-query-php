@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TimeKeyword::class)]
 #[Medium]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\Sqlite;
 
 use InvalidArgumentException;
 use SqlParser\Lexer\SourceException;
@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\SemanticException;
-use SqlSemantics\Platform\Sqlite\Model\Facade\Splitter;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Validation\LeafEmbedding;
@@ -153,25 +152,5 @@ final class Inspection
         Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
 
         return $operation;
-    }
-
-    /**
-     * Finds the statement boundaries of a script, as the database finds them.
-     *
-     * Each text ends with its own terminator; trailing whitespace and comments
-     * stay with the last statement. A semicolon inside a string, a comment, or
-     * a compound statement ends nothing.
-     *
-     * @return list<string>
-     *
-     * @throws AnalysisException When a statement is outside the selected grammar
-     */
-    public function split(string $sql): array
-    {
-        try {
-            return (new Splitter($this->parser))->split($sql);
-        } catch (SourceException $error) {
-            throw new AnalysisException($error->getMessage(), 0, $error);
-        }
     }
 }

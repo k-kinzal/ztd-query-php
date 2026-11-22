@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(IndexHint::class)]
 #[Medium]

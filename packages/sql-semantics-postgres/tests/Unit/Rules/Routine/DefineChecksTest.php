@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Choice\Collation
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(DefineChecks::class)]
 #[Medium]

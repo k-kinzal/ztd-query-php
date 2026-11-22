@@ -32,8 +32,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateTrigger::class)]
 #[Medium]

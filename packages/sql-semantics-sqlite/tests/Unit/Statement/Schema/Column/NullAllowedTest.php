@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\NullAllowed;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NullAllowed::class)]
 #[Medium]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(WhileLoop::class)]
 #[Medium]

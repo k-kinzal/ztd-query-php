@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(OnceSchedule::class)]
 #[Medium]

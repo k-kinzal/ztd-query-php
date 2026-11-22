@@ -25,7 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\RenamedPart;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Rename::class)]
 #[Medium]

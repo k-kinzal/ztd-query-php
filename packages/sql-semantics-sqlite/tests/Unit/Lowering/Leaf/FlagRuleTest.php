@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\FlagRule;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(FlagRule::class)]
 #[Medium]

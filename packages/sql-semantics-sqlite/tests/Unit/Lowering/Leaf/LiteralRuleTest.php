@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(LiteralRule::class)]
 #[Medium]

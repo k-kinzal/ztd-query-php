@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TypeNameRule::class)]
 #[Medium]

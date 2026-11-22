@@ -31,6 +31,8 @@ final class StatementBinder
 
     /**
      * Checks the complete input structure and resolves its static references.
+     * @throws AnalysisException When the SQL is outside the grammar
+     * @throws SemanticException When binding finds a semantic error
      */
     public function resolve(string $sql, AnalysisContext $context): BoundStatement
     {

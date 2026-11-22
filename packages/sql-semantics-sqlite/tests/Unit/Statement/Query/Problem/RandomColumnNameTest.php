@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ConditionalCol
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RandomColumnName::class)]
 #[Medium]

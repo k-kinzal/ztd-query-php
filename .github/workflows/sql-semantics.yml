@@ -107,7 +107,7 @@ jobs:
           $semantics = new $class();
           if (method_exists($semantics, 'inspect') || method_exists($semantics, 'diagnose')
               || class_exists('SqlSemantics\\Platform\\' . $dialect . '\\Model\\Statement\\Operation')
-              || interface_exists('SqlSemantics\\Query') || class_exists('Tests\\Support\\Inspection')) {
+              || interface_exists('SqlSemantics\\Query') || class_exists('SqlSemantics\\Testing\\' . $dialect . '\\Inspection')) {
               throw new RuntimeException('The runtime installation exposes a non-IR analysis route.');
           }
           $query = $semantics->analyze('SELECT 42 AS answer');

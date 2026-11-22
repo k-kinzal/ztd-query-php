@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExpressionFacts::class)]
 #[Medium]

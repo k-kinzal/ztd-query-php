@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Set\ValueRule;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ValueRule::class)]
 #[Medium]

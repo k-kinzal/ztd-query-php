@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SizeOption::class)]
 #[Medium]

@@ -14,7 +14,7 @@ final class AlterCommandTest extends TestCase
 {
     public function testActionsAreAlterCommands(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t SET LOGGED, NOT OF', []);
         self::assertSame('ALTER TABLE t SET LOGGED, NOT OF', $statement->toString());
     }

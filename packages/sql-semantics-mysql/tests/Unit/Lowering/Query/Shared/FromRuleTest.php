@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FromRule::class)]
 #[Medium]

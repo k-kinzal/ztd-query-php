@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\Equivalence;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 use Throwable;
 
 /**

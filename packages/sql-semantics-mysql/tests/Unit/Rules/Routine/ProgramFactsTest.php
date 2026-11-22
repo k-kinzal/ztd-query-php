@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ProgramFacts::class)]
 #[Medium]

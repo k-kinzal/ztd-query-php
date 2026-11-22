@@ -20,7 +20,7 @@ final class ForeignKeysTest extends TestCase
 
     public function testDeriveResolvesTheReferencedTable(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x int REFERENCES t (zz) MATCH PARTIAL)', $context);
@@ -32,14 +32,14 @@ final class ForeignKeysTest extends TestCase
 
     public function testWriteTargetWritesTheReferencedSide(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (x int REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', []);
         self::assertSame('CREATE TABLE n (x INT REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', $statement->toString());
     }
 
     public function testDeriveReportsAReferencedView(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')];
         self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('CREATE TABLE c (a int REFERENCES v (zz))', $context)->facts->diagnostics));
     }

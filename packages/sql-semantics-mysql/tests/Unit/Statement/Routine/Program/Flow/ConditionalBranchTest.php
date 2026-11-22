@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionalBranch::class)]
 #[Medium]

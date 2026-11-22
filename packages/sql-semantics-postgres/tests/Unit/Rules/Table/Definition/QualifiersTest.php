@@ -20,7 +20,7 @@ final class QualifiersTest extends TestCase
 
     public function testDeriveReportsSeveralCollations(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a text COLLATE "C" COLLATE "POSIX")', []);
         self::assertSame([
           0 => 'multiple COLLATE clauses not allowed',
@@ -29,7 +29,7 @@ final class QualifiersTest extends TestCase
 
     public function testAttributesReportsMisplacedAndRepeatedAttributes(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int DEFERRABLE, b int UNIQUE DEFERRABLE NOT DEFERRABLE INITIALLY DEFERRED INITIALLY IMMEDIATE)', []);
         self::assertSame([
           0 => 'misplaced DEFERRABLE clause',
@@ -41,7 +41,7 @@ final class QualifiersTest extends TestCase
 
     public function testConflictsReportsCombinedValueSources(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int DEFAULT 1 GENERATED ALWAYS AS (2) STORED GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS (3) STORED)', []);
         self::assertSame([
           0 => 'multiple generation clauses specified for column "a"',

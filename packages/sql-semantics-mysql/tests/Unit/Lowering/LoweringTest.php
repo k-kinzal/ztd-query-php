@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Lowering::class)]
 #[Medium]

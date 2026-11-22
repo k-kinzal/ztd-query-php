@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableDeclaration::class)]
 #[Medium]

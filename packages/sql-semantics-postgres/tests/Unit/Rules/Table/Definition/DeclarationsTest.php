@@ -14,7 +14,7 @@ final class DeclarationsTest extends TestCase
 {
     public function testTableDeclaresTheColumnsOfAPartition(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE p1 PARTITION OF t (b NOT NULL) DEFAULT', $context);
@@ -27,7 +27,7 @@ final class DeclarationsTest extends TestCase
 
     public function testListedPutsInheritedColumnsFirst(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x int, b int NOT NULL) INHERITS (t)', $context);
@@ -41,7 +41,7 @@ final class DeclarationsTest extends TestCase
 
     public function testCopyClosesTheDeclarationAtAnUndeclaredSource(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x int, LIKE zz, y int)', $context);
@@ -56,7 +56,7 @@ final class DeclarationsTest extends TestCase
 
     public function testConstrainAppliesPrimaryKeys(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x int, y int, PRIMARY KEY (y))', $context);
@@ -68,7 +68,7 @@ final class DeclarationsTest extends TestCase
 
     public function testNotNullCountsIdentityColumns(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x int GENERATED ALWAYS AS IDENTITY)', $context);
@@ -79,7 +79,7 @@ final class DeclarationsTest extends TestCase
 
     public function testCopyKeepsGeneratedColumnsOfParentsAndPartitions(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED) PARTITION BY LIST (a)')->declarations());
         $child = $semantics->diagnose('CREATE TABLE c (b int, x int) INHERITS (t)', $context);
@@ -92,7 +92,7 @@ final class DeclarationsTest extends TestCase
 
     public function testIncludesGeneratedAppliesTheOptionsInOrder(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)')->declarations());
         self::assertSame(
@@ -106,7 +106,7 @@ final class DeclarationsTest extends TestCase
 
     public function testGeneratedTellsAGenerationClause(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int, b int GENERATED ALWAYS AS (a) STORED, c int GENERATED ALWAYS AS IDENTITY)');
         self::assertSame([false, true, false], array_map(static fn ($column): bool => $column->generated, $statement->declarations()[0]->columns));
     }

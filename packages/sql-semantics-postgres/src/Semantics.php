@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\Catalog;
@@ -72,11 +73,21 @@ final class Semantics implements Analyzer
      * Builds a context from explicit SQL relation definitions.
      *
      * Null describes an open catalog. An explicit list can enumerate the entire catalog.
-     * @param list<string>|null $declarations Relation definition statements in dependency order
+     * @param array<array-key, mixed>|null $declarations An ordered list of SQL relation definitions
      */
     public function context(?array $declarations = null, bool $complete = true): Context
     {
-        return $this->catalog->build($declarations, $complete);
+        if ($declarations === null) {
+            return $this->catalog->build(null, $complete);
+        }
+        Check::input(array_is_list($declarations), 'Catalog definitions must form a list.');
+        $definitions = [];
+        foreach ($declarations as $definition) {
+            Check::input(is_string($definition), 'Catalog definitions must be SQL strings.');
+            $definitions[] = $definition;
+        }
+
+        return $this->catalog->build($definitions, $complete);
     }
 
     /**

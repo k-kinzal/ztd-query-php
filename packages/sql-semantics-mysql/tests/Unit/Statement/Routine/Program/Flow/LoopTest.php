@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Leave;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Loop::class)]
 #[Medium]

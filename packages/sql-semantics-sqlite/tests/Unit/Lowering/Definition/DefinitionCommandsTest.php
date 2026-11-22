@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DefinitionCommands::class)]
 #[Medium]

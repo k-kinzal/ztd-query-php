@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ReplicaUntil::class)]
 #[Medium]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\TableResolution;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableResolution::class)]
 #[Medium]

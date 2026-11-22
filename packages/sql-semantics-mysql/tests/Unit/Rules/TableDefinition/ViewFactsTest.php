@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ViewFacts::class)]
 #[Medium]

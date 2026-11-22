@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\MySql;
 
 use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
-use SqlSemantics\Platform\PostgreSql\Model\Contract\LeafKeys;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvariantViolation;
-use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Model\Contract\LeafKeys;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Model\Lowering\Productions;
 
 /**
  * Checks that the layouts of a rendering only re-spelled the rendered tokens.

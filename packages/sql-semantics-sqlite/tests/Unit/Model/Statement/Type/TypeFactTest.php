@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\TypeFact;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TypeFact::class)]
 #[Medium]

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(PartitionEntry::class)]
 #[Medium]

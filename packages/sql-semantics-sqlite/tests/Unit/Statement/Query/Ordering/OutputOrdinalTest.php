@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\OrdinalOutOfRange;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(OutputOrdinal::class)]
 #[Medium]

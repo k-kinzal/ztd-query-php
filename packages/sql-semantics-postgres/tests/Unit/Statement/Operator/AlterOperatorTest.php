@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AlterOperator::class)]
 #[Medium]

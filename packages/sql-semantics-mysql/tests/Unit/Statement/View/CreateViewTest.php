@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateView::class)]
 #[Medium]

@@ -10,7 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering

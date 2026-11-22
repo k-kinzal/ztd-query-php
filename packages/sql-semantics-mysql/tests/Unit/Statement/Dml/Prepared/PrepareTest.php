@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Prepare::class)]
 #[Medium]

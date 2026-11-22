@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivileg
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Grantable;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversNothing]
 #[Medium]

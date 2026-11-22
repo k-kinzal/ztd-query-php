@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\Statemen
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DiagnosticsRule::class)]
 #[Medium]

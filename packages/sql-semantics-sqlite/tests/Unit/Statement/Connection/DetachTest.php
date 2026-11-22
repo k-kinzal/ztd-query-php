@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Detach::class)]
 #[Medium]

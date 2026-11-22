@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(InsertInto::class)]
 #[Medium]

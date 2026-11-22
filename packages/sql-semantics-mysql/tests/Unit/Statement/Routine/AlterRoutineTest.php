@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterRoutine::class)]
 #[Medium]

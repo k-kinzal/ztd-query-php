@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorFamilyAddition;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(OperatorFamilyAddition::class)]
 #[Medium]

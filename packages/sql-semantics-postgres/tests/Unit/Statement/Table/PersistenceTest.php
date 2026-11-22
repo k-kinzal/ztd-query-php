@@ -28,7 +28,7 @@ final class PersistenceTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('CREATE GLOBAL TEMPORARY TABLE t (a int)', []);
         self::assertSame('CREATE GLOBAL TEMPORARY TABLE t (a INT)', $statement->toString());
     }

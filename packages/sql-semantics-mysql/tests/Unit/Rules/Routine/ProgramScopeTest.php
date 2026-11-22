@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ProgramScope::class)]
 #[Medium]

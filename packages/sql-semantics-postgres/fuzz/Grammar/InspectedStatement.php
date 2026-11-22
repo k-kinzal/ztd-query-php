@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\PostgreSql;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
@@ -52,6 +52,9 @@ final class InspectedStatement
         $this->sql = $sql;
     }
 
+    /**
+     * Derives the binding used by the complete IR lowerer.
+     */
     public function binding(): \SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement
     {
         return new \SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement($this->context, $this->statement);

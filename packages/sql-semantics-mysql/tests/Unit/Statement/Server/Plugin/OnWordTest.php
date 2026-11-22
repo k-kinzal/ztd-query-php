@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(OnWord::class)]
 #[Medium]

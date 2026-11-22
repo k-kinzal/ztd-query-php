@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(RoutineChecks::class)]
 #[Medium]

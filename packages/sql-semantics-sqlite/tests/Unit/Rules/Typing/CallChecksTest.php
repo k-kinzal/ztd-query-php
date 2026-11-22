@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\CallMisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\WrongArgumentCount;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CallChecks::class)]
 #[Medium]

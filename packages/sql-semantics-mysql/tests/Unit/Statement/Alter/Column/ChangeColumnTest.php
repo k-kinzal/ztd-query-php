@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ChangeColumn::class)]
 #[Medium]

@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(WriteScope::class)]
 #[Medium]

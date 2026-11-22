@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternMatch;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\PatternOperator;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(PatternOperator::class)]
 #[Medium]

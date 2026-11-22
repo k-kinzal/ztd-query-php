@@ -24,7 +24,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblemKi
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Define::class)]
 #[Medium]

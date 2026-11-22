@@ -23,7 +23,7 @@ final class UtilityCommandsTest extends TestCase
 {
     public function testStatementHandsEachStatementToItsGroup(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         self::assertSame(
             ['BEGIN', 'SET a TO 1', 'VACUUM', 'LISTEN c'],
             [$semantics->inspect('BEGIN')->toString(), $semantics->inspect('SET a = 1')->toString(), $semantics->inspect('VACUUM')->toString(), $semantics->inspect('LISTEN c')->toString()],

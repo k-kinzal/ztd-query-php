@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\Sqlite;
 
 use SqlParser\Lexer\SourceException;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
@@ -25,6 +25,7 @@ final class RenderAudit
     /**
      * Derives facts and checks the rendered grammar fixture.
      * @return array{Facts, string}
+     * @throws InvariantViolation When the fixture does not round trip
      */
     public function establish(AnalysisContext $context, Statement $statement): array
     {

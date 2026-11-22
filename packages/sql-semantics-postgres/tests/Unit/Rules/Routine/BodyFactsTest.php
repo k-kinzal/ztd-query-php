@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(BodyFacts::class)]
 #[Medium]

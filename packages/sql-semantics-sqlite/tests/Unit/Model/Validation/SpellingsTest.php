@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\Sqlite\SqliteParser;
-use Tests\Support\Spellings;
 use SqlSemantics\Platform\Sqlite\Platform;
 use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Spellings;
 
 #[CoversClass(Spellings::class)]
 #[Medium]

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Magnitudes::class)]
 #[Medium]

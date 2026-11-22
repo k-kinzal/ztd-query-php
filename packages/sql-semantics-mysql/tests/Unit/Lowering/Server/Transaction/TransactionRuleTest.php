@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\TransactionRule;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TransactionRule::class)]
 #[Medium]

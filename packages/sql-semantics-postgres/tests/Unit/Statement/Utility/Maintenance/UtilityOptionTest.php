@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(UtilityOption::class)]
 #[Medium]

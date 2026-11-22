@@ -14,7 +14,7 @@ final class AlterConstraintTest extends TestCase
 {
     public function testDeriveClauseChecksTheAttributes(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER CONSTRAINT f NOT DEFERRABLE INITIALLY DEFERRED', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
@@ -24,7 +24,7 @@ final class AlterConstraintTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER CONSTRAINT f DEFERRABLE INITIALLY IMMEDIATE', []);
         self::assertSame('ALTER TABLE t ALTER CONSTRAINT f DEFERRABLE INITIALLY IMMEDIATE', $statement->toString());
     }

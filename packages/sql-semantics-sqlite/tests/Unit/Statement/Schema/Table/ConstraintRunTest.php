@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ConstraintRun;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ConstraintRun::class)]
 #[Medium]

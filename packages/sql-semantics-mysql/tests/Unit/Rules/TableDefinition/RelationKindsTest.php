@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RelationKinds::class)]
 #[Medium]

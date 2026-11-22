@@ -14,6 +14,6 @@ final class BeginSpellingTest extends TestCase
 {
     public function testBothSpellingsAreKept(): void
     {
-        self::assertSame(['BEGIN', 'START TRANSACTION'], [(new \Tests\Support\Inspection())->inspect('BEGIN')->toString(), (new \Tests\Support\Inspection())->inspect('START TRANSACTION')->toString()]);
+        self::assertSame(['BEGIN', 'START TRANSACTION'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('BEGIN')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('START TRANSACTION')->toString()]);
     }
 }

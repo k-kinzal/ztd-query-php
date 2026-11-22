@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterUser::class)]
 #[Medium]

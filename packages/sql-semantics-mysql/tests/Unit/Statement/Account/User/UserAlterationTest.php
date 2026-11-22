@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversNothing]
 #[Medium]

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineFacts;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(RoutineFacts::class)]
 #[Medium]

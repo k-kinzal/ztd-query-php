@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\WrongRelationKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RelationKinds::class)]
 #[Medium]

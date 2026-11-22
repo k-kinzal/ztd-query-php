@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ExpressionRule::class)]
 #[Medium]

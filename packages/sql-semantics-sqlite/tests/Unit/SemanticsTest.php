@@ -24,7 +24,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\SemanticsIR;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Semantics::class)]
 #[Medium]
@@ -123,9 +123,9 @@ final class SemanticsTest extends TestCase
         $complete = $semantics->context([]);
         $partial = $semantics->context([], false);
 
-        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $open);
-        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $complete);
-        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext::class, $partial);
+        self::assertInstanceOf(AnalysisContext::class, $open);
+        self::assertInstanceOf(AnalysisContext::class, $complete);
+        self::assertInstanceOf(AnalysisContext::class, $partial);
         self::assertFalse($open->complete);
         self::assertTrue($complete->complete);
         self::assertFalse($partial->complete);

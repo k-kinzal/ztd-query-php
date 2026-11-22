@@ -14,7 +14,7 @@ final class AlterStatisticsTest extends TestCase
 {
     public function testDeriveStatementHasNoOperand(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('ALTER STATISTICS s SET STATISTICS 5', []);
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
@@ -22,7 +22,7 @@ final class AlterStatisticsTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('ALTER STATISTICS IF EXISTS x.s SET STATISTICS -1', []);
         self::assertSame('ALTER STATISTICS IF EXISTS x.s SET STATISTICS - 1', $statement->toString());
     }

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RevokePrivileges::class)]
 #[Medium]

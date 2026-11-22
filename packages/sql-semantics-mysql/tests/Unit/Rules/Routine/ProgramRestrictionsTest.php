@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Model\Statement\Query;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ProgramRestrictions::class)]
 #[Medium]

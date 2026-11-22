@@ -14,7 +14,7 @@ final class ColumnTypingTest extends TestCase
 {
     public function testSerialAnswersTheIntegerType(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a bigserial, b public.serial)');
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -37,7 +37,7 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorIsNullForATypeNameThatIsAnError(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int, c serial[], d int)');
         self::assertSame([
           0 => 'a integer Nullable',
@@ -46,7 +46,7 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorNamesATypeTheContextCannotIdentify(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int, b mood, c text NOT NULL, d app.money[], e int)');
         self::assertSame([
           0 => 'a integer Nullable',
@@ -60,7 +60,7 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorIsTheCatalogTypeInACompleteContext(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (c text, d date[])', []);
         self::assertSame([
           0 =>
@@ -71,7 +71,7 @@ final class ColumnTypingTest extends TestCase
 
     public function testDescriptorOfAnotherStatementKeepsItsShape(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int)');
         self::assertSame([
           0 => 'a integer Nullable',

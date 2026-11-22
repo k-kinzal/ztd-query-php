@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Targets::class)]
 #[Medium]

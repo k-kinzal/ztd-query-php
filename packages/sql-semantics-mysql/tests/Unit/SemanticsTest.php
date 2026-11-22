@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\SemanticsIR;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Semantics::class)]
 #[Medium]

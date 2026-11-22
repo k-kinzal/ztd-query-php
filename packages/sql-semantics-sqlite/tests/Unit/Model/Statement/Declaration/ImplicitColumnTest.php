@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\ImplicitColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ImplicitColumn::class)]
 #[Medium]

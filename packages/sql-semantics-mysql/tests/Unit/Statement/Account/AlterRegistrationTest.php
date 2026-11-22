@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterRegistration;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AlterRegistration::class)]
 #[Medium]

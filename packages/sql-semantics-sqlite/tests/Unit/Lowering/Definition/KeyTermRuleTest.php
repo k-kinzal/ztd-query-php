@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(KeyTermRule::class)]
 #[Medium]

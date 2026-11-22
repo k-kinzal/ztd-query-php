@@ -26,6 +26,10 @@ use SqlSemantics\SemanticsIR;
  * A complete UPDATE over a single resolved base table.
  *
  * @visibility public
+ * @example Preparing a checked UPDATE operation
+ *     $sqlite = new \SqlSemantics\Platform\Sqlite\Semantics();
+ *     $catalog = $sqlite->context(['CREATE TABLE items (id INTEGER)']);
+ *     $sqlite->analyze('UPDATE items SET id = 2', $catalog) instanceof \SqlSemantics\Platform\Sqlite\Ir\Mutation\Update // => true
  */
 final class Update implements SemanticsIR
 {

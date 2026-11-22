@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversNothing]
 #[Medium]

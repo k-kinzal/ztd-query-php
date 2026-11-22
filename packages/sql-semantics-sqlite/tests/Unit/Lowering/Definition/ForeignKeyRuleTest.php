@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceAction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceReaction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ForeignKey;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ForeignKeyRule::class)]
 #[Medium]

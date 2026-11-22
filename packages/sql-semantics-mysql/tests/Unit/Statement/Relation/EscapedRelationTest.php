@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(EscapedRelation::class)]
 #[Medium]

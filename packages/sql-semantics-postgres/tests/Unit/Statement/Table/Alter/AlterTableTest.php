@@ -14,7 +14,7 @@ final class AlterTableTest extends TestCase
 {
     public function testDeriveStatementDerivesTheActionsAgainstTheTable(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
@@ -25,7 +25,7 @@ final class AlterTableTest extends TestCase
 
     public function testDeriveRelationResolvesTheTable(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t DROP b', $context);
@@ -38,7 +38,7 @@ final class AlterTableTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE IF EXISTS ONLY s.t ADD COLUMN d int, DROP COLUMN e', []);
         self::assertSame('ALTER TABLE IF EXISTS ONLY s.t ADD d INT, DROP e', $statement->toString());
     }

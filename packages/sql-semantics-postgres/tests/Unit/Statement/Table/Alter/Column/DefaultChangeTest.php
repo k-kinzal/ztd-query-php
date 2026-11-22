@@ -14,7 +14,7 @@ final class DefaultChangeTest extends TestCase
 {
     public function testDeriveClauseSeesNoColumn(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('ALTER TABLE t ALTER b SET DEFAULT a', $context);
@@ -25,7 +25,7 @@ final class DefaultChangeTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('ALTER TABLE t ALTER b SET DEFAULT 1 + 2', []);
         self::assertSame('ALTER TABLE t ALTER b SET DEFAULT 1 + 2', $statement->toString());
     }

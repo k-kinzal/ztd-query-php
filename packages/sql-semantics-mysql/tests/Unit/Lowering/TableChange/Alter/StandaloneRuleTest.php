@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\StandaloneRule;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StandaloneRule::class)]
 #[Medium]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 use SqlSemantics\Platform\Sqlite\Platform;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Script::class)]
 #[Medium]

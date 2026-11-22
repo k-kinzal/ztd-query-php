@@ -14,7 +14,7 @@ final class IndexElementTest extends TestCase
 {
     public function testDeriveClauseResolvesTheKey(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE INDEX ON t (zz text_pattern_ops (x = 1))', $context);
@@ -25,7 +25,7 @@ final class IndexElementTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE INDEX ON t (c COLLATE "C" text_ops (x = 1) DESC NULLS FIRST)', []);
         self::assertSame('CREATE INDEX ON t (c COLLATE "C" text_ops (x = 1) DESC NULLS FIRST)', $statement->toString());
     }

@@ -14,6 +14,6 @@ final class CastContextTest extends TestCase
 {
     public function testAssignmentIsKept(): void
     {
-        self::assertSame('CREATE CAST (a AS b) WITH INOUT AS ASSIGNMENT', (new \Tests\Support\Inspection())->inspect('CREATE CAST (a AS b) WITH INOUT AS ASSIGNMENT')->toString());
+        self::assertSame('CREATE CAST (a AS b) WITH INOUT AS ASSIGNMENT', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE CAST (a AS b) WITH INOUT AS ASSIGNMENT')->toString());
     }
 }

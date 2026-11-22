@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(LoadInput::class)]
 #[Medium]

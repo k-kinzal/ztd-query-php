@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\StatementRule;
 use SqlSemantics\Platform\MySql\Statement\Account\RenameUser;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StatementRule::class)]
 #[Medium]

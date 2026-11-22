@@ -14,7 +14,7 @@ final class PrivilegesTest extends TestCase
 {
     public function testStatementLowersEveryGroup(): void
     {
-        self::assertSame('GRANT SELECT ON TABLE t TO u', (new \Tests\Support\Inspection())->inspect('GRANT SELECT ON t TO u')->toString());
+        self::assertSame('GRANT SELECT ON TABLE t TO u', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('GRANT SELECT ON t TO u')->toString());
     }
 
     public function testStatementRoutesARoleCommand(): void

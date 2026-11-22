@@ -44,7 +44,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(BlockRule::class)]
 #[Medium]

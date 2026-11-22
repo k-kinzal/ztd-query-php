@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\ForeignKey;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ForeignKey::class)]
 #[Medium]

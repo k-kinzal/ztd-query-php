@@ -14,7 +14,7 @@ final class CopyOptionRuleTest extends TestCase
 {
     public function testOptionsLowersTheOldSyntax(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->diagnose("COPY t TO STDOUT WITH CSV HEADER QUOTE '\"' FORCE QUOTE *");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -23,7 +23,7 @@ final class CopyOptionRuleTest extends TestCase
 
     public function testItemLowersAForceColumnList(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->diagnose('COPY t FROM STDIN CSV FORCE NOT NULL a, b');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -34,7 +34,7 @@ final class CopyOptionRuleTest extends TestCase
 
     public function testOptionLowersTheName(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->diagnose('COPY t FROM STDIN ("Format" csv)');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -43,7 +43,7 @@ final class CopyOptionRuleTest extends TestCase
 
     public function testArgumentLowersEveryForm(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->diagnose("COPY t FROM STDIN (a, b 1, c *, d DEFAULT, e (x), f 'y', g true)");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -52,7 +52,7 @@ final class CopyOptionRuleTest extends TestCase
 
     public function testArgumentsLowersTheItems(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->diagnose("COPY t FROM STDIN (force_null (a, 'b', off))");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);

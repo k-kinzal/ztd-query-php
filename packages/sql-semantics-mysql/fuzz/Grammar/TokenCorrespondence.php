@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\MySql;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;

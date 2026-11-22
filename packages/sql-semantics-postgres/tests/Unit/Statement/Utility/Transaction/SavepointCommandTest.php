@@ -14,11 +14,11 @@ final class SavepointCommandTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \Tests\Support\Inspection())->inspect('SAVEPOINT s')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SAVEPOINT s')->facts->diagnostics);
     }
 
     public function testRenderDropsTheOptionalWords(): void
     {
-        self::assertSame(['SAVEPOINT s', 'RELEASE s', 'ROLLBACK TO s', 'ROLLBACK TO "S"'], [(new \Tests\Support\Inspection())->inspect('SAVEPOINT s')->toString(), (new \Tests\Support\Inspection())->inspect('RELEASE SAVEPOINT s')->toString(), (new \Tests\Support\Inspection())->inspect('ROLLBACK TRANSACTION TO SAVEPOINT s')->toString(), (new \Tests\Support\Inspection())->inspect('ROLLBACK TO "S"')->toString()]);
+        self::assertSame(['SAVEPOINT s', 'RELEASE s', 'ROLLBACK TO s', 'ROLLBACK TO "S"'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('SAVEPOINT s')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('RELEASE SAVEPOINT s')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ROLLBACK TRANSACTION TO SAVEPOINT s')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ROLLBACK TO "S"')->toString()]);
     }
 }

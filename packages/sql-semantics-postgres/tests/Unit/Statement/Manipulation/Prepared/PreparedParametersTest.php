@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\PreparedParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(PreparedParameters::class)]
 #[Medium]

@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ConditionDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ConditionRule::class)]
 #[Medium]

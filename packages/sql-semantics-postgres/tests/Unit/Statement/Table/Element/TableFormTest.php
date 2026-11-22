@@ -14,7 +14,7 @@ final class TableFormTest extends TestCase
 {
     public function testElementsIsEmptyForATypedTableWithoutElements(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('CREATE TABLE t OF ty', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);

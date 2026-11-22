@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Reindex;
 use SqlSemantics\Platform\Sqlite\Statement\Maintenance\Vacuum;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MaintenanceRule::class)]
 #[Medium]

@@ -237,9 +237,14 @@ try {
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
+    $contextBody = 'if ($declarations === null) { return $this->catalog->build(null, $complete); }'
+        . '\\' . $platform . '\\Model\\Diagnostic\\Check::input(array_is_list($declarations), \'Catalog definitions must form a list.\');'
+        . '$definitions = []; foreach ($declarations as $definition) {'
+        . '\\' . $platform . '\\Model\\Diagnostic\\Check::input(is_string($definition), \'Catalog definitions must be SQL strings.\');'
+        . '$definitions[] = $definition; } return $this->catalog->build($definitions, $complete);';
     $routes = [
         'analyze' => [$roots, $analyze],
-        'context' => [['SqlSemantics\\AnalysisContext'], 'return $this->catalog->build($declarations, $complete);'],
+        'context' => [['SqlSemantics\\AnalysisContext'], $contextBody],
         'analyzeAll' => [['array'], $resolve . ' $results = [];'
             . 'foreach ($this->split($sql) as $statement) { $results[] = $this->analyze($statement, $declarations); } return $results;'],
     ];

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Transaction\Transaction;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionCommand;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TransactionLowering::class)]
 #[Small]

@@ -14,6 +14,6 @@ final class CommitSpellingTest extends TestCase
 {
     public function testBothSpellingsAreKept(): void
     {
-        self::assertSame(['COMMIT', 'END'], [(new \Tests\Support\Inspection())->inspect('COMMIT WORK')->toString(), (new \Tests\Support\Inspection())->inspect('END TRANSACTION')->toString()]);
+        self::assertSame(['COMMIT', 'END'], [(new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('COMMIT WORK')->toString(), (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('END TRANSACTION')->toString()]);
     }
 }

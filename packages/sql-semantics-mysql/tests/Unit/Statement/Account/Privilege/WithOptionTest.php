@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversNothing]
 #[Medium]

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateLoadableFunction::class)]
 #[Medium]

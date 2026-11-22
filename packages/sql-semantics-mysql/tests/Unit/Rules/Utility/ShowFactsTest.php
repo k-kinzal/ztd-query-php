@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\OpenStar;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ShowFacts::class)]
 #[Medium]

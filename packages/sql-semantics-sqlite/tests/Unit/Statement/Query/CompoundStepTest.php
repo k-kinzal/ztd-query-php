@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CompoundStep::class)]
 #[Medium]

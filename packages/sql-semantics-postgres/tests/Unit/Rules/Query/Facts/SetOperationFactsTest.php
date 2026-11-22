@@ -14,14 +14,14 @@ final class SetOperationFactsTest extends TestCase
 {
     public function testDeriveKeepsTheNamesOfTheFirstOperand(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT 1 AS a INTERSECT SELECT 2 AS b');
         self::assertSame('a', $query->field(0)->name?->value);
     }
 
     public function testCombinedReportsTypesThatCannotBeMatched(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('SELECT 1 UNION SELECT TRUE');
         self::assertSame('UNION types integer and boolean cannot be matched.', $query->facts->diagnostics[0]->message());
     }

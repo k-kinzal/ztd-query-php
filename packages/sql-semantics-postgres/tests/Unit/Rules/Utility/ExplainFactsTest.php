@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(ExplainFacts::class)]
 #[Medium]

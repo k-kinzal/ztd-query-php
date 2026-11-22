@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Locking;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Locking::class)]
 #[Medium]

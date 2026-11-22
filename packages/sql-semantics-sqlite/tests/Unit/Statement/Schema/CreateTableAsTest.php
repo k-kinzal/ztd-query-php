@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateTableAs::class)]
 #[Medium]

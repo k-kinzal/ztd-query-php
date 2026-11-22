@@ -22,7 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\Dictionary
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Reading;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Define;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(AttributeChecks::class)]
 #[Medium]

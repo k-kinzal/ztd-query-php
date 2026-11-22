@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Assignment;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(UpsertRule::class)]
 #[Medium]

@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterDropColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AlterDropColumn::class)]
 #[Medium]

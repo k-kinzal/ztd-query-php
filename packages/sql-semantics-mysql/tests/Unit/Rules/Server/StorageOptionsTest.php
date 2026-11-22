@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StorageOptions::class)]
 #[Medium]

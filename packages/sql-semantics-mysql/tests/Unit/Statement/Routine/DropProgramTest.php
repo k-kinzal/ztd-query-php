@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropProgram::class)]
 #[Medium]

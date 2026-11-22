@@ -7,9 +7,9 @@ namespace Tests\Unit\Model\Validation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\TokenCorrespondence;
 use SqlSemantics\Platform\Sqlite\Platform;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
+use SqlSemantics\Testing\Sqlite\TokenCorrespondence;
 
 #[CoversClass(TokenCorrespondence::class)]
 #[Medium]

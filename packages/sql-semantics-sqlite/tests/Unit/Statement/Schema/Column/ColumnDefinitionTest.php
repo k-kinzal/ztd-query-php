@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ColumnDefinition::class)]
 #[Medium]

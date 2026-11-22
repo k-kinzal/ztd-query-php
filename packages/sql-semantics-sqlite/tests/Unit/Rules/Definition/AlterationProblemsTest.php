@@ -23,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AlterationProblems::class)]
 #[Medium]

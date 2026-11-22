@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Lowering\Server\Instance\InstanceRule;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(InstanceRule::class)]
 #[Medium]

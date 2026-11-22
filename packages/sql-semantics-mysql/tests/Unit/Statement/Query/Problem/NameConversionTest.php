@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\DependentField;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(NameConversion::class)]
 #[Medium]

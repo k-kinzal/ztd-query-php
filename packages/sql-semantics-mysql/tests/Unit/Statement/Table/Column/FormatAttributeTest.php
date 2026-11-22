@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\FormatAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnFormat;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FormatAttribute::class)]
 #[Medium]

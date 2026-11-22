@@ -22,7 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TriggerRule::class)]
 #[Medium]

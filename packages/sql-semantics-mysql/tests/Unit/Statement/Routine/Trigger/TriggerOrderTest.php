@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\OrderPlacement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerOrder;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TriggerOrder::class)]
 #[Medium]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\Attach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(NameOperand::class)]
 #[Medium]

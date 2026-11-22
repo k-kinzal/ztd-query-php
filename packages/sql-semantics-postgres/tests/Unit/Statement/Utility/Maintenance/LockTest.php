@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Lock;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Lock::class)]
 #[Medium]

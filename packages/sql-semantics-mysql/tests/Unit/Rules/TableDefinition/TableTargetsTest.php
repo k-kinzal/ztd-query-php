@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TableTargets::class)]
 #[Medium]

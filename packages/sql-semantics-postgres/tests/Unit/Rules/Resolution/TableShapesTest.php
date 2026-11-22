@@ -22,7 +22,7 @@ final class TableShapesTest extends TestCase
 
     public function testInputReportsATableWithoutReturning(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->diagnose('WITH x AS (INSERT INTO t VALUES (1)) SELECT * FROM x');
         self::assertSame('WITH query "x" does not have a RETURNING clause', $query->facts->diagnostics[0]->message());
     }
@@ -34,7 +34,7 @@ final class TableShapesTest extends TestCase
 
     public function testInputReportsSamplingAView(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [$semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a'), $semantics->diagnose('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
         self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('SELECT * FROM v TABLESAMPLE system (1)', $context)->facts->diagnostics));
         self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->diagnose('SELECT * FROM m TABLESAMPLE system (1)', $context)->facts->diagnostics));

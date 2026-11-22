@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DatabaseOption::class)]
 #[Medium]

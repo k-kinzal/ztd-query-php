@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 /**
  * Measures analyzing a PostgreSQL statement into its semantic model and back to SQL.

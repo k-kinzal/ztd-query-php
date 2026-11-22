@@ -10,7 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering

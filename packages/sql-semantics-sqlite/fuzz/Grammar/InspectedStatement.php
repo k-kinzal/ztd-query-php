@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\Sqlite;
 
-use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
-use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
-use SqlSemantics\Platform\MySql\Model\Statement\Fact\Facts;
-use SqlSemantics\Platform\MySql\Model\Statement\NamedRelation;
-use SqlSemantics\Platform\MySql\Model\Statement\Relation;
-use SqlSemantics\Platform\MySql\Model\Statement\Selection;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\FieldLookup;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\Fields;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\RowShape;
-use SqlSemantics\Platform\MySql\Model\Statement\Shape\UniqueField;
-use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
-use SqlSemantics\Platform\MySql\Model\Statement\Statement;
+use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\Facts;
+use SqlSemantics\Platform\Sqlite\Model\Statement\NamedRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Selection;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\FieldLookup;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Fields;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 
 /**
  * Test fixture for grammar, facts and parser round-trip checks.
@@ -52,9 +52,12 @@ final class InspectedStatement
         $this->sql = $sql;
     }
 
-    public function binding(): \SqlSemantics\Platform\MySql\Model\Facade\BoundStatement
+    /**
+     * Derives the binding used by the complete IR lowerer.
+     */
+    public function binding(): \SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement
     {
-        return new \SqlSemantics\Platform\MySql\Model\Facade\BoundStatement($this->context, $this->statement);
+        return new \SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement($this->context, $this->statement);
     }
 
     /**
@@ -105,7 +108,7 @@ final class InspectedStatement
      * This is a convenience for the unique case; use lookupField() to tell
      * absent, ambiguous and dependent lookups apart.
      *
-     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When no field or more than one field answers the key
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When no field or more than one field answers the key
      */
     public function field(string|int $key): Field
     {
@@ -124,7 +127,7 @@ final class InspectedStatement
     /**
      * Looks an output field up by name, distinguishing unique, absent, ambiguous and dependent results.
      *
-     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the statement returns no rows
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the statement returns no rows
      */
     public function lookupField(string $name): FieldLookup
     {
@@ -144,7 +147,7 @@ final class InspectedStatement
     /**
      * Answers the input when it is exactly one plainly named relation.
      *
-     * @throws \SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction When the input is a join, a derived relation, several relations, or absent
+     * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When the input is a join, a derived relation, several relations, or absent
      */
     public function singleNamedInput(): NamedRelation
     {

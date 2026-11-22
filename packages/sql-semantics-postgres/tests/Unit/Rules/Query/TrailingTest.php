@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Trailing::class)]
 #[Medium]

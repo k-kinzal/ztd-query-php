@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(DefaultLiteral::class)]
 #[Medium]

@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(MaintenanceRule::class)]
 #[Medium]

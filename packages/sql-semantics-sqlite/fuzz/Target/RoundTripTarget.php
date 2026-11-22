@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use Tests\Support\Equivalence;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Equivalence;
+use SqlSemantics\Testing\Sqlite\Inspection;
 use Throwable;
 
 /**

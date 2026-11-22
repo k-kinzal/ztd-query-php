@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\Informat
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StatementDiagnostics::class)]
 #[Medium]

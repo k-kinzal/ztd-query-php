@@ -14,7 +14,7 @@ final class CursorRuleTest extends TestCase
 {
     public function testDeclareLowersTheHoldability(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('DECLARE c CURSOR WITHOUT HOLD FOR SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
@@ -23,7 +23,7 @@ final class CursorRuleTest extends TestCase
 
     public function testOptionsKeepsTheWrittenOrder(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('DECLARE c SCROLL BINARY INSENSITIVE CURSOR FOR SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
@@ -32,7 +32,7 @@ final class CursorRuleTest extends TestCase
 
     public function testFetchLowersTheMovementAndTheCount(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('MOVE BACKWARD -2 IN c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch::class, $statement);
@@ -41,14 +41,14 @@ final class CursorRuleTest extends TestCase
 
     public function testFromAcceptsTheNoiseWords(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('FETCH ALL IN c');
         self::assertSame('FETCH ALL c', $query->toString());
     }
 
     public function testCloseLowersTheCursor(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('CLOSE c');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close::class, $statement);

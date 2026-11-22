@@ -14,22 +14,22 @@ final class RoleRuleTest extends TestCase
 {
     public function testStatementLowersCreateGroup(): void
     {
-        self::assertSame('CREATE GROUP g USER a', (new \Tests\Support\Inspection())->inspect('CREATE GROUP g WITH USER a')->toString());
+        self::assertSame('CREATE GROUP g USER a', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('CREATE GROUP g WITH USER a')->toString());
     }
 
     public function testStatementLowersAlterGroup(): void
     {
-        self::assertSame('ALTER GROUP g DROP USER a', (new \Tests\Support\Inspection())->inspect('ALTER GROUP g DROP USER a')->toString());
+        self::assertSame('ALTER GROUP g DROP USER a', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER GROUP g DROP USER a')->toString());
     }
 
     public function testStatementLowersDropRole(): void
     {
-        self::assertSame('DROP GROUP IF EXISTS g', (new \Tests\Support\Inspection())->inspect('DROP GROUP IF EXISTS g')->toString());
+        self::assertSame('DROP GROUP IF EXISTS g', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('DROP GROUP IF EXISTS g')->toString());
     }
 
     public function testStatementLowersAlterRoleSet(): void
     {
-        self::assertSame('ALTER USER joe RESET ALL', (new \Tests\Support\Inspection())->inspect('ALTER USER joe RESET ALL')->toString());
+        self::assertSame('ALTER USER joe RESET ALL', (new \SqlSemantics\Testing\PostgreSql\Inspection())->inspect('ALTER USER joe RESET ALL')->toString());
     }
 
     public function testOptionsLowersTheListInOrder(): void

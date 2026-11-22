@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DropSpatialReference::class)]
 #[Medium]

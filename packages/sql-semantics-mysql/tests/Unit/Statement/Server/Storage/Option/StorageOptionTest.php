@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(StorageOption::class)]
 #[Medium]

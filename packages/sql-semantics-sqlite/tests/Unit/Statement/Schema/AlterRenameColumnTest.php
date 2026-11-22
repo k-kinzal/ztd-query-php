@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AlterRenameColumn::class)]
 #[Medium]

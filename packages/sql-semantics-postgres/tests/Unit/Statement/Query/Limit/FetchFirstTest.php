@@ -14,14 +14,14 @@ final class FetchFirstTest extends TestCase
 {
     public function testRenderWritesTheStandardSpelling(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->inspect('SELECT 1 ORDER BY 1 FETCH NEXT +3 ROW WITH TIES');
         self::assertSame('SELECT 1 ORDER BY 1 FETCH FIRST 3 ROWS WITH TIES', $query->toString());
     }
 
     public function testRenderWritesANegativeCount(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->inspect('SELECT 1 FETCH FIRST -1 ROWS ONLY');
         self::assertSame('SELECT 1 FETCH FIRST - 1 ROWS ONLY', $query->toString());
     }

@@ -11,8 +11,8 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\ModuleArgument;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateVirtualTable::class)]
 #[Medium]

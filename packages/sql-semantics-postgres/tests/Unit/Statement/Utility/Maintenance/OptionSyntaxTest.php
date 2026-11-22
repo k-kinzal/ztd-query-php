@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Cluster;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(OptionSyntax::class)]
 #[Medium]

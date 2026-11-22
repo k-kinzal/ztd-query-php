@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\XaRule;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(XaRule::class)]
 #[Medium]

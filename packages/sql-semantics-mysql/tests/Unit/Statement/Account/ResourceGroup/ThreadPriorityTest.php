@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ThreadPriority::class)]
 #[Medium]

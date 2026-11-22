@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(RoutineSource::class)]
 #[Medium]

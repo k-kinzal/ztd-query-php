@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InsertInto::class)]
 #[Medium]

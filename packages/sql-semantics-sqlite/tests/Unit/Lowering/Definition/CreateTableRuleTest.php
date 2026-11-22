@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Lowering\Definition\CreateTableRule;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CreateTableRule::class)]
 #[Medium]

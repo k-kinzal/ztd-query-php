@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace SqlSemantics\Testing\PostgreSql;
 
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Platform\Sqlite\Model\Contract\LeafKeys;
-use SqlSemantics\Platform\Sqlite\Model\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Model\Contract\LeafKeys;
+use SqlSemantics\Platform\PostgreSql\Model\Lowering\Productions;
 
 /**
  * Compares the significant tokens of the analyzed SQL with those of the rendered SQL.

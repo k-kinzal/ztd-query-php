@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SystemAssignment::class)]
 #[Medium]

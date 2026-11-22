@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\CreateUser;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateUser::class)]
 #[Medium]

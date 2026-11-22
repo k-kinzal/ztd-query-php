@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CreateIndex::class)]
 #[Medium]

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\OrdinalOutOfRange;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(OrdinalOutOfRange::class)]
 #[Medium]

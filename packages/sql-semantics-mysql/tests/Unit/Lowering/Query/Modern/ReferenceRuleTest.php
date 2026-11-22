@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ReferenceRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ReferenceRule::class)]
 #[Medium]

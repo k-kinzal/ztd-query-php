@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\AlterInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\InstanceAction;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(InstanceAction::class)]
 #[Medium]

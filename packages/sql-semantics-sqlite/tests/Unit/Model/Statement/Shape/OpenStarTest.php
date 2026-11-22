@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\IncompleteMem
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OpenStar;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(OpenStar::class)]
 #[Medium]

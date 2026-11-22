@@ -13,7 +13,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Connection\Detach;
 use SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ConnectionRule::class)]
 #[Medium]

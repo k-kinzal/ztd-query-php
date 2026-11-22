@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\TriggerReferences;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnStar;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(TriggerReferences::class)]
 #[Medium]

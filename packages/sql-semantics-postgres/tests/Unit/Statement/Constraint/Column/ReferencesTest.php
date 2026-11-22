@@ -14,7 +14,7 @@ final class ReferencesTest extends TestCase
 {
     public function testKindIsForeignKey(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int REFERENCES u)', []);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
@@ -29,7 +29,7 @@ final class ReferencesTest extends TestCase
 
     public function testDeriveClauseResolvesTheReferencedTable(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE t (a int REFERENCES p (id))', $context);
@@ -48,7 +48,7 @@ final class ReferencesTest extends TestCase
 
     public function testDeriveClauseReportsAMissingReferencedColumn(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE p (id int PRIMARY KEY)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE t (a int REFERENCES p (nope) MATCH PARTIAL ON UPDATE SET NULL (a))', $context);
@@ -61,7 +61,7 @@ final class ReferencesTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE t (a int CONSTRAINT f REFERENCES s.p (id) MATCH FULL ON DELETE CASCADE ON UPDATE RESTRICT)', []);
         self::assertSame('CREATE TABLE t (a INT CONSTRAINT f REFERENCES s.p (id) MATCH FULL ON DELETE CASCADE ON UPDATE RESTRICT)', $statement->toString());
     }

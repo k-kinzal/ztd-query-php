@@ -14,14 +14,14 @@ final class DeallocateTest extends TestCase
 {
     public function testDeriveStatementDerivesNothing(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('DEALLOCATE p');
         self::assertNull($query->facts->output);
     }
 
     public function testRenderDropsTheIgnoredKeyword(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('DEALLOCATE PREPARE p');
         self::assertSame('DEALLOCATE p', $query->toString());
     }

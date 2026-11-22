@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Rendering\Output;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Determinism::class)]
 #[Medium]

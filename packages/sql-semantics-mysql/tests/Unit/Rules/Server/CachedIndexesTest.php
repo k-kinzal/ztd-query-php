@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rules\Server\CachedIndexes;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CachedIndexes::class)]
 #[Medium]

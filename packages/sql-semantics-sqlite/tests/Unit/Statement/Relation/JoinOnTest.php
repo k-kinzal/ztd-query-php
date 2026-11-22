@@ -21,8 +21,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(JoinOn::class)]
 #[Medium]

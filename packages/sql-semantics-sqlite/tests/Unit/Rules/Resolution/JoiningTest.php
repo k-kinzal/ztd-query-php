@@ -26,7 +26,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Joining::class)]
 #[Medium]

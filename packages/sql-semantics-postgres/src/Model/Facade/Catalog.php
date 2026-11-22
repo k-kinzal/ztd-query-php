@@ -30,16 +30,14 @@ final class Catalog
 
     /**
      * Collects declarations without executing their statements.
-     * @param array<array-key, mixed>|null $declarations
+     * @param list<string>|null $declarations
      */
     public function build(?array $declarations, bool $complete): AnalysisContext
     {
         $platform = Platform::shared();
         $binder = new StatementBinder($this->parser);
         $tables = [];
-        Check::input($declarations === null || array_is_list($declarations), 'Catalog definitions must form a list.');
         foreach ($declarations ?? [] as $sql) {
-            Check::input(is_string($sql), 'Catalog definitions must be SQL strings.');
             $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
             $binding = $binder->resolve($sql, $scope);
             Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation.');

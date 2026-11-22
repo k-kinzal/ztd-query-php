@@ -14,14 +14,14 @@ final class CopyRuleTest extends TestCase
 {
     public function testCopyLowersAQuery(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('COPY (DELETE FROM t RETURNING *) TO STDOUT');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyQuery::class, $query->statement);
     }
 
     public function testDirectionLowersFrom(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect('COPY t FROM STDIN');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -30,7 +30,7 @@ final class CopyRuleTest extends TestCase
 
     public function testFlagLowersBinaryAndProgram(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect("COPY BINARY t TO PROGRAM 'gzip'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -39,7 +39,7 @@ final class CopyRuleTest extends TestCase
 
     public function testFileLowersAFileName(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect("COPY t TO '/tmp/t.csv'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
@@ -48,7 +48,7 @@ final class CopyRuleTest extends TestCase
 
     public function testDelimitersLowersTheString(): void
     {
-        $semantics = new \Tests\Support\Inspection('pg-17.2');
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection('pg-17.2');
         $query = $semantics->inspect("COPY t FROM STDIN DELIMITERS '|'");
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);

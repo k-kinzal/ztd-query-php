@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(LockTables::class)]
 #[Medium]

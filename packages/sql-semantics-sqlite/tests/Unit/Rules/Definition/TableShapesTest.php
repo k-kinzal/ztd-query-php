@@ -21,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\UndeclaredTable
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableShapes::class)]
 #[Medium]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\BlockRule;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Platform;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(BlockRule::class)]
 #[Medium]

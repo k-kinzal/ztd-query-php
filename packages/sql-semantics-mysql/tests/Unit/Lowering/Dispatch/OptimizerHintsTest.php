@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\MySql\MySqlParser;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\OptimizerHints;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(OptimizerHints::class)]
 #[Medium]

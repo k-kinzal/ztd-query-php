@@ -30,7 +30,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TriggerFacts::class)]
 #[Medium]

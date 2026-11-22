@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ZoneKeyword;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetConstraints;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SettingRule::class)]
 #[Medium]

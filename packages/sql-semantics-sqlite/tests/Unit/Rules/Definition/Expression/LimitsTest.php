@@ -17,7 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Limits::class)]
 #[Medium]

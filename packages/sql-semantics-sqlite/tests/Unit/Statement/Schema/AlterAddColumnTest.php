@@ -19,7 +19,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AlterAddColumn::class)]
 #[Medium]

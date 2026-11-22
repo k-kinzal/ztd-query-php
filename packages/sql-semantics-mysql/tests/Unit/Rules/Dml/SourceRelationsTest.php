@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Rules\Dml\SourceRelations;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SourceRelations::class)]
 #[Medium]

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownTableOption;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(TableProblems::class)]
 #[Medium]

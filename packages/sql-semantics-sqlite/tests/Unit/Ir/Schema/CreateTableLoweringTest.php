@@ -10,7 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 /**
  * @covers \SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering

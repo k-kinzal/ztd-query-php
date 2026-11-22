@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\QueryColumns;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(QueryColumns::class)]
 #[Medium]

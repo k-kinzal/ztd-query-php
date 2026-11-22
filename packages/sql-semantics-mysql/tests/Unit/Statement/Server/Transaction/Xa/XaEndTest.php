@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\InspectedStatement;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(XaEnd::class)]
 #[Medium]

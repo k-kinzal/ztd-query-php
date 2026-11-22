@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\PrimaryKeyRule;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(PrimaryKeyRule::class)]
 #[Medium]

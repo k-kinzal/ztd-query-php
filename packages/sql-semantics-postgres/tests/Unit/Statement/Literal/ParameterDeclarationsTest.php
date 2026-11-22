@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\ParameterDeclarations;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(ParameterDeclarations::class)]
 #[Medium]

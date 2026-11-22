@@ -6,7 +6,7 @@ namespace Fuzz\Target;
 
 use Error;
 use SqlSemantics\Platform\MySql\Model\Validation\Equivalence;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 use Throwable;
 
 /**

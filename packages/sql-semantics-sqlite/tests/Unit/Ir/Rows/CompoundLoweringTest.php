@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundLowering;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(CompoundLowering::class)]
 #[Small]

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpecKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\ChangeOwner;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(ChangeOwner::class)]
 #[Medium]

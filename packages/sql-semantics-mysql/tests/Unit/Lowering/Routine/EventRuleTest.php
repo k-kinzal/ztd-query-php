@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(EventRule::class)]
 #[Medium]

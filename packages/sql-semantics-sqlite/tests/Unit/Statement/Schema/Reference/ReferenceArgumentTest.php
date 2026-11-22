@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\MatchName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceAction;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceArgument;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversNothing]
 #[Medium]

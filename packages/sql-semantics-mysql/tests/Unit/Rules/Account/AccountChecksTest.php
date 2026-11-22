@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Account\AccountChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AccountChecks::class)]
 #[Medium]

@@ -16,8 +16,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MutationTarget::class)]
 #[Medium]

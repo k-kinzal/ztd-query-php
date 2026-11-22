@@ -25,13 +25,13 @@ final class BooleanLiteralTest extends TestCase
 {
     public function testGivesAnUnaliasedColumnNoName(): void
     {
-        $query = (new \Tests\Support\Inspection())->diagnose('SELECT true, false');
+        $query = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('SELECT true, false');
         self::assertSame(['?column?', '?column?'], [$query->field(0)->name?->value, $query->field(1)->name?->value]);
     }
 
     public function testADerivedColumnOfAConstantIsNotNamedBool(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $missing = $semantics->diagnose('SELECT bool FROM (SELECT true) s');
         $found = $semantics->diagnose('SELECT "?column?" FROM (SELECT true) s');
         self::assertSame(['Column bool does not exist.'], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $missing->facts->diagnostics));

@@ -8,7 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\AnalysisException;
-use Tests\Support\Inspection;
+use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(AnalysisException::class)]
 #[Medium]
@@ -25,7 +26,7 @@ final class AnalysisExceptionTest extends TestCase
     {
         $this->expectException(AnalysisException::class);
 
-        (new Inspection())->split('SELECT 1; SELEC 2');
+        (new Semantics())->split('SELECT 1; SELEC 2');
     }
 
     public function testSemanticProblemsAreFactsAndNotRejections(): void

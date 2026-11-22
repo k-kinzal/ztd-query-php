@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(RoutineRules::class)]
 #[Medium]

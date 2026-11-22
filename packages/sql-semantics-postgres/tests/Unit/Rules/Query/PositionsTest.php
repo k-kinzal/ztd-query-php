@@ -14,7 +14,7 @@ final class PositionsTest extends TestCase
 {
     public function testValueFoldsMinusSignsAndParentheses(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $query = $semantics->inspect('SELECT 1 ORDER BY - (- 1)');
         $select = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);

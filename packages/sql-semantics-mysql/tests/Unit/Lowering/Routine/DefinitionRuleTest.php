@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\LoadableResult;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DefinitionRule::class)]
 #[Medium]

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Dependent;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(MissingInput::class)]
 #[Medium]

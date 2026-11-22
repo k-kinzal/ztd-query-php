@@ -14,7 +14,7 @@ final class ExpressionKeyTest extends TestCase
 {
     public function testDeriveScalarAnswersTheTypeOfTheExpression(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE INDEX ON t ((a + 1))', $context);
@@ -29,7 +29,7 @@ final class ExpressionKeyTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE INDEX ON t ((a + 1), lower(c), ((b)))', []);
         self::assertSame('CREATE INDEX ON t ((a + 1), lower(c), ((b)))', $statement->toString());
     }

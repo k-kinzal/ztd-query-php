@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(PrivilegeChecks::class)]
 #[Medium]

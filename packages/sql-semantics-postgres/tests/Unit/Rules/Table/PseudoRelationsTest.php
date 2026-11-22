@@ -14,7 +14,7 @@ final class PseudoRelationsTest extends TestCase
 {
     public function testScopeHoldsOldAndNew(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TRIGGER g AFTER UPDATE ON t FOR EACH ROW WHEN (old.a = new.a AND a > 0) EXECUTE FUNCTION f()', $context);

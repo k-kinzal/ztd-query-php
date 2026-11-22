@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(TransactionRule::class)]
 #[Medium]

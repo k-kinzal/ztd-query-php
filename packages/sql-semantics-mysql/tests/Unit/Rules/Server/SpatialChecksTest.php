@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
 use SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SpatialChecks::class)]
 #[Medium]

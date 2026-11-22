@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RelationFact::class)]
 #[Medium]

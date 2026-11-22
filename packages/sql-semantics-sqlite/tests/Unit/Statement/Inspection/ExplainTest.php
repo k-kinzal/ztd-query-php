@@ -14,8 +14,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
-use Tests\Support\InspectedStatement;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\InspectedStatement;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(Explain::class)]
 #[Medium]

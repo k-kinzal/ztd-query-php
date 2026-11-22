@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(FactorRule::class)]
 #[Medium]

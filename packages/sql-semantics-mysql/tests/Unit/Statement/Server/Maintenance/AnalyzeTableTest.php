@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(AnalyzeTable::class)]
 #[Medium]

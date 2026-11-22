@@ -19,7 +19,7 @@ final class QueryTablesTest extends TestCase
 
     public function testTableTurnsUnknownIntoText(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $context = [];
         array_push($context, ...$semantics->diagnose('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->diagnose('CREATE TABLE n (x, y, z) AS SELECT \'a\', a FROM t', $context);
@@ -38,7 +38,7 @@ final class QueryTablesTest extends TestCase
 
     public function testTableDeclaresEveryNamedColumnOfADependentType(): void
     {
-        $operation = (new \Tests\Support\Inspection())->diagnose('CREATE TABLE x AS SELECT f(1) AS a, NULL AS b, 2 AS c', []);
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE TABLE x AS SELECT f(1) AS a, NULL AS b, 2 AS c', []);
         $table = $operation->declarations()[0];
         self::assertTrue($table->complete);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined::class, $table->columns[0]->type);
@@ -47,14 +47,14 @@ final class QueryTablesTest extends TestCase
 
     public function testTableIsIncompleteAtAnOpenRow(): void
     {
-        $operation = (new \Tests\Support\Inspection())->diagnose('CREATE VIEW w AS SELECT 1 AS k, * FROM zz');
+        $operation = (new \SqlSemantics\Testing\PostgreSql\Inspection())->diagnose('CREATE VIEW w AS SELECT 1 AS k, * FROM zz');
         self::assertFalse($operation->declarations()[0]->complete);
         self::assertCount(1, $operation->declarations()[0]->columns);
     }
 
     public function testTableDeclaresTheKind(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $view = $semantics->diagnose('CREATE VIEW v AS SELECT 1 AS a')->declarations()[0];
         $table = $semantics->diagnose('CREATE TABLE c AS SELECT 1 AS a')->declarations()[0];
         self::assertSame(

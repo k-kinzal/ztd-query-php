@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\JsonProblemKin
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(JsonArrayQuery::class)]
 #[Medium]

@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Type\Invalid;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CommonTableExpression::class)]
 #[Medium]

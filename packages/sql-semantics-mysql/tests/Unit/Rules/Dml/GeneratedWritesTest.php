@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(GeneratedWrites::class)]
 #[Medium]

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(ConflictTarget::class)]
 #[Medium]

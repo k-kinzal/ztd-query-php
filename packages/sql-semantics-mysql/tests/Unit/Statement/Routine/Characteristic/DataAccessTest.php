@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(DataAccess::class)]
 #[Medium]

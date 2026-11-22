@@ -18,7 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\UndeclaredT
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(MaintenanceFacts::class)]
 #[Medium]

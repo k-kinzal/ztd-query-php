@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(CharacteristicRule::class)]
 #[Medium]

@@ -14,7 +14,7 @@ final class PartitionSpecTest extends TestCase
 {
     public function testDeriveClauseReportsAnUnknownStrategy(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int) PARTITION BY tree (a)', []);
         self::assertSame([
           0 => 'unrecognized partitioning strategy "tree"',
@@ -23,7 +23,7 @@ final class PartitionSpecTest extends TestCase
 
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->diagnose('CREATE TABLE n (a int) PARTITION BY "RANGE" (a)', []);
         self::assertSame('CREATE TABLE n (a INT) PARTITION BY "RANGE" (a)', $statement->toString());
     }

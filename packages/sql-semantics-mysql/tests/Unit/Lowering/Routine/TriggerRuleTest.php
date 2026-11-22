@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\OrderPlacement;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TriggerRule::class)]
 #[Medium]

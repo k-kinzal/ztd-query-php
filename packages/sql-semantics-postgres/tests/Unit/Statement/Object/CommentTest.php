@@ -21,7 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\UnqualifiedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(Comment::class)]
 #[Medium]

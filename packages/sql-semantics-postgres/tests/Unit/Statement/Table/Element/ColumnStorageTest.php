@@ -14,7 +14,7 @@ final class ColumnStorageTest extends TestCase
 {
     public function testRenderWritesTheClauseAsWritten(): void
     {
-        $semantics = new \Tests\Support\Inspection();
+        $semantics = new \SqlSemantics\Testing\PostgreSql\Inspection();
         $statement = $semantics->inspect('CREATE TABLE t (a text STORAGE DEFAULT)', []);
         self::assertSame('CREATE TABLE t (a text STORAGE DEFAULT)', $statement->toString());
     }

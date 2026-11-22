@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
-use Tests\Support\Inspection;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(MaintainedTables::class)]
 #[Medium]
