@@ -33,8 +33,8 @@ final class SelectLowering
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
         Check::input(
             $statement->groupBy === [] && $statement->having === null
-                && $statement->windows === [] && ($statement->distinct?->on ?? []) === [] && $statement->into === null
-                && ($statement->options?->locking ?? []) === [] && !($statement->options?->readOnly ?? false),
+                && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null
+                && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),
             'Complete PostgreSQL IR currently supports projections with positional result selection.',
         );
         Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');
@@ -56,7 +56,7 @@ final class SelectLowering
 
         $result = new ResultLowering();
         $order = [];
-        foreach ($statement->options?->order ?? [] as $key) {
+        foreach ($statement->options->order ?? [] as $key) {
             $order[] = $result->order($key);
         }
 

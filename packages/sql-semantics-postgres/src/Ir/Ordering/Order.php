@@ -18,7 +18,9 @@ final class Order
 {
     use Snapshot;
 
-    /** Whether this key places NULL ahead of every non-NULL value. */
+    /**
+     * Whether this key places NULL ahead of every non-NULL value.
+     */
     public readonly bool $nullsFirst;
 
     /**
