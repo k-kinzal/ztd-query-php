@@ -14,7 +14,7 @@
   "meaning": [
     "DIV truncates the signed quotient toward zero. Remainder follows the dividend sign.",
     "A NULL operand or a zero divisor produces a typed NULL if no child evaluation fails. Under the fixed empty mode a zero divisor in the projection produces no division warning.",
-    "The signed 64-bit minimum divided by either positive or negative one raises SQLSTATE 22003 under the measured MySQL implementations. Its remainder by either one is zero. Evaluate each nested child under its own signed arithmetic rule."
+    "The signed 64-bit minimum divided by either positive or negative one raises SQLSTATE 22003 under the measured MySQL implementations. Its remainder by either one is zero. Evaluate each nested child under its own signed arithmetic rule. The multiplication witness whose mathematical result is the signed 64-bit minimum is accepted by the pinned 5.x versions and raises SQLSTATE 22003 on the pinned 8.x and 9.x versions. A second witness constructs the minimum by addition to isolate DIV from this multiplication boundary."
   ],
   "sql": "Render the two operands in order with the closed infix operator inside parentheses. Preserve names, positions and external source qualification.",
   "observations": [
@@ -60,6 +60,7 @@
     "https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html",
     "https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html",
     "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/item_func.cc",
+    "https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/item_func.cc",
     "https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/item_func.cc"
   ]
 }
