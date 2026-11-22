@@ -17,13 +17,13 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\NullOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
-use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
+use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(RowValueUse::class)]
 #[Small]
@@ -49,7 +49,7 @@ final class RowValueUseTest extends TestCase
 
     public function testSingleReportsARowValueAndAnswersTheProblem(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $problem = (new RowValueUse())->single(new ScalarFact(new Known(new Vector(2)), Nullability::NotNull), $derivation);
 
         self::assertNotNull($problem);
@@ -60,7 +60,7 @@ final class RowValueUseTest extends TestCase
 
     public function testSingleAdmitsASingleValueAndAnUnknownWidth(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $rows = new RowValueUse();
 
         self::assertNull($rows->single(new ScalarFact(new Known(Storage::Text), Nullability::NotNull), $derivation));
@@ -70,7 +70,7 @@ final class RowValueUseTest extends TestCase
 
     public function testUniformReportsRowsOfDifferentWidths(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new RowValueUse())->uniform([new ScalarFact(new Known(new Vector(2)), Nullability::NotNull), new ScalarFact(new Known(new Vector(3)), Nullability::NotNull)], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
 
@@ -84,7 +84,7 @@ final class RowValueUseTest extends TestCase
 
     public function testUniformReportsARowValueBesideASingleValue(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new RowValueUse())->uniform([new ScalarFact(new Known(Storage::Integer), Nullability::NotNull), new ScalarFact(new Known(new Vector(2)), Nullability::NotNull)], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
 
@@ -95,7 +95,7 @@ final class RowValueUseTest extends TestCase
 
     public function testUniformReportsNothingForEqualOrUnknownWidths(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $rows = new RowValueUse();
         $rows->uniform([new ScalarFact(new Known(new Vector(2)), Nullability::NotNull), new ScalarFact(new Known(new Vector(2)), Nullability::Nullable), new ScalarFact(new Dependent([new UnboundParameter('?')]), Nullability::Dependent)], $derivation);
         $rows->uniform([new ScalarFact(new Known(Storage::Integer), Nullability::NotNull), new ScalarFact(new NullOnly(), Nullability::Nullable)], $derivation);
@@ -106,7 +106,7 @@ final class RowValueUseTest extends TestCase
 
     public function testMembershipReportsAnOperandOfAnotherWidthThanTheColumns(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new RowValueUse())->membership(new ScalarFact(new Known(new Vector(2)), Nullability::NotNull), 3, $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
 
@@ -120,7 +120,7 @@ final class RowValueUseTest extends TestCase
 
     public function testMembershipReportsNothingForAMatchingOrUnknownWidth(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $rows = new RowValueUse();
         $rows->membership(new ScalarFact(new Known(Storage::Integer), Nullability::NotNull), 1, $derivation);
         $rows->membership(new ScalarFact(new Known(new Vector(2)), Nullability::NotNull), 2, $derivation);
@@ -131,7 +131,7 @@ final class RowValueUseTest extends TestCase
 
     public function testElementsReportsTheFirstElementOfAnotherWidthOnly(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $pair = new ScalarFact(new Known(new Vector(2)), Nullability::NotNull);
         (new RowValueUse())->elements($pair, [$pair, new ScalarFact(new Known(Storage::Integer), Nullability::NotNull), new ScalarFact(new Known(new Vector(3)), Nullability::NotNull)], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
@@ -146,7 +146,7 @@ final class RowValueUseTest extends TestCase
 
     public function testElementsSpellsTheTermsOfARowElementInThePlural(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         (new RowValueUse())->elements(new ScalarFact(new Known(Storage::Integer), Nullability::NotNull), [new ScalarFact(new Known(new Vector(2)), Nullability::NotNull)], $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
 
@@ -156,7 +156,7 @@ final class RowValueUseTest extends TestCase
 
     public function testElementsReportsNothingForMatchingOrUnknownWidths(): void
     {
-        $derivation = new Derivation((new Semantics())->context());
+        $derivation = new Derivation((new Inspection())->context());
         $rows = new RowValueUse();
         $single = new ScalarFact(new Known(Storage::Integer), Nullability::NotNull);
         $unknown = new ScalarFact(new Dependent([new UnboundParameter('?')]), Nullability::Dependent);

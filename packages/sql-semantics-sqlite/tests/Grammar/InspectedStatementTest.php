@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Model\Statement;
+namespace Tests\Grammar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
@@ -20,7 +20,7 @@ use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(InspectedStatement::class)]
 #[Medium]
-final class OperationTest extends TestCase
+final class InspectedStatementTest extends TestCase
 {
     public function testToStringRendersFromTheStructureAndNotFromTheInput(): void
     {
