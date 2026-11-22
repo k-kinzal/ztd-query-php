@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object\Problem;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\WarningDiagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -15,7 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility SqlSemantics
  */
-final class AttributeProblem implements Diagnostic
+final class AttributeProblem implements WarningDiagnostic
 {
     use Snapshot;
 

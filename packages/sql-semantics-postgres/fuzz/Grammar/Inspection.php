@@ -20,10 +20,10 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\WarningDiagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\LeafEmbedding;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblem;
 
 /**
  * Parses and measures grammar fixtures for tests, fuzz targets and benchmarks.
@@ -117,7 +117,7 @@ final class Inspection
         $operation = $this->diagnose($sql, $context);
         $errors = array_values(array_filter(
             $operation->facts->diagnostics,
-            static fn (Diagnostic $problem): bool => !($problem instanceof AttributeProblem && $problem->warning()),
+            static fn (Diagnostic $problem): bool => !($problem instanceof WarningDiagnostic && $problem->warning()),
         ));
         if ($errors !== []) {
             throw new SemanticException($errors);

@@ -18,10 +18,16 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Testing\Sqlite\InspectedStatement;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
+/**
+ * Checks the statement facts and rendering used by the grammar audit.
+ */
 #[CoversClass(InspectedStatement::class)]
 #[Medium]
 final class InspectedStatementTest extends TestCase
 {
+    /**
+     * Rendering uses the checked nodes and their current operands.
+     */
     public function testToStringRendersFromTheStructureAndNotFromTheInput(): void
     {
         $operation = (new Inspection())->inspect('select   a  ,b from   t where a>1 /* c */');
@@ -29,6 +35,9 @@ final class InspectedStatementTest extends TestCase
         self::assertSame('SELECT a, b FROM t WHERE a > 1', $operation->toString());
     }
 
+    /**
+     * A directly built grammar fixture can be rendered.
+     */
     public function testToStringOfANewRootBuiltFromExplicitStructure(): void
     {
         $semantics = new Inspection();
@@ -42,6 +51,9 @@ final class InspectedStatementTest extends TestCase
         self::assertSame('7', $operation->field(0)->expression->digits);
     }
 
+    /**
+     * The grammar fixture rejects one occurrence reused in distinct positions.
+     */
     public function testToStringIsNotReachedForANodeUsedAtTwoPositions(): void
     {
         $semantics = new Inspection();
@@ -52,6 +64,9 @@ final class InspectedStatementTest extends TestCase
         new InspectedStatement($semantics->context([]), new Select([new ResultColumn($literal), new ResultColumn($literal)]));
     }
 
+    /**
+     * Fixture analysis uses the explicitly supplied profile.
+     */
     public function testProfileIsTheProfileOfTheContext(): void
     {
         $semantics = new Inspection();
@@ -62,6 +77,9 @@ final class InspectedStatementTest extends TestCase
         self::assertSame($operation->context->profile, $operation->profile());
     }
 
+    /**
+     * The facts record a table contributed by its declaration.
+     */
     public function testDeclarationsAnswerTheTablesAStatementProvides(): void
     {
         $operation = (new Inspection())->inspect('CREATE TABLE t (a INTEGER, b TEXT)');
@@ -72,11 +90,17 @@ final class InspectedStatementTest extends TestCase
         self::assertSame([], (new Inspection())->inspect('SELECT 1')->declarations());
     }
 
+    /**
+     * A non-row operation has no output shape.
+     */
     public function testShapeIsNullWhenTheStatementReturnsNoRows(): void
     {
         self::assertNull((new Inspection())->inspect('CREATE TABLE t (a INTEGER)')->shape());
     }
 
+    /**
+     * An unresolved star marks the fixture output shape as open.
+     */
     public function testShapeStaysOpenWhileAStarCannotBeExpanded(): void
     {
         $shape = (new Inspection())->inspect('SELECT *, 1 FROM t')->shape();
@@ -86,6 +110,9 @@ final class InspectedStatementTest extends TestCase
         self::assertCount(1, $shape->slots);
     }
 
+    /**
+     * Field lists require a complete row shape.
+     */
     public function testFieldsAreNullForAnOpenShapeAndForNoRows(): void
     {
         $semantics = new Inspection();
@@ -95,6 +122,9 @@ final class InspectedStatementTest extends TestCase
         self::assertCount(2, $semantics->inspect('SELECT 1, 2')->fields() ?? []);
     }
 
+    /**
+     * A complete shape supports ordinal and unique-name lookup.
+     */
     public function testFieldFindsByPositionAndByUniqueName(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b');
@@ -103,6 +133,9 @@ final class InspectedStatementTest extends TestCase
         self::assertSame('a', $operation->field(0)->name?->value);
     }
 
+    /**
+     * Name lookup reports a repeated output name.
+     */
     public function testFieldRefusesANameSeveralFieldsShare(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1 AS a, 2 AS a');
@@ -112,6 +145,9 @@ final class InspectedStatementTest extends TestCase
         $operation->field('a');
     }
 
+    /**
+     * Ordinal lookup requires the complete list of fields.
+     */
     public function testFieldRefusesAPositionOfAnOpenShape(): void
     {
         $operation = (new Inspection())->inspect('SELECT * FROM t');
@@ -121,6 +157,9 @@ final class InspectedStatementTest extends TestCase
         $operation->field(0);
     }
 
+    /**
+     * Lookups distinguish unique, absent, ambiguous and dependent results.
+     */
     public function testLookupFieldTellsTheOutcomesApart(): void
     {
         $semantics = new Inspection();
@@ -132,6 +171,9 @@ final class InspectedStatementTest extends TestCase
         self::assertInstanceOf(DependentField::class, $semantics->inspect('SELECT * FROM t')->lookupField('a'));
     }
 
+    /**
+     * Field lookup is invalid for a non-row operation.
+     */
     public function testLookupFieldRefusesAStatementWithoutRows(): void
     {
         $operation = (new Inspection())->inspect('DELETE FROM t');
@@ -141,6 +183,9 @@ final class InspectedStatementTest extends TestCase
         $operation->lookupField('a');
     }
 
+    /**
+     * The selection records its FROM structure.
+     */
     public function testInputRelationIsTheFromStructureOfASelection(): void
     {
         $semantics = new Inspection();
@@ -150,6 +195,9 @@ final class InspectedStatementTest extends TestCase
         self::assertNull($semantics->inspect('DELETE FROM t')->inputRelation());
     }
 
+    /**
+     * A simple named source can be located from the fixture.
+     */
     public function testSingleNamedInputAnswersTheOnlyNamedRelation(): void
     {
         $operation = (new Inspection())->inspect('SELECT a FROM t AS x');
@@ -158,6 +206,9 @@ final class InspectedStatementTest extends TestCase
         self::assertSame('x', $operation->singleNamedInput()->alias()?->value);
     }
 
+    /**
+     * A join has no single named input.
+     */
     public function testSingleNamedInputRefusesAJoin(): void
     {
         $operation = (new Inspection())->inspect('SELECT a FROM t, u');
@@ -167,6 +218,9 @@ final class InspectedStatementTest extends TestCase
         $operation->singleNamedInput();
     }
 
+    /**
+     * A derived relation has no single named input.
+     */
     public function testSingleNamedInputRefusesADerivedRelation(): void
     {
         $operation = (new Inspection())->inspect('SELECT x FROM (SELECT 1 AS x)');

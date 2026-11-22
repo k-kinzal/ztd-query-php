@@ -14,10 +14,16 @@ use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Testing\Sqlite\Spellings;
 
+/**
+ * Checks token spellings and trivia used to generate grammar variants.
+ */
 #[CoversClass(Spellings::class)]
 #[Medium]
 final class SpellingsTest extends TestCase
 {
+    /**
+     * Equivalent token spellings can be separated by trivia.
+     */
     public function testCheckAcceptsOtherSpellingsOfTheSameTokensAndTrivia(): void
     {
         $spellings = new Spellings(new SqliteParser(), Platform::shared()->productions((new Semantics())->profile()), new LeafKeys());
@@ -27,6 +33,9 @@ final class SpellingsTest extends TestCase
         self::assertCount(4, $spellings->tokens('SELECT a AND b'));
     }
 
+    /**
+     * An edit that changes a token is rejected.
+     */
     public function testCheckRefusesADifferentToken(): void
     {
         $spellings = new Spellings(new SqliteParser(), Platform::shared()->productions((new Semantics())->profile()), new LeafKeys());
@@ -36,6 +45,9 @@ final class SpellingsTest extends TestCase
         $spellings->check('SELECT a AND b', 'SELECT a OR b');
     }
 
+    /**
+     * A trivia edit cannot add a significant token.
+     */
     public function testCheckRefusesATokenWrittenIntoAGap(): void
     {
         $spellings = new Spellings(new SqliteParser(), Platform::shared()->productions((new Semantics())->profile()), new LeafKeys());
@@ -45,6 +57,9 @@ final class SpellingsTest extends TestCase
         $spellings->check('SELECT a AND b', 'SELECT a AND NOT b');
     }
 
+    /**
+     * The fixture excludes the lexer end marker.
+     */
     public function testTokensDropsTheEndMarker(): void
     {
         $tokens = (new Spellings(new SqliteParser(), Platform::shared()->productions((new Semantics())->profile()), new LeafKeys()))->tokens(" -- only a comment\n");
@@ -52,6 +67,9 @@ final class SpellingsTest extends TestCase
         self::assertSame([], array_map(static fn (Token $token): string => $token->text, $tokens));
     }
 
+    /**
+     * A grammar variant must form a grammatical statement.
+     */
     public function testTreeRefusesTextOutsideTheGrammar(): void
     {
         $spellings = new Spellings(new SqliteParser(), Platform::shared()->productions((new Semantics())->profile()), new LeafKeys());

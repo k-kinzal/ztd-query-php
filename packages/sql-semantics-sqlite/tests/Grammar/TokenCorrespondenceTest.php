@@ -11,10 +11,16 @@ use SqlSemantics\Platform\Sqlite\Platform;
 use SqlSemantics\Testing\Sqlite\Inspection;
 use SqlSemantics\Testing\Sqlite\TokenCorrespondence;
 
+/**
+ * Checks token correspondence between grammar inputs and their rendered forms.
+ */
 #[CoversClass(TokenCorrespondence::class)]
 #[Medium]
 final class TokenCorrespondenceTest extends TestCase
 {
+    /**
+     * Token correspondence follows the statement order.
+     */
     public function testKeysListTheSignificantTokensInOrder(): void
     {
         $platform = Platform::shared();
@@ -26,6 +32,9 @@ final class TokenCorrespondenceTest extends TestCase
         self::assertSame(['SELECT:SELECT', 'name:A', 'COMMA:,', 'string:x', 'AS:AS', 'name:y', 'FROM:FROM', 'name:t'], $keys);
     }
 
+    /**
+     * Equivalent keyword, whitespace and quoting changes keep the same keys.
+     */
     public function testKeysIgnoreKeywordCaseWhitespaceAndQuoteStyle(): void
     {
         $platform = Platform::shared();
@@ -38,6 +47,9 @@ final class TokenCorrespondenceTest extends TestCase
         self::assertNull($correspondence->difference($source, $rendered));
     }
 
+    /**
+     * The first differing token is reported.
+     */
     public function testDifferenceNamesTheFirstTokenThatDiffers(): void
     {
         $correspondence = new TokenCorrespondence();
@@ -47,6 +59,9 @@ final class TokenCorrespondenceTest extends TestCase
         self::assertSame('token 0: source has (end), rendered SQL has SELECT:SELECT', $correspondence->difference([], ['SELECT:SELECT']));
     }
 
+    /**
+     * A faithful fixture rendering has matching token keys.
+     */
     public function testDifferenceOfARenderedStatementAgainstItsSourceIsNull(): void
     {
         $platform = Platform::shared();

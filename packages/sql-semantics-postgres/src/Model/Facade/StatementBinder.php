@@ -12,10 +12,10 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\Diagnostic;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Fact\WarningDiagnostic;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\LeafEmbedding;
 use SqlSemantics\Platform\PostgreSql\Model\Validation\ValueGraph;
 use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblem;
 
 /**
  * Parses a statement once and binds it against an explicit catalog.
@@ -55,7 +55,7 @@ final class StatementBinder
         $binding = new BoundStatement($context, $statement);
         $errors = array_values(array_filter(
             $binding->facts->diagnostics,
-            static fn (Diagnostic $problem): bool => !($problem instanceof AttributeProblem && $problem->warning()),
+            static fn (Diagnostic $problem): bool => !($problem instanceof WarningDiagnostic && $problem->warning()),
         ));
         if ($errors !== []) {
             throw new SemanticException($errors);
