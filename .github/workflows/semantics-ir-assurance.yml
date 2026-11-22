@@ -184,6 +184,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-auto-rowid-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-unique-keys-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-named-checks-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-rename-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/

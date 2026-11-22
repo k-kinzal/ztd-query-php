@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v4.json"
-CONTRACT = "070b012b0700c2efa06e71e354b564b00ee4e92ac829101229e37060d44b84b5"
+CONTRACT_NAME = "release-layout-v5.json"
+CONTRACT = "27f1492dd87b51807df447cfa8fb9c36e5969285f9dc6b65d14da7c896498ec0"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -189,6 +189,8 @@ def verify_probe(raw, catalog):
     expected.update((platform, "Mutation\\InsertQuery") for platform in ("MySql", "PostgreSql"))
     expected.add(("Sqlite", "Rows\\ValuesQuery"))
     expected.add(("Sqlite", "Schema\\Query\\CreateTableAs"))
+    expected.add(("Sqlite", "Schema\\Alter\\RenameTable"))
+    expected.add(("Sqlite", "Schema\\Alter\\RenameColumn"))
     expected.update((platform, "Rows\\LocalProjection") for platform in ("MySql", "PostgreSql"))
     expected.update((platform, "Rows\\RecursiveSeries") for platform in ("MySql", "PostgreSql"))
     require(pairs == expected and len(results) == len(expected), "incomplete-installed-publication")
@@ -207,6 +209,11 @@ def verify_probe(raw, catalog):
                 ["unique", False, 1, True, "BINARY", "IGNORE"],
             ], "installed-table-key-layout-mismatch", item)
             require(item.get("namedChecks") == [["ref id", 1, 0]], "installed-table-check-mismatch", item)
+        if item["role"] == "Schema\\Alter\\RenameTable":
+            require(item.get("rename") == ["main", "accounts", "renamed"], "installed-table-rename-mismatch", item)
+        if item["role"] == "Schema\\Alter\\RenameColumn":
+            require(item.get("rename") == ["main", "accounts", "id", "renamed", False],
+                    "installed-column-rename-mismatch", item)
         if item["role"] == "Schema\\Query\\CreateTableAs":
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

@@ -22,6 +22,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
@@ -51,6 +54,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Compound as ParsedCompound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterRenameTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTableAs as ParsedCreateTableAs;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
@@ -129,7 +134,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|Transaction
+    public function analyze(string $sql, ?Context $context = null): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|RenameColumn|RenameTable|Transaction
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -146,6 +151,7 @@ final class Semantics implements Analyzer
             $statement instanceof Drop => (new DropTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTableAs => (new CreateTableAsLowering())->lower($operation, $statement),
+            $statement instanceof AlterRenameColumn, $statement instanceof AlterRenameTable => (new RenameLowering())->lower($operation, $statement),
             default => (new TransactionLowering())->lower($statement),
         };
     }
@@ -155,7 +161,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|Transaction>
+     * @return list<Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|RenameColumn|RenameTable|Transaction>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

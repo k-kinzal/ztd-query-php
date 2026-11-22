@@ -100,6 +100,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
         $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE CONSTRAINT "ref id" CHECK(id), UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
+        $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
+        $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -155,6 +157,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 }
                 return [$check->label->value, $check->column, $check->condition->slot];
             }, $result->checks);
+        }
+        if ($role === 'Schema\\Alter\\RenameTable') {
+            $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];
+        }
+        if ($role === 'Schema\\Alter\\RenameColumn') {
+            $details['rename'] = [$result->schema->value, $result->table->value, $result->column->value,
+                $result->destination->value, $result->quoteReferences];
         }
         if ($role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

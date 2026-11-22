@@ -289,6 +289,11 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Query\\CreatedColumn'] = ['__construct'];
     $properties['Schema\\Query\\CreatedColumnDeclaration'] = $methods['Schema\\Query\\CreatedColumnDeclaration'] = [];
     $enumCases['Schema\\Query\\CreatedColumnDeclaration'] = ['Untyped' => '', 'Integer' => 'INT', 'Numeric' => 'NUM', 'Real' => 'REAL', 'Text' => 'TEXT'];
+    array_push($roots, 'Schema\\Alter\\RenameTable', 'Schema\\Alter\\RenameColumn');
+    $internal[] = 'Schema\\Alter\\RenameLowering';
+    $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
+    $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
+    $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
     $roots[] = 'Schema\\Query\\CreateTableAs';
     array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
@@ -651,6 +656,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -676,6 +682,17 @@ try {
         $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
         $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
+    }
+    if ($dialect === 'sqlite') {
+        $renameBoundary = __DIR__ . '/sqlite-rename-boundaries-v1.json';
+        requireShape(hash_file('sha256', $renameBoundary) === '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f',
+            'SQLite rename boundary contract differs from its fixed revision');
+        $renameSources = json_decode(file_get_contents($renameBoundary), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
+        foreach ($renameSources as $path => $expected) {
+            $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
+            $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
+            requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite rename binding source differs: $path");
+        }
     }
     $checkedBindingSources = [];
     if ($dialect === 'sqlite') {
@@ -732,6 +749,21 @@ try {
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
         $observed[] = $short;
+        if ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn') {
+            $lexical = __DIR__ . '/sqlite-rename-v3.json';
+            requireShape(hash_file('sha256', $lexical) === '1b57e1bd67075672bedcb840b51bc0e289a4d71c63cea2f6323dc8cd05f6df64', 'SQLite rename token contract differs');
+            $required = json_decode(file_get_contents($lexical), true, 512, JSON_THROW_ON_ERROR)['lexicalDomain']['bareRejected'];
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $set = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPrivate()
+                && $set->name->toString() === 'RESERVED_DESTINATIONS' && $set->value instanceof Expr\Array_, 'SQLite rename token registry differs');
+            $names = [];
+            foreach ($set->value->items as $token) {
+                requireShape($token->key === null && $token->value instanceof String_ && !$token->unpack, 'Invalid SQLite rename token registry entry');
+                $names[] = $token->value->value;
+            }
+            requireShape($names === $required, 'SQLite reserved destination tokens differ');
+        }
         if ($dialect === 'mysql' && $short === 'IntegerLiteral') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
             $width = $constants[0]->consts[0] ?? null;
@@ -783,6 +815,7 @@ try {
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
+                    || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
                 "Unexpected function in $short",
             );

@@ -60,6 +60,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
@@ -282,7 +284,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|RenameTable|RenameColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -604,6 +606,31 @@ function observeGrouped(GroupedSelect $query): array
     ];
 }
 
+function directRename(array $input): RenameTable|RenameColumn
+{
+    $schema = new Identifier($input['schema']);
+    $table = new Identifier($input['table']);
+    $destination = new Identifier($input['destination']);
+
+    return $input['column'] === null ? new RenameTable($schema, $table, $destination)
+        : new RenameColumn($schema, $table, new Identifier($input['column']), $destination, $input['quoteReferences']);
+}
+
+function observeRename(RenameTable|RenameColumn $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'rename',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'column' => $value instanceof RenameColumn ? $value->column->value : null,
+        'destination' => $value->destination->value,
+        'quoteReferences' => $value instanceof RenameColumn ? $value->quoteReferences : null,
+        'sql' => $value->toString(),
+    ];
+}
+
 function runCase(array $input): array
 {
     try {
@@ -614,6 +641,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
+            ($input['operation'] ?? null) === 'rename' => directRename($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
             ($input['operation'] ?? null) === 'create-as' => directCreateTableAs($input),
@@ -627,6 +655,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof RenameTable || $value instanceof RenameColumn) {
+        return observeRename($value);
+    }
     if ($value instanceof GroupedSelect) {
         return observeGrouped($value);
     }

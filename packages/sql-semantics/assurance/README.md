@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v20.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v21.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -540,6 +540,8 @@ The [SQLite population contract](sqlite-create-as-v5.json) checks the catalog an
 The [SQLite unique-key contract](sqlite-unique-keys-v1.json) covers ordered inline and table keys, default and explicit collations and conflict policies, equivalent indexes, and coexistence with a primary key. The fixture compares native index order, covering slots, nullable writes, colliding rows and rollback. Run `run_sqlite_unique_keys.py` with the pinned SQLite library and the ordinary SQLite fixture arguments.
 
 The named CHECK fixture independently models slot comparisons, NULL propagation and ordered CHECK failures. It measures ordinary INSERT and conflict overrides, column rename and drop, and coexistence with NOT NULL and UNIQUE. The journal preserves the full ALTER diagnostic and compares the resolved column dependency. Run `run_sqlite_named_checks.py` with the same arguments. [SQLite named CHECK contract](sqlite-named-checks-v2.json)
+
+The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v3.json)
 
 ## SQLite literal defaults
 

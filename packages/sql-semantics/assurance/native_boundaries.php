@@ -13,6 +13,7 @@ function nativeBoundaryContract(string $dialect): array
 {
     $records = match ($dialect) {
         'sqlite' => [
+            ['sqlite-rename-boundaries-v1.json', '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f'],
             ['sqlite-conflict-boundaries-v2.json', '8d859e50ede03278918a73739153f01cb63d1d03e139cee95587e577bc63d168'],
             ['sqlite-query-scope-boundaries-v1.json', '8deaf1505b4e3dac0dcf73c7b4149862b9145530824cb89b08933b3599c68906'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
@@ -81,6 +82,9 @@ function checkNativeBoundaries(
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\NotNullConflict', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
             'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Schema\\Table\\TableOptionKind', 'Statement\\Mutation\\MutationTarget',
+            'Ir\\Schema\\Alter\\RenameColumn', 'Ir\\Schema\\Alter\\RenameTable',
+            'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
+            'Statement\\Schema\\AlterRenameColumn', 'Statement\\Schema\\AlterRenameTable',
             'Ir\\Schema\\CreateTable', 'Ir\\Schema\\Key\\KeyConflict', 'Ir\\Schema\\Key\\KeyTerm', 'Ir\\Schema\\Key\\PrimaryKey',
             'Ir\\Schema\\Key\\KeyTermLowering', 'Ir\\Schema\\Key\\TableKeySql', 'Ir\\Schema\\Key\\TableKeyLowering',
             'Ir\\Schema\\Key\\TableKeyLayout', 'Ir\\Schema\\Key\\UniqueKey',

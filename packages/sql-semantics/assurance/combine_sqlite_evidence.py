@@ -40,6 +40,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-create-table-evidence", "sqlite-create-table-v2.json", 40, 117, 5, 4),
     Domain("semantics-ir-sqlite-create-as-evidence", "sqlite-create-as-v5.json", 576, 674, 5, 4),
     Domain("semantics-ir-sqlite-strict-tables-evidence", "sqlite-strict-tables-v2.json", 312, 390, 4, 4),
+    Domain("semantics-ir-sqlite-rename-evidence", "sqlite-rename-v3.json", 48, 245, 68, 5),
     Domain("semantics-ir-sqlite-named-checks-evidence", "sqlite-named-checks-v2.json", 64, 168, 8, 5),
     Domain("semantics-ir-sqlite-unique-keys-evidence", "sqlite-unique-keys-v1.json", 216, 332, 7, 5),
     Domain("semantics-ir-sqlite-primary-keys-evidence", "sqlite-primary-keys-v2.json", 800, 903, 7, 5),
