@@ -25,7 +25,7 @@ NATIVE = {
     "transaction": "server-transaction-v1.json",
     "drop_table": "server-drop-table-v1.json",
     "create_table": "server-create-table-v1.json",
-    "parameter": "server-parameter-v4.json",
+    "parameter": "server-parameter-v5.json",
     "compound": "server-compound-v2.json",
     "local_projection": "server-local-projection-v4.json",
     "truth": "server-truth-v2.json",

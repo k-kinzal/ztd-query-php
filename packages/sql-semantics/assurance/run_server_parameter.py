@@ -12,11 +12,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "parameter"
 OBSERVER = "server_parameter_observer.php"
-CONTRACT = "dd410a42211c70acbecc380bf9b3f6bab7934882619602060981e72235e4b5ae"
+CONTRACT = "b7e49e61e5976a20b1ea5ba9b2a9da6c5a1b783d9ce4aead3840c92977819213"
 
 
 def specifications():
-    path, projection = TOOL / "server-parameter-v4.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-parameter-v5.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-parameter-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
