@@ -351,6 +351,16 @@ def main():
     native_launch = evidence.native_launch()
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
     controls = evidence.artifact("assurance-controls/index.json", "verified")
+    preflight_file = root / "sqlite-fault-preflight/index.json"
+    preflight = evidence.record(preflight_file) if preflight_file.is_file() else None
+    if preflight:
+        _, origin, observed = preflight
+        require(observed["status"] == "verified" and not observed["failures"],
+                "bundle-sqlite-fault-preflight-failed", origin)
+        require(all(entry["anchorMatches"] == 1
+                    and manifest.get("packages/" + entry["file"]) == entry["sourceDigest"]
+                    for cases in observed["domains"].values() for entry in cases),
+                "bundle-sqlite-fault-preflight-source", origin)
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
     staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
@@ -367,6 +377,7 @@ def main():
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
         "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
         "nativeLaunch": native_launch,
+        "sqliteFaultPreflight": preflight[1] if preflight else None,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,

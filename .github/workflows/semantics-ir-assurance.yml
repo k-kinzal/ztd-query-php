@@ -78,6 +78,13 @@ jobs:
           unzip -q "$RUNNER_TEMP/sqlite.zip" -d "$RUNNER_TEMP"
           cc -O2 -DSQLITE_THREADSAFE=1 -shared -fPIC "$RUNNER_TEMP/sqlite-amalgamation-3470200/sqlite3.c" -o "$RUNNER_TEMP/libsqlite3.so"
           docker pull php@sha256:f1ef73e865793418aac8cf6d8dbb44b33b527cdac62dbcf2e47061ed8f40b81a
+      - name: Check that the SQLite fault overlays still apply
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/preflight_sqlite_faults.py \
+            --candidate candidate --out "$RUNNER_TEMP/sqlite-fault-preflight"
       - name: Collect initial-domain observations
         env:
           PYTHONDONTWRITEBYTECODE: '1'
@@ -513,6 +520,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-upsert-nothing-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-insert-returning-evidence/
+            ${{ runner.temp }}/sqlite-fault-preflight/
             ${{ runner.temp }}/sqlite-index/
             ${{ runner.temp }}/assurance-controls/
             ${{ runner.temp }}/native-boundaries/

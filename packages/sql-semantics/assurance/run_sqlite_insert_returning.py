@@ -142,7 +142,7 @@ def check_faults(args, db, runner=check_render_faults):
     field = "$target->columns[$column->reference->slot]->quoted()"
     item = with_returning(values([[integer(5), integer(41)]], columns=("payload", "id")), LAYOUTS["all"])
     return runner(args, db, [
-        RenderFault("omit-inserted-row-output", root, "$this->input->toString() . $returning;", "$this->input->toString();", item, "meaning-mismatch"),
+        RenderFault("omit-inserted-row-output", root, "$source . $action . $returning;", "$source . $action;", item, "meaning-mismatch"),
         RenderFault("read-other-inserted-field", renderer, field, "$target->columns[0]->quoted()", item, "meaning-mismatch"),
         RenderFault("change-insert-result-label", renderer, "$column->name->quoted()", "'\"changed\"'", item, "meaning-mismatch"),
         RenderFault("reorder-write-slots", root, "foreach ($this->writes as $column)", "foreach (array_reverse($this->writes) as $column)",
