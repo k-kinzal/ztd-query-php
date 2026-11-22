@@ -1,0 +1,17 @@
+{
+  "revision": "SemanticsIR/counterexample-reduction-1",
+  "approval": "pending-human-review",
+  "scope": "Direct positive counterexamples in the initial and relational SQLite schedules.",
+  "original": "Write the original request and its measured failure before making any reduction request. Keep the original record unchanged even if the reducer crashes or times out.",
+  "admittedSignals": ["meaning-mismatch", "relational-order-mismatch"],
+  "maximumReductionProbes": 64,
+  "confirmation": "Repeat the original failure once. A strictly smaller direct request must pass the same construction and oracle premises and exhibit the same comparison signal twice. Preserve the exact confirmed failure and request. Do not reduce a negative or analyzed case through this mechanism.",
+  "time": "Use the worker's original absolute execution deadline. Reduction cannot extend execution or change the result of a required test.",
+  "retention": "Record the reduction separately with the original artifact digest and every attempted probe classification. Failures to reproduce stay visible and never override the original error.",
+  "controls": [
+    "Confirm a valid smaller request and reproduce its exact comparison signal",
+    "Reject a proposed request that fails a construction premise",
+    "Reject a request that only mismatches once",
+    "Preserve the original request when reduction generation raises"
+  ]
+}
