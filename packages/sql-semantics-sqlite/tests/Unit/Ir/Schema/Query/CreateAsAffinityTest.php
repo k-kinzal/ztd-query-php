@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateAsAffinity;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumnDeclaration;
-use stdClass;
 
 #[CoversClass(CreateAsAffinity::class)]
 #[Small]
