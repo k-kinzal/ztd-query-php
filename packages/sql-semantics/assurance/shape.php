@@ -208,7 +208,7 @@ if ($dialect === 'sqlite') {
     $methods['Mutation\\Delete'] = $methods['Select'];
     $properties['Mutation\\Insert'] = [
         'target' => ['TableSource'], 'writes' => ['array'], 'input' => ['Mutation\\DefaultRow', 'Rows\\ValuesQuery', 'Select'],
-        'conflict' => ['Mutation\\InsertConflict'], 'returning' => ['array'],
+        'conflict' => ['Mutation\\InsertConflict'], 'handler' => ['Mutation\\InsertConflictHandler'], 'returning' => ['array'],
     ];
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\DefaultRow'] = $methods['Mutation\\DefaultRow'] = [];
@@ -260,6 +260,7 @@ if ($dialect === 'sqlite') {
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
+    $enumCases['Mutation\\InsertConflictHandler'] = ['None' => 'none', 'DoNothing' => 'do-nothing'];
     $enumCases['Mutation\\InsertConflict'] = [
         'Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore', 'Fail' => 'fail', 'Rollback' => 'rollback', 'Replace' => 'replace',
     ];
@@ -272,7 +273,7 @@ if ($dialect === 'sqlite') {
         'Greater' => '>', 'GreaterOrEqual' => '>=', 'Is' => 'IS', 'IsNot' => 'IS NOT',
     ];
     $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR'];
-    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Mutation\\UpdateConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator', 'Schema\\DeclaredDatatypeName'] as $enum) {
+    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Mutation\\InsertConflictHandler', 'Mutation\\UpdateConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator', 'Schema\\DeclaredDatatypeName'] as $enum) {
         $methods[$enum] = $properties[$enum] = [];
     }
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {

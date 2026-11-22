@@ -241,7 +241,10 @@ Run `run_server_derived_join.py` with the native fixture options. Replay all rel
 
 ## SQLite statement conflict policies
 
-The [conflict policy contract](sqlite-mutation-conflicts-v1.json) compares inherited behavior and each of the five explicit SQLite conflict algorithms. Every direct case runs in autocommit and inside an explicit transaction, each with recursive triggers on and off. The observer records ordered trigger events, typed returned fields, exact errors, changes and transaction state. Run `run_sqlite_mutation_conflicts.py`. The SQLite collector replays this domain with the other required receipts.
+The [conflict policy contract](sqlite-mutation-conflicts-v2.json) compares inherited behavior and each of the five explicit SQLite conflict algorithms. Every direct case runs in autocommit and inside an explicit transaction, each with recursive triggers on and off. The observer records ordered trigger events, typed returned fields, exact errors, changes and transaction state. Run `run_sqlite_mutation_conflicts.py`. The SQLite collector replays this domain with the other required receipts.
+
+
+The [targetless DO NOTHING contract](sqlite-upsert-nothing-v1.json) compares the uniqueness action separately from the statement policy. It measures the two input forms, the unchanged blocking row, exact output and transaction effects, and SQL grammar disambiguation for SELECT inputs. Run `run_sqlite_upsert_nothing.py` and preserve its raw SQLite receipt for replay.
 
 ## MySQL signed quotient and remainder
 

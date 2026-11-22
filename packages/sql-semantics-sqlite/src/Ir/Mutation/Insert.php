@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
+use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -44,6 +45,7 @@ final class Insert implements SemanticsIR
      * @param ValuesQuery|Select|DefaultRow $input The checked source of rows
      * @param InsertConflict $conflict The statement's conflict policy
      * @param list<ReturnedColumn> $returning The ordered fields read from each inserted row
+     * @param InsertConflictHandler $handler The optional action on a uniqueness conflict
      */
     public function __construct(
         public readonly TableSource $target,
@@ -51,6 +53,7 @@ final class Insert implements SemanticsIR
         public readonly ValuesQuery|Select|DefaultRow $input,
         public readonly InsertConflict $conflict = InsertConflict::Inherit,
         array $returning = [],
+        public readonly InsertConflictHandler $handler = InsertConflictHandler::None,
     ) {
         $supplied = Check::listOf($writes, ColumnReference::class, 'An INSERT needs checked write slots.');
         $seen = [];
@@ -61,6 +64,7 @@ final class Insert implements SemanticsIR
         }
         $width = count($supplied);
         if ($input instanceof DefaultRow) {
+            Check::input($handler === InsertConflictHandler::None, 'DEFAULT VALUES cannot take an INSERT conflict handler.');
             Check::input($width === 0, 'A DEFAULT VALUES input has no supplied target columns.');
         } else {
             Check::input($width !== 0, 'An INSERT must name at least one target column.');
@@ -113,6 +117,14 @@ final class Insert implements SemanticsIR
             return $head . ' DEFAULT VALUES' . $returning;
         }
 
-        return $head . ' (' . implode(', ', $columns) . ') ' . $this->input->toString() . $returning;
+        $source = $this->input instanceof Select && $this->handler === InsertConflictHandler::DoNothing
+            ? (new SelectSql())->render($this->input, requireWhere: true)
+            : $this->input->toString();
+        $action = match ($this->handler) {
+            InsertConflictHandler::None => '',
+            InsertConflictHandler::DoNothing => ' ON CONFLICT DO NOTHING',
+        };
+
+        return $head . ' (' . implode(', ', $columns) . ') ' . $source . $action . $returning;
     }
 }

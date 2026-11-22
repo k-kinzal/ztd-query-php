@@ -31,6 +31,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflictHandler;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\ReturnedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateAssignment;
@@ -334,6 +335,7 @@ function directInsert(array $input): Insert
         $rows,
         InsertConflict::from($input['conflict']),
         directReturning($input['returning'] ?? []),
+        InsertConflictHandler::from($input['handler'] ?? 'none'),
     );
 }
 
@@ -347,6 +349,7 @@ function observeInsert(Insert $value): array
         'writes' => array_map(observeOperand(...), $value->writes),
         'returning' => observeReturning($value->returning),
         'conflict' => $value->conflict->value,
+        'handler' => $value->handler->value,
         ...match (true) {
             $value->input instanceof DefaultRow => ['defaults' => true],
             $value->input instanceof Select => ['query' => observeArm($value->input)],

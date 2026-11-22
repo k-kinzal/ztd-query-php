@@ -34,10 +34,7 @@ final class InsertLowering
     public function lower(BoundStatement $operation, InsertRows|InsertSelect|InsertDefaults $statement): Insert
     {
         $into = $statement->into;
-        Check::input(
-            $into->with === null && ($statement instanceof InsertDefaults || $statement->upserts === []),
-            'Complete SQLite INSERT does not support WITH or UPSERT.',
-        );
+        Check::input($into->with === null, 'Complete SQLite INSERT does not support WITH.');
         $policy = match ($into->replace ? ConflictResolution::Replace : $into->resolution) {
             null => InsertConflict::Inherit,
             ConflictResolution::Abort => InsertConflict::Abort,
@@ -52,7 +49,24 @@ final class InsertLowering
         $target = $binding->source();
         Check::invariant($target instanceof TableSource, 'A resolved INSERT has one external target.');
 
-        return new Insert($target, $writes, $this->input($operation, $statement), $policy, $returning);
+        return new Insert($target, $writes, $this->input($operation, $statement), $policy, $returning, $this->handler($statement));
+    }
+
+    /**
+     * Resolves the uniqueness handler from the supported statement forms.
+     */
+    public function handler(InsertRows|InsertSelect|InsertDefaults $statement): InsertConflictHandler
+    {
+        if ($statement instanceof InsertDefaults || $statement->upserts === []) {
+            return InsertConflictHandler::None;
+        }
+        $clause = $statement->upserts[0];
+        Check::input(
+            count($statement->upserts) === 1 && $clause->target === null && $clause->assignments === [] && $clause->where === null,
+            'A complete INSERT requires a single targetless DO NOTHING clause.',
+        );
+
+        return InsertConflictHandler::DoNothing;
     }
 
     /**

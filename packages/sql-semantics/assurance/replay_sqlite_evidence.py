@@ -37,6 +37,7 @@ import run_sqlite_between as between
 import run_sqlite_truth as truth
 import run_sqlite_unary as unary
 import run_sqlite_update as update
+import run_sqlite_upsert_nothing as upsert_nothing
 import run_sqlite_update_returning as update_returning
 import run_sqlite_values as values
 import run_sqlite_wildcard as wildcard
@@ -68,6 +69,7 @@ DOMAINS = {
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     pattern.CONTRACT_NAME: (pattern, pattern.FIXTURE),
     mutation_conflicts.CONTRACT_NAME: (mutation_conflicts, mutation_conflicts.FIXTURE),
+    upsert_nothing.CONTRACT_NAME: (upsert_nothing, upsert_nothing.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
     concatenation.CONTRACT_NAME: (concatenation, concatenation.FIXTURE),
     collation.CONTRACT_NAME: (collation, collation.FIXTURE),

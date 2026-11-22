@@ -41,7 +41,7 @@ final class SelectSql
     /**
      * Renders the SELECT, the join chain, the filter and the ordering in clause order.
      */
-    public function render(Select $select): string
+    public function render(Select $select, bool $requireWhere = false): string
     {
         $source = $select->source;
         $sql = $source instanceof LocalSource ? $this->localPrefix($source) : '';
@@ -61,6 +61,8 @@ final class SelectSql
         }
         if ($select->where !== null) {
             $sql .= ' WHERE ' . $this->expression($select->where, $source, $select->joins);
+        } elseif ($requireWhere) {
+            $sql .= ' WHERE 1';
         }
         return $sql . $this->ordering($select->orderBy) . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));
     }

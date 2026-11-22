@@ -148,7 +148,7 @@ def negatives():
     wrong = update(2, [("code", 10)], "replace")
     yield {**wrong, "assignments": [[3, integer(21)]]}, "rejected", "assignment slot must belong"
     yield ({"sql": "REPLACE INTO ir_conflict VALUES (3,30,30) ON CONFLICT(id) DO NOTHING",
-            "declarations": [DECLARATION]}, "rejected", "does not support WITH or UPSERT")
+            "declarations": [DECLARATION]}, "rejected", "requires a single targetless DO NOTHING clause")
 
 
 def read_atom(operand):
@@ -193,6 +193,8 @@ def expected(request, recursive, explicit):
     for old, new in actions(request):
         column, blocked = conflict(rows, old, new)
         if column is not None:
+            if column in ("id", "code") and request.get("handler") == "do-nothing":
+                continue
             rule = ("ignore" if column == "code" else "abort") if policy == "inherit" else policy
             if rule == "replace":
                 if column == "payload":

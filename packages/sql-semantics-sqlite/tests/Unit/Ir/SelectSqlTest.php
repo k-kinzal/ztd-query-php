@@ -137,4 +137,13 @@ final class SelectSqlTest extends TestCase
 
         self::assertSame('"__ztd_source"."tenant"', (new SelectSql())->column($column, $from, []));
     }
+
+    public function testRenderAddsTheDisambiguatingPredicateOnlyWhenRequested(): void
+    {
+        $select = new Select([new ResultColumn(new IntegerLiteral('1'), new Identifier('first'))]);
+        $renderer = new SelectSql();
+
+        self::assertSame('SELECT 1 AS "first"', $renderer->render($select));
+        self::assertSame('SELECT 1 AS "first" WHERE 1', $renderer->render($select, requireWhere: true));
+    }
 }

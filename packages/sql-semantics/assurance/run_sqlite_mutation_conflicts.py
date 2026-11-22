@@ -9,8 +9,8 @@ from sqlite_mutation_conflict_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-mutation-conflicts-v1.json"
-CONTRACT = "3234f3e898475bd10e96b8cba61650fd29ab4a9f2a60f3e3007c98e52d42b3ab"
+CONTRACT_NAME = "sqlite-mutation-conflicts-v2.json"
+CONTRACT = "083319fa81636593499d85ac4420ef701acbf9cdbc275c1fa7f64a2d92d84ada"
 PROFILES = tuple(product((False, True), repeat=2))
 
 
@@ -48,14 +48,20 @@ def probe(request, reply, db, ledger=None, key=None, original=None):
     roles += ["writes", "rows"] if request["operation"] == "insert" else ["assignments", "where"]
     require(all(request[role] == reply[role] for role in roles), "sqlite-conflict-structure-mismatch",
             {"request": request, "reply": reply})
+    if request["operation"] == "insert":
+        require(reply["handler"] == "none", "sqlite-conflict-unexpected-handler", reply)
+    return compare_profiles(request, reply, db, ledger, key, original)
+
+
+def compare_profiles(request, reply, db, ledger=None, key=None, original=None, predictor=expected, observer=observe):
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
-    measurements = {"observation": [observe(db, reply["sql"], mode, explicit) for mode, explicit in PROFILES]}
+    measurements = {"observation": [observer(db, reply["sql"], mode, explicit) for mode, explicit in PROFILES]}
     if original is not None:
-        measurements["original"] = [observe(db, original, mode, explicit) for mode, explicit in PROFILES]
+        measurements["original"] = [observer(db, original, mode, explicit) for mode, explicit in PROFILES]
     if ledger is not None:
         ledger.record(key, "observed", **measurements)
-    prediction = [expected(request, mode, explicit) for mode, explicit in PROFILES]
+    prediction = [predictor(request, mode, explicit) for mode, explicit in PROFILES]
     for states in measurements.values():
         compare(prediction, states)
     if ledger is not None:

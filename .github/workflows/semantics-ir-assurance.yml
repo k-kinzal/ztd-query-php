@@ -394,6 +394,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-mutation-conflicts-evidence"
+      - name: Collect SQLite targetless DO NOTHING observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_upsert_nothing.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-upsert-nothing-evidence"
       - name: Collect SQLite INSERT RETURNING observations
         if: ${{ !cancelled() }}
         env:
@@ -502,6 +511,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-upsert-nothing-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-insert-returning-evidence/
             ${{ runner.temp }}/sqlite-index/
             ${{ runner.temp }}/assurance-controls/

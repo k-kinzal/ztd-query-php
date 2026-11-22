@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflictHandler;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -66,6 +67,21 @@ final class InsertLoweringTest extends TestCase
 
         self::assertSame('payload', $statement->target->columns[0]->value);
         self::assertSame('value', $statement->input->columns[0]->name->value);
+    }
+
+    public function testHandlerKeepsTheTargetlessActionIndependentOfTheStatementPolicy(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context(['CREATE TABLE entries (id INTEGER PRIMARY KEY)']);
+        $sql = 'INSERT OR REPLACE INTO entries (id) VALUES (1) ON CONFLICT DO NOTHING RETURNING id';
+        $operation = (new Inspection())->inspect($sql, $context);
+        self::assertInstanceOf(InsertRows::class, $operation->statement);
+
+        $lowering = new InsertLowering();
+        self::assertSame(InsertConflictHandler::DoNothing, $lowering->handler($operation->statement));
+        $insert = $lowering->lower($operation->binding(), $operation->statement);
+        self::assertSame(InsertConflict::Replace, $insert->conflict);
+        self::assertStringContainsString('ON CONFLICT DO NOTHING RETURNING', $insert->toString());
     }
 
     public function testInputIdentifiesTheDefaultRowRole(): void
