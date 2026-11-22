@@ -9,7 +9,7 @@ from collections import Counter
 from cases import MAX, MIN, numeric
 from run import Ledger, Worker, compare, require, write_json
 from run_sqlite_values import names
-from sqlite_cast_semantics import comparison_values, convert
+from sqlite_cast_semantics import comparison_values, convert, text_value
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 from sqlite_numeric_semantics import NUMERIC_OPERATORS, evaluate_numeric
@@ -84,6 +84,13 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
                     break
         return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
+    if kind == "concat":
+        left = evaluate(arguments[0], bindings, row, case_equal, comparison_inputs)
+        right = evaluate(arguments[1], bindings, row, case_equal, comparison_inputs)
+        if left is None or right is None:
+            return None
+        combined = text_value(left).encode(errors="surrogateescape") + text_value(right).encode(errors="surrogateescape")
+        return combined.decode(errors="surrogateescape")
     if kind == "collate":
         return evaluate(arguments[1], bindings, row, case_equal, comparison_inputs)
     if kind == "folded-membership":

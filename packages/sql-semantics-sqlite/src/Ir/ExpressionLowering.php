@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -45,6 +46,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as Par
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral as ParsedText;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between as ParsedBetween;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
@@ -66,7 +68,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -150,8 +152,14 @@ final class ExpressionLowering
      * Selects the ordered operation and recognizes the native truth-test operand.
      * @throws InvalidConstruction When an operation or binding has no checked representation
      */
-    public function binary(Binary $expression, SourceBinding $binding): Arithmetic|Comparison|Logical|TruthTest
+    public function binary(Binary $expression, SourceBinding $binding): Arithmetic|Comparison|Concatenation|Logical|TruthTest
     {
+        if ($expression->operator === BinaryOperator::Concat) {
+            $left = $this->lower($expression->left, $binding);
+            $right = $this->lower($expression->right, $binding);
+
+            return new Concatenation($left, $right);
+        }
         $operator = (new BinaryOperatorLowering())->lower($expression->operator);
         $left = $this->lower($expression->left, $binding);
         $writtenRight = $expression->right;

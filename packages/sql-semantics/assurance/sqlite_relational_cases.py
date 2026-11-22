@@ -67,6 +67,9 @@ def children(expression):
     if expression[0] in ("arithmetic", "comparison", "logical"):
         yield from children(expression[2])
         yield from children(expression[3])
+    elif expression[0] == "concat":
+        yield from children(expression[1])
+        yield from children(expression[2])
     elif expression[0] == "case":
         yield from children(expression[1])
         for when, result in expression[2]:

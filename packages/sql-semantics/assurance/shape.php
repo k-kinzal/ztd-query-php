@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\Concatenation', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -124,6 +124,8 @@ if ($dialect === 'sqlite') {
     $properties['Expression\\CaseExpression'] = ['base' => $nullableCaseOperands, 'branches' => ['array'], 'otherwise' => $nullableCaseOperands];
     $properties['Expression\\CaseBranch'] = ['when' => $operands, 'then' => $operands];
     $methods['Expression\\CaseExpression'] = $methods['Expression\\CaseBranch'] = ['__construct'];
+    $properties['Expression\\Concatenation'] = ['left' => $operands, 'right' => $operands];
+    $methods['Expression\\Concatenation'] = ['__construct'];
     $properties['Expression\\CollatedExpression'] = ['operand' => $operands, 'collation' => ['Collation']];
     $methods['Expression\\CollatedExpression'] = ['__construct'];
     $internal[] = 'Rows\\ValueRowOperand';

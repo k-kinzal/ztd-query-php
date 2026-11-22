@@ -337,6 +337,8 @@ The [unary record](sqlite-unary-v1.json) tests direct prefix expressions, comput
 
 ## SQLite truth tests
 
+The [concatenation record](sqlite-concatenation-v1.json) checks ordered TEXT bytes and NULL in projections and VALUES. The fixture covers mixed storage classes, native REAL formatting and two byte fragments that form a UTF-8 character only after concatenation. Run `run_sqlite_concatenation.py` with the SQLite fixture options.
+
 The [collation record](sqlite-collation-v1.json) checks explicit BINARY, NOCASE and RTRIM on scalar expressions. It compares nested precedence, declared affinity, NUL-containing TEXT, ordered result positions, BETWEEN bounds and singleton and multi-item IN lists. The same builtin enum and independent byte-key rules serve [SQLite grouping](sqlite-grouped-v2.json). Its schedule, fixtures and expected outcomes are preserved after the enum moves to the shared dialect IR namespace. Run `run_sqlite_collation.py` with the SQLite fixture options.
 
 The [folded membership record](sqlite-folded-membership-v1.json) checks constant empty-list outcomes and surviving numbered registrations. Analysis audits the whole syntax graph and binds only the live part. It preserves bindings from the discarded operand in their original lexical order. The comparison pairs the written statements with emitted SQL and distinguishes the first label of a shared slot and gaps before the highest slot. Run `run_sqlite_folded_membership.py` with the SQLite fixture options.

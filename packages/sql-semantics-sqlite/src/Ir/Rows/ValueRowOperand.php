@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -36,12 +37,12 @@ final class ValueRowOperand
      * Returns a checked scalar for the enclosing row scope.
      * @throws InvalidConstruction When the value is outside the row operand roles
      */
-    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function checked(object $value): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         Check::input(
             $value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof BlobLiteral
             || $value instanceof CaseExpression || $value instanceof CastExpression || $value instanceof CollatedExpression
-            || $value instanceof Comparison || $value instanceof FoldedMembership || $value instanceof HexIntegerLiteral
+            || $value instanceof Comparison || $value instanceof Concatenation || $value instanceof FoldedMembership || $value instanceof HexIntegerLiteral
             || $value instanceof IntegerLiteral || $value instanceof Logical || $value instanceof MembershipTest
             || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral
             || $value instanceof TextLiteral || $value instanceof TruthTest || $value instanceof UnaryExpression,

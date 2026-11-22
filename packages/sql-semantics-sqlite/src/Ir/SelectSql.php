@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -131,24 +132,20 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
-        if ($expression instanceof ColumnReference) {
-            $source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);
-            Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');
-
-            return $this->alias($expression->source) . '.' . $source->columns[$expression->slot]->quoted();
-        }
-
         return match (true) {
+            $expression instanceof ColumnReference => $this->column($expression, $source, $joins),
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
             $expression instanceof FoldedMembership => $this->foldedMembership($expression),
             $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
+            $expression instanceof Concatenation => '(' . $this->expression($expression->left, $source, $joins)
+                . ' || ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof CollatedExpression => '(' . $this->expression($expression->operand, $source, $joins) . ' COLLATE ' . $expression->collation->value . ')',
             $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
@@ -161,6 +158,18 @@ final class SelectSql
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Renders the column of a checked source occurrence.
+     * @param list<Join> $joins The remaining source occurrences
+     */
+    public function column(ColumnReference $expression, TableSource|LocalSource|null $source, array $joins): string
+    {
+        $source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);
+        Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');
+
+        return $this->alias($expression->source) . '.' . $source->columns[$expression->slot]->quoted();
     }
 
     /**

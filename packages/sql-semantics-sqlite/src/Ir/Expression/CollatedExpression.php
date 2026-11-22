@@ -38,7 +38,7 @@ final class CollatedExpression
      * Retains the scalar and its explicit collation identity.
      */
     public function __construct(
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|self|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|self|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
         public readonly Collation $collation,
     ) {
     }

@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
@@ -118,5 +119,13 @@ final class SelectSqlTest extends TestCase
 
         self::assertSame('((CASE WHEN ?02 THEN 0 WHEN ?2 THEN 0 WHEN ?7 THEN 0 END) NOT IN ())', $renderer->foldedMembership($value));
         self::assertSame('0', $renderer->foldedMembership(new FoldedMembership(false)));
+    }
+
+    public function testColumnKeepsTheCheckedOccurrenceAndSlot(): void
+    {
+        $from = new TableSource(new Identifier('main'), new Identifier('accounts'), [new Identifier('id'), new Identifier('tenant')]);
+        $column = new ColumnReference(1);
+
+        self::assertSame('"__ztd_source"."tenant"', (new SelectSql())->column($column, $from, []));
     }
 }

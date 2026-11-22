@@ -36,11 +36,11 @@ final class CastExpression
 
     /**
      * @param CastTarget $target The effective SQLite conversion
-     * @param Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand The evaluated scalar
+     * @param Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand The evaluated scalar
      */
     public function __construct(
         public readonly CastTarget $target,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
     ) {
     }
 }
