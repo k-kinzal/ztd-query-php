@@ -118,8 +118,7 @@ def negatives():
     yield case([[ATOMS[0], ATOMS[1]]], columns=[[["column", 0, 1], "answer"]]), "visible occurrence"
 
 
-def expanded_admission(db, worker, ledger):
-    item = case([[ATOMS[0], ATOMS[1]]], joins=[["INNER", ["main", "c", ["a", "b"]], None]])
+def expanded_admission(item, db, worker, ledger):
     key = "join/previously-refused"
     ledger.record(key, "attempted", input=item)
     response = worker.request(item)
@@ -170,7 +169,8 @@ def execute(args, specification, db, worker_factory=Worker):
                 key = f"analysis/{index}"
                 ledger.record(key, "attempted", input=current, expected=item)
                 probe(item, worker.request(current), db, ledger, key, original=sql)
-            expanded_admission(db, worker, ledger)
+            current = case([[ATOMS[0], ATOMS[1]]], joins=[["INNER", ["main", "c", ["a", "b"]], None]])
+            expanded_admission(current, db, worker, ledger)
             for index, (current, message) in enumerate(negatives()):
                 key = f"negative/{index}"
                 ledger.record(key, "attempted", input=current)
