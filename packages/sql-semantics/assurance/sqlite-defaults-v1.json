@@ -1,0 +1,42 @@
+{
+  "revision": "SemanticsIR/sqlite-defaults-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under the ordinary rowid table declaration profile of sqlite-create-table-v1.json.",
+  "scope": "One optional literal default per ordinary column with or without the existing default NOT NULL policy. Shape the declared SQLite value and preserve its assignment to that column.",
+  "constructors": {},
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "IntegerLiteral", "NullLiteral", "Literal/HexIntegerLiteral", "Literal/RealLiteral", "Literal/TextLiteral", "Literal/BlobLiteral"],
+  "structure": "A column has name, declared type, nullability and an optional immutable scalar literal. An absent operand is distinct from an explicit SQL NULL operand.",
+  "conditions": ["One checked default and at most one admitted nullability constraint for each column.",
+                 "The column default belongs to the closed literal union and has no table or parameter operands.",
+                 "The completed table checks total scalar payload size and its existing target and column constraints.",
+                 "Analysis accepts numeric signs on numeric literals, plain NULL, TEXT and BLOB, parenthesized single supported literals and decoded word defaults."],
+  "meaning": "A missing value on INSERT takes the declared default or SQL NULL when no default exists. The table applies the declared affinity and nullability constraints. An explicitly supplied value bypasses the default. A default on a guarded creation attempt cannot alter the column of an already existing table.",
+  "sql": "Append the DEFAULT keyword and typed literal to the owning column when present. Literal numeric, string, NULL and binary forms come from the checked structural operands.",
+  "observations": [
+    "Absolute creation target, ordered names, declared types, nullability and default presence in the catalog",
+    "Typed rows from omitting the value, explicitly overriding the value and attempting an explicitly supplied SQL NULL",
+    "Exact constraint rejection under NOT NULL and restoration after the fixture savepoint",
+    "Both raw catalog records and the semantic projection of default presence are recorded. Catalog display spelling is governed by the fit between the default literal and its native expression rules."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "types": ["", "INTEGER", "TEXT", "REAL", "BLOB"],
+    "defaults": [null, ["null"], ["integer", "-3"], ["real", "2", "5", null, false], ["text", "007"], ["text", "only text"], ["blob", "FF"]],
+    "notNull": [false, true],
+    "guards": [false, true],
+    "completeness": "Check each observed schema, type, default alternative, nullability and creation guard identity exactly once."
+  },
+  "exploration": {
+    "seeds": [7119, 16747, 25801],
+    "casesPerSeed": 20,
+    "timeoutSeconds": 130,
+    "allowedExclusions": [],
+    "structure": "Vary ordered columns, target schema, declared affinity, nullability, decoded labels and explicit defaults, including absent operands and typed default values."
+  },
+  "negative": ["Unsupported constant expression beyond one literal", "Parameter in a schema default", "Duplicate default clauses", "An unsupported conflict policy with a default", "Non-numeric literal with an explicit sign"],
+  "faults": ["Omit every DEFAULT clause", "Replace each admitted default with NULL", "Emit a BLOB default as a text value"],
+  "open": ["Constant expression defaults with operators or functions, CURRENT_TIME-family defaults, unsupported conflict policies and signed nonnumeric forms"],
+  "trust": ["Independent assignment model for the fixed storage values", "Pinned SQLite catalog and write observations", "The schema belongs to the same SQLite evaluation context"],
+  "sources": ["https://sqlite.org/lang_createtable.html#the_default_clause", "https://sqlite.org/datatype3.html#affinity_name_examples"]
+}
