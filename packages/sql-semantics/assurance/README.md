@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v9.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v10.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -76,7 +76,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v3.json) fix selected PHP guard sequences for row slots, joined sources, compound roles, INSERT, UPDATE, table removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v4.json) fix selected PHP guard sequences for row slots, joined sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -145,6 +145,12 @@ Run `run_server_transaction.py` with the same options and pinned fixture setting
 The [native DROP TABLE contract](server-drop-table-v1.json) covers ordered persistent table targets, IF EXISTS and PostgreSQL dependency policy. The observer records retained typed rows, dependent view survival and changes to an open transaction. Its fixed fixtures distinguish partial deletion on MySQL 5.6 or 5.7 from DROP with a missing target on newer InnoDB releases. PostgreSQL exercises both dependency options and restoration on rollback.
 
 Run `run_server_drop_table.py` with the same native fixture options. Replay the pinned release set with `combine_server_drop_table_evidence.py` and the per-release `index.json` paths.
+
+## Native table creation
+
+The [native CREATE TABLE contract](server-create-table-v1.json) covers ordinary persistent tables with ordered signed integer columns, nullability and literal defaults. The observer inspects column names, positions, types and defaults and attempts a default insert. It measures IF NOT EXISTS with a preexisting target and compares transaction effects and rollback.
+
+Run `run_server_create_table.py` with the same native fixture options. Replay all releases with `combine_server_create_table_evidence.py` and the per-release `index.json` paths.
 
 ## Native compound queries
 

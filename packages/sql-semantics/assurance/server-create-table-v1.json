@@ -4,7 +4,7 @@
   "dialects": ["MySql", "PostgreSql"],
   "profiles": "The pinned native releases and name profiles. Omitted access methods resolve to InnoDB on MySQL and heap on PostgreSQL. The fixture uses these defaults and observes each native transaction policy.",
   "scope": "Create one persistent ordinary table at a resolved schema identity with one or more named SMALLINT, INTEGER or BIGINT columns, nullable or not nullable, and optional explicit NULL or signed 32-bit literal defaults. Preserve IF NOT EXISTS.",
-  "open": ["Other types, type modifiers, defaults, constraints, temporary and unlogged tables, partitioning, inheritance, LIKE, CREATE TABLE AS and other engine options"],
+  "open": ["Non-ASCII MySQL column names, other types, type modifiers, defaults, constraints, temporary and unlogged tables, partitioning, inheritance, LIKE, CREATE TABLE AS and other engine options"],
   "additionalPublicRoots": ["Schema/CreateTable"],
   "constructors": {
     "CreateTable": {
@@ -19,7 +19,7 @@
     "TableColumn": {
       "type": "Schema/TableColumn",
       "role": "An ordered column with signed native integer kind, nullability and an optional literal default",
-      "invariants": ["The column name fits the native definition role", "An integer default fits the native width", "MySQL NOT NULL does not admit an explicit NULL default"],
+      "invariants": ["MySQL column names use ASCII for the pinned case comparison. PostgreSQL column names exclude system attribute names.", "An integer default fits the native width", "MySQL NOT NULL does not admit an explicit NULL default"],
       "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
     },
     "IntegerStorage": {
@@ -33,7 +33,8 @@
   "finite": {"types": ["SMALLINT", "INTEGER", "BIGINT"], "columnForms": ["nullable without an explicit default", "nullable with explicit NULL", "nullable with an integer default", "NOT NULL with an integer default"], "ifNotExists": [false, true], "priorTarget": [false, true], "completeness": "Observe all 48 constructor and prior-target combinations per release."},
   "exploration": {"seeds": [3541, 6701, 17183], "casesPerSeed": 20, "timeoutSecondsPerRelease": 185, "allowedExclusions": []},
   "negative": ["Empty column list", "Repeated column name", "Default outside SMALLINT", "Unsupported definition alternative", "Unresolved declaration schema"],
-  "additionalMySqlNegatives": ["NOT NULL with explicit NULL"],
+  "additionalMySqlNegatives": ["NOT NULL with explicit NULL", "Non-ASCII MySQL column name"],
+  "additionalPostgreSqlNegatives": ["System column name"],
   "faults": ["Change column order", "Change a signed integer storage role", "Change a nonzero default", "Invert IF NOT EXISTS"],
   "trust": ["Pinned builtin integer roles and access-method settings", "Disposable ordinary tables", "Independent prediction of catalog and default effects", "Engine and client representation of metadata"],
   "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-table.html", "https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html", "https://www.postgresql.org/docs/17/sql-createtable.html"]

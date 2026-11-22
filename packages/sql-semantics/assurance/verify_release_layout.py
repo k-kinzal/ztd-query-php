@@ -14,7 +14,7 @@ from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, 
 CONTRACT = "3cd8905bf72414457cea1458b392c29dbb3aa7d6b4a33521ae47e66778585aef"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
-          "Schema\\DropTable", "Transaction\\Transaction"}
+          "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
 
 
 def checked_recipe(candidate, contract, out):
@@ -102,7 +102,7 @@ def probe(stage, evidence):
     results = [json.loads(line) for line in raw.splitlines()]
     pairs = {(item["platform"], item["role"]) for item in results}
     expected = {(platform, role) for platform in DIALECTS for role in COMMON}
-    expected.update({("Sqlite", "Rows\\ValuesQuery"), ("Sqlite", "Schema\\CreateTable")})
+    expected.add(("Sqlite", "Rows\\ValuesQuery"))
     require(pairs == expected and len(results) == len(expected), "incomplete-installed-publication")
     for item in results:
         package = "sql-semantics-" + DIALECTS[item["platform"]]

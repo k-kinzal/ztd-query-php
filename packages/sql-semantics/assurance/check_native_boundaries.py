@@ -29,6 +29,9 @@ def faults(engine):
               "CompoundShape::width($left) === CompoundShape::width($right),", "true,"),
         Fault("accept-excessive-compound-size", "Rows/Compound::__construct",
               "CompoundShape::arms($left) + CompoundShape::arms($right) <= 64,", "true,"),
+        Fault("accept-out-of-range-smallint-default", "Schema/TableColumn::__construct",
+              "$integer >= -32768 && $integer <= 32767,", "true,"),
+        Fault("accept-excessive-table-width", "Schema/CreateTable::__construct", "count($checked) <= 128,", "true,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
@@ -92,7 +95,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v3.json", "value_storage.php", "value-storage-v7.json", "value-primitives.json")},
+                       "native-boundaries-v4.json", "value_storage.php", "value-storage-v8.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

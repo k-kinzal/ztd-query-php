@@ -196,6 +196,29 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
     ];
 }
 
+function constructCreateTable(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\CreateTable';
+    $target = $namespace . 'Schema\\TableName';
+    $name = $namespace . 'Identifier';
+    $column = $namespace . 'Schema\\TableColumn';
+    $storage = $namespace . 'Schema\\IntegerStorage';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $create = $input['create'];
+    $columns = [];
+    foreach ($create['columns'] as [$columnName, $kind, $nullable, $default]) {
+        $columns[] = new $column(new $name($columnName), $storage::from($kind), $nullable, $default === null ? null : constructOperand($namespace, $default));
+    }
+
+    return new $statement(
+        new $target(new $name($create['target'][0]), new $name($create['target'][1])),
+        $columns,
+        $create['ifNotExists'],
+        $release::from($input['release']),
+    );
+}
+
 function constructDropTable(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -329,6 +352,7 @@ function observeStatement(array $input): array
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),
+            isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
@@ -338,6 +362,21 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Schema\\CreateTable') {
+        $observed = [
+            'target' => [$value->target->schema->value, $value->target->table->value],
+            'ifNotExists' => $value->ifNotExists,
+            'columns' => [],
+        ];
+        foreach ($value->columns as $column) {
+            $observed['columns'][] = [
+                $column->name->value, $column->storage->value, $column->nullable,
+                $column->default === null ? null : observeOperand($namespace, $column->default),
+            ];
+        }
+
+        return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString()];
     }
     if ($value::class === $namespace . 'Schema\\DropTable') {
         $observed = ['targets' => [], 'ifExists' => $value->ifExists];

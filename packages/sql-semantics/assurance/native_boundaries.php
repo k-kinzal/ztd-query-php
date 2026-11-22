@@ -11,8 +11,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(): array
 {
-    $file = __DIR__ . '/native-boundaries-v3.json';
-    requireShape(hash_file('sha256', $file) === '6ab147587ae4fa1e7ada1c2b89a2b2fb0167f9bd65b29f7ddf60c38fe016378f', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v4.json';
+    requireShape(hash_file('sha256', $file) === '2a0ea73f247773de6b3f6691071edb66065b0ee6a1d9d8a55b50db941bad89dd', 'Native boundary contract differs from the recorded revision');
 
     return json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 }
@@ -28,7 +28,7 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }

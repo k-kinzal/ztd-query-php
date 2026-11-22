@@ -122,8 +122,8 @@ def request_batches(cases, maximum):
 
 def negative_count(specification, engine, tag):
     specific = specification.get("negativeByRelease", {})
-    return (len(specification["negative"]) + len(specific.get(tag, specific.get("default", ())))
-            + (len(specification.get("additionalPostgreSqlNegatives", ())) if engine == "postgres" else 0))
+    dialect = {"postgres": "additionalPostgreSqlNegatives", "mysql": "additionalMySqlNegatives"}[engine]
+    return len(specification["negative"]) + len(specific.get(tag, specific.get("default", ()))) + len(specification.get(dialect, ()))
 
 
 def execute(args, specification, tag, worker, db, domain=None):

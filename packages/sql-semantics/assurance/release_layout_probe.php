@@ -26,12 +26,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         'Mutation\\Delete' => "DELETE FROM $table WHERE id < 2",
         'Mutation\\Insert' => "INSERT INTO $table (id) VALUES (2)",
         'Mutation\\Update' => "UPDATE $table SET id = 2",
+        'Schema\\CreateTable' => "CREATE TABLE $schema.other (id INTEGER)",
         'Schema\\DropTable' => "DROP TABLE IF EXISTS $table",
         'Transaction\\Transaction' => 'ROLLBACK TO SAVEPOINT bookmark',
     ];
     if ($platform === 'Sqlite') {
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
-        $queries['Schema\\CreateTable'] = 'CREATE TABLE main.other (id INTEGER)';
     }
 
     foreach ($queries as $role => $sql) {

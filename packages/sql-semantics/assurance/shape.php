@@ -165,7 +165,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    array_push($roots, 'Rows\\Compound', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\DropTable', 'Transaction\\Transaction');
+    array_push($roots, 'Rows\\Compound', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -230,6 +230,19 @@ if ($dialect !== 'sqlite') {
         : ['Integer' => 'int32', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
     array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');
     $pureCollaborators[] = 'Rows\\CompoundShape';
+    $properties['Schema\\CreateTable'] = [
+        'target' => ['Schema\\TableName'], 'columns' => ['array'], 'ifNotExists' => ['bool'],
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $methods['Schema\\CreateTable'] = $methods['Select'];
+    $properties['Schema\\TableColumn'] = [
+        'name' => ['Identifier'], 'storage' => ['Schema\\IntegerStorage'], 'nullable' => ['bool'],
+        'default' => ['IntegerLiteral', 'NullLiteral', 'null'],
+    ];
+    $methods['Schema\\TableColumn'] = ['__construct', 'toString'];
+    $properties['Schema\\IntegerStorage'] = $methods['Schema\\IntegerStorage'] = [];
+    $enumCases['Schema\\IntegerStorage'] = ['Small' => 'SMALLINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
+    array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
         'targets' => ['array'], 'ifExists' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
     ];
@@ -333,6 +346,7 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
         . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
@@ -375,9 +389,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v7.json';
+    $storagePath = __DIR__ . '/value-storage-v8.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '4144bf835b3f4093368a5be997c6c699d132185a7ac44cef08cf42a6c7c4c58f',
+        hash_file('sha256', $storagePath) === 'dd02bacc87b0aa5358c8975bc94775c1f1611fc9f95a1e411b0e2ee21e63d805',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -420,6 +434,8 @@ try {
             requireShape($interfaces === [], "Unexpected collaborator interface in $short");
             $loweringRole = match ($short) {
                 'SelectLowering' => 'Select',
+                'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
+                'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
