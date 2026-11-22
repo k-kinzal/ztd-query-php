@@ -404,6 +404,8 @@ def main():
     classes = json.loads(inventory_file.read_text())
     check_scope(classes, roles, manifest)
     faults = {}
+    from faults import fault_budget
+    require(base.get("initialFaultBudget") == fault_budget(), "bundle-initial-fault-budget")
     for receipt in base["faults"]:
         fault = receipt["id"]
         require(fault not in faults, "bundle-repeated-fault", fault)

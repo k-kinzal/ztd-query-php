@@ -472,7 +472,7 @@ def main():
     check_comparator()
     code_shape = shape(args)
     checks = run(args, db, contract, args.out / "events.jsonl")
-    from faults import exercise
+    from faults import exercise, fault_budget
     faults = exercise(args, db, distribution)
     verify_candidate(args.candidate, commit, distribution)
     index = {
@@ -494,7 +494,7 @@ def main():
         },
         "repositoryAcceptanceProtection": "unconfigured",
         "inventoryArtifacts": {name: digest(args.out / name) for name in ("inventory.json", "scope.json")},
-        "shape": code_shape, "checks": checks, "faults": faults,
+        "shape": code_shape, "checks": checks, "faults": faults, "initialFaultBudget": fault_budget(),
         "proof": "none", "open": ["full constructor ledger", "server projection evidence is recorded separately", "remaining semantic families and profiles", "human review", "protected acceptance configuration"],
         "files": ["summary.md", "distribution.json", "scope.json", "grammar-scope.json", "inventory.json", "events.jsonl", "faults/"],
         "inventorySettings": {"timeoutSeconds": 60, "xdebugMode": "off"},

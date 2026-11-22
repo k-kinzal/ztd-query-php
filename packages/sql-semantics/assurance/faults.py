@@ -4,6 +4,7 @@ import collections
 import difflib
 import hashlib
 import io
+import json
 import time
 
 from cases import MAIN, case, expected, finite_identity
@@ -14,6 +15,17 @@ from run import (
 
 
 IR = "sql-semantics-sqlite/src/Ir/"
+BUDGET_RECORD = "initial-fault-budget-v1.json"
+BUDGET_DIGEST = "9bce1f665cc57c3631bab051f505fb5cd35e277c3e81ccad9ef4a97ee46553ad"
+
+
+def fault_budget():
+    path = TOOL / BUDGET_RECORD
+    require(digest(path) == BUDGET_DIGEST, "initial-fault-budget-mismatch")
+    data = json.loads(path.read_text())
+    return {"record": BUDGET_RECORD, "sha256": BUDGET_DIGEST,
+            "startupSeconds": data["workerStartupSeconds"], "executionSeconds": data["workerExecutionSeconds"]}
+
 
 
 def replace_once(source, before, after):
@@ -42,6 +54,7 @@ def check_events(ledger_type):
 
 
 def exercise(args, db, distribution):
+    budget = fault_budget()
     root = args.out / "faults"
     root.mkdir()
     simple = case(None, [["integer", "42"]])
@@ -50,7 +63,8 @@ def exercise(args, db, distribution):
     empty = case(None, [])
 
     def worker_check(test, overlay):
-        with Worker(args, time.monotonic() + 20, overlay) as worker:
+        with Worker(args, time.monotonic() + budget["executionSeconds"], overlay,
+                    startup_timeout=budget["startupSeconds"]) as worker:
             return test(worker)
 
     def record(key, path, original, mutant, signal, fixture, control, check):
@@ -62,12 +76,20 @@ def exercise(args, db, distribution):
         patch = "".join(difflib.unified_diff(original.splitlines(True), mutant.splitlines(True), f"a/{path}", f"b/{path}"))
         require(bool(patch) and mutation.read_text() == mutant, "fault-not-applied", key)
         (folder / "injected.diff").write_text(patch)
-        control()
         record = {
             "id": key, "affectedPath": path, "mutatedDigest": digest(mutation),
             "baselineDigest": hashlib.sha256(original.encode()).hexdigest(),
-            "input": fixture, "control": "passed", "expectedSignal": signal,
+            "input": fixture, "expectedSignal": signal,
         }
+        try:
+            control()
+        except Failure as failure:
+            record["control"] = "failed"
+            record["controlSignal"] = failure.signal
+            record["detail"] = failure.detail
+            write_json(folder / "result.json", record)
+            raise
+        record["control"] = "passed"
         try:
             check(folder, mutation)
         except Failure as fault:
