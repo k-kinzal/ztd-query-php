@@ -233,7 +233,8 @@ def main(domain):
                 result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, comparatorControls=comparator_controls, observerPreparation=preparation)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
             result["faults"] = check_render_faults(args, db, mutations, lambda item, value, db: probe(item, value, db, domain), script="server_worker.php")
-            require(len(result["faults"]) == len(specification["faults"]), f"server-{label}-faults-incomplete")
+            registered_faults = len(specification["faults"]) + len(specification.get("dialectFaults", {}).get(args.engine, ()))
+            require(len(result["faults"]) == registered_faults, f"server-{label}-faults-incomplete")
     except Exception as error:
         write_json(args.out / "run-failure.json", {
             "candidate": commit, "contract": domain.CONTRACT, "engine": args.engine, "release": args.release,

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ir;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
@@ -13,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SourceBinding::class)]
-#[Small]
+#[Medium]
 final class SourceBindingTest extends TestCase
 {
     public function testReferenceAndSourceKeepTheBoundColumnName(): void
@@ -57,5 +57,31 @@ final class SourceBindingTest extends TestCase
 
         self::assertSame('payload', $target->columns[0]->value);
         self::assertSame('id', $target->columns[1]->value);
+    }
+
+    public function testSlotForKeepsTheIdentityOfADeclaredColumn(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (id INTEGER)');
+        $operation = $inspection->inspect('SELECT id FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+        $column = $binding->writableColumn('id');
+        $before = $binding->slotFor($column);
+
+        self::assertSame($before->slot, $binding->slotFor($column)->slot);
+        self::assertSame(0, $before->occurrence);
+    }
+
+    public function testWritableColumnRejectsAnIneligibleType(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (a TEXT)');
+        $operation = $inspection->inspect('SELECT a FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+        $this->expectExceptionMessage('writable signed 32-bit integer');
+
+        $binding->writableColumn('a');
     }
 }

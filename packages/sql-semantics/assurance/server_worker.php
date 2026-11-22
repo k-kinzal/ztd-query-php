@@ -154,6 +154,34 @@ function constructPredicate(string $namespace, ?array $test): ?object
     };
 }
 
+function constructUpdate(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Mutation\\Update';
+    $assignment = $namespace . 'Mutation\\UpdateAssignment';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $target = constructSource($namespace, $input['target'], $input['dialect']);
+    $sets = [];
+    foreach ($input['assignments'] as [$slot, $value]) {
+        $sets[] = new $assignment(constructOperand($namespace, $slot), constructOperand($namespace, $value));
+    }
+
+    return new $statement($target, $sets, constructPredicate($namespace, $input['where']), $release::from($input['release']));
+}
+
+function observeUpdate(string $namespace, object $value, string $dialect): array
+{
+    $sets = [];
+    foreach ($value->assignments as $assignment) {
+        $sets[] = [observeOperand($namespace, $assignment->target), observeOperand($namespace, $assignment->value)];
+    }
+
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace),
+        'assignments' => $sets, 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
+    ];
+}
+
 function constructInsert(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -228,12 +256,16 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['rows']) => constructInsert($platform, $input),
             isset($input['target']) => constructDelete($platform, $input),
             default => constructSelect($platform, $input),
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Mutation\\Update') {
+        return observeUpdate($namespace, $value, $input['dialect']);
     }
     if ($value::class === $namespace . 'Mutation\\Insert') {
         return observeInsert($namespace, $value, $input['dialect']);

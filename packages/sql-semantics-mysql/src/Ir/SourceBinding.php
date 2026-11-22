@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
@@ -76,10 +77,17 @@ final class SourceBinding
             'The column must resolve to the projection source.',
         );
         $column = $resolution->declaration();
-        Check::input(
-            $column !== null && $this->table !== null && in_array($column, $this->table->columns, true),
-            'The column must be an explicit member of the projection source.',
-        );
+        Check::input($column !== null, 'The column must be an explicit member of the projection source.');
+
+        return $this->slotFor($column);
+    }
+
+    /**
+     * Allocates a slot for a checked integer member of this table.
+     */
+    public function slotFor(Column $column): ColumnReference
+    {
+        Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
         Check::input($column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'The bound column must have the signed 32-bit integer type.');
         $key = spl_object_id($column);
         if (!isset($this->slots[$key])) {
@@ -118,16 +126,26 @@ final class SourceBinding
     public function writeTarget(array $names): TableSource
     {
         $target = $this->source();
-        Check::input($this->table !== null && $target !== null, 'An INSERT requires a resolved write target.');
+        Check::input($target !== null, 'An INSERT requires a resolved write target.');
         $columns = [];
         foreach ($names as $name) {
-            $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
-            Check::input(count($matches) === 1, 'An INSERT column must resolve to a declared target slot.');
-            $column = $matches[0];
-            Check::input(!$column->generated && $column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'An INSERT column must be a writable signed 32-bit integer.');
-            $columns[] = new Identifier($column->name->value);
+            $columns[] = new Identifier($this->writableColumn($name)->name->value);
         }
 
         return new TableSource($target->schema, $target->table, $columns);
+    }
+
+    /**
+     * Resolves a name to a writable explicit member with the signed integer role.
+     */
+    public function writableColumn(string $name): Column
+    {
+        Check::input($this->table !== null, 'A write requires a resolved base table.');
+        $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
+        Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
+        $column = $matches[0];
+        Check::input(!$column->generated && $column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'A write column must be a writable signed 32-bit integer.');
+
+        return $column;
     }
 }

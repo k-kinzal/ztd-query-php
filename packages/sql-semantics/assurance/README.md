@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [publication contract](publication-v5.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v6.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -115,6 +115,12 @@ Replay the release matrix with `combine_server_result_evidence.py` and the same 
 The [native INSERT contract](server-insert-v1.json) covers ordinary writable signed-integer targets and literal integer or NULL values. The observer starts with different target and control data and observes all rows, affected-row counts, defaults on omitted columns, trigger events and restoration after rollback. It only admits the fixed fixture's literal INSERT forms.
 
 Use `run_server_insert.py` with the same native options and fixture connection settings as the DELETE runner. Replay the release set with `combine_server_insert_evidence.py` and the per-release `index.json` paths. PostgreSQL analysis distinguishes ordinary inherited columns, identity columns copied through LIKE, and inherited identities on partitions.
+
+## Native ordered UPDATE effects
+
+The [native UPDATE contract](server-update-v1.json) compares writes to declared writable signed integer slots. MySQL assigns in written order and counts changed rows in the fixture's client profile. PostgreSQL reads the old row for each assignment, counts updated rows and preserves ONLY. The observer records complete table contents, before and after values from the row trigger, and the state after rollback.
+
+Use `run_server_update.py` with the same options and pinned fixture settings as the INSERT runner. Replay the release set with `combine_server_update_evidence.py` and the per-release `index.json` paths.
 
 ## SQLite joins, filters and ordering
 

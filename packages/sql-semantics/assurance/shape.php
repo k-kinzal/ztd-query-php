@@ -164,7 +164,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert');
+    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -206,6 +206,16 @@ if ($dialect !== 'sqlite') {
     $properties['Mutation\\InsertCell'] = ['value' => ['?IntegerLiteral']];
     $methods['Mutation\\InsertRow'] = $methods['Mutation\\InsertCell'] = ['__construct', 'toString'];
     $internal[] = 'Mutation\\InsertLowering';
+    $properties['Mutation\\Update'] = [
+        'target' => ['TableSource'], 'assignments' => ['array'], 'where' => $conditions,
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $properties['Mutation\\UpdateAssignment'] = [
+        'target' => ['ColumnReference'], 'value' => ['ColumnReference', 'IntegerLiteral', 'NullLiteral'],
+    ];
+    $methods['Mutation\\Update'] = $methods['Select'];
+    $methods['Mutation\\UpdateAssignment'] = ['__construct'];
+    $internal[] = 'Mutation\\UpdateLowering';
     $methods['Predicate\\IntegerComparison'] = ['__construct'];
     $methods['Predicate\\IntegerOperator'] = [];
     $enumCases['Predicate\\IntegerOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -251,9 +261,9 @@ try {
     requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
         && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
-    $publication = __DIR__ . '/publication-v5.json';
+    $publication = __DIR__ . '/publication-v6.json';
     requireShape(
-        hash_file('sha256', $publication) === 'ae49925bf3e0c7d25f55bb15f318c6686e160285c44a3ae20a5349722f12ed67',
+        hash_file('sha256', $publication) === '296a6501047059163e2bce51a8bb238c2e0e2180ccadf2015d6c79e2af0dc14b',
         'Publication contract differs from the recorded revision'
     );
     $surface = json_decode(file_get_contents($publication), true, 512, JSON_THROW_ON_ERROR)['surface'];
@@ -280,6 +290,7 @@ try {
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
         . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
@@ -318,9 +329,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v5.json';
+    $storagePath = __DIR__ . '/value-storage-v6.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'b65707c979811d42ce85733c705f391efe9a71e7fe97c356a2b8cfb33ff232cc',
+        hash_file('sha256', $storagePath) === 'b7e1d7ce54ffc875cc99cd5f895097db6332803b3104033fe09b11cb50aa0e25',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

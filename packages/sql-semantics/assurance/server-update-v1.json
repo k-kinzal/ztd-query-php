@@ -35,8 +35,9 @@
   },
   "exploration": {"seeds": [1883, 17623, 22913], "casesPerSeed": 36, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
   "negative": ["Empty assignment list", "A read reference outside the target", "A write reference outside the target", "A nonzero write occurrence", "A WHERE reference outside the target", "Undeclared or unwritable assignment target"],
-  "postgresNegative": ["A repeated write slot"],
-  "faults": ["Reverse the MySQL assignment order", "Write to the wrong target slot", "Omit WHERE", "Omit PostgreSQL ONLY"],
+  "additionalPostgreSqlNegatives": ["A repeated write slot"],
+  "faults": ["Write to the wrong target slot", "Omit WHERE"],
+  "dialectFaults": {"mysql": ["Reverse the assignment order"], "postgres": ["Omit ONLY"]},
   "evidence": "Preserve actual typed state and emitted SQL on exact runtime bytes. Compare an independent old-row or current-row interpreter with the native engine and check that the fixture is restored.",
   "trust": ["Closed runtime rules and declared relation facts", "Deterministic fixture table definitions and observers", "Native expression profile and effect model"],
   "sources": ["https://dev.mysql.com/doc/refman/8.4/en/update.html", "https://www.postgresql.org/docs/17/sql-update.html"]
