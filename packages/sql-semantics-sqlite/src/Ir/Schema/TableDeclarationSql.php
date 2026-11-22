@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeySql;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
  * Composes a table definition from its columns and constraints.
@@ -46,7 +50,7 @@ final class TableDeclarationSql
             $source = new DefinitionSource($names);
             $expressions = new SelectSql();
             foreach ($checks as $check) {
-                $sql = 'CONSTRAINT ' . $check->label->quoted() . ' CHECK (' . $expressions->expression($check->condition, $source) . ')';
+                $sql = $this->checkClause($check, $expressions, $source);
                 if ($check->column === null) {
                     $table[] = $sql;
                 } else {
@@ -61,5 +65,20 @@ final class TableDeclarationSql
         }
 
         return [...$parts, ...$table];
+    }
+
+    /**
+     * Writes the checked constraint in the selected naming role.
+     */
+    public function checkClause(CheckConstraint $check, SelectSql $expressions, DefinitionSource $source): string
+    {
+        $condition = $check->condition;
+        if ($check->label instanceof ImplicitCheckLabel) {
+            Check::invariant($condition instanceof Comparison && $condition->right instanceof IntegerLiteral, 'The implicit CHECK has an integer operand.');
+
+            return 'CHECK (' . $check->label->expression($condition->right) . ')';
+        }
+
+        return 'CONSTRAINT ' . $check->label->quoted() . ' CHECK (' . $expressions->expression($condition, $source) . ')';
     }
 }

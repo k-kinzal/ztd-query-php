@@ -1,0 +1,121 @@
+{
+  "revision": "SemanticsIR/sqlite-not-null-conflict-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "SQLite 3.47.2 with the ordinary rowid table declaration profile, matching settings, write inputs and initial transaction state.",
+  "scope": "An optional NOT NULL policy on any ordinary declared column, including all five algorithms and interaction with its literal default and the writing statement's override.",
+  "constructors": {
+    "Schema/NotNullConflict": {
+      "role": "The effective default conflict algorithm assigned to one NOT NULL column constraint.",
+      "structure": "The closed enumeration of ABORT, FAIL, IGNORE, REPLACE and ROLLBACK. The owning column uses null for no constraint and the Abort case for both written ABORT and the implicit algorithm.",
+      "conditions": "Only the owning column declares this constraint. Analysis accepts a single NOT NULL clause for that column and obtains its algorithm from the parsed conflict role. The parent table verifies the existing ordered column and default conditions.",
+      "meaning": "An INSERT or UPDATE which would store SQL NULL applies its explicitly selected conflict algorithm, or this column policy when the writer inherits. ABORT undoes the statement, FAIL keeps earlier successful row changes, IGNORE skips the offending row, and ROLLBACK undoes an explicit transaction or behaves as ABORT in autocommit. REPLACE substitutes the declared default when non-NULL and otherwise behaves as ABORT.",
+      "externalInterpretation": "The table declaration is installed into the same target schema and behavior is compared with the same subsequent write inputs, constraint order and transaction state.",
+      "sql": "Render no clause for an unconstrained column. Emit NOT NULL for ABORT and add ON CONFLICT followed by the exact algorithm for each other kind. Associate any optional DEFAULT with the same column.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Schema/CreateTable",
+    "Schema/TableColumn",
+    "IntegerLiteral",
+    "NullLiteral"
+  ],
+  "observations": [
+    "The resolved schema, ordered column names, declared types and effective nullability with absent, explicit NULL or non-NULL default operands.",
+    "The full ordered stored rows, exact constraint errors and change count after INSERT and UPDATE probe statements.",
+    "The preceding transaction marker and remaining transaction state after each write; retain a distinguishing prefix for FAIL and make REPLACE observable by comparing the actual stored values.",
+    "The native probes run against the emitted and original DDL for analyzed cases. The reference model calculates each effect from the observed structure and independent write inputs."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "constraints": [
+      false,
+      true,
+      "FAIL",
+      "IGNORE",
+      "REPLACE",
+      "ROLLBACK"
+    ],
+    "defaults": [
+      null,
+      [
+        "null"
+      ],
+      [
+        "integer",
+        "-7"
+      ]
+    ],
+    "writes": [
+      "insert",
+      "update"
+    ],
+    "overrides": [
+      "inherit",
+      "ABORT",
+      "FAIL",
+      "IGNORE",
+      "REPLACE",
+      "ROLLBACK"
+    ],
+    "transaction": [
+      false,
+      true
+    ],
+    "identity": "Each of the 864 creation and write profile products is covered exactly once. Derive the identity from the returned column shape and independently tracked probe specification and compare it with the full product."
+  },
+  "exploration": {
+    "seeds": [
+      30149,
+      42061,
+      57143
+    ],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary ordered column widths one to four, active constraint slot, quoted labels, other independently constrained columns, fixed integer and untyped declaration roles, default presence and values, statement kind, guard and policy, transaction state and length of the successful INSERT prefix."
+  },
+  "negative": [
+    "Repeated NOT NULL declarations",
+    "Unknown direct policy",
+    "Unsupported CHECK constraint with a literal default"
+  ],
+  "faults": [
+    "Render all non-ABORT algorithms as implicit ABORT, wrongly rejecting IGNORE writes.",
+    "Render FAIL as ABORT and erase a successful prefix.",
+    "Render ROLLBACK as ABORT and retain preceding transaction writes.",
+    "Render REPLACE as IGNORE and omit the default row."
+  ],
+  "open": [
+    "Repeated NOT NULL declarations, other table constraints and general column defaults outside the admitted literal profile."
+  ],
+  "trust": [
+    "Pinned SQLite engine and fixture authorizer.",
+    "Independent default, conflict and transaction outcome rules for the fixed ordinary tables and probe writes.",
+    "Checked PHP layouts and actual class-to-package dispatch."
+  ],
+  "sources": [
+    "https://www.sqlite.org/lang_createtable.html#not_null_constraints",
+    "https://www.sqlite.org/lang_conflict.html"
+  ],
+  "extends": "sqlite-not-null-conflict-v1.json",
+  "observationRevision": "Preserve the finite, exploration and negative budgets. The previously rejected simple unnamed CHECK is an analyzed positive in sqlite-implicit-checks-v1.json. Require the corresponding unsupported comment presentation to be rejected at the same construction boundary."
+}

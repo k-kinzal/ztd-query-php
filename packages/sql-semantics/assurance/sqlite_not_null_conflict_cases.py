@@ -82,7 +82,7 @@ def negatives():
     yield case([["value", "", "UNKNOWN"]], table=TABLE), (
         "error", "TypeError", "TableColumn::__construct(): Argument #3 ($notNull) must be of type ?"
         + "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\NotNullConflict, string given")
-    yield {"sql": "CREATE TABLE t (a CHECK (a > 0) DEFAULT 1)", "declarations": []}, (
+    yield {"sql": "CREATE TABLE t (a CHECK (/* label */ a > 0) DEFAULT 1)", "declarations": []}, (
         "rejected", EXCEPTION + "InvalidConstruction", "column constraint has no complete")
 
 

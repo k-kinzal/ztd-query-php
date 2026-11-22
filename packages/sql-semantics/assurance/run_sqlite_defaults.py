@@ -8,8 +8,8 @@ from run_sqlite_create_table import DECLARATIONS, EXISTING, FIXTURE, case, quote
 from sqlite_default_cases import TABLE, analyzed, columns_of, expected, finite_cases, finite_id, finite_ids, negatives, seeded
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 
-CONTRACT_NAME = "sqlite-defaults-v2.json"
-CONTRACT = "42189e362b95c677b793a9355a9d98eeca7a90c1a2ce0800b119f6419eb1ef25"
+CONTRACT_NAME = "sqlite-defaults-v3.json"
+CONTRACT = "6b6e987a065e52b3be5a018d0f9e1ba21d3f243b7ad05acb02308b109c3661a9"
 EXCEPTION = "SqlSemantics\\Platform\\Sqlite\\Model\\Diagnostic\\"
 SCHEMAS = ("main", "temp")
 

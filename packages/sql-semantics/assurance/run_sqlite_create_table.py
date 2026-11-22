@@ -10,7 +10,7 @@ from run_sqlite_delete import typed_rows
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 
-CONTRACT = "be2c9f922e27b7106b63cd201b04cfecef60b035c27dd74366ad7b8b0650e99e"
+CONTRACT = "a2e7d433392ad397b62f58e5e0dc45f2307c591ad9d59c5317b49362545390c3"
 SCHEMAS = ("main", "temp")
 TYPES = ("", "INTEGER", "TEXT", "REAL", "BLOB")
 EXISTING = "ir_create_existing"
@@ -150,7 +150,7 @@ def negatives():
     yield case([]), "nonempty ordered column list"
     yield case([["a", "INTEGER", True], ["A", "TEXT", False]]), "cannot repeat a column name"
     yield case([["a", "", False]], table="sQLite_foo"), "reserved SQLite namespace"
-    yield {"sql": "CREATE TABLE t (a INTEGER CHECK (a > 0))", "declarations": []}, "column constraint has no complete"
+    yield {"sql": "CREATE TABLE t (a INTEGER CHECK (/* label */ a > 0))", "declarations": []}, "column constraint has no complete"
     yield {"sql": "CREATE TABLE unavailable.t (a INTEGER)", "declarations": []}, "requires a known schema"
 
 
@@ -217,4 +217,4 @@ def check_faults(args, db, runner=check_render_faults):
 
 
 if __name__ == "__main__":
-    run_domain("CREATE TABLE", "sqlite-create-table-v2.json", CONTRACT, FIXTURE, execute, check_faults)
+    run_domain("CREATE TABLE", "sqlite-create-table-v3.json", CONTRACT, FIXTURE, execute, check_faults)

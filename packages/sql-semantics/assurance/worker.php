@@ -69,6 +69,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
@@ -477,11 +479,34 @@ function directCreateTable(array $input): CreateTable
         array_map(directTableKey(...), $keys),
         array_map(
             static fn (array $check): CheckConstraint => new CheckConstraint(
-                new Identifier($check['label']), operand($check['condition']), $check['column'],
+                directCheckLabel($check['label']), operand($check['condition']), $check['column'],
             ),
             $input['checks'] ?? [],
         ),
     );
+}
+
+function directCheckLabel(string|array $source): Identifier|ImplicitCheckLabel
+{
+    if (is_string($source)) {
+        return new Identifier($source);
+    }
+
+    return new ImplicitCheckLabel(new Identifier($source['name']), ComparisonSpelling::from($source['glyph']),
+        $source['quoted'], $source['before'], $source['after'], $source['zeroes']);
+}
+
+function observeCheckLabel(Identifier|ImplicitCheckLabel $label): string|array
+{
+    if ($label instanceof Identifier) {
+        return $label->value;
+    }
+
+    return [
+        'name' => $label->columnName->value, 'glyph' => $label->token->value,
+        'quoted' => $label->quoted, 'before' => $label->beforeOperator, 'after' => $label->afterOperator,
+        'zeroes' => $label->leadingZeroes,
+    ];
 }
 
 function observeCreateTable(CreateTable $value): array
@@ -510,7 +535,7 @@ function observeCreateTable(CreateTable $value): array
         'primaryKey' => observePrimaryKey($value->primaryKey),
         'keys' => array_map(observeTableKey(...), $value->keys),
         'checks' => array_map(static fn (CheckConstraint $check): array => [
-            'label' => $check->label->value,
+            'label' => observeCheckLabel($check->label),
             'column' => $check->column,
             'condition' => observeOperand($check->condition),
         ], $value->checks),

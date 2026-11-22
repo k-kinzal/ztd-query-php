@@ -119,7 +119,7 @@ def negatives():
         (f"CREATE TABLE {TABLE}(c0 INTEGER CONSTRAINT L CHECK(unknown>0))", "analysis-rejected", "Column unknown does not exist."),
         (f"CREATE TABLE {TABLE}(c0 INTEGER CONSTRAINT L CHECK((SELECT 1)))", "analysis-rejected", "Subqueries"),
         (f"CREATE TABLE {TABLE}(c0 INTEGER CONSTRAINT L CHECK(c0>?1))", "analysis-rejected", "Parameters"),
-        (f"CREATE TABLE {TABLE}(c0 INTEGER, CONSTRAINT L CHECK(c0>0), CHECK(c0<10))", "rejected", "explicit CHECK label"),
+        (f"CREATE TABLE {TABLE}(c0 INTEGER, CONSTRAINT L CHECK(c0>0), CHECK(/* label */ c0<10))", "rejected", "explicit CHECK label"),
     ):
         yield {"sql": sql, "declarations": []}, status, reason
 

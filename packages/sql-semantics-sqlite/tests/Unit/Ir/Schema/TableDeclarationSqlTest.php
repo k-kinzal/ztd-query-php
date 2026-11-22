@@ -10,12 +10,19 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableDeclarationSql;
+use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 
 #[CoversClass(TableDeclarationSql::class)]
 #[Small]
@@ -32,5 +39,15 @@ final class TableDeclarationSqlTest extends TestCase
             ['"code" COLLATE NOCASE UNIQUE CONSTRAINT "a""b" CHECK ("code")', 'UNIQUE ("code" COLLATE BINARY) ON CONFLICT IGNORE'],
             (new TableDeclarationSql())->declarations([$column], [$inline, $table], [$check])
         );
+    }
+
+    public function testCheckClauseRetainsImplicitRenameBehavior(): void
+    {
+        $column = new Identifier('Id');
+        $condition = new Comparison(ComparisonOperator::Equal, new ColumnReference(0), new IntegerLiteral('1'));
+        $label = new ImplicitCheckLabel($column, ComparisonSpelling::DoubleEqual, false, ' ', '', 1);
+        $check = new CheckConstraint($label, $condition);
+
+        self::assertSame('CHECK (Id ==01)', (new TableDeclarationSql())->checkClause($check, new SelectSql(), new DefinitionSource([$column])));
     }
 }

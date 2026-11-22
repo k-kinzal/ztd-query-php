@@ -74,7 +74,7 @@ def negatives():
     yield "CREATE TABLE t (a DEFAULT (1+2))", "rejected", "requires one closed literal operand"
     yield "CREATE TABLE t (a DEFAULT (?2))", "analysis-rejected", "default value of column a is not constant"
     yield "CREATE TABLE t (a DEFAULT 1 DEFAULT 2)", "rejected", "can declare one default"
-    yield "CREATE TABLE t (a CHECK (a > 0) DEFAULT 1)", "rejected", "column constraint has no complete"
+    yield "CREATE TABLE t (a CHECK (/* label */ a > 0) DEFAULT 1)", "rejected", "column constraint has no complete"
     yield "CREATE TABLE t (a DEFAULT -'7')", "rejected", "signed default requires a numeric literal"
 
 

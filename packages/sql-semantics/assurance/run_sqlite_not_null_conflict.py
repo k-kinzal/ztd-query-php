@@ -11,8 +11,8 @@ from sqlite_not_null_conflict_cases import (
     FIXTURE, TABLE, expected, finite_id, finite_ids, insert_rows, negatives, payload, plan, requests,
 )
 
-CONTRACT_NAME = "sqlite-not-null-conflict-v1.json"
-CONTRACT = "443536ce329c19c48bbd86c409241038d8bd0127e0bb03051a773deeea4e999c"
+CONTRACT_NAME = "sqlite-not-null-conflict-v2.json"
+CONTRACT = "7dea02740bfcba38f358358c38aa42fd54e577923a9d78beca6a425b1c59b820"
 
 
 def tuple_sql(row):

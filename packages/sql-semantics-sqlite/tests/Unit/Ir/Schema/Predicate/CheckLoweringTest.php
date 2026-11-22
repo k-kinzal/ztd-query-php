@@ -29,7 +29,11 @@ final class CheckLoweringTest extends TestCase
         );
 
         self::assertInstanceOf(CreateTable::class, $value);
-        self::assertSame(['first', 'first', 'next'], array_map(static fn ($check) => $check->label->value, $value->checks));
+        self::assertSame(['first', 'first', 'next'], array_map(static function ($check): string {
+            self::assertInstanceOf(Identifier::class, $check->label);
+
+            return $check->label->value;
+        }, $value->checks));
         self::assertSame([0, 0, null], array_column($value->checks, 'column'));
         $first = $value->checks[0]->condition;
         self::assertInstanceOf(Comparison::class, $first);
@@ -60,6 +64,10 @@ final class CheckLoweringTest extends TestCase
 
         $checks = (new CheckLowering())->collect($binding, $operation->statement->columns[0]->constraints, 0);
 
-        self::assertSame(['first', 'second'], array_map(static fn ($check) => $check->label->value, $checks));
+        self::assertSame(['first', 'second'], array_map(static function ($check): string {
+            self::assertInstanceOf(Identifier::class, $check->label);
+
+            return $check->label->value;
+        }, $checks));
     }
 }

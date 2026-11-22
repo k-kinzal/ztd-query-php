@@ -9,7 +9,13 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 
 #[CoversClass(CheckConstraint::class)]
 #[Small]
@@ -22,5 +28,15 @@ final class CheckConstraintTest extends TestCase
 
         self::assertSame($condition, $constraint->condition);
         self::assertSame(0, $constraint->column);
+    }
+
+    public function testCheckPresentationRejectsANameOfAnotherSlot(): void
+    {
+        $condition = new Comparison(ComparisonOperator::Greater, new ColumnReference(0), new IntegerLiteral('0'));
+        $label = new ImplicitCheckLabel(new Identifier('b'), ComparisonSpelling::Greater, false);
+        $check = new CheckConstraint($label, $condition, 0);
+        $this->expectExceptionMessage('must identify the resolved column');
+
+        $check->checkPresentation([new TableColumn(new Identifier('a')), new TableColumn(new Identifier('b'))]);
     }
 }

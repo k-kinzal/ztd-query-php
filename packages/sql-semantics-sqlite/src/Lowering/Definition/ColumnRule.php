@@ -108,7 +108,7 @@ final class ColumnRule
                 $this->autoincrement($form->node(4)),
             ),
             'ccons: UNIQUE onconf' => new ColumnUnique($this->lowering->conflicts->onConflict($form->node(1))),
-            'ccons: CHECK LP expr RP' => new ColumnCheck($this->lowering->expressions->expression($form->node(2))),
+            'ccons: CHECK LP expr RP' => new ColumnCheck($this->lowering->expressions->expression($form->node(2)), (new ImplicitCheckLayout())->capture($form)),
             'ccons: REFERENCES nm eidlist_opt refargs' => $this->foreignKeys->clause($form->node(1), $form->node(2), $form->node(3)),
             'ccons: defer_subclause' => $this->foreignKeys->deferrability($form->node(0)),
             'ccons: COLLATE ids' => new Collation($this->lowering->names->token($form->token(1))),

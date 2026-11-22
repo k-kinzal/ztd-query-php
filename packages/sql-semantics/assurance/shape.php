@@ -291,12 +291,22 @@ if ($dialect === 'sqlite') {
     array_push($pureCollaborators, 'Schema\\Key\\TableKeySql', 'Schema\\Key\\TableKeyLayout');
     $methods['Schema\\CreateTable'] = $methods['Select'];
     $properties['Schema\\Predicate\\CheckConstraint'] = [
-        'label' => ['Identifier'], 'condition' => array_values(array_diff($operands, ['Parameter'])), 'column' => ['?int'],
+        'label' => ['Identifier', 'Schema\\Predicate\\ImplicitCheckLabel'], 'condition' => array_values(array_diff($operands, ['Parameter'])), 'column' => ['?int'],
     ];
-    $methods['Schema\\Predicate\\CheckConstraint'] = ['__construct'];
+    $methods['Schema\\Predicate\\CheckConstraint'] = ['__construct', 'checkPresentation'];
+    $implicitLabel = 'Schema\\Predicate\\ImplicitCheckLabel';
+    $comparisonSpelling = 'Schema\\Predicate\\ComparisonSpelling';
+    $properties[$implicitLabel] = ['columnName' => ['Identifier'], 'token' => [$comparisonSpelling], 'quoted' => ['bool'],
+        'beforeOperator' => ['string'], 'afterOperator' => ['string'], 'leadingZeroes' => ['int']];
+    $methods[$implicitLabel] = ['__construct', 'operation', 'expression'];
+    $properties[$comparisonSpelling] = $methods[$comparisonSpelling] = [];
+    $enumCases[$comparisonSpelling] = [
+        'Equal' => '=', 'DoubleEqual' => '==', 'NotEqual' => '<>', 'BangEqual' => '!=',
+        'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>=',
+    ];
     $properties['Schema\\Predicate\\DefinitionSource'] = ['columns' => ['array']];
     $methods['Schema\\Predicate\\DefinitionSource'] = ['__construct'];
-    array_push($internal, 'Schema\\Predicate\\CheckLowering', 'Schema\\TableDeclarationSql');
+    array_push($internal, 'Schema\\Predicate\\CheckLowering', 'Schema\\Predicate\\ImplicitCheckLowering', 'Schema\\TableDeclarationSql');
     array_push($pureCollaborators, 'Schema\\Predicate\\DefinitionSource', 'Schema\\TableDeclarationSql');
     $properties['Schema\\Query\\CreateTableAs'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
@@ -785,6 +795,23 @@ try {
                 $names[] = $token->value->value;
             }
             requireShape($names === $required, 'SQLite reserved destination tokens differ');
+        }
+        if ($dialect === 'sqlite' && $short === 'Schema\\Predicate\\ImplicitCheckLabel') {
+            $lexical = __DIR__ . '/sqlite-implicit-checks-v1.json';
+            requireShape(hash_file('sha256', $lexical) === '94101eaf66395a96c32aca5cc6e4b79f210b0436962f1712c08e0fc14f75b766', 'SQLite implicit CHECK token contract differs');
+            $required = json_decode(file_get_contents($lexical), true, 512, JSON_THROW_ON_ERROR)['lexicalDomain']['bareRejected'];
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $map = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPrivate()
+                && $map->name->toString() === 'NON_COLUMN_KEYWORDS' && $map->value instanceof Expr\Array_, 'SQLite CHECK token registry differs');
+            $observedKeys = [];
+            foreach ($map->value->items as $item) {
+                requireShape($item->key instanceof String_ && !$item->unpack && !$item->byRef
+                    && $item->value instanceof Expr\ConstFetch && $item->value->name->toLowerString() === 'true',
+                    'Invalid SQLite CHECK token registry entry');
+                $observedKeys[] = $item->key->value;
+            }
+            requireShape($observedKeys === array_map('strtolower', $required), 'SQLite CHECK token meanings differ');
         }
         if ($dialect === 'mysql' && $short === 'IntegerLiteral') {
             $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);

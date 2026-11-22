@@ -44,6 +44,7 @@ import run_sqlite_unary as unary
 import run_sqlite_unique_keys as unique_keys
 import run_sqlite_named_checks as named_checks
 import run_sqlite_folded_checks as folded_checks
+import run_sqlite_implicit_checks as implicit_checks
 import run_sqlite_rename as rename
 import run_sqlite_update as update
 import run_sqlite_upsert_nothing as upsert_nothing
@@ -75,12 +76,13 @@ DOMAINS = {
     "sqlite-update-v1.json": (update, update.FIXTURE),
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
-    "sqlite-create-table-v2.json": (create, create.FIXTURE),
+    "sqlite-create-table-v3.json": (create, create.FIXTURE),
     create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     primary_keys.CONTRACT_NAME: (primary_keys, primary_keys.FIXTURE),
     rename.CONTRACT_NAME: (rename, rename.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
+    implicit_checks.CONTRACT_NAME: (implicit_checks, implicit_checks.FIXTURE),
     named_checks.CONTRACT_NAME: (named_checks, named_checks.FIXTURE),
     unique_keys.CONTRACT_NAME: (unique_keys, unique_keys.FIXTURE),
     auto_rowid.CONTRACT_NAME: (auto_rowid, auto_rowid.FIXTURE),
@@ -120,6 +122,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                strict_tables: strict_tables.StrictDatabase, primary_keys: primary_keys.KeyDatabase,
                auto_rowid: primary_keys.KeyDatabase, unique_keys: unique_keys.UniqueDatabase,
                named_checks: named_checks.NamedCheckDatabase, folded_checks: folded_checks.FoldedCheckDatabase,
+               implicit_checks: implicit_checks.ImplicitCheckDatabase,
                rename: rename.RenameDatabase}.get(module, Database)
     database = factory(library)
     try:

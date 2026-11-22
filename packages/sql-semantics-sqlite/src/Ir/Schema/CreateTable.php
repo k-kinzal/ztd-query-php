@@ -86,6 +86,7 @@ final class CreateTable implements SemanticsIR
         foreach ($orderedChecks as $check) {
             $owner = $check->column ?? count($checked);
             Check::input(($check->column === null || isset($checked[$owner])) && $owner >= $lastOwner, 'A CHECK belongs to a visible owning column in declaration order or to the table.');
+            $check->checkPresentation($checked);
             $lastOwner = $owner;
             $conditions[] = [$check->condition, 0, 1];
         }

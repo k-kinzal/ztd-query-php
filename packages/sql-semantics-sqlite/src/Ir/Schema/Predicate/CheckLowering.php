@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -20,7 +21,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint;
 
 /**
- * Resolves named constraints against the table being declared.
+ * Resolves each constraint against the table being declared.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -64,10 +65,12 @@ final class CheckLowering
                 $label = $constraint->name;
             }
             if ($constraint instanceof ColumnCheck || $constraint instanceof TableCheck) {
-                Check::input($label !== null, 'This column constraint has no complete CREATE TABLE representation without an explicit CHECK label.');
                 $condition = (new ExpressionLowering())->lower($constraint->expression, $binding);
                 Check::input(!$condition instanceof Parameter, 'A schema expression cannot contain a parameter.');
-                $checks[] = new CheckConstraint(new Identifier($label->value), $condition, $owner);
+                $name = $label === null
+                    ? (new ImplicitCheckLowering())->label($condition instanceof Comparison ? $condition : null, $constraint->labelLayout)
+                    : new Identifier($label->value);
+                $checks[] = new CheckConstraint($name, $condition, $owner);
             }
         }
 

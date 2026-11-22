@@ -65,7 +65,7 @@ python3 "$verifier/index_evidence.py" --candidate "$candidate" --verifier "$veri
 ```
 
 Use the same archived assurance directory in both commands. Keep the initial SQLite records in `semantics-ir-evidence/` and the SQLite replay in `sqlite-index/index.json` under the evidence root. The native collector writes `native-replay/` with paths relative to the receipts. Preserve the original raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. The initial assurance workflow also generates a provisional `review-bundle/` alongside the SQLite records, native construction audit and staged Composer evidence. Combine the independently collected native matrix under the same evidence root to include its release receipts.
-It also emits `constructors.json` with each audited type, source digest, constructor signature, publication routes and contract pointers. The trace links selected method templates and installed root examples. The [constructor declaration supplement](constructor-declarations-v6.json) fills the required descriptive fields and fixes the common P01–P06 and Q01–Q05 criteria for the registered roles. The trace verifies complete role declarations and records their approval status. Each linked receipt records coverage within its measured domain. Remaining obligations stay open. The assurance controls remove a constructor and a publication path from the recorded inventory and weaken the output obligation in a copy of the declaration contract. Each change must trigger its specified check. It lists missing evidence and open acceptance requirements in the index.
+It also emits `constructors.json` with each audited type, source digest, constructor signature, publication routes and contract pointers. The trace links selected method templates and installed root examples. The [constructor declaration supplement](constructor-declarations-v7.json) fills the required descriptive fields and fixes the common P01–P06 and Q01–Q05 criteria for the registered roles. The trace verifies complete role declarations and records their approval status. Each linked receipt records coverage within its measured domain. Remaining obligations stay open. The assurance controls remove a constructor and a publication path from the recorded inventory and weaken the output obligation in a copy of the declaration contract. Each change must trigger its specified check. It lists missing evidence and open acceptance requirements in the index.
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v2.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
@@ -83,7 +83,7 @@ python3 "$verifier/run_sqlite_matrix.py" --candidate "$candidate" --candidate-sh
   --tool-autoload "$tool_autoload" --sqlite-library "$third_party/libsqlite3.so" --evidence-root "$evidence"
 ```
 
-For example, `--diagnostic sqlite-not-null-conflict-v1.json` runs one named contract. Its receipt lists all omitted domains. The bundle checks the exact schedule and absence of skipped executions for a full matrix. The matrix runner retains raw outputs even if a domain exits with an error.
+For example, `--diagnostic sqlite-not-null-conflict-v2.json` runs one named contract. Its receipt lists all omitted domains. The bundle checks the exact schedule and absence of skipped executions for a full matrix. The matrix runner retains raw outputs even if a domain exits with an error.
 
 ### Reproduce the native release matrix
 
@@ -525,7 +525,7 @@ The fixture enables foreign keys before construction and compares object identit
 
 ## SQLite CREATE TABLE effects
 
-Run the [CREATE TABLE effect contract](sqlite-create-table-v2.json) with the same engine:
+Run the [CREATE TABLE effect contract](sqlite-create-table-v3.json) with the same engine:
 
 ```sh
 create_table_evidence=$(mktemp -d)/sqlite-create-table-evidence
@@ -548,19 +548,21 @@ The [SQLite population contract](sqlite-create-as-v5.json) checks the catalog an
 
 The [SQLite unique-key contract](sqlite-unique-keys-v1.json) covers ordered inline and table keys, default and explicit collations and conflict policies, equivalent indexes, and coexistence with a primary key. The fixture compares native index order, covering slots, nullable writes, colliding rows and rollback. Run `run_sqlite_unique_keys.py` with the pinned SQLite library and the ordinary SQLite fixture arguments.
 
-The named CHECK fixture independently models slot comparisons, NULL propagation and ordered CHECK failures. It measures ordinary INSERT and conflict overrides, column rename and drop, and coexistence with NOT NULL and UNIQUE. The journal preserves the full ALTER diagnostic and compares the resolved column dependency. Run `run_sqlite_named_checks.py` with the same arguments. [SQLite named CHECK contract](sqlite-named-checks-v3.json)
+The named CHECK fixture independently models slot comparisons, NULL propagation and ordered CHECK failures. It measures ordinary INSERT and conflict overrides, column rename and drop, and coexistence with NOT NULL and UNIQUE. The journal preserves the full ALTER diagnostic and compares the resolved column dependency. Run `run_sqlite_named_checks.py` with the same arguments. [SQLite named CHECK contract](sqlite-named-checks-v4.json)
 
 The folded CHECK suite compares native preparation slot count and first marker spelling, then repeats the declaration and writes with absent, NULL, integer and text bindings. A discarded operand contributes its markers in occurrence order. The observed schema condition remains independent of the supplied values. Run `run_sqlite_folded_checks.py` with the standard SQLite fixture options. [SQLite folded CHECK contract](sqlite-folded-checks-v1.json)
+
+The [implicit comparison CHECK contract](sqlite-implicit-checks-v1.json) observes the failure labels of unnamed comparisons before and after native column rename. Its witness varies declaration slot, referenced slot, comparison aliases, quoting, whitespace and zero prefixes. The native keyword catalogue checks the allowed bare identifier spellings. Run `run_sqlite_implicit_checks.py` with the standard SQLite fixture options.
 
 The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v4.json)
 
 ## SQLite literal defaults
 
-The [default record](sqlite-defaults-v2.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.
+The [default record](sqlite-defaults-v3.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.
 
 Run `run_sqlite_defaults.py` using the SQLite fixture options. The SQLite collector requires and replays the default receipt.
 
-The [column policy record](sqlite-not-null-conflict-v1.json) checks INSERT and UPDATE behavior after the declaration is installed. It crosses all five algorithms, explicit statement overrides, absence of the constraint, three fixed defaults and two transaction states. The explorer varies column count, storage type and the column receiving NULL. Run `run_sqlite_not_null_conflict.py` with the same options and retain the catalog, conflict write and transaction records.
+The [column policy record](sqlite-not-null-conflict-v2.json) checks INSERT and UPDATE behavior after the declaration is installed. It crosses all five algorithms, explicit statement overrides, absence of the constraint, three fixed defaults and two transaction states. The explorer varies column count, storage type and the column receiving NULL. Run `run_sqlite_not_null_conflict.py` with the same options and retain the catalog, conflict write and transaction records.
 
 ## SQLite literals and scalar composition
 

@@ -177,6 +177,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $key->inline, $key->terms[0]->slot, $key->terms[0]->descending, $key->terms[0]->collation->value,
                 $key->conflict?->value,
             ], $result->keys);
+            $implicit = $semantics->analyze('CREATE TABLE bounded (a INTEGER CHECK (a ==00))', $context)->checks[0];
+            $presentation = $implicit->label;
+            $comparison = $implicit->condition;
+            if ($presentation::class !== $namespace . 'Ir\\Schema\\Predicate\\ImplicitCheckLabel'
+                || $comparison::class !== $namespace . 'Ir\\Predicate\\Comparison'
+                || $comparison->left::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('The installed analyzer lost the implicit CHECK role.');
+            }
+            $details['implicitCheck'] = [$presentation->columnName->value, $presentation->token->value, $presentation->quoted,
+                $presentation->beforeOperator, $presentation->afterOperator, $presentation->leadingZeroes,
+                $comparison->operator->value, $comparison->left->slot];
             $details['namedChecks'] = array_map(static function ($check) use ($namespace): array {
                 if ($check::class !== $namespace . 'Ir\\Schema\\Predicate\\CheckConstraint'
                     || $check->condition::class !== $namespace . 'Ir\\ColumnReference' || $check->condition->source !== 0) {

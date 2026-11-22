@@ -58,6 +58,6 @@ final class ColumnCheckTest extends TestCase
 
     public function testRenderWritesTheConditionInParentheses(): void
     {
-        self::assertSame('CREATE TABLE t (a CHECK (a > 0))', (new Inspection())->diagnose('create table t (a check(a>0))')->toString());
+        self::assertSame('CREATE TABLE t (a CHECK (a>0))', (new Inspection())->diagnose('create table t (a check(a>0))')->toString());
     }
 }
