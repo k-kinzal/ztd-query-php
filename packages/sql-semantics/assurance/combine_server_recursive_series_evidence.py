@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--unavailable", type=Path, action="append", required=True)
     parser.add_argument("indexes", type=Path, nargs="+")
     args = parser.parse_args()
+    args.candidate_root = args.candidate_root.resolve()
     specification, _ = domain.specifications()
     missing_syntax = unavailable(args.unavailable, args.candidate_root, args.candidate, specification)
     combine(args.candidate, args.candidate_root, args.indexes, args.out, domain)

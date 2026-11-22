@@ -8,6 +8,8 @@ from pathlib import Path
 TOOL = Path(__file__).resolve().parent
 
 ROOTS = {
+    "SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedSelect",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection",
@@ -41,6 +43,8 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-grouped-v2.json": "9bbd02f35dced65558725061c0b5b796d5856e60791190ef931b58ff999a927b",
+
     "server-derived-join-v1.json": "131a8055798d3395508fc269cfd895c123ac896a9f17168eedcd2b124453df1d",
     "server-derived-join-v2.json": "3d2b1652912fe098f37f7a11248f81c791762a690b799f53beac73678d1844ee",
     "server-recursive-series-v2.json": "57ec24e29d2ed8d9ff1a18cd899165303c9dc3032db1738feb61a973da7842ff",
@@ -72,7 +76,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "37f241d8560c72065d138f9e4b1aa6f8efc1e511b89f97207926ca12d175e6d6"
+PUBLICATION = "5568464d5d7c39bf25f08f72f9ac9c35ee777ad064d1d87bb7e6f8ad438f7063"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -82,7 +86,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v12.json").read_bytes()
+    publication = (TOOL / "publication-v13.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -175,7 +179,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

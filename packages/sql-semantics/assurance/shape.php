@@ -173,10 +173,23 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     $internal[] = 'Binding\\ParameterLowering';
-    array_push($roots, 'Rows\\Compound', 'Rows\\LocalProjection', 'Rows\\RecursiveSeries', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
+    array_push($roots, 'Aggregation\\GroupedSelect', 'Rows\\Compound', 'Rows\\LocalProjection', 'Rows\\RecursiveSeries', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
+    $properties['Aggregation\\GroupedSelect'] = [
+        'source' => ['TableSource'], 'keys' => ['array'], 'columns' => ['array'],
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $methods['Aggregation\\GroupedSelect'] = $methods['Select'];
+    $properties['Aggregation\\AggregateOperator'] = $methods['Aggregation\\AggregateOperator'] = [];
+    $enumCases['Aggregation\\AggregateOperator'] = ['Count' => 'count', 'Sum' => 'sum', 'Min' => 'min', 'Max' => 'max'];
+    $properties['Aggregation\\Aggregate'] = ['operator' => ['Aggregation\\AggregateOperator'], 'argument' => ['?ColumnReference'], 'distinct' => ['bool']];
+    $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Aggregate', 'ColumnReference'], 'name' => ['Identifier']];
+    $methods['Aggregation\\Aggregate'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
+    array_push($internal, 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
+    $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $properties['ColumnReference']['occurrence'] = ['int'];
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $conditions = [...$truthValues, 'null'];
+    $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
     $properties['Select']['where'] = $conditions;
     $properties['Select']['distinct'] = ['bool'];
@@ -390,6 +403,7 @@ try {
         . '\\Statement\\Relation\\DerivedTable => (new \\' . $prefix . 'Rows\\LocalProjectionLowering())->lower($operation),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
         . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && (new \\' . $prefix . 'Aggregation\\GroupedLowering())->applies($statement) => (new \\' . $prefix . 'Aggregation\\GroupedLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
@@ -434,9 +448,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v10.json';
+    $storagePath = __DIR__ . '/value-storage-v11.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'cba65f8f297bad1c659eb55294bb006d78aa92d7e463affa552150c3adf7dab7',
+        hash_file('sha256', $storagePath) === '5ab3b7e26a9890b5337d678201bb619f5bb9ad83d11cb3975a5e3f4cffc82e88',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -485,6 +499,7 @@ try {
             $interfaces = array_map(static fn ($interface) => $interface->toString(), $class->implements);
             requireShape($interfaces === [], "Unexpected collaborator interface in $short");
             $loweringRole = match ($short) {
+                'Aggregation\\GroupedLowering' => 'Aggregation\\GroupedSelect',
                 'SelectLowering' => 'Select',
                 'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
@@ -499,7 +514,7 @@ try {
                     static fn ($method) => $method->name->toString(),
                     array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
                 ));
-                requireShape($publicMethods === ['lower'], "Unexpected lowering entry point in $short");
+                requireShape($publicMethods === ($short === 'Aggregation\\GroupedLowering' ? ['applies', 'lower'] : ['lower']), "Unexpected lowering entry point in $short");
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
             }
         }

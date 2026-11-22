@@ -274,6 +274,53 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
     ];
 }
 
+function constructGrouped(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $name = $namespace . 'Identifier';
+    $output = $namespace . 'Aggregation\\GroupColumn';
+    $aggregate = $namespace . 'Aggregation\\Aggregate';
+    $operator = $namespace . 'Aggregation\\AggregateOperator';
+    $select = $namespace . 'Aggregation\\GroupedSelect';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $grouped = $input['grouped'];
+    $columns = [];
+    foreach ($grouped['columns'] as [$expression, $label]) {
+        $value = $expression[0] === 'aggregate'
+            ? new $aggregate($operator::from($expression[1]), $expression[2] === null ? null : constructOperand($namespace, $expression[2]), $expression[3])
+            : constructOperand($namespace, $expression);
+        $columns[] = new $output($value, new $name($label));
+    }
+    return new $select(
+        constructSource($platform, $grouped['source'], $input['dialect']),
+        array_map(static fn (array $key): object => constructOperand($namespace, $key), $grouped['keys']),
+        $columns,
+        $release::from($input['release']),
+        constructPredicate($namespace, $grouped['where']),
+    );
+}
+
+function observeGrouped(string $namespace, object $query, string $dialect): array
+{
+    $columns = [];
+    foreach ($query->columns as $field) {
+        $value = $field->value;
+        $expression = $value::class === $namespace . 'Aggregation\\Aggregate'
+            ? ['aggregate', $value->operator->value, $value->argument === null ? null : observeOperand($namespace, $value->argument), $value->distinct]
+            : observeOperand($namespace, $value);
+        $columns[] = [$expression, $field->name->value];
+    }
+
+    return [
+        'status' => 'constructed', 'profile' => $query->profileId(), 'sql' => $query->toString(),
+        'grouped' => [
+            'source' => observeSource($query->source, $dialect, $namespace), 'columns' => $columns,
+            'keys' => array_map(static fn ($key): array => observeOperand($namespace, $key), $query->keys),
+            'where' => observePredicate($namespace, $query->where),
+        ],
+    ];
+}
+
 function constructCreateTable(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -430,6 +477,7 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['grouped']) => constructGrouped($platform, $input),
             isset($input['local']) => constructLocalProjection($platform, $input),
             isset($input['series']) => constructRecursiveSeries($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),
@@ -443,6 +491,9 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Aggregation\\GroupedSelect') {
+        return observeGrouped($namespace, $value, $input['dialect']);
     }
     if ($value::class === $namespace . 'Rows\\RecursiveSeries') {
         return [

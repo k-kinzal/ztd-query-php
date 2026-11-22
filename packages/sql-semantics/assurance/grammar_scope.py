@@ -154,6 +154,14 @@ def inventory(root):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v4.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
+        grouped_signatures = {
+            "opt_group_clause: GROUP_SYM BY group_list olap_opt",
+            "opt_group_clause: GROUP_SYM BY group_list",
+            "group_clause: GROUP_P BY set_quantifier group_by_list",
+            "group_by_item: a_expr",
+        }
+        for alternative in sorted(grouped_signatures & signatures):
+            related[alternative] = (*related.get(alternative, ()), "server-grouped-v2.json")
         derived_join_signatures = {
             "table_factor: derived_table",
             "derived_table: table_subquery opt_table_alias opt_derived_column_list",

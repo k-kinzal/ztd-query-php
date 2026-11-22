@@ -17,6 +17,12 @@ class Fault(NamedTuple):
 
 def faults(engine):
     shared = [
+        Fault("allow-argumentless-sum", "Aggregation/Aggregate::__construct",
+              "$operator === AggregateOperator::Count && !$distinct", "!$distinct"),
+        Fault("ignore-aggregate-scope", "Aggregation/GroupedSelect::__construct",
+              "$value->argument === null || isset($source->columns[$value->argument->slot]),", "true,"),
+        Fault("ignore-unjoined-result-key", "Aggregation/GroupedSelect::__construct",
+              "$value->occurrence === 0 && isset($members[$value->slot]),", "true,"),
         Fault("ignore-negative-ordinal", "ColumnReference::__construct", "$occurrence >= 0,", "true,"),
         Fault("reverse-join-occurrences", "From/Join::inputs", "array_merge($left, $right)", "array_merge($right, $left)"),
         Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "$this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot)", "true"),
@@ -120,7 +126,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v10.json", "value_storage.php", "value-storage-v10.json", "value-primitives.json")},
+                       "native-boundaries-v11.json", "value_storage.php", "value-storage-v11.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

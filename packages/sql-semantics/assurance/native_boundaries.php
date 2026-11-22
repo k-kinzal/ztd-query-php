@@ -11,8 +11,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(string $dialect): array
 {
-    $file = __DIR__ . '/native-boundaries-v10.json';
-    requireShape(hash_file('sha256', $file) === 'd0bfad61f5530cbc8e263a13403f907db4264ce3efb64f70e56a176bdaf5d026', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v11.json';
+    requireShape(hash_file('sha256', $file) === 'f86d0da10d98d5f0f15af2faa2fd9730429d9d3612f07a6fe03575618bfaab98', 'Native boundary contract differs from the recorded revision');
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 

@@ -10,6 +10,8 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
+use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedLowering;
+use SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\MySql\Ir\Mutation\Delete;
 use SqlSemantics\Platform\MySql\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\MySql\Ir\Mutation\Insert;
@@ -133,7 +135,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -143,6 +145,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedWith && $statement->with !== null,
             $statement instanceof ParsedSelect && $statement->from instanceof ParsedDerived => (new LocalProjectionLowering())->lower($operation),
             $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
+            $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop => (new DropTableLowering())->lower($operation, $statement),
@@ -158,7 +161,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update>
+     * @return list<Compound|CreateTable|Delete|DropTable|GroupedSelect|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

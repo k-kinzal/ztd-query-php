@@ -9,7 +9,7 @@ from run import candidate_distribution, digest, require, verify_candidate, verif
 
 NATIVE = (
     "projection", "delete", "join", "result", "insert", "update", "transaction",
-    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series", "derived_join",
+    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series", "derived_join", "grouped",
 )
 SQLITE = {
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",

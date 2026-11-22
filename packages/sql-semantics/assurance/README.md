@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v12.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v13.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -55,7 +55,7 @@ The independent evaluator reads the direct construction inputs and implements se
 
 The checked domain supports a composition argument. Every leaf has one of the closed roles. Each arithmetic node has two ordered children of those roles. The constructor visits every occurrence, checks the source slot range, and bounds expansion. All lists and children have immutable value semantics. The renderer emits the two operands with the recorded operator inside parentheses, or an explicit leaf representation. A schema-qualified source and an explicit output alias preserve the external identity and result names. This is an argument for human review. The finite and seeded SQLite comparisons are empirical evidence. The PHP code shape audit checks the recorded property types, method names, traits, dependencies and known dynamic constructs. It does not prove arbitrary method bodies or establish the correctness of parser lowering and declaration resolution.
 
-Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth,recursive_series,derived_join}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
+Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth,recursive_series,derived_join,grouped}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
 
 ## Establish independent acceptance
 
@@ -189,6 +189,12 @@ Run `run_server_recursive_series.py` on pinned MySQL releases from 8.0 onward an
 The [derived join record](server-derived-join-v2.json) checks external and independent sources in the same join tree. Derived references use an outer occurrence and an inner ordinal. The direct finite domain crosses both input positions, four join kinds and both observed output layouts. The seeded cases add nested joins, repeated input names, filters and distinct definitions. The native comparator checks result labels, exact type tags, multiplicities and NULL extension.
 
 Run `run_server_derived_join.py` with the native fixture options. Replay all releases with `combine_server_derived_join_evidence.py` and the per-release `index.json` paths. Its mutation probes change occurrence selection, field position and outer join behavior.
+
+## Native grouped projections
+
+The [grouped projection record](server-grouped-v2.json) defines signed input slots, COUNT, SUM, MIN and MAX, argument duplicate policy and ordered grouping fields. Its oracle partitions the fixture by declared key tuples, computes typed aggregate outputs and exercises both keyed and global queries over empty inputs. The comparator preserves exact decimal text and native metadata. On PostgreSQL the observer supplies a competing `count(int4)` and measures the distinct results of qualified and unqualified calls.
+
+Run `run_server_grouped.py` using the native fixture options. Replay every release with `combine_server_grouped_evidence.py` and its `index.json` path. The faulty SQL probes change DISTINCT, NULL treatment, grouping fields, filter placement and PostgreSQL routine identity.
 
 ## SQLite joins, filters and ordering
 
