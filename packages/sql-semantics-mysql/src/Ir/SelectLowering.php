@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;

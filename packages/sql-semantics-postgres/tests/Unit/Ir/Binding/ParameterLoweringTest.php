@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir;
+namespace Tests\Unit\Ir\Binding;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\PostgreSql\Ir\Parameter;
-use SqlSemantics\Platform\PostgreSql\Ir\ParameterLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;

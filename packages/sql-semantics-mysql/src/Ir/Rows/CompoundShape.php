@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
+use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
-use SqlSemantics\Platform\MySql\Ir\Parameter;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 

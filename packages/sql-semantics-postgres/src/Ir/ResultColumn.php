@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**

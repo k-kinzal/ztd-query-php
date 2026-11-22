@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;

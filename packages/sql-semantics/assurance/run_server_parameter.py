@@ -12,7 +12,7 @@ from sqlite_domain import RenderFault
 
 LABEL = "parameter"
 OBSERVER = "server_parameter_observer.php"
-CONTRACT = "d3d239cf3796a284fee9ea6667d167ce437893e6e9b6857744ac4e7cb4208cb1"
+CONTRACT = "a25669b690cb52522a4fc0af7f35d6fee5cb3ac597dabd72383dee3f14d77052"
 
 
 def specifications():
@@ -114,7 +114,7 @@ def faults(engine, tag):
                     "$expression instanceof Parameter => $expression->toString() . ' * 0',", comparison, "meaning-mismatch"),
         RenderFault("reverse-parameter-outputs", root + "SelectSql.php", "implode(', ', $items)", "implode(', ', array_reverse($items))",
                     comparison, "meaning-mismatch"),
-        RenderFault("change-parameter-cast", root + "Parameter.php", target, alternate, comparison, "meaning-mismatch"),
+        RenderFault("change-parameter-cast", root + "Binding/Parameter.php", target, alternate, comparison, "meaning-mismatch"),
     ]
 
 

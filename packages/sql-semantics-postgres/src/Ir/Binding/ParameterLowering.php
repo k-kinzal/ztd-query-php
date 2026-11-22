@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir;
+namespace SqlSemantics\Platform\PostgreSql\Ir\Binding;
 
 use SqlSemantics\Platform\PostgreSql\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;

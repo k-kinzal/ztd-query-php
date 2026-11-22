@@ -7,7 +7,7 @@
   "open": ["Parameters without a fixed target role, other cast types, parameters inside other scalar expressions, predicates, mutation operands and row bounds"],
   "constructors": {
     "Parameter": {
-      "type": "Parameter",
+      "type": "Binding/Parameter",
       "role": "One bound integer projection operand with a checked native position",
       "fields": ["position"],
       "invariants": ["An integer position from 1 through 1024", "The containing projection closes MySQL lexical order or PostgreSQL numbered slot coverage"],

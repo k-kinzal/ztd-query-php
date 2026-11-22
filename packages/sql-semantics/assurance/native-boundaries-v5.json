@@ -218,7 +218,7 @@
         "}"
       ]
     },
-    "Parameter::__construct": {
+    "Binding/Parameter::__construct": {
       "common": [
         "Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');"
       ],

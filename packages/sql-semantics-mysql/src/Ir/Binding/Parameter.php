@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir;
+namespace SqlSemantics\Platform\MySql\Ir\Binding;
 
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
  * A native projected parameter with a fixed signed integer cast.
  *
  * @visibility public
  * @example Referring to the second bound position
- *     (new \SqlSemantics\Platform\PostgreSql\Ir\Parameter(2))->toString() // => 'CAST($2 AS pg_catalog.int4)'
+ *     (new \SqlSemantics\Platform\MySql\Ir\Binding\Parameter(2))->toString() // => 'CAST(? AS SIGNED)'
  */
 final class Parameter
 {
@@ -31,6 +31,6 @@ final class Parameter
      */
     public function toString(): string
     {
-        return 'CAST($' . $this->position . ' AS pg_catalog.int4)';
+        return 'CAST(? AS SIGNED)';
     }
 }

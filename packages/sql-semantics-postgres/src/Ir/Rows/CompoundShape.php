@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
-use SqlSemantics\Platform\PostgreSql\Ir\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 

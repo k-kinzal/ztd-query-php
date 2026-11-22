@@ -32,7 +32,7 @@ def faults(engine):
         Fault("accept-out-of-range-smallint-default", "Schema/TableColumn::__construct",
               "$integer >= -32768 && $integer <= 32767,", "true,"),
         Fault("accept-excessive-table-width", "Schema/CreateTable::__construct", "count($checked) <= 128,", "true,"),
-        Fault("allow-zero-parameter-position", "Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
+        Fault("allow-zero-parameter-position", "Binding/Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",

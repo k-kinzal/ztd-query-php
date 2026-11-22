@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir;
+namespace Tests\Unit\Ir\Binding;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Ir\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 
 #[CoversClass(Parameter::class)]
 #[Small]
@@ -18,6 +18,6 @@ final class ParameterTest extends TestCase
         $parameter = new Parameter(1);
 
         self::assertSame(1, $parameter->position);
-        self::assertSame('CAST(? AS SIGNED)', $parameter->toString());
+        self::assertSame('CAST($1 AS pg_catalog.int4)', $parameter->toString());
     }
 }

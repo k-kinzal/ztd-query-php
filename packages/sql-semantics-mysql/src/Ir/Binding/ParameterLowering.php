@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Ir;
+namespace SqlSemantics\Platform\MySql\Ir\Binding;
 
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;

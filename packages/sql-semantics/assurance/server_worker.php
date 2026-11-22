@@ -28,7 +28,7 @@ function constructOperand(string $namespace, array $data): object
 {
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
-        'parameter' => 'Parameter',
+        'parameter' => 'Binding\\Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
         'slot' => 'ColumnReference',
@@ -52,7 +52,7 @@ function observeOperand(string $namespace, object $value): array
 {
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
-        $namespace . 'Parameter' => ['parameter', $value->position],
+        $namespace . 'Binding\\Parameter' => ['parameter', $value->position],
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],

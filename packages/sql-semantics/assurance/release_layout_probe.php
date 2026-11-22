@@ -27,7 +27,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform !== 'Sqlite') {
         $parameterSql = $platform === 'MySql' ? 'SELECT CAST(? AS SIGNED) AS value' : 'SELECT CAST($1 AS integer) AS value';
         $value = $semantics->analyze($parameterSql)->columns[0]->expression;
-        if ($value::class !== $namespace . 'Ir\\Parameter' || $value->position !== 1) {
+        if ($value::class !== $namespace . 'Ir\\Binding\\Parameter' || $value->position !== 1) {
             throw new RuntimeException('The installed analyzer lost the projected parameter position.');
         }
     }
