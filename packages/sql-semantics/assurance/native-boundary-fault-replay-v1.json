@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/native-boundary-fault-replay-1",
+  "approval": "pending-human-review",
+  "scope": "Every registered static native boundary mutation for MySQL, PostgreSQL and SQLite.",
+  "preflight": "Read the exact candidate source before running the audits. Require one occurrence of every fixed mutation anchor, one unique case name per dialect, and a changed byte identity for each mutation.",
+  "replay": "Compare the declared plan with the checked candidate. Require every planned case exactly once, with the declared role, source and mutation digests, healthy shape control and exact rejection. Reconstruct the actual overlay and portable unified patch and verify the raw receipt.",
+  "controls": [
+    "A complete healthy plan replays with the expected raw evidence.",
+    "Omit the first declared static fault while leaving the aggregate report and candidate intact.",
+    "Replace a changed source digest with a different valid digest while leaving the raw files intact.",
+    "Change an injected replacement while preserving the original source and asserted detection."
+  ],
+  "trust": [
+    "The fixed mutation registry and checked shape templates in the independent verifier archive",
+    "Verified candidate bytes and custody of the raw execution records",
+    "The replay validates the applied changes and measured rejection receipts. Running the shape audit remains the operation that evaluates PHP source and mutation overlays."
+  ]
+}
