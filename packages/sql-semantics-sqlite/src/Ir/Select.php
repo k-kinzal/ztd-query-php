@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
+use SqlSemantics\Platform\Sqlite\Ir\From\SelectBounds;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;

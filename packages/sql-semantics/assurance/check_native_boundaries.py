@@ -18,6 +18,9 @@ class Fault(NamedTuple):
 def faults(engine):
     if engine == "sqlite":
         return [
+            Fault("skip-sqlite-select-expression-scope", "From/SelectBounds::check", "(new ExpressionScope())->check($widths, $pending);", ""),
+            Fault("skip-sqlite-select-boundary", "Select::__construct",
+                  "(new SelectBounds())->check($results, $source, $this->joins, $where, $this->orderBy, $limit);", ""),
             Fault("allow-invalid-updated-return-slot", "Mutation/Update::__construct",
                   "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("skip-group-row-filter-scope", "Aggregation/GroupedSelect::__construct", "$predicates[] = [$where, 0, count($widths)];", ""),
@@ -186,7 +189,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v16.json", "postgres-mutation-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v21.json", "value-primitives.json")},
+                       "native-boundaries-v16.json", "postgres-mutation-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "value_storage.php", "value-storage-v21.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

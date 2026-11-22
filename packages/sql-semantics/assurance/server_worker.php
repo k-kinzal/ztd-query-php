@@ -398,8 +398,13 @@ function constructUpdate(string $platform, array $input): SemanticsIR
         $sets[] = new $assignment(constructOperand($namespace, $slot), constructOperand($namespace, $value));
     }
 
-    return new $statement($target, $sets, constructPredicate($namespace, $input['where']), $release::from($input['release']),
-        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : []));
+    return new $statement(
+        $target,
+        $sets,
+        constructPredicate($namespace, $input['where']),
+        $release::from($input['release']),
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : [])
+    );
 }
 
 function observeUpdate(string $namespace, object $value, string $dialect): array
@@ -490,8 +495,12 @@ function constructDelete(string $platform, array $input): SemanticsIR
     $delete = $namespace . 'Mutation\\Delete';
     $where = constructPredicate($namespace, $input['where']);
 
-    return new $delete(constructSource($platform, $input['target'], $input['dialect']), $where, $release::from($input['release']),
-        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : []));
+    return new $delete(
+        constructSource($platform, $input['target'], $input['dialect']),
+        $where,
+        $release::from($input['release']),
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : [])
+    );
 }
 
 function observePredicate(string $namespace, ?object $condition): ?array

@@ -86,11 +86,12 @@ if ($dialect === 'mysql') {
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
 }
-$internal = ['ExpressionLowering', 'SelectBounds', 'SelectLowering', 'SelectSql', 'SourceBinding'];
+$selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
+$internal = ['ExpressionLowering', $selectBounds, 'SelectLowering', 'SelectSql', 'SourceBinding'];
 if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
 }
-$pureCollaborators = ['SelectBounds', 'SelectSql'];
+$pureCollaborators = [$selectBounds, 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'mysql') {

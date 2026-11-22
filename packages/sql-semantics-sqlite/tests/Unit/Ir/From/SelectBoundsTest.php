@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir;
+namespace Tests\Unit\Ir\From;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\From\SelectBounds;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
-use SqlSemantics\Platform\Sqlite\Ir\SelectBounds;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 #[CoversClass(SelectBounds::class)]

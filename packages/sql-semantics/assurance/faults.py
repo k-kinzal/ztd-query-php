@@ -96,7 +96,7 @@ def exercise(args, db, distribution):
     patch_model("F01", "Select",
                 "result columns.', 1)", "result columns.', 0)", "negative-boundary-mismatch",
                 empty, lambda worker: negative(worker, empty, "nonempty list"))
-    patch_model("F02", "SelectBounds",
+    patch_model("F02", "From/SelectBounds",
                 "count($results) <= 2000", "false", "positive-construction-failed",
                 simple, lambda worker: positive(worker, db, simple))
     patch_model("F03", "SelectSql",
