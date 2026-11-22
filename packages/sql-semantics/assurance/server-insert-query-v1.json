@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/server-insert-query-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "additionalPublicRoots": ["Mutation/InsertQuery"],
+  "profiles": "The release and native settings of server-projection-v1.json and server-insert-v1.json.",
+  "scope": "Ordinary INSERT of the rows of one independently checked simple SELECT into an absolute table and explicit writable signed integer target columns.",
+  "open": ["Compound, grouped, ordered, bound, local or joined query inputs", "Coercions from nonintegral query columns and query parameters", "Implicit write lists, conflict overrides, overriding identities, RETURNING and WITH"],
+  "constructors": {
+    "InsertQuery": {
+      "type": "Mutation/InsertQuery",
+      "role": "Complete write from one checked row-producing query",
+      "structure": ["target", "query"],
+      "invariants": [
+        "The target explicitly supplies 1 to 1024 unique ordered writable signed integer columns. PostgreSQL does not accept ONLY on the INSERT target.",
+        "The independent query produces the same number of fields as the ordered target layout. Each field is a signed column, signed literal or arithmetic expression, or SQL NULL.",
+        "The query is unbounded and has no explicit ordering, join or local definition. Its predicate and DISTINCT are part of its complete query structure.",
+        "The write takes its release and native profile from the checked query."
+      ],
+      "externalInterpretation": "The query input and write target each denote their absolute tables and declared fields under the same release and settings. Omitted write fields use the same defaults.",
+      "meaning": "Evaluate the source rows in the statement and associate each row's values with the target list in position order. Preserve duplicates when the source does, along with NULLs and zero-row writes. Apply native constraints, defaults and triggers under the same external interpretation.",
+      "sql": "Write the absolute qualified target and its ordered column list, followed by the complete SELECT in the owning release.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "The binder resolves each query input independently of the write target. Use the existing checked projection and writable-slot binders and publish the checked write only after verifying the source-to-target width.",
+  "observations": ["Number of affected rows including zero", "Typed target contents and trigger images, preserving duplicates, NULLs, defaults and column order", "Unchanged scan and control relations", "Restored rows and trigger images after rollback"],
+  "finite": {
+    "targetLayouts": [["id"], ["delta"], ["id", "delta"], ["delta", "id"]],
+    "sourceRelations": ["unit", "ordinary", "empty"],
+    "distinctPolicies": [false, true],
+    "predicates": ["all", "false"],
+    "completeness": "Measure each crossed layout, scan role, DISTINCT bit and selected predicate from the actual structure exactly once."
+  },
+  "exploration": {
+    "seeds": [3481, 7717, 15791],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 210,
+    "allowedExclusions": [],
+    "structure": "Vary source roles, predicates, integer projection expressions, assignment widths, repeated slots, NULL fields and explicit column order."
+  },
+  "negative": [
+    "Empty target layout", "Projection and target width mismatch", "Boolean projection", "Unbound query parameter",
+    "Query with a local or joined input", "Ordered or bounded source query", "An explicit unresolved target column",
+    "An explicit nonwritable or nonintegral target field"
+  ],
+  "faults": ["Reverse target assignment names", "Read another signed scan slot", "Drop query DISTINCT", "Drop query filter"],
+  "trust": ["Existing checked writable table identity and ordinary projection domains", "Independent value and effect oracle in a disposable transaction", "No ordering assumption in a write without an explicit source order"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/insert-select.html", "https://www.postgresql.org/docs/17/sql-insert.html"]
+}
