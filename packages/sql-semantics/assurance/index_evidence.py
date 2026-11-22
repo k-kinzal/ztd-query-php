@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
 from native_schedule import NATIVE, reports as native_reports
 from scope import CONTRACTS
@@ -232,11 +233,15 @@ def main():
     cli.add_argument("--candidate", required=True, type=Path)
     cli.add_argument("--evidence-root", required=True, type=Path)
     cli.add_argument("--verifier", required=True, type=Path, help="The archived packages/sql-semantics/assurance directory.")
+    cli.add_argument("--previous-verifier", type=Path, help="The reviewer-selected previous verifier archive for an assurance change report.")
     cli.add_argument("--out", required=True, type=Path)
     args = cli.parse_args()
     root, checkout, tools, output = (item.resolve() for item in (args.evidence_root, args.candidate, args.verifier, args.out))
     require(tools == Path(__file__).resolve().parent, "bundle-verifier-location-mismatch", str(tools))
     require(root in output.parents and checkout not in root.parents and checkout != root, "bundle-output-location")
+    previous = args.previous_verifier.resolve() if args.previous_verifier else None
+    if previous is not None:
+        require(previous != checkout and checkout not in previous.parents, "bundle-previous-verifier-inside-candidate")
     identity, manifest = candidate_distribution(checkout)
     dist = root / BASE / "distribution.json"
     verify_distribution(json.loads(dist.read_text()), manifest)
@@ -290,6 +295,12 @@ def main():
     }
     verify_candidate(checkout, identity, manifest)
     output.mkdir(parents=True, exist_ok=False)
+    if previous is not None:
+        revision = output / "assurance-changes.json"
+        write_json(revision, review(previous, tools))
+        report["assuranceChanges"] = evidence.checked(revision)[1]
+    else:
+        report["assuranceChanges"] = None
     write_json(output / "constructors.json", role_trace)
     report["constructorTrace"] = evidence.checked(output / "constructors.json")[1]
     write_json(output / "index.json", report)
@@ -304,6 +315,8 @@ def main():
         "", "The [machine-readable index](index.json) links to the source inventory, replay summaries, original requests and recorded database observations.",
         "The [constructor trace](constructors.json) identifies contract fields, required obligations, related domain receipts and audited methods for each public role.",
     ]
+    if previous is not None:
+        lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")
 
 

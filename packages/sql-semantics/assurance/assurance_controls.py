@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
@@ -308,6 +309,42 @@ def text_controls(db):
              "observed": observed, "mismatches": signals}]
 
 
+def assurance_revision_control(args):
+    folder = args.out / "reduced-assurance-revision"
+    before = folder / "previous" / "packages/sql-semantics/assurance"
+    after = folder / "current" / "packages/sql-semantics/assurance"
+    shutil.copytree(TOOL, before)
+    shutil.copytree(TOOL, after)
+    healthy = review(before, after)
+    require(healthy["status"] == "identical-measured-inputs" and not healthy["observedPotentialReductions"],
+            "revision-control-healthy-mismatch")
+    source = before / "postgres-int4-case-v1.json"
+    target = after / source.name
+    minimum = json.loads(source.read_text())
+    previous_budget = minimum["exploration"]["casesPerSeed"]
+    minimum["exploration"]["casesPerSeed"] -= 1
+    write_json(target, minimum)
+    tampered = observe_rejection(lambda: review(before, after), "revision-contract-digest")
+    registry = after / "scope.py"
+    text = registry.read_text()
+    require(text.count(digest(source)) == 1, "revision-control-registry-anchor")
+    registry.write_text(text.replace(digest(source), digest(target)))
+    measured = review(before, after)
+    expected = [{"family": "postgres-int4-case", "field": "exploration/casesPerSeed",
+                 "before": previous_budget, "after": previous_budget - 1}]
+    require(measured["status"] == "review-required" and measured["observedPotentialReductions"] == expected,
+            "revision-control-reduction-not-flagged", measured["observedPotentialReductions"])
+    write_json(folder / "healthy.json", healthy)
+    write_json(folder / "observed.json", measured)
+    (folder / "injected.diff").write_text("".join(difflib.unified_diff(
+        source.read_text().splitlines(keepends=True), target.read_text().splitlines(keepends=True),
+        "previous/" + source.name, "current/" + target.name,
+    )) + "".join(difflib.unified_diff(text.splitlines(keepends=True), registry.read_text().splitlines(keepends=True),
+                                     "previous/scope.py", "current/scope.py")))
+    return {"case": folder.name, "control": "passed", "original": digest(source), "mutated": digest(target),
+            "digestMismatch": tampered.signal, "expected": expected, "observed": measured["observedPotentialReductions"]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("root", "candidate", "tool-autoload", "sqlite-library", "out"):
@@ -319,7 +356,8 @@ def main():
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
-              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution) + [declaration_control(args)])
+              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
+              + [declaration_control(args), assurance_revision_control(args)])
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

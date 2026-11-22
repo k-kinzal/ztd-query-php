@@ -69,6 +69,18 @@ It also emits `constructors.json` with each audited type, source digest, constru
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v1.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
+### Compare assurance revisions
+
+Select the previous verifier archive independently of the candidate. Pass its assurance directory to the indexer with `--previous-verifier` to include the change record in the review bundle. To compare the verifier revisions before running the database matrix, use the standalone comparator.
+
+```sh
+python3 "$verifier/compare_assurance_revisions.py" \
+  --previous-verifier "$previous_verifier" --current-verifier "$verifier" \
+  --out "$evidence/assurance-changes.json"
+```
+
+The report verifies the declared contract digests and records changed observations, limits, fault lists, native schedules, verifier files and available workflow and dependency lock files. It flags mechanically recognizable reductions, including a reduced exploration budget or a removed native domain. The report records the archive fingerprints and any unavailable supporting files. A reviewer assesses the effect of each change and records the independent decision.
+
 ## Establish independent acceptance
 
 The proposed [manual evidence workflow](../../../.github/workflows/semantics-ir-assurance.yml) selects its checker from the workflow revision on `main` and reads an explicit candidate SHA. Keep it outside the candidate's pull-request checks and review the workflow, its action pins, locked dependencies, engine build, oracle, mutation fixtures and contract before using the evidence for acceptance. Require repository-owner control of changes to this workflow and its inputs, and an independently maintained decision keyed to the tested candidate SHA. Verify that the decision rejects missing or stale evidence. No repository-level control has been installed or verified in this change.
