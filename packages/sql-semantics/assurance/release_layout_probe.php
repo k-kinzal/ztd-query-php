@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-require '/stage/vendor/autoload.php';
+$installed = $argv[1] ?? '/stage';
+$catalog = $argv[2] ?? '/roles.json';
+require $installed . '/vendor/autoload.php';
 
-$roles = json_decode(file_get_contents('/roles.json'), true, 512, JSON_THROW_ON_ERROR);
+$roles = json_decode(file_get_contents($catalog), true, 512, JSON_THROW_ON_ERROR);
 function observeEnum(string $name): array
 {
     $reflection = new ReflectionEnum($name);

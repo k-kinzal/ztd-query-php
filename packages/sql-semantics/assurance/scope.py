@@ -123,11 +123,15 @@ def declared_constructors(dialects):
     return definitions, supplemental, roots_by_dialect
 
 
-def constructor_scope(by_class):
+def publication_definition():
     publication = (TOOL / "publication-v23.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
-    publication = json.loads(publication)
+    return json.loads(publication)
+
+
+def constructor_scope(by_class):
+    publication = publication_definition()
     prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
     routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
     definitions, supplemental, roots_by_dialect = declared_constructors(publication["dialects"])

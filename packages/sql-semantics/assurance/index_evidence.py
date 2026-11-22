@@ -17,7 +17,7 @@ from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
 from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
-from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
+from run import IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
 
 
@@ -339,6 +339,7 @@ def replay_staged(evidence, artifact, manifest, inventory):
         return None
     path, origin, report = artifact
     require(report["contract"] == RELEASE_LAYOUT == evidence.tools[RELEASE_LAYOUT_NAME], "bundle-release-layout-contract", origin)
+    require(report.get("workerImage") == IMAGE, "bundle-installed-probe-isolation", origin)
     specification = json.loads((evidence.tool_root / RELEASE_LAYOUT_NAME).read_text())
     recorded, inventory_link = evidence.checked(path.parent / "inventory.json", report["inventory"])
     require(json.loads(recorded.read_text()) == inventory, "bundle-installed-inventory-mismatch", inventory_link)

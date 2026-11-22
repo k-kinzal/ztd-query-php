@@ -10,13 +10,12 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
-from scope import declared_constructors
+from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v14.json"
-CONTRACT = "0467a2b0b81d50deda5146b6d7530eead87da47cfaa86f78f31f696a0463c259"
+CONTRACT_NAME = "release-layout-v15.json"
+CONTRACT = "789a24cdb0244ad41d8e731572bb1032281628fcdc42b2d041fbd7b9cff2e5be"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
-COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
-          "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
+
 
 
 def checked_recipe(candidate, contract, out):
@@ -166,8 +165,16 @@ def role_controls(catalog, observations):
     return controls
 
 
-def probe(stage, evidence, catalog, catalog_path):
+def probe(stage, evidence, catalog, catalog_path, local):
     script = TOOL / "release_layout_probe.php"
+    if local:
+        catalog = {role: {**entry, "path": str(stage / Path(entry["path"]).relative_to("/stage"))}
+                   for role, entry in catalog.items()}
+        installed_catalog = evidence / "local-runtime-catalog.json"
+        write_json(installed_catalog, catalog)
+        raw = command(["php", str(script), str(stage), str(installed_catalog)], stage, evidence / "probe.log", XDEBUG_MODE="off")
+        return verify_probe(raw, catalog)
+
     arguments = ["docker", "run", "--pull", "never", "--rm", "--network", "none", "--read-only",
                  "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--user", "65534:65534",
                  "--pids-limit", "64", "--memory", "256m", "-v", f"{stage / 'vendor'}:/stage/vendor:ro", "-v", f"{script}:/probe.php:ro",
@@ -184,20 +191,15 @@ def verify_probe(raw, catalog):
     role_observations = [item for item in frames if item["probe"] == "role"]
     require(len(frames) == len(results) + len(role_observations), "unexpected-installed-probe")
     pairs = {(item["platform"], item["role"]) for item in results}
-    expected = {(platform, role) for platform in DIALECTS for role in COMMON}
-    expected.update((platform, "Aggregation\\GroupedSelect") for platform in DIALECTS)
-    expected.update((platform, "Mutation\\InsertQuery") for platform in ("MySql", "PostgreSql"))
-    expected.add(("Sqlite", "Rows\\ValuesQuery"))
-    expected.add(("Sqlite", "Schema\\DropView"))
-    expected.add(("Sqlite", "Schema\\Query\\CreateTableAs"))
-    expected.add(("Sqlite", "Schema\\Alter\\RenameTable"))
-    expected.add(("Sqlite", "Schema\\Alter\\RenameColumn"))
-    expected.update((platform, "Rows\\LocalProjection") for platform in ("MySql", "PostgreSql"))
-    expected.update((platform, "Rows\\RecursiveSeries") for platform in ("MySql", "PostgreSql"))
+    publication = publication_definition()
+    single = publication["single"]
+    expected = {(platform, role.removeprefix("Ir\\"))
+                for platform in publication["dialects"]
+                for role in (single["result"], *single["additionalDialectResults"][platform])}
     require(pairs == expected and len(results) == len(expected), "incomplete-installed-publication")
     for item in results:
-        package = "sql-semantics-" + DIALECTS[item["platform"]]
-        path = f"/stage/vendor/k-kinzal/{package}/src/Ir/" + item["role"].replace("\\", "/") + ".php"
+        name = "SqlSemantics\\Platform\\" + item["platform"] + "\\Ir\\" + item["role"]
+        path = catalog[name]["path"]
         require(item["path"] == path and isinstance(item["sql"], str) and item["sql"] and item["profile"],
                 "unexpected-installed-publication", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Select"):
@@ -258,7 +260,7 @@ def digest_fault(installed, expected, directory):
     raise Failure("release-layout-fault-missed", role)
 
 
-def verify(candidate, tool_autoload, out):
+def verify(candidate, tool_autoload, out, local=False):
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "release-layout-contract-mismatch")
     specification = json.loads(path.read_bytes())
@@ -293,16 +295,19 @@ def verify(candidate, tool_autoload, out):
                 metadata[package] = digest(target / "composer.json")
                 require(metadata[package] == digest(stage / "packages" / package / "composer.json"),
                         "installed-metadata-mismatch", package)
-            roots, roles, controls = probe(stage, evidence, catalog, catalog_path)
+            roots, roles, controls = probe(stage, evidence, catalog, catalog_path, local)
             digest_fault(installed, expected, evidence)
             report[profile] = {"versions": locked, "packageManifests": metadata,
                                "checkedFiles": {package: len(files) for package, files in expected.items()},
                                "runtime": roots, "roles": roles, "roleControls": controls, "probeDigest": digest(evidence / "probe.log"),
+                               **({"localRuntimeCatalog": digest(evidence / "local-runtime-catalog.json")} if local else {}),
                                "installedMutation": {name: digest(evidence / name) for name in ("installed-mutation.diff", "installed-mutation.json")}}
     verify_candidate(candidate, sha, manifest)
-    write_json(out / "index.json", {"status": "provisional-staged-composer-layout", "candidate": sha,
+    status = "provisional-local-staged-composer-layout" if local else "provisional-staged-composer-layout"
+    write_json(out / "index.json", {"status": status, "candidate": sha,
                                    "distribution": digest(out / "distribution.json"), "contract": CONTRACT,
-                                   "recipe": specification["recipe"], "workerImage": IMAGE,
+                                   "recipe": specification["recipe"], "workerImage": None if local else IMAGE,
+                                   **({"localPhp": command(["php", "--version"], out, XDEBUG_MODE="off").strip()} if local else {}),
                                    "runtimeCatalog": digest(catalog_path), "inventory": digest(inventory_path),
                                    "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php", "inventory.php", "scope.py")},
                                    "composer": command(["composer", "--version"], out).strip(), "profiles": report})
@@ -313,12 +318,13 @@ if __name__ == "__main__":
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--tool-autoload", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--local", action="store_true", help="Stage and probe in host PHP as a diagnostic.")
     args = parser.parse_args()
     candidate, out = args.candidate.resolve(), args.out.resolve()
     require(out != candidate and candidate not in out.parents, "evidence-directory-inside-candidate")
     out.mkdir(parents=True, exist_ok=False)
     try:
-        verify(candidate, args.tool_autoload.resolve(), out)
+        verify(candidate, args.tool_autoload.resolve(), out, args.local)
     except Exception as error:
         write_json(out / "run-failure.json", {"signal": error.signal if isinstance(error, Failure) else type(error).__name__,
                                              "failure": str(error)})
