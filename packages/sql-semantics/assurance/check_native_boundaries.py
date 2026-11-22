@@ -36,6 +36,9 @@ def faults(engine):
         Fault("allow-missing-local-slot", "Rows/LocalProjection::__construct", "isset($definition->columns[$column->slot]),", "true,"),
         Fault("allow-negative-local-slot", "Rows/LocalResultColumn::__construct", "$slot >= 0,", "true,"),
         Fault("ignore-local-chain-bound", "Rows/LocalProjection::__construct", "++$layers <= 16,", "true,"),
+        Fault("ignore-recursive-working-slot", "Rows/RecursiveSeries::__construct", "$column->slot === 0,", "true,"),
+        Fault("ignore-recursive-progress", "Rows/RecursiveSeries::__construct",
+              "($increment->decimal[0] === '-') === ($comparison === IntegerOperator::Greater),", "true,"),
         Fault("ignore-truth-operator-arity", "Predicate/LogicalPredicate::__construct",
               "($operator === LogicalOperator::Not) === ($right === null),", "true,"),
         Fault("ignore-expanded-predicate-size", "From/OccurrenceScope::checkTree",
@@ -49,6 +52,8 @@ def faults(engine):
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
         shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::check", "$expression->position === ++$position,", "true,"))
+        shared.append(Fault("ignore-recursive-release-capability", "Rows/RecursiveSeries::__construct",
+                            "Check::input($available,", "Check::input(true,"))
         shared.append(Fault("allow-negative-integer-padding", "IntegerLiteral::__construct",
                             "$leadingZeroes >= 0 && $leadingZeroes <= self::MAX_LEADING_ZEROES,", "true,"))
     else:
@@ -109,7 +114,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v8.json", "value_storage.php", "value-storage-v9.json", "value-primitives.json")},
+                       "native-boundaries-v9.json", "value_storage.php", "value-storage-v10.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

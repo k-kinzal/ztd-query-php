@@ -20,6 +20,8 @@ use SqlSemantics\Platform\MySql\Ir\Rows\Compound;
 use SqlSemantics\Platform\MySql\Ir\Rows\CompoundLowering;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjectionLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\Recursive\RecursiveSeriesLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\RecursiveSeries;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
@@ -46,6 +48,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery as ParsedPare
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression as ParsedWith;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation as ParsedCompound;
+use SqlSemantics\Platform\MySql\Statement\Query\With\With as ParsedRecursiveWith;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable as ParsedDerived;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin as ParsedBegin;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit as ParsedCommit;
@@ -130,12 +133,13 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|Select|Transaction|Update
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
         $statement = $operation->statement;
         return match (true) {
+            $statement instanceof ParsedWith && $statement->with instanceof ParsedRecursiveWith && $statement->with->recursive => (new RecursiveSeriesLowering())->lower($operation, $statement),
             $statement instanceof ParsedWith && $statement->with !== null,
             $statement instanceof ParsedSelect && $statement->from instanceof ParsedDerived => (new LocalProjectionLowering())->lower($operation),
             $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
@@ -154,7 +158,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|Select|Transaction|Update>
+     * @return list<Compound|CreateTable|Delete|DropTable|Insert|LocalProjection|RecursiveSeries|Select|Transaction|Update>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

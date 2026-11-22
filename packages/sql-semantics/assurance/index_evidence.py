@@ -9,7 +9,7 @@ from run import candidate_distribution, digest, require, verify_candidate, verif
 
 NATIVE = (
     "projection", "delete", "join", "result", "insert", "update", "transaction",
-    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth",
+    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series",
 )
 SQLITE = {
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",
@@ -40,6 +40,7 @@ class Evidence:
         self.root = root
         self.candidate = candidate
         self.distribution = distribution
+        self.tool_root = tool_root
         self.tools = {file.name: digest(file) for file in tool_root.iterdir()
                       if file.suffix in (".php", ".py", ".json", ".md")}
         self.missing = []
@@ -95,12 +96,26 @@ class Evidence:
         return {"replay": origin, "domains": domains}
 
     def native(self, profiles):
-        required = {f"{engine} {release}" for engine, profile in profiles.items() for release in profile["releases"]}
         domains = {}
         for domain in NATIVE:
             item = self.optional(f"native-replay/{domain}.json")
             if item is None:
                 continue
+            registered = {engine: settings["releases"] for engine, settings in profiles.items()}
+            unavailable = {}
+            if domain == "recursive_series":
+                series = json.loads((self.tool_root / "server-recursive-series-v2.json").read_text())
+                registered = series["profiles"]
+                receipts = report["unavailableProfiles"]
+                require(receipts.keys() == set(series["unavailableSyntax"]["mysql"]), "bundle-recursive-availability-mismatch")
+                for release, receipt in receipts.items():
+                    legacy, link, raw = self.record(path.parent / receipt["index"])
+                    self.checked(legacy, receipt["indexDigest"])
+                    self.checked(legacy.parent / "observations.json", receipt["observationsDigest"])
+                    require(raw["toolDigests"] == self.tools and raw["distribution"] == self.distribution
+                            and raw["contract"] == report["contract"], "bundle-recursive-availability-identity", release)
+                    unavailable[release] = link
+            required = {f"{engine} {release}" for engine, releases in registered.items() for release in releases}
             path, origin, report = item
             reports = report["releaseReports"]
             missing = sorted(required - reports.keys())
@@ -127,6 +142,8 @@ class Evidence:
                                                  "events.jsonl", receipt["eventsDigest"], report["contract"], self.tools)
             require(report["contract"] in self.tools.values(), "bundle-unregistered-native-contract", origin)
             domains[domain] = {"replay": origin, "releases": releases, "execution": report["execution"], "missing": missing}
+            if unavailable:
+                domains[domain]["unavailableProfiles"] = unavailable
         return domains
 
     def artifact(self, path, status, distribution=False):

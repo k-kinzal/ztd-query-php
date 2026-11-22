@@ -53,6 +53,7 @@ final class LocalDefinition
 
         return $query;
     }
+
     /**
      * Checks a projection consumer before resolving its local input.
      *
@@ -60,10 +61,21 @@ final class LocalDefinition
      */
     public function consumer(Select|QueryExpression $statement): Select
     {
+        $body = $this->queryBlock($statement);
+        Check::input($body->where === null, 'The local projection requires an ordinary result without outer clauses.');
+
+        return $body;
+    }
+
+    /**
+     * Checks the clauses shared by a local consumer and a recursive step.
+     */
+    public function queryBlock(Select|QueryExpression $statement): Select
+    {
         $body = $statement instanceof QueryExpression ? $statement->body : $statement;
         Check::input($body instanceof Select, 'A local projection requires a query with a local source.');
         Check::input(
-            $body->where === null && $body->groupBy === [] && $body->having === null
+            $body->groupBy === [] && $body->having === null
             && $body->windows === [] && $body->distinct === null && $body->into === null && $body->options === null,
             'The local projection requires an ordinary result without outer clauses.'
         );

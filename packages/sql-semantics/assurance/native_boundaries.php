@@ -11,8 +11,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(string $dialect): array
 {
-    $file = __DIR__ . '/native-boundaries-v8.json';
-    requireShape(hash_file('sha256', $file) === '34a54a2980bd58254666f9dc4cf4fbbb2576cf9730dda35bee8098174f053fd7', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v9.json';
+    requireShape(hash_file('sha256', $file) === '650f3dcc41e4165a78a6ca0d14107ed4a5d68a7657a9e55a68fadbae996d032d', 'Native boundary contract differs from the recorded revision');
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 
@@ -32,7 +32,8 @@ function checkNativeBoundaries(
     $imports = '';
     foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
-        'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql'] as $name) {
+        'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
+        'Model\\Contract\\GrammarRelease'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     $verified = [];

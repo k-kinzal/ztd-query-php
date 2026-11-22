@@ -32,4 +32,12 @@ final class LocalDefinitionTest extends TestCase
 
         self::assertSame($query->statement, (new LocalDefinition())->consumer($query->statement));
     }
+
+    public function testQueryBlockAllowsASeparatePredicate(): void
+    {
+        $query = (new Inspection())->inspect('SELECT q.a FROM (SELECT 1 AS a) AS q WHERE TRUE');
+        self::assertInstanceOf(Select::class, $query->statement);
+
+        self::assertSame($query->statement, (new LocalDefinition())->queryBlock($query->statement));
+    }
 }

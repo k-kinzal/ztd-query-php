@@ -189,6 +189,31 @@ function constructLocalProjection(string $platform, array $input): SemanticsIR
     return new $statement($source, $columns);
 }
 
+function constructRecursiveSeries(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $type = $namespace . 'Rows\\RecursiveSeries';
+    $column = $namespace . 'Rows\\LocalResultColumn';
+    $identifier = $namespace . 'Identifier';
+    $operator = $namespace . 'Predicate\\IntegerOperator';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $series = $input['series'];
+    $columns = [];
+    foreach ($series['columns'] as [$slot, $name]) {
+        $columns[] = new $column($slot, new $identifier($name));
+    }
+
+    return new $type(
+        constructOperand($namespace, $series['start']),
+        constructOperand($namespace, $series['increment']),
+        constructOperand($namespace, $series['boundary']),
+        $operator::from($series['comparison']),
+        $series['all'],
+        $columns,
+        $release::from($input['release']),
+    );
+}
+
 function constructSetQuery(string $platform, array $input): SemanticsIR
 {
     if (!isset($input['compound'])) {
@@ -394,6 +419,7 @@ function observeStatement(array $input): array
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
             isset($input['local']) => constructLocalProjection($platform, $input),
+            isset($input['series']) => constructRecursiveSeries($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
@@ -405,6 +431,19 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Rows\\RecursiveSeries') {
+        return [
+            'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'series' => [
+                'start' => observeOperand($namespace, $value->start),
+                'increment' => observeOperand($namespace, $value->increment),
+                'boundary' => observeOperand($namespace, $value->boundary),
+                'comparison' => $value->comparison->value,
+                'all' => $value->all,
+                'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
+            ],
+        ];
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $observed = [

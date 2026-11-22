@@ -173,7 +173,7 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     $internal[] = 'Binding\\ParameterLowering';
-    array_push($roots, 'Rows\\Compound', 'Rows\\LocalProjection', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
+    array_push($roots, 'Rows\\Compound', 'Rows\\LocalProjection', 'Rows\\RecursiveSeries', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $conditions = [...$truthValues, 'null'];
@@ -245,6 +245,13 @@ if ($dialect !== 'sqlite') {
     $methods['Rows\\LocalResultColumn'] = ['__construct'];
     array_push($internal, 'Rows\\LocalProjectionLowering', 'Rows\\LocalDefinition', 'Rows\\LocalProjectionSql');
     $pureCollaborators[] = 'Rows\\LocalProjectionSql';
+    $properties['Rows\\RecursiveSeries'] = [
+        'start' => ['IntegerLiteral'], 'increment' => ['IntegerLiteral'], 'boundary' => ['IntegerLiteral'],
+        'comparison' => ['Predicate\\IntegerOperator'], 'all' => ['bool'], 'columns' => ['array'],
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $methods['Rows\\RecursiveSeries'] = $methods['Select'];
+    array_push($internal, 'Rows\\Recursive\\RecursiveSeriesLowering', 'Rows\\Recursive\\RecursiveStepLowering', 'Rows\\Recursive\\RecursiveBinding');
     $properties['Rows\\Compound'] = [
         'left' => ['Rows\\Compound', 'Select'], 'operator' => ['Rows\\CompoundOperator'],
         'all' => ['bool'], 'right' => ['Rows\\Compound', 'Select'],
@@ -370,7 +377,12 @@ try {
         ? ['Begin', 'Commit', 'Rollback', 'StartTransaction', 'Savepoint', 'ReleaseSavepoint', 'RollbackToSavepoint']
         : ['Begin', 'Commit', 'Rollback', 'SavepointCommand'];
     $transactions = implode(', ', array_map(static fn ($type) => '$statement instanceof \\' . $transactionNamespace . $type, $transactionTypes));
+    $recursiveWith = $dialect === 'mysql'
+        ? '$statement->with instanceof \\' . $platform . '\\Statement\\Query\\With\\With && $statement->with->recursive'
+        : '$statement->with?->recursive === true';
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
+        . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null,'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && $statement->from instanceof \\' . $platform
         . '\\Statement\\Relation\\DerivedTable => (new \\' . $prefix . 'Rows\\LocalProjectionLowering())->lower($operation),'
@@ -420,9 +432,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v9.json';
+    $storagePath = __DIR__ . '/value-storage-v10.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'aaa26cb700ea53f89d2f3c7398a2dc4013565eaaef19c0db7847ef05d00fe707',
+        hash_file('sha256', $storagePath) === 'cba65f8f297bad1c659eb55294bb006d78aa92d7e463affa552150c3adf7dab7',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -473,6 +485,7 @@ try {
             $loweringRole = match ($short) {
                 'SelectLowering' => 'Select',
                 'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
+                'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',

@@ -308,6 +308,42 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-truth-evidence"
+      - name: Check recursive syntax on the pinned MySQL 5.x releases
+        if: ${{ !cancelled() && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/check_recursive_availability.py \
+            --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-recursive-unavailable-evidence"
+      - name: Compare native recursive series results
+        if: ${{ !cancelled() && matrix.release != '5.6.51' && matrix.release != '5.7.44' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_recursive_series.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-recursive-series-evidence"
       - name: Compare native local projection results
         if: ${{ !cancelled() }}
         env:
@@ -410,6 +446,18 @@ jobs:
         with:
           name: native-truth-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-truth-evidence/
+      - name: Preserve native recursive syntax availability controls
+        if: ${{ always() && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-recursive-unavailable-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-recursive-unavailable-evidence/
+      - name: Preserve native recursive series observations and any failure
+        if: ${{ always() && matrix.release != '5.6.51' && matrix.release != '5.7.44' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-recursive-series-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-recursive-series-evidence/
       - name: Preserve native local projection observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -509,6 +557,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh run download "$GITHUB_RUN_ID" --pattern 'native-truth-*' --dir "$RUNNER_TEMP/truth-matrix"
+      - name: Download the protected recursive availability records
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'native-recursive-unavailable-*' --dir "$RUNNER_TEMP/recursive-unavailable-matrix"
+      - name: Download the protected recursive series records
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'native-recursive-series-*' --dir "$RUNNER_TEMP/recursive-series-matrix"
       - name: Download the protected local projection records
         if: ${{ !cancelled() }}
         env:
@@ -645,6 +705,21 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/combine_server_truth_evidence.py \
             --candidate "$CANDIDATE" --candidate-root candidate \
             --out "$RUNNER_TEMP/truth-matrix.json" "${indexes[@]}"
+      - name: Require all native recursive series releases
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          shopt -s nullglob
+          indexes=("$RUNNER_TEMP"/recursive-series-matrix/*/index.json)
+          unavailable=()
+          for index in "$RUNNER_TEMP"/recursive-unavailable-matrix/*/index.json; do
+            unavailable+=(--unavailable "$index")
+          done
+          python3 trusted/packages/sql-semantics/assurance/combine_server_recursive_series_evidence.py \
+            --candidate "$CANDIDATE" --candidate-root candidate \
+            --out "$RUNNER_TEMP/recursive-series-matrix.json" "${unavailable[@]}" "${indexes[@]}"
       - name: Require all native local projection releases
         if: ${{ !cancelled() }}
         env:
@@ -733,6 +808,12 @@ jobs:
         with:
           name: native-truth-matrix
           path: ${{ runner.temp }}/truth-matrix.json
+      - name: Preserve the native recursive series matrix report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-recursive-series-matrix
+          path: ${{ runner.temp }}/recursive-series-matrix.json
       - name: Preserve the native local projection matrix report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

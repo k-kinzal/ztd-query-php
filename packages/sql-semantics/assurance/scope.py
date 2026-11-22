@@ -11,6 +11,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection",
+    "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\RecursiveSeries",
     "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CreateTable",
     "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Insert",
@@ -19,6 +20,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\LocalProjection",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\RecursiveSeries",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Insert",
@@ -39,6 +41,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-recursive-series-v2.json": "57ec24e29d2ed8d9ff1a18cd899165303c9dc3032db1738feb61a973da7842ff",
     "server-truth-v2.json": "8ecb535370bab902634dc06671fd19fecd1bc9d1e770e501a1cb212365738f61",
     "server-local-projection-v4.json": "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9",
     "server-parameter-v1.json": "a25669b690cb52522a4fc0af7f35d6fee5cb3ac597dabd72383dee3f14d77052",
@@ -67,7 +70,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "1c3dac8028bb7b644eeca6bab1c2c9bc5aea63119795e490466edfba009976c6"
+PUBLICATION = "37f241d8560c72065d138f9e4b1aa6f8efc1e511b89f97207926ca12d175e6d6"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -77,7 +80,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v11.json").read_bytes()
+    publication = (TOOL / "publication-v12.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)

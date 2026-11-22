@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v11.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v12.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -55,7 +55,7 @@ The independent evaluator reads the direct construction inputs and implements se
 
 The checked domain supports a composition argument. Every leaf has one of the closed roles. Each arithmetic node has two ordered children of those roles. The constructor visits every occurrence, checks the source slot range, and bounds expansion. All lists and children have immutable value semantics. The renderer emits the two operands with the recorded operator inside parentheses, or an explicit leaf representation. A schema-qualified source and an explicit output alias preserve the external identity and result names. This is an argument for human review. The finite and seeded SQLite comparisons are empirical evidence. The PHP code shape audit checks the recorded property types, method names, traits, dependencies and known dynamic constructs. It does not prove arbitrary method bodies or establish the correctness of parser lowering and declaration resolution.
 
-Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
+Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth,recursive_series}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
 
 ## Establish independent acceptance
 
@@ -78,7 +78,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v8.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v9.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -177,6 +177,12 @@ Run `run_server_local_projection.py` with the native fixture options. Replay all
 The [truth contract](server-truth-v2.json) enumerates every constant input for the registered logic operators. Two row observations distinguish each of TRUE, FALSE and UNKNOWN. Seeded tests vary nesting, scope, nullable slot occurrences, and join type. The DELETE and UPDATE runners check the same predicates against physical target rows, trigger records and restored state.
 
 Run `run_server_truth.py` with the native fixture options and replay with `combine_server_truth_evidence.py`. Use the DELETE and UPDATE replay commands for the state changes.
+
+## Native recursive series
+
+The [recursive series contract](server-recursive-series-v2.json) fixes the signed one-column anchor, increment, strict comparison, UNION policy and output roles. The oracle computes the expected admitted rows directly from the distance to the bound and the increment. The observer compares native field types and verifies an analyzed recursive CTE that shadows a physical table.
+
+Run `run_server_recursive_series.py` on pinned MySQL releases from 8.0 onward and PostgreSQL. On MySQL 5.6 and 5.7, use `check_recursive_availability.py` to check native syntax rejection, the analyzed and direct construction boundaries, and a positive native projection. Replay the accepted recursive statements with `combine_server_recursive_series_evidence.py`, the supported release `index.json` paths and one `--unavailable` record per MySQL 5.x release.
 
 ## SQLite joins, filters and ordering
 

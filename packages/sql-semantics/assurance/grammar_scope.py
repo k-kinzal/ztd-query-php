@@ -162,6 +162,9 @@ def inventory(root):
         }
         for alternative in sorted(truth_signatures & signatures):
             related[alternative] = (*related.get(alternative, ()), "server-truth-v2.json")
+        for alternative in ("with_clause: WITH RECURSIVE_SYM with_list", "with_clause: WITH RECURSIVE cte_list"):
+            if alternative in signatures:
+                related[alternative] = (*related.get(alternative, ()), "server-recursive-series-v2.json")
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):
             raise ValueError(f"Unknown production or domain in scope correspondence: {path}")
