@@ -77,10 +77,12 @@ if ($dialect === 'postgres') {
         'subject' => $rangeLeaves, 'lower' => $rangeLeaves, 'upper' => $rangeLeaves,
         'negated' => ['bool'], 'symmetric' => ['bool'],
     ];
-    $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = ['__construct'];
-    $properties[$caseArm]['condition'][] = $range;
+    $distinctness = 'Predicate\\IntegerDistinctness';
+    $properties[$distinctness] = ['left' => $rangeLeaves, 'right' => $rangeLeaves, 'negated' => ['bool']];
+    $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
+    array_push($properties[$caseArm]['condition'], $range, $distinctness);
     sort($properties[$caseArm]['condition']);
-    $properties['ResultColumn']['expression'][] = $range;
+    array_push($properties['ResultColumn']['expression'], $range, $distinctness);
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -109,7 +111,8 @@ $internal = ['ExpressionLowering', $selectBounds, 'SelectLowering', 'SelectSql',
 if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
     $internal[] = 'Predicate\\IntegerRangeLowering';
-    $internal[] = 'Predicate\\IntegerRangeOperandLowering';
+    $internal[] = 'Predicate\\IntegerAtomLowering';
+    $internal[] = 'Predicate\\IntegerDistinctnessLowering';
 }
 if ($dialect === 'mysql') {
     array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering');
@@ -316,6 +319,9 @@ if ($dialect !== 'sqlite') {
     $properties['ColumnReference']['occurrence'] = ['int'];
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $truthValues[] = 'Predicate\\IntegerRange';
+    if ($dialect === 'postgres') {
+        $truthValues[] = 'Predicate\\IntegerDistinctness';
+    }
     sort($truthValues);
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
@@ -367,6 +373,9 @@ if ($dialect !== 'sqlite') {
         'negated' => ['bool'],
     ];
     $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
+    if ($dialect === 'postgres') {
+        $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerDistinctness';
+    }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];
     $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR', 'Not' => 'NOT'];

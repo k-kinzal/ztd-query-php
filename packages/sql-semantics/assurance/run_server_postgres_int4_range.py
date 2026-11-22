@@ -34,7 +34,7 @@ def prepare(engine, db):
     ]}))
     return {
         "shadow": db.request({"sql": "SELECT current_setting('search_path') AS path, 2 >= 1 AS lower, 2 <= 3 AS upper",
-                              "shadowInt4Range": True}),
+                              "shadowBuiltinOperators": True}),
         "restored": db.request({"sql": "SELECT current_setting('search_path') AS path, 2 >= 1 AS lower, 2 <= 3 AS upper"}),
     }
 
@@ -47,7 +47,7 @@ def check_preparation(_, environment, prepared):
 
 
 def observer_request(request, sql):
-    return {"sql": sql, **({"shadowInt4Range": True} if request.get("shadow") else {})}
+    return {"sql": sql, **({"shadowBuiltinOperators": True} if request.get("shadow") else {})}
 
 
 def required_forms(_engine, _tag):

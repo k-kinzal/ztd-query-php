@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
@@ -74,6 +75,15 @@ final class SelectSqlTest extends TestCase
     {
         self::assertSame('CAST(NULL AS pg_catalog.int4)', (new SelectSql())->integerOrNull(new NullLiteral(), null, 0, true));
     }
+    public function testIntegerDistinctnessCombinesQualifiedEqualityAndBothNullTests(): void
+    {
+        $value = new IntegerDistinctness(new IntegerLiteral('1'), new NullLiteral());
+        $expected = '(NOT COALESCE((CAST(1 AS pg_catalog.int4) OPERATOR(pg_catalog.=) CAST(NULL AS pg_catalog.int4)), '
+            . '(CAST(1 AS pg_catalog.int4) IS NULL AND CAST(NULL AS pg_catalog.int4) IS NULL)))';
+
+        self::assertSame($expected, (new SelectSql())->integerDistinctness($value, null, 0, true));
+    }
+
     public function testIntegerRangePreservesBothSymmetricIntervalsAndNegation(): void
     {
         $range = new IntegerRange(new IntegerLiteral('1'), new IntegerLiteral('2'), new NullLiteral(), true, true);

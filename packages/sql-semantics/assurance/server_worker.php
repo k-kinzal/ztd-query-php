@@ -35,6 +35,7 @@ function constructOperand(string $namespace, array $data): object
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
         'int4-range', 'signed-range' => 'Predicate\\IntegerRange',
+        'int4-distinctness' => 'Predicate\\IntegerDistinctness',
         'range-integer' => 'Predicate\\RangeIntegerLiteral',
     };
     $operator = $namespace . 'ArithmeticOperator';
@@ -48,6 +49,11 @@ function constructOperand(string $namespace, array $data): object
             $operator::from($data[1]),
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
+        ),
+        'int4-distinctness' => new $type(
+            constructOperand($namespace, $data[2]),
+            constructOperand($namespace, $data[3]),
+            $data[1],
         ),
         'signed-range' => new $type(
             constructOperand($namespace, $data[2]),
@@ -86,6 +92,8 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
+            observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
+        $namespace . 'Predicate\\IntegerDistinctness' => ['int4-distinctness', $value->negated,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Predicate\\IntegerRange' => [
             ...($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange
@@ -213,7 +221,7 @@ function constructPredicate(string $namespace, ?array $test): ?object
             constructPredicate($namespace, $test[3] ?? null),
         ),
         'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
-        'boolean', 'null', 'slot', 'integer', 'int4-range', 'signed-range' => constructOperand($namespace, $test),
+        'boolean', 'null', 'slot', 'integer', 'int4-range', 'signed-range', 'int4-distinctness' => constructOperand($namespace, $test),
     };
 }
 
@@ -570,7 +578,7 @@ function observePredicate(string $namespace, ?object $condition): ?array
         $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
         $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
         $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'IntegerLiteral',
-        $namespace . 'Predicate\\IntegerRange' => observeOperand($namespace, $condition),
+        $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness' => observeOperand($namespace, $condition),
     };
 }
 

@@ -8,15 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeOperandLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerAtomLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
 
-#[CoversClass(IntegerRangeOperandLowering::class)]
+#[CoversClass(IntegerAtomLowering::class)]
 #[Small]
-final class IntegerRangeOperandLoweringTest extends TestCase
+final class IntegerAtomLoweringTest extends TestCase
 {
     public function testLowerRecordsOnlyTheCastAsATypeFixedBeforeComparison(): void
     {
@@ -25,7 +25,7 @@ final class IntegerRangeOperandLoweringTest extends TestCase
         $parsed = $operation->statement->where;
         self::assertInstanceOf(Between::class, $parsed);
         $binding = new SourceBinding($operation->binding(), null);
-        $operands = new IntegerRangeOperandLowering();
+        $operands = new IntegerAtomLowering();
 
         [$low, $knownLow] = $operands->lower($parsed->low, $binding, true);
         [$high, $knownHigh] = $operands->lower($parsed->high, $binding, true);

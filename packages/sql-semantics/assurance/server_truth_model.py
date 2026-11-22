@@ -27,6 +27,10 @@ def predicate_value(condition, operand):
         _, symbol, left, right = condition
         lhs, rhs = operand(left), operand(right)
         return None if lhs is None or rhs is None else COMPARISONS[symbol](lhs, rhs)
+    if role == "int4-distinctness":
+        _, null_safe_equality, left, right = condition
+        same = operand(left) == operand(right)
+        return same if null_safe_equality else not same
     if role in ("int4-range", "signed-range"):
         negated = condition[1]
         symmetric = role == "int4-range" and condition[2]

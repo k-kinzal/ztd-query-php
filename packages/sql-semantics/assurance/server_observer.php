@@ -30,7 +30,7 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         // MySQL 5.x can retain earlier diagnostics when a constant statement succeeds.
         $pdo->query('SELECT 1 FROM ir_fixture.ir_evidence_accounts LIMIT 1')->closeCursor();
     }
-    $shadowRange = ($input['shadowInt4Range'] ?? false) === true;
+    $shadowRange = ($input['shadowBuiltinOperators'] ?? false) === true;
     try {
         if ($shadowRange) {
             $pdo->exec('SET LOCAL search_path = public, pg_catalog');

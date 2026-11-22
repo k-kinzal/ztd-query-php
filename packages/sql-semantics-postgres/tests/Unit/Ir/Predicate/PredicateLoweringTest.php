@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
@@ -43,5 +44,16 @@ final class PredicateLoweringTest extends TestCase
         self::assertInstanceOf(NullTest::class, $predicate);
         self::assertInstanceOf(LogicalPredicate::class, $predicate->operand);
         self::assertSame('NOT', $predicate->operand->operator->value);
+    }
+
+    public function testLeafReturnsTheClosedNullSafePredicate(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1 WHERE 1 IS DISTINCT FROM NULL');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertNotNull($operation->statement->where);
+
+        $test = (new PredicateLowering())->leaf($operation->statement->where, new SourceBinding($operation->binding(), null), true);
+        self::assertInstanceOf(IntegerDistinctness::class, $test);
+        self::assertFalse($test->negated);
     }
 }

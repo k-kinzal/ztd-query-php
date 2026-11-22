@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -64,7 +65,7 @@ final class CompoundShape
 
         return match (true) {
             $column instanceof NullLiteral => ResultKind::Unknown,
-            $column instanceof BooleanLiteral, $column instanceof IntegerRange => ResultKind::Boolean,
+            $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,
         };
     }

@@ -115,7 +115,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v20.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v21.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -265,6 +265,9 @@ The [searched int4 CASE record](postgres-int4-case-v1.json) exhausts the ordered
 
 
 The [int4 range record](postgres-int4-range-v1.json) checks all 2,216 ordered operand and placement identities on each PostgreSQL release. Its evaluator preserves UNKNOWN, measures bool result types and only admits TRUE in a filter. The fixture checks generated SQL under a search path with competing operators. Run `run_server_postgres_int4_range.py` and replay the receipts with `combine_server_postgres_int4_range_evidence.py`.
+
+
+The [null-safe int4 contract](postgres-int4-distinctness-v1.json) compares exact Boolean output, both polarities, NULL and both reference positions. It uses the same signed input and independent fixture as the range domain. The native comparator detects changes in the NULL rule, referenced operand, comparison polarity and equality identity. Run `run_server_postgres_int4_distinctness.py` and replay its two release records with `combine_server_postgres_int4_distinctness_evidence.py`.
 
 ## Native grouped projections
 

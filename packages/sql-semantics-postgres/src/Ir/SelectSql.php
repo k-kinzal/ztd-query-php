@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -61,7 +62,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
@@ -80,6 +81,7 @@ final class SelectSql
         return match (true) {
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
+            $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof NullLiteral => 'NULL',
@@ -111,6 +113,19 @@ final class SelectSql
     public function integerOrNull(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $value, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
         return $value instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.int4)' : $this->expression($value, $source, $offset, $qualify);
+    }
+
+    /**
+     * Emits the qualified equality and defines the NULL result for both operand positions.
+     */
+    public function integerDistinctness(IntegerDistinctness $test, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $left = $this->integerOrNull($test->left, $source, $offset, $qualify);
+        $right = $this->integerOrNull($test->right, $source, $offset, $qualify);
+        $equality = '(' . $left . ' OPERATOR(pg_catalog.=) ' . $right . ')';
+        $same = 'COALESCE(' . $equality . ', (' . $left . ' IS NULL AND ' . $right . ' IS NULL))';
+
+        return $test->negated ? $same : '(NOT ' . $same . ')';
     }
 
     /**
@@ -153,7 +168,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

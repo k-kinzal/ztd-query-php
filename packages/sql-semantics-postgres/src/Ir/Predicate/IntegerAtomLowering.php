@@ -23,7 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
-final class IntegerRangeOperandLowering
+final class IntegerAtomLowering
 {
     /**
      * Distinguishes an untyped NULL from a value already resolved as int4.
@@ -38,7 +38,7 @@ final class IntegerRangeOperandLowering
             return [new NullLiteral(), false];
         }
         $type = $binding->typeOf($expression);
-        Check::input($type instanceof Known && $type->descriptor === Builtin::Int4, 'A range operand must resolve to pg_catalog.int4 or NULL.');
+        Check::input($type instanceof Known && $type->descriptor === Builtin::Int4, 'An int4 comparison operand must resolve to pg_catalog.int4 or NULL.');
         if ($expression instanceof Cast && !$expression->type->setOf) {
             $inner = $expression->operand;
             while ($inner instanceof Grouped) {
@@ -49,7 +49,7 @@ final class IntegerRangeOperandLowering
             }
         }
         $value = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);
-        Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral, 'A range operand requires a pure signed integer or NULL.');
+        Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral, 'An int4 comparison operand requires a pure signed integer or NULL.');
 
         return [$value, true];
     }

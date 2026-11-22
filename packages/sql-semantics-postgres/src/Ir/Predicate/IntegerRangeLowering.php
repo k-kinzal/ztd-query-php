@@ -22,7 +22,7 @@ final class IntegerRangeLowering
     public function lower(Between $range, SourceBinding|JoinBinding $binding, bool $catalogFirst): IntegerRange
     {
         Check::input($catalogFirst, 'A range predicate must resolve to pg_catalog operators.');
-        $operands = new IntegerRangeOperandLowering();
+        $operands = new IntegerAtomLowering();
         [$subject, $knownSubject] = $operands->lower($range->operand, $binding, $catalogFirst);
         [$lower, $knownLower] = $operands->lower($range->low, $binding, $catalogFirst);
         [$upper, $knownUpper] = $operands->lower($range->high, $binding, $catalogFirst);

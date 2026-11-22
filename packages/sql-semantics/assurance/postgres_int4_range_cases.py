@@ -134,11 +134,11 @@ def positive_sql(tag):
 def negatives(tag):
     one, missing = integer(1), ["slot", 0]
     for triple in ((missing, one, one), (one, missing, one), (one, one, missing)):
-        yield item(tag, "projection", int4_range(*triple), "unit"), "A range slot must belong to the SELECT source."
+        yield item(tag, "projection", int4_range(*triple), "unit"), "An integer predicate slot must belong to the SELECT source."
     yield item(tag, "where", int4_range(one, one, ["slot", 0, 1]), "only"), "A predicate slot must belong to a visible input occurrence."
     for sql, message in (
-        ("SELECT (1 + 2) BETWEEN 1 AND 3 AS n", "A range operand requires a pure signed integer or NULL."),
-        ("SELECT 1.5 BETWEEN 1 AND 3 AS n", "A range operand must resolve to pg_catalog.int4 or NULL."),
+        ("SELECT (1 + 2) BETWEEN 1 AND 3 AS n", "An int4 comparison operand requires a pure signed integer or NULL."),
+        ("SELECT 1.5 BETWEEN 1 AND 3 AS n", "An int4 comparison operand must resolve to pg_catalog.int4 or NULL."),
         ("SELECT NULL BETWEEN NULL AND 3 AS n", "Each range comparison requires a known int4 operand."),
     ):
         yield analyzed("postgres", sql, version=tag), message
