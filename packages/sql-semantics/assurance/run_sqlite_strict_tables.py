@@ -1,9 +1,12 @@
 """Compare SQLite STRICT and ordinary table declarations against native storage."""
 
+import hashlib
+
 from run import Failure, Worker, compare, require
 from run_sqlite_create_table import quoted
 from run_sqlite_defaults import catalogs, semantic
 from sqlite_domain import RenderFault, check_render_faults, run_domain
+from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 from sqlite_strict_tables_cases import (
     EXISTING, FIXTURE, SAMPLES, declaration, expected, finite_id, finite_ids, negatives, requests,
@@ -11,6 +14,17 @@ from sqlite_strict_tables_cases import (
 
 CONTRACT_NAME = "sqlite-strict-tables-v1.json"
 CONTRACT = "7f4ad1594466bb3fad8c5ff79ea80ebb81ae976b0e07224ce05ca0b0d2d3da6c"
+
+
+class StrictDatabase(Database):
+    """Reads strictness through a trusted catalog query outside candidate execution."""
+
+    policy_digest = hashlib.sha256(f"{OBSERVER_CONTRACT}:{CONTRACT}".encode()).hexdigest()
+
+    def table_list(self, schema, name):
+        require(schema in ("main", "temp"), "sqlite-strict-invalid-catalog-schema", schema)
+        sql = f"PRAGMA {schema}.table_list({quoted(name)})"
+        return self._observe(sql, {})["rows"]
 
 
 def literal(value):
@@ -43,7 +57,7 @@ def observe(db, item, sql):
         creation = db.observe(sql, {}, capture_evaluation_error=True)
         require(not creation["readOnly"] and creation["changes"] == 0 and creation["evaluationError"] is None,
                 "sqlite-strict-create-failed", creation)
-        metadata = db.metadata("table_list", schema=schema, table=table)
+        metadata = db.table_list(schema, table)
         columns = db.metadata("table_xinfo", schema=schema, table=table)
         require(bool(metadata) and bool(columns), "sqlite-strict-target-missing", target)
         writes = {} if table == EXISTING else measure_writes(db, target, len(item["columns"]))
@@ -92,7 +106,7 @@ def required(domain):
     }
 
 
-def controls():
+def controls(db):
     strict = expected(declaration([["value", "ANY", False]], True))
     ordinary = expected(declaration([["value", "ANY", False]]))
     other = {
@@ -108,13 +122,24 @@ def controls():
             require(error.signal == "meaning-mismatch", "sqlite-strict-comparator-control", name)
         else:
             raise Failure("sqlite-strict-comparator-accepted-difference", name)
-    return {"expected": strict, "rejected": other}
+    catalog = db.table_list("main", EXISTING)
+    require(catalog == [[typed(value) for value in ("main", EXISTING, "table", 1, 0, 0)]],
+            "sqlite-strict-catalog-positive-control", catalog)
+    metadata_sql = f"PRAGMA main.table_list({quoted(EXISTING)})"
+    try:
+        db.observe(metadata_sql, {})
+    except ObserverAuthorizationError as denial:
+        require(denial.action == 19, "sqlite-strict-catalog-control-denial", denial.arguments)
+    else:
+        raise Failure("sqlite-strict-catalog-authorization-allowed-candidate")
+    return {"expected": strict, "rejected": other,
+            "observer": {"trustedCatalog": catalog, "candidateSql": metadata_sql, "deniedAction": 19}}
 
 
 def execute(args, specification, db, worker_factory=Worker):
     required_samples = ["omitted", *SAMPLES]
     require(required_samples == specification["finite"]["samples"], "sqlite-strict-sample-set", required_samples)
-    schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, controls)
+    schedule = ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, lambda: controls(db))
     return execute_schedule(args, specification, db, worker_factory, schedule, probe)
 
 
@@ -135,4 +160,4 @@ def check_faults(args, db, runner=check_render_faults):
 
 
 if __name__ == "__main__":
-    run_domain("strict-tables", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_faults)
+    run_domain("strict-tables", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_faults, StrictDatabase)

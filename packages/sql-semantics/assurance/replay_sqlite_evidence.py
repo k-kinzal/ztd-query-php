@@ -102,7 +102,8 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
 
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
     factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase, pattern: pattern.PatternDatabase,
-               group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase}.get(module, Database)
+               group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase,
+               strict_tables: strict_tables.StrictDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]
