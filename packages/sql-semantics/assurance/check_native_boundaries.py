@@ -17,9 +17,10 @@ class Fault(NamedTuple):
 
 
 def faults(engine):
+    delimiter = "`" if engine == "mysql" else '"'
+    quoting = f"'{delimiter}' . str_replace('{delimiter}', '{delimiter}{delimiter}', $this->value) . '{delimiter}'"
     identifier = [
-        Fault("discard-quoted-identifier-value", "Identifier::quoted",
-              "$this->value", "''"),
+        Fault("discard-quoted-identifier-value", "Identifier::quoted", quoting, f"'{delimiter}{delimiter}'"),
         Fault("admit-unchecked-identifier-encoding", "Identifier::__construct",
               " === 1,", " !== 2,"),
     ]
