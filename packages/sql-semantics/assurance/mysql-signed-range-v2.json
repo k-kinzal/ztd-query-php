@@ -1,0 +1,135 @@
+{
+  "revision": "SemanticsIR/mysql-signed-range-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profile": "MySQL 5.6.51 through 9.1.0 on the nine pinned native releases, with the registered empty SQL mode and utf8mb4 connection.",
+  "scope": "Inclusive signed integer BETWEEN and NOT BETWEEN, with pure scalar operands.",
+  "constructors": {
+    "Predicate/IntegerRange": {
+      "role": "One nullable signed range decision in a result or predicate position.",
+      "structure": "Three ordered signed INT column, RangeIntegerLiteral or NULL operands and a negation flag.",
+      "conditions": "At the enclosing scope check all three reference coordinates and count the complete operand tree. The analyzed domain comprises signed INT slots, signed integer literals and NULL. Direct literal spelling can retain the signed literal role's zero padding and negative zero.",
+      "meaning": "A nonnull subject within the inclusive bounds yields 1. Either comparison being false yields 0. A remaining unknown result yields NULL. NOT exchanges 0 and 1 and propagates NULL. Only true admits a row in WHERE. The tested value, lower and upper bounds remain in their ordered positions.",
+      "externalInterpretation": "Read the exact referenced signed INT slots with the established source identities and release. The profile uses only the built-in numeric comparison rules.",
+      "sql": "Emit parenthesized native BETWEEN or NOT BETWEEN with the three validated leaves in order. Emit literals in their checked numeric form, including the signed 64-bit boundaries.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/RangeIntegerLiteral": {
+      "role": "One signed 64-bit decimal operand in the range comparison role.",
+      "structure": "Canonical signed decimal value, effective zero padding and explicit negative-zero flag.",
+      "conditions": "Check the normalized decimal form and both signed 64-bit endpoints. Permit padding from zero through 32 and an explicit negative sign on the zero value.",
+      "meaning": "A numeric operand in the signed integer comparison domain, including magnitudes beyond int32.",
+      "externalInterpretation": "The signed numeric literal rules of the registered MySQL releases.",
+      "sql": "Emit a checked decimal literal with its sign and effective padding.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "Select",
+    "ResultColumn",
+    "ColumnReference",
+    "IntegerLiteral",
+    "NullLiteral",
+    "Predicate/NullTest",
+    "Predicate/LogicalPredicate"
+  ],
+  "observations": [
+    "Exact field positions, labels, native LONGLONG projection type, three-valued results, duplicate rows and TRUE-only filtering.",
+    "Signed adjacent integers beyond binary64 exactness and the signed minimum and maximum compare without narrowing. Keep warning observations for the supply of extremes and nullable bounds.",
+    "MySQL 5.6 and 5.7 require an explicit unit source for a filter without a physical table. Known false and unknown suppress the row on all releases."
+  ],
+  "finite": {
+    "sources": [
+      "unit",
+      "table"
+    ],
+    "placements": [
+      "projection",
+      "where"
+    ],
+    "negated": [
+      false,
+      true
+    ],
+    "literalValues": [
+      -2,
+      2,
+      null
+    ],
+    "slots": [
+      0,
+      1
+    ],
+    "identity": "Every ordered triple of available operands at both placements, with and without negation. Unit queries omit slots. Exhaust all 608 direct identities exactly once per release."
+  },
+  "exploration": {
+    "seeds": [
+      18127,
+      29723,
+      47123
+    ],
+    "casesPerSeed": 40,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Vary signed extrema, exact non-binary64 values, visibly different slots, NULL, repeated bounds and zero padding. Vary result width and labels. Generate nested logic, NULL tests and negation with row and unit filtering."
+  },
+  "negative": [
+    "Invisible subject slot",
+    "Invisible lower slot",
+    "Invisible upper slot",
+    "Invisible filter occurrence",
+    "Computed signed operand",
+    "Decimal operand",
+    "Unsigned literal beyond the admitted range in direct and analyzed construction",
+    "Direct malformed signed literal"
+  ],
+  "faults": [
+    "Exchange the bound positions",
+    "Drop the textual negation of the native predicate",
+    "Convert the signed operands to binary64",
+    "Replace a NULL result with zero"
+  ],
+  "open": [
+    "Decimal, unsigned, string, temporal, computed and mixed-domain range predicates.",
+    "Write, join, grouping and compound placements beyond the directly compared single-source projection and filter domain."
+  ],
+  "trust": [
+    "The pinned MySQL releases and native metadata observer.",
+    "Independent signed integer and three-valued interpretation.",
+    "The construction, binding, traversal and emission checks for the exact distributed PHP roles."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_between",
+    "https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/item_cmpfunc.cc",
+    "https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/item_cmpfunc.cc"
+  ],
+  "revisionReasons": [
+    "Resolve a separate signed 64-bit literal role for range operands. Preserve all finite identities, exploration budgets, observations, and faults, while checking the new literal's direct invalid data."
+  ]
+}
