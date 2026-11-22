@@ -22,12 +22,13 @@ final class SelectSql
     /**
      * Renders the result columns in order, then the optional source and filter.
      */
-    public function render(Select $select): string
+    public function render(Select $select, bool $localNames = false): string
     {
         $source = $select->source;
         $items = [];
-        foreach ($select->columns as $column) {
-            $items[] = $this->expression($column->expression, $source) . ' AS ' . $column->name->quoted();
+        foreach ($select->columns as $slot => $column) {
+            $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();
+            $items[] = $this->expression($column->expression, $source) . ' AS ' . $name;
         }
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {
@@ -38,6 +39,14 @@ final class SelectSql
         }
 
         return $sql . (new ResultSql())->render($select);
+    }
+
+    /**
+     * Names one slot inside a derived projection.
+     */
+    public function localColumn(int $slot): string
+    {
+        return '"__ztd_c' . $slot . '"';
     }
 
     /**

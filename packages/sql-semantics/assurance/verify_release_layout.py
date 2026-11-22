@@ -103,6 +103,7 @@ def probe(stage, evidence):
     pairs = {(item["platform"], item["role"]) for item in results}
     expected = {(platform, role) for platform in DIALECTS for role in COMMON}
     expected.add(("Sqlite", "Rows\\ValuesQuery"))
+    expected.update((platform, "Rows\\LocalProjection") for platform in ("MySql", "PostgreSql"))
     require(pairs == expected and len(results) == len(expected), "incomplete-installed-publication")
     for item in results:
         package = "sql-semantics-" + DIALECTS[item["platform"]]

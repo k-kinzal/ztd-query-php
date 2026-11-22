@@ -52,4 +52,9 @@ final class SelectSqlTest extends TestCase
     {
         self::assertSame('NULL', (new SelectSql())->predicate(new NullLiteral(), null));
     }
+    public function testLocalColumnNamesTheResultOrdinal(): void
+    {
+        self::assertSame('"__ztd_c3"', (new SelectSql())->localColumn(3));
+    }
+
 }

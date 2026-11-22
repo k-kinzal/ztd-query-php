@@ -24,4 +24,13 @@ final class IntegerLiteralTest extends TestCase
 
         new IntegerLiteral('2147483648');
     }
+
+    public function testToStringPreservesTheEffectiveFieldWidth(): void
+    {
+        self::assertSame(['-0002', '-000', '0004'], [
+            (new IntegerLiteral('-2', 3))->toString(),
+            (new IntegerLiteral('0', 2, true))->toString(),
+            (new IntegerLiteral('4', 3))->toString(),
+        ]);
+    }
 }

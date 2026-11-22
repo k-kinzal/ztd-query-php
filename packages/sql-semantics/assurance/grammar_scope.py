@@ -81,6 +81,7 @@ def inventory(root):
         if "sql-semantics-mysql/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
             parameters = ("param_marker", "simple_expr", "cast_type")
+            local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")
             create = ("create_table_stmt", "create_table", "column_def", "field_def", "column_attribute")
             drop = ("drop_table_stmt", "drop")
@@ -92,6 +93,7 @@ def inventory(root):
         elif "sql-semantics-postgres/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
             parameters = ("c_expr", "a_expr")
+            local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")
             create = ("CreateStmt", "ColumnDef", "ColConstraintElem")
             drop = ("DropStmt", "object_type_any_name")
@@ -101,7 +103,7 @@ def inventory(root):
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
             families = ("joined_table", "join_type", "join_qual", "where_clause")
         else:
-            families = selection = insert = update = transaction = drop = compound = create = parameters = ()
+            families = selection = insert = update = transaction = drop = compound = create = parameters = local = ()
         for rule in families:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
@@ -134,6 +136,23 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
                     related[alternative] = ("server-parameter-v1.json",)
+        local_signatures = {
+            "table_factor: select_derived_init get_select_lex select_derived2",
+            "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",
+            "table_factor: ( select_derived_union ) opt_table_alias",
+            "table_factor: derived_table",
+            "derived_table: table_subquery opt_table_alias opt_derived_column_list",
+            "table_ref: select_with_parens opt_alias_clause",
+            "with_clause: WITH with_list",
+            "with_clause: WITH cte_list",
+            "with_clause: WITH_LA cte_list",
+            "with_list: common_table_expr",
+            "cte_list: common_table_expr",
+        }
+        for rule in local:
+            for alternative in rules.get(rule, []):
+                if alternative in local_signatures or rule == "common_table_expr":
+                    related[alternative] = (*related.get(alternative, ()), "server-local-projection-v2.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

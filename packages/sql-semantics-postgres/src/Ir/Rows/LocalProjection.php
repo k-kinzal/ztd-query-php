@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
+
+use SqlSemantics\Platform\PostgreSql\Ir\Select;
+use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
+use SqlSemantics\SemanticsIR;
+
+/**
+ * A checked projection of a single independent query.
+ *
+ * @visibility public
+ * @example Projecting a slot from a derived query
+ *     $name = new \SqlSemantics\Platform\PostgreSql\Ir\Identifier('a');
+ *     $column = new \SqlSemantics\Platform\PostgreSql\Ir\ResultColumn(new \SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral('1'), $name);
+ *     $definition = new \SqlSemantics\Platform\PostgreSql\Ir\Select([$column]);
+ *     (new \SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection($definition, [new \SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalResultColumn(0, $name)]))->columns[0]->name->value // => 'a'
+ */
+final class LocalProjection implements SemanticsIR
+{
+    use Snapshot;
+
+    /**
+     * @var non-empty-list<LocalResultColumn> Outer fields in result order
+     */
+    public readonly array $columns;
+
+    /**
+     * Closes every slot reference over the corresponding independent definition.
+     *
+     * @param list<LocalResultColumn> $columns The outer result positions
+     */
+    public function __construct(public readonly Select $definition, array $columns)
+    {
+        Check::input($definition->orderBy === [] && $definition->limit === null, 'The local definition requires an unbounded projection without ordering.');
+        $checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);
+        Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');
+        foreach ($checked as $column) {
+            Check::input(isset($definition->columns[$column->slot]), 'The local slot must belong to the definition.');
+        }
+        $this->columns = $checked;
+    }
+
+    /**
+     * Identifies the shared native profile of the definition and its consumer.
+     */
+    public function profileId(): string
+    {
+        return $this->definition->profileId();
+    }
+
+    /**
+     * Emits the independent source and the explicit local slot reads.
+     */
+    public function toString(): string
+    {
+        $renderer = new SelectSql();
+        $alias = '"__ztd_local"';
+        $columns = [];
+        foreach ($this->columns as $column) {
+            $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $column->name->quoted();
+        }
+
+        return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $renderer->render($this->definition, true) . ') AS ' . $alias;
+    }
+}

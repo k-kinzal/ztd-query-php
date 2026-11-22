@@ -61,8 +61,9 @@ final class ExpressionLowering
             $number = $expression;
             Check::input($number->form === NumberForm::Integer, 'The numeric literal must have the signed integer role.');
             $digits = ltrim($number->text, '0');
+            $zeroes = min(strlen($number->text) - max(1, strlen($digits)), IntegerLiteral::MAX_LEADING_ZEROES);
 
-            return new IntegerLiteral($digits === '' ? '0' : (($negative ? '-' : '') . $digits));
+            return new IntegerLiteral($digits === '' ? '0' : (($negative ? '-' : '') . $digits), $zeroes, $negative && $digits === '');
         }
 
         return match (true) {

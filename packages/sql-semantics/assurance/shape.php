@@ -68,6 +68,11 @@ if ($dialect === 'postgres') {
     $methods['Identifier'] = ['__construct', 'quoted'];
     $properties['TableSource']['only'] = ['bool'];
 }
+if ($dialect === 'mysql') {
+    $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
+    $properties['IntegerLiteral']['negativeZero'] = ['bool'];
+    $methods['IntegerLiteral'][] = 'toString';
+}
 $internal = ['ExpressionLowering', 'SelectBounds', 'SelectLowering', 'SelectSql', 'SourceBinding'];
 $pureCollaborators = ['SelectBounds', 'SelectSql'];
 $roots = ['Select'];
@@ -168,7 +173,7 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     $internal[] = 'Binding\\ParameterLowering';
-    array_push($roots, 'Rows\\Compound', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
+    array_push($roots, 'Rows\\Compound', 'Rows\\LocalProjection', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -220,6 +225,11 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
+    $properties['Rows\\LocalProjection'] = ['definition' => ['Select'], 'columns' => ['array']];
+    $properties['Rows\\LocalResultColumn'] = ['slot' => ['int'], 'name' => ['Identifier']];
+    $methods['Rows\\LocalProjection'] = $methods['Select'];
+    $methods['Rows\\LocalResultColumn'] = ['__construct'];
+    array_push($internal, 'Rows\\LocalProjectionLowering', 'Rows\\LocalDefinition');
     $properties['Rows\\Compound'] = [
         'left' => ['Rows\\Compound', 'Select'], 'operator' => ['Rows\\CompoundOperator'],
         'all' => ['bool'], 'right' => ['Rows\\Compound', 'Select'],
@@ -279,7 +289,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','strpbrk','substr_count'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','strpbrk','substr_count','str_repeat'];
 
 function requireShape(bool $condition, string $detail): void
 {
@@ -346,6 +356,9 @@ try {
         : ['Begin', 'Commit', 'Rollback', 'SavepointCommand'];
     $transactions = implode(', ', array_map(static fn ($type) => '$statement instanceof \\' . $transactionNamespace . $type, $transactionTypes));
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null,'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && $statement->from instanceof \\' . $platform
+        . '\\Statement\\Relation\\DerivedTable => (new \\' . $prefix . 'Rows\\LocalProjectionLowering())->lower($operation),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
         . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
@@ -392,9 +405,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v8.json';
+    $storagePath = __DIR__ . '/value-storage-v9.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'dd02bacc87b0aa5358c8975bc94775c1f1611fc9f95a1e411b0e2ee21e63d805',
+        hash_file('sha256', $storagePath) === 'aaa26cb700ea53f89d2f3c7398a2dc4013565eaaef19c0db7847ef05d00fe707',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -402,7 +415,7 @@ try {
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
-    $boundaries = $dialect === 'sqlite' ? [] : nativeBoundaryContract();
+    $boundaries = $dialect === 'sqlite' ? [] : nativeBoundaryContract($dialect);
     $checkedBoundaries = [];
     foreach ($files as $entry) {
         if (!$entry->isFile() || $entry->getExtension() !== 'php') {
@@ -431,12 +444,20 @@ try {
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
         $observed[] = $short;
+        if ($dialect === 'mysql' && $short === 'IntegerLiteral') {
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $width = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPublic()
+                && $width->name->toString() === 'MAX_LEADING_ZEROES' && $width->value instanceof PhpParser\Node\Scalar\Int_
+                && $width->value->value === 32, 'The MySQL integer field width differs');
+        }
         if (in_array($short, $internal, true)) {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open IR collaborator $short");
             $interfaces = array_map(static fn ($interface) => $interface->toString(), $class->implements);
             requireShape($interfaces === [], "Unexpected collaborator interface in $short");
             $loweringRole = match ($short) {
                 'SelectLowering' => 'Select',
+                'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',

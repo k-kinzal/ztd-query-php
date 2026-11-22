@@ -9,12 +9,14 @@ use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinter\Standard;
 
-function nativeBoundaryContract(): array
+function nativeBoundaryContract(string $dialect): array
 {
-    $file = __DIR__ . '/native-boundaries-v5.json';
-    requireShape(hash_file('sha256', $file) === 'ac5db49c843a18e306567ec98542bd494892a269d02d648c136f39fa564727cf', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v6.json';
+    requireShape(hash_file('sha256', $file) === 'd657703677fe872e13ee88848de7097adceab732b48dce8b71389c2f72ecc18d', 'Native boundary contract differs from the recorded revision');
 
-    return json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
+    $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
+
+    return array_filter($rules, static fn (array $rule): bool => !isset($rule['dialects']) || in_array($dialect, $rule['dialects'], true));
 }
 
 function checkNativeBoundaries(

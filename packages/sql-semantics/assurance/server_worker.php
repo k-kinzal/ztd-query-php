@@ -37,7 +37,8 @@ function constructOperand(string $namespace, array $data): object
     $operator = $namespace . 'ArithmeticOperator';
 
     return match ($data[0]) {
-        'integer', 'boolean', 'parameter' => new $type($data[1]),
+        'integer' => new $type(...array_slice($data, 1)),
+        'boolean', 'parameter' => new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
@@ -50,6 +51,10 @@ function constructOperand(string $namespace, array $data): object
 
 function observeOperand(string $namespace, object $value): array
 {
+    if ($value instanceof SqlSemantics\Platform\MySql\Ir\IntegerLiteral
+        && ($value->leadingZeroes !== 0 || $value->negativeZero)) {
+        return ['integer', $value->decimal, $value->leadingZeroes, $value->negativeZero];
+    }
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
         $namespace . 'Binding\\Parameter' => ['parameter', $value->position],
@@ -154,6 +159,21 @@ function constructPredicate(string $namespace, ?array $test): ?object
         ),
         default => constructOperand($namespace, $test),
     };
+}
+
+function constructLocalProjection(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Rows\\LocalProjection';
+    $column = $namespace . 'Rows\\LocalResultColumn';
+    $name = $namespace . 'Identifier';
+    $local = $input['local'];
+    $columns = [];
+    foreach ($local['columns'] as [$slot, $label]) {
+        $columns[] = new $column($slot, new $name($label));
+    }
+
+    return new $statement(constructSelect($platform, $local['definition']), $columns);
 }
 
 function constructSetQuery(string $platform, array $input): SemanticsIR
@@ -353,6 +373,7 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['local']) => constructLocalProjection($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
@@ -364,6 +385,17 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Rows\\LocalProjection') {
+        return [
+            'status' => 'constructed',
+            'profile' => $value->profileId(),
+            'local' => [
+                'definition' => observeSetQuery($namespace, $value->definition, $input['dialect']),
+                'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
+            ],
+            'sql' => $value->toString(),
+        ];
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $observed = [

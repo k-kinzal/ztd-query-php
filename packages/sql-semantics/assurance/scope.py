@@ -10,6 +10,7 @@ TOOL = Path(__file__).resolve().parent
 ROOTS = {
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound",
+    "SqlSemantics\\Platform\\MySql\\Ir\\Rows\\LocalProjection",
     "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\CreateTable",
     "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Insert",
@@ -17,6 +18,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\MySql\\Ir\\Transaction\\Transaction",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Compound",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\LocalProjection",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\CreateTable",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Insert",
@@ -37,6 +39,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-local-projection-v2.json": "a94f6acffb9f27ae98445fceb61e2c03285d45a1d6d1f1b9c5dac389cfa9f934",
     "server-parameter-v1.json": "a25669b690cb52522a4fc0af7f35d6fee5cb3ac597dabd72383dee3f14d77052",
     "server-create-table-v1.json": "1b9ce10f3903792d68b307e0b92d0bf3008e3ff0af150bfc4b3d8438dde23b4f",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
@@ -63,7 +66,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "70420e5ebdc789b2855bf47a4c4fbf76253975e5c3d8aad710eb8af17d0d039a"
+PUBLICATION = "1c3dac8028bb7b644eeca6bab1c2c9bc5aea63119795e490466edfba009976c6"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -73,7 +76,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v10.json").read_bytes()
+    publication = (TOOL / "publication-v11.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -166,7 +169,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins, filters, row selection, typed compounds, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }
