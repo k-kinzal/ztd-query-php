@@ -372,7 +372,7 @@ jobs:
         run: |
           python3 trusted/packages/sql-semantics/assurance/combine_sqlite_evidence.py \
             --root "$RUNNER_TEMP" --candidate "$CANDIDATE" --candidate-root candidate \
-            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-index"
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/sqlite-index"
       - name: Exercise evidence and package verification controls
         if: ${{ !cancelled() }}
         env:
@@ -381,7 +381,7 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/assurance_controls.py \
             --root "$RUNNER_TEMP" --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-controls"
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/assurance-controls"
       - name: Verify native constructor boundaries and guard faults
         if: ${{ !cancelled() }}
         env:
@@ -390,14 +390,23 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/check_native_boundaries.py \
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-native-boundaries"
+            --out "$RUNNER_TEMP/native-boundaries"
       - name: Verify installed Composer package bytes and publication
         if: ${{ !cancelled() }}
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 trusted/packages/sql-semantics/assurance/verify_release_layout.py \
-            --candidate candidate --out "$RUNNER_TEMP/semantics-ir-release-layout"
+            --candidate candidate --out "$RUNNER_TEMP/release-layout"
+      - name: Compile the candidate evidence index
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          verifier="trusted/packages/sql-semantics/assurance"
+          python3 "$verifier/index_evidence.py" \
+            --candidate candidate --verifier "$verifier" \
+            --evidence-root "$RUNNER_TEMP" --out "$RUNNER_TEMP/review-bundle"
       - name: Preserve observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -434,7 +443,8 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-insert-returning-evidence/
-            ${{ runner.temp }}/semantics-ir-sqlite-index/
-            ${{ runner.temp }}/semantics-ir-controls/
-            ${{ runner.temp }}/semantics-ir-native-boundaries/
-            ${{ runner.temp }}/semantics-ir-release-layout/
+            ${{ runner.temp }}/sqlite-index/
+            ${{ runner.temp }}/assurance-controls/
+            ${{ runner.temp }}/native-boundaries/
+            ${{ runner.temp }}/release-layout/
+            ${{ runner.temp }}/review-bundle/
