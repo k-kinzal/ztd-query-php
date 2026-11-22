@@ -5,6 +5,42 @@ declare(strict_types=1);
 require '/stage/vendor/autoload.php';
 
 $roles = json_decode(file_get_contents('/roles.json'), true, 512, JSON_THROW_ON_ERROR);
+function observeEnum(string $name): array
+{
+    $reflection = new ReflectionEnum($name);
+    if ($reflection->getBackingType()?->getName() !== 'string') {
+        throw new RuntimeException('An installed IR enum has an unexpected backing type.');
+    }
+    $listed = $name::cases();
+    $cases = [];
+    foreach ($reflection->getCases() as $position => $declaration) {
+        $case = $declaration->getValue();
+        $direct = constant($name . '::' . $case->name);
+        $selected = $name::from($case->value);
+        $optional = $name::tryFrom($case->value);
+        $restored = unserialize(serialize($case), ['allowed_classes' => [$name]]);
+        if ($case !== $direct || $case !== ($listed[$position] ?? null) || $case !== $selected
+            || $case !== $optional || $case !== $restored) {
+            throw new RuntimeException('An installed enum publication route returned another value.');
+        }
+        $cases[] = [$case->name, $case->value];
+    }
+    if (count($listed) !== count($cases)) {
+        throw new RuntimeException('An installed enum exposes an extra case.');
+    }
+    $unknown = '__ztd_invalid_enum_value';
+    while ($name::tryFrom($unknown) !== null) {
+        $unknown .= '_';
+    }
+    try {
+        $name::from($unknown);
+    } catch (ValueError) {
+        return ['backing' => 'string', 'cases' => $cases, 'unknownValue' => $unknown, 'unknownRejected' => true];
+    }
+
+    throw new RuntimeException('An installed enum accepts an unknown backing value.');
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -16,6 +52,7 @@ foreach (array_keys($roles) as $name) {
         'name' => $role->getName(),
         'kind' => $role->isInterface() ? 'interface' : ($role->isEnum() ? 'enum' : 'class'),
         'final' => $role->isFinal(),
+        'enum' => $role->isEnum() ? observeEnum($name) : null,
         'path' => $path,
         'sha256' => hash_file('sha256', $path),
     ], JSON_THROW_ON_ERROR) . "\n";

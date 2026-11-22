@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v2.json"
-CONTRACT = "f47b620b5d45795ee5144a1321798c5db4828dc99e6aeee7f9e5c5ee734e6a17"
+CONTRACT_NAME = "release-layout-v3.json"
+CONTRACT = "10bccfdd9c8e8076889c78c84878092ca4438f88b4a46c04acf15e80e1f17c02"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -94,16 +94,28 @@ def stage_packages(candidate, stage, manifest, transform, constraint, version):
     return expected
 
 
-def runtime_catalog(specification, manifest):
+def runtime_catalog(specification, manifest, inventory):
     declared, _, _ = declared_constructors(DIALECTS)
     interfaces = specification["runtimeRoles"]["interfaces"]
     paths = {name: ("sql-semantics", path, True) for name, path in interfaces.items()}
     for name in declared:
         _, _, platform, *role = name.split("\\")
         paths[name] = ("sql-semantics-" + DIALECTS[platform], "src/" + "/".join(role) + ".php", False)
-    return {name: {"path": f"/stage/vendor/k-kinzal/{package}/{source}", "sha256": manifest[f"packages/{package}/{source}"],
-                   "interface": interface}
-            for name, (package, source, interface) in sorted(paths.items())}
+    classes = {name: value for package in inventory.values() for name, value in package["classes"].items()}
+    catalog = {}
+    for name, (package, source, interface) in sorted(paths.items()):
+        relative = f"packages/{package}/{source}"
+        declaration = classes[name]
+        require(declaration["file"] == relative and declaration["sha256"] == manifest[relative],
+                "installed-catalog-source-mismatch", name)
+        kind = {"Stmt_Interface": "interface", "Stmt_Class": "class", "Stmt_Enum": "enum"}[declaration["kind"]]
+        require(interface == (kind == "interface"), "installed-catalog-kind-mismatch", name)
+        enum = declaration["enum"]
+        if kind == "enum":
+            require(enum["backing"] == "string" and bool(enum["cases"]), "installed-catalog-enum-mismatch", name)
+        catalog[name] = {"path": f"/stage/vendor/k-kinzal/{package}/{source}", "sha256": manifest[relative],
+                         "kind": kind, "enum": enum}
+    return catalog
 
 
 def checked_roles(catalog, observations):
@@ -115,26 +127,40 @@ def checked_roles(catalog, observations):
         name = item["name"]
         expected = catalog[name]
         kind = item["kind"]
-        require((kind == "interface" if expected["interface"] else kind in ("class", "enum") and item["final"])
+        require(kind == expected["kind"] and (kind == "interface" or item["final"])
                 and item["path"] == expected["path"] and item["sha256"] == expected["sha256"],
                 "installed-role-source-mismatch", {"expected": expected, "observed": item})
-        measured[name] = {"kind": kind, "final": item["final"], "path": item["path"], "sha256": item["sha256"]}
+        enum = item["enum"]
+        if expected["enum"] is None:
+            require(enum is None, "installed-enum-route-mismatch", name)
+        else:
+            require(isinstance(enum, dict) and enum.get("backing") == expected["enum"]["backing"]
+                    and enum.get("cases") == expected["enum"]["cases"] and enum.get("unknownRejected") is True
+                    and isinstance(enum.get("unknownValue"), str)
+                    and enum["unknownValue"] not in {value for _, value in expected["enum"]["cases"]},
+                    "installed-enum-route-mismatch", {"role": name, "expected": expected["enum"], "observed": enum})
+        measured[name] = {key: item[key] for key in ("kind", "final", "path", "sha256", "enum")}
     return measured
 
 
 def role_controls(catalog, observations):
     first, second = observations[:2]
+    enum_index = next(index for index, item in enumerate(observations) if item["enum"] is not None)
+    enum = observations[enum_index]
+    lost_case = {**enum, "enum": {**enum["enum"], "cases": enum["enum"]["cases"][1:]}}
     trials = {
-        "omitted-role": (observations[1:], "incomplete-installed-roles"),
-        "wrong-source": ([{**first, "path": second["path"]}, *observations[1:]], "installed-role-source-mismatch"),
+        "omitted-role": (observations[1:], first, "incomplete-installed-roles"),
+        "wrong-source": ([{**first, "path": second["path"]}, *observations[1:]], first, "installed-role-source-mismatch"),
+        "omitted-enum-case": ([*observations[:enum_index], lost_case, *observations[enum_index + 1:]],
+                              enum, "installed-enum-route-mismatch"),
     }
     controls = {}
-    for name, (altered, expected) in trials.items():
+    for name, (altered, target, expected) in trials.items():
         try:
             checked_roles(catalog, altered)
         except Failure as error:
             require(error.signal == expected, "installed-role-control-wrong-signal", name)
-            controls[name] = {"role": first["name"], "signal": error.signal, "detail": error.detail}
+            controls[name] = {"role": target["name"], "signal": error.signal, "detail": error.detail}
         else:
             raise Failure("installed-role-control-accepted", name)
     return controls
@@ -201,14 +227,17 @@ def digest_fault(installed, expected, directory):
     raise Failure("release-layout-fault-missed", role)
 
 
-def verify(candidate, out):
+def verify(candidate, tool_autoload, out):
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "release-layout-contract-mismatch")
     specification = json.loads(path.read_bytes())
     sha, manifest = candidate_distribution(candidate)
     write_json(out / "distribution.json", manifest)
     transform = checked_recipe(candidate, specification, out)
-    catalog = runtime_catalog(specification, manifest)
+    inventory_path = out / "inventory.json"
+    inventory = json.loads(command(["php", str(TOOL / "inventory.php"), str(candidate), str(tool_autoload)],
+                                   out, inventory_path, XDEBUG_MODE="off"))
+    catalog = runtime_catalog(specification, manifest, inventory)
     catalog_path = out / "runtime-catalog.json"
     write_json(catalog_path, catalog)
     report = {}
@@ -243,21 +272,22 @@ def verify(candidate, out):
     write_json(out / "index.json", {"status": "provisional-staged-composer-layout", "candidate": sha,
                                    "distribution": digest(out / "distribution.json"), "contract": CONTRACT,
                                    "recipe": specification["recipe"], "workerImage": IMAGE,
-                                   "runtimeCatalog": digest(catalog_path),
-                                   "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php", "scope.py")},
+                                   "runtimeCatalog": digest(catalog_path), "inventory": digest(inventory_path),
+                                   "tools": {name: digest(TOOL / name) for name in ("verify_release_layout.py", "release_layout_probe.php", "inventory.php", "scope.py")},
                                    "composer": command(["composer", "--version"], out).strip(), "profiles": report})
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", type=Path, required=True)
+    parser.add_argument("--tool-autoload", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     candidate, out = args.candidate.resolve(), args.out.resolve()
     require(out != candidate and candidate not in out.parents, "evidence-directory-inside-candidate")
     out.mkdir(parents=True, exist_ok=False)
     try:
-        verify(candidate, out)
+        verify(candidate, args.tool_autoload.resolve(), out)
     except Exception as error:
         write_json(out / "run-failure.json", {"signal": error.signal if isinstance(error, Failure) else type(error).__name__,
                                              "failure": str(error)})

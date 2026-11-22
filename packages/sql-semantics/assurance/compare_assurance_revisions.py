@@ -20,17 +20,23 @@ SUPPORT_FILES = (
 SCOPE_FIELDS = ("scope", "approval", "profile", "profiles", "release", "mode", "open", "trust", "externalInterpretation",
                 "conditions", "invariants", "meaning", "sql", "observations", "observation", "finite",
                 "exploration", "negative", "faults", "dialectFaults", "allowedExclusions", "obligations", "formalProof",
-                "composition", "rules", "predecessorCheck", "changeFromV1", "initialExecutableDomain")
+                "composition", "rules", "predecessorCheck", "changeFromV1", "initialExecutableDomain",
+                "arrayRoutes", "unconstrainedReturns", "backedEnums", "single", "batch", "context", "surface", "forbidden",
+                "runtimeRoles", "enumRoutes", "recipe", "acceptance")
 
 
-def literal_registry(path, variable):
+def literal_value(path, variable):
     matches = [
         node.value for node in ast.parse(path.read_text()).body
         if isinstance(node, ast.Assign)
         and any(isinstance(target, ast.Name) and target.id == variable for target in node.targets)
     ]
     require(len(matches) == 1, "revision-registry-definition", {"file": path.name, "name": variable})
-    value = ast.literal_eval(matches[0])
+    return ast.literal_eval(matches[0])
+
+
+def literal_registry(path, variable):
+    value = literal_value(path, variable)
     require(type(value) is dict and value and all(type(key) is str and type(entry) is str for key, entry in value.items()),
             "revision-registry-shape", variable)
     return value
@@ -39,6 +45,15 @@ def literal_registry(path, variable):
 def declared_contracts(tools):
     registry = literal_registry(tools / "scope.py", "CONTRACTS")
     records = {}
+    for family, script, symbol in (
+        ("publication", "scope.py", "PUBLICATION"),
+        ("release-layout", "verify_release_layout.py", "CONTRACT"),
+    ):
+        fingerprint = literal_value(tools / script, symbol)
+        matches = [path for path in tools.glob(f"{family}-v*.json")
+                   if path.is_file() and not path.is_symlink() and digest(path) == fingerprint]
+        require(len(matches) == 1, "revision-audit-contract-selection", {"family": family, "sha256": fingerprint})
+        registry[matches[0].name] = fingerprint
     for name, claimed in sorted(registry.items()):
         path = tools / name
         require(Path(name).name == name and path.is_file() and not path.is_symlink(), "revision-missing-contract", name)

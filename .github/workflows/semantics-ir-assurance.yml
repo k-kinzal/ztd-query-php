@@ -127,7 +127,9 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 trusted/packages/sql-semantics/assurance/verify_release_layout.py \
-            --candidate candidate --out "$RUNNER_TEMP/release-layout"
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/release-layout"
       - name: Compile the candidate evidence index
         if: ${{ !cancelled() }}
         env:

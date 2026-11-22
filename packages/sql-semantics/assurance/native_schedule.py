@@ -5,7 +5,7 @@ NATIVE = {
     "projection": "server-projection-v1.json",
     "postgres_int4": "postgres-int4-operators-v1.json",
     "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
-    "postgres_builtin_casts": "postgres-builtin-casts-v1.json",
+    "postgres_builtin_casts": "postgres-builtin-casts-v2.json",
     "postgres_int4_distinctness": "postgres-int4-distinctness-v1.json",
     "postgres_int4_range": "postgres-int4-range-v1.json",
     "postgres_int4_case": "postgres-int4-case-v1.json",

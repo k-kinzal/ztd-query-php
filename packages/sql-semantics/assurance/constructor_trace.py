@@ -31,7 +31,7 @@ OBLIGATIONS = {
 }
 SCOPE_CHECKS = (
     "changedGrammarArtifacts", "unregisteredRootTypes", "missingRootTypes",
-    "unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes",
+    "unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes", "unexpectedUnconstrainedRoutes",
 )
 
 
@@ -176,6 +176,7 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
         _, _, dialect, _, role = name.split("\\", 4)
         constructors[name] = {
             "dialect": DIALECTS[dialect], "publicAndMagicSignatures": item["paths"],
+            "enum": item["enum"],
             "source": item["source"], "sourceDigest": item["sha256"],
             "publishers": [method for method, results in scope["publicationRoutes"].items() if name in results],
             "declarations": [role_declaration(records[row["record"]], row["record"], row["role"], supplements)

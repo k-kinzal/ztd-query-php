@@ -464,7 +464,7 @@ def main():
     grammar_scope = grammar_inventory(args.candidate)
     grammar_path = args.out / "grammar-scope.json"
     write_json(grammar_path, grammar_scope)
-    for field in ("unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes"):
+    for field in ("unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes", "unexpectedUnconstrainedRoutes"):
         require(not scope[field], "ir-constructor-ledger-mismatch", {"field": field, "detail": scope[field]})
     db = Database(args.sqlite_library)
     require(db.version == contract["initialExecutableDomain"]["profile"]["version"], "engine-version-mismatch", db.version)

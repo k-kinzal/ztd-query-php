@@ -332,13 +332,15 @@ class Evidence:
         return item
 
 
-def replay_staged(evidence, artifact, manifest):
+def replay_staged(evidence, artifact, manifest, inventory):
     if artifact is None:
         return None
     path, origin, report = artifact
     require(report["contract"] == RELEASE_LAYOUT == evidence.tools[RELEASE_LAYOUT_NAME], "bundle-release-layout-contract", origin)
     specification = json.loads((evidence.tool_root / RELEASE_LAYOUT_NAME).read_text())
-    expected = runtime_catalog(specification, manifest)
+    recorded, inventory_link = evidence.checked(path.parent / "inventory.json", report["inventory"])
+    require(json.loads(recorded.read_text()) == inventory, "bundle-installed-inventory-mismatch", inventory_link)
+    expected = runtime_catalog(specification, manifest, inventory)
     catalog, catalog_link = evidence.checked(path.parent / "runtime-catalog.json", report["runtimeCatalog"])
     require(json.loads(catalog.read_text()) == expected, "bundle-installed-role-catalog-mismatch", catalog_link)
     require(report["profiles"].keys() == specification["profiles"].keys(), "bundle-installed-profile-mismatch", origin)
@@ -399,7 +401,8 @@ def main():
     inventory_file, inventory = evidence.checked(f"{BASE}/inventory.json", base["inventoryArtifacts"]["inventory.json"])
     scope_file, scope = evidence.checked(f"{BASE}/scope.json", base["inventoryArtifacts"]["scope.json"])
     roles = json.loads(scope_file.read_text())
-    check_scope(json.loads(inventory_file.read_text()), roles, manifest)
+    classes = json.loads(inventory_file.read_text())
+    check_scope(classes, roles, manifest)
     faults = {}
     for receipt in base["faults"]:
         fault = receipt["id"]
@@ -423,7 +426,7 @@ def main():
         _, _, observed = preflight
         verify_sqlite_preflight(observed, checkout, manifest)
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
-    staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest)
+    staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest, classes)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
@@ -436,7 +439,7 @@ def main():
         "indexer": digest(Path(__file__)), "verifierFiles": evidence.tools,
         "inventory": inventory, "scope": scope, "grammar": grammar, "initial": original,
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
-        "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
+        "routes": roles["publicationRoutes"], "unconstrainedRoutes": roles["unconstrainedRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
         "nativeLaunch": native_launch, "sqliteLaunch": sqlite_launch,
         "sqliteFaultPreflight": preflight[1] if preflight else None,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,

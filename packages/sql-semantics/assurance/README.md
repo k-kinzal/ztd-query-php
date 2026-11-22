@@ -34,13 +34,13 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Verify an installed Composer layout
 
-Run `verify_release_layout.py --candidate /path/to/candidate --out release-evidence` from a separate copy of the reviewed assurance tools. Give it a clean full checkout of the candidate and the pinned PHP container image used by the assurance workflow. Bash, jq and Composer must be available on the controller.
+Run `verify_release_layout.py --candidate /path/to/candidate --tool-autoload /path/to/verifier/vendor/autoload.php --out release-evidence` from a separate copy of the reviewed assurance tools. Give it a clean full checkout of the candidate and the pinned PHP container image used by the assurance workflow. Bash, jq and Composer must be available on the controller.
 
 The verifier applies the pinned split workflow's Composer transformation and uses offline mirrored packages for the development version and an example tagged version. It compares the installed source and resource bytes to the measured commit, loads the dialect classes through installed autoload in a read-only container, and exercises each statement root. It then injects a change into an installed PHP file and verifies that the byte comparison rejects the change. The report identifies the staged artifacts, observed paths and installation profiles. It also loads every registered concrete role and each shared interface through Composer, records the reflected source path and source hash, and checks each role’s kind and finality. The review bundle replays the raw probe log and links each constructor to both installed profiles. Use the same comparison against the final published package artifacts at release.
 
 ## Publication contract
 
-The [publication contract](publication-v19.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v20.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -287,7 +287,7 @@ The [null-safe int4 contract](postgres-int4-distinctness-v1.json) compares exact
 
 The [Boolean truth test contract](postgres-boolean-tests-v1.json) covers the six tests over TRUE, FALSE and NULL. The exploration also uses composed and nested predicates, typed NULL, scoped references, filters and CASE. Run `run_server_postgres_boolean_tests.py` on both releases and replay them with `combine_server_postgres_boolean_tests_evidence.py`.
 
-The [PostgreSQL built-in cast contract](postgres-builtin-casts-v1.json) checks explicit int4 and Boolean conversions, NULL result types, scoped inputs, nested target roles and DISTINCT. Run `run_server_postgres_builtin_casts.py` on each registered PostgreSQL release. Replay the closed finite identities and native recordings with `combine_server_postgres_builtin_casts_evidence.py`.
+The [PostgreSQL built-in cast contract](postgres-builtin-casts-v2.json) checks explicit int4 and Boolean conversions, NULL result types, scoped inputs, nested target roles and DISTINCT. Run `run_server_postgres_builtin_casts.py` on each registered PostgreSQL release. Replay the closed finite identities and native recordings with `combine_server_postgres_builtin_casts_evidence.py`.
 
 ## Native grouped projections
 

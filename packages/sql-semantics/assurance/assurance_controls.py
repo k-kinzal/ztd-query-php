@@ -18,6 +18,7 @@ from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
 from run_sqlite_mutation_conflicts import FIXTURE as CONFLICT_FIXTURE, check_faults as conflict_faults
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
+from scope import public_scope
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
 
@@ -93,7 +94,71 @@ def scope_controls(args, distribution):
         failure = observe_rejection(lambda: check_scope(inventory, mutated, distribution), expected)
         records.append({"case": name, "removed": removed, "control": "passed", "original": digest(path),
                         "mutated": digest(target), "expected": expected, "signal": failure.signal})
+    records.append(generic_return_control(args, distribution))
     return records
+
+
+def generic_return_control(args, distribution):
+    name = "undeclared-generic-publications"
+    folder = args.out / name
+    package = "sql-semantics-postgres"
+    source = f"packages/{package}/src/Model/Contract/LanguageProfile.php"
+    for member in ("sql-semantics", "sql-semantics-mysql", package, "sql-semantics-sqlite"):
+        original = args.candidate / "packages" / member / "src"
+        target = folder / "packages" / member / "src"
+        target.parent.mkdir(parents=True)
+        if member == package:
+            shutil.copytree(original, target)
+        else:
+            target.symlink_to(original, target_is_directory=True)
+    original = args.candidate / source
+    target = folder / source
+    source_text = original.read_text()
+    boundary = source_text.rfind("\n}")
+    require(boundary > 0, "generic-publication-injection-anchor", source)
+    patch = r"""
+    public function unregisteredList(): ?array
+    {
+        return [(new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1')];
+    }
+
+    public function unregisteredIterator(): \Iterator
+    {
+        yield (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+    }
+
+    public function unregisteredValue()
+    {
+        return (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+    }
+
+    public function unregisteredMixed(): mixed
+    {
+        return (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('SELECT 1');
+    }
+"""
+    target.write_text(source_text[:boundary] + "\n" + patch + source_text[boundary:])
+    diff = folder / "injected.diff"
+    diff.write_text("".join(difflib.unified_diff(
+        source_text.splitlines(keepends=True), target.read_text().splitlines(keepends=True), str(original), str(target)
+    )))
+    measured = folder / "inventory.json"
+    with measured.open("w") as stream:
+        subprocess.run(["php", str(TOOL / "inventory.php"), str(folder), str(args.tool_autoload)],
+                       check=True, timeout=60, stdout=stream)
+    inventory = json.loads(measured.read_text())
+    manifest = {**distribution, source: digest(target)}
+    scope = public_scope(inventory, manifest)
+    expected = "trace-unregistered-role-or-path"
+    failure = observe_rejection(lambda: check_scope(inventory, scope, manifest), expected)
+    owner = "SqlSemantics\\Platform\\PostgreSql\\Model\\Contract\\LanguageProfile::"
+    intended = {owner + "unregisteredList": ["array", "null"], owner + "unregisteredIterator": ["iterator"],
+                owner + "unregisteredValue": ["untyped"], owner + "unregisteredMixed": ["mixed"]}
+    require(failure.detail["unexpectedUnconstrainedRoutes"] == intended,
+            "generic-publication-mutation-mismatch", failure.detail)
+    return {"case": name, "control": "passed", "path": source, "original": digest(original), "mutated": digest(target),
+            "injection": digest(diff), "inventory": digest(measured), "expected": expected, "signal": failure.signal,
+            "observed": intended}
 
 
 def declaration_control(args):

@@ -51,7 +51,7 @@ CONTRACTS = {
     "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
     "postgres-update-returning-v2.json": "f5f5710892ada09c1ca26c102c6af730e4b9fbd5c077d2af0cb0847d8e5b0efa",
     "postgres-delete-returning-v1.json": "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6",
-    "postgres-builtin-casts-v1.json": "ea0e1977637fa501ce82f7a39fa8153fb5147d52e2079e2cf54f2ec70fa5914e",
+    "postgres-builtin-casts-v2.json": "ea6139a89394b54599ab3329d9a7aee9251bde2201858ebe84f56fa2aa11a2d0",
     "postgres-boolean-tests-v1.json": "db8f3a718d0eec95297d153076a3af9d8b456e4d706ebd16f10238d3a7fda32d",
     "postgres-int4-distinctness-v1.json": "7389b300bd6ee4a8eb0094bdf5ba7bf9d8aaea4bde8ee87412e725e996278cdc",
     "postgres-int4-range-v1.json": "18d4b12d531f691206f92ba36a1bf7932421581d690c72be4829289999fcb676",
@@ -121,7 +121,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "537d55a39475629415650a79326c44af630522029f8ad009748ce3b9e4fe3eb2"
+PUBLICATION = "3f8e308b116fa76af2a9c12618d32c84be445e5470ad673ada3a5889d8b5576c"
 
 
 def declared_constructors(dialects):
@@ -151,7 +151,7 @@ def declared_constructors(dialects):
 
 
 def constructor_scope(by_class):
-    publication = (TOOL / "publication-v19.json").read_bytes()
+    publication = (TOOL / "publication-v20.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -178,28 +178,46 @@ def constructor_scope(by_class):
         owner, _, _ = route.partition("::")
         if owner not in definitions or not members or members[0] != "array" or set(members[1:]) - definitions.keys():
             raise ValueError(f"Array publication route has unregistered roles: {route}")
-    found = {}
+    generic = publication["unconstrainedReturns"]
+    generic_types = {kind.lower() for kind in generic["intrinsicKinds"]}
+    non_ir_routes = {platform + "\\" + role: expected for platform in prefixes
+                     for role, expected in generic["nonIrRoutes"].items()}
+    expected_unconstrained = {**batch_routes, **{route: ["array"] for route in array_routes}, **non_ir_routes}
+    found, unconstrained = {}, {}
     for clas, record in by_class.items():
         if record["visibility"] != "public":
             continue
         for method, returns in record["public_return_roles"].items():
-            matched = sorted(set(returns) & publication_types)
-            if matched:
-                found[f"{clas}::{method}"] = matched
-        for method in record["public_array_returns"]:
             route = f"{clas}::{method}"
-            if route in batch_routes or clas in definitions:
-                found[route] = array_routes.get(route, ["array"])
+            if set(returns) & publication_types:
+                found[route] = sorted(returns)
+            if method.lower() in generic["constructionLanguageMethods"] and returns == ["untyped"]:
+                continue
+            signature = sorted(member.lower() if member.lower() in generic_types else member for member in returns)
+            if generic_types.intersection(signature):
+                unconstrained[route] = signature
+                if route in array_routes and signature == ["array"]:
+                    found[route] = array_routes[route]
+                elif route not in non_ir_routes:
+                    found[route] = signature
+
     routes.update(batch_routes)
     routes.update(array_routes)
+    unexpected_unconstrained = {
+        name: unconstrained.get(name) for name in sorted(set(expected_unconstrained) | set(unconstrained))
+        if expected_unconstrained.get(name) != unconstrained.get(name)
+    }
     return {
         "registeredConstructors": {name: {
             "contracts": definitions[name], "supplementalEvidence": supplemental.get(name, []), "source": by_class[name]["file"],
             "sha256": by_class[name]["sha256"], "paths": by_class[name]["public_and_magic_signatures"],
+            "enum": by_class[name]["enum"],
         } for name in sorted(published & set(definitions))},
         "unregisteredConstructors": sorted(published - set(definitions)),
         "missingConstructors": sorted(set(definitions) - published),
         "publicationRoutes": found,
+        "unconstrainedRoutes": unconstrained,
+        "unexpectedUnconstrainedRoutes": unexpected_unconstrained,
         "publicationContract": PUBLICATION,
         "unexpectedPublicationRoutes": {
             name: found.get(name) for name in sorted(set(routes) | set(found)) if routes.get(name) != found.get(name)

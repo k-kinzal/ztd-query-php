@@ -2,15 +2,52 @@
 
 declare(strict_types=1);
 
-use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassLike;
+use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\Interface_;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
+
+function declaredReturnMembers(?Node $type, ClassLike $owner): array
+{
+    if ($type === null) {
+        return ['untyped'];
+    }
+    if ($type instanceof Node\NullableType) {
+        return ['null', ...declaredReturnMembers($type->type, $owner)];
+    }
+    if ($type instanceof Node\UnionType || $type instanceof Node\IntersectionType) {
+        return array_merge(...array_map(static fn ($member): array => declaredReturnMembers($member, $owner), $type->types));
+    }
+
+    return match ($type->toString()) {
+        'self', 'static' => [$owner->namespacedName->toString()],
+        'parent' => [$owner instanceof Class_ ? $owner->extends?->toString() ?? 'parent' : 'parent'],
+        default => [$type->toString()],
+    };
+}
+
+function declaredEnumCases(Enum_ $type, Standard $printer): array
+{
+    $cases = [];
+    foreach ($type->stmts as $statement) {
+        if ($statement instanceof Node\Stmt\EnumCase) {
+            $value = $statement->expr;
+            $cases[] = [$statement->name->toString(), match (true) {
+                $value instanceof Node\Scalar\String_, $value instanceof Node\Scalar\Int_ => $value->value,
+                $value === null => null,
+                default => $printer->prettyPrintExpr($value),
+            }];
+        }
+    }
+
+    return ['backing' => $type->scalarType?->toString(), 'cases' => $cases];
+}
 
 // The input may be a Git archive of the baseline. Candidate PHP is read as data.
 if ($argc !== 3) {
@@ -49,14 +86,11 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
             }
             $methods = [];
             $publicReturns = [];
-            $publicArrays = [];
             foreach ($type->getMethods() as $method) {
-                if ($method->isPublic() && $method->returnType !== null) {
-                    $names = $finder->findInstanceOf($method->returnType, FullyQualified::class);
-                    $publicReturns[$method->name->toString()] = array_map(static fn (FullyQualified $name) => $name->toString(), $names);
-                    if ($method->returnType instanceof PhpParser\Node\Identifier && $method->returnType->toString() === 'array') {
-                        $publicArrays[] = $method->name->toString();
-                    }
+                if ($method->isPublic()) {
+                    $members = declaredReturnMembers($method->returnType, $type);
+                    sort($members);
+                    $publicReturns[$method->name->toString()] = $members;
                 }
                 if ($method->isPublic() || str_starts_with($method->name->toString(), '__')) {
                     $signature = clone $method;
@@ -84,7 +118,7 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                 )),
                 'public_and_magic_signatures' => $methods,
                 'public_return_roles' => (object) $publicReturns,
-                'public_array_returns' => $publicArrays,
+                'enum' => $type instanceof Enum_ ? declaredEnumCases($type, $printer) : null,
             ];
         }
     }
