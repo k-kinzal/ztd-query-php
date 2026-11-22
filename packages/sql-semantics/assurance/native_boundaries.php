@@ -37,6 +37,11 @@ function nativeBoundaryContract(string $dialect): array
         $additional = json_decode(file_get_contents($choice), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite CASE cannot replace a fixed boundary');
         $rules += $additional;
+        $defaults = __DIR__ . '/sqlite-default-boundaries-v1.json';
+        requireShape(hash_file('sha256', $defaults) === 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a', 'SQLite default boundary contract differs from the recorded revision');
+        $additional = json_decode(file_get_contents($defaults), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite defaults cannot replace a fixed boundary');
+        $rules += $additional;
     } else {
         $extension = __DIR__ . '/native-insert-query-boundaries-v2.json';
         requireShape(
@@ -72,7 +77,9 @@ function checkNativeBoundaries(
     }
     if ($dialect === 'sqlite') {
         foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Literal\\BlobLiteral',
-            'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical'] as $name) {
+            'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
+            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Statement\\Schema\\Column\\NotNull',
+            'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
     } else {

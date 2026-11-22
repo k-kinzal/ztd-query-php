@@ -137,7 +137,12 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\DropTable'] = $methods['Select'];
     $properties['Schema\\CreateTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool']];
     $methods['Schema\\CreateTable'] = $methods['Select'];
-    $properties['Schema\\TableColumn'] = ['name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['bool']];
+    $properties['Schema\\TableColumn'] = [
+        'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['bool'],
+        'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
+            'Literal\\TextLiteral', 'NullLiteral', 'null'],
+    ];
+    array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\DefaultLowering');
     $methods['Schema\\TableColumn'] = ['__construct', 'toString'];
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Mutation\\Insert';

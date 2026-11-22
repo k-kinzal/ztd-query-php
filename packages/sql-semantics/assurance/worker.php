@@ -321,7 +321,12 @@ function directCreateTable(array $input): CreateTable
     return new CreateTable(
         new Identifier($input['schema']),
         new Identifier($input['table']),
-        array_map(static fn (array $slot): TableColumn => new TableColumn(new Identifier($slot[0]), DeclaredDatatypeName::from($slot[1]), $slot[2]), $input['columns']),
+        array_map(static fn (array $slot): TableColumn => new TableColumn(
+            new Identifier($slot[0]),
+            DeclaredDatatypeName::from($slot[1]),
+            $slot[2],
+            isset($slot[3]) ? operand($slot[3]) : null,
+        ), $input['columns']),
         $input['ifNotExists'],
     );
 }
@@ -335,7 +340,10 @@ function observeCreateTable(CreateTable $value): array
         'schema' => $value->schema->value,
         'table' => $value->table->value,
         'columns' => array_map(
-            static fn (TableColumn $column): array => [$column->name->value, $column->type->value, $column->notNull],
+            static fn (TableColumn $column): array => [
+                $column->name->value, $column->type->value, $column->notNull,
+                ...($column->default === null ? [] : [observeOperand($column->default)]),
+            ],
             $value->columns,
         ),
         'ifNotExists' => $value->ifNotExists,

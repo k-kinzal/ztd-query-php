@@ -10,6 +10,7 @@ import run_sqlite_case as choice
 import run_sqlite_compound as compound
 import run_sqlite_create_table as create
 import run_sqlite_delete as delete
+import run_sqlite_defaults as defaults
 import run_sqlite_drop_table as drop
 import run_sqlite_grouped as grouped
 import run_sqlite_insert as insert
@@ -30,6 +31,7 @@ from sqlite_engine import Database
 
 DOMAINS = {
     choice.CONTRACT_NAME: (choice, choice.FIXTURE),
+    defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
     "sqlite-relational-v1.json": (relational, relational.SCHEMA),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),

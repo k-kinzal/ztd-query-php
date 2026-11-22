@@ -5,10 +5,17 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A table column with its declared type and nullability constraint.
+ * A table column with its declared type, nullability and optional literal default.
  *
  * @visibility public
  * @example Declaring a column that refuses NULL
@@ -22,11 +29,14 @@ final class TableColumn
 
     /**
      * Defines the column within its parent table.
+     *
+     * @param BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default The explicit default when present
      */
     public function __construct(
         public readonly Identifier $name,
         public readonly DeclaredDatatypeName $type = DeclaredDatatypeName::Untyped,
         public readonly bool $notNull = false,
+        public readonly BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default = null,
     ) {
     }
 
@@ -37,6 +47,8 @@ final class TableColumn
     {
         $type = $this->type === DeclaredDatatypeName::Untyped ? '' : ' ' . $this->type->value;
 
-        return $this->name->quoted() . $type . ($this->notNull ? ' NOT NULL' : '');
+        $default = $this->default === null ? '' : ' DEFAULT ' . (new SelectSql())->expression($this->default, null);
+
+        return $this->name->quoted() . $type . ($this->notNull ? ' NOT NULL' : '') . $default;
     }
 }

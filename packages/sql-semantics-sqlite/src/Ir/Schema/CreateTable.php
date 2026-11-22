@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -42,11 +43,16 @@ final class CreateTable implements SemanticsIR
         $checked = Check::listOf($columns, TableColumn::class, 'A CREATE TABLE needs a nonempty ordered column list.', 1);
         Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');
         $seen = [];
+        $defaults = [];
         foreach ($checked as $column) {
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
+            if ($column->default !== null) {
+                $defaults[] = [$column->default, 0, 0];
+            }
         }
+        (new ExpressionScope())->check([], $defaults);
         $this->columns = $checked;
     }
 

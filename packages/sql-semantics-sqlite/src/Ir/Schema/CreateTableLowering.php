@@ -9,7 +9,6 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\NotNull;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 
 /**
@@ -30,20 +29,9 @@ final class CreateTableLowering
         $comparison = Comparison::AsciiInsensitive;
         Check::input(!$statement->temporary || $comparison->equal($schemaName, 'temp'), 'A temporary table must be in the temp schema.');
         $columns = [];
+        $lowering = new CreateColumnLowering();
         foreach ($statement->columns as $column) {
-            $constraint = $column->constraints[0] ?? null;
-            Check::input(
-                $column->constraints === [] || (count($column->constraints) === 1 && $constraint instanceof NotNull && $constraint->conflict === null),
-                'This column constraint has no complete CREATE TABLE representation.',
-            );
-            $type = DeclaredDatatypeName::Untyped;
-            if ($column->type !== null) {
-                Check::input(count($column->type->words) === 1 && $column->type->arguments === [], 'The declared type must be one supported type name.');
-                $spelling = strtr($column->type->text(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-                $type = DeclaredDatatypeName::tryFrom($spelling);
-                Check::input($type !== null && $type !== DeclaredDatatypeName::Untyped, 'This declared type has no complete CREATE TABLE representation.');
-            }
-            $columns[] = new TableColumn(new Identifier($column->name->value), $type, $constraint !== null);
+            $columns[] = $lowering->lower($column, $operation);
         }
         foreach ($operation->context->searchPath as $schema) {
             if ($comparison->equal($schemaName, $schema->value)) {

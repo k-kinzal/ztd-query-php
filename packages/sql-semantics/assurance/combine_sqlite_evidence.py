@@ -40,6 +40,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-grouped-evidence", "sqlite-grouped-v1.json", 80, 159, 9, 4),
     Domain("semantics-ir-sqlite-transaction-evidence", "sqlite-transaction-v1.json", 80, 213, 6, 3),
     Domain("semantics-ir-sqlite-case-evidence", "sqlite-case-v1.json", 400, 503, 5, 4),
+    Domain("semantics-ir-sqlite-defaults-evidence", "sqlite-defaults-v1.json", 280, 345, 5, 3),
 )
 
 
