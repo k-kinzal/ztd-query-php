@@ -52,7 +52,7 @@
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @example Selecting default row input for a resolved table</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *     $target = new \SqlSemantics\Platform\Sqlite\Ir\TableSource(new \SqlSemantics\Platform\Sqlite\Ir\Identifier(&#039;main&#039;), new \SqlSemantics\Platform\Sqlite\Ir\Identifier(&#039;items&#039;), []);</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     (new \SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert($target, new \SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow()))-&gt;toString() // =&gt; &#039;INSERT INTO &quot;main&quot;.&quot;items&quot; DEFAULT VALUES&#039;</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     (new \SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert($target, [], new \SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow()))-&gt;toString() // =&gt; &#039;INSERT INTO &quot;main&quot;.&quot;items&quot; DEFAULT VALUES&#039;</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DefaultRow</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>{</span>
