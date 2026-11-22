@@ -63,7 +63,7 @@ function updatedRows(PDO $pdo, string $engine, string $schema): array
     $placeholders = $engine === 'postgres' ? 'CAST(NULL AS INTEGER), CAST(NULL AS INTEGER), CAST(NULL AS VARCHAR(32))' : 'NULL, NULL, NULL';
     $select = [];
     foreach (['target', 'child', 'control'] as $kind) {
-        $select[] = "SELECT '" . $kind . "', id, delta, " . $placeholders . " FROM " . $scan . $prefix . $kind;
+        $select[] = "SELECT '" . $kind . "', id, delta, " . $placeholders . ' FROM ' . $scan . $prefix . $kind;
     }
     $select[] = "SELECT 'events', old_id, old_delta, new_id, new_delta, source FROM " . $prefix . 'events';
     foreach ($pdo->query(implode(' UNION ALL ', $select))->fetchAll(PDO::FETCH_NUM) as [$kind, $id, $delta, $newId, $newDelta, $source]) {

@@ -68,6 +68,12 @@ The proposal starts disabled and can be added alongside the existing merge gate.
 
 The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. Unimplemented SQL structures, uncovered server projection roles and modes, and effects outside the registered statement domains remain open under the wider contract.
 
+## Native construction boundary audit
+
+The [native boundary rules](native-boundaries-v1.json) fix selected PHP guard sequences for row slots, joined sources, INSERT and UPDATE. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+
+Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
+
 ## MySQL and PostgreSQL evidence
 
 [Server projection criteria](server-projection-v1.json) add independently checked native domains for MySQL and PostgreSQL. [The MySQL label refinement](server-projection-errata.md) records an observed server rule about output names. The mandatory fixture releases are MySQL 9.1.0 and PostgreSQL 17.2. Other grammar releases and language modes remain distinct engine-test obligations.

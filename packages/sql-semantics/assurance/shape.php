@@ -20,6 +20,7 @@ use PhpParser\PrettyPrinter\Standard;
 
 require $argv[1];
 require __DIR__ . '/value_storage.php';
+require __DIR__ . '/native_boundaries.php';
 $root = $argv[2];
 $overlay = $argv[3] ?? '';
 $dialect = $argv[4] ?? 'sqlite';
@@ -339,6 +340,8 @@ try {
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
+    $boundaries = $dialect === 'sqlite' ? [] : nativeBoundaryContract();
+    $checkedBoundaries = [];
     foreach ($files as $entry) {
         if (!$entry->isFile() || $entry->getExtension() !== 'php') {
             continue;
@@ -409,6 +412,16 @@ try {
             || $node instanceof Expr\MethodCall && !$node->name instanceof Identifier
             || $node instanceof Expr\PropertyFetch && !$node->name instanceof Identifier);
         requireShape($danger === null, "Unexpected dynamic PHP in $short");
+        array_push($checkedBoundaries, ...checkNativeBoundaries(
+            $class,
+            str_replace('\\', '/', $short),
+            $platform,
+            $dialect,
+            $boundaries,
+            $parser,
+            $traverser,
+            $printer,
+        ));
         if (!isset($properties[$short])) {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->getProperties() === [], "Stateful SELECT collaborator $short");
             continue;
@@ -464,7 +477,11 @@ try {
     sort($observed);
     ksort($listFields);
     requireShape(array_keys($listFields) === array_keys($storage), 'List storage catalogue is incomplete');
-    echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields]) . "\n";
+    sort($checkedBoundaries);
+    $expectedBoundaries = array_keys($boundaries);
+    sort($expectedBoundaries);
+    requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
+    echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);
