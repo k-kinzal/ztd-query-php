@@ -26,7 +26,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
             ] : []),
-            ['native-boundaries-v18.json', '6a047f86445270675ec3d1251cc1e5639008ce1f52cd34ec4d3b4735090bddf8'],
+            ['native-boundaries-v19.json', 'a9c771f34e571b9deeeef6b36a4b760b2be4e54b3a3c12843b44c495ef772faa'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };

@@ -71,7 +71,8 @@ final class PredicateLowering
         }
         if ($condition instanceof ParsedComparison) {
             $qualifiers = array_column($condition->operator->qualifiers, 'value');
-            Check::input(($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'], 'A predicate comparison must resolve to a pg_catalog operator.');
+            $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];
+            Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');
             $operator = IntegerOperator::tryFrom($condition->operator->name->value);
             Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
             $left = $expression->lower($condition->left, $binding, $catalogFirst);
