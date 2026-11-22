@@ -148,6 +148,7 @@ def inventory(root):
         raise ValueError("The required grammar inventory differs from the baseline revision")
     artifacts = {}
     for path, record in json.loads(requirements)["artifacts"].items():
+        postgres = "sql-semantics-postgres/resources/" in path
         rules = parse(root, path, record)
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
@@ -179,7 +180,7 @@ def inventory(root):
             insert = ("insert", "insert_stmt", "insert_values", "insert_from_constructor", "insert_from_constructor_opt", "values_list")
             selection = ("order_clause", "opt_order_clause", "limit_clause", "opt_limit_clause", "select_options", "select_option")
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
-        elif "sql-semantics-postgres/resources/" in path:
+        elif postgres:
             entry = "stmt"
             related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v1.json") for alternative in rules.get("DeleteStmt", [])}
             related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v1.json", "postgres-update-returning-v2.json",
@@ -251,7 +252,7 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
                     related[alternative] = (*related.get(alternative, ()), "server-parameter-v5.json")
-                    if dialect == "postgres":
+                    if postgres:
                         related[alternative] = (*related[alternative], "postgres-typed-parameters-v1.json")
         local_signatures = {
             "table_factor: select_derived_init get_select_lex select_derived2",
