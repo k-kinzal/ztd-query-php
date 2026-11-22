@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/sqlite-update-returning-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under the ordinary table, named return and UPDATE effect conditions of sqlite-delete-returning-v1.json and sqlite-update-v1.json.",
+  "constructors": {},
+  "existingRoles": ["Mutation/Update", "Mutation/UpdateAssignment", "Mutation/UpdateConflict", "Mutation/ReturnedColumn", "ColumnReference", "Identifier", "TableSource"],
+  "scope": "The optional ordered RETURNING fields of an admitted single-target UPDATE. Field references read the completed new row of the same target occurrence.",
+  "admission": [
+    "The ordered immutable output list contains only named ReturnedColumn values. Each field refers to an existing target slot. At most 2000 fields are allowed.",
+    "Analysis admits unqualified declared fields and an unqualified wildcard expanded to the target result fields in native column order. The field returned can differ from every read or written slot in the assignments and WHERE.",
+    "An empty list has no returned result. An available returned field can include a generated column. The target external interpretation includes the same declarations, affinity, constraints and triggers."
+  ],
+  "meaning": [
+    "Evaluate assignments and WHERE against the old row. Return the ordered projection of the successfully updated new row, including new generated values computed from the assignments.",
+    "Ignore rows skipped by filtering or conflict policy. The RETURNING projection observes the new row seen by the top-level statement, including duplicates, before subsequent AFTER trigger changes to that row.",
+    "Changes from the top-level update, AFTER trigger changes, output field layout and rollback are distinct observations."
+  ],
+  "sql": "Emit a trailing RETURNING after assignments and WHERE, read each target field by the unqualified quoted column name and emit its exact result label.",
+  "finite": {
+    "schemas": ["main", "temp"],
+    "policies": ["inherit", "abort", "ignore"],
+    "assignments": ["null target", "swap from old row", "replace right value"],
+    "layouts": ["absent", "computed", "right and left", "repeated name and reference"],
+    "identity": "All 72 tuples decoded from constructed values, each once."
+  },
+  "exploration": {
+    "seeds": [5843, 19373, 28183],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 155,
+    "allowedExclusions": [],
+    "structure": "Generate assignment and WHERE trees, varied valid and repeated return slots, repeated result names and varied column widths."
+  },
+  "negative": ["Wrong target occurrence", "Absent target slot", "Excess result width", "Qualified alias in RETURNING", "Aggregate in RETURNING"],
+  "faults": ["Omit RETURNING", "Redirect a returned field to another target slot", "Erase a distinguishing label", "Add the UPDATE alias to a returned field"],
+  "trust": ["Independent old-row assignment rules and new-row projection", "A fixture with an AFTER trigger that modifies the same row and records its received values", "Pinned SQLite engine, read and write observations"],
+  "open": ["General and qualified result expressions, UPDATE FROM, virtual tables, custom trigger behavior outside the checked fixture, extended conflict algorithms."],
+  "sources": ["https://sqlite.org/lang_returning.html", "https://sqlite.org/lang_update.html", "https://sqlite.org/lang_createtrigger.html"]
+}
