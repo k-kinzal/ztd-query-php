@@ -32,7 +32,7 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
     {
         return $condition === null ? null : $this->lowerValue($condition, $binding, $catalogFirst);
     }
@@ -40,7 +40,7 @@ final class PredicateLowering
     /**
      * Resolves a checked predicate or truth constant.
      */
-    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -88,11 +88,11 @@ final class PredicateLowering
     /**
      * Resolves a truth constant or a comparison with its own scalar role.
      */
-    public function leaf(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerDistinctness|IntegerRange|NullLiteral
+    public function leaf(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerDistinctness|IntegerRange|NullLiteral|TruthTest
     {
         $value = (new ExpressionLowering())->lower($condition, $binding, $catalogFirst);
         Check::input(
-            $value instanceof BooleanLiteral || $value instanceof NullLiteral || $value instanceof IntegerRange || $value instanceof IntegerDistinctness,
+            $value instanceof BooleanLiteral || $value instanceof NullLiteral || $value instanceof IntegerRange || $value instanceof IntegerDistinctness || $value instanceof TruthTest,
             'A filter needs a Boolean or signed integer comparison.',
         );
 

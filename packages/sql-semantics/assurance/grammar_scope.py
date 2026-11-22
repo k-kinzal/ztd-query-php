@@ -157,6 +157,9 @@ def inventory(root):
                             if " BETWEEN " in alternative})
             related.update({alternative: ("postgres-int4-distinctness-v1.json",) for rule in ("a_expr", "b_expr")
                             for alternative in rules[rule] if " DISTINCT FROM " in alternative})
+            related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]
+                            if any(alternative.endswith(" " + mode) for mode in ("TRUE_P", "FALSE_P", "UNKNOWN"))
+                            and " IS " in alternative})
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

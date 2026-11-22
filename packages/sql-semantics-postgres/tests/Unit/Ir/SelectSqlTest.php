@@ -17,6 +17,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
@@ -75,6 +77,13 @@ final class SelectSqlTest extends TestCase
     {
         self::assertSame('CAST(NULL AS pg_catalog.int4)', (new SelectSql())->integerOrNull(new NullLiteral(), null, 0, true));
     }
+    public function testTruthTestEmitsTheSelectedBuiltInPredicate(): void
+    {
+        $test = new TruthTest(TruthOperator::IsNotFalse, new NullLiteral());
+
+        self::assertSame('(NULL IS NOT FALSE)', (new SelectSql())->truthTest($test, null, 0, true));
+    }
+
     public function testIntegerDistinctnessCombinesQualifiedEqualityAndBothNullTests(): void
     {
         $value = new IntegerDistinctness(new IntegerLiteral('1'), new NullLiteral());

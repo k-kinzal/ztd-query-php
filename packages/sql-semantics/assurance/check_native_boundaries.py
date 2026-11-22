@@ -118,6 +118,11 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
+        shared.append(Fault("ignore-truth-test-child", "From/OccurrenceScope::checkTree",
+                            "$operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand]",
+                            "$operand instanceof NullTest => [$operand->operand], $operand instanceof TruthTest => []"))
+        shared.append(Fault("lower-foreign-cast-as-boolean-null", "Predicate/TruthTestLowering::lower",
+                            "$type->descriptor === Builtin::Bool", "$type->descriptor === Builtin::Int4"))
         shared.append(Fault("skip-distinctness-right-slot", "From/OccurrenceScope::checkTree",
                             "$operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness => [$operand->left, $operand->right]",
                             "$operand instanceof IntegerComparison => [$operand->left, $operand->right], $operand instanceof IntegerDistinctness => [$operand->left]"))
@@ -228,7 +233,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v21.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
+                       "native-boundaries-v22.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

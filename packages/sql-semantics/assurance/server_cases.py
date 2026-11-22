@@ -111,7 +111,7 @@ def evaluate(operand, row, dialect, release=None):
         return operand[1] if dialect == "postgres" else int(operand[1])
     if tag == "null":
         return None
-    if tag in ("int4-range", "signed-range", "int4-distinctness"):
+    if tag in ("int4-range", "signed-range", "int4-distinctness", "truth-test"):
         result = predicate_value(operand, lambda leaf: evaluate(leaf, row, dialect, release))
         return int(result) if dialect == "mysql" and result is not None else result
     if tag == "int4-case":
@@ -168,7 +168,7 @@ def expected(item):
     dialect, table = item["dialect"], item["source"]
     rows = [None] if table is None else ROWS + (CHILD_ROWS if dialect == "postgres" and not table["only"] else [])
     fields = item["columns"]
-    mapping = ({"boolean": "bool", "int4-range": "bool", "int4-distinctness": "bool", "null": "text"} if dialect == "postgres"
+    mapping = ({"boolean": "bool", "int4-range": "bool", "int4-distinctness": "bool", "truth-test": "bool", "null": "text"} if dialect == "postgres"
                else {"slot": "LONG", "null": "NULL"})
     default = "int4" if dialect == "postgres" else "LONGLONG"
     try:

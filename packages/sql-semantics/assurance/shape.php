@@ -77,12 +77,16 @@ if ($dialect === 'postgres') {
         'subject' => $rangeLeaves, 'lower' => $rangeLeaves, 'upper' => $rangeLeaves,
         'negated' => ['bool'], 'symmetric' => ['bool'],
     ];
+    $truthTest = 'Predicate\\TruthTest';
+    $truthOperator = 'Predicate\\TruthOperator';
+    $properties[$truthOperator] = $methods[$truthOperator] = [];
+    $methods[$truthTest] = ['__construct'];
     $distinctness = 'Predicate\\IntegerDistinctness';
     $properties[$distinctness] = ['left' => $rangeLeaves, 'right' => $rangeLeaves, 'negated' => ['bool']];
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
-    array_push($properties[$caseArm]['condition'], $range, $distinctness);
+    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest);
     sort($properties[$caseArm]['condition']);
-    array_push($properties['ResultColumn']['expression'], $range, $distinctness);
+    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest);
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -113,6 +117,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\IntegerRangeLowering';
     $internal[] = 'Predicate\\IntegerAtomLowering';
     $internal[] = 'Predicate\\IntegerDistinctnessLowering';
+    $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
     array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering');
@@ -320,9 +325,17 @@ if ($dialect !== 'sqlite') {
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $truthValues[] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        $truthValues[] = 'Predicate\\IntegerDistinctness';
+        array_push($truthValues, 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
     }
     sort($truthValues);
+    if ($dialect === 'postgres') {
+        $properties['Predicate\\TruthTest'] = ['operator' => ['Predicate\\TruthOperator'], 'operand' => $truthValues];
+        $enumCases['Predicate\\TruthOperator'] = [
+            'IsTrue' => 'IS TRUE', 'IsNotTrue' => 'IS NOT TRUE',
+            'IsFalse' => 'IS FALSE', 'IsNotFalse' => 'IS NOT FALSE',
+            'IsUnknown' => 'IS UNKNOWN', 'IsNotUnknown' => 'IS NOT UNKNOWN',
+        ];
+    }
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -374,7 +387,7 @@ if ($dialect !== 'sqlite') {
     ];
     $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerDistinctness';
+        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

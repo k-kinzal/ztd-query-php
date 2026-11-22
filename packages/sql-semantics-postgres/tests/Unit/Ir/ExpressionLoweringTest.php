@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
@@ -43,5 +44,17 @@ final class ExpressionLoweringTest extends TestCase
         $value = (new ExpressionLowering())->binary($target->expression, new SourceBinding($operation->binding(), null), false);
 
         self::assertSame(ArithmeticOperator::Divide, $value->operator);
+    }
+
+    public function testIntegerLiteralDecodesTheSignedMinimum(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT -2147483648');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $target = $operation->statement->targets[0];
+        self::assertInstanceOf(ExpressionTarget::class, $target);
+
+        $value = (new ExpressionLowering())->integerLiteral($target->expression, true);
+        self::assertInstanceOf(IntegerLiteral::class, $value);
+        self::assertSame('-2147483648', $value->decimal);
     }
 }

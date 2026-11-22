@@ -14,7 +14,7 @@ $ir = $semantics->analyze('SELECT id, accounts.id FROM public.accounts', $contex
 echo $ir->toString();
 ```
 
-The checked complete domain covers signed integer projections, including searched CASE expressions whose result resolves to int4. PostgreSQL integer `BETWEEN` retains each nullable operand, inclusivity, bound order, symmetry and negation. Signed int4 `IS DISTINCT FROM` and `IS NOT DISTINCT FROM` retain the ordered operands and produce a nonnull Boolean. Built-in integer operators are emitted with their pg_catalog identity. The profile includes the schema search path.
+The checked complete domain covers signed integer projections, including searched CASE expressions whose result resolves to int4. PostgreSQL integer `BETWEEN` retains each nullable operand, inclusivity, bound order, symmetry and negation. Signed int4 `IS DISTINCT FROM` and `IS NOT DISTINCT FROM` retain the ordered operands and produce a nonnull Boolean. Boolean predicates can record each of the six IS truth tests. Built-in integer operators are emitted with their pg_catalog identity. The profile includes the schema search path.
 
 Ordinary DELETE and UPDATE statements can return named int4 fields from the affected target rows. DELETE returns the deleted row. UPDATE assignments read the old row and RETURNING reads the new row. A complete value records repeated fields or labels by position and preserves the target's `ONLY` policy.
 

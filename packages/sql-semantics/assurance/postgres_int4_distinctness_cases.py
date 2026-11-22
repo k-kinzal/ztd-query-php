@@ -100,7 +100,7 @@ def originals(tag):
 def negatives(tag):
     one, missing = integer(1), ["slot", 0]
     for left, right in ((missing, one), (one, missing)):
-        yield item(tag, "projection", distinctness(left, right), "unit"), "An integer predicate slot must belong to the SELECT source."
+        yield item(tag, "projection", distinctness(left, right), "unit"), "A tested predicate slot must belong to the SELECT source."
     yield (item(tag, "where", distinctness(["slot", 0, 1], one), "only"),
            "A predicate slot must belong to a visible input occurrence.")
     yield analyzed("postgres", "SELECT (1 + 2) IS DISTINCT FROM 4 AS result", version=tag), "An int4 comparison operand requires a pure signed integer or NULL."

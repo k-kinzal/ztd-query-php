@@ -4,6 +4,7 @@
 NATIVE = {
     "projection": "server-projection-v1.json",
     "postgres_int4": "postgres-int4-operators-v1.json",
+    "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
     "postgres_int4_distinctness": "postgres-int4-distinctness-v1.json",
     "postgres_int4_range": "postgres-int4-range-v1.json",
     "postgres_int4_case": "postgres-int4-case-v1.json",
@@ -35,6 +36,7 @@ NATIVE = {
 SINGLE_ENGINE = {
     "postgres_int4": "postgres",
     "postgres_int4_case": "postgres",
+    "postgres_boolean_tests": "postgres",
     "postgres_int4_distinctness": "postgres",
     "postgres_int4_range": "postgres",
     "postgres_delete_returning": "postgres",

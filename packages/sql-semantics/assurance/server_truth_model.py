@@ -27,6 +27,13 @@ def predicate_value(condition, operand):
         _, symbol, left, right = condition
         lhs, rhs = operand(left), operand(right)
         return None if lhs is None or rhs is None else COMPARISONS[symbol](lhs, rhs)
+    if role == "truth-test":
+        _, mode, tested = condition
+        value = predicate_value(tested, operand)
+        required = {"TRUE": True, "FALSE": False, "UNKNOWN": None}
+        parts = mode.split()
+        matches = value is required[parts[-1]]
+        return not matches if len(parts) == 3 else matches
     if role == "int4-distinctness":
         _, null_safe_equality, left, right = condition
         same = operand(left) == operand(right)

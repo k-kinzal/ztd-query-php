@@ -11,6 +11,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTestLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
@@ -21,6 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between as ParsedRange;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\DistinctTest as ParsedDistinctness;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\BooleanTest as ParsedTruthTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral as ParsedBoolean;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
@@ -43,13 +46,35 @@ final class ExpressionLowering
         Scalar $expression,
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
-    ): Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|BooleanLiteral|NullLiteral {
+    ): Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
         if ($expression instanceof BinaryOperation) {
             return $this->binary($expression, $binding, $catalogFirst);
         }
+        $integer = $this->integerLiteral($expression, $catalogFirst);
+        if ($integer !== null) {
+            return $integer;
+        }
+
+        return match (true) {
+            $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),
+            $expression instanceof ParsedNull => new NullLiteral(),
+            $expression instanceof ParsedColumn => $binding->reference($expression),
+            default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
+        };
+    }
+
+    /**
+     * Decodes the checked spelling of an int4 literal and its signed endpoint.
+     */
+    public function integerLiteral(Scalar $expression, bool $catalogFirst): ?IntegerLiteral
+    {
         if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {
             return new IntegerLiteral($expression->value->digits);
         }
@@ -64,15 +89,7 @@ final class ExpressionLowering
             }
         }
 
-        return match (true) {
-            $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
-            $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
-            $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
-            $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),
-            $expression instanceof ParsedNull => new NullLiteral(),
-            $expression instanceof ParsedColumn => $binding->reference($expression),
-            default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
-        };
+        return null;
     }
 
     /**
@@ -91,8 +108,8 @@ final class ExpressionLowering
         $left = $this->lower($expression->left, $binding, $catalogFirst);
         $right = $this->lower($expression->right, $binding, $catalogFirst);
         $typeError = 'Arithmetic operands must have the int4 role.';
-        Check::input(!$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$left instanceof IntegerRange && !$left instanceof IntegerDistinctness, $typeError);
-        Check::input(!$right instanceof BooleanLiteral && !$right instanceof NullLiteral && !$right instanceof IntegerRange && !$right instanceof IntegerDistinctness, $typeError);
+        Check::input($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerCase || $left instanceof IntegerLiteral, $typeError);
+        Check::input($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerCase || $right instanceof IntegerLiteral, $typeError);
 
         return new Arithmetic($operator, $left, $right);
     }
