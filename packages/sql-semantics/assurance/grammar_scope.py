@@ -167,9 +167,10 @@ def inventory(root):
                 "simple_expr: CONVERT_SYM ( expr , cast_type )",
                 "cast_type: SIGNED_SYM", "cast_type: SIGNED_SYM INT_SYM",
             )})
+            unsigned = "UNSIGNED" if "/mysql-5." in path else "UNSIGNED_SYM"
             for alternative in (f"simple_expr: CAST_SYM ( expr AS cast_type{cast_suffix} )",
                                 "simple_expr: CONVERT_SYM ( expr , cast_type )",
-                                "cast_type: UNSIGNED_SYM", "cast_type: UNSIGNED_SYM INT_SYM"):
+                                f"cast_type: {unsigned}", f"cast_type: {unsigned} INT_SYM"):
                 related[alternative] = (*related.get(alternative, ()), "mysql-unsigned-casts-v3.json")
             create = ("create_table_stmt", "create_table", "column_def", "field_def", "column_attribute")
             drop = ("drop_table_stmt", "drop")
