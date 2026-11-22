@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
@@ -64,6 +65,7 @@ final class SelectBounds
                         $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
                         'Column slot must belong to the SELECT source.',
                     ),
+                    $expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => $positions[$expression->position] = true,
                     $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,

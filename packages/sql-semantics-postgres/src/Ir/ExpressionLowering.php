@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCastLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
@@ -17,6 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseExpression as ParsedCase;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
@@ -46,7 +49,7 @@ final class ExpressionLowering
         Scalar $expression,
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
-    ): Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral {
+    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -59,6 +62,7 @@ final class ExpressionLowering
         }
 
         return match (true) {
+            $expression instanceof Cast => (new BuiltinCastLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),

@@ -8,6 +8,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -65,6 +67,10 @@ final class CompoundShape
         $column = $query->columns[$position]->expression;
 
         return match (true) {
+            $column instanceof BuiltinCast => match ($column->target) {
+                CastDestination::Integer => ResultKind::Integer,
+                CastDestination::Boolean => ResultKind::Boolean,
+            },
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof TruthTest => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,

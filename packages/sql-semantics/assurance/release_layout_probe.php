@@ -75,17 +75,30 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
     }
 
+    if ($platform === 'PostgreSql') {
+        $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer WHERE (NOT NULL) IS NULL';
+    }
     foreach ($queries as $role => $sql) {
         $result = $semantics->analyze($sql, $context);
         if (!$result instanceof SqlSemantics\SemanticsIR || $result::class !== $namespace . 'Ir\\' . $role) {
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
+        $details = [];
+        if ($platform === 'PostgreSql' && $role === 'Select') {
+            $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';
+            $value = $result->columns[0]->expression;
+            if ($value::class !== $castRole || $value->operand::class !== $castRole
+                || $value->operand->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost an explicit scalar conversion.');
+            }
+            $details['nestedCast'] = [$value->target->value, $value->operand->target->value, $value->operand->operand->decimal];
+        }
         if ($role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();
-            if (count($columns) !== 1 || $columns[0]::class !== $namespace . 'Ir\\Schema\\Query\\CreatedColumn'
-                || $columns[0]->name->value !== 'result' || $columns[0]->type->value !== 'INT') {
+            if (count($columns) !== 1 || $columns[0]::class !== $namespace . 'Ir\\Schema\\Query\\CreatedColumn') {
                 throw new RuntimeException('The installed CREATE TABLE AS derives an unexpected column.');
             }
+            $details['column'] = [$columns[0]->name->value, $columns[0]->type->value];
         }
         echo json_encode([
             'probe' => 'publication',
@@ -95,6 +108,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             'path' => (new ReflectionClass($result))->getFileName(),
             'input' => $sql,
             'sql' => $result->toString(),
+            ...$details,
         ], JSON_THROW_ON_ERROR) . "\n";
     }
 }

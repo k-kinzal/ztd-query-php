@@ -51,6 +51,7 @@ CONTRACTS = {
     "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
     "postgres-update-returning-v2.json": "f5f5710892ada09c1ca26c102c6af730e4b9fbd5c077d2af0cb0847d8e5b0efa",
     "postgres-delete-returning-v1.json": "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6",
+    "postgres-builtin-casts-v1.json": "ea0e1977637fa501ce82f7a39fa8153fb5147d52e2079e2cf54f2ec70fa5914e",
     "postgres-boolean-tests-v1.json": "db8f3a718d0eec95297d153076a3af9d8b456e4d706ebd16f10238d3a7fda32d",
     "postgres-int4-distinctness-v1.json": "7389b300bd6ee4a8eb0094bdf5ba7bf9d8aaea4bde8ee87412e725e996278cdc",
     "postgres-int4-range-v1.json": "18d4b12d531f691206f92ba36a1bf7932421581d690c72be4829289999fcb676",

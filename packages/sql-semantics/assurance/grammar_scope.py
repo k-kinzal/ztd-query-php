@@ -180,6 +180,10 @@ def inventory(root):
             related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]
                             if any(alternative.endswith(" " + mode) for mode in ("TRUE_P", "FALSE_P", "UNKNOWN"))
                             and " IS " in alternative})
+            related.update({alternative: ("postgres-builtin-casts-v1.json",) for alternative in (
+                "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
+                "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
+            )})
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

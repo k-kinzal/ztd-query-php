@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
@@ -63,7 +64,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
@@ -81,6 +82,7 @@ final class SelectSql
 
         return match (true) {
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
+            $expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
             $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),

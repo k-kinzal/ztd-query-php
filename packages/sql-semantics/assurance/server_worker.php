@@ -34,12 +34,14 @@ function constructOperand(string $namespace, array $data): object
         'slot' => 'ColumnReference',
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
+        'builtin-cast' => 'Expression\\BuiltinCast',
         'int4-range', 'signed-range' => 'Predicate\\IntegerRange',
         'int4-distinctness' => 'Predicate\\IntegerDistinctness',
         'truth-test' => 'Predicate\\TruthTest',
         'range-integer' => 'Predicate\\RangeIntegerLiteral',
     };
     $operator = $namespace . 'ArithmeticOperator';
+    $castTarget = $namespace . 'Expression\\CastDestination';
     $truth = $namespace . 'Predicate\\TruthOperator';
 
     return match ($data[0]) {
@@ -52,6 +54,7 @@ function constructOperand(string $namespace, array $data): object
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
         ),
+        'builtin-cast' => new $type($castTarget::from($data[1]), constructOperand($namespace, $data[2])),
         'truth-test' => new $type($truth::from($data[1]), constructPredicate($namespace, $data[2])),
         'int4-distinctness' => new $type(
             constructOperand($namespace, $data[2]),
@@ -96,6 +99,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
+        $namespace . 'Expression\\BuiltinCast' => ['builtin-cast', $value->target->value, observeOperand($namespace, $value->operand)],
         $namespace . 'Predicate\\TruthTest' => ['truth-test', $value->operator->value, observePredicate($namespace, $value->operand)],
         $namespace . 'Predicate\\IntegerDistinctness' => ['int4-distinctness', $value->negated,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],

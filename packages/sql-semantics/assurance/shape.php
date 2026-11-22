@@ -65,6 +65,15 @@ if ($dialect !== 'sqlite') {
     $properties['Select']['release'] = [$platform . '\\Model\\Contract\\GrammarRelease'];
 }
 if ($dialect === 'postgres') {
+    $builtinCast = 'Expression\\BuiltinCast';
+    $castDestination = 'Expression\\CastDestination';
+    $properties[$builtinCast] = [
+        'target' => [$castDestination],
+        'operand' => ['BooleanLiteral', 'ColumnReference', $builtinCast, 'IntegerLiteral', 'NullLiteral'],
+    ];
+    $properties[$castDestination] = $methods[$castDestination] = [];
+    $methods[$builtinCast] = ['__construct'];
+    $properties['ResultColumn']['expression'][] = $builtinCast;
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -114,6 +123,7 @@ $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
 $internal = ['ExpressionLowering', $selectBounds, 'SelectLowering', 'SelectSql', 'SourceBinding'];
 if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
+    $internal[] = 'Expression\\BuiltinCastLowering';
     $internal[] = 'Predicate\\IntegerRangeLowering';
     $internal[] = 'Predicate\\IntegerAtomLowering';
     $internal[] = 'Predicate\\IntegerDistinctnessLowering';
@@ -129,6 +139,7 @@ if ($dialect === 'mysql') {
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {
+    $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'Boolean' => 'bool'];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
 if ($dialect === 'sqlite') {

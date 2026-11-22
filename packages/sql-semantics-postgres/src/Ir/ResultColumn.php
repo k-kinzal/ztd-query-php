@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
@@ -27,7 +28,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter $expression,
+        public readonly Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter $expression,
         public readonly Identifier $name,
     ) {
     }
