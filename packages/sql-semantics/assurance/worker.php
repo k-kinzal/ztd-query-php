@@ -65,6 +65,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropView;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
@@ -288,7 +289,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|RenameTable|RenameColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|RenameTable|RenameColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -687,6 +688,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'rename' => directRename($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
+            ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
             ($input['operation'] ?? null) === 'create-as' => directCreateTableAs($input),
             ($input['operation'] ?? null) === 'transaction' => directTransaction($input),
@@ -716,6 +718,17 @@ function runCase(array $input): array
     }
     if ($value instanceof Update) {
         return observeUpdate($value);
+    }
+    if ($value instanceof DropView) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'drop-view',
+            'profile' => $value->profileId(),
+            'schema' => $value->schema->value,
+            'view' => $value->view->value,
+            'ifExists' => $value->ifExists,
+            'sql' => $value->toString(),
+        ];
     }
     if ($value instanceof DropTable) {
         return [

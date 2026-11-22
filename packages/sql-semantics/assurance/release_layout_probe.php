@@ -69,7 +69,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
 
     $table = $schema . '.accounts';
-    $context = $semantics->context(["CREATE TABLE $table (id INTEGER)"]);
+    $declarations = ["CREATE TABLE $table (id INTEGER)"];
+    if ($platform === 'Sqlite') {
+        $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
+    }
+    $context = $semantics->context($declarations);
     $reference = $semantics->analyze("SELECT id, accounts.id FROM $table", $context);
     $occurrence = $platform === 'Sqlite' ? 'source' : 'occurrence';
     foreach ($reference->columns as $column) {
@@ -98,6 +102,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $queries['Aggregation\\GroupedSelect'] = "SELECT id, COUNT(*) AS entries FROM $table GROUP BY id";
     if ($platform === 'Sqlite') {
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
+        $queries['Schema\\DropView'] = 'DROP VIEW IF EXISTS main.removable';
         $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE CONSTRAINT "ref id" CHECK(id), UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
         $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
@@ -214,6 +219,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 }
                 $details['generatedColumns'][] = [$slot, $rule->mode->value, $rule->expression->slot];
             }
+        }
+        if ($role === 'Schema\\DropView') {
+            $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];
         }
         if ($role === 'Schema\\Alter\\RenameTable') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];

@@ -156,6 +156,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-insert-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-drop-table-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-drop-view-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-create-table-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-create-as-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-scalars-evidence/

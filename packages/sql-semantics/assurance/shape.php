@@ -274,6 +274,8 @@ if ($dialect === 'sqlite') {
     $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $properties['Schema\\DropTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'ifExists' => ['bool']];
     $methods['Schema\\DropTable'] = $methods['Select'];
+    $properties['Schema\\DropView'] = ['schema' => ['Identifier'], 'view' => ['Identifier'], 'ifExists' => ['bool']];
+    $methods['Schema\\DropView'] = $methods['Select'];
     $properties['Schema\\CreateTable'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'],
         'strict' => ['bool'], 'withoutRowid' => ['bool'], 'keys' => ['array'], 'checks' => ['array'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
@@ -361,6 +363,7 @@ if ($dialect === 'sqlite') {
     $enumCases['Rows\\CompoundOperator'] = ['UnionAll' => 'UNION ALL', 'Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $roots[] = 'Rows\\ValuesQuery';
     $roots[] = 'Schema\\DropTable';
+    $roots[] = 'Schema\\DropView';
     $roots[] = 'Schema\\CreateTable';
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
@@ -386,7 +389,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropTableLowering', 'Schema\\CreateTableLowering');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropRelationLowering', 'Schema\\CreateTableLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
     $roots[] = 'Transaction\\Transaction';
     $internal[] = 'Transaction\\TransactionLowering';
@@ -695,7 +698,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertSelect, $statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertDefaults => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
-            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropRelationLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
@@ -857,6 +860,14 @@ try {
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Schema\\DropRelationLowering') {
+                $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
+                requireShape(
+                    count($methodsByName) === 1 && $methodsByName[0]->name->toString() === 'lower'
+                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\DropView'],
+                    'Unexpected SQLite relation removal publication shape'
+                );
+            }
             if ($loweringRole !== null) {
                 $publicMethods = array_values(array_map(
                     static fn ($method) => $method->name->toString(),

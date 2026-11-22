@@ -16,6 +16,7 @@ import run_sqlite_delete as delete
 import run_sqlite_delete_returning as returning
 import run_sqlite_defaults as defaults
 import run_sqlite_drop_table as drop
+import run_sqlite_drop_view as drop_view
 import run_sqlite_group_filter as group_filter
 import run_sqlite_grouped as grouped
 import run_sqlite_insert as insert
@@ -77,6 +78,7 @@ DOMAINS = {
     "sqlite-update-v1.json": (update, update.FIXTURE),
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
+    drop_view.CONTRACT_NAME: (drop_view, drop_view.FIXTURE),
     "sqlite-create-table-v3.json": (create, create.FIXTURE),
     create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
@@ -126,7 +128,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                named_checks: named_checks.NamedCheckDatabase, folded_checks: folded_checks.FoldedCheckDatabase,
                implicit_checks: implicit_checks.ImplicitCheckDatabase,
                generated_columns: generated_columns.GeneratedColumnDatabase,
-               rename: rename.RenameDatabase}.get(module, Database)
+               rename: rename.RenameDatabase, drop_view: drop_view.DropViewDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

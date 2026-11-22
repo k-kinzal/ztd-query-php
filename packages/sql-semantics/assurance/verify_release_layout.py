@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v11.json"
-CONTRACT = "cfdc89e14fe286ee3a59053ddbd76527f4e4ca4d02a8222ae4a7454161741dfe"
+CONTRACT_NAME = "release-layout-v12.json"
+CONTRACT = "e64b414040f7a048482eaa45f7c79c666138bc121b23f41be483b453fc604bc7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -188,6 +188,7 @@ def verify_probe(raw, catalog):
     expected.update((platform, "Aggregation\\GroupedSelect") for platform in DIALECTS)
     expected.update((platform, "Mutation\\InsertQuery") for platform in ("MySql", "PostgreSql"))
     expected.add(("Sqlite", "Rows\\ValuesQuery"))
+    expected.add(("Sqlite", "Schema\\DropView"))
     expected.add(("Sqlite", "Schema\\Query\\CreateTableAs"))
     expected.add(("Sqlite", "Schema\\Alter\\RenameTable"))
     expected.add(("Sqlite", "Schema\\Alter\\RenameColumn"))
@@ -218,6 +219,8 @@ def verify_probe(raw, catalog):
                     "installed-generated-column-mismatch", item)
             require(item.get("implicitCheck") == ["a", "==", False, " ", "", 1, "=", 0],
                     "installed-implicit-check-presentation-mismatch", item)
+        if item["role"] == "Schema\\DropView":
+            require(item.get("dropView") == ["main", "removable", True], "installed-view-removal-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameTable":
             require(item.get("rename") == ["main", "accounts", "renamed"], "installed-table-rename-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameColumn":

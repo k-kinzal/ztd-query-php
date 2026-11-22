@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v22.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v23.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -559,6 +559,8 @@ The folded CHECK suite compares native preparation slot count and first marker s
 The [implicit comparison CHECK contract](sqlite-implicit-checks-v1.json) observes the failure labels of unnamed comparisons before and after native column rename. Its witness varies declaration slot, referenced slot, comparison aliases, quoting, whitespace and zero prefixes. The native keyword catalogue checks the allowed bare identifier spellings. Run `run_sqlite_implicit_checks.py` with the standard SQLite fixture options.
 
 The [SQLite generated-column contract](sqlite-generated-columns-v2.json) checks resolved dependencies across VIRTUAL and STORED columns, forward references and multiple parents. An independent evaluator predicts typed rows from ordinary inserts and updates, and the native fixture measures storage metadata, writable columns, constraint effects, marker registrations, rename and dependent-drop rejection. The fixture reads durable schema and rows after recovering a fixed inner savepoint. SQLite 3.47.2 can temporarily omit generated columns in a connection-local projection immediately after a failed DROP with a double-quoted reference. The raw diagnostic and the recovered state remain observable evidence. Run `run_sqlite_generated_columns.py` with the same SQLite fixture options.
+
+The [SQLite DROP VIEW contract](sqlite-drop-view-v1.json) verifies the selected view's schema under temp/main collisions. It compares owned-trigger removal, catalog membership, dependent reads and unchanged underlying data. The finite identities use both the actual IR and the verified catalog before removal. Run `run_sqlite_drop_view.py` with the same fixture arguments.
 
 The rename fixture checks qualified table identity, both column rewrite modes, stored rows, schema dependencies and rollback. It obtains native keyword spellings from the SQLite C API and measures all legal and rejected bare destinations. The view and trigger cases retain native refusal outcomes and distinguish a changed index role under temp-table shadowing. Run `run_sqlite_rename.py` with the same SQLite fixture options. [SQLite rename contract](sqlite-rename-v4.json)
 
