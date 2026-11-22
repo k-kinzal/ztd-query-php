@@ -1,0 +1,118 @@
+{
+  "revision": "SemanticsIR/mysql-signed-casts-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profile": "All nine registered native MySQL releases from 5.6.51 through 9.1.0, using the fixed default lexical settings and native markers.",
+  "scope": "Explicit scalar CAST and CONVERT to SIGNED in checked MySQL SELECT projections. The input role is a signed integer, Boolean, NULL, resolved signed column, integer arithmetic or another signed cast.",
+  "constructors": {
+    "Expression/SignedCast": {
+      "role": "An explicit conversion to MySQL signed BIGINT of one checked scalar.",
+      "structure": "One owned operand from the closed signed, Boolean and NULL roles. The concrete constructor fixes the signed 64-bit target.",
+      "conditions": "The projection checks input occurrence membership, maximum expression depth and total expanded nodes. The analyzed target must be SIGNED or SIGNED INT without ARRAY. The analyzed input must have a supported scalar role. Existing projected signed marker handling fixes parameter positions separately.",
+      "meaning": "Translate Boolean to zero or one, retain signed integer values and propagate NULL as a signed BIGINT result. Evaluate the operand with its native signed arithmetic behavior. Each nested cast has its own conversion boundary.",
+      "externalInterpretation": "Resolve each external slot to its recorded signed column in the same table occurrence and release profile.",
+      "sql": "Emit CAST with the operand and AS SIGNED. Preserve the original observable result name from binding, including names based on an unaliased CAST or CONVERT. Emit an equivalent signed result when the parsed spelling uses an optional INT.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "existingRoles": [
+    "ResultColumn",
+    "Select",
+    "Arithmetic",
+    "Rows/Compound",
+    "Binding/Parameter"
+  ],
+  "observations": [
+    "Compare ordered names and signed BIGINT metadata, NULL, signed values and preserved row multiplicity. DISTINCT makes repetition unobservable only when selected.",
+    "Compare direct structure and independently evaluate the emitted SQL, including nested conversions and a nonconstant source with different input slots.",
+    "For analyzed SQL check the native original and emitted field names for CAST, CONVERT and SIGNED INT spellings. Preserve existing typed parameter and compound behavior."
+  ],
+  "finite": {
+    "sources": [
+      "unit",
+      "table"
+    ],
+    "operands": [
+      -2147483648,
+      -1,
+      0,
+      1,
+      2147483647,
+      false,
+      true,
+      null
+    ],
+    "referenceSlots": [
+      0,
+      1
+    ],
+    "arithmetic": [
+      "+",
+      "-",
+      "*"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "identity": "Witness all 32 scalar source, operand and DISTINCT combinations, all 4 reference slot and DISTINCT combinations, and all 12 source, arithmetic operation and DISTINCT combinations per release. Derive identities independently from the actual constructed value."
+  },
+  "exploration": {
+    "seeds": [
+      19913,
+      41413,
+      73361
+    ],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": [],
+    "structure": "Generate variable projection width, duplicate and quoted result names, references to distinct nullable slots, cast chains to depth six, signed arithmetic children, distinct or repeated results and boundary integer values."
+  },
+  "negative": [
+    "An invisible input occurrence inside a direct signed cast",
+    "A missing source slot inside a direct signed cast",
+    "A deeply nested chain beyond the projection envelope",
+    "An analyzed DECIMAL conversion without a checked target role",
+    "An analyzed string conversion outside the admitted source roles"
+  ],
+  "faults": [
+    "Replace SIGNED with UNSIGNED for a negative value",
+    "Return an untyped NULL instead of the signed conversion",
+    "Substitute a different visible source slot",
+    "Replace an arithmetic child with a constant"
+  ],
+  "open": [
+    "Unsigned casts and mixed signedness set operators, string coercion, casts as predicate and arithmetic inputs, and casts outside the recorded projection profiles."
+  ],
+  "trust": [
+    "The fixed native MySQL cast and metadata contract",
+    "An independent value and input-slot evaluator and a signedness-aware native observer",
+    "Exact PHP value, scope, type composition and lowering checks"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast",
+    "https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_convert",
+    "https://www.php.net/manual/en/mysqli-result.fetch-fields.php"
+  ],
+  "extends": "mysql-signed-casts-v1.json",
+  "admissionChange": {
+    "formerlyRejected": "SELECT CAST(1 AS UNSIGNED)",
+    "positiveContract": "mysql-unsigned-casts-v1.json",
+    "oldBoundary": "A deeply nested chain beyond the projection envelope",
+    "change": "The unsigned projection has an explicit checked result kind. The signed finite identities, budgets, comparisons and meaningful faults are retained."
+  }
+}
