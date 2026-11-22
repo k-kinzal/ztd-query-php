@@ -19,6 +19,7 @@ import run_sqlite_grouped as grouped
 import run_sqlite_insert as insert
 import run_sqlite_insert_input as insert_input
 import run_sqlite_insert_query as insert_query
+import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
 import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
@@ -47,6 +48,7 @@ DOMAINS = {
     recursive.CONTRACT_NAME: (recursive, recursive.FIXTURE),
     "sqlite-insert-v1.json": (insert, insert.FIXTURE),
     insert_query.CONTRACT_NAME: (insert_query, insert_query.FIXTURE),
+    insert_returning.CONTRACT_NAME: (insert_returning, insert_returning.FIXTURE),
     insert_input.CONTRACT_NAME: (insert_input, insert_input.FIXTURE),
     "sqlite-update-v1.json": (update, update.FIXTURE),
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),

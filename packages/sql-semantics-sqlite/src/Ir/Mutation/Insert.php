@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -26,18 +27,39 @@ final class Insert implements SemanticsIR
     use Snapshot;
 
     /**
+     * @var list<ColumnReference> Target slots in input position order
+     */
+    public readonly array $writes;
+
+    /**
+     * @var list<ReturnedColumn> The ordered fields of the directly inserted rows
+     */
+    public readonly array $returning;
+
+    /**
      * Pairs each value position with a writable target column.
      *
-     * @param TableSource $target The absolute target and its ordered writable column slots
+     * @param TableSource $target The absolute target with its consumed field slots
+     * @param list<ColumnReference> $writes The writable slots in the order supplied by the input
      * @param ValuesQuery|Select|DefaultRow $input The checked source of rows
      * @param InsertConflict $conflict The statement's conflict policy
+     * @param list<ReturnedColumn> $returning The ordered fields read from each inserted row
      */
     public function __construct(
         public readonly TableSource $target,
+        array $writes,
         public readonly ValuesQuery|Select|DefaultRow $input,
         public readonly InsertConflict $conflict = InsertConflict::Inherit,
+        array $returning = [],
     ) {
-        $width = count($target->columns);
+        $supplied = Check::listOf($writes, ColumnReference::class, 'An INSERT needs checked write slots.');
+        $seen = [];
+        foreach ($supplied as $column) {
+            Check::input($column->source === 0 && isset($target->columns[$column->slot]), 'A supplied slot must belong to the INSERT target.');
+            Check::input(!isset($seen[$column->slot]), 'An INSERT cannot repeat a supplied column.');
+            $seen[$column->slot] = true;
+        }
+        $width = count($supplied);
         if ($input instanceof DefaultRow) {
             Check::input($width === 0, 'A DEFAULT VALUES input has no supplied target columns.');
         } else {
@@ -48,6 +70,13 @@ final class Insert implements SemanticsIR
             $inputWidth = $input instanceof ValuesQuery ? count($input->rows[0]->values) : count($input->columns);
             Check::input($width === $inputWidth, 'INSERT target width must match the input rows.');
         }
+        $output = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');
+        Check::input(count($output) <= 2000, 'An INSERT can return at most 2000 fields in this profile.');
+        foreach ($output as $column) {
+            Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the INSERT target.');
+        }
+        $this->writes = $supplied;
+        $this->returning = $output;
     }
 
     /**
@@ -66,8 +95,8 @@ final class Insert implements SemanticsIR
     public function toString(): string
     {
         $columns = [];
-        foreach ($this->target->columns as $column) {
-            $columns[] = $column->quoted();
+        foreach ($this->writes as $column) {
+            $columns[] = $this->target->columns[$column->slot]->quoted();
         }
         $conflict = match ($this->conflict) {
             InsertConflict::Inherit => '',
@@ -76,10 +105,11 @@ final class Insert implements SemanticsIR
         };
 
         $head = 'INSERT' . $conflict . ' INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted();
+        $returning = (new ReturningSql())->clause($this->target, $this->returning);
         if ($this->input instanceof DefaultRow) {
-            return $head . ' DEFAULT VALUES';
+            return $head . ' DEFAULT VALUES' . $returning;
         }
 
-        return $head . ' (' . implode(', ', $columns) . ') ' . $this->input->toString();
+        return $head . ' (' . implode(', ', $columns) . ') ' . $this->input->toString() . $returning;
     }
 }

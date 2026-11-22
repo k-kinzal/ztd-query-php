@@ -129,7 +129,10 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Mutation\\ReturningLowering', 'Mutation\\ReturningSql');
     $pureCollaborators[] = 'Mutation\\ReturningSql';
     $methods['Mutation\\Delete'] = $methods['Select'];
-    $properties['Mutation\\Insert'] = ['target' => ['TableSource'], 'input' => ['Mutation\\DefaultRow', 'Rows\\ValuesQuery', 'Select'], 'conflict' => ['Mutation\\InsertConflict']];
+    $properties['Mutation\\Insert'] = [
+        'target' => ['TableSource'], 'writes' => ['array'], 'input' => ['Mutation\\DefaultRow', 'Rows\\ValuesQuery', 'Select'],
+        'conflict' => ['Mutation\\InsertConflict'], 'returning' => ['array'],
+    ];
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\DefaultRow'] = $methods['Mutation\\DefaultRow'] = [];
     $internal[] = 'Mutation\\InsertTargetLowering';
@@ -498,9 +501,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v15.json';
+    $storagePath = __DIR__ . '/value-storage-v16.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '2257399a3563f8aab17f3773af11cf7733b14c7a291b3803da544837202c76f0',
+        hash_file('sha256', $storagePath) === '954a0f714bb57f75872f9c85cac7ddc53908d1860fe6baf83a8f155f0995e475',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

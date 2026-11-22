@@ -115,6 +115,24 @@ final class SourceBinding
     }
 
     /**
+     * Allocates the writable fields of an implicit target list in declaration order.
+     * @return list<ColumnReference>
+     */
+    public function implicitWrites(): array
+    {
+        [$occurrence, $table] = $this->tables[0] ?? [null, null];
+        Check::invariant($occurrence instanceof MutationTarget && $table !== null, 'An implicit write requires a bound mutation target.');
+        $writes = [];
+        foreach ($table->columns as $column) {
+            if (!$column->generated) {
+                $writes[] = new ColumnReference($this->slot(0, $column));
+            }
+        }
+
+        return $writes;
+    }
+
+    /**
      * Records a resolved column once within its occurrence.
      */
     public function slot(int $occurrence, Column $column): int

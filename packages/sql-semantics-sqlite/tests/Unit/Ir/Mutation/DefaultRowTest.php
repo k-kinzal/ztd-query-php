@@ -20,7 +20,7 @@ final class DefaultRowTest extends TestCase
     public function testDefaultInputSuppliesOneRowWithoutAColumnList(): void
     {
         $target = new TableSource(new Identifier('temp'), new Identifier('entries'), []);
-        $value = new Insert($target, new DefaultRow(), InsertConflict::Ignore);
+        $value = new Insert($target, [], new DefaultRow(), InsertConflict::Ignore);
 
         self::assertSame('INSERT OR IGNORE INTO "temp"."entries" DEFAULT VALUES', $value->toString());
     }

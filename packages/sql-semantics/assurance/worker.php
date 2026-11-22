@@ -284,7 +284,16 @@ function directInsert(array $input): Insert
         default => directValues($input),
     };
 
-    return new Insert(source($input['target']), $rows, InsertConflict::from($input['conflict']));
+    $target = source($input['target']);
+    $writes = $input['writes'] ?? array_map(static fn (int $slot): array => ['column', $slot], array_keys($target->columns));
+
+    return new Insert(
+        $target,
+        array_map(operand(...), $writes),
+        $rows,
+        InsertConflict::from($input['conflict']),
+        directReturning($input['returning'] ?? []),
+    );
 }
 
 function observeInsert(Insert $value): array
@@ -294,6 +303,8 @@ function observeInsert(Insert $value): array
         'operation' => 'insert',
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
+        'writes' => array_map(observeOperand(...), $value->writes),
+        'returning' => observeReturning($value->returning),
         'conflict' => $value->conflict->value,
         ...match (true) {
             $value->input instanceof DefaultRow => ['defaults' => true],

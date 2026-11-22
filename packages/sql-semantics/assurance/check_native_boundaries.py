@@ -22,8 +22,11 @@ def faults(engine):
                   "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("skip-group-row-filter-scope", "Aggregation/GroupedSelect::__construct", "$predicates[] = [$where, 0, count($widths)];", ""),
             Fault("ignore-having-count-slot", "Aggregation/GroupedSelect::__construct", "$argument === null || isset($source->columns[$argument->slot]),", "true,"),
+            Fault("ignore-inserted-output-slot", "Mutation/Insert::__construct",
+                  "isset($target->columns[$column->reference->slot]),", "true,"),
+            Fault("allow-duplicate-insert-slot", "Mutation/Insert::__construct", "!isset($seen[$column->slot]),", "true,"),
             Fault("allow-supplied-default-slot", "Mutation/Insert::__construct", "$width === 0,", "true,"),
-            Fault("allow-generated-implicit-target", "Mutation/InsertTargetLowering::lower", "if (!$column->generated)", "if (true)"),
+            Fault("allow-generated-implicit-target", "SourceBinding::implicitWrites", "if (!$column->generated)", "if (true)"),
             Fault("skip-cast-operand-scope", "Predicate/ExpressionScope::check",
                   "$pending[] = [$expression->operand, $height + 1, $visibility],", "null,"),
             Fault("allow-invalid-returning-slot", "Mutation/Delete::__construct", "isset($target->columns[$column->reference->slot]),", "true,"),
@@ -160,7 +163,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v3.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-input-boundaries-v2.json", "sqlite-scalar-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v15.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v3.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

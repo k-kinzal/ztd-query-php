@@ -118,7 +118,7 @@ def execute(args, specification, db, worker_factory=Worker):
 
 def check_faults(args, db):
     renderer = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
-    lower = "sql-semantics-sqlite/src/Ir/Mutation/InsertTargetLowering.php"
+    lower = "sql-semantics-sqlite/src/Ir/SourceBinding.php"
     sql, input = list(analyzed())[3]
     statement = {"sql": sql, "declarations": DECLARATIONS, "bindings": {}, "expected": input}
     return check_render_faults(args, db, [

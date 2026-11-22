@@ -78,20 +78,24 @@ def integer_affinity(value):
     return value
 
 
-def expected(request, omitted_id=None):
+def expected(request, omitted_id=None, after_main=None):
     rows = ((evaluate(value, (), request["bindings"]) for value in row) for row in request["rows"])
-    return expected_assignment(request, rows, names(request["rows"]), omitted_id)
+    return expected_assignment(request, rows, names(request["rows"]), omitted_id, after_main)
 
 
-def expected_assignment(request, rows, parameters, omitted_id=None):
+def expected_assignment(request, rows, parameters, omitted_id=None, after_main=None):
     schema, _, columns = request["target"]
+    writes = [columns[reference[1]] for reference in request["writes"]] if "writes" in request else columns
+    returning = request.get("returning", [])
+    physical = ("id", "payload", "computed")
+    result_slots = [physical.index(columns[reference[1]]) for reference, _ in returning]
     policy = request["conflict"]
     old = MAIN if schema == "main" else TEMP
     accepted = []
     error = None
     known = {record[0] for record in old}
     for row in rows:
-        values = dict(zip(columns, row))
+        values = dict(zip(writes, row))
         key = integer_affinity(values.get("id", omitted_id))
         if key is not None and key in known:
             if policy == "ignore" or (policy == "inherit" and schema == "main"):
@@ -104,11 +108,13 @@ def expected_assignment(request, rows, parameters, omitted_id=None):
         computed = None if payload is None else 2 * numeric(payload)
         accepted.append((key, payload, computed))
     log = accepted if schema == "main" else []
+    stored = [after_main(row) for row in accepted] if schema == "main" and after_main is not None else accepted
+    returned = typed_rows(tuple(row[index] for index in result_slots) for row in accepted) if returning else []
     return {
-        "statement": {"names": [], "parameters": parameters, "parameterCount": max(map(int, parameters), default=0),
-                      "readOnly": False, "changes": len(accepted), "rows": [], "evaluationError": error},
-        "main": typed_rows(old + accepted if schema == "main" else MAIN),
-        "temp": typed_rows(old + accepted if schema == "temp" else TEMP),
+        "statement": {"names": [label for _, label in returning], "parameters": parameters, "parameterCount": max(map(int, parameters), default=0),
+                      "readOnly": False, "changes": len(accepted), "rows": returned, "evaluationError": error},
+        "main": typed_rows(old + stored if schema == "main" else MAIN),
+        "temp": typed_rows(old + stored if schema == "temp" else TEMP),
         "log": [[typed(value) for value in row] for row in log],
     }
 

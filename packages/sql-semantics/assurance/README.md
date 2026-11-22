@@ -308,6 +308,10 @@ The [INSERT input record](sqlite-insert-input-v2.json) checks a default-only row
 
 Run `run_sqlite_insert_input.py` with the SQLite fixture options. The collector replays typed rows, constraint outcomes, trigger effects and rollback.
 
+## SQLite INSERT RETURNING
+
+The [INSERT RETURNING record](sqlite-insert-returning-v1.json) checks an ordered list of supplied slots and a separate ordered result over one target. Its fixture computes defaults and generated values, records the inserted row, and then changes its payload with an AFTER trigger. Run `run_sqlite_insert_returning.py` with the SQLite fixture options to compare the immediate returned row, trigger state, stored state and rollback for all three input roles.
+
 ## SQLite UPDATE RETURNING
 
 The [UPDATE RETURNING record](sqlite-update-returning-v1.json) observes the new row after assignments and generated columns are computed. The fixture changes the updated row in an AFTER trigger and records the arguments received by that trigger. The oracle compares the returned rows, persisted rows and trigger effects separately, and confirms that rollback restores all three tables. Run `run_sqlite_update_returning.py` with the SQLite fixture options.

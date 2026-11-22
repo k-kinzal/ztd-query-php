@@ -103,7 +103,7 @@ def negatives():
     yield case(inner,("id",)), "rejected", "without a local definition"
 
 
-def expected(item, omitted_id=None):
+def expected(item, omitted_id=None, after_main=None):
     source = item["query"]
     baseline = rows_from_source(source)
     measured = baseline["rows"]
@@ -118,7 +118,7 @@ def expected(item, omitted_id=None):
         count = bound_value(count, source["bindings"])
         offset = max(0,bound_value(offset,source["bindings"])) if offset is not None else 0
         selected = selected[offset:] if count < 0 else selected[offset:offset+count]
-    effect = expected_assignment(item, ([untyped(value) for value in row] for row in selected), result_parameters(source), omitted_id)
+    effect = expected_assignment(item, ([untyped(value) for value in row] for row in selected), result_parameters(source), omitted_id, after_main)
     return {**effect, "restored": BASELINE_STATE}
 
 

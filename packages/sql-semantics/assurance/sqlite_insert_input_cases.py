@@ -85,14 +85,14 @@ def negatives():
            "analysis-rejected", "cannot INSERT into generated column")
 
 
-def expected(item):
+def expected(item, after_main=None):
     omitted = 1 if item["target"][0] == "main" else 7
     if item.get("defaults"):
-        effect = expected_assignment(item, [()], {}, omitted)
+        effect = expected_assignment(item, [()], {}, omitted, after_main)
     elif "query" in item:
-        return query_effect(item, omitted)
+        return query_effect(item, omitted, after_main)
     else:
-        effect = values_effect(item, omitted)
+        effect = values_effect(item, omitted, after_main)
     return {**effect, "restored": BASELINE_STATE}
 
 

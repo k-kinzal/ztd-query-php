@@ -8,6 +8,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select as CheckedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
+use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -33,8 +35,8 @@ final class InsertLowering
     {
         $into = $statement->into;
         Check::input(
-            $into->with === null && !$into->replace && ($statement instanceof InsertDefaults || $statement->upserts === []) && $statement->returning === [],
-            'Complete SQLite INSERT does not support WITH, REPLACE, UPSERT or RETURNING.',
+            $into->with === null && !$into->replace && ($statement instanceof InsertDefaults || $statement->upserts === []),
+            'Complete SQLite INSERT does not support WITH, REPLACE or UPSERT.',
         );
         $policy = match ($into->resolution) {
             null => InsertConflict::Inherit,
@@ -43,9 +45,13 @@ final class InsertLowering
             ConflictResolution::Fail, ConflictResolution::Replace, ConflictResolution::Rollback
                 => throw new InvalidConstruction('This conflict policy has no complete SQLite INSERT representation.'),
         };
-        $target = (new InsertTargetLowering())->lower($operation, $into, $statement instanceof InsertDefaults);
+        $binding = new SourceBinding($operation, $into->target);
+        $writes = (new InsertTargetLowering())->lower($binding, $into, $statement instanceof InsertDefaults);
+        $returning = (new ReturningLowering())->lower($operation, $statement->returning, $binding);
+        $target = $binding->source();
+        Check::invariant($target instanceof TableSource, 'A resolved INSERT has one external target.');
 
-        return new Insert($target, $this->input($operation, $statement), $policy);
+        return new Insert($target, $writes, $this->input($operation, $statement), $policy, $returning);
     }
 
     /**

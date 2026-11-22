@@ -15,7 +15,7 @@ function nativeBoundaryContract(string $dialect): array
         'sqlite' => [
             ['sqlite-grouped-boundaries-v3.json', 'a2a412c86bd0d805dea49b84a59887964d26353432d7dd7bc3cbfbeef17cac56'],
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
-            ['sqlite-insert-input-boundaries-v2.json', 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f'],
+            ['sqlite-insert-slots-boundaries-v1.json', 'cde9f0df0d6f1ca8ff20ddac140fd96577cf456c2facfd00e809f5d89a717d9e'],
             ['sqlite-scalar-boundaries-v2.json', '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be'],
             ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
             ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
@@ -62,7 +62,7 @@ function checkNativeBoundaries(
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow',
             'Ir\\Mutation\\UpdateConflict', 'Statement\\Expression\\ColumnUse', 'Statement\\Expression\\DoubleQuotedWord', 'Statement\\Query\\TableStar', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
-            'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {
+            'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord', 'Statement\\Mutation\\MutationTarget'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
         $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";
