@@ -138,7 +138,7 @@ def negatives(dialect):
         (case(dialect, None, [["integer", "1"]], ["n\0ame"]), "no NUL" if dialect == "mysql" else "without NUL"),
         (analyzed(dialect, f"SELECT id FROM {table}", schemas=False), "resolved, complete base table"),
         (analyzed(dialect, f"SELECT poison FROM {table}"), "signed 32-bit integer type"),
-        (analyzed(dialect, "SELECT 1 GROUP BY 1"), "projections with positional result selection"),
+        (analyzed(dialect, f"SELECT id FROM {table} GROUP BY id"), "projections with positional result selection"),
     ]
     if dialect == "mysql":
         invalid.append((case(dialect, None, [["integer", "1"]], [" before"]), "cannot start with SQL whitespace"))
