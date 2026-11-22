@@ -1,0 +1,60 @@
+{
+  "revision": "SemanticsIR/sqlite-upsert-nothing-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with matching schema constraints, explicit transaction context and recursive trigger setting.",
+  "scope": "One targetless ON CONFLICT DO NOTHING clause on a checked INSERT of values or a checked SELECT.",
+  "constructors": {
+    "Mutation/InsertConflictHandler": {
+      "role": "An optional targetless uniqueness handler for a complete INSERT.",
+      "structure": "No handler or the exact DO NOTHING action on any uniqueness conflict.",
+      "conditions": "The parent INSERT rejects a handler on DEFAULT VALUES. The analysis boundary accepts only one handler with no indexed conflict target, assignments or condition. The SQL parse profile has the targetless form.",
+      "meaning": "Skip a supplied row that would violate a uniqueness constraint without modifying the conflicting row. Apply the statement conflict strategy or the declared constraint policy to failures beyond uniqueness. RETURNING describes only actual insertions.",
+      "externalInterpretation": "Use the same table, unique and primary key constraints, defaults, transaction and trigger rules. The action covers the target's uniqueness constraints without resolving one named index.",
+      "sql": "Omit the clause for the absent role. Emit ON CONFLICT DO NOTHING after VALUES or the independent SELECT. If the SELECT lacks a predicate, emit WHERE 1 before its order or bounds to disambiguate the ON token. Preserve all selected rows and their input sequence.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Mutation/Insert", "Mutation/InsertConflict", "Rows/ValuesQuery", "Select", "Mutation/ReturnedColumn"],
+  "observations": [
+    "Distinguish violations of rowid uniqueness, secondary uniqueness and NOT NULL. The latter still uses the statement algorithm.",
+    "Compare typed RETURNING labels and positions, inserted and skipped rows, exact constraint errors, trigger events, preceding transaction writes and transaction state.",
+    "Compare SELECT inputs with a FROM clause and no recorded filter, nonempty filters, ordered row bounds, and VALUES with collisions at different positions."
+  ],
+  "finite": {
+    "inputs": ["values", "select"],
+    "policies": ["inherit", "abort", "ignore", "fail", "rollback", "replace"],
+    "handlers": ["none", "do-nothing"],
+    "scenarios": ["clean", "rowid", "unique", "not-null"],
+    "returning": [false, true],
+    "recursiveTriggers": [false, true],
+    "transaction": [false, true],
+    "identity": "Every one of the 192 observed constructor combinations has four native fixture measurements."
+  },
+  "exploration": {
+    "seeds": [19751, 26947, 58271],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Generate variable-length and reordered VALUES, permuted input and return slots, and SELECT filters, sort directions and row bounds over distinguishing inputs carrying collisions. Vary explicit statement algorithms and handler presence."
+  },
+  "negative": [
+    "Direct handler on a DEFAULT VALUES input",
+    "Explicit conflict target",
+    "DO UPDATE assignments",
+    "Multiple handlers"
+  ],
+  "faults": [
+    "Drop DO NOTHING so an explicit REPLACE deletes the conflicting row",
+    "Implement DO NOTHING as OR IGNORE and skip an invalid NOT NULL value",
+    "Drop the SELECT WHERE disambiguator",
+    "Move DO NOTHING after RETURNING"
+  ],
+  "open": ["Indexed conflict targets, multiple actions, DO UPDATE bindings and additional virtual table behavior."],
+  "trust": [
+    "Pinned SQLite parser and evaluator, restricted fixture connection, and exact typed observations.",
+    "Independent uniqueness decision, ordered input and transactional state model.",
+    "Shape checks for action and input roles, the construction boundary and clause order."
+  ],
+  "sources": ["https://sqlite.org/lang_upsert.html", "https://sqlite.org/lang_insert.html", "https://sqlite.org/lang_conflict.html"]
+}
