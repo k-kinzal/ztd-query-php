@@ -241,6 +241,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-insert-query-evidence"
+      - name: Collect SQLite CASE observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_case.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-case-evidence"
       - name: Collect MySQL and PostgreSQL projection observations
         if: ${{ !cancelled() }}
         env:
@@ -314,6 +323,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-grouped-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-wildcard-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-insert-query-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-case-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-index/
             ${{ runner.temp }}/semantics-ir-controls/
             ${{ runner.temp }}/semantics-ir-native-boundaries/

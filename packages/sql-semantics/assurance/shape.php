@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -92,6 +92,10 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Aggregation\\CountBinding', 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
     $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $predicates = $operands;
+    $nullableCaseOperands = [...$operands, 'null'];
+    $properties['Expression\\CaseExpression'] = ['base' => $nullableCaseOperands, 'branches' => ['array'], 'otherwise' => $nullableCaseOperands];
+    $properties['Expression\\CaseBranch'] = ['when' => $operands, 'then' => $operands];
+    $methods['Expression\\CaseExpression'] = $methods['Expression\\CaseBranch'] = ['__construct'];
     $properties['Literal\\BlobLiteral'] = ['hex' => ['string']];
     $properties['Literal\\HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
     $properties['Literal\\RealLiteral'] = ['whole' => ['string'], 'fraction' => ['?string'], 'exponent' => ['?string'], 'negative' => ['bool']];
@@ -472,9 +476,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v12.json';
+    $storagePath = __DIR__ . '/value-storage-v13.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '6ffac2a00ac2294dd07dafff4235342d74ba77ed1a4e2ac223f8aefe0e196a6c',
+        hash_file('sha256', $storagePath) === '8f2f8fc9bca25ef29a2a407cad68f3611a5f4e4d6cf2721d6dfd64d1b2f8eae2',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

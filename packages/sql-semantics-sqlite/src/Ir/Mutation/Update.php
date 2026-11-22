@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -49,7 +50,7 @@ final class Update implements SemanticsIR
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
-        public readonly Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
         public readonly UpdateConflict $conflict = UpdateConflict::Inherit,
     ) {
         $checked = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty ordered assignment list.', 1);

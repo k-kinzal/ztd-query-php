@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -37,7 +38,7 @@ final class SelectBounds
         array $results,
         TableSource|LocalSource|null $source,
         array $joins = [],
-        Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
+        Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
         array $orderBy = [],
         ?Limit $limit = null,
     ): void {

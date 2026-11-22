@@ -20,7 +20,7 @@ FIXTURE = DDL + "; INSERT INTO ir_scalars VALUES (1,'keep'),(1,'keep'),(2,X'FF')
 PROFILE = "sqlite-3.47.2/utf8/short-column-names/numbered-parameters"
 
 
-def evaluate(term, bindings, row=()):
+def evaluate(term, bindings, row=(), case_equal=None):
     kind, *arguments = term
     if kind == "integer":
         return int(arguments[0])
@@ -48,8 +48,27 @@ def evaluate(term, bindings, row=()):
     if kind == "column":
         return row[arguments[0]]
 
+    if kind == "case":
+        base, branches, fallback = arguments
+        value = None if base is None else evaluate(base, bindings, row, case_equal)
+        result = fallback
+        if base is None or value is not None:
+            for when, then in branches:
+                decision = evaluate(when, bindings, row, case_equal)
+                if base is None:
+                    matches = truth(decision) is True
+                elif case_equal is None:
+                    matches = order_value(value) == order_value(decision)
+                else:
+                    matches = case_equal(base, when, value, decision)
+                if matches:
+                    result = then
+                    break
+        return None if result is None else evaluate(result, bindings, row, case_equal)
+
     operator, left, right = arguments
-    a, b = evaluate(left, bindings, row), evaluate(right, bindings, row)
+    a = evaluate(left, bindings, row, case_equal)
+    b = evaluate(right, bindings, row, case_equal)
     if kind == "logical":
         p, q = truth(a), truth(b)
         if operator == "AND":

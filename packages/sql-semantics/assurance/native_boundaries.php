@@ -32,6 +32,11 @@ function nativeBoundaryContract(string $dialect): array
         $additional = json_decode(file_get_contents($insert), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite query INSERT cannot replace a fixed boundary');
         $rules += $additional;
+        $choice = __DIR__ . '/sqlite-case-boundaries-v1.json';
+        requireShape(hash_file('sha256', $choice) === 'f632bc623433c75ed8195410d97bfe3a63886cb87cf0b2300f396ee702ded46a', 'SQLite CASE boundary contract differs from the recorded revision');
+        $additional = json_decode(file_get_contents($choice), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite CASE cannot replace a fixed boundary');
+        $rules += $additional;
     } else {
         $extension = __DIR__ . '/native-insert-query-boundaries-v2.json';
         requireShape(
@@ -57,13 +62,21 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Model\\Diagnostic\\InvalidConstruction', 'Ir\\Identifier', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\Rows\\LocalSource', 'Ir\\Rows\\ValuesQuery', 'Ir\\Mutation\\InsertConflict', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\Ordering\\ResultSql', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Model\\Diagnostic\\InvalidConstruction', 'Ir\\Identifier', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Rows\\LocalSource', 'Ir\\Rows\\ValuesQuery', 'Ir\\Mutation\\InsertConflict', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\Ordering\\ResultSql', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
         'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
         'Model\\Contract\\GrammarRelease', 'Statement\\Query\\ParenthesizedQuery', 'Statement\\Relation\\DerivedTable',
         'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering', 'Statement\\Expression\\Collate',  'Statement\\Expression\\Grouped', 'Statement\\Query\\SelectExpression', 'Ir\\ExpressionLowering',
         'Ir\\Binding\\ParameterLowering', 'Ir\\Ordering\\ProjectionLabel'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
+    }
+    if ($dialect === 'sqlite') {
+        foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Literal\\BlobLiteral',
+            'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical'] as $name) {
+            $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
+        }
+    } else {
+        $imports .= 'use ' . $platform . '\\Ir\\Binding\\Parameter;' . "\n";
     }
     $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";
     $imports .= 'use ' . $platform . '\\Statement\\Relation\\' . ($dialect === 'mysql' ? 'JoinedTable' : 'Join') . ' as ParsedJoin;' . "\n";

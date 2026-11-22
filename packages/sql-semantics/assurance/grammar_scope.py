@@ -11,6 +11,13 @@ RULE = re.compile(r"^    '([A-Za-z_][A-Za-z0-9_]*)' => \[$")
 ALTERNATIVE = re.compile(r"^        '([^'\\]*)',$")
 SQLITE = "packages/sql-semantics-sqlite/resources/productions/sqlite-3.47.2.php"
 RELATED_SQLITE_DOMAINS = {
+    "expr: CASE case_operand case_exprlist case_else END": ("sqlite-case-v1.json",),
+    "case_exprlist: case_exprlist WHEN expr THEN expr": ("sqlite-case-v1.json",),
+    "case_exprlist: WHEN expr THEN expr": ("sqlite-case-v1.json",),
+    "case_else: ELSE expr": ("sqlite-case-v1.json",),
+    "case_else:": ("sqlite-case-v1.json",),
+    "case_operand: expr": ("sqlite-case-v1.json",),
+    "case_operand:": ("sqlite-case-v1.json",),
     "groupby_opt: GROUP BY nexprlist": ("sqlite-grouped-v1.json",),
     "selectnowith: selectnowith multiselect_op oneselect": ("sqlite-compound-v1.json", "sqlite-recursive-source-v1.json"),
     "term: NULL|FLOAT|BLOB": ("sqlite-scalars-v1.json",),

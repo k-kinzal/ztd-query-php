@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\From;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -90,7 +91,7 @@ final class QueryClauses
     /**
      * Converts a filter or ON expression into the closed predicate domain.
      */
-    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null
+    public function predicate(?Scalar $scalar, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null
     {
         return $scalar === null ? null : (new ExpressionLowering())->lower($scalar, $binding);
     }

@@ -10,6 +10,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
@@ -66,9 +68,14 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
+function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
 {
     return match ($input[0]) {
+        'case' => new CaseExpression(
+            $input[1] === null ? null : operand($input[1]),
+            array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
+            $input[3] === null ? null : operand($input[3]),
+        ),
         'integer' => new IntegerLiteral($input[1]),
         'text' => new TextLiteral($input[1]),
         'blob' => new BlobLiteral($input[1]),
@@ -83,9 +90,15 @@ function operand(array $input): Arithmetic|BlobLiteral|ColumnReference|Compariso
     };
 }
 
-function observeOperand(Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value): array
+function observeOperand(Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value): array
 {
     return match (true) {
+        $value instanceof CaseExpression => [
+            'case',
+            $value->base === null ? null : observeOperand($value->base),
+            array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
+            $value->otherwise === null ? null : observeOperand($value->otherwise),
+        ],
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
         $value instanceof TextLiteral => ['text', $value->value],
         $value instanceof BlobLiteral => ['blob', $value->hex],

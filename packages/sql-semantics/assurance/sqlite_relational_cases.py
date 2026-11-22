@@ -67,6 +67,12 @@ def children(expression):
     if expression[0] in ("arithmetic", "comparison", "logical"):
         yield from children(expression[2])
         yield from children(expression[3])
+    elif expression[0] == "case":
+        yield from children(expression[1])
+        for when, result in expression[2]:
+            yield from children(when)
+            yield from children(result)
+        yield from children(expression[3])
 
 
 def parameter_names(item):

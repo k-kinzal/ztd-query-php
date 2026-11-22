@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -123,7 +124,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $expression,
+        Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -137,6 +138,7 @@ final class SelectSql
         return match (true) {
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
+            $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
             $expression instanceof IntegerLiteral => $expression->decimal,
             $expression instanceof HexIntegerLiteral => ($expression->negated ? '-' : '') . '0x' . $expression->digits,
             $expression instanceof RealLiteral => ($expression->negative ? '-' : '') . $expression->whole
@@ -147,6 +149,28 @@ final class SelectSql
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Emits the native conditional form and evaluates the base at most once.
+     *
+     * @param list<Join> $joins The remaining source occurrences
+     */
+    public function choice(CaseExpression $expression, TableSource|LocalSource|null $source, array $joins): string
+    {
+        $sql = '(CASE';
+        if ($expression->base !== null) {
+            $sql .= ' ' . $this->expression($expression->base, $source, $joins);
+        }
+        foreach ($expression->branches as $branch) {
+            $sql .= ' WHEN ' . $this->expression($branch->when, $source, $joins)
+                . ' THEN ' . $this->expression($branch->then, $source, $joins);
+        }
+        if ($expression->otherwise !== null) {
+            $sql .= ' ELSE ' . $this->expression($expression->otherwise, $source, $joins);
+        }
+
+        return $sql . ' END)';
     }
 
     /**

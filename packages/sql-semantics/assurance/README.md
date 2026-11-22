@@ -406,6 +406,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_sc
 
 The four new literal classes are under the SQLite IR namespace Literal. The runner checks literal storage classes, negative zero, ordered result labels and parameter slots. It covers the finite product of literal pairs and the recorded operators in SELECT and VALUES, and explores nested operands from the fixed seeds. Six persistent-state observations compare the three write forms through direct construction and analysis against a table with duplicates and mixed storage classes. Each write is rolled back to the original fixture. The mutations detect loss of the REAL or hexadecimal sign and a TEXT value emitted as BLOB.
 
+## SQLite conditional expressions
+
+The [CASE record](sqlite-case-v1.json) links the ordered branches, optional base, and fallback to their construction conditions and observation rules. The runner compares the direct and analyzed forms against the independent lazy evaluator and SQLite 3.47.2, including both simple and searched CASE, typed results, parameter registration, and effective column affinity and collation. It detects incorrect precedence, selection of a WHEN operand as a result, and omitted base or fallback operands.
+
+Run `run_sqlite_case.py` with the SQLite fixture options. The SQLite collector requires and replays the CASE receipt.
+
 ## SQLite compound queries
 
 Run the [compound contract](sqlite-compound-v1.json) with the pinned SQLite library:

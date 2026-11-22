@@ -7,6 +7,8 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
@@ -68,5 +70,14 @@ final class SelectSqlTest extends TestCase
         $sql = new SelectSql();
         self::assertSame('"__ztd_source"', $sql->alias(0));
         self::assertSame('"__ztd_source_1"', $sql->alias(1));
+    }
+
+    public function testChoiceWritesTheBaseAndBranchesInOrder(): void
+    {
+        $one = new IntegerLiteral('1');
+        $two = new IntegerLiteral('2');
+        $choice = new CaseExpression($one, [new CaseBranch($one, $two), new CaseBranch($two, $one)], $two);
+
+        self::assertSame('(CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 2 END)', (new SelectSql())->choice($choice, null, []));
     }
 }

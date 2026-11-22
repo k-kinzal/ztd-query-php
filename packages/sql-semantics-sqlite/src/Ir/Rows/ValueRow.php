@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -32,7 +33,7 @@ final class ValueRow
     use Snapshot;
 
     /**
-     * @var non-empty-list<Arithmetic|BlobLiteral|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral>
+     * @var non-empty-list<Arithmetic|BlobLiteral|CaseExpression|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral>
      */
     public readonly array $values;
 
@@ -47,7 +48,7 @@ final class ValueRow
         $closed = [];
         $pending = [];
         foreach ($values as $value) {
-            Check::input($value instanceof Arithmetic || $value instanceof BlobLiteral || $value instanceof Comparison
+            Check::input($value instanceof Arithmetic || $value instanceof BlobLiteral || $value instanceof CaseExpression || $value instanceof Comparison
                 || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral || $value instanceof Logical
                 || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral, 'A VALUES row needs a scalar operand independent of tables.');
             $closed[] = $value;

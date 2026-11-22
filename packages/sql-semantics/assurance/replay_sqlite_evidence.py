@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import run
+import run_sqlite_case as choice
 import run_sqlite_compound as compound
 import run_sqlite_create_table as create
 import run_sqlite_delete as delete
@@ -28,6 +29,7 @@ from run import TOOL, require
 from sqlite_engine import Database
 
 DOMAINS = {
+    choice.CONTRACT_NAME: (choice, choice.FIXTURE),
     "sqlite-relational-v1.json": (relational, relational.SCHEMA),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),

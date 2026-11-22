@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Predicate;
 
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -19,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
- * @phpstan-type ScopedExpression array{Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral, int, int}
+ * @phpstan-type ScopedExpression array{Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral, int, int}
  */
 final class ExpressionScope
 {
@@ -36,6 +37,12 @@ final class ExpressionScope
         while ($pending !== []) {
             [$expression, $height, $visibility] = array_pop($pending);
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
+            if ($expression instanceof CaseExpression) {
+                foreach ($this->choice($expression, $height + 1, $visibility) as $operand) {
+                    $pending[] = $operand;
+                }
+                continue;
+            }
             match (true) {
                 $expression instanceof ColumnReference => Check::input(
                     $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),
@@ -51,5 +58,27 @@ final class ExpressionScope
             };
             Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');
         }
+    }
+
+    /**
+     * Lists every conditional operand, including operands potentially skipped at evaluation.
+     *
+     * @return list<ScopedExpression>
+     */
+    public function choice(CaseExpression $expression, int $height, int $visibility): array
+    {
+        $operands = [];
+        if ($expression->base !== null) {
+            $operands[] = [$expression->base, $height, $visibility];
+        }
+        foreach ($expression->branches as $branch) {
+            $operands[] = [$branch->when, $height, $visibility];
+            $operands[] = [$branch->then, $height, $visibility];
+        }
+        if ($expression->otherwise !== null) {
+            $operands[] = [$expression->otherwise, $height, $visibility];
+        }
+
+        return $operands;
     }
 }

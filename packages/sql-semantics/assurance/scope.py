@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-case-v1.json": "a8a4eddad1e405a41566c48439c7b521f2c787a606d90b93b8fcbbf875fa9179",
     "server-projection-admission-v1.json": "cb6cb546e11007dcd00983f2f2ed0acf1d193cb7b17676b035b6384e4e2d46dd",
     "sqlite-insert-query-v1.json": "009a9763066a4f9bd707f389f002f30dd9ca71382d5693318dbd7656ac077699",
     "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
