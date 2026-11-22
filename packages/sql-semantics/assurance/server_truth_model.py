@@ -27,6 +27,19 @@ def predicate_value(condition, operand):
         _, symbol, left, right = condition
         lhs, rhs = operand(left), operand(right)
         return None if lhs is None or rhs is None else COMPARISONS[symbol](lhs, rhs)
+    if role == "int4-range":
+        _, negated, symmetric, subject, lower, upper = condition
+        subject, lower, upper = map(operand, (subject, lower, upper))
+
+        def interval(first, last):
+            above = None if subject is None or first is None else subject >= first
+            below = None if subject is None or last is None else subject <= last
+            return TABLES["AND"][TRUTH.index(above)][TRUTH.index(below)]
+
+        value = interval(lower, upper)
+        if symmetric:
+            value = TABLES["OR"][TRUTH.index(value)][TRUTH.index(interval(upper, lower))]
+        return (True, False, None)[TRUTH.index(value)] if negated else value
     if role == "null-test":
         _, negated, tested = condition
         return (predicate_value(tested, operand) is None) != negated

@@ -30,7 +30,11 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         // MySQL 5.x can retain earlier diagnostics when a constant statement succeeds.
         $pdo->query('SELECT 1 FROM ir_fixture.ir_evidence_accounts LIMIT 1')->closeCursor();
     }
+    $shadowRange = ($input['shadowInt4Range'] ?? false) === true;
     try {
+        if ($shadowRange) {
+            $pdo->exec('SET LOCAL search_path = public, pg_catalog');
+        }
         $statement = $pdo->prepare($input['sql']);
         $statement->execute();
         $fields = [];
@@ -40,6 +44,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         }
         $rows = $statement->fetchAll(PDO::FETCH_NUM);
         $statement->closeCursor();
+        if ($shadowRange) {
+            $pdo->exec('SET LOCAL search_path = pg_catalog, public');
+        }
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
         if ($warnings) {
             $result['warningCount'] = warningCount($pdo);

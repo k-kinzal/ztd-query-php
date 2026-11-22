@@ -34,6 +34,7 @@ function constructOperand(string $namespace, array $data): object
         'slot' => 'ColumnReference',
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
+        'int4-range' => 'Predicate\\IntegerRange',
     };
     $operator = $namespace . 'ArithmeticOperator';
 
@@ -46,6 +47,13 @@ function constructOperand(string $namespace, array $data): object
             $operator::from($data[1]),
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
+        ),
+        'int4-range' => new $type(
+            constructOperand($namespace, $data[3]),
+            constructOperand($namespace, $data[4]),
+            constructOperand($namespace, $data[5]),
+            $data[1],
+            $data[2],
         ),
         'int4-case' => new $type(
             array_map(static function (array $branch) use ($namespace): object {
@@ -72,6 +80,8 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
+        $namespace . 'Predicate\\IntegerRange' => ['int4-range', $value->negated, $value->symmetric,
+            observeOperand($namespace, $value->subject), observeOperand($namespace, $value->lower), observeOperand($namespace, $value->upper)],
         $namespace . 'Expression\\IntegerCase' => ['int4-case',
             array_map(static fn ($arm) => [observePredicate($namespace, $arm->condition), observeOperand($namespace, $arm->result)], $value->arms),
             $value->otherwise === null ? null : observeOperand($namespace, $value->otherwise)],
@@ -192,7 +202,7 @@ function constructPredicate(string $namespace, ?array $test): ?object
             constructPredicate($namespace, $test[3] ?? null),
         ),
         'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
-        'boolean', 'null', 'slot', 'integer' => constructOperand($namespace, $test),
+        'boolean', 'null', 'slot', 'integer', 'int4-range' => constructOperand($namespace, $test),
     };
 }
 
@@ -548,7 +558,8 @@ function observePredicate(string $namespace, ?object $condition): ?array
         $namespace . 'Predicate\\IntegerComparison' => ['comparison', $condition->operator->value, observeOperand($namespace, $condition->left), observeOperand($namespace, $condition->right)],
         $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
         $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
-        $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'IntegerLiteral' => observeOperand($namespace, $condition),
+        $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'IntegerLiteral',
+        $namespace . 'Predicate\\IntegerRange' => observeOperand($namespace, $condition),
     };
 }
 

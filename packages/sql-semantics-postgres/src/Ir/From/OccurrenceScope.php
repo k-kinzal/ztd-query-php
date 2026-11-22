@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -26,7 +27,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
-        BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $condition,
+        BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $condition,
         array $inputs,
         string $invalidSlot = 'A predicate slot must belong to a visible input occurrence.',
     ): void {
@@ -41,7 +42,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|ColumnReference|IntegerComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $operand,
+        BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -54,6 +55,7 @@ final class OccurrenceScope
         $children = match (true) {
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
             $operand instanceof IntegerComparison => [$operand->left, $operand->right],
+            $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest => [$operand->operand],
             $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral => [],
         };

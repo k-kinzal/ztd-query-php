@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -71,7 +72,7 @@ final class IntegerCaseLowering
             }
         }
         $result = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);
-        Check::input(!$result instanceof BooleanLiteral, 'An int4 CASE arm requires a signed integer or NULL.');
+        Check::input(!$result instanceof BooleanLiteral && !$result instanceof IntegerRange, 'An int4 CASE arm requires a signed integer or NULL.');
 
         return $result;
     }

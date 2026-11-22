@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
@@ -14,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\CaseExpression as ParsedCase;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between as ParsedRange;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral as ParsedBoolean;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
@@ -37,7 +40,7 @@ final class ExpressionLowering
         Scalar $expression,
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
-    ): Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|BooleanLiteral|NullLiteral {
+    ): Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -60,6 +63,7 @@ final class ExpressionLowering
 
         return match (true) {
             $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof ParsedColumn => $binding->reference($expression),
@@ -83,10 +87,8 @@ final class ExpressionLowering
         $left = $this->lower($expression->left, $binding, $catalogFirst);
         $right = $this->lower($expression->right, $binding, $catalogFirst);
         $typeError = 'Arithmetic operands must have the int4 role.';
-        Check::input(!$left instanceof BooleanLiteral, $typeError);
-        Check::input(!$left instanceof NullLiteral, $typeError);
-        Check::input(!$right instanceof BooleanLiteral, $typeError);
-        Check::input(!$right instanceof NullLiteral, $typeError);
+        Check::input(!$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$left instanceof IntegerRange, $typeError);
+        Check::input(!$right instanceof BooleanLiteral && !$right instanceof NullLiteral && !$right instanceof IntegerRange, $typeError);
 
         return new Arithmetic($operator, $left, $right);
     }

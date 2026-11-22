@@ -71,7 +71,16 @@ if ($dialect === 'postgres') {
     $properties[$integerCase] = ['arms' => ['array'], 'otherwise' => [...$caseValues, 'null']];
     $properties[$caseArm] = ['condition' => ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'],
         'result' => $caseValues];
-    $methods[$integerCase] = $methods[$caseArm] = ['__construct'];
+    $range = 'Predicate\\IntegerRange';
+    $rangeLeaves = ['ColumnReference', 'IntegerLiteral', 'NullLiteral'];
+    $properties[$range] = [
+        'subject' => $rangeLeaves, 'lower' => $rangeLeaves, 'upper' => $rangeLeaves,
+        'negated' => ['bool'], 'symmetric' => ['bool'],
+    ];
+    $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = ['__construct'];
+    $properties[$caseArm]['condition'][] = $range;
+    sort($properties[$caseArm]['condition']);
+    $properties['ResultColumn']['expression'][] = $range;
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -90,6 +99,8 @@ $selectBounds = $dialect === 'sqlite' ? 'From\\SelectBounds' : 'SelectBounds';
 $internal = ['ExpressionLowering', $selectBounds, 'SelectLowering', 'SelectSql', 'SourceBinding'];
 if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
+    $internal[] = 'Predicate\\IntegerRangeLowering';
+    $internal[] = 'Predicate\\IntegerRangeOperandLowering';
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
 $roots = ['Select'];
@@ -287,6 +298,10 @@ if ($dialect !== 'sqlite') {
     $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $properties['ColumnReference']['occurrence'] = ['int'];
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
+    if ($dialect === 'postgres') {
+        $truthValues[] = 'Predicate\\IntegerRange';
+        sort($truthValues);
+    }
     $conditions = [...$truthValues, 'null'];
     $properties['Aggregation\\GroupedSelect']['where'] = $conditions;
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -336,6 +351,10 @@ if ($dialect !== 'sqlite') {
         'operand' => ['BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'],
         'negated' => ['bool'],
     ];
+    if ($dialect === 'postgres') {
+        $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
+        sort($properties['Predicate\\NullTest']['operand']);
+    }
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];
     $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR', 'Not' => 'NOT'];
     if ($dialect === 'mysql') {
@@ -673,7 +692,11 @@ try {
             requireShape(in_array($name->toString(), $allowed, true), "Unexpected dependency in $short: $name");
         }
         foreach ($finder->findInstanceOf($ast, Expr\FuncCall::class) as $call) {
-            requireShape($call->name instanceof Name && in_array($call->name->toString(), $pureFunctions, true), "Unexpected function in $short");
+            requireShape(
+                $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
+                    || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
+                "Unexpected function in $short",
+            );
         }
         $danger = $finder->findFirst($ast, static fn ($node) => $node instanceof Expr\Eval_ || $node instanceof Expr\Include_
             || $node instanceof Expr\ShellExec || $node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction

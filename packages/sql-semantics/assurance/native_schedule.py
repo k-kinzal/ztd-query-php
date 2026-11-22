@@ -4,6 +4,7 @@
 NATIVE = {
     "projection": "server-projection-v1.json",
     "postgres_int4": "postgres-int4-operators-v1.json",
+    "postgres_int4_range": "postgres-int4-range-v1.json",
     "postgres_int4_case": "postgres-int4-case-v1.json",
     "postgres_delete_returning": "postgres-delete-returning-v1.json",
     "postgres_update_returning": "postgres-update-returning-v2.json",

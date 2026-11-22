@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -35,7 +36,7 @@ final class Join
         public readonly JoinKind $kind,
         public readonly TableSource|DerivedSource|self $left,
         public readonly TableSource|DerivedSource|self $right,
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $on = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $on = null,
     ) {
         $inputs = $this->inputs();
         Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');

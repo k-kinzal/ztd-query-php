@@ -102,7 +102,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v13.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v18.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -237,6 +237,9 @@ Run `run_server_mysql_signed_quotient.py` on the nine pinned MySQL releases. Rep
 The [int4 operator record](postgres-int4-operators-v1.json) checks ordered int4 operands, type and result values, SQLSTATE 22012 for a zero divisor and SQLSTATE 22003 for division overflow. Each evaluation outcome is checked against the independent rules for its exact operands. The fixture sets a distinguishing search path with an identically named division operator and measures both operation identities. Run `run_server_postgres_int4.py` for both pinned PostgreSQL releases. Replay the exact reports with `combine_server_postgres_int4_evidence.py`.
 
 The [searched int4 CASE record](postgres-int4-case-v1.json) exhausts the ordered one- and two-arm finite domain and explores nested, repeated and nullable branches. The fixture compares exact int4 metadata, scoped reads and row-dependent guarded arithmetic. Run `run_server_postgres_int4_case.py` for both pinned PostgreSQL releases. Replay the reports with `combine_server_postgres_int4_case_evidence.py`.
+
+
+The [int4 range record](postgres-int4-range-v1.json) checks all 2,216 ordered operand and placement identities on each PostgreSQL release. Its evaluator preserves UNKNOWN, measures bool result types and only admits TRUE in a filter. The fixture checks generated SQL under a search path with competing operators. Run `run_server_postgres_int4_range.py` and replay the receipts with `combine_server_postgres_int4_range_evidence.py`.
 
 ## Native grouped projections
 

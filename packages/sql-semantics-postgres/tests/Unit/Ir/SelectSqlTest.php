@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
@@ -69,10 +70,21 @@ final class SelectSqlTest extends TestCase
         );
     }
 
-    public function testCaseResultTypesExplicitNull(): void
+    public function testIntegerOrNullTypesExplicitNull(): void
     {
-        self::assertSame('CAST(NULL AS pg_catalog.int4)', (new SelectSql())->caseResult(new NullLiteral(), null, 0, true));
+        self::assertSame('CAST(NULL AS pg_catalog.int4)', (new SelectSql())->integerOrNull(new NullLiteral(), null, 0, true));
     }
+    public function testIntegerRangePreservesBothSymmetricIntervalsAndNegation(): void
+    {
+        $range = new IntegerRange(new IntegerLiteral('1'), new IntegerLiteral('2'), new NullLiteral(), true, true);
+        $expected = '(NOT (((CAST(1 AS pg_catalog.int4) OPERATOR(pg_catalog.>=) CAST(2 AS pg_catalog.int4))'
+            . ' AND (CAST(1 AS pg_catalog.int4) OPERATOR(pg_catalog.<=) CAST(NULL AS pg_catalog.int4))) OR '
+            . '((CAST(1 AS pg_catalog.int4) OPERATOR(pg_catalog.>=) CAST(NULL AS pg_catalog.int4))'
+            . ' AND (CAST(1 AS pg_catalog.int4) OPERATOR(pg_catalog.<=) CAST(2 AS pg_catalog.int4)))))';
+
+        self::assertSame($expected, (new SelectSql())->integerRange($range, null));
+    }
+
     public function testLocalColumnNamesTheResultOrdinal(): void
     {
         self::assertSame('"__ztd_c3"', (new SelectSql())->localColumn(3));

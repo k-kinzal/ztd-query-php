@@ -145,6 +145,8 @@ def inventory(root):
                 "when_clause_list: when_clause", "when_clause_list: when_clause_list when_clause",
                 "when_clause: WHEN a_expr THEN a_expr", "case_default: ELSE a_expr", "case_default:", "case_arg:",
             )})
+            related.update({alternative: ("postgres-int4-range-v1.json",) for alternative in rules["a_expr"]
+                            if " BETWEEN " in alternative})
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

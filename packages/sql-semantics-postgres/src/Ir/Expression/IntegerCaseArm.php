@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -30,7 +31,7 @@ final class IntegerCaseArm
      * Holds the checked condition and its corresponding scalar value.
      */
     public function __construct(
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest $condition,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest $condition,
         public readonly Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $result,
     ) {
     }

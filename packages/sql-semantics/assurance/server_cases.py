@@ -4,7 +4,7 @@ import itertools
 import json
 import random
 
-from server_truth_model import predicate_value
+from server_truth_model import admits, predicate_value
 
 ATOMS = [["integer", "-2"], ["integer", "0"], ["integer", "3"]]
 REFERENCES = [["slot", 0], ["slot", 1]]
@@ -111,6 +111,8 @@ def evaluate(operand, row, dialect, release=None):
         return operand[1] if dialect == "postgres" else int(operand[1])
     if tag == "null":
         return None
+    if tag == "int4-range":
+        return predicate_value(operand, lambda leaf: evaluate(leaf, row, dialect, release))
     if tag == "int4-case":
         _, arms, otherwise = operand
         for condition, result in arms:
@@ -165,11 +167,14 @@ def expected(item):
     dialect, table = item["dialect"], item["source"]
     rows = [None] if table is None else ROWS + (CHILD_ROWS if dialect == "postgres" and not table["only"] else [])
     fields = item["columns"]
-    mapping = ({"boolean": "bool", "null": "text"} if dialect == "postgres"
+    mapping = ({"boolean": "bool", "int4-range": "bool", "null": "text"} if dialect == "postgres"
                else {"slot": "LONG", "null": "NULL"})
     default = "int4" if dialect == "postgres" else "LONGLONG"
     try:
-        values = [[evaluate(expression, row, dialect, item["release"]) for expression, _ in fields] for row in rows]
+        values = [
+            [evaluate(expression, row, dialect, item["release"]) for expression, _ in fields]
+            for row in rows if admits(item.get("where"), lambda leaf: evaluate(leaf, row, dialect, item["release"]))
+        ]
     except OverflowError:
         return {"status": "db-error", "state": "22003"}
     except ZeroDivisionError:

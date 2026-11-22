@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -60,7 +61,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
@@ -79,6 +80,7 @@ final class SelectSql
         return match (true) {
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
+            $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
@@ -94,21 +96,38 @@ final class SelectSql
         $sql = '(CASE';
         foreach ($expression->arms as $arm) {
             $sql .= ' WHEN ' . $this->predicate($arm->condition, $source, $offset, $qualify)
-                . ' THEN ' . $this->caseResult($arm->result, $source, $offset, $qualify);
+                . ' THEN ' . $this->integerOrNull($arm->result, $source, $offset, $qualify);
         }
         if ($expression->otherwise !== null) {
-            $sql .= ' ELSE ' . $this->caseResult($expression->otherwise, $source, $offset, $qualify);
+            $sql .= ' ELSE ' . $this->integerOrNull($expression->otherwise, $source, $offset, $qualify);
         }
 
         return $sql . ' END)';
     }
 
     /**
-     * Emits a value with the type required by an int4 CASE result position.
+     * Emits a value with the type required by a resolved int4 operand position.
      */
-    public function caseResult(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $value, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function integerOrNull(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $value, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
         return $value instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.int4)' : $this->expression($value, $source, $offset, $qualify);
+    }
+
+    /**
+     * Emits comparisons with the same builtin identity independently of search path.
+     */
+    public function integerRange(IntegerRange $range, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    {
+        $subject = $this->integerOrNull($range->subject, $source, $offset, $qualify);
+        $lower = $this->integerOrNull($range->lower, $source, $offset, $qualify);
+        $upper = $this->integerOrNull($range->upper, $source, $offset, $qualify);
+        $format = '((%1$s OPERATOR(pg_catalog.>=) %2$s) AND (%1$s OPERATOR(pg_catalog.<=) %3$s))';
+        $interval = sprintf($format, $subject, $lower, $upper);
+        if ($range->symmetric) {
+            $interval = '(' . $interval . ' OR ' . sprintf($format, $subject, $upper, $lower) . ')';
+        }
+
+        return $range->negated ? '(NOT ' . $interval . ')' : $interval;
     }
 
     /**
@@ -134,7 +153,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

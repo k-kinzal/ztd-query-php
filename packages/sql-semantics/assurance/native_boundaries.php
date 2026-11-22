@@ -25,9 +25,8 @@ function nativeBoundaryContract(string $dialect): array
         'mysql', 'postgres' => [
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
-                ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
             ] : []),
-            ['native-boundaries-v17.json', '0c64f052b4b7c5cd8f0c42475cf9c5841f171eb0d634818bde3fc67b967f068d'],
+            ['native-boundaries-v18.json', '6a047f86445270675ec3d1251cc1e5639008ce1f52cd34ec4d3b4735090bddf8'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
@@ -86,7 +85,12 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\Ir\\SelectBounds;' . "\n";
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
-            foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Predicate\\PredicateLowering',
+            foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
+                'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerRangeOperandLowering',
+                'Statement\\Expression\\BinaryOperation', 'Statement\\Expression\\ColumnReference as ParsedColumn',
+                'Statement\\Expression\\Operator\\Between as ParsedRange', 'Statement\\Expression\\Operator\\UnaryOperation',
+                'Statement\\Expression\\Constructor\\CaseExpression as ParsedCase', 'Statement\\Literal\\BooleanLiteral as ParsedBoolean',
+                'Statement\\Literal\\Constant', 'Statement\\Literal\\IntegerConstant', 'Statement\\Literal\\NumericConstant', 'Ir\\Predicate\\PredicateLowering',
                 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
