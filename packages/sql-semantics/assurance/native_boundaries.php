@@ -11,50 +11,26 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(string $dialect): array
 {
-    if ($dialect === 'sqlite') {
-        $file = __DIR__ . '/sqlite-grouped-boundaries-v2.json';
-        requireShape(hash_file('sha256', $file) === '0d054f583a15cc1ccc76a45d79b3cf2420279d8b26f51d112f4ec6bf022285e7', 'SQLite grouping boundary contract differs from the recorded revision');
-    } else {
-        $file = __DIR__ . '/native-boundaries-v13.json';
-        requireShape(hash_file('sha256', $file) === '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3', 'Native boundary contract differs from the recorded revision');
-    }
-
-    $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
-
-    if ($dialect === 'sqlite') {
-        $extension = __DIR__ . '/sqlite-wildcard-boundaries-v1.json';
-        requireShape(hash_file('sha256', $extension) === 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d', 'SQLite wildcard boundary contract differs from its recorded revision');
-        $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite wildcard cannot replace a fixed boundary');
-        $rules += $additional;
-        $insert = __DIR__ . '/sqlite-insert-input-boundaries-v2.json';
-        requireShape(hash_file('sha256', $insert) === 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f', 'SQLite INSERT boundary contract differs from the recorded revision');
-        $additional = json_decode(file_get_contents($insert), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite query INSERT cannot replace a fixed boundary');
-        $rules += $additional;
-        $choice = __DIR__ . '/sqlite-scalar-boundaries-v2.json';
-        requireShape(hash_file('sha256', $choice) === '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be', 'SQLite CASE boundary contract differs from the recorded revision');
-        $additional = json_decode(file_get_contents($choice), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite CASE cannot replace a fixed boundary');
-        $rules += $additional;
-        $defaults = __DIR__ . '/sqlite-default-boundaries-v1.json';
-        requireShape(hash_file('sha256', $defaults) === 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a', 'SQLite default boundary contract differs from the recorded revision');
-        $additional = json_decode(file_get_contents($defaults), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite defaults cannot replace a fixed boundary');
-        $rules += $additional;
-        $returning = __DIR__ . '/sqlite-delete-returning-boundaries-v1.json';
-        requireShape(hash_file('sha256', $returning) === '692d0b9ef8a91b6e3cb4c8f09dbc5bcad3b9a985789a2e57480cce1bea1e1c4b', 'SQLite DELETE RETURNING boundary contract differs from the recorded revision');
-        $additional = json_decode(file_get_contents($returning), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite RETURNING cannot replace a fixed boundary');
-        $rules += $additional;
-    } else {
-        $extension = __DIR__ . '/native-insert-query-boundaries-v2.json';
-        requireShape(
-            hash_file('sha256', $extension) === '527e7d1284a409e72b022a14f1280ee2d7ed1cc738b47b5d61df3a72e9cc8ee2',
-            'Native query INSERT boundary contract differs from the recorded revision'
-        );
-        $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
-        requireShape(array_intersect_key($additional, $rules) === [], 'Native query INSERT cannot replace a fixed boundary');
+    $records = match ($dialect) {
+        'sqlite' => [
+            ['sqlite-grouped-boundaries-v2.json', '0d054f583a15cc1ccc76a45d79b3cf2420279d8b26f51d112f4ec6bf022285e7'],
+            ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
+            ['sqlite-insert-input-boundaries-v2.json', 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f'],
+            ['sqlite-scalar-boundaries-v2.json', '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be'],
+            ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
+            ['sqlite-delete-returning-boundaries-v1.json', '692d0b9ef8a91b6e3cb4c8f09dbc5bcad3b9a985789a2e57480cce1bea1e1c4b'],
+        ],
+        'mysql', 'postgres' => [
+            ['native-boundaries-v13.json', '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3'],
+            ['native-insert-query-boundaries-v2.json', '527e7d1284a409e72b022a14f1280ee2d7ed1cc738b47b5d61df3a72e9cc8ee2'],
+        ],
+    };
+    $rules = [];
+    foreach ($records as [$name, $digest]) {
+        $path = __DIR__ . '/' . $name;
+        requireShape(is_file($path) && hash_file('sha256', $path) === $digest, "Boundary contract differs from its recorded revision: $name");
+        $additional = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape($additional !== [] && array_intersect_key($additional, $rules) === [], "Boundary contract has no distinct rules: $name");
         $rules += $additional;
     }
 
