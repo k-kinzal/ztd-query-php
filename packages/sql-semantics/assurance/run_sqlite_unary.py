@@ -63,11 +63,13 @@ def execute(args, specification, db, worker_factory=Worker):
 def check_faults(args, db):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     unary = "$expression->kind->value . ' '"
+    operand = "$this->expression($expression->operand, $source, $joins)"
+    emission = f"{unary} . {operand}"
     binary = "$expression->operator->value"
     return check_render_faults(args, db, [
-        RenderFault("erase-plus-affinity-rule", renderer, unary, f"($expression->kind->value === '+' ? '' : {unary})",
+        RenderFault("erase-plus-affinity-rule", renderer, emission, f"($expression->kind->value === '+' ? '' : {unary}) . {operand}",
                     affinity_witness(), "meaning-mismatch"),
-        RenderFault("complement-instead-of-not", renderer, unary, f"($expression->kind->value === 'NOT' ? '~ ' : {unary})",
+        RenderFault("complement-instead-of-not", renderer, emission, f"($expression->kind->value === 'NOT' ? '~ ' : {unary}) . {operand}",
                     query("select", [[expression("not", integer(1))]]), "meaning-mismatch"),
         RenderFault("reverse-null-test", renderer, binary, f"({binary} === 'IS' ? 'IS NOT' : {binary})",
                     query("select", [[expression("is-null", ["null"])]]), "meaning-mismatch"),
