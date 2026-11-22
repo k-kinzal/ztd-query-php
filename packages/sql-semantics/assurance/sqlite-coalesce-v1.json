@@ -1,0 +1,66 @@
+{
+  "revision": "SemanticsIR/sqlite-coalesce-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with its builtin routine registry and MAX_FUNCTION_ARG=127.",
+  "constructors": {
+    "Expression/Nulls/Coalesce": {
+      "role": "The ordered first non-NULL operation of SQLite COALESCE and binary IFNULL.",
+      "structure": "Two to 127 ordered checked scalar arguments. The owner checks each operand in the expression's scope.",
+      "conditions": "Use exactly the admitted argument role. Preserve every argument and its evaluation order. Resolve the builtin function and reject invalid arity, star, aggregate ordering, filter and window placement. Scalar ALL and DISTINCT are accepted by SQLite and do not change evaluation.",
+      "meaning": "Evaluate arguments in order until one is non-NULL. Preserve the selected value and storage class. With no such value return NULL. Later expressions stay unevaluated while their lexical markers remain registered. Preserve the explicit collation carried by the arguments.",
+      "externalInterpretation": "Use the installed SQLite builtins and the enclosing column slots. Runtime bindings occupy the explicit numbered slots.",
+      "sql": "Emit COALESCE with every operand in its original argument position. IFNULL has the same binary native operation.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Expression/Nulls/CoalesceArgument": {
+      "role": "A scalar evaluated at one position of the first non-NULL operation.",
+      "structure": "One checked scalar from the closed SQLite expression graph.",
+      "conditions": "Only the explicit immutable scalar alternatives are admitted. The owning statement checks scope and budgets.",
+      "meaning": "Evaluate this scalar only when every previous argument has returned NULL.",
+      "externalInterpretation": "Use the same native scalar and parameter roles as the owner.",
+      "sql": "Emit the checked scalar with explicit grouping when required.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Argument order and arity, first selected value, all-NULL results, distinct native storage classes and ordered result names.",
+    "Missing, NULL and non-NULL numbered arguments, dormant registrations, stable first spelling, and changes when a dormant error becomes selected.",
+    "Explicit collation propagation through a call and independence from an implicit table collation.",
+    "One resolved scalar participates in native projections, filters and schema expressions using the enclosing scope."
+  ],
+  "finite": {
+    "arity": [2, 3, 7, 127],
+    "layout": ["first-text", "last-integer", "all-null", "dormant-marker", "bound-last", "null-last"],
+    "placement": ["result", "is-null"],
+    "identity": "Recover all 48 combinations from the observed argument roles, list length, marker spellings and enclosing operation."
+  },
+  "exploration": {
+    "seeds": [9277, 24623, 56153],
+    "casesPerSeed": 41,
+    "timeoutSeconds": 280,
+    "allowedExclusions": [],
+    "structure": "Vary argument position, count, native values, explicit NULL and binding positions. Build nested first non-NULL expressions and scoped column reads. Include comparison, short-circuit and collation observations."
+  },
+  "negative": [
+    "A one-argument direct call",
+    "A direct call with 128 arguments",
+    "An argument list with a missing list position",
+    "A direct list with a value outside the argument role",
+    "An analyzed call with a FILTER clause",
+    "An analyzed IFNULL with three arguments",
+    "An unbound column inside a dormant argument"
+  ],
+  "faults": [
+    "Reverse argument order",
+    "Lose the last argument of a call with three arguments",
+    "Replace a bound marker in a dormant argument with NULL",
+    "Use a native expression that selects the first argument even when NULL"
+  ],
+  "trust": [
+    "SQLite 3.47.2 native builtin registry, fixed limits and typing rules",
+    "Independent ordered scalar and explicit collation observations",
+    "The exact immutable PHP value and its closed runtime visitors"
+  ],
+  "sources": ["https://sqlite.org/lang_corefunc.html", "https://sqlite.org/limits.html", "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip"]
+}
