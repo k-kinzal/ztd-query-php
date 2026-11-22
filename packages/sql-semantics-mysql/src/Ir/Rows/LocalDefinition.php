@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
@@ -49,5 +50,23 @@ final class LocalDefinition
         Check::input($query instanceof Select || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');
 
         return $query;
+    }
+    /**
+     * Checks a projection consumer before resolving its local input.
+     *
+     * @throws InvalidConstruction When the root or an outer clause has no local IR representation
+     */
+    public function consumer(Select|QueryExpression $statement): Select
+    {
+        $body = $statement instanceof QueryExpression ? $statement->body : $statement;
+        Check::input($body instanceof Select, 'A local projection requires a query with a local source.');
+        Check::input(
+            $body->where === null && $body->groupBy === null && $body->having === null && $body->windows === []
+            && $body->qualify === null && $body->orderBy === [] && $body->limit === null && $body->procedure === null
+            && $body->locking === [] && $body->into === null && $body->late === null && ($body->options === [] || $body->options === [SelectOption::All]),
+            'The local projection requires an ordinary result without outer clauses.'
+        );
+
+        return $body;
     }
 }

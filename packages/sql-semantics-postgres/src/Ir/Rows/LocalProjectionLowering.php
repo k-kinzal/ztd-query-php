@@ -32,14 +32,10 @@ final class LocalProjectionLowering
         Check::input($remaining >= 1 && $remaining <= 16, 'A local projection has at most sixteen definition boundaries.');
         $statement = $query ?? $operation->statement;
         Check::input($statement instanceof Select || $statement instanceof QueryExpression, 'A local projection requires a query with a local source.');
-        $body = $statement instanceof QueryExpression ? $statement->body : $statement;
-        Check::input($body instanceof Select && $body->from !== null, 'A local projection requires a query with a local source.');
-        Check::input(
-            $body->where === null && $body->groupBy === [] && $body->having === null
-            && $body->windows === [] && $body->distinct === null && $body->into === null && $body->options === null,
-            'The local projection requires an ordinary result without outer clauses.'
-        );
-        $definition = (new LocalDefinition())->resolve($operation, $body, $statement);
+        $local = new LocalDefinition();
+        $body = $local->consumer($statement);
+        Check::input($body->from !== null, 'A local projection requires a query with a local source.');
+        $definition = $local->resolve($operation, $body, $statement);
         $source = $definition instanceof QueryExpression || $definition->from instanceof DerivedTable
             ? $this->lower($operation, $definition, $remaining - 1)
             : (new SelectLowering())->lower($operation, $definition);

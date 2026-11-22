@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 
 /**
@@ -33,15 +32,10 @@ final class LocalProjectionLowering
         Check::input($remaining >= 1 && $remaining <= 16, 'A local projection has at most sixteen definition boundaries.');
         $statement = $query ?? $operation->statement;
         Check::input($statement instanceof Select || $statement instanceof QueryExpression, 'A local projection requires a query with a local source.');
-        $body = $statement instanceof QueryExpression ? $statement->body : $statement;
-        Check::input($body instanceof Select && $body->from !== null, 'A local projection requires a query with a local source.');
-        Check::input(
-            $body->where === null && $body->groupBy === null && $body->having === null && $body->windows === []
-            && $body->qualify === null && $body->orderBy === [] && $body->limit === null && $body->procedure === null
-            && $body->locking === [] && $body->into === null && $body->late === null && ($body->options === [] || $body->options === [SelectOption::All]),
-            'The local projection requires an ordinary result without outer clauses.'
-        );
-        $definition = (new LocalDefinition())->resolve($operation, $body, $statement);
+        $local = new LocalDefinition();
+        $body = $local->consumer($statement);
+        Check::input($body->from !== null, 'A local projection requires a query with a local source.');
+        $definition = $local->resolve($operation, $body, $statement);
         $source = $definition instanceof QueryExpression || $definition->from instanceof DerivedTable
             ? $this->lower($operation, $definition, $remaining - 1)
             : (new SelectLowering())->lower($operation, $definition);

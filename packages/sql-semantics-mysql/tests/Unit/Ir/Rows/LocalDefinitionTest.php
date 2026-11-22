@@ -24,4 +24,12 @@ final class LocalDefinitionTest extends TestCase
 
         self::assertSame($query->statement->from->query, (new LocalDefinition())->resolve($query->binding(), $query->statement, $query->statement));
     }
+
+    public function testConsumerReturnsTheCheckedOuterSelect(): void
+    {
+        $query = (new Inspection())->inspect('SELECT q.a FROM (SELECT 1 AS a) AS q');
+        self::assertInstanceOf(Select::class, $query->statement);
+
+        self::assertSame($query->statement, (new LocalDefinition())->consumer($query->statement));
+    }
 }
