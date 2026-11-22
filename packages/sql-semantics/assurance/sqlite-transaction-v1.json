@@ -1,0 +1,77 @@
+{
+  "revision": "SemanticsIR/sqlite-transaction-1",
+  "approval": "pending-human-review",
+  "profile": {
+    "engine": "SQLite",
+    "version": "3.47.2",
+    "encoding": "UTF-8",
+    "connection": "The same connection state, transaction stack, open statements, schema, storage and journal settings apply before execution."
+  },
+  "additionalPublicRoots": ["Transaction/Transaction"],
+  "constructors": {
+    "transaction": {
+      "type": "Transaction/Transaction",
+      "role": "One connection-local transaction or savepoint operation",
+      "structure": "A transaction command and an optional decoded savepoint name",
+      "conditions": "A savepoint command requires a name. Other commands require the absence of a name. Emitted SQL is within SQLite's default 1,000,000,000-byte SQL-length limit.",
+      "meaning": "Start with the specified lock acquisition, commit or roll back the entire transaction, push a named checkpoint, release through the most recent matching checkpoint, or roll back to it while retaining it. Savepoint selection uses the connection's runtime stack and SQLite ASCII case-insensitive name matching. Missing savepoints and other invalid connection states produce execution errors.",
+      "sql": "Emit the command followed by a quoted savepoint name for named operations only.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "command": {
+      "type": "Transaction/TransactionCommand",
+      "role": "Closed transaction state transition",
+      "structure": "Enum for deferred, immediate or exclusive BEGIN, COMMIT, ROLLBACK, SAVEPOINT, RELEASE and ROLLBACK TO",
+      "conditions": "One enum case",
+      "meaning": "Specifies the state transition and whether it takes a savepoint name. BEGIN modes differ in early write and read locking under the same journal settings.",
+      "sql": "Fixed keyword sequence for each case, including the BEGIN mode and the TO qualifier.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "name": {
+      "type": "Transaction/SavepointName",
+      "role": "Decoded label supplied to a runtime savepoint operation",
+      "structure": "One UTF-8 string",
+      "conditions": "Valid UTF-8 without NUL. Empty names and duplicate names are valid. The enclosing statement checks the encoded SQL length.",
+      "meaning": "Preserves the name including its spelling in a missing-savepoint error. SQLite folds ASCII letters when matching the connection's most recent savepoint.",
+      "sql": "Double-quoted name with each embedded double quote doubled.",
+      "assurance": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "analysis": "Cover the six published SQLite transaction grammar alternatives. The omitted BEGIN mode is DEFERRED. END is COMMIT. Optional TRANSACTION names have no effect. Optional SAVEPOINT keywords add no meaning. No declaration lookup is needed. The savepoint target is an explicitly named operation on future connection state.",
+  "observations": [
+    "Ordered column metadata, zero rows, parameter metadata and direct changes",
+    "SQLite read-only statement flag",
+    "Autocommit and typed fixture rows after the candidate and each follow-up probe",
+    "Exact state-dependent rejection for nested BEGIN, absent transaction and missing savepoint",
+    "Relative reader and writer access from a second connection after a BEGIN in DELETE journal mode, with zero busy timeout"
+  ],
+  "finite": {
+    "prefixes": ["idle", "explicit transaction", "outer savepoint transaction", "explicit transaction with duplicate and nested savepoints"],
+    "nameless": ["BEGIN DEFERRED", "BEGIN IMMEDIATE", "BEGIN EXCLUSIVE", "COMMIT", "ROLLBACK"],
+    "named": ["SAVEPOINT", "RELEASE SAVEPOINT", "ROLLBACK TO SAVEPOINT"],
+    "labels": ["S", "s", "é", "É", ""],
+    "completeness": "Check the full product of four prefix identities with five nameless and fifteen named targets. Build the expected identity set from the criterion bytes and compare each returned identity exactly once."
+  },
+  "exploration": {
+    "seeds": [89, 431, 1559],
+    "casesPerSeed": 40,
+    "prefixSteps": 7,
+    "suffixSteps": 5,
+    "timeoutSeconds": 240,
+    "allowedExclusions": []
+  },
+  "analysisCases": 10,
+  "lockCases": 3,
+  "negative": [
+    "A release without a name", "A rollback to a savepoint without a name", "A commit with a name",
+    "A savepoint name containing NUL", "A savepoint name containing invalid UTF-8", "A BEGIN mode supplied with a name"
+  ],
+  "faults": ["Release the retained rollback target", "Render the wrong savepoint name", "Request an exclusive lock for an immediate transaction"],
+  "trust": [
+    "SQLite statement framing, engine mode, connection-state API and the two native connections",
+    "Independent checkpoint-stack transition model and observed state trace",
+    "Source shape audit and checked recursive storage rules",
+    "The statement length predicate is checked structurally. Finite tests do not allocate one billion bytes."
+  ],
+  "sources": ["https://www.sqlite.org/lang_transaction.html", "https://www.sqlite.org/lang_savepoint.html"]
+}
