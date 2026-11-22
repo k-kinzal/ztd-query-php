@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -39,7 +40,7 @@ final class ValueRow
     use Snapshot;
 
     /**
-     * @var non-empty-list<Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression>
+     * @var non-empty-list<Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression>
      */
     public readonly array $values;
 
@@ -51,15 +52,14 @@ final class ValueRow
     public function __construct(array $values)
     {
         Check::input(array_is_list($values) && $values !== [] && count($values) <= 2000, 'A VALUES row needs an ordered list of 1 to 2000 operands.');
+        $checker = new ValueRowOperand();
         $closed = [];
         $pending = [];
         foreach ($values as $value) {
-            Check::input($value instanceof Arithmetic || $value instanceof BetweenTest || $value instanceof BlobLiteral || $value instanceof CaseExpression || $value instanceof CastExpression || $value instanceof Comparison
-                || $value instanceof FoldedMembership || $value instanceof HexIntegerLiteral || $value instanceof IntegerLiteral || $value instanceof Logical
-                || $value instanceof MembershipTest || $value instanceof NullLiteral || $value instanceof Parameter || $value instanceof RealLiteral || $value instanceof TextLiteral
-                || $value instanceof TruthTest || $value instanceof UnaryExpression, 'A VALUES row needs a scalar operand independent of tables.');
-            $closed[] = $value;
-            $pending[] = [$value, 0, 0];
+            Check::input(is_object($value), 'A VALUES row needs a scalar operand independent of tables.');
+            $operand = $checker->checked($value);
+            $closed[] = $operand;
+            $pending[] = [$operand, 0, 0];
         }
         (new ExpressionScope())->check([], $pending);
         $this->values = $closed;

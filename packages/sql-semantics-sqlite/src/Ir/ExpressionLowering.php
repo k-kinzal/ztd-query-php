@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -26,11 +27,13 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression as ParsedCase;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast as ParsedCast;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate as ParsedCollate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
@@ -63,7 +66,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -77,14 +80,7 @@ final class ExpressionLowering
         }
 
         return match (true) {
-            $expression instanceof NullTest => new Comparison(
-                match ($expression->form) {
-                    NullTestForm::IsNull => ComparisonOperator::Is,
-                    NullTestForm::NotNull, NullTestForm::NotNullWords => ComparisonOperator::IsNot,
-                },
-                $this->lower($expression->operand, $binding),
-                new NullLiteral(),
-            ),
+            $expression instanceof NullTest => $this->nullTest($expression, $binding),
             $expression instanceof ParsedBetween => new BetweenTest(
                 $this->lower($expression->operand, $binding),
                 $this->lower($expression->low, $binding),
@@ -92,6 +88,7 @@ final class ExpressionLowering
                 $expression->negated,
             ),
             $expression instanceof ParsedMembership => $this->membership($expression, $binding),
+            $expression instanceof ParsedCollate => $this->collated($expression, $binding),
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),
             $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
@@ -103,6 +100,32 @@ final class ExpressionLowering
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
+    }
+
+    /**
+     * Resolves a postfix NULL test to a null-safe comparison role.
+     * @throws InvalidConstruction When the tested operand cannot be resolved
+     */
+    public function nullTest(NullTest $expression, SourceBinding $binding): Comparison
+    {
+        $operator = match ($expression->form) {
+            NullTestForm::IsNull => ComparisonOperator::Is,
+            NullTestForm::NotNull, NullTestForm::NotNullWords => ComparisonOperator::IsNot,
+        };
+
+        return new Comparison($operator, $this->lower($expression->operand, $binding), new NullLiteral());
+    }
+
+    /**
+     * Resolves the explicit builtin comparison sequence for a scalar.
+     * @throws InvalidConstruction When the sequence or operand is unsupported
+     */
+    public function collated(ParsedCollate $expression, SourceBinding $binding): CollatedExpression
+    {
+        $collation = Collation::tryFrom(strtoupper($expression->collation->value));
+        Check::input($collation !== null, 'An explicit collation requires a known SQLite builtin.');
+
+        return new CollatedExpression($this->lower($expression->operand, $binding), $collation);
     }
 
     /**

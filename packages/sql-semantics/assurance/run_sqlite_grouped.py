@@ -11,8 +11,8 @@ from sqlite_grouped_cases import COLLATIONS, FIXTURE, SCHEMA, analyzed, boundari
 from sqlite_grouped_cases import finite_cases, finite_id, finite_ids, negatives, seeded, slot, source
 from sqlite_result_cases import integer
 
-CONTRACT_NAME = "sqlite-grouped-v1.json"
-CONTRACT = "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1"
+CONTRACT_NAME = "sqlite-grouped-v2.json"
+CONTRACT = "2ef368050fa99f784e75c811988bc5ac3951300fd48d575193bc55a8faf74662"
 POLICY = "c3ec0f3c57b38b838a34a357d4cb83e10ada3212a6308e2fa3f4bd153193024b"
 FIELDS = ("operation", "source", "keys", "columns", "where")
 NEGATIVE = r"SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction"

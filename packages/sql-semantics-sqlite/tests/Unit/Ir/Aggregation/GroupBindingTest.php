@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupBinding;
-use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -28,7 +28,7 @@ final class GroupBindingTest extends TestCase
         $source = new SourceBinding($binding, $statement->from);
         $key = (new GroupBinding($binding, $source))->key($statement->groupBy[0]);
 
-        self::assertSame(GroupCollation::RightTrim, $key->collation);
+        self::assertSame(Collation::RightTrim, $key->collation);
         self::assertSame(0, $key->column->slot);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\CountComparison;
-use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
@@ -80,7 +81,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -88,6 +89,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
             array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
             $input[3] === null ? null : operand($input[3]),
         ),
+        'collate' => new CollatedExpression(operand($input[2]), Collation::from($input[1])),
         'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
         'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
         'folded-membership' => new FoldedMembership($input[1], array_map(static fn (string $label): Parameter => new Parameter($label), $input[2])),
@@ -112,7 +114,7 @@ function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpressio
     };
 }
 
-function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -121,6 +123,7 @@ function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastEx
             array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
             $value->otherwise === null ? null : observeOperand($value->otherwise),
         ],
+        $value instanceof CollatedExpression => ['collate', $value->collation->value, observeOperand($value->operand)],
         $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
         $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],
         $value instanceof FoldedMembership => ['folded-membership', $value->matches,
@@ -432,7 +435,7 @@ function directTransaction(array $input): Transaction
 
 function directCount(array $input): Count
 {
-    return new Count($input[1] === null ? null : operand($input[1]), $input[2] === null ? null : GroupCollation::from($input[2]));
+    return new Count($input[1] === null ? null : operand($input[1]), $input[2] === null ? null : Collation::from($input[2]));
 }
 
 function observeCount(Count $value): array
@@ -444,7 +447,7 @@ function directGrouped(array $input): GroupedSelect
 {
     $keys = [];
     foreach ($input['keys'] as [$column, $collation]) {
-        $keys[] = new GroupKey(operand($column), GroupCollation::from($collation));
+        $keys[] = new GroupKey(operand($column), Collation::from($collation));
     }
     $columns = [];
     foreach ($input['columns'] as [$field, $name]) {

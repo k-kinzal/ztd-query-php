@@ -27,4 +27,9 @@ final class HexIntegerLiteralTest extends TestCase
 
         new HexIntegerLiteral('8000000000000000', true);
     }
+
+    public function testToStringKeepsTheSignAndDigits(): void
+    {
+        self::assertSame('-0xFF', (new HexIntegerLiteral('FF', true))->toString());
+    }
 }

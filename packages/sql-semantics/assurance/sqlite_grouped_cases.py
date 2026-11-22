@@ -6,6 +6,7 @@ from random import Random
 from evidence_transcript import canonical
 from run import require
 from run_sqlite_scalars import evaluate
+from sqlite_builtin_collations import collation_key
 from sqlite_engine import typed
 from sqlite_relational_cases import children, truth
 from sqlite_result_cases import integer
@@ -115,10 +116,7 @@ def key_value(value, collation):
     if isinstance(value, (int, float)):
         return "number", value
     if isinstance(value, str):
-        encoded = value.encode()
-        if collation == "NOCASE":
-            return "text", len(encoded), encoded.partition(b"\x00")[0].lower()
-        return "text", encoded.rstrip(b" ") if collation == "RTRIM" else encoded
+        return "text", collation_key(value, collation)
     return ("null",) if value is None else ("blob", value)
 
 

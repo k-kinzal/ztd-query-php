@@ -27,6 +27,7 @@ import run_sqlite_relational as relational
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
+import run_sqlite_collation as collation
 import run_sqlite_folded_membership as folded_membership
 import run_sqlite_membership as membership
 import run_sqlite_between as between
@@ -63,6 +64,7 @@ DOMAINS = {
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
+    collation.CONTRACT_NAME: (collation, collation.FIXTURE),
     folded_membership.CONTRACT_NAME: (folded_membership, folded_membership.FIXTURE),
     membership.CONTRACT_NAME: (membership, membership.FIXTURE),
     between.CONTRACT_NAME: (between, between.FIXTURE),

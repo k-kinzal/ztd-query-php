@@ -26,4 +26,12 @@ final class HexIntegerLiteral
         Check::input(preg_match('/\A(?:0|[1-9A-F][0-9A-F]{0,15})\z/', $digits) === 1, 'Hexadecimal INTEGER requires up to sixteen significant upper-case digits.');
         Check::input(!$negated || $digits !== '8000000000000000', 'The minimum hexadecimal INTEGER cannot be negated.');
     }
+
+    /**
+     * Emits the signed hexadecimal INTEGER spelling.
+     */
+    public function toString(): string
+    {
+        return ($this->negated ? '-' : '') . '0x' . $this->digits;
+    }
 }

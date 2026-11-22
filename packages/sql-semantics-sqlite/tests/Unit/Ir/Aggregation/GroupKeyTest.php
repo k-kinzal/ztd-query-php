@@ -7,8 +7,8 @@ namespace Tests\Unit\Ir\Aggregation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 
 #[CoversClass(GroupKey::class)]
@@ -17,8 +17,8 @@ final class GroupKeyTest extends TestCase
 {
     public function testRetainsBuiltinCollation(): void
     {
-        $key = new GroupKey(new ColumnReference(0), GroupCollation::RightTrim);
+        $key = new GroupKey(new ColumnReference(0), Collation::RightTrim);
 
-        self::assertSame(GroupCollation::RightTrim, $key->collation);
+        self::assertSame(Collation::RightTrim, $key->collation);
     }
 }

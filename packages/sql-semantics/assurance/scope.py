@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-collation-v1.json": "e6095ab2d70045c9ab7f0d49ea8c06248dd2195dd0828968690a35221d45dcd6",
     "sqlite-folded-membership-v1.json": "23406667099181edb6465612e4132cb3c9b0c0cf1c58341dd1a158a8040fd084",
     "sqlite-membership-v1.json": "a4164002596a004a50c1d2d0a85fa0a4578a18980415a0dfc59784c76854dcf7",
     "sqlite-between-v1.json": "8cf61799f6bd352e6b182ce1c8e9fc1f43d2015b1c9b3b7fa835fd38920cd639",
@@ -66,7 +67,7 @@ CONTRACTS = {
     "sqlite-insert-query-v1.json": "009a9763066a4f9bd707f389f002f30dd9ca71382d5693318dbd7656ac077699",
     "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
     "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
-    "sqlite-grouped-v1.json": "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1",
+    "sqlite-grouped-v2.json": "2ef368050fa99f784e75c811988bc5ac3951300fd48d575193bc55a8faf74662",
 
     "server-grouped-v3.json": "d927ba45c6a8c77e669b6da5551e099a815d38dc63dd8338b97553d4cd0cb199",
 

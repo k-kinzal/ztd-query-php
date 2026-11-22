@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\CountBinding;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupBinding;
-use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -34,6 +34,6 @@ final class CountBindingTest extends TestCase
         $count = (new CountBinding())->lower($column->expression, $binding);
 
         self::assertSame(0, $count->argument?->slot);
-        self::assertSame(GroupCollation::RightTrim, $count->distinctCollation);
+        self::assertSame(Collation::RightTrim, $count->distinctCollation);
     }
 }

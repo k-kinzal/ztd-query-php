@@ -84,6 +84,8 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
                     break
         return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
+    if kind == "collate":
+        return evaluate(arguments[1], bindings, row, case_equal, comparison_inputs)
     if kind == "folded-membership":
         return int(arguments[0])
     if kind == "membership":
@@ -99,7 +101,7 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
             if candidate is None:
                 undecided = True
                 continue
-            left, right = comparison_inputs(operand, ("membership-item",), value, candidate)
+            left, right = comparison_inputs(operand, ("membership-item", member, len(items) == 1), value, candidate)
             if order_value(left) == order_value(right):
                 return int(not negated)
         return None if undecided else int(negated)
@@ -398,11 +400,12 @@ def execute(args, specification, db, worker_factory=Worker):
 def check_mutations(args, db):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     real = "sql-semantics-sqlite/src/Ir/Literal/RealLiteral.php"
+    hex_integer = "sql-semantics-sqlite/src/Ir/Literal/HexIntegerLiteral.php"
     cases = [
         ("text-to-blob", renderer, """$expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'", """.rstrip(),
          """$expression instanceof TextLiteral => "CAST('" . str_replace("'", "''", $expression->value) . "' AS BLOB)", """.rstrip(), ["text", "it's"]),
         ("drop-real-sign", real, "($this->negative ? '-' : '') . $this->whole", "$this->whole", ["real", "0", "0", None, True]),
-        ("drop-hex-sign", renderer, "($expression->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
+        ("drop-hex-sign", hex_integer, "($this->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
     ]
     return check_render_faults(args, db, [
         RenderFault(name, path, before, after, query("select", [[term]]), "meaning-mismatch")

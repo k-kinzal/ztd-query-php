@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -130,7 +131,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -148,11 +149,12 @@ final class SelectSql
             $expression instanceof FoldedMembership => $this->foldedMembership($expression),
             $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
+            $expression instanceof CollatedExpression => '(' . $this->expression($expression->operand, $source, $joins) . ' COLLATE ' . $expression->collation->value . ')',
             $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
             $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
-            $expression instanceof HexIntegerLiteral => ($expression->negated ? '-' : '') . '0x' . $expression->digits,
+            $expression instanceof HexIntegerLiteral => $expression->toString(),
             $expression instanceof RealLiteral => $expression->toString(),
             $expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'",
             $expression instanceof BlobLiteral => "X'" . $expression->hex . "'",

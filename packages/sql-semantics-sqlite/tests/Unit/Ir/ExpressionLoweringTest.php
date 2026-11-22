@@ -9,17 +9,22 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
@@ -133,5 +138,27 @@ final class ExpressionLoweringTest extends TestCase
         self::assertSame('02', $test->operand->label);
         self::assertInstanceOf(Parameter::class, $test->items[0]->expression);
         self::assertSame('3', $test->items[0]->expression->label);
+    }
+
+    public function testCollatedResolvesTheBuiltinIdentityAndKeepsItsOperand(): void
+    {
+        $result = (new Semantics())->analyze('SELECT ?02 COLLATE nOcAsE AS value');
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Ir\Select::class, $result);
+        $value = $result->columns[0]->expression;
+
+        self::assertInstanceOf(CollatedExpression::class, $value);
+        self::assertSame(Collation::NoCase, $value->collation);
+        self::assertInstanceOf(Parameter::class, $value->operand);
+        self::assertSame('02', $value->operand->label);
+    }
+
+    public function testNullTestUsesNullSafeComparison(): void
+    {
+        $result = (new Semantics())->analyze('SELECT ?02 ISNULL AS value');
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Ir\Select::class, $result);
+        $value = $result->columns[0]->expression;
+
+        self::assertInstanceOf(Comparison::class, $value);
+        self::assertSame(ComparisonOperator::Is, $value->operator);
     }
 }

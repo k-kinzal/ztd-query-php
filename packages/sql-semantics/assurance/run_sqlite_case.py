@@ -23,9 +23,10 @@ def probe(item, reply, db, ledger=None, key=None, original=None, prediction=expe
             {"expected": item, "actual": reply})
     if ledger is not None:
         ledger.record(key, "constructed", response=reply)
-    observed = {"observation": db.observe(reply["sql"], item["bindings"])}
+    preserve_order = bool(item.get("orderBy"))
+    observed = {"observation": db.observe(reply["sql"], item["bindings"], preserve_order=preserve_order)}
     if original is not None:
-        observed["original"] = db.observe(original, item["bindings"])
+        observed["original"] = db.observe(original, item["bindings"], preserve_order=preserve_order)
     if ledger is not None:
         ledger.record(key, "observed", **observed)
     reference = prediction(item)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Aggregation;
 
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -24,7 +25,7 @@ final class GroupKey
      */
     public function __construct(
         public readonly ColumnReference $column,
-        public readonly GroupCollation $collation = GroupCollation::Binary,
+        public readonly Collation $collation = Collation::Binary,
     ) {
         Check::input($column->source === 0, 'A grouping key must read the single input occurrence.');
     }

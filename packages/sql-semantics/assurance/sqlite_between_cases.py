@@ -2,10 +2,10 @@
 
 from itertools import product
 from random import Random
-from string import ascii_lowercase, ascii_uppercase
 
 from run_sqlite_scalars import evaluate, query
 from run_sqlite_values import names
+from sqlite_builtin_collations import collation_key, explicit_collation
 from sqlite_cast_semantics import comparison_values
 from sqlite_engine import typed
 from sqlite_relational_cases import children, parameter_names
@@ -15,7 +15,6 @@ TABLE = "ir_range_inputs"
 DDL = f"CREATE TABLE main.{TABLE} (n INTEGER, t TEXT COLLATE NOCASE)"
 DATA = ((2, "10"), (2, "10"), (0, "apple"), (8, "aPPLe"), (12, "Z"), (None, "b"), (3, None))
 FIXTURE = DDL + f"; INSERT INTO main.{TABLE} VALUES (2,'10'),(2,'10'),(0,'apple'),(8,'aPPLe'),(12,'Z'),(NULL,'b'),(3,NULL);"
-LOWER = str.maketrans(ascii_uppercase, ascii_lowercase)
 
 
 def col(index):
@@ -137,6 +136,8 @@ def comparison(source):
     slots = [] if source is None else source[2]
 
     def describe(term):
+        if term[0] == "collate":
+            return describe(term[2])
         if term[0] == "column":
             name = slots[term[1]]
             return ["cast", "INTEGER" if name == "n" else "TEXT"], "BINARY" if name == "n" else "NOCASE"
@@ -147,11 +148,17 @@ def comparison(source):
         return term, None
 
     def apply(left, right, a, b):
+        l_explicit = explicit_collation(left)
+        if right[0] == "membership-item":
+            r_explicit = explicit_collation(right[1]) if right[2] else None
+        else:
+            r_explicit = explicit_collation(right)
         left, l_collation = describe(left)
         right, r_collation = describe(right)
         a, b = comparison_values(left, right, a, b)
-        if type(a) is str and type(b) is str and (l_collation or r_collation) == "NOCASE":
-            return a.translate(LOWER), b.translate(LOWER)
+        if type(a) is str and type(b) is str:
+            collation = l_explicit or r_explicit or l_collation or r_collation or "BINARY"
+            return collation_key(a, collation), collation_key(b, collation)
         return a, b
 
     return apply

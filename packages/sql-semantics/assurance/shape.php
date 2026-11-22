@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\CollatedExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\BetweenTest', 'Predicate\\Comparison', 'Predicate\\FoldedMembership', 'Predicate\\Logical', 'Predicate\\MembershipTest', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -107,13 +107,13 @@ if ($dialect === 'sqlite') {
         'having' => ['?Aggregation\\CountComparison'],
     ];
     $methods['Aggregation\\GroupedSelect'] = $methods['Select'];
-    $properties['Aggregation\\GroupCollation'] = $methods['Aggregation\\GroupCollation'] = [];
-    $enumCases['Aggregation\\GroupCollation'] = ['Binary' => 'BINARY', 'NoCase' => 'NOCASE', 'RightTrim' => 'RTRIM'];
-    $properties['Aggregation\\Count'] = ['argument' => ['?ColumnReference'], 'distinctCollation' => ['?Aggregation\\GroupCollation']];
+    $properties['Collation'] = $methods['Collation'] = [];
+    $enumCases['Collation'] = ['Binary' => 'BINARY', 'NoCase' => 'NOCASE', 'RightTrim' => 'RTRIM'];
+    $properties['Aggregation\\Count'] = ['argument' => ['?ColumnReference'], 'distinctCollation' => ['?Collation']];
     $properties['Aggregation\\CountComparison'] = [
         'count' => ['Aggregation\\Count'], 'operator' => ['Predicate\\ComparisonOperator'], 'threshold' => ['IntegerLiteral', 'NullLiteral', 'Parameter'], 'thresholdFirst' => ['bool'],
     ];
-    $properties['Aggregation\\GroupKey'] = ['column' => ['ColumnReference'], 'collation' => ['Aggregation\\GroupCollation']];
+    $properties['Aggregation\\GroupKey'] = ['column' => ['ColumnReference'], 'collation' => ['Collation']];
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Count', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Count'] = $methods['Aggregation\\GroupKey'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
     $methods['Aggregation\\CountComparison'] = ['__construct'];
@@ -124,6 +124,10 @@ if ($dialect === 'sqlite') {
     $properties['Expression\\CaseExpression'] = ['base' => $nullableCaseOperands, 'branches' => ['array'], 'otherwise' => $nullableCaseOperands];
     $properties['Expression\\CaseBranch'] = ['when' => $operands, 'then' => $operands];
     $methods['Expression\\CaseExpression'] = $methods['Expression\\CaseBranch'] = ['__construct'];
+    $properties['Expression\\CollatedExpression'] = ['operand' => $operands, 'collation' => ['Collation']];
+    $methods['Expression\\CollatedExpression'] = ['__construct'];
+    $internal[] = 'Rows\\ValueRowOperand';
+    $pureCollaborators[] = 'Rows\\ValueRowOperand';
     $properties['Expression\\CastExpression'] = ['target' => ['Expression\\CastTarget'], 'operand' => $operands];
     $methods['Expression\\CastExpression'] = ['__construct'];
     $properties['Expression\\CastTarget'] = $methods['Expression\\CastTarget'] = [];
@@ -143,6 +147,7 @@ if ($dialect === 'sqlite') {
     $properties['Select']['distinct'] = ['bool'];
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
     $methods['Literal\\RealLiteral'][] = 'toString';
+    $methods['Literal\\HexIntegerLiteral'][] = 'toString';
     $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
@@ -399,7 +404,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','strpbrk','substr_count','str_repeat'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','is_object','strpbrk','substr_count','str_repeat'];
 
 function requireShape(bool $condition, string $detail): void
 {

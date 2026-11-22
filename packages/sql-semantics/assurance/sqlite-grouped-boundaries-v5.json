@@ -1,0 +1,166 @@
+{
+  "revision": "SemanticsIR/sqlite-grouped-boundaries-5",
+  "approval": "pending-human-review",
+  "scope": "Exact AST rules for grouping, pre-qualification of rows, and post-group COUNT comparisons. Resolve truth tests and preserve their operands under the checked table scope.",
+  "trust": "Pinned PHP AST parsing, builtin SQLite collation and function registry, and the detached checked-list and snapshot primitives.",
+  "rules": {
+    "Aggregation/Count::__construct": {
+      "common": [
+        "Check::input($argument !== null || $distinctCollation === null, 'A distinct count requires a field argument.');",
+        "Check::input($argument === null || $argument->source === 0, 'A count argument must read the single input occurrence.');"
+      ]
+    },
+    "Aggregation/GroupKey::__construct": {
+      "common": [
+        "Check::input($column->source === 0, 'A grouping key must read the single input occurrence.');"
+      ]
+    },
+    "Aggregation/GroupBinding::key": {
+      "common": [
+        "$explicit = null;",
+        "while ($expression instanceof Grouped || $expression instanceof Collate) {",
+        "    if ($expression instanceof Collate) {",
+        "        Check::input($explicit === null, 'A grouped field can have one explicit collation.');",
+        "        $explicit = $expression->collation;",
+        "    }",
+        "    $expression = $expression->operand;",
+        "}",
+        "$reference = $this->source->reference($expression);",
+        "$resolution = $this->operation->facts->scalar($expression)->resolution;",
+        "Check::invariant($resolution instanceof ResolvedColumn, 'The bound grouping slot is a resolved column.');",
+        "$default = $compareText ? $resolution->declaration()?->collation : null;",
+        "$collation = Collation::tryFrom(strtoupper(($explicit ?? $default)->value ?? 'BINARY'));",
+        "Check::input($collation !== null, 'A grouped text comparison requires a resolved builtin collation.');",
+        "",
+        "return new GroupKey($reference, $collation);"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "common": [
+        "$grouping = Check::listOf($keys, GroupKey::class, 'A grouped query requires an owned key list.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped query requires a nonempty result list.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the SQLite group profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input(isset($source->columns[$key->column->slot]), 'Each grouping key must belong to its input.');",
+        "    $members[$key->column->slot] = true;",
+        "}",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->source === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } else {",
+        "        Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'A count slot must belong to the group input.');",
+        "    }",
+        "}",
+        "$predicates = [];",
+        "$widths = $source === null ? [] : [count($source->columns)];",
+        "if ($where !== null) {",
+        "    $predicates[] = [$where, 0, count($widths)];",
+        "}",
+        "if ($having !== null) {",
+        "    $argument = $having->count->argument;",
+        "    Check::input($argument === null || isset($source->columns[$argument->slot]), 'A HAVING count slot must belong to the group input.');",
+        "    $predicates[] = [$having->threshold, 0, count($widths)];",
+        "}",
+        "(new ExpressionScope())->check($widths, $predicates);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedSelect::toString": {
+      "common": [
+        "return (new GroupedSql())->render($this);"
+      ]
+    },
+    "Aggregation/GroupedSelect::profileId": {
+      "common": [
+        "return 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters/grouped-builtin';"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $field) {",
+        "    $value = $field->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        $result = $renderer->expression($value, $query->source);",
+        "    } else {",
+        "        $result = $this->count($value, $query, $renderer);",
+        "    }",
+        "    $items[] = $result . ' AS ' . $field->name->quoted();",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items);",
+        "if ($query->source !== null) {",
+        "    $sql .= ' FROM ' . $renderer->source($query->source, 0);",
+        "}",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->expression($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key->column, $query->source) . ' COLLATE ' . $key->collation->value;",
+        "}",
+        "",
+        "if ($keys !== []) {",
+        "    $sql .= ' GROUP BY ' . implode(', ', $keys);",
+        "}",
+        "if ($query->having !== null) {",
+        "    $condition = $query->having;",
+        "    $count = $this->count($condition->count, $query, $renderer);",
+        "    $threshold = $renderer->expression($condition->threshold, $query->source);",
+        "    [$left, $right] = $condition->thresholdFirst ? [$threshold, $count] : [$count, $threshold];",
+        "    $sql .= ' HAVING ' . $left . ' ' . $condition->operator->value . ' ' . $right;",
+        "}",
+        "",
+        "return $sql;"
+      ]
+    },
+    "Aggregation/GroupedSql::count": {
+      "common": [
+        "$argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);",
+        "if ($value->distinctCollation !== null) {",
+        "    $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;",
+        "}",
+        "",
+        "return 'count(' . $argument . ')';"
+      ]
+    },
+    "Aggregation/GroupFilterLowering::lower": {
+      "common": [
+        "$comparison = $this->operand($expression);",
+        "Check::input($comparison instanceof Binary, 'HAVING requires a comparison of one COUNT and one threshold.');",
+        "$operator = (new BinaryOperatorLowering())->lower($comparison->operator);",
+        "Check::input($operator instanceof ComparisonOperator, 'HAVING requires a comparison of one COUNT and one threshold.');",
+        "$left = $this->operand($comparison->left);",
+        "$right = $this->operand($comparison->right);",
+        "$thresholdFirst = !$left instanceof FunctionCall;",
+        "$aggregate = $thresholdFirst ? $right : $left;",
+        "$threshold = $thresholdFirst ? $left : $right;",
+        "Check::input($aggregate instanceof FunctionCall && !$threshold instanceof FunctionCall, 'HAVING requires a comparison of one COUNT and one threshold.');",
+        "$count = (new CountBinding())->lower($aggregate, $binding);",
+        "if (!$thresholdFirst && ($operator === ComparisonOperator::Is || $operator === ComparisonOperator::IsNot)",
+        "    && $threshold instanceof TruthWord && ($desired = $source->constantTruth($threshold)) !== null) {",
+        "    $nonzero = $desired === ($operator === ComparisonOperator::Is);",
+        "",
+        "    return new CountComparison($count, $nonzero ? ComparisonOperator::NotEqual : ComparisonOperator::Equal, new IntegerLiteral('0'));",
+        "}",
+        "$value = (new ExpressionLowering())->lower($threshold, $source);",
+        "Check::input($value instanceof IntegerLiteral || $value instanceof NullLiteral || $value instanceof Parameter, 'HAVING requires an integer, NULL or numbered threshold.');",
+        "",
+        "return new CountComparison($count, $operator, $value, $thresholdFirst);"
+      ]
+    },
+    "Aggregation/GroupFilterLowering::operand": {
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "",
+        "return $expression;"
+      ]
+    }
+  },
+  "extends": "sqlite-grouped-boundaries-v3.json"
+}

@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
-use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
@@ -32,9 +32,9 @@ final class GroupedLoweringTest extends TestCase
         self::assertInstanceOf(Select::class, $operation->statement);
 
         $query = (new GroupedLowering())->lower($operation->binding(), $operation->statement);
-        self::assertSame(GroupCollation::NoCase, $query->keys[0]->collation);
+        self::assertSame(Collation::NoCase, $query->keys[0]->collation);
         $count = $query->columns[0]->value;
         self::assertInstanceOf(Count::class, $count);
-        self::assertSame(GroupCollation::RightTrim, $count->distinctCollation);
+        self::assertSame(Collation::RightTrim, $count->distinctCollation);
     }
 }
