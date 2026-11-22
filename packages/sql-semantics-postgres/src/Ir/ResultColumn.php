@@ -22,7 +22,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral $expression,
+        public readonly Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression,
         public readonly Identifier $name,
     ) {
     }

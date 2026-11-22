@@ -17,8 +17,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $table = $schema . '.accounts';
     $context = $semantics->context(["CREATE TABLE $table (id INTEGER)"]);
     $reference = $semantics->analyze("SELECT id, accounts.id FROM $table", $context);
-    if ($reference->columns[0]->expression !== $reference->columns[1]->expression) {
-        throw new RuntimeException('The installed analyzer resolved different slots for equivalent references.');
+    $occurrence = $platform === 'Sqlite' ? 'source' : 'occurrence';
+    foreach ($reference->columns as $column) {
+        $expression = $column->expression;
+        if ([$expression::class, $expression->slot ?? null, $expression->$occurrence ?? null] !== [$namespace . 'Ir\\ColumnReference', 0, 0]) {
+            throw new RuntimeException('The installed analyzer resolved different slots for equivalent references.');
+        }
+    }
+    if ($platform !== 'Sqlite') {
+        $parameterSql = $platform === 'MySql' ? 'SELECT CAST(? AS SIGNED) AS value' : 'SELECT CAST($1 AS integer) AS value';
+        $value = $semantics->analyze($parameterSql)->columns[0]->expression;
+        if ($value::class !== $namespace . 'Ir\\Parameter' || $value->position !== 1) {
+            throw new RuntimeException('The installed analyzer lost the projected parameter position.');
+        }
     }
     $queries = [
         'Select' => 'SELECT 42 AS answer',

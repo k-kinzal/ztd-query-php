@@ -55,11 +55,12 @@ $methods = [
     'TableSource' => ['__construct'],
 ];
 if ($dialect !== 'sqlite') {
-    unset($properties['Parameter'], $methods['Parameter']);
+    $properties['Parameter'] = ['position' => ['int']];
+    $methods['Parameter'] = ['__construct', 'toString'];
     $properties['BooleanLiteral'] = ['value' => ['bool']];
     $methods['BooleanLiteral'] = ['__construct'];
     $properties['Arithmetic']['left'] = $properties['Arithmetic']['right'] = ['Arithmetic', 'ColumnReference', 'IntegerLiteral'];
-    $properties['ResultColumn']['expression'] = ['Arithmetic', 'BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral'];
+    $properties['ResultColumn']['expression'] = ['Arithmetic', 'BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
     $properties['Select']['release'] = [$platform . '\\Model\\Contract\\GrammarRelease'];
 }
 if ($dialect === 'postgres') {
@@ -165,6 +166,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
+    $internal[] = 'ParameterLowering';
     array_push($roots, 'Rows\\Compound', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];

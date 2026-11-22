@@ -31,6 +31,7 @@ final class SelectBounds
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
         (new OccurrenceScope())->predicate($where, $inputs);
         $nodes = 0;
+        $positions = [];
         foreach ($results as $result) {
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
@@ -42,9 +43,13 @@ final class SelectBounds
                         'Column slot must belong to the SELECT source.',
                     ),
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
+                    $expression instanceof Parameter => $positions[$expression->position] = true,
                     $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,
                 };
             }
+        }
+        for ($position = 1; $position <= count($positions); ++$position) {
+            Check::input(isset($positions[$position]), 'PostgreSQL parameter positions must cover the contiguous bound slots.');
         }
     }
 }

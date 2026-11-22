@@ -28,6 +28,7 @@ function constructOperand(string $namespace, array $data): object
 {
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
+        'parameter' => 'Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
         'slot' => 'ColumnReference',
@@ -36,7 +37,7 @@ function constructOperand(string $namespace, array $data): object
     $operator = $namespace . 'ArithmeticOperator';
 
     return match ($data[0]) {
-        'integer', 'boolean' => new $type($data[1]),
+        'integer', 'boolean', 'parameter' => new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
@@ -51,6 +52,7 @@ function observeOperand(string $namespace, object $value): array
 {
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
+        $namespace . 'Parameter' => ['parameter', $value->position],
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],

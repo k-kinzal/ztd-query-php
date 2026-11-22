@@ -80,6 +80,7 @@ def inventory(root):
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
+            parameters = ("param_marker", "simple_expr", "cast_type")
             compound = ("union_list", "union_clause", "query_expression_body")
             create = ("create_table_stmt", "create_table", "column_def", "field_def", "column_attribute")
             drop = ("drop_table_stmt", "drop")
@@ -90,6 +91,7 @@ def inventory(root):
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
+            parameters = ("c_expr", "a_expr")
             compound = ("simple_select", "set_quantifier")
             create = ("CreateStmt", "ColumnDef", "ColConstraintElem")
             drop = ("DropStmt", "object_type_any_name")
@@ -99,7 +101,7 @@ def inventory(root):
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
             families = ("joined_table", "join_type", "join_qual", "where_clause")
         else:
-            families = selection = insert = update = transaction = drop = compound = create = ()
+            families = selection = insert = update = transaction = drop = compound = create = parameters = ()
         for rule in families:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
@@ -128,6 +130,10 @@ def inventory(root):
         for rule in create:
             for alternative in rules.get(rule, []):
                 related[alternative] = ("server-create-table-v1.json",)
+        for rule in parameters:
+            for alternative in rules.get(rule, []):
+                if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
+                    related[alternative] = ("server-parameter-v1.json",)
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

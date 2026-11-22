@@ -76,7 +76,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v4.json) fix selected PHP guard sequences for row slots, joined sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v5.json) fix selected PHP guard sequences for row slots, projected parameters, joined sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -157,6 +157,12 @@ Run `run_server_create_table.py` with the same native fixture options. Replay al
 The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.
 
 Run `run_server_compound.py` with the same native fixture options. Replay all releases with `combine_server_compound_evidence.py` and the per-release `index.json` paths.
+
+## Native projected parameters
+
+The [native parameter contract](server-parameter-v1.json) fixes the binding position and builtin cast for explicitly cast native markers in output columns. The observer binds distinct integers and NULL through MySQL's native prepared protocol or PostgreSQL PREPARE with int4 arguments. The independent comparison checks the exact vector lookup, output order and native types. PostgreSQL uses repeated and reordered positions.
+
+Run `run_server_parameter.py` with the same native fixture options. Replay all releases with `combine_server_parameter_evidence.py` and the per-release `index.json` paths.
 
 ## SQLite joins, filters and ordering
 

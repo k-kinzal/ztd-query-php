@@ -11,8 +11,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(): array
 {
-    $file = __DIR__ . '/native-boundaries-v4.json';
-    requireShape(hash_file('sha256', $file) === '2a0ea73f247773de6b3f6691071edb66065b0ee6a1d9d8a55b50db941bad89dd', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v5.json';
+    requireShape(hash_file('sha256', $file) === 'd7ab70fd4e0f4f92733d1aaf01e5887c107c63ef24259a3abf5c9d6db96b6b3c', 'Native boundary contract differs from the recorded revision');
 
     return json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 }
@@ -28,7 +28,7 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Parameter', 'Ir\\From\\Join', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }

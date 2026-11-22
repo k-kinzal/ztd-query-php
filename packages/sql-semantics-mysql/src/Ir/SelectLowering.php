@@ -49,11 +49,17 @@ final class SelectLowering
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
+        $parameters = new ParameterLowering();
+        $parameterPosition = 0;
         foreach ($statement->items as $index => $column) {
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
             $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
-            $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier(ltrim($name->value, " \t\r\n\v\f")));
+            $parameter = $parameters->lower($column->expression, $parameterPosition + 1);
+            if ($parameter !== null) {
+                ++$parameterPosition;
+            }
+            $results[] = new ResultColumn($parameter ?? $expressions->lower($column->expression, $binding), new Identifier(ltrim($name->value, " \t\r\n\v\f")));
         }
 
         $result = new ResultLowering();

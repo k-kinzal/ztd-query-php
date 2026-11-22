@@ -47,11 +47,13 @@ final class SelectLowering
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
+        $parameters = new ParameterLowering();
         foreach ($statement->targets as $index => $column) {
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
             $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
-            $results[] = new ResultColumn($expressions->lower($column->expression, $binding, $catalogFirst), new Identifier($name->value));
+            $parameter = $parameters->lower($column->expression, $operation->context);
+            $results[] = new ResultColumn($parameter ?? $expressions->lower($column->expression, $binding, $catalogFirst), new Identifier($name->value));
         }
 
         $result = new ResultLowering();

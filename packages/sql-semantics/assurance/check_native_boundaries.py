@@ -32,6 +32,7 @@ def faults(engine):
         Fault("accept-out-of-range-smallint-default", "Schema/TableColumn::__construct",
               "$integer >= -32768 && $integer <= 32767,", "true,"),
         Fault("accept-excessive-table-width", "Schema/CreateTable::__construct", "count($checked) <= 128,", "true,"),
+        Fault("allow-zero-parameter-position", "Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
@@ -39,6 +40,10 @@ def faults(engine):
         shared.append(Fault("allow-repeated-pg-update-targets", "Mutation/Update::__construct", "!isset($written[$slot]),", "true,"))
         shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
+    if engine == "mysql":
+        shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::check", "$expression->position === ++$position,", "true,"))
+    else:
+        shared.append(Fault("ignore-postgres-slot-holes", "SelectBounds::check", "isset($positions[$position]),", "true,"))
     return shared
 
 
@@ -95,7 +100,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v4.json", "value_storage.php", "value-storage-v8.json", "value-primitives.json")},
+                       "native-boundaries-v5.json", "value_storage.php", "value-storage-v8.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)
