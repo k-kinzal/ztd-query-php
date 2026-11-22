@@ -314,6 +314,8 @@ The [SQLite grouping record](sqlite-grouped-v1.json) fixes builtin text collatio
 
 Run `run_sqlite_grouped.py` with the same SQLite fixture options as the other domains. The SQLite collector replays the transcript under the same restricted observer and verifies the exact finite identities.
 
+The [group filter record](sqlite-group-filter-v1.json) adds a scoped input filter and a comparison evaluated over the formed group. Run `run_sqlite_group_filter.py` with the SQLite fixture options. The oracle checks both stages against a table with mixed storage classes, unequal counts, NULLs and repeated numbered parameters. The group filter can read a count absent from the result.
+
 ## SQLite recursive common tables
 
 The [recursive source contract](sqlite-recursive-source-v1.json) covers one named local definition with an independent anchor and one self-fed SELECT arm. The step scope represents a single dequeued row, and the consuming SELECT reads the resulting local table. The reference evaluator implements queue admission and UNION duplicate elimination, including equality of NULL cells. It compares storage classes, output names, row multiplicity, declared ordering, read-only effects and parameter slots against SQLite 3.47.2.

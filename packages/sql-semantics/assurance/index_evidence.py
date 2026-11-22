@@ -30,7 +30,7 @@ NATIVE = {
     "wildcard": "wildcard-projection-v2.json",
 }
 SQLITE = {
-    "sqlite-case-v1.json", "sqlite-cast-v1.json", "sqlite-defaults-v1.json", "sqlite-delete-returning-v1.json",
+    "sqlite-case-v1.json", "sqlite-cast-v1.json", "sqlite-defaults-v1.json", "sqlite-delete-returning-v1.json", "sqlite-group-filter-v1.json",
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",
     "sqlite-drop-table-v1.json", "sqlite-insert-v1.json", "sqlite-local-source-v1.json",
     "sqlite-recursive-source-v1.json", "sqlite-relational-v1.json", "sqlite-result-v1.json", "sqlite-scalars-v1.json",

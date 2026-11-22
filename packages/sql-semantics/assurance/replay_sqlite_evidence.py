@@ -14,6 +14,7 @@ import run_sqlite_delete as delete
 import run_sqlite_delete_returning as returning
 import run_sqlite_defaults as defaults
 import run_sqlite_drop_table as drop
+import run_sqlite_group_filter as group_filter
 import run_sqlite_grouped as grouped
 import run_sqlite_insert as insert
 import run_sqlite_insert_input as insert_input
@@ -52,6 +53,7 @@ DOMAINS = {
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
+    group_filter.CONTRACT_NAME: (group_filter, group_filter.FIXTURE),
     wildcard.CONTRACT_NAME: (wildcard, wildcard.SCHEMA),
     "sqlite-transaction-v1.json": (transaction, transaction.FIXTURE),
 }
@@ -68,7 +70,8 @@ def replay(directory, contract_name, index, library):
         return transcript
 
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
-    factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase}.get(module, Database)
+    factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase,
+               group_filter: group_filter.GroupedDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

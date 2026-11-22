@@ -26,11 +26,7 @@ final class GroupedSql
             if ($value instanceof ColumnReference) {
                 $result = $renderer->expression($value, $query->source);
             } else {
-                $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
-                if ($value->distinctCollation !== null) {
-                    $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;
-                }
-                $result = 'count(' . $argument . ')';
+                $result = $this->count($value, $query, $renderer);
             }
             $items[] = $result . ' AS ' . $field->name->quoted();
         }
@@ -46,6 +42,30 @@ final class GroupedSql
             $keys[] = $renderer->expression($key->column, $query->source) . ' COLLATE ' . $key->collation->value;
         }
 
-        return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));
+        if ($keys !== []) {
+            $sql .= ' GROUP BY ' . implode(', ', $keys);
+        }
+        if ($query->having !== null) {
+            $condition = $query->having;
+            $count = $this->count($condition->count, $query, $renderer);
+            $threshold = $renderer->expression($condition->threshold, $query->source);
+            [$left, $right] = $condition->thresholdFirst ? [$threshold, $count] : [$count, $threshold];
+            $sql .= ' HAVING ' . $left . ' ' . $condition->operator->value . ' ' . $right;
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Emits the checked aggregate with the collation of a distinct argument.
+     */
+    public function count(Count $value, GroupedSelect $query, SelectSql $renderer): string
+    {
+        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
+        if ($value->distinctCollation !== null) {
+            $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;
+        }
+
+        return 'count(' . $argument . ')';
     }
 }

@@ -13,7 +13,7 @@ function nativeBoundaryContract(string $dialect): array
 {
     $records = match ($dialect) {
         'sqlite' => [
-            ['sqlite-grouped-boundaries-v2.json', '0d054f583a15cc1ccc76a45d79b3cf2420279d8b26f51d112f4ec6bf022285e7'],
+            ['sqlite-grouped-boundaries-v3.json', 'a2a412c86bd0d805dea49b84a59887964d26353432d7dd7bc3cbfbeef17cac56'],
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
             ['sqlite-insert-input-boundaries-v2.json', 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f'],
             ['sqlite-scalar-boundaries-v2.json', '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be'],
@@ -57,7 +57,8 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     if ($dialect === 'sqlite') {
-        foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
+        foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\Predicate\\ComparisonOperator',
+            'Statement\\Expression\\FunctionCall', 'Statement\\Expression\\Operator\\Binary', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {

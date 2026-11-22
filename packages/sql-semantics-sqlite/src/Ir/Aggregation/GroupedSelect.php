@@ -4,9 +4,20 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Aggregation;
 
+use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
@@ -43,7 +54,8 @@ final class GroupedSelect implements SemanticsIR
         public readonly ?TableSource $source,
         array $keys,
         array $columns,
-        public readonly IntegerLiteral|NullLiteral|null $where = null,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
+        public readonly ?CountComparison $having = null,
     ) {
         $grouping = Check::listOf($keys, GroupKey::class, 'A grouped query requires an owned key list.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped query requires a nonempty result list.', 1);
@@ -61,6 +73,17 @@ final class GroupedSelect implements SemanticsIR
                 Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'A count slot must belong to the group input.');
             }
         }
+        $predicates = [];
+        $widths = $source === null ? [] : [count($source->columns)];
+        if ($where !== null) {
+            $predicates[] = [$where, 0, count($widths)];
+        }
+        if ($having !== null) {
+            $argument = $having->count->argument;
+            Check::input($argument === null || isset($source->columns[$argument->slot]), 'A HAVING count slot must belong to the group input.');
+            $predicates[] = [$having->threshold, 0, count($widths)];
+        }
+        (new ExpressionScope())->check($widths, $predicates);
         $this->keys = $grouping;
         $this->columns = $results;
     }

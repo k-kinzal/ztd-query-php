@@ -5,7 +5,9 @@ from random import Random
 
 from evidence_transcript import canonical
 from run import require
+from run_sqlite_scalars import evaluate
 from sqlite_engine import typed
+from sqlite_relational_cases import children, truth
 from sqlite_result_cases import integer
 
 COLLATIONS = ("BINARY", "NOCASE", "RTRIM")
@@ -130,6 +132,8 @@ def projected_count(value, rows):
 
 def expected(item):
     relation, where = item["source"], item["where"]
+    bindings = item.get("bindings", {})
+    having = item.get("having")
     if relation is None:
         entries = [()]
     elif relation[1] == "ir_group_empty":
@@ -137,8 +141,8 @@ def expected(item):
     else:
         positions = ["ab".index(name) for name in relation[2]]
         entries = [tuple(row[position] for position in positions) for row in DATA]
-    if where is not None and (where[0] == "null" or int(where[1]) == 0):
-        entries = []
+    if where is not None:
+        entries = [row for row in entries if truth(evaluate(where, bindings, row)) is True]
     keys = item["keys"]
     groups = {} if keys else {(): []}
     for row in entries:
@@ -146,12 +150,30 @@ def expected(item):
         groups.setdefault(group, []).append(row)
     output = []
     for members in groups.values():
+        if having is not None:
+            measure, operator, threshold, threshold_first = having
+            count_term = integer(projected_count(measure, members))
+            left, right = (threshold, count_term) if threshold_first else (count_term, threshold)
+            if truth(evaluate(["comparison", operator, left, right], bindings)) is not True:
+                continue
         measured = [projected_count(value, members) if value[0] == "count" else None for value, _ in item["columns"]]
         reps = members or [()]
         output.append([[typed(rep[value[1]] if value[0] == "column" else fixed)
                         for (value, _), fixed in zip(item["columns"], measured)] for rep in reps])
-    metadata = {"names": [label for _, label in item["columns"]], "parameters": {}, "parameterCount": 0, "readOnly": True, "changes": 0}
+    parameters = binding_names(item)
+    metadata = {"names": [label for _, label in item["columns"]], "parameters": parameters,
+                "parameterCount": max(map(int, parameters), default=0), "readOnly": True, "changes": 0}
     return metadata, output
+
+
+def binding_names(item):
+    parameters = {}
+    having = item.get("having")
+    for root in (item["where"], None if having is None else having[2]):
+        for member in children(root):
+            if member[0] == "parameter":
+                parameters.setdefault(str(int(member[1])), "?" + member[1])
+    return parameters
 
 
 def matches(choices, observed):

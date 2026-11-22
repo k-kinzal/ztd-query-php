@@ -6,8 +6,6 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Aggregation;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
-use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -43,13 +41,13 @@ final class GroupedLowering
     }
 
     /**
-     * Binds the selected field, group keys and constant admission filter.
+     * Binds the selected fields, group keys and filters.
      */
     public function lower(BoundStatement $operation, Select $statement): GroupedSelect
     {
         Check::input(
             ($statement->from === null || $statement->from instanceof TableInput)
-                && $statement->having === null && $statement->windows === [] && $statement->orderBy === []
+                && $statement->windows === [] && $statement->orderBy === []
                 && $statement->limit === null && $statement->quantifier !== SetQuantifier::Distinct,
             'A grouped projection requires an ordinary unbounded input without result modifiers.',
         );
@@ -60,10 +58,6 @@ final class GroupedLowering
             $keys[] = $binding->key($expression);
         }
         $where = (new QueryClauses())->predicate($statement->where, $source);
-        Check::input(
-            $where === null || $where instanceof IntegerLiteral || $where instanceof NullLiteral,
-            'A grouped query requires an integer or NULL constant filter.'
-        );
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');
         $columns = [];
@@ -76,7 +70,8 @@ final class GroupedLowering
                 : $source->reference($target->expression);
             $columns[] = new GroupColumn($value, new Identifier($name->value));
         }
+        $having = $statement->having === null ? null : (new GroupFilterLowering())->lower($statement->having, $binding, $source);
 
-        return new GroupedSelect($source->source(), $keys, $columns, $where);
+        return new GroupedSelect($source->source(), $keys, $columns, $where, $having);
     }
 }

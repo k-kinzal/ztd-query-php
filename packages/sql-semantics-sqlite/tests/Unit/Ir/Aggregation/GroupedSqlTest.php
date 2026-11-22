@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSql;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 #[CoversClass(GroupedSql::class)]
@@ -30,5 +31,13 @@ final class GroupedSqlTest extends TestCase
         $sql = (new GroupedSql())->render(new GroupedSelect($source, [$key], [$count]));
 
         self::assertSame('SELECT count(DISTINCT "__ztd_source"."key" COLLATE NOCASE) AS "n" FROM "main"."items" AS "__ztd_source" GROUP BY "__ztd_source"."key" COLLATE RTRIM', $sql);
+    }
+
+    public function testCountEmitsTheCountAllArgument(): void
+    {
+        $count = new Count();
+        $query = new GroupedSelect(null, [], [new GroupColumn($count, new Identifier('n'))]);
+
+        self::assertSame('count(*)', (new GroupedSql())->count($count, $query, new SelectSql()));
     }
 }

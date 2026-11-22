@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\CountComparison;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
@@ -383,6 +384,16 @@ function directTransaction(array $input): Transaction
     return new Transaction(TransactionCommand::from($input['command']), $name === null ? null : new SavepointName($name));
 }
 
+function directCount(array $input): Count
+{
+    return new Count($input[1] === null ? null : operand($input[1]), $input[2] === null ? null : GroupCollation::from($input[2]));
+}
+
+function observeCount(Count $value): array
+{
+    return ['count', $value->argument === null ? null : observeOperand($value->argument), $value->distinctCollation?->value];
+}
+
 function directGrouped(array $input): GroupedSelect
 {
     $keys = [];
@@ -391,17 +402,22 @@ function directGrouped(array $input): GroupedSelect
     }
     $columns = [];
     foreach ($input['columns'] as [$field, $name]) {
-        $value = $field[0] === 'count'
-            ? new Count($field[1] === null ? null : operand($field[1]), $field[2] === null ? null : GroupCollation::from($field[2]))
-            : operand($field);
+        $value = $field[0] === 'count' ? directCount($field) : operand($field);
         $columns[] = new GroupColumn($value, new Identifier($name));
     }
 
+    $condition = $input['having'] ?? null;
     return new GroupedSelect(
         $input['source'] === null ? null : source($input['source']),
         $keys,
         $columns,
         $input['where'] === null ? null : operand($input['where']),
+        $condition === null ? null : new CountComparison(
+            directCount($condition[0]),
+            ComparisonOperator::from($condition[1]),
+            operand($condition[2]),
+            $condition[3],
+        ),
     );
 }
 
@@ -410,12 +426,7 @@ function observeGrouped(GroupedSelect $query): array
     $columns = [];
     foreach ($query->columns as $field) {
         $value = $field->value;
-        $columns[] = [
-            $value instanceof Count
-                ? ['count', $value->argument === null ? null : observeOperand($value->argument), $value->distinctCollation?->value]
-                : observeOperand($value),
-            $field->name->value,
-        ];
+        $columns[] = [$value instanceof Count ? observeCount($value) : observeOperand($value), $field->name->value];
     }
 
     return [
@@ -423,6 +434,10 @@ function observeGrouped(GroupedSelect $query): array
         'source' => $query->source === null ? null : observeSource($query->source),
         'keys' => array_map(static fn (GroupKey $key): array => [observeOperand($key->column), $key->collation->value], $query->keys),
         'columns' => $columns, 'where' => $query->where === null ? null : observeOperand($query->where),
+        'having' => $query->having === null ? null : [
+            observeCount($query->having->count), $query->having->operator->value,
+            observeOperand($query->having->threshold), $query->having->thresholdFirst,
+        ],
     ];
 }
 

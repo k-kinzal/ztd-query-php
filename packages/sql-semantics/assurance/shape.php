@@ -80,16 +80,21 @@ $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multipl
 if ($dialect === 'sqlite') {
     $roots[] = 'Aggregation\\GroupedSelect';
     $properties['Aggregation\\GroupedSelect'] = [
-        'source' => ['?TableSource'], 'keys' => ['array'], 'columns' => ['array'], 'where' => ['IntegerLiteral', 'NullLiteral', 'null'],
+        'source' => ['?TableSource'], 'keys' => ['array'], 'columns' => ['array'], 'where' => [...$operands, 'null'],
+        'having' => ['?Aggregation\\CountComparison'],
     ];
     $methods['Aggregation\\GroupedSelect'] = $methods['Select'];
     $properties['Aggregation\\GroupCollation'] = $methods['Aggregation\\GroupCollation'] = [];
     $enumCases['Aggregation\\GroupCollation'] = ['Binary' => 'BINARY', 'NoCase' => 'NOCASE', 'RightTrim' => 'RTRIM'];
     $properties['Aggregation\\Count'] = ['argument' => ['?ColumnReference'], 'distinctCollation' => ['?Aggregation\\GroupCollation']];
+    $properties['Aggregation\\CountComparison'] = [
+        'count' => ['Aggregation\\Count'], 'operator' => ['Predicate\\ComparisonOperator'], 'threshold' => ['IntegerLiteral', 'NullLiteral', 'Parameter'], 'thresholdFirst' => ['bool'],
+    ];
     $properties['Aggregation\\GroupKey'] = ['column' => ['ColumnReference'], 'collation' => ['Aggregation\\GroupCollation']];
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Count', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Count'] = $methods['Aggregation\\GroupKey'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
-    array_push($internal, 'Aggregation\\CountBinding', 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
+    $methods['Aggregation\\CountComparison'] = ['__construct'];
+    array_push($internal, 'Aggregation\\CountBinding', 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql', 'Aggregation\\GroupFilterLowering');
     $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $predicates = $operands;
     $nullableCaseOperands = [...$operands, 'null'];
