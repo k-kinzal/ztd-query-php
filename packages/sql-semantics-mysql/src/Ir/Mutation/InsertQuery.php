@@ -21,8 +21,8 @@ use SqlSemantics\SemanticsIR;
  * @visibility public
  * @example Using an independent projection as a write source
  *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
- *     $context = $semantics->context(['CREATE TABLE app.events (id INT)']);
- *     $semantics->analyze('INSERT INTO app.events (id) SELECT 7 AS id', $context) instanceof \SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery // => true
+ *     $declarations = $semantics->context(['CREATE TABLE app.events (id INT)']);
+ *     $semantics->analyze('INSERT INTO app.events (id) SELECT 7 AS id', $declarations) instanceof \SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery // => true
  */
 final class InsertQuery implements SemanticsIR
 {
