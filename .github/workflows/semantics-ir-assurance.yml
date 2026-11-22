@@ -256,6 +256,13 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-native-boundaries"
+      - name: Verify installed Composer package bytes and publication
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/verify_release_layout.py \
+            --candidate candidate --out "$RUNNER_TEMP/semantics-ir-release-layout"
       - name: Preserve observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -280,3 +287,4 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-index/
             ${{ runner.temp }}/semantics-ir-controls/
             ${{ runner.temp }}/semantics-ir-native-boundaries/
+            ${{ runner.temp }}/semantics-ir-release-layout/

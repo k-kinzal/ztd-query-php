@@ -32,6 +32,12 @@ The host owns the case generation, comparator, SQLite database, and evidence pat
 
 Use `--verify-distribution "$evidence/distribution.json"` with the same arguments to compare a checkout with the captured files. The manifest covers source, resources and locked dependencies of the four Semantics packages and SQL Parser. These files must match the paths and blobs in the candidate commit before and after observation collection. An archive that omits locked files must restore them from the candidate commit first. It does not pin the contents of a downstream Composer installation. Use the library and tool digests recorded in the evidence when comparing runs.
 
+## Verify an installed Composer layout
+
+Run `verify_release_layout.py --candidate /path/to/candidate --out release-evidence` from a separate copy of the reviewed assurance tools. Give it a clean full checkout of the candidate and the pinned PHP container image used by the assurance workflow. Bash, jq and Composer must be available on the controller.
+
+The verifier applies the pinned split workflow's Composer transformation and uses offline mirrored packages for the development version and an example tagged version. It compares the installed source and resource bytes to the measured commit, loads the dialect classes through installed autoload in a read-only container, and exercises each statement root. It then injects a change into an installed PHP file and verifies that the byte comparison rejects the change. The report identifies the staged artifacts, observed paths and installation profiles. Use the same comparison against the final published package artifacts at release.
+
 ## Publication contract
 
 The [publication contract](publication-v9.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.

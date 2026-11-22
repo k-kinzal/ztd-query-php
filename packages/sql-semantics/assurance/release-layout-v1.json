@@ -1,0 +1,10 @@
+{
+  "revision": "SemanticsIR/release-layout-1",
+  "approval": "pending-human-review",
+  "recipe": {"path": ".github/workflows/split.yml", "sha256": "68a692747c399644db1a5ffc7abcc85418b11750cac3c73ff4c9e79c5843df8f"},
+  "profiles": {"main": {"version": "dev-main", "constraint": ""}, "tag-example": {"version": "1.0.0", "constraint": "^1.0"}},
+  "packages": "The exact runtime package set and source and resource paths from runtime-package-v1.json.",
+  "acceptance": "Apply the fixed package metadata transform, install offline through Composer, verify exact installed source and resource bytes, verify dependency metadata, and observe every registered root through installed autoload.",
+  "fault": "Append a newline to one installed PHP file after its healthy measurement. Require exact installed-path digest rejection.",
+  "trust": ["Pinned package split recipe and package contract", "Composer invoked without plugins, scripts, network or development dependencies", "Isolated read-only PHP worker", "Staged local package installations and their measured provenance"]
+}
