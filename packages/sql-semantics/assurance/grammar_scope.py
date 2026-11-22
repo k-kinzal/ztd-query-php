@@ -80,18 +80,20 @@ def inventory(root):
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
+            transaction = ("begin", "start", "commit", "rollback", "savepoint", "release", "opt_chain", "opt_release")
             update = ("update", "update_stmt", "update_list", "update_elem")
             insert = ("insert", "insert_stmt", "insert_values", "insert_from_constructor", "insert_from_constructor_opt", "values_list")
             selection = ("order_clause", "opt_order_clause", "limit_clause", "opt_limit_clause", "select_options", "select_option")
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
+            transaction = ("TransactionStmt", "TransactionStmtLegacy", "opt_transaction_chain")
             update = ("UpdateStmt", "set_clause_list", "set_clause")
             insert = ("InsertStmt", "insert_rest", "insert_column_list")
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
             families = ("joined_table", "join_type", "join_qual", "where_clause")
         else:
-            families = selection = insert = update = ()
+            families = selection = insert = update = transaction = ()
         for rule in families:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
@@ -105,6 +107,10 @@ def inventory(root):
         for rule in update:
             for alternative in rules.get(rule, []):
                 related[alternative] = ("server-update-v1.json",)
+        for rule in transaction:
+            for alternative in rules.get(rule, []):
+                if not any(excluded in alternative for excluded in ("PREPARED", "PREPARE", "REPLICA", "SLAVE")):
+                    related[alternative] = ("server-transaction-v1.json",)
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

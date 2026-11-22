@@ -8,7 +8,7 @@ from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import CONTRACT as JOIN
-from run_server_join import OBSERVER, check_preparation, main, prepare
+from run_server_join import OBSERVER, check_preparation, main, observer_request, prepare
 from server_join_cases import is_join, slot, table
 from server_result_cases import case, expected, finite_id, finite_ids, match, order, requests
 from sqlite_domain import RenderFault
@@ -50,7 +50,7 @@ def required_forms(_):
             "limit/tie-cut", "source/joined", "source/table", "projection/repeated-label"}
 
 
-def sample_forms(forms, response, engine):
+def sample_forms(forms, response, engine, _):
     plan = expected({**response, "dialect": engine})
     eligible = [row for band in plan["bands"] for row in band["members"]]
     if len(eligible) > len({canonical(row) for row in eligible}):

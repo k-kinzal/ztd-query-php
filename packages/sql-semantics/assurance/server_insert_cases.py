@@ -32,7 +32,7 @@ def finite_cases(engine, tag):
         yield case(engine, tag, layout, [line[:len(layout)] for line in vector[:count]])
 
 
-def finite_id(_, response):
+def finite_id(_, response, _item):
     columns, rows = response["target"]["columns"], response["rows"]
     variant = next(index for index, pair in enumerate(VECTORS)
                    if [line[:len(columns)] for line in pair[:len(rows)]] == rows)

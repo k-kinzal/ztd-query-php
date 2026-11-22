@@ -18,6 +18,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Update;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\UpdateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Transaction\Transaction;
+use SqlSemantics\Platform\PostgreSql\Ir\Transaction\TransactionLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\SearchPath;
@@ -31,6 +33,10 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDelete;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update as ParsedUpdate;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin as ParsedBegin;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit as ParsedCommit;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback as ParsedRollback;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointCommand as ParsedSavepointCommand;
 
 /**
  * Binds SQL under a fixed dialect profile and publishes complete semantic values.
@@ -106,7 +112,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Delete|Insert|Select|Update
+    public function analyze(string $sql, ?Context $context = null): Delete|Insert|Select|Transaction|Update
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -115,6 +121,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
+            $statement instanceof ParsedBegin, $statement instanceof ParsedCommit, $statement instanceof ParsedRollback, $statement instanceof ParsedSavepointCommand => (new TransactionLowering())->lower($operation),
             default => (new SelectLowering())->lower($operation),
         };
     }
@@ -124,7 +131,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Delete|Insert|Select|Update>
+     * @return list<Delete|Insert|Select|Transaction|Update>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

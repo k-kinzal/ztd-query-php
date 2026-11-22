@@ -64,7 +64,7 @@ def finite_cases(dialect, tag):
         yield case(dialect, tag, source, PROJECTION, where)
 
 
-def finite_id(dialect, response):
+def finite_id(dialect, response, _):
     source = response["source"]
     return (source["right"]["table"], registered(dialect).index((source["kind"], source["on"])),
             FILTERS.index(response["where"]), bool(source["left"].get("only")))

@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [publication contract](publication-v6.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v7.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -94,7 +94,7 @@ The SQLite evidence also writes `scope.json`. It compares the AST inventory with
 
 For a single declared release, pass `--engine mysql --release 8.4.7` or `--engine postgres --release 16.6` and connect the observer to that release. The runner checks the exact server version before comparing any case. The [manual release matrix](../../../.github/workflows/semantics-ir-release-matrix.yml) pins images for all nine MySQL releases and both PostgreSQL releases. Its artifacts are keyed by engine and release. Every matrix result remains specific to the native projection domain.
 
-The [native transport contract](server-projection-transport-v1.json) groups up to sixteen direct requests at a time. The database observer prepares and executes each SQL string separately. The controller checks the response cardinality, records each comparison, and replays the same request order. The join, result selection and INSERT runners also use this transport. Their ledgers record each dispatch, construction and individual observation in batch order. The existing timeout and case budgets apply.
+The [native transport contract](server-projection-transport-v1.json) groups up to sixteen direct requests at a time. The database observer prepares and executes each SQL string separately. The controller checks the response cardinality, records each comparison, and replays the same request order. The join, result selection, INSERT, UPDATE and transaction runners also use this transport. Their ledgers record each dispatch, construction and individual observation in batch order. The existing timeout and case budgets apply.
 
 To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out server-matrix.json` with the paths to the per-release `index.json` files. The join checks the candidate checkout, the distribution, contract and tools. The join reproduces the required requests, recomputes the direct oracle and compares both recorded observations for analyzed statements. A missing or duplicate release, missing original observation or changed ledger fails the join. Collect server observations with the revised runner before replaying them.
 
@@ -127,6 +127,12 @@ Use `run_server_insert.py` with the same native options and fixture connection s
 The [native UPDATE contract](server-update-v1.json) compares writes to declared writable signed integer slots. MySQL assigns in written order and counts changed rows in the fixture's client profile. PostgreSQL reads the old row for each assignment, counts updated rows and preserves ONLY. The observer records complete table contents, before and after values from the row trigger, and the state after rollback.
 
 Use `run_server_update.py` with the same options and pinned fixture settings as the INSERT runner. Replay the release set with `combine_server_update_evidence.py` and the per-release `index.json` paths.
+
+## Native transaction effects
+
+The [native transaction contract](server-transaction-v1.json) covers plain BEGIN, COMMIT, ROLLBACK and the three savepoint roles. The experiment runs a generated program with a candidate transition between trusted setup and continuation steps. It observes transaction state and typed rows on the writer and an independent reader after every step. Programs include a second live checkpoint, repeated labels and BEGIN on an already active transaction.
+
+Run `run_server_transaction.py` with the same options and pinned fixture settings as the UPDATE runner. Run `combine_server_transaction_evidence.py` with all of the per-release `index.json` paths to replay the release set. The observer uses an InnoDB table for MySQL and fixes the session completion type to NO_CHAIN.
 
 ## SQLite joins, filters and ordering
 

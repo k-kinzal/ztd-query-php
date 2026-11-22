@@ -165,7 +165,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update');
+    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -217,6 +217,17 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
+    $properties['Transaction\\Transaction'] = [
+        'command' => ['Transaction\\TransactionCommand'], 'name' => ['?Identifier'],
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    $properties['Transaction\\TransactionCommand'] = $methods['Transaction\\TransactionCommand'] = [];
+    $methods['Transaction\\Transaction'] = $methods['Select'];
+    $enumCases['Transaction\\TransactionCommand'] = [
+        'Begin' => 'begin', 'Commit' => 'commit', 'Rollback' => 'rollback',
+        'Savepoint' => 'savepoint', 'Release' => 'release', 'RollbackTo' => 'rollback-to',
+    ];
+    $internal[] = 'Transaction\\TransactionLowering';
     $methods['Predicate\\IntegerComparison'] = ['__construct'];
     $methods['Predicate\\IntegerOperator'] = [];
     $enumCases['Predicate\\IntegerOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -262,9 +273,9 @@ try {
     requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
         && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
-    $publication = __DIR__ . '/publication-v6.json';
+    $publication = __DIR__ . '/publication-v7.json';
     requireShape(
-        hash_file('sha256', $publication) === '296a6501047059163e2bce51a8bb238c2e0e2180ccadf2015d6c79e2af0dc14b',
+        hash_file('sha256', $publication) === 'af60a77bec1c74a88be03002fa8ce0c08a82c317ad181bbe49d85f61d7b8e7c8',
         'Publication contract differs from the recorded revision'
     );
     $surface = json_decode(file_get_contents($publication), true, 512, JSON_THROW_ON_ERROR)['surface'];
@@ -288,10 +299,16 @@ try {
     $bind = '$this->binder->resolve($sql, $declarations)';
     $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
     $insert = $dialect === 'mysql' ? 'Dml\\Insert\\InsertRows' : 'Manipulation\\InsertRows';
+    $transactionNamespace = $platform . ($dialect === 'mysql' ? '\\Statement\\Server\\Transaction\\' : '\\Statement\\Utility\\Transaction\\');
+    $transactionTypes = $dialect === 'mysql'
+        ? ['Begin', 'Commit', 'Rollback', 'StartTransaction', 'Savepoint', 'ReleaseSavepoint', 'RollbackToSavepoint']
+        : ['Begin', 'Commit', 'Rollback', 'SavepointCommand'];
+    $transactions = implode(', ', array_map(static fn ($type) => '$statement instanceof \\' . $transactionNamespace . $type, $transactionTypes));
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
+        . $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),'
         . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'

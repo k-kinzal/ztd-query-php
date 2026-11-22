@@ -61,9 +61,13 @@ def check_preparation(_, environment, preparation):
     same({"status": "fixture"}, preparation)
 
 
+def observer_request(_, sql):
+    return {"sql": sql}
+
+
 def probe(item, response, db, domain):
     domain.check_value(item, response)
-    actual = domain.observation(db.request({"sql": response["sql"]}))
+    actual = domain.observation(db.request(domain.observer_request(item, response["sql"])))
     domain.check_observation(item, actual, response["sql"])
     return actual
 
@@ -74,7 +78,7 @@ def required_forms(engine):
             "projection/first", "projection/later", *("kind/" + kind for kind in kinds)}
 
 
-def sample_forms(forms, response, _):
+def sample_forms(forms, response, _engine, _item):
     def operands(expression):
         if expression[0] == "slot":
             forms["projection/" + ("later" if len(expression) == 3 else "first")] += 1
@@ -144,7 +148,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                 for (key, current, item, _), response in zip(batch, replies):
                     domain.check_value(item, response)
                     ledger.record(key, "constructed", response=response)
-                statements = [{"sql": response["sql"]} for response in replies]
+                statements = [domain.observer_request(item, response["sql"]) for (_, _, item, _), response in zip(batch, replies)]
                 if len(statements) == 1:
                     native = [db.request(statements[0])]
                 else:
@@ -154,14 +158,14 @@ def execute(args, specification, tag, worker, db, domain=None):
                     domain.check_observation(item, actual, response["sql"])
                     details = {"observation": actual}
                     if "sql" in current:
-                        original = domain.observation(db.request({"sql": current["sql"]}))
+                        original = domain.observation(db.request(domain.observer_request(item, current["sql"])))
                         domain.check_observation(item, original, current["sql"])
                         details["original"] = original
                     ledger.record(key, "compared", **details)
                     if key.startswith("finite/"):
-                        seen[domain.finite_id(args.engine, response)] += 1
+                        seen[domain.finite_id(args.engine, response, item)] += 1
                     elif key.startswith("seed/"):
-                        domain.sample_forms(forms, response, args.engine)
+                        domain.sample_forms(forms, response, args.engine, item)
             require(set(seen) == domain.finite_ids(args.engine, specification) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
             require(domain.required_forms(args.engine) <= forms.keys(), f"server-{label}-exploration-incomplete",

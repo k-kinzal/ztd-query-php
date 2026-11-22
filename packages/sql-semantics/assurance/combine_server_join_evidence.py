@@ -51,9 +51,9 @@ def replay(path, report, specification, domain=run_server_join):
             if "sql" in request:
                 domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
             if key.startswith("finite/"):
-                seen[domain.finite_id(engine, response)] += 1
+                seen[domain.finite_id(engine, response, item)] += 1
             elif key.startswith("seed/"):
-                domain.sample_forms(forms, response, engine)
+                domain.sample_forms(forms, response, engine, item)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
     require(set(seen) == domain.finite_ids(engine, specification) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
     require(domain.required_forms(engine) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")

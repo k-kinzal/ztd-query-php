@@ -45,7 +45,7 @@ def finite_cases(engine, tag):
         yield case(engine, tag, source, columns, distinct, sort, limit)
 
 
-def finite_id(engine, response):
+def finite_id(engine, response, _):
     return (LAYOUTS.index(response["columns"]), int(response["distinct"]),
             orders(engine).index(response["orderBy"]), bounds(engine).index(response["limit"]))
 

@@ -6,7 +6,7 @@ import sys
 from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
-from run_server_join import main
+from run_server_join import main, observer_request
 from server_cases import SCHEMAS
 from server_insert_cases import INITIAL, case, expected, finite_id, finite_ids, observation, ordered, requests
 from sqlite_domain import RenderFault
@@ -45,7 +45,7 @@ def required_forms(_):
             "cell/null", "cell/min", "cell/max", "defaults/omitted", "defaults/all-specified"}
 
 
-def sample_forms(forms, response, _):
+def sample_forms(forms, response, _engine, _item):
     columns, rows = response["target"]["columns"], response["rows"]
     forms["width/" + ("one" if len(columns) == 1 else "wide")] += 1
     forms["rows/" + ("one" if len(rows) == 1 else "multiple")] += 1

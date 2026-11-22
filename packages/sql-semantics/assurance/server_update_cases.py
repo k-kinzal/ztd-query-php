@@ -28,7 +28,7 @@ def finite_cases(engine, tag):
         yield case(engine, tag, columns, assignments, where, only)
 
 
-def finite_id(_, response):
+def finite_id(_, response, _item):
     target = response["target"]
     return (LAYOUTS.index(target["columns"]), ASSIGNMENTS.index(response["assignments"]), FILTERS.index(response["where"]),
             target.get("only", False))

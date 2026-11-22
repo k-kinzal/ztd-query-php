@@ -154,6 +154,17 @@ function constructPredicate(string $namespace, ?array $test): ?object
     };
 }
 
+function constructTransaction(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Transaction\\Transaction';
+    $command = $namespace . 'Transaction\\TransactionCommand';
+    $name = $namespace . 'Identifier';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+
+    return new $statement($command::from($input['command']), $input['name'] === null ? null : new $name($input['name']), $release::from($input['release']));
+}
+
 function constructUpdate(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -256,6 +267,7 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['rows']) => constructInsert($platform, $input),
             isset($input['target']) => constructDelete($platform, $input),
@@ -263,6 +275,12 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Transaction\\Transaction') {
+        return [
+            'status' => 'constructed', 'profile' => $value->profileId(), 'command' => $value->command->value,
+            'name' => $value->name?->value, 'sql' => $value->toString(),
+        ];
     }
     if ($value::class === $namespace . 'Mutation\\Update') {
         return observeUpdate($namespace, $value, $input['dialect']);

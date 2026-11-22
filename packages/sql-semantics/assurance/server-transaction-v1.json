@@ -16,8 +16,8 @@
     "Transaction": {
       "type": "Transaction/Transaction",
       "fields": ["command", "name", "release"],
-      "invariants": ["Savepoint, release and rollback-to have one checked name", "Other commands have no name", "Each label is representable in the chosen dialect"],
-      "meaning": "Begin opens a transaction. Commit publishes, and rollback discards its writes. A savepoint records the current transactional state. Rollback-to removes later work and retains its target. PostgreSQL releases the named savepoint with its successors. MySQL releases the named entry. PostgreSQL keeps older equal-name entries underneath the newest one. MySQL replaces an equal-name entry.",
+      "invariants": ["Savepoint, release and rollback-to have one checked name", "Other commands have no name", "MySQL labels use one to 64 non-NUL BMP characters. PostgreSQL labels use the checked nonempty UTF-8 identifier role and its 63-byte bound."],
+      "meaning": "Begin opens a transaction. When one is open, MySQL commits it before starting another. PostgreSQL keeps the current transaction and issues a warning. Commit publishes, and rollback discards its writes. A savepoint records the current transactional state. Rollback-to removes later work and retains its target. PostgreSQL releases the named savepoint with its successors. MySQL releases the named entry. PostgreSQL keeps older equal-name entries underneath the newest one. MySQL replaces an equal-name entry.",
       "sql": "Emit the registered command and quote the decoded label when required. MySQL explicitly emits AND NO CHAIN NO RELEASE on commit and rollback.",
       "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
     }
@@ -31,7 +31,7 @@
     "identitiesPerRelease": 18,
     "completeness": "Check every combination of label, final terminal command and program role in the observed constructed operations."
   },
-  "exploration": {"seeds": [2857, 6553, 17191], "programsPerSeed": 12, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
+  "exploration": {"seeds": [2857, 6553, 17191], "casesPerSeed": 18, "timeoutSecondsPerRelease": 170, "allowedExclusions": []},
   "negative": ["Named command without a label", "Non-named command with a label", "Unrepresentable label", "Unsupported transaction characteristics", "Positive completion chaining"],
   "faults": ["Convert COMMIT to ROLLBACK", "Make rollback-to use the other live checkpoint", "Convert ROLLBACK to COMMIT"],
   "trust": ["Fixed native profile and transactional fixture", "Closed command and label roles", "Independent interpreter of local writes, visibility and checkpoint transitions"],

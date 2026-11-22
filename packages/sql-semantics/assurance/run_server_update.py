@@ -6,7 +6,7 @@ import sys
 from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
-from run_server_join import main
+from run_server_join import main, observer_request
 from server_cases import SCHEMAS
 from server_delete_cases import ROWS, literal, ordered
 from server_join_cases import slot
@@ -48,7 +48,7 @@ def required_forms(engine):
     return width | ({"inherit/True", "inherit/False"} if engine == "postgres" else {"writes/repeated"})
 
 
-def sample_forms(forms, response, engine):
+def sample_forms(forms, response, engine, _):
     sets = response["assignments"]
     forms["assignments/" + ("single" if len(sets) == 1 else "multiple")] += 1
     written = set()
