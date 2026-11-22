@@ -142,7 +142,19 @@ jobs:
           catalog="origin/$BASE_REF:packages/deriver/requirements/function.yaml"
           if git cat-file -e "$snapshot" 2>/dev/null && git cat-file -e "$catalog" 2>/dev/null; then
             git show "$snapshot" > /tmp/base-snapshot.json
-            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json
+            coverage_flags=()
+            if [ "$(git rev-parse "$snapshot")" = a8d484797a7e9bbb9808b0a96ba0028a02e64bd1 ]; then
+              # The first checked-in excerpts change DOM paths. Require every old fingerprint
+              # and its occurrence count before accepting the new unit keys.
+              jq -es '
+                def counts: [.units[].fingerprint] | group_by(.) | map({key: .[0], value: length}) | from_entries;
+                (.[1] | counts) as $current
+                | (.[0] | counts) | to_entries
+                | all(.[]; ($current[.key] // 0) >= .value)
+              ' /tmp/base-snapshot.json /tmp/current-snapshot.json
+              coverage_flags+=(--allow-removed)
+            fi
+            php ../requirements/bin/requirements coverage --snapshot /tmp/base-snapshot.json "${coverage_flags[@]}"
           else
             echo 'Initial adoption: review the scope and enforce the configured total coverage gate.'
           fi

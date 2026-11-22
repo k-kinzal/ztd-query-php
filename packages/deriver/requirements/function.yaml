@@ -5,8 +5,8 @@ source:
   uri: 'https://www.php.net/manual/en/indexes.functions.php'
   format: html
   selector: '#layout-content ul.index-for-refentry a[href^="function."]:not([href="function.halt-compiler.php"]):not([href="function.array.php"]):not([href="function.die.php"]):not([href="function.echo.php"]):not([href="function.empty.php"]):not([href="function.eval.php"]):not([href="function.exit.php"]):not([href="function.include.php"]):not([href="function.include-once.php"]):not([href="function.isset.php"]):not([href="function.list.php"]):not([href="function.print.php"]):not([href="function.require.php"]):not([href="function.require-once.php"]):not([href="function.return.php"]):not([href="function.unset.php"])'
-  snapshot: .requirements-cache/indexes.functions.php
-  sha256: 9d34862aba84b143614f60fcf11d54db35dd1ea3cd086b8087e4bdbca98ed531
+  snapshot: requirements/manual/function.html
+  sha256: 045af094babec4dba54b2fb9478bd8dccb0a90b73d13a83f205ec439762f7abe
 items:
   -
     id: PHP-FUNCTION-0041
