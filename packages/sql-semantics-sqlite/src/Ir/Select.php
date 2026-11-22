@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -55,7 +56,7 @@ final class Select implements SemanticsIR
      * @param non-empty-list<ResultColumn> $columns The ordered result columns
      * @param TableSource|LocalSource|null $source The first input
      * @param list<Join> $joins The inputs joined to the left prefix
-     * @param Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where The post-join filter
+     * @param Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where The post-join filter
      * @param list<Order> $orderBy The output ordering
      * @param bool $distinct Whether equivalent result rows are collapsed
      * @param Limit|null $limit The bounds applied after ordering
@@ -64,7 +65,7 @@ final class Select implements SemanticsIR
         array $columns,
         public readonly TableSource|LocalSource|null $source = null,
         array $joins = [],
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         array $orderBy = [],
         public readonly bool $distinct = false,
         public readonly ?Limit $limit = null,

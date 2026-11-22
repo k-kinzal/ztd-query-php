@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -33,11 +34,11 @@ final class CastExpression
 
     /**
      * @param CastTarget $target The effective SQLite conversion
-     * @param Arithmetic|BlobLiteral|CaseExpression|self|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand The evaluated scalar
+     * @param Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand The evaluated scalar
      */
     public function __construct(
         public readonly CastTarget $target,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|self|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|self|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $operand,
     ) {
     }
 }

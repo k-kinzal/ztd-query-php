@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
@@ -80,6 +81,13 @@ final class SelectSqlTest extends TestCase
         $choice = new CaseExpression($one, [new CaseBranch($one, $two), new CaseBranch($two, $one)], $two);
 
         self::assertSame('(CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 2 END)', (new SelectSql())->choice($choice, null, []));
+    }
+
+    public function testBetweenRendersEveryRoleOnceInOrder(): void
+    {
+        $range = new BetweenTest(new Parameter('02'), new Parameter('3'), new Parameter('1'), true);
+
+        self::assertSame('(?02 NOT BETWEEN ?3 AND ?1)', (new SelectSql())->between($range, null, []));
     }
 
     public function testTruthUsesTheNumberedOperandOnce(): void

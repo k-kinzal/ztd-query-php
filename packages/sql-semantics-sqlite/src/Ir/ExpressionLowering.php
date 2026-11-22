@@ -16,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\NumericLiteralLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
@@ -35,6 +36,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as 
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral as ParsedNull;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral as ParsedText;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between as ParsedBetween;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTest;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
@@ -56,7 +58,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -77,6 +79,12 @@ final class ExpressionLowering
                 },
                 $this->lower($expression->operand, $binding),
                 new NullLiteral(),
+            ),
+            $expression instanceof ParsedBetween => new BetweenTest(
+                $this->lower($expression->operand, $binding),
+                $this->lower($expression->low, $binding),
+                $this->lower($expression->high, $binding),
+                $expression->negated,
             ),
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
             $expression instanceof ParsedCast => $this->cast($expression, $binding),

@@ -37,6 +37,7 @@ use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
@@ -76,7 +77,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+function operand(array $input): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -86,6 +87,7 @@ function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|CastExpres
         ),
         'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
         'unary' => new UnaryExpression(UnaryKind::from($input[1]), operand($input[2])),
+        'between' => new BetweenTest(operand($input[2]), operand($input[3]), operand($input[4]), $input[1]),
         'truth' => new TruthTest(operand($input[3]), $input[1], $input[2]),
         'integer' => new IntegerLiteral($input[1]),
         'text' => new TextLiteral($input[1]),
@@ -101,7 +103,7 @@ function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|CastExpres
     };
 }
 
-function observeOperand(Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
+function observeOperand(Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -112,6 +114,7 @@ function observeOperand(Arithmetic|BlobLiteral|CaseExpression|CastExpression|Col
         ],
         $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
         $value instanceof UnaryExpression => ['unary', $value->kind->value, observeOperand($value->operand)],
+        $value instanceof BetweenTest => ['between', $value->negated, observeOperand($value->operand), observeOperand($value->lower), observeOperand($value->upper)],
         $value instanceof TruthTest => ['truth', $value->desired, $value->negated, observeOperand($value->operand)],
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
         $value instanceof TextLiteral => ['text', $value->value],

@@ -27,6 +27,7 @@ import run_sqlite_relational as relational
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
+import run_sqlite_between as between
 import run_sqlite_truth as truth
 import run_sqlite_unary as unary
 import run_sqlite_update as update
@@ -60,6 +61,7 @@ DOMAINS = {
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
+    between.CONTRACT_NAME: (between, between.FIXTURE),
     truth.CONTRACT_NAME: (truth, truth.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),

@@ -84,6 +84,22 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
                     break
         return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
+    if kind == "between":
+        negated, operand, lower, upper = arguments
+        value = evaluate(operand, bindings, row, case_equal, comparison_inputs)
+
+        def comparison(bound, relation):
+            other = evaluate(bound, bindings, row, case_equal, comparison_inputs)
+            if value is None or other is None:
+                return None
+            left, right = comparison_inputs(operand, bound, value, other)
+            return relation(order_value(left), order_value(right))
+
+        below = comparison(lower, lambda left, right: left >= right)
+        above = comparison(upper, lambda left, right: left <= right)
+        truth_value = False if False in (below, above) else None if None in (below, above) else True
+        return None if truth_value is None else int(truth_value != negated)
+
     operator, left, right = arguments
     a = evaluate(left, bindings, row, case_equal, comparison_inputs)
     b = evaluate(right, bindings, row, case_equal, comparison_inputs)

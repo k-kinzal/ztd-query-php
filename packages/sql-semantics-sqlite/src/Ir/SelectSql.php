@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -127,7 +128,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -141,6 +142,7 @@ final class SelectSql
         return match (true) {
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
+            $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
             $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
             $expression instanceof TruthTest => $this->truth($expression, $source, $joins),
@@ -155,6 +157,18 @@ final class SelectSql
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Emits one tested scalar and its ordered inclusive bounds.
+     * @param list<Join> $joins The remaining source occurrences
+     */
+    public function between(BetweenTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    {
+        return '(' . $this->expression($expression->operand, $source, $joins)
+            . ($expression->negated ? ' NOT BETWEEN ' : ' BETWEEN ')
+            . $this->expression($expression->lower, $source, $joins) . ' AND '
+            . $this->expression($expression->upper, $source, $joins) . ')';
     }
 
     /**

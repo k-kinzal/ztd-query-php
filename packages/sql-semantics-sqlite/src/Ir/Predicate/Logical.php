@@ -35,8 +35,8 @@ final class Logical
      */
     public function __construct(
         public readonly LogicalOperator $operator,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|self|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|self|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|self|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|self|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
     ) {
     }
 }
