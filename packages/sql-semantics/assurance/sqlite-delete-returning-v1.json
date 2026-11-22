@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/sqlite-delete-returning-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "The pinned SQLite 3.47.2 ordinary base-table DELETE profile in sqlite-delete-v1.json.",
+  "scope": "An ordinary DELETE can return an ordered list of named columns from its resolved pre-delete row. Analyze admits unqualified column references and unqualified star expansion.",
+  "constructors": {
+    "returned-column": {
+      "type": "Mutation/ReturnedColumn",
+      "role": "One output position in the RETURNING layout of a single-target DELETE",
+      "structure": "A readonly ColumnReference at target occurrence zero and a readonly decoded output name.",
+      "conditions": "The returned column has occurrence zero. The owning DELETE verifies slot membership, copies the ordered list and bounds it to 2000 fields.",
+      "meaning": "Read the referenced value of the row before removal and attach the recorded output label.",
+      "externalInterpretation": "Resolve the same absolute ordinary table and column layout at evaluation. The table's triggers and foreign keys participate in the deletion.",
+      "sql": "Render the target slot as an unqualified quoted column in RETURNING and emit its quoted output label.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Mutation/Delete", "TableSource", "ColumnReference"],
+  "observations": [
+    "Ordered result labels, exact SQLite storage classes, NULL, duplicate rows and predicate parameter registration",
+    "RETURNING sees directly deleted pre-write rows. Compare the result as a multiset under SQLite's unspecified row order.",
+    "The remaining main and temporary table contents, trigger effects and complete savepoint restoration"
+  ],
+  "baseSuiteTransition": {
+    "previousRejection": "DELETE FROM main.ir_delete RETURNING key",
+    "nowRequired": "Compare the exact input with its checked construction and typed result. The original bounded DELETE cases remain required.",
+    "negative": "DELETE FROM main.ir_delete RETURNING count(*) AS n",
+    "negativeReason": "The aggregate has no checked returned column role or is rejected in analysis. Require the exact observed boundary type and message."
+  },
+  "finite": {
+    "schemas": ["main", "temp"],
+    "filters": ["none", "none-admitted", "equals-numbered-parameter", "is-null"],
+    "layouts": ["key-only", "value-only", "both", "reversed-and-repeated", "no-returning"],
+    "complete": "Identify each target schema, admitted predicate and ordered label and slot layout exactly once."
+  },
+  "exploration": {
+    "seeds": [7727, 15473, 29311],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 130,
+    "allowedExclusions": [],
+    "structure": "Vary predicate shape, target schema, slot and output label order, repeated columns, output count and input bindings."
+  },
+  "negative": ["Nonzero return occurrence", "Unknown target slot", "Excessive return width", "Alias-qualified RETURNING", "Aggregate in RETURNING"],
+  "faults": ["Discard the return list", "Read another target slot", "Change output names", "Emit the generated target alias on a returning field"],
+  "open": ["Qualified inputs validated against the native RETURNING namespace, scalar RETURNING expressions, other statements with RETURNING, and additional mutation effects."],
+  "trust": ["Independent old-row selection and return projection", "Pinned SQLite C API and authorizer, ordinary target declarations and unchanged triggers"],
+  "sources": ["https://sqlite.org/lang_returning.html", "https://sqlite.org/lang_delete.html"]
+}
