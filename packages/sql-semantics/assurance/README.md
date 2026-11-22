@@ -71,7 +71,7 @@ The [folded SQLite binding record](sqlite-folded-binding-sources-v1.json) ties t
 
 ### Reproduce the SQLite matrix
 
-Use an archived verifier checkout and a new evidence directory for the complete SQLite schedule. The launcher checks that every domain has both a runner and a replay observer. It checks that each source mutation can be applied, executes each domain in its own process, and runs the independent collector after all domain attempts. The launch receipt links the exit outcomes, logs and artifacts to the measured candidate and SQLite binary.
+Use an archived verifier checkout and a new evidence directory for the complete SQLite schedule. The launcher checks that every domain has both a runner and a replay observer. It checks that each source mutation can be applied, executes each domain in its own process, and runs the independent collector after all domain attempts. The launcher writes its full plan before starting and records each child start and exit as it occurs. Its final receipt links the journal, logs and artifacts to the measured candidate and SQLite binary. The manual workflow on main runs the same schedule from its trusted workflow revision.
 
 ```sh
 candidate=/path/to/candidate

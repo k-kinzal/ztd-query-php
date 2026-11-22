@@ -7,6 +7,7 @@ import re
 
 from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
+from evidence_transcript import events as execution_events
 from grammar_scope import inventory as grammar_inventory
 from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
@@ -122,10 +123,10 @@ class Evidence:
         return {"replay": origin, "domains": domains}
 
     def sqlite_launch(self):
-        index = self.root / "sqlite-launch/index.json"
-        if not index.is_file():
+        receipt = self.optional("sqlite-launch/index.json")
+        if receipt is None:
             return None
-        path, origin, report = self.record(index)
+        path, origin, report = receipt
         require(report["distribution"] == self.distribution
                 and report["launcherDigest"] == self.tools["run_sqlite_matrix.py"]
                 and report["runnerTimeoutSeconds"] == SQLITE_RUNNER_SECONDS
@@ -135,6 +136,12 @@ class Evidence:
         omitted = report["omittedDomains"]
         require(omitted == sorted(set(omitted)) and set(omitted) < SQLITE, "bundle-sqlite-launch-domain-set", omitted)
         expected = sqlite_jobs(omitted)
+        plan, _ = self.checked(path.parent / "plan.json", report["planDigest"])
+        require(json.loads(plan.read_text()) == {
+            "candidate": self.candidate, "distribution": self.distribution, "jobs": [list(job) for job in expected],
+            "omittedDomains": omitted, "runnerTimeoutSeconds": SQLITE_RUNNER_SECONDS,
+        }, "bundle-sqlite-launch-plan", origin)
+        journal_file, _ = self.checked(path.parent / "events.jsonl", report["journalDigest"])
         entries = report["executions"]
         require([(entry["job"], entry["runner"], entry["directory"]) for entry in entries] == expected,
                 "bundle-sqlite-launch-schedule", origin)
@@ -161,6 +168,11 @@ class Evidence:
                             "bundle-sqlite-launch-engine-or-contract", name)
             if code != 0 or fingerprint is None:
                 failed.append(name)
+        journal = []
+        for ordinal, ((name, runner, directory), entry) in enumerate(zip(expected, entries)):
+            journal.extend(({"id": name, "event": "started", "runner": runner, "directory": directory, "ordinal": ordinal},
+                            {"id": name, "event": "finished", "receipt": entry}))
+        require(list(execution_events(journal_file)) == journal, "bundle-sqlite-launch-journal", origin)
         expected_status = "incomplete" if failed else "observed-subset" if omitted else "observed-matrix"
         require(report["failed"] == failed and report["status"] == expected_status, "bundle-sqlite-launch-balance", origin)
         self.missing.extend(f"sqlite-launch/{key}" for key in [*failed, *omitted])

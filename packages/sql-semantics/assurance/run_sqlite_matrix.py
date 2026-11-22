@@ -8,7 +8,7 @@ from pathlib import Path
 
 from combine_sqlite_evidence import DOMAINS
 from replay_sqlite_evidence import DOMAINS as REPLAY_DOMAINS
-from run import TOOL, candidate_distribution, digest, require, verify_candidate, write_json
+from run import TOOL, Ledger, candidate_distribution, digest, require, verify_candidate, write_json
 
 RUNNER_SECONDS = 3600
 INITIAL = "contract-v1.json"
@@ -58,13 +58,14 @@ def command(args, root, job):
     return [sys.executable, TOOL / runner, *flags, "--out", output]
 
 
-def execute(args, jobs, receipts):
+def execute(args, jobs, receipts, ledger):
     root = args.evidence_root
     env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "XDEBUG_MODE": "off"}
     executions = []
     for ordinal, job in enumerate(jobs):
         name, runner, directory = job
         log = receipts / f"{ordinal:02d}-{directory}.log"
+        ledger.record(name, "started", runner=runner, directory=directory, ordinal=ordinal)
         print(f"Running {name}", flush=True)
         with log.open("w") as stream:
             try:
@@ -82,6 +83,7 @@ def execute(args, jobs, receipts):
             "log": log.name, "logDigest": digest(log), "outcome": outcome, "exitCode": code,
             "artifactDigest": digest(artifact) if artifact.is_file() else None,
         })
+        ledger.record(name, "finished", receipt=executions[-1])
         print(f"{name} {outcome} {code}", flush=True)
     return executions
 
@@ -112,7 +114,12 @@ def main():
     manifest = receipts / "distribution.json"
     write_json(manifest, distribution)
     engine = digest(args.sqlite_library)
-    runs = execute(args, jobs, receipts)
+    plan = receipts / "plan.json"
+    journal = receipts / "events.jsonl"
+    write_json(plan, {"candidate": sha, "distribution": digest(manifest), "jobs": jobs,
+                      "omittedDomains": omitted, "runnerTimeoutSeconds": RUNNER_SECONDS})
+    with journal.open("x") as stream:
+        runs = execute(args, jobs, receipts, Ledger(stream))
     failed = [run["job"] for run in runs if run["exitCode"] != 0 or run["artifactDigest"] is None]
     verify_candidate(args.candidate, sha, distribution)
     require(engine == digest(args.sqlite_library), "sqlite-launch-engine-changed")
@@ -121,6 +128,7 @@ def main():
         "sqliteLibraryDigest": engine, "runnerTimeoutSeconds": RUNNER_SECONDS,
         "status": "incomplete" if failed else "observed-subset" if omitted else "observed-matrix",
         "omittedDomains": omitted, "executions": runs, "failed": failed,
+        "planDigest": digest(plan), "journalDigest": digest(journal),
     })
     require(not failed, "sqlite-launch-incomplete-matrix", failed)
 
