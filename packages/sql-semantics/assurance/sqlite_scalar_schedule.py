@@ -19,7 +19,7 @@ class ScalarSchedule(NamedTuple):
     comparator_controls: Callable
 
 
-def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe):
+def execute_schedule(args, specification, db, worker_factory, schedule, observe=probe, *, measured_input=None):
     domain, settings = specification["finite"], specification["exploration"]
     seen, observed = Counter(), Counter()
     comparator = schedule.comparator_controls()
@@ -30,11 +30,12 @@ def execute_schedule(args, specification, db, worker_factory, schedule, observe=
             for key, current, item in schedule.requests(specification):
                 ledger.record(key, "attempted", input=current, expected=item)
                 reply = worker.request(current)
-                observe(item, reply, db, ledger, key, original=current.get("sql"))
+                measurement = observe(item, reply, db, ledger, key, original=current.get("sql"))
+                measured = reply if measured_input is None else measured_input(reply, measurement)
                 if key.startswith("finite/"):
-                    seen[schedule.finite_id(reply, domain)] += 1
+                    seen[schedule.finite_id(measured, domain)] += 1
                 if key.startswith("seed/"):
-                    observed.update(schedule.observed_forms(reply))
+                    observed.update(schedule.observed_forms(measured))
             for index, (current, status, reason) in enumerate(schedule.negatives()):
                 key = f"negative/{index}"
                 ledger.record(key, "attempted", input=current)

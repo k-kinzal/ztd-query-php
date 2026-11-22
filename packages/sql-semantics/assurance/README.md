@@ -527,7 +527,9 @@ The observer compares ordered native column metadata, implicit rowids and data w
 
 The [SQLite STRICT table contract](sqlite-strict-tables-v2.json) compares the catalog mode and declared names and measures each write's typed rows, change count and exact constraint errors. Its fixed storage values distinguish ordinary ANY from STRICT ANY, BLOB from untyped and INT from INTEGER. Run `run_sqlite_strict_tables.py` with the same fixture options. The original and emitted declarations are compared independently for analyzed cases.
 
-The [SQLite primary key contract](sqlite-primary-keys-v1.json) follows resolved owned-column slots through an inline or table constraint. Its fixtures compare primary key index fields, collations and directions, rowid availability, generated keys, duplicate and NULL writes, and rollback. Run `run_sqlite_primary_keys.py` with the SQLite fixture options to record both transaction states.
+The [SQLite primary key contract](sqlite-primary-keys-v2.json) follows resolved owned-column slots through an inline or table constraint. Its fixtures compare primary key index fields, collations and directions, rowid availability, generated keys, duplicate and NULL writes, and rollback. Run `run_sqlite_primary_keys.py` with the SQLite fixture options to record both transaction states.
+
+The [SQLite automatic rowid contract](sqlite-auto-rowid-v1.json) preserves the distinction between the ordinary allocator and AUTOINCREMENT. It compares alias values and the owning schema's sqlite_sequence after deletions, commits and rollbacks. The fixed histories also verify SQLITE_FULL after exhausting the signed range. Run `run_sqlite_auto_rowid.py` with the same SQLite fixture options.
 
 ## SQLite literal defaults
 

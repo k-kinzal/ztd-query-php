@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import run
+import run_sqlite_auto_rowid as auto_rowid
 import run_sqlite_case as choice
 import run_sqlite_cast as cast
 import run_sqlite_compound as compound
@@ -72,6 +73,7 @@ DOMAINS = {
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     primary_keys.CONTRACT_NAME: (primary_keys, primary_keys.FIXTURE),
+    auto_rowid.CONTRACT_NAME: (auto_rowid, auto_rowid.FIXTURE),
     "sqlite-scalars-v2.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     pattern.CONTRACT_NAME: (pattern, pattern.FIXTURE),
@@ -105,7 +107,8 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
     factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase, pattern: pattern.PatternDatabase,
                group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase,
-               strict_tables: strict_tables.StrictDatabase, primary_keys: primary_keys.KeyDatabase}.get(module, Database)
+               strict_tables: strict_tables.StrictDatabase, primary_keys: primary_keys.KeyDatabase,
+               auto_rowid: primary_keys.KeyDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

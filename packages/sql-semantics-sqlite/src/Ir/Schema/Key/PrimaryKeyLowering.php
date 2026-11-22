@@ -29,13 +29,12 @@ final class PrimaryKeyLowering
             foreach ($run->items as $constraint) {
                 Check::input($constraint instanceof TablePrimaryKey, 'This table constraint has no complete CREATE TABLE representation.');
                 Check::input($key === null, 'A table declaration can have one primary key.');
-                Check::input(!$constraint->autoincrement, 'AUTOINCREMENT has no complete PRIMARY KEY representation.');
                 $terms = [];
                 $lowering = new KeyTermLowering();
                 foreach ($constraint->terms as $term) {
                     $terms[] = $lowering->lower($term, $definition->columns);
                 }
-                $key = new PrimaryKey($terms, false, KeyConflict::from($constraint->conflict->value ?? 'ABORT'));
+                $key = new PrimaryKey($terms, false, KeyConflict::from($constraint->conflict->value ?? 'ABORT'), $constraint->autoincrement);
             }
         }
 
@@ -55,9 +54,8 @@ final class PrimaryKeyLowering
                     continue;
                 }
                 Check::input($key === null, 'A table declaration can have one primary key.');
-                Check::input(!$constraint->autoincrement, 'AUTOINCREMENT has no complete PRIMARY KEY representation.');
                 $term = new KeyTerm($slot, $constraint->direction === SortDirection::Descending);
-                $key = new PrimaryKey([$term], true, KeyConflict::from($constraint->conflict->value ?? 'ABORT'));
+                $key = new PrimaryKey([$term], true, KeyConflict::from($constraint->conflict->value ?? 'ABORT'), $constraint->autoincrement);
             }
         }
 

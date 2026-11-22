@@ -54,6 +54,12 @@ final class CreateTable implements SemanticsIR
         foreach ($primaryKey->terms ?? [] as $term) {
             Check::input($term->slot < count($checked), 'A primary key term belongs to the declared column layout.');
         }
+        if ($primaryKey !== null && $primaryKey->autoIncrement) {
+            Check::input(
+                !$withoutRowid && $checked[$primaryKey->terms[0]->slot]->type === DeclaredDatatypeName::Integer,
+                'AUTOINCREMENT requires one INTEGER rowid alias.'
+            );
+        }
         $seen = [];
         $defaults = [];
         foreach ($checked as $column) {

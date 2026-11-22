@@ -19,7 +19,8 @@ final class PrimaryKeySql
      */
     public function inline(PrimaryKey $key): string
     {
-        return ' PRIMARY KEY' . ($key->terms[0]->descending ? ' DESC' : '') . $this->conflict($key->conflict);
+        return ' PRIMARY KEY' . ($key->terms[0]->descending ? ' DESC' : '') . $this->conflict($key->conflict)
+            . ($key->autoIncrement ? ' AUTOINCREMENT' : '');
     }
 
     /**
@@ -34,7 +35,7 @@ final class PrimaryKeySql
             $terms[] = $columns[$term->slot]->name->quoted() . $collation . ($term->descending ? ' DESC' : '');
         }
 
-        return 'PRIMARY KEY (' . implode(', ', $terms) . ')' . $this->conflict($key->conflict);
+        return 'PRIMARY KEY (' . implode(', ', $terms) . ($key->autoIncrement ? ' AUTOINCREMENT' : '') . ')' . $this->conflict($key->conflict);
     }
 
     /**

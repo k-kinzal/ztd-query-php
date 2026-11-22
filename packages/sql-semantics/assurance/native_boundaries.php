@@ -20,7 +20,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-insert-slots-boundaries-v3.json', 'ff1868cce0bf4174b3bbadde618f58a9383fa73c70c37ab300d83962aac00af4'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v11.json', 'c0774a7a164324280a42032b79ea1d4c58e22dd4eef0bdbe098edcecc0a8a949'],
-            ['sqlite-default-boundaries-v4.json', '6de6fb16238ea1488bca631de80c2558515acccb2f7e783d1ca1501abf4ebb2e'],
+            ['sqlite-default-boundaries-v5.json', '0f8fa057e393b8af7154e4b7ccbba7c46110660cf6a024c8cc972bfdcedf9158'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [

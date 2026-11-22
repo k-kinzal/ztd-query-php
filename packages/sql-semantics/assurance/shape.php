@@ -246,7 +246,7 @@ if ($dialect === 'sqlite') {
     ];
     $properties['Schema\\Key\\KeyTerm'] = ['slot' => ['int'], 'descending' => ['bool'], 'collation' => ['Collation']];
     $properties['Schema\\Key\\PrimaryKey'] = [
-        'terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['Schema\\Key\\KeyConflict'],
+        'terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['Schema\\Key\\KeyConflict'], 'autoIncrement' => ['bool'],
     ];
     $methods['Schema\\Key\\KeyTerm'] = $methods['Schema\\Key\\PrimaryKey'] = ['__construct'];
     $properties['Schema\\Key\\KeyConflict'] = $methods['Schema\\Key\\KeyConflict'] = [];

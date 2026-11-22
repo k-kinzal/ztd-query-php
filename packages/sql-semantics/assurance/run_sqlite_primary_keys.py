@@ -13,8 +13,8 @@ from sqlite_primary_keys_cases import (
 )
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-primary-keys-v1.json"
-CONTRACT = "98cebf1222a3d399fb6c9c1684c640069b10ab78b22e4e91c422da972b94fd10"
+CONTRACT_NAME = "sqlite-primary-keys-v2.json"
+CONTRACT = "b5ed249813c2bf4d36b971033e76bad276ad617b0cea5cc6c9cbcfc518e3a51b"
 MARKER = "main.ir_key_marker"
 TRANSACTIONS = (False, True)
 

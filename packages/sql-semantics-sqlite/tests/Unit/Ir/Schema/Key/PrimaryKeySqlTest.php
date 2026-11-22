@@ -41,4 +41,12 @@ final class PrimaryKeySqlTest extends TestCase
         self::assertSame('', $renderer->conflict(KeyConflict::Abort));
         self::assertSame(' ON CONFLICT ROLLBACK', $renderer->conflict(KeyConflict::Rollback));
     }
+
+    public function testTableKeepsAutomaticAllocationInsideTheKeyTerms(): void
+    {
+        $columns = [new TableColumn(new Identifier('id'))];
+        $key = new PrimaryKey([new KeyTerm(0, true)], conflict: KeyConflict::Fail, autoIncrement: true);
+
+        self::assertSame('PRIMARY KEY ("id" DESC AUTOINCREMENT) ON CONFLICT FAIL', (new PrimaryKeySql())->table($key, $columns));
+    }
 }

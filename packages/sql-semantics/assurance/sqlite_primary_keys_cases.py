@@ -25,10 +25,10 @@ LAYOUTS = {
 DIMENSIONS = ("schemas", "layouts", "modes", "conflicts", "nullableDeclaration")
 
 
-def declaration(columns, terms, inline, mode="rowid", conflict="ABORT", schema="main", name=TABLE, guard=False):
+def declaration(columns, terms, inline, mode="rowid", conflict="ABORT", schema="main", name=TABLE, guard=False, automatic=False):
     strict, without_rowid = MODES[mode]
     return {**table_declaration(columns, strict, schema, name, guard),
-            "withoutRowid": without_rowid, "primaryKey": {"inline": inline, "terms": terms, "conflict": conflict}}
+            "withoutRowid": without_rowid, "primaryKey": {"inline": inline, "terms": terms, "conflict": conflict, "autoIncrement": automatic}}
 
 
 def finite_cases(domain):
@@ -111,7 +111,7 @@ def negatives():
     yield declaration(columns, [[0, False, "NOCASE"]], True), "rejected", "default column collation"
     direct = {**table_declaration(columns), "withoutRowid": True}
     yield direct, "rejected", "needs a primary key"
-    yield {"sql": "CREATE TABLE t (a INTEGER PRIMARY KEY AUTOINCREMENT)", "declarations": []}, "rejected", "AUTOINCREMENT has no complete"
+    yield {"sql": "CREATE TABLE t (a INT PRIMARY KEY AUTOINCREMENT)", "declarations": []}, "analysis-rejected", "AUTOINCREMENT"
     yield {"sql": "CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)", "declarations": []}, "analysis-rejected", "more than one primary key"
 
 

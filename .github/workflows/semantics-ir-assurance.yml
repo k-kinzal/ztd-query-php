@@ -178,6 +178,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-not-null-conflict-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-strict-tables-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-primary-keys-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-auto-rowid-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-mutation-conflicts-evidence/

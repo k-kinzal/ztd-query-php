@@ -60,6 +60,10 @@ def faults(engine):
             Fault("allow-nonexistent-key-slot", "Schema/CreateTable::__construct", "$term->slot < count($checked),", "true,"),
             Fault("allow-keyless-without-rowid", "Schema/CreateTable::__construct", "!$withoutRowid || $primaryKey !== null,", "true,"),
             Fault("allow-several-inline-key-terms", "Schema/Key/PrimaryKey::__construct", "!$inline || count($checked) === 1,", "true,"),
+            Fault("allow-automatic-non-alias", "Schema/CreateTable::__construct",
+                  "!$withoutRowid && $checked[$primaryKey->terms[0]->slot]->type === DeclaredDatatypeName::Integer,", "true,"),
+            Fault("allow-automatic-inline-descending-key", "Schema/Key/PrimaryKey::__construct",
+                  "!$autoIncrement || !$inline || !$checked[0]->descending,", "true,"),
             Fault("replace-declared-default", "Schema/CreateColumnLowering::lower", "$default === null,", "true,"),
             Fault("allow-excessive-case-branches", "Expression/CaseExpression::__construct", "count($branches) <= 32,", "true,"),
             Fault("skip-conditional-result-scope", "Predicate/ExpressionScope::choice",
@@ -236,7 +240,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v22.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v23.json", "value-primitives.json")},
+                       "native-boundaries-v22.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v5.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v23.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

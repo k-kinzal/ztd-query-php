@@ -422,6 +422,7 @@ function directPrimaryKey(?array $value): ?PrimaryKey
         array_map(static fn (array $term): KeyTerm => new KeyTerm($term[0], $term[1], Collation::from($term[2])), $value['terms']),
         $value['inline'],
         KeyConflict::from($value['conflict']),
+        $value['autoIncrement'] ?? false,
     );
 }
 
@@ -434,6 +435,7 @@ function observePrimaryKey(?PrimaryKey $value): ?array
         'terms' => array_map(static fn (KeyTerm $term): array => [$term->slot, $term->descending, $term->collation->value], $value->terms),
         'inline' => $value->inline,
         'conflict' => $value->conflict->value,
+        'autoIncrement' => $value->autoIncrement,
     ];
 }
 

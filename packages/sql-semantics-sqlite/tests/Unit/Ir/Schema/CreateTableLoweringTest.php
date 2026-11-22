@@ -61,4 +61,14 @@ final class CreateTableLoweringTest extends TestCase
         self::assertSame(KeyConflict::Fail, $value->primaryKey->conflict);
         self::assertSame('CREATE TABLE "temp"."data" ("code" TEXT, "id" INTEGER, PRIMARY KEY ("id" DESC, "code" COLLATE NOCASE) ON CONFLICT FAIL) WITHOUT ROWID', $value->toString());
     }
+
+    public function testAnalyzePublishesPersistentRowidAllocation(): void
+    {
+        $value = (new Semantics())->analyze('CREATE TABLE data (id INTEGER PRIMARY KEY AUTOINCREMENT)');
+
+        self::assertInstanceOf(CreateTable::class, $value);
+        self::assertNotNull($value->primaryKey);
+        self::assertTrue($value->primaryKey->autoIncrement);
+        self::assertSame('CREATE TABLE "main"."data" ("id" INTEGER PRIMARY KEY AUTOINCREMENT)', $value->toString());
+    }
 }
