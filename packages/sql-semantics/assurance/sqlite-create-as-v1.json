@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/sqlite-create-as-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under the existing numbered parameter and short column name profile.",
+  "scope": "CREATE TABLE AS over a checked standalone VALUES or source-free SELECT, with a resolved destination and deterministic names and type declarations.",
+  "constructors": {
+    "Schema/Query/CreateTableAs": {
+      "role": "A complete population and declaration of a SQLite rowid table from a closed query.",
+      "structure": "Resolved schema and table identifiers, an IF NOT EXISTS decision and a checked Select or ValuesQuery. Its created columns are derived from these immutable operands.",
+      "conditions": "The target schema is nonempty, the table is outside the reserved namespace, and SELECT has no source. The query already checks its width, operand roles and binding slots. A resolved column name must fit the identifier profile and must be determined before the native random suffix fallback.",
+      "meaning": "Declare the ordered result columns with the profiled SQLite creation names and affinity. Populate them with the query's results in result order, preserving NULL, repeats, runtime storage classes and parameter correspondence. The table has a rowid, no column constraints and default binary collation.",
+      "externalInterpretation": "Use the same target schema, matching initial catalog and parameter values. The source-free query depends only on its resolved scalar structure and explicit inputs.",
+      "sql": "Emit CREATE TABLE with the qualified target and creation guard, then AS followed by the checked query representation.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Query/CreatedColumn": {
+      "role": "An ordered member of the declared output layout.",
+      "structure": "One immutable identifier and a closed declared type.",
+      "conditions": "The owning layout assigns the final name, position and native affinity. A fragment is admissible for that role with checked component values.",
+      "meaning": "The identifier and declaration are the catalog facts created from the corresponding result.",
+      "externalInterpretation": "Use introspection of the output table in the same SQLite profile.",
+      "sql": "The containing CTAS creates the column through its query operand, which supplies the normalized name and decltype through native rules.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Schema/Query/CreatedColumnType": {
+      "role": "One native declaration spelling derived from a source-free query's column.",
+      "structure": "Untyped, INT, NUM, REAL or TEXT.",
+      "conditions": "The layout implements the pinned SQLite expression affinity and compound result rules.",
+      "meaning": "The spelling selects the declared SQLite type and column write affinity.",
+      "externalInterpretation": "Use the same SQLite affinity and creation profile.",
+      "sql": "The query's explicit casts and compound storage roles produce the derived declaration without an explicit column declaration.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "additionalPublicRoots": ["Schema/Query/CreateTableAs"],
+  "existingRoles": ["Select", "ResultColumn", "Rows/ValuesQuery", "Rows/ValueRow", "Identifier", "Expression/CastExpression", "Parameter"],
+  "observations": [
+    "Observe destination schema, ordered column names and declaration types, lack of defaults and constraints, and preservation of guarded existing data.",
+    "Observe the complete typed row sequence and contiguous exposed rowids. If all aliases are hidden by the at-most-one-row projection, observe the declared fields directly.",
+    "Retain native parameter labels and positions, exact value storage, duplicates and the original SQL observation for analyzed inputs.",
+    "Check the derived layout independently against the installed database catalog."
+  ],
+  "rules": [
+    "VALUES starts with the ordinary columnN names. SELECT uses its result labels, with SQLite's TRUE/FALSE fallback and ASCII-insensitive collision resolution. The suffix starts at one, strips an existing trailing colon and digits before appending, and cannot use the random retry after suffix four.",
+    "A COLLATE operator retains its operand's affinity. A cast supplies its target affinity. Other source-free roles in this domain have no affinity. A blob affinity uses the untyped declaration.",
+    "A multirow VALUES column selects its first affinity. A numeric row in another arm can suppress TEXT affinity, and a text row can suppress numeric affinity. The possible-storage categories come from the pinned syntax rules, independent of a particular binding value. A leading bare CAST in a compatible numeric group produces NUM."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "guards": [false, true],
+    "forms": ["select", "values-single", "values-compatible-pair", "values-mixed-pair"],
+    "widths": [1, 2],
+    "affinityRoles": ["none", "integer", "numeric", "real", "text", "blob"],
+    "inputs": ["literal", "parameter-text", "parameter-null"],
+    "identity": "Check each of the 576 combinations once. Compare both the checked derived layout and the resulting native declaration and row state."
+  },
+  "exploration": {
+    "seeds": [53171, 60223, 75317],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary widths, ordered values row count and alternate affinity roles, nested casts and collations, filter results, parameter use, aliases and deterministic collisions, and guarded existing targets."
+  },
+  "negative": [
+    "A direct SELECT body with an external source",
+    "A resolved analyzed SELECT body with an external source",
+    "An analyzed query root outside the admitted source-free forms",
+    "A layout whose next collision would require the native random suffix",
+    "A reserved destination name"
+  ],
+  "faults": [
+    "Change the destination schema",
+    "Drop IF NOT EXISTS",
+    "Replace the input query with a fixed SELECT",
+    "Erase a cast that determines the declaration"
+  ],
+  "open": ["CTAS from resolved source tables or subqueries, other query root roles and nondeterministic collision suffixes."],
+  "trust": ["The pinned SQLite affinity, naming and C API rules.", "Independent declaration and query evaluation for the measured inputs.", "Exact PHP layout and composition checks, and the installed publication probe."],
+  "sources": ["https://sqlite.org/lang_createtable.html#create_table_as_select_statements", "https://sqlite.org/src/file/src/select.c?ci=version-3.47.2", "https://sqlite.org/src/file/src/expr.c?ci=version-3.47.2"]
+}
