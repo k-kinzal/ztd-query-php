@@ -20,7 +20,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-insert-slots-boundaries-v3.json', 'ff1868cce0bf4174b3bbadde618f58a9383fa73c70c37ab300d83962aac00af4'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v11.json', 'c0774a7a164324280a42032b79ea1d4c58e22dd4eef0bdbe098edcecc0a8a949'],
-            ['sqlite-default-boundaries-v5.json', '0f8fa057e393b8af7154e4b7ccbba7c46110660cf6a024c8cc972bfdcedf9158'],
+            ['sqlite-default-boundaries-v6.json', 'a61a4b5fb6e8d2ac08a2de1548448ca01902426549fe77a0b11c9ba4c7f6719c'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
@@ -84,7 +84,10 @@ function checkNativeBoundaries(
             'Ir\\Schema\\CreateTable', 'Ir\\Schema\\Key\\KeyConflict', 'Ir\\Schema\\Key\\KeyTerm', 'Ir\\Schema\\Key\\PrimaryKey',
             'Ir\\Schema\\Key\\KeyTermLowering', 'Ir\\Schema\\Key\\PrimaryKeySql', 'Ir\\Schema\\Key\\PrimaryKeyLowering',
             'Statement\\Schema\\LiteralColumn', 'Statement\\Query\\Ordering\\SortDirection',
-            'Statement\\Schema\\Column\\ColumnPrimaryKey', 'Statement\\Schema\\Table\\TablePrimaryKey'] as $name) {
+            'Statement\\Schema\\Column\\ColumnPrimaryKey', 'Statement\\Schema\\Table\\TablePrimaryKey',
+            'Ir\\Schema\\CreateSchema', 'Ir\\Schema\\Query\\CreateTableAs', 'Ir\\Schema\\Query\\CreateAsAffinity',
+            'Ir\\Schema\\Query\\CreateAsLayout', 'Ir\\Schema\\Query\\CreatedColumn', 'Ir\\Schema\\Query\\CreatedColumnDeclaration',
+            'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
         $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";

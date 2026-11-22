@@ -41,6 +41,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\Compound",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\CreateTable",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Query\\CreateTableAs",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Transaction\\Transaction",
 }
 
@@ -115,10 +116,11 @@ CONTRACTS = {
     "sqlite-strict-tables-v2.json": "0c9786f6e227573ed745d43d8b1c320b128b5b3fa4b23b3f6f40842098284302",
     "sqlite-primary-keys-v2.json": "b5ed249813c2bf4d36b971033e76bad276ad617b0cea5cc6c9cbcfc518e3a51b",
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
+    "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "7565f214ab112e451f0c0058185349c6a5a851af4c5f7500a1cc5ed3f4b75323"
+PUBLICATION = "537d55a39475629415650a79326c44af630522029f8ad009748ce3b9e4fe3eb2"
 
 
 def declared_constructors(dialects):
@@ -148,7 +150,7 @@ def declared_constructors(dialects):
 
 
 def constructor_scope(by_class):
-    publication = (TOOL / "publication-v17.json").read_bytes()
+    publication = (TOOL / "publication-v19.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -170,6 +172,11 @@ def constructor_scope(by_class):
         and clas.startswith(tuple(prefix + "\\Ir\\" for prefix in prefixes))
     }
     publication_types = set(definitions) | {kind for cases in routes.values() for kind in cases}
+    array_routes = publication["arrayRoutes"]
+    for route, members in array_routes.items():
+        owner, _, _ = route.partition("::")
+        if owner not in definitions or not members or members[0] != "array" or set(members[1:]) - definitions.keys():
+            raise ValueError(f"Array publication route has unregistered roles: {route}")
     found = {}
     for clas, record in by_class.items():
         if record["visibility"] != "public":
@@ -180,9 +187,10 @@ def constructor_scope(by_class):
                 found[f"{clas}::{method}"] = matched
         for method in record["public_array_returns"]:
             route = f"{clas}::{method}"
-            if route in batch_routes:
-                found[route] = ["array"]
+            if route in batch_routes or clas in definitions:
+                found[route] = array_routes.get(route, ["array"])
     routes.update(batch_routes)
+    routes.update(array_routes)
     return {
         "registeredConstructors": {name: {
             "contracts": definitions[name], "supplementalEvidence": supplemental.get(name, []), "source": by_class[name]["file"],

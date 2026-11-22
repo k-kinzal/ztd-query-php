@@ -61,6 +61,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $queries['Aggregation\\GroupedSelect'] = "SELECT id, COUNT(*) AS entries FROM $table GROUP BY id";
     if ($platform === 'Sqlite') {
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
         $queries['Rows\\LocalProjection'] = 'SELECT q.value FROM (SELECT 42 AS value) AS q';
@@ -78,6 +79,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $result = $semantics->analyze($sql, $context);
         if (!$result instanceof SqlSemantics\SemanticsIR || $result::class !== $namespace . 'Ir\\' . $role) {
             throw new RuntimeException('The installed analyzer published an unexpected role.');
+        }
+        if ($role === 'Schema\\Query\\CreateTableAs') {
+            $columns = $result->columns();
+            if (count($columns) !== 1 || $columns[0]::class !== $namespace . 'Ir\\Schema\\Query\\CreatedColumn'
+                || $columns[0]->name->value !== 'result' || $columns[0]->type->value !== 'INT') {
+                throw new RuntimeException('The installed CREATE TABLE AS derives an unexpected column.');
+            }
         }
         echo json_encode([
             'probe' => 'publication',

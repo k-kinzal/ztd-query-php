@@ -255,6 +255,17 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Schema\\Key\\PrimaryKeySql', 'Schema\\Key\\PrimaryKeyLowering', 'Schema\\Key\\KeyTermLowering');
     $pureCollaborators[] = 'Schema\\Key\\PrimaryKeySql';
     $methods['Schema\\CreateTable'] = $methods['Select'];
+    $properties['Schema\\Query\\CreateTableAs'] = [
+        'schema' => ['Identifier'], 'table' => ['Identifier'], 'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
+    ];
+    $methods['Schema\\Query\\CreateTableAs'] = ['__construct', 'columns', 'profileId', 'toString'];
+    $properties['Schema\\Query\\CreatedColumn'] = ['name' => ['Identifier'], 'type' => ['Schema\\Query\\CreatedColumnDeclaration']];
+    $methods['Schema\\Query\\CreatedColumn'] = ['__construct'];
+    $properties['Schema\\Query\\CreatedColumnDeclaration'] = $methods['Schema\\Query\\CreatedColumnDeclaration'] = [];
+    $enumCases['Schema\\Query\\CreatedColumnDeclaration'] = ['Untyped' => '', 'Integer' => 'INT', 'Numeric' => 'NUM', 'Real' => 'REAL', 'Text' => 'TEXT'];
+    $roots[] = 'Schema\\Query\\CreateTableAs';
+    array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
+    array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     $properties['Schema\\TableColumn'] = [
         'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
         'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
@@ -613,6 +624,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
     sort($roots);
@@ -711,6 +723,7 @@ try {
                 'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
+                'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',

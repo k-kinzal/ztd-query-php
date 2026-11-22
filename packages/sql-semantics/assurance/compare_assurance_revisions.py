@@ -20,7 +20,7 @@ SUPPORT_FILES = (
 SCOPE_FIELDS = ("scope", "approval", "profile", "profiles", "release", "mode", "open", "trust", "externalInterpretation",
                 "conditions", "invariants", "meaning", "sql", "observations", "observation", "finite",
                 "exploration", "negative", "faults", "dialectFaults", "allowedExclusions", "obligations", "formalProof",
-                "composition", "predecessorCheck", "changeFromV1", "initialExecutableDomain")
+                "composition", "rules", "predecessorCheck", "changeFromV1", "initialExecutableDomain")
 
 
 def literal_registry(path, variable):

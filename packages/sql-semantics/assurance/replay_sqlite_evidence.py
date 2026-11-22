@@ -11,6 +11,7 @@ import run_sqlite_case as choice
 import run_sqlite_cast as cast
 import run_sqlite_compound as compound
 import run_sqlite_create_table as create
+import run_sqlite_create_as as create_as
 import run_sqlite_delete as delete
 import run_sqlite_delete_returning as returning
 import run_sqlite_defaults as defaults
@@ -71,6 +72,7 @@ DOMAINS = {
     update_returning.CONTRACT_NAME: (update_returning, update_returning.FIXTURE),
     "sqlite-drop-table-v1.json": (drop, drop.FIXTURE),
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
+    create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     primary_keys.CONTRACT_NAME: (primary_keys, primary_keys.FIXTURE),
     auto_rowid.CONTRACT_NAME: (auto_rowid, auto_rowid.FIXTURE),

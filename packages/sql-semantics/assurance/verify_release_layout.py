@@ -162,6 +162,7 @@ def verify_probe(raw, catalog):
     expected.update((platform, "Aggregation\\GroupedSelect") for platform in DIALECTS)
     expected.update((platform, "Mutation\\InsertQuery") for platform in ("MySql", "PostgreSql"))
     expected.add(("Sqlite", "Rows\\ValuesQuery"))
+    expected.add(("Sqlite", "Schema\\Query\\CreateTableAs"))
     expected.update((platform, "Rows\\LocalProjection") for platform in ("MySql", "PostgreSql"))
     expected.update((platform, "Rows\\RecursiveSeries") for platform in ("MySql", "PostgreSql"))
     require(pairs == expected and len(results) == len(expected), "incomplete-installed-publication")

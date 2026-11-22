@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v17.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v19.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -530,6 +530,8 @@ The [SQLite STRICT table contract](sqlite-strict-tables-v2.json) compares the ca
 The [SQLite primary key contract](sqlite-primary-keys-v2.json) follows resolved owned-column slots through an inline or table constraint. Its fixtures compare primary key index fields, collations and directions, rowid availability, generated keys, duplicate and NULL writes, and rollback. Run `run_sqlite_primary_keys.py` with the SQLite fixture options to record both transaction states.
 
 The [SQLite automatic rowid contract](sqlite-auto-rowid-v1.json) preserves the distinction between the ordinary allocator and AUTOINCREMENT. It compares alias values and the owning schema's sqlite_sequence after deletions, commits and rollbacks. The fixed histories also verify SQLITE_FULL after exhausting the signed range. Run `run_sqlite_auto_rowid.py` with the same SQLite fixture options.
+
+The [SQLite population contract](sqlite-create-as-v5.json) checks the catalog and contents of CREATE TABLE AS. It compares declaration names, affinity, read-back storage classes, rowid order, parameters and the guarded destination. Run `run_sqlite_create_as.py` with the SQLite fixture options. The contract preserves the independent counterexamples for compound type selection and population affinity.
 
 ## SQLite literal defaults
 

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKeyLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
 
@@ -29,28 +28,20 @@ final class CreateTableLowering
         foreach ($statement->options as $option) {
             Check::input($option->kind() === TableOptionKind::Strict || $option->kind() === TableOptionKind::WithoutRowid, 'This table option has no complete CREATE TABLE representation.');
         }
-        $schemaName = $statement->name->schema->value ?? ($statement->temporary ? 'temp' : 'main');
-        $comparison = Comparison::AsciiInsensitive;
-        Check::input(!$statement->temporary || $comparison->equal($schemaName, 'temp'), 'A temporary table must be in the temp schema.');
+        $schema = (new CreateSchema())->resolve($operation, $statement->name, $statement->temporary);
         $columns = [];
         $lowering = new CreateColumnLowering();
         foreach ($statement->columns as $column) {
             $columns[] = $lowering->lower($column, $operation);
         }
-        foreach ($operation->context->searchPath as $schema) {
-            if ($comparison->equal($schemaName, $schema->value)) {
-                return new CreateTable(
-                    new Identifier($schema->value),
-                    new Identifier($statement->name->name->value),
-                    $columns,
-                    $statement->ifNotExists,
-                    $statement->strict(),
-                    $statement->withoutRowid(),
-                    (new PrimaryKeyLowering())->lower($statement)
-                );
-            }
-        }
-
-        throw new InvalidConstruction('CREATE TABLE requires a known schema.');
+        return new CreateTable(
+            $schema,
+            new Identifier($statement->name->name->value),
+            $columns,
+            $statement->ifNotExists,
+            $statement->strict(),
+            $statement->withoutRowid(),
+            (new PrimaryKeyLowering())->lower($statement)
+        );
     }
 }

@@ -66,6 +66,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -278,7 +280,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|CreateTableAs|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -489,6 +491,29 @@ function observeCreateTable(CreateTable $value): array
     ];
 }
 
+function directCreateTableAs(array $input): CreateTableAs
+{
+    $query = $input['query'];
+    $value = ($query['operation'] ?? 'select') === 'values' ? directValues($query) : direct($query);
+
+    return new CreateTableAs(new Identifier($input['schema']), new Identifier($input['table']), $value, $input['ifNotExists']);
+}
+
+function observeCreateTableAs(CreateTableAs $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-as',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'table' => $value->table->value,
+        'ifNotExists' => $value->ifNotExists,
+        'query' => $value->query instanceof ValuesQuery ? observeValues($value->query) : observeSelect($value->query),
+        'columns' => array_map(static fn (CreatedColumn $column): array => [$column->name->value, $column->type->value], $value->columns()),
+        'sql' => $value->toString(),
+    ];
+}
+
 function directTransaction(array $input): Transaction
 {
     $name = isset($input['nameHex']) ? hex2bin($input['nameHex']) : ($input['name'] ?? null);
@@ -565,6 +590,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
+            ($input['operation'] ?? null) === 'create-as' => directCreateTableAs($input),
             ($input['operation'] ?? null) === 'transaction' => directTransaction($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
@@ -603,6 +629,9 @@ function runCase(array $input): array
     }
     if ($value instanceof CreateTable) {
         return observeCreateTable($value);
+    }
+    if ($value instanceof CreateTableAs) {
+        return observeCreateTableAs($value);
     }
     if ($value instanceof Transaction) {
         return [
