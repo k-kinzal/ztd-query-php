@@ -1,0 +1,62 @@
+{
+  "revision": "SemanticsIR/sqlite-joined-local-source-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "scope": "A checked explicit join chain can read a single named VALUES definition in either input position or in several occurrences.",
+  "constructors": {},
+  "existingRoles": ["Select", "From/Join", "Rows/LocalSource", "Rows/ValuesQuery", "ColumnReference"],
+  "conditions": [
+    "Each local occurrence contains the same immutable LocalSource object, and each referenced ColumnReference selects one occurrence and column ordinal. An independently allocated LocalSource denotes a different definition even if its rows match.",
+    "Derive one definition and its ordered explicit names. Match every local occurrence to that exact bound definition. Require at least one local occurrence in a published WITH SELECT.",
+    "Every ON condition can see only the declared prefix. Projection and filter read the full joined layout. Recursive source joins, multiple distinct definitions, explicit materialization hints and index annotations remain required outside this checked domain.",
+    "Charge the local definition once in the statement envelope. Emit its named WITH clause once, before the ordinary SELECT and JOIN clauses. Preserve the syntax order of the local markers and later registrations."
+  ],
+  "observations": [
+    "Absolute external table identity despite a matching local name, local definition identity and distinct occurrence indices when the definition is read several times.",
+    "Ordered result names, typed rows, duplicate counts, NULL extensions and known row order. Without an order, compare the multiset under the fixed native typing rules.",
+    "The actual native parameter count, first label for repeated numbered slots, distinct bound values and repeated evaluation of a shared local source."
+  ],
+  "finite": {
+    "join": ["INNER", "CROSS", "LEFT", "RIGHT", "FULL"],
+    "placement": ["first", "right", "repeat"],
+    "condition": ["explicit", "unconditional"],
+    "rowShape": ["single", "duplicate-null"],
+    "distinct": [false, true],
+    "identity": "Independently recover all 120 tuples from the returned source roles, shared instance identity, ordered local rows and join roles. Run the complete product against pinned SQLite."
+  },
+  "exploration": {
+    "seeds": [12721, 24893, 39209],
+    "casesPerSeed": 45,
+    "timeoutSeconds": 300,
+    "allowedExclusions": [],
+    "structure": "Generate join chains with two to five occurrences, vary local and external inputs and left-to-right ON visibility, and vary row shape, row type, NULL, multiplicity and independent parameter values."
+  },
+  "negative": [
+    "A join without a first source",
+    "Two distinct LocalSource instances in the same query",
+    "A local column slot outside the definition width",
+    "A local occurrence referenced before it enters the ON prefix",
+    "A recursively defined source in a join",
+    "An analyzed WITH query that does not read its checked definition"
+  ],
+  "faults": [
+    "Render two uses of the local definition as different occurrence aliases with a shared wrong column qualifier",
+    "Use a same-named external table for a local occurrence",
+    "Ignore the local definition projection context when rendering a join condition",
+    "Omit the first registration of a parameter in the shared definition"
+  ],
+  "evidence": {
+    "Q01": "Resolve all occurrence and column roles and reject independent invalid direct constructions at their owner boundary.",
+    "Q02": "Run all source positions, repeated definitions and native positive original SQL under the fixed schedule.",
+    "Q03": "Inspect the actual shared definition identity and verify the scope checks, ordering and bounds.",
+    "Q04": "Compare original and rendered SQL with independent join projection and parameter rules.",
+    "Q05": "Record exact source and installed cross-package publication identity."
+  },
+  "trust": [
+    "Pinned SQLite VALUES, WITH and JOIN rules",
+    "The referenced external relation definitions and data supplied by the caller",
+    "The exact PHP boundaries, shared-object identity, renderer and independent fixture"
+  ],
+  "sources": ["https://sqlite.org/lang_with.html", "https://sqlite.org/lang_select.html"]
+}
