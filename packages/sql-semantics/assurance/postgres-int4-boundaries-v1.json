@@ -1,0 +1,30 @@
+{
+  "revision": "SemanticsIR/postgres-int4-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Require the fixed native int4 operator binding and check both operand roles.",
+  "rules": {
+    "ExpressionLowering::binary": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$qualifiers = array_column($expression->operator->qualifiers, 'value');",
+        "Check::input(",
+        "    ($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],",
+        "    'Integer arithmetic must resolve to a pg_catalog operator.',",
+        ");",
+        "$operator = ArithmeticOperator::tryFrom($expression->operator->name->value);",
+        "Check::input($operator !== null, 'The operator has no checked PostgreSQL int4 arithmetic representation.');",
+        "$left = $this->lower($expression->left, $binding, $catalogFirst);",
+        "$right = $this->lower($expression->right, $binding, $catalogFirst);",
+        "$typeError = 'Arithmetic operands must have the int4 role.';",
+        "Check::input(!$left instanceof BooleanLiteral, $typeError);",
+        "Check::input(!$left instanceof NullLiteral, $typeError);",
+        "Check::input(!$right instanceof BooleanLiteral, $typeError);",
+        "Check::input(!$right instanceof NullLiteral, $typeError);",
+        "",
+        "return new Arithmetic($operator, $left, $right);"
+      ]
+    }
+  }
+}

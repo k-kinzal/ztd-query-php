@@ -16,4 +16,9 @@ enum ArithmeticOperator: string
     case Add = '+';
     case Subtract = '-';
     case Multiply = '*';
+    case Divide = '/';
+    case Remainder = '%';
+    case BitAnd = '&';
+    case BitOr = '|';
+    case BitXor = '#';
 }

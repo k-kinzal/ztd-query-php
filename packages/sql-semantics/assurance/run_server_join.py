@@ -218,18 +218,18 @@ def faults(engine, tag):
 
 def main(domain):
     label = domain.LABEL
+    specification, profiles = domain.specifications()
     parser = argparse.ArgumentParser(description=domain.__doc__)
     parser.add_argument("--candidate", required=True, type=Path)
     parser.add_argument("--tool-autoload", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--engine", required=True, choices=("mysql", "postgres"))
+    parser.add_argument("--engine", required=True, choices=tuple(profiles))
     parser.add_argument("--release", required=True)
     parser.add_argument("--local", action="store_true")
     args = parser.parse_args()
     args.candidate, args.tool_autoload, args.out = args.candidate.resolve(), args.tool_autoload.resolve(), args.out.resolve()
     require(args.out != args.candidate and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True, exist_ok=False)
-    specification, profiles = domain.specifications()
     require(args.release in profiles[args.engine]["releases"], f"server-{label}-release-not-registered", args.release)
     commit, manifest = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", manifest)

@@ -22,6 +22,9 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
         ],
         'mysql', 'postgres' => [
+            ...($dialect === 'postgres' ? [
+                ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
+            ] : []),
             ['native-boundaries-v13.json', '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3'],
             ['native-insert-query-boundaries-v2.json', '527e7d1284a409e72b022a14f1280ee2d7ed1cc738b47b5d61df3a72e9cc8ee2'],
         ],
@@ -71,6 +74,9 @@ function checkNativeBoundaries(
         }
         $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";
     } else {
+        if ($dialect === 'postgres') {
+            $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
+        }
         $imports .= 'use ' . $platform . '\\Ir\\Binding\\Parameter;' . "\n";
     }
     $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";

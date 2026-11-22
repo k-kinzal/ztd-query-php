@@ -120,6 +120,10 @@ def inventory(root):
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
             related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("DeleteStmt", [])}
+            related.update({alternative: ("postgres-int4-operators-v1.json",) for alternative in (
+                "a_expr: a_expr / a_expr", "a_expr: a_expr % a_expr", "a_expr: a_expr qual_Op a_expr",
+                "b_expr: b_expr / b_expr", "b_expr: b_expr % b_expr", "b_expr: b_expr qual_Op b_expr",
+            )})
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

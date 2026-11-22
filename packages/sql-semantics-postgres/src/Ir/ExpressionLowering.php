@@ -39,22 +39,7 @@ final class ExpressionLowering
             $expression = $expression->operand;
         }
         if ($expression instanceof BinaryOperation) {
-            $qualifiers = array_column($expression->operator->qualifiers, 'value');
-            Check::input(
-                ($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],
-                'Integer arithmetic must resolve to a pg_catalog operator.',
-            );
-            $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
-            Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
-            $left = $this->lower($expression->left, $binding, $catalogFirst);
-            $right = $this->lower($expression->right, $binding, $catalogFirst);
-            $typeError = 'Arithmetic operands must have the int4 role.';
-            Check::input(!$left instanceof BooleanLiteral, $typeError);
-            Check::input(!$left instanceof NullLiteral, $typeError);
-            Check::input(!$right instanceof BooleanLiteral, $typeError);
-            Check::input(!$right instanceof NullLiteral, $typeError);
-
-            return new Arithmetic($operator, $left, $right);
+            return $this->binary($expression, $binding, $catalogFirst);
         }
         if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {
             return new IntegerLiteral($expression->value->digits);
@@ -76,5 +61,29 @@ final class ExpressionLowering
             $expression instanceof ParsedColumn => $binding->reference($expression),
             default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
         };
+    }
+
+    /**
+     * Resolves the exact builtin operation and both of its int4 operands.
+     * @throws InvalidConstruction When an operator or operand is outside this checked scope
+     */
+    public function binary(BinaryOperation $expression, SourceBinding|JoinBinding $binding, bool $catalogFirst): Arithmetic
+    {
+        $qualifiers = array_column($expression->operator->qualifiers, 'value');
+        Check::input(
+            ($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],
+            'Integer arithmetic must resolve to a pg_catalog operator.',
+        );
+        $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
+        Check::input($operator !== null, 'The operator has no checked PostgreSQL int4 arithmetic representation.');
+        $left = $this->lower($expression->left, $binding, $catalogFirst);
+        $right = $this->lower($expression->right, $binding, $catalogFirst);
+        $typeError = 'Arithmetic operands must have the int4 role.';
+        Check::input(!$left instanceof BooleanLiteral, $typeError);
+        Check::input(!$left instanceof NullLiteral, $typeError);
+        Check::input(!$right instanceof BooleanLiteral, $typeError);
+        Check::input(!$right instanceof NullLiteral, $typeError);
+
+        return new Arithmetic($operator, $left, $right);
     }
 }

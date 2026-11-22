@@ -11,6 +11,7 @@ from run import candidate_distribution, digest, require, verify_candidate, verif
 
 NATIVE = {
     "projection": "server-projection-v1.json",
+    "postgres_int4": "postgres-int4-operators-v1.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v1.json",
     "result": "server-result-v1.json",
@@ -129,6 +130,8 @@ class Evidence:
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
+            if domain == "postgres_int4":
+                registered = {"postgres": registered["postgres"]}
             unavailable = {}
             if domain == "recursive_series":
                 series = json.loads((self.tool_root / "server-recursive-series-v2.json").read_text())

@@ -117,8 +117,20 @@ def evaluate(operand, row, dialect):
         return validate_width(left + right, dialect)
     if operand[1] == "-":
         return validate_width(left - right, dialect)
-    assert operand[1] == "*"
-    return validate_width(left * right, dialect)
+    if operand[1] == "*":
+        return validate_width(left * right, dialect)
+    assert dialect == "postgres"
+    operator = operand[1]
+    if operator in ("/", "%"):
+        magnitude = abs(left) // abs(right)
+        quotient = -magnitude if (left < 0) != (right < 0) else magnitude
+        return validate_width(quotient, dialect) if operator == "/" else left - right * quotient
+    if operator == "&":
+        return left & right
+    if operator == "|":
+        return left | right
+    assert operator == "#"
+    return left ^ right
 
 
 def observation(observed):
@@ -138,6 +150,8 @@ def expected(item):
         values = [[evaluate(expression, row, dialect) for expression, _ in fields] for row in rows]
     except OverflowError:
         return {"status": "db-error", "state": "22003"}
+    except ZeroDivisionError:
+        return {"status": "db-error", "state": "22012"}
     return observation({"status": "rows", "fields": [[name, mapping.get(expr[0], default)] for expr, name in fields], "rows": values})
 
 

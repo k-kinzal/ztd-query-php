@@ -77,6 +77,9 @@ $internal = ['ExpressionLowering', 'SelectBounds', 'SelectLowering', 'SelectSql'
 $pureCollaborators = ['SelectBounds', 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
+if ($dialect === 'postgres') {
+    $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
+}
 if ($dialect === 'sqlite') {
     $enumCases['ArithmeticOperator'] += [
         'Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'ShiftLeft' => '<<', 'ShiftRight' => '>>',

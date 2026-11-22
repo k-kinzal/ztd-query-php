@@ -94,6 +94,8 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
+        shared.append(Fault("allow-foreign-int4-operator", "ExpressionLowering::binary",
+                            "($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],", "true,"))
         shared.append(Fault("ignore-wildcard-occurrence-ambiguity", "From/JoinBinding::resolved", "$expanded === null,", "true,"))
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
                             "!== ($on->right->occurrence < $leftWidth)", "=== ($on->right->occurrence < $leftWidth)"))
@@ -168,7 +170,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v4.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v4.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v4.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v4.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)
