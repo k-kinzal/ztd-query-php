@@ -11,6 +11,9 @@ use SqlSemantics\Platform\MySql\Model\Statement\Fact\Diagnostic;
  * Semantic problems established while analyzing grammatical SQL.
  *
  * @visibility public
+ * @example Rejecting a relation absent from a complete catalog
+ *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();
+ *     $semantics->analyze('SELECT id FROM missing', $semantics->context([])) // throws \SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException
  */
 final class SemanticException extends RuntimeException implements \SqlSemantics\AnalysisException
 {

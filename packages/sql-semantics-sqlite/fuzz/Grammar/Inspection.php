@@ -9,7 +9,6 @@ use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Contract\Mode;
-use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;

@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(ValuesQuery::class)]
 #[Medium]
@@ -27,7 +28,7 @@ final class ValuesQueryTest extends TestCase
 {
     public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1')])]);
         $derivation = new Derivation($semantics->context());
         $derivation->statement($values);
@@ -38,7 +39,7 @@ final class ValuesQueryTest extends TestCase
 
     public function testDeriveQueryNamesTheColumnsAndCombinesTheRows(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1'), new NumberLiteral('2')]), new ValueRow([new NullLiteral(), new NumberLiteral('3')])]);
         $derivation = new Derivation($semantics->context());
         $fact = $derivation->query($values, $derivation->environment());
@@ -52,7 +53,7 @@ final class ValuesQueryTest extends TestCase
 
     public function testDeriveQueryReportsRowsOfDifferentLengths(): void
     {
-        $semantics = new Semantics();
+        $semantics = new Inspection();
         $values = new ValuesQuery([new ValueRow([new NumberLiteral('1'), new NumberLiteral('2')]), new ValueRow([new NumberLiteral('3')])]);
         $derivation = new Derivation($semantics->context());
         $derivation->query($values, $derivation->environment());

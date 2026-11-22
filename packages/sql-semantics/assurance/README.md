@@ -66,7 +66,7 @@ python3 packages/sql-semantics/assurance/branch_gate.py audit \
 
 The proposal starts disabled and can be added alongside the existing merge gate. Activate it after the reviewed acceptance publisher is running and a sandbox pull request demonstrates that missing evidence, old SHAs and the same context from another App are rejected. Run the audit with the effective rules and the attached ruleset definition to verify the exact App, strict checks and the absence of bypass actors. Check the publisher's credential isolation and review history separately. [GitHub ruleset API](https://docs.github.com/en/rest/repos/rules)
 
-The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. The legacy models, other SQLite constructs, uncovered server projection roles and modes, and comparison of statement effects outside SELECT all remain open under the wider contract.
+The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. Unimplemented SQL structures, uncovered server projection roles and modes, and effects outside the registered statement domains remain open under the wider contract.
 
 ## MySQL and PostgreSQL evidence
 
@@ -84,7 +84,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_server.py
 
 The finite verifier checks the observed case IDs by expression tree and source policy. The evaluator independently computes integer operations, NULL propagation, overflow, output types and names, duplicate rows, and PostgreSQL inheritance. Each analyzed case compares the original statement and its emitted SQL in the observed server settings.
 
-The SQLite evidence also writes `scope.json`. It compares the AST inventory with the constructor IDs and named public return roles in the fixed contracts. Each matched constructor links to its source digest and public and magic signatures. An added or missing constructor or publication route fails the check. The same audit follows inherited interfaces to find every completed root and compares grammar artifact digests against [the fixed baseline list](required-grammars.json). The wider model and grammar obligations remain open. Legacy public types are listed for further classification by semantic role.
+The SQLite evidence also writes `scope.json`. It compares the AST inventory with the constructor IDs and named public return roles in the fixed contracts. Each matched constructor links to its source digest and public and magic signatures. An added or missing constructor or publication route fails the check. The same audit follows inherited interfaces to find every completed root and compares grammar artifact digests against [the fixed baseline list](required-grammars.json). The wider model and grammar obligations remain open. The inventory also lists internal analysis types so reviewers can check their visibility and separation from the public IR.
 
 For a single declared release, pass `--engine mysql --release 8.4.7` or `--engine postgres --release 16.6` and connect the observer to that release. The runner checks the exact server version before comparing any case. The [manual release matrix](../../../.github/workflows/semantics-ir-release-matrix.yml) pins images for all nine MySQL releases and both PostgreSQL releases. Its artifacts are keyed by engine and release. Every matrix result remains specific to the native projection domain.
 

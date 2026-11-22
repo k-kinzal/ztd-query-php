@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
-use SqlSemantics\Platform\MySql\Semantics;
+use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SessionDatabase::class)]
 #[Medium]
@@ -17,14 +17,14 @@ final class SessionDatabaseTest extends TestCase
 {
     public function testNamedAnswersTheDatabaseTheCallerNamed(): void
     {
-        $context = (new Semantics(null, null, searchPath: new SearchPath('shop')))->context();
+        $context = (new Inspection(null, null, searchPath: new SearchPath('shop')))->context();
 
         self::assertSame('shop', (new SessionDatabase())->named($context)?->value);
     }
 
     public function testNamedAnswersNullWithoutACurrentDatabase(): void
     {
-        $context = (new Semantics())->context();
+        $context = (new Inspection())->context();
 
         self::assertSame(SessionDatabase::UNNAMED, $context->searchPath[0]->value);
         self::assertNull((new SessionDatabase())->named($context));

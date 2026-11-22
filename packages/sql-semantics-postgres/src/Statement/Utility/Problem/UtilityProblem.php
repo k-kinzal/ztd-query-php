@@ -24,16 +24,13 @@ final class UtilityProblem implements Diagnostic
 
     /**
      * @param UtilityProblemKind $kind The broken rule
-     * @param array<array-key, mixed> $subjects The texts the message names, one for each `%s` of the rule
+     * @param list<string> $subjects The texts the message names, one for each `%s` of the rule
      */
     public function __construct(public readonly UtilityProblemKind $kind, array $subjects = [])
     {
         Check::input(array_is_list($subjects) && count($subjects) === substr_count($kind->value, '%s'), 'A utility problem names one subject for each place of its message.');
-        $texts = [];
-        foreach ($subjects as $subject) {
-            Check::input(is_string($subject), 'A subject of a utility problem is a text.');
-            $texts[] = $subject;
-        }
+        $texts = array_values(array_filter($subjects, is_string(...)));
+        Check::input(count($texts) === count($subjects), 'A subject of a utility problem is a text.');
         $this->subjects = $texts;
     }
 

@@ -8,6 +8,8 @@ namespace SqlSemantics\Platform\MySql;
  * Selects MySQL for semantic analysis.
  *
  * @visibility public
+ * @example Identifying the selected database
+ *     \SqlSemantics\Platform\MySql\Dialect::MySql->database() // => 'mysql'
  */
 enum Dialect: string implements \SqlSemantics\Contract\Dialect
 {

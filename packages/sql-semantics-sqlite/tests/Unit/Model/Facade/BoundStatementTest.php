@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 #[Small]
 final class BoundStatementTest extends TestCase
 {
-    public function testConstructDerivesFactsFromTheStatement(): void
+    public function testFactsAreDerivedFromTheBoundStatement(): void
     {
         $platform = Platform::shared();
         $profile = (new Semantics())->profile();
