@@ -118,6 +118,23 @@ def faults(engine, tag):
     return result
 
 
+def observer_probes(engine):
+    schema = "ir_fixture" if engine == "mysql" else "public"
+    return (
+        "DELETE FROM " + schema + ".ir_unregistered WHERE FALSE",
+        "DELETE FROM " + schema + ".ir_delete_target WHERE FALSE; DELETE FROM " + schema + ".ir_delete_control",
+    )
+
+
+def observer_controls(engine, db):
+    result = {}
+    for statement in observer_probes(engine):
+        reply = db.request({"sql": statement})
+        same({"status": "outside-observer-scope"}, reply)
+        result[statement] = reply["status"]
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True, type=Path)
@@ -142,9 +159,10 @@ def main():
         with Observer(args.engine, deadline, "server_delete_observer.php") as db:
             check_profile(args.engine, args.release, db)
             same(ordered(ROWS), ordered(db.environment["initial"]))
+            protection = observer_controls(args.engine, db)
             with Worker(args, deadline, script="server_worker.php") as php:
                 result = execute(args, specification, args.engine, tag, php, db)
-                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment)
+                result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, observerControls=protection)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
             result["faults"] = check_render_faults(args, db, mutations, probe, script="server_worker.php")
     except Exception as error:

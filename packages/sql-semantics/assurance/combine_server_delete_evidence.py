@@ -4,12 +4,13 @@ import argparse
 import json
 from collections import Counter
 from pathlib import Path
+from types import SimpleNamespace
 
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from run_server import same
-from run_server_delete import CONTRACT, check_value, faults, required_forms, sample_forms, specifications, tools, version_tag
-from server_delete_cases import expected, finite_id, finite_ids, observation, requests
+from run_server import check_profile, same
+from run_server_delete import CONTRACT, check_value, faults, observer_probes, required_forms, sample_forms, specifications, tools, version_tag
+from server_delete_cases import ROWS, expected, finite_id, finite_ids, observation, ordered, requests
 
 
 def replay(path, report, specification):
@@ -85,6 +86,9 @@ def combine(candidate, checkout, paths, output):
         verify_distribution(json.loads(distribution.read_text()), manifest)
         ledger = path.parent / "events.jsonl"
         require(raw["eventsDigest"] == digest(ledger), "server-delete-evidence-ledger-mismatch", str(path))
+        check_profile(*role, SimpleNamespace(environment=raw["observerEnvironment"]))
+        same(ordered(ROWS), ordered(raw["observerEnvironment"]["initial"]))
+        same({probe: "outside-observer-scope" for probe in observer_probes(raw["engine"])}, raw["observerControls"])
         results = replay(ledger, raw, specification)
         check_faults(path.parent, raw, manifest)
         counts.update(results)

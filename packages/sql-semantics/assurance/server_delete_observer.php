@@ -33,7 +33,7 @@ function deleteFixture(PDO $pdo, string $engine, string $schema): void
         $trigger = 'CREATE TRIGGER ' . $name . '_log AFTER DELETE ON ' . $schema . '.' . $name . ' FOR EACH ROW ';
         $action = $engine === 'postgres'
             ? 'EXECUTE FUNCTION pg_temp.ir_record_delete()'
-            : "INSERT INTO " . $events . " VALUES ('" . $name . "', OLD.id, OLD.delta)";
+            : 'INSERT INTO ' . $events . " VALUES ('" . $name . "', OLD.id, OLD.delta)";
         $pdo->exec($trigger . $action);
     }
 }
@@ -57,11 +57,15 @@ function admitDelete(string $sql, string $schema): bool
 function physicalRows(PDO $pdo, string $engine, string $schema): array
 {
     $physical = $engine === 'postgres' ? 'ONLY ' : '';
-    $rows = [];
+    $rows = ['target' => [], 'child' => [], 'control' => [], 'events' => []];
+    $relations = [];
     foreach (['target', 'child', 'control'] as $name) {
-        $rows[$name] = $pdo->query('SELECT id, delta FROM ' . $physical . $schema . '.ir_delete_' . $name)->fetchAll(PDO::FETCH_NUM);
+        $relations[] = "SELECT '" . $name . "' AS bucket, id, delta, NULL AS source FROM " . $physical . $schema . '.ir_delete_' . $name;
     }
-    $rows['events'] = $pdo->query('SELECT source, id, delta FROM ' . $schema . '.ir_delete_events')->fetchAll(PDO::FETCH_NUM);
+    $relations[] = "SELECT 'events', id, delta, source FROM " . $schema . '.ir_delete_events';
+    foreach ($pdo->query(implode(' UNION ALL ', $relations))->fetchAll(PDO::FETCH_NUM) as [$bucket, $id, $delta, $source]) {
+        $rows[$bucket][] = $bucket === 'events' ? [$source, $id, $delta] : [$id, $delta];
+    }
 
     return $rows;
 }

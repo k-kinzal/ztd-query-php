@@ -113,8 +113,11 @@ function constructDelete(string $platform, array $input): SemanticsIR
     $test = $input['where'];
     $where = match (true) {
         $test === null => null,
-        $test[0] === 'comparison' => new $comparison($operator::from($test[1]),
-            constructOperand($namespace, $test[2]), constructOperand($namespace, $test[3])),
+        $test[0] === 'comparison' => new $comparison(
+            $operator::from($test[1]),
+            constructOperand($namespace, $test[2]),
+            constructOperand($namespace, $test[3])
+        ),
         default => constructOperand($namespace, $test),
     };
 
