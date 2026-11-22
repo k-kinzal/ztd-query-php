@@ -32,6 +32,7 @@ function nativeBoundaryContract(string $dialect): array
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
+    $records[] = ['identifier-boundaries-v1.json', 'e526dfe9c9f107bf37e8aa1a38a006e7615f9dcf912d2087d564c19b500c7ab0'];
     $rules = [];
     foreach ($records as [$name, $digest]) {
         $path = __DIR__ . '/' . $name;
@@ -98,7 +99,6 @@ function checkNativeBoundaries(
             'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
-        $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";
     } else {
         $imports .= 'use ' . $platform . '\\Ir\\SelectBounds;' . "\n";
         if ($dialect === 'postgres') {
@@ -142,6 +142,7 @@ function checkNativeBoundaries(
         }
         $imports .= 'use ' . $platform . '\\Ir\\Binding\\Parameter;' . "\n";
     }
+    $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";
     $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";
     $imports .= 'use ' . $platform . '\\Statement\\Relation\\' . ($dialect === 'mysql' ? 'JoinedTable' : 'Join') . ' as ParsedJoin;' . "\n";
     $verified = [];
