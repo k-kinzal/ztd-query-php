@@ -23,6 +23,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalInputs;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
@@ -45,7 +46,8 @@ final class SelectSql
     public function render(Select $select, bool $requireWhere = false): string
     {
         $source = $select->source;
-        $sql = $source instanceof LocalSource ? $this->localPrefix($source) : '';
+        $local = (new LocalInputs())->occurrences($source, $select->joins)[0] ?? null;
+        $sql = $local === null ? '' : $this->localPrefix($local);
         $items = [];
         foreach ($select->columns as $column) {
             $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();

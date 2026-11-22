@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -48,5 +49,19 @@ final class SelectLoweringTest extends TestCase
         $value = (new SelectLowering())->lower($operation->binding());
 
         self::assertSame(['chosen', 'id', 'amount'], array_map(static fn ($column): string => $column->name->value, $value->columns));
+    }
+
+    public function testLowerSeparatesTwoOccurrencesOfTheSameLocalDefinition(): void
+    {
+        $operation = (new Inspection())->inspect(
+            'WITH c(id) AS (VALUES (?02), (4)) SELECT a.id AS first, b.id AS second FROM c a LEFT JOIN c b ON a.id=b.id'
+        );
+        $value = (new SelectLowering())->lower($operation->binding());
+
+        self::assertInstanceOf(LocalSource::class, $value->source);
+        self::assertSame($value->source, $value->joins[0]->source);
+        self::assertEquals(new ColumnReference(0, 0), $value->columns[0]->expression);
+        self::assertEquals(new ColumnReference(0, 1), $value->columns[1]->expression);
+        self::assertSame(1, substr_count($value->toString(), 'AS (VALUES (?02), (4))'));
     }
 }

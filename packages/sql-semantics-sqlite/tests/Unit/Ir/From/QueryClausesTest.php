@@ -29,6 +29,7 @@ final class QueryClausesTest extends TestCase
 
         self::assertInstanceOf(Select::class, $query);
         self::assertSame(JoinKind::Full, $query->joins[0]->kind);
+        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Ir\TableSource::class, $query->joins[0]->source);
         self::assertSame('t', $query->joins[0]->source->table->value);
     }
 

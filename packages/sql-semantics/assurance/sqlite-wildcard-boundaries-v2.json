@@ -1,0 +1,97 @@
+{
+  "revision": "SemanticsIR/sqlite-wildcard-boundaries-v2",
+  "approval": "pending-human-review",
+  "scope": "Allocate an exact SQLite input occurrence and slot for a bound result field. The admitted joined VALUES scope uses one shared definition and ordered references.",
+  "rules": {
+    "SourceBinding::resolved": {
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0,",
+        "    'The column must resolve to the projection source.'",
+        ");",
+        "if ($this->localColumns !== null) {",
+        "    Check::input($resolution->relation === $this->source, 'The column must resolve to the local input occurrence.');",
+        "",
+        "    return $this->localSlot($resolution, $this->localColumns, 0);",
+        "}",
+        "$column = $resolution->declaration();",
+        "foreach ($this->tables as $index => [$occurrence, $table]) {",
+        "    if ($resolution->relation === $occurrence) {",
+        "        if ($table instanceof LocalSource) {",
+        "            return $this->localSlot($resolution, $table->columns, $index);",
+        "        }",
+        "        Check::input($column !== null, 'The column must be an explicit member of the projection source.');",
+        "        return new ColumnReference($this->slot($index, $column), $index);",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('The column must resolve to a local base-table occurrence.');"
+      ]
+    },
+    "SourceBinding::__construct": {
+      "common": [
+        "$this->tables = $localColumns === null ? (new SourceDeclarations())->bind($operation, $source, $localDefinition) : [];"
+      ]
+    },
+    "SourceBinding::localSlot": {
+      "common": [
+        "$name = $resolution->slot->name;",
+        "Check::input($name !== null, 'The column must resolve to a named local slot.');",
+        "$key = (new Identifier($name->value))->key();",
+        "foreach ($columns as $index => $column) {",
+        "    if ($column->key() === $key) {",
+        "        return new ColumnReference($index, $source);",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('The column must belong to the local input.');"
+      ]
+    },
+    "SourceBinding::input": {
+      "common": [
+        "$binding = $this->tables[$index][1] ?? null;",
+        "",
+        "return $binding instanceof LocalSource ? $binding : $this->source($index);"
+      ]
+    },
+    "SourceBinding::source": {
+      "common": [
+        "$table = $this->tables[$index][1] ?? null;",
+        "",
+        "Check::invariant($table === null || $table instanceof Table, 'This occurrence has an external table identity.');",
+        "",
+        "return $table === null ? null : new TableSource(",
+        "    new Identifier(($table->name->schema ?? $this->operation->context->declarationSchema)->value),",
+        "    new Identifier($table->name->name->value),",
+        "    $this->names[$index] ?? [],",
+        ");"
+      ]
+    },
+    "SourceBinding::slot": {
+      "common": [
+        "$table = $this->tables[$occurrence][1] ?? null;",
+        "Check::input($table instanceof Table && in_array($column, $table->columns, true), 'The column must be an explicit member of the projection source.');",
+        "$key = spl_object_id($column);",
+        "if (!isset($this->slots[$occurrence][$key])) {",
+        "    $this->slots[$occurrence][$key] = count($this->names[$occurrence] ?? []);",
+        "    $this->names[$occurrence][] = new Identifier($column->name->value);",
+        "}",
+        "",
+        "return $this->slots[$occurrence][$key];"
+      ]
+    },
+    "SourceBinding::write": {
+      "common": [
+        "[$occurrence, $table] = $this->tables[0] ?? [null, null];",
+        "Check::invariant($occurrence instanceof MutationTarget && $table instanceof Table, 'A written slot belongs to a bound mutation target.');",
+        "$matches = $table->matchingColumns($name->value, NameComparison::AsciiInsensitive);",
+        "Check::input(",
+        "    count($matches) === 1 && in_array($matches[0], $table->columns, true) && !$matches[0]->generated,",
+        "    'An assigned name must resolve to a writable declared column.',",
+        ");",
+        "",
+        "return $this->slot(0, $matches[0]);"
+      ]
+    }
+  }
+}

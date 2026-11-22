@@ -28,6 +28,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -68,8 +69,8 @@ final class QueryClauses
         }
         $joins = [];
         foreach ($source->steps as $index => $step) {
-            $right = $binding->source($index + 1);
-            Check::invariant($right instanceof TableSource, 'Every join step has a bound external table occurrence.');
+            $right = $binding->input($index + 1);
+            Check::invariant($right instanceof TableSource || $right instanceof LocalSource, 'Every join step has a bound input occurrence.');
             $joins[] = new Join($this->kind($step->operator), $right, $predicates[$index]);
         }
 

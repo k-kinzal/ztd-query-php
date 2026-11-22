@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
@@ -16,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
 #[CoversClass(SourceBinding::class)]
@@ -114,5 +117,32 @@ final class SourceBindingTest extends TestCase
         self::assertInstanceOf(TruthWord::class, $column->expression);
 
         self::assertFalse((new SourceBinding($operation->binding(), null))->constantTruth($column->expression));
+    }
+
+    public function testInputExportsTheSameDefinitionAtEachResolvedUse(): void
+    {
+        $operation = (new Inspection())->inspect('WITH c(id) AS (VALUES (3)) SELECT a.id FROM c a JOIN c b');
+        self::assertInstanceOf(WithQuery::class, $operation->statement);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement->body);
+        $bound = $operation->binding();
+        $local = (new LocalSourceLowering())->lower($bound, $statement);
+        $slots = new SourceBinding($bound, $statement->body->from, localDefinition: [$statement->with->tables[0], $local]);
+
+        self::assertSame($local, $slots->input(0));
+        self::assertSame($local, $slots->input(1));
+    }
+
+    public function testLocalSlotKeepsTheOrdinalAndTheOccurrence(): void
+    {
+        $operation = (new Inspection())->inspect('WITH c(first, second) AS (VALUES (1,2)) SELECT second FROM c');
+        $result = $operation->binding()->facts->output?->fields()?->at(0)->expression;
+        self::assertNotNull($result);
+        $resolution = $operation->binding()->facts->scalar($result)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $names = [new Identifier('first'), new Identifier('second')];
+        $slots = new SourceBinding($operation->binding(), null);
+
+        self::assertEquals(new ColumnReference(1, 4), $slots->localSlot($resolution, $names, 4));
     }
 }

@@ -176,6 +176,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 [$narrow->operand->position, $narrow->operand->input->value, $narrow->target->value],
             ];
         }
+        if ($platform === 'Sqlite' && $role === 'Select') {
+            $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');
+            if ($joined->source::class !== $namespace . 'Ir\\Rows\\LocalSource'
+                || $joined->columns[0]->expression::class !== $namespace . 'Ir\\ColumnReference'
+                || $joined->columns[1]->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('Installed SQLite join lost its local definition or references.');
+            }
+            $details['joinedLocal'] = [
+                $joined->source === $joined->joins[0]->source, $joined->columns[0]->expression->source,
+                $joined->columns[1]->expression->source, substr_count($joined->toString(), '?02'),
+            ];
+        }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [
                 $key instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey ? 'primary' : 'unique',

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
-use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalInputs;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
@@ -69,7 +69,7 @@ final class Insert implements SemanticsIR
         } else {
             Check::input($width !== 0, 'An INSERT must name at least one target column.');
             if ($input instanceof Select) {
-                Check::input(!$input->source instanceof LocalSource, 'The INSERT projection requires an independent source without a local definition.');
+                Check::input((new LocalInputs())->occurrences($input->source, $input->joins) === [], 'The INSERT projection requires an independent source without a local definition.');
             }
             $inputWidth = $input instanceof ValuesQuery ? count($input->rows[0]->values) : count($input->columns);
             Check::input($width === $inputWidth, 'INSERT target width must match the input rows.');

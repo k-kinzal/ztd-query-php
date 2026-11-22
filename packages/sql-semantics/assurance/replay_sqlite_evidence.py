@@ -24,6 +24,7 @@ import run_sqlite_insert_input as insert_input
 import run_sqlite_insert_query as insert_query
 import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
+import run_sqlite_joined_local_source as joined_local
 import run_sqlite_not_null_conflict as not_null_conflict
 import run_sqlite_numeric as numeric
 import run_sqlite_mutation_conflicts as mutation_conflicts
@@ -70,6 +71,7 @@ DOMAINS = {
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),
     "sqlite-values-v1.json": (values, ""),
     "sqlite-local-source-v1.json": (local, local.DATA),
+    joined_local.CONTRACT_NAME: (joined_local, joined_local.FIXTURE),
     recursive.CONTRACT_NAME: (recursive, recursive.FIXTURE),
     "sqlite-insert-v1.json": (insert, insert.FIXTURE),
     insert_query.CONTRACT_NAME: (insert_query, insert_query.FIXTURE),
@@ -128,7 +130,8 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                named_checks: named_checks.NamedCheckDatabase, folded_checks: folded_checks.FoldedCheckDatabase,
                implicit_checks: implicit_checks.ImplicitCheckDatabase,
                generated_columns: generated_columns.GeneratedColumnDatabase,
-               rename: rename.RenameDatabase, drop_view: drop_view.DropViewDatabase}.get(module, Database)
+               rename: rename.RenameDatabase, drop_view: drop_view.DropViewDatabase,
+               joined_local: joined_local.JoinedLocalDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

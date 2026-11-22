@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
+use SqlSemantics\Platform\Sqlite\Statement\Query\With\CommonTable;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 
 /**
@@ -27,7 +29,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 final class SourceBinding
 {
     /**
-     * @var list<array{TableInput|MutationTarget, Table}>
+     * @var list<array{TableInput|MutationTarget, Table|LocalSource}>
      */
     private readonly array $tables;
 
@@ -43,14 +45,16 @@ final class SourceBinding
 
     /**
      * Resolves the relation occurrences before allocating column slots.
-     * @param non-empty-list<Identifier>|null $localColumns The slots of a verified local input
+     * @param non-empty-list<Identifier>|null $localColumns The slots of an enclosing declaration or recursive arm
+     * @param array{CommonTable, LocalSource}|null $localDefinition The exact compiled WITH definition
      */
     public function __construct(
         private readonly BoundStatement $operation,
         private readonly ?Relation $source,
         private readonly ?array $localColumns = null,
+        ?array $localDefinition = null,
     ) {
-        $this->tables = $localColumns === null ? (new SourceDeclarations())->bind($operation, $source) : [];
+        $this->tables = $localColumns === null ? (new SourceDeclarations())->bind($operation, $source, $localDefinition) : [];
     }
 
     /**
@@ -78,19 +82,16 @@ final class SourceBinding
             'The column must resolve to the projection source.'
         );
         if ($this->localColumns !== null) {
-            $name = $resolution->slot->name;
-            Check::input($resolution->relation === $this->source && $name !== null, 'The column must resolve to the local input occurrence.');
-            $key = (new Identifier($name->value))->key();
-            foreach ($this->localColumns as $index => $column) {
-                if ($column->key() === $key) {
-                    return new ColumnReference($index);
-                }
-            }
-            throw new InvalidConstruction('The column must belong to the local input.');
+            Check::input($resolution->relation === $this->source, 'The column must resolve to the local input occurrence.');
+
+            return $this->localSlot($resolution, $this->localColumns, 0);
         }
         $column = $resolution->declaration();
         foreach ($this->tables as $index => [$occurrence, $table]) {
             if ($resolution->relation === $occurrence) {
+                if ($table instanceof LocalSource) {
+                    return $this->localSlot($resolution, $table->columns, $index);
+                }
                 Check::input($column !== null, 'The column must be an explicit member of the projection source.');
                 return new ColumnReference($this->slot($index, $column), $index);
             }
@@ -100,12 +101,31 @@ final class SourceBinding
     }
 
     /**
+     * Resolves a column by its name in the verified declaration at one occurrence.
+     * @param non-empty-list<Identifier> $columns The declared names in native order
+     * @throws InvalidConstruction When the resolution has no checked local slot
+     */
+    public function localSlot(ResolvedColumn $resolution, array $columns, int $source): ColumnReference
+    {
+        $name = $resolution->slot->name;
+        Check::input($name !== null, 'The column must resolve to a named local slot.');
+        $key = (new Identifier($name->value))->key();
+        foreach ($columns as $index => $column) {
+            if ($column->key() === $key) {
+                return new ColumnReference($index, $source);
+            }
+        }
+
+        throw new InvalidConstruction('The column must belong to the local input.');
+    }
+
+    /**
      * Resolves a writable declared name in the single mutation target.
      */
     public function write(Name $name): int
     {
         [$occurrence, $table] = $this->tables[0] ?? [null, null];
-        Check::invariant($occurrence instanceof MutationTarget && $table !== null, 'A written slot belongs to a bound mutation target.');
+        Check::invariant($occurrence instanceof MutationTarget && $table instanceof Table, 'A written slot belongs to a bound mutation target.');
         $matches = $table->matchingColumns($name->value, Comparison::AsciiInsensitive);
         Check::input(
             count($matches) === 1 && in_array($matches[0], $table->columns, true) && !$matches[0]->generated,
@@ -122,7 +142,7 @@ final class SourceBinding
     public function implicitWrites(): array
     {
         [$occurrence, $table] = $this->tables[0] ?? [null, null];
-        Check::invariant($occurrence instanceof MutationTarget && $table !== null, 'An implicit write requires a bound mutation target.');
+        Check::invariant($occurrence instanceof MutationTarget && $table instanceof Table, 'An implicit write requires a bound mutation target.');
         $writes = [];
         foreach ($table->columns as $column) {
             if (!$column->generated) {
@@ -147,7 +167,7 @@ final class SourceBinding
     public function slot(int $occurrence, Column $column): int
     {
         $table = $this->tables[$occurrence][1] ?? null;
-        Check::input($table !== null && in_array($column, $table->columns, true), 'The column must be an explicit member of the projection source.');
+        Check::input($table instanceof Table && in_array($column, $table->columns, true), 'The column must be an explicit member of the projection source.');
         $key = spl_object_id($column);
         if (!isset($this->slots[$occurrence][$key])) {
             $this->slots[$occurrence][$key] = count($this->names[$occurrence] ?? []);
@@ -164,10 +184,22 @@ final class SourceBinding
     {
         $table = $this->tables[$index][1] ?? null;
 
+        Check::invariant($table === null || $table instanceof Table, 'This occurrence has an external table identity.');
+
         return $table === null ? null : new TableSource(
             new Identifier(($table->name->schema ?? $this->operation->context->declarationSchema)->value),
             new Identifier($table->name->name->value),
             $this->names[$index] ?? [],
         );
+    }
+
+    /**
+     * Exports either the resolved external table or the shared local definition.
+     */
+    public function input(int $index = 0): TableSource|LocalSource|null
+    {
+        $binding = $this->tables[$index][1] ?? null;
+
+        return $binding instanceof LocalSource ? $binding : $this->source($index);
     }
 }

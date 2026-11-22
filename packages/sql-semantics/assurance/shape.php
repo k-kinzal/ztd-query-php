@@ -239,7 +239,7 @@ if ($dialect === 'sqlite') {
     $methods['Literal\\HexIntegerLiteral'][] = 'toString';
     $methods['Literal\\TextLiteral'] = ['__construct', 'toString', 'payloadBytes'];
     $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
-    $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
+    $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['Rows\\LocalSource', 'TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
     $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates, 'returning' => ['array']];
@@ -391,6 +391,8 @@ if ($dialect === 'sqlite') {
     }
     array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropRelationLowering', 'Schema\\CreateTableLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
+    $internal[] = 'Rows\\LocalInputs';
+    $pureCollaborators[] = 'Rows\\LocalInputs';
     $roots[] = 'Transaction\\Transaction';
     $internal[] = 'Transaction\\TransactionLowering';
     $properties['Transaction\\Transaction'] = ['command' => ['Transaction\\TransactionCommand'], 'name' => ['?Transaction\\SavepointName']];

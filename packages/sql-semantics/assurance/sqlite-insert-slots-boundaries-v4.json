@@ -1,0 +1,110 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-slots-boundaries-v4",
+  "approval": "pending-human-review",
+  "extends": "SemanticsIR/sqlite-insert-input-boundaries-2",
+  "scope": "Guard ordered write and result slots, default and query input constraints, and resolved writable declaration order. The admitted joined VALUES scope uses one shared definition and ordered references.",
+  "rules": {
+    "Mutation/Insert::__construct": {
+      "common": [
+        "$supplied = Check::listOf($writes, ColumnReference::class, 'An INSERT needs checked write slots.');",
+        "$seen = [];",
+        "foreach ($supplied as $column) {",
+        "    Check::input($column->source === 0 && isset($target->columns[$column->slot]), 'A supplied slot must belong to the INSERT target.');",
+        "    Check::input(!isset($seen[$column->slot]), 'An INSERT cannot repeat a supplied column.');",
+        "    $seen[$column->slot] = true;",
+        "}",
+        "$width = count($supplied);",
+        "if ($input instanceof DefaultRow) {",
+        "    Check::input($handler === InsertConflictHandler::None, 'DEFAULT VALUES cannot take an INSERT conflict handler.');",
+        "    Check::input($width === 0, 'A DEFAULT VALUES input has no supplied target columns.');",
+        "} else {",
+        "    Check::input($width !== 0, 'An INSERT must name at least one target column.');",
+        "    if ($input instanceof Select) {",
+        "        Check::input((new LocalInputs())->occurrences($input->source, $input->joins) === [], 'The INSERT projection requires an independent source without a local definition.');",
+        "    }",
+        "    $inputWidth = $input instanceof ValuesQuery ? count($input->rows[0]->values) : count($input->columns);",
+        "    Check::input($width === $inputWidth, 'INSERT target width must match the input rows.');",
+        "}",
+        "$output = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');",
+        "Check::input(count($output) <= 2000, 'An INSERT can return at most 2000 fields in this profile.');",
+        "foreach ($output as $column) {",
+        "    Check::input(isset($target->columns[$column->reference->slot]), 'A returned slot must belong to the INSERT target.');",
+        "}",
+        "$this->writes = $supplied;",
+        "$this->returning = $output;"
+      ]
+    },
+    "Mutation/Insert::profileId": {
+      "common": [
+        "return $this->input instanceof DefaultRow",
+        "    ? 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters'",
+        "    : $this->input->profileId();"
+      ]
+    },
+    "Mutation/Insert::toString": {
+      "common": [
+        "$columns = [];",
+        "foreach ($this->writes as $column) {",
+        "    $columns[] = $this->target->columns[$column->slot]->quoted();",
+        "}",
+        "$conflict = match ($this->conflict) {",
+        "    InsertConflict::Inherit => '',",
+        "    InsertConflict::Abort => ' OR ABORT',",
+        "    InsertConflict::Ignore => ' OR IGNORE',",
+        "    InsertConflict::Fail => ' OR FAIL',",
+        "    InsertConflict::Rollback => ' OR ROLLBACK',",
+        "    InsertConflict::Replace => ' OR REPLACE',",
+        "};",
+        "",
+        "$head = 'INSERT' . $conflict . ' INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted();",
+        "$returning = (new ReturningSql())->clause($this->target, $this->returning);",
+        "if ($this->input instanceof DefaultRow) {",
+        "    return $head . ' DEFAULT VALUES' . $returning;",
+        "}",
+        "",
+        "$source = $this->input instanceof Select && $this->handler === InsertConflictHandler::DoNothing",
+        "    ? (new SelectSql())->render($this->input, requireWhere: true)",
+        "    : $this->input->toString();",
+        "$action = match ($this->handler) {",
+        "    InsertConflictHandler::None => '',",
+        "    InsertConflictHandler::DoNothing => ' ON CONFLICT DO NOTHING',",
+        "};",
+        "",
+        "return $head . ' (' . implode(', ', $columns) . ') ' . $source . $action . $returning;"
+      ]
+    },
+    "Mutation/InsertTargetLowering::lower": {
+      "common": [
+        "if ($defaults) {",
+        "    Check::input($into->columns === [], 'DEFAULT VALUES does not admit a written column list.');",
+        "",
+        "    return [];",
+        "}",
+        "if ($into->columns === []) {",
+        "    return $binding->implicitWrites();",
+        "}",
+        "",
+        "$writes = [];",
+        "foreach ($into->columns as $name) {",
+        "    $writes[] = new ColumnReference($binding->write($name));",
+        "}",
+        "",
+        "return $writes;"
+      ]
+    },
+    "SourceBinding::implicitWrites": {
+      "common": [
+        "[$occurrence, $table] = $this->tables[0] ?? [null, null];",
+        "Check::invariant($occurrence instanceof MutationTarget && $table instanceof Table, 'An implicit write requires a bound mutation target.');",
+        "$writes = [];",
+        "foreach ($table->columns as $column) {",
+        "    if (!$column->generated) {",
+        "        $writes[] = new ColumnReference($this->slot(0, $column));",
+        "    }",
+        "}",
+        "",
+        "return $writes;"
+      ]
+    }
+  }
+}

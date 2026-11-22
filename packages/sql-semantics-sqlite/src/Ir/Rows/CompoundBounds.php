@@ -38,7 +38,7 @@ final class CompoundBounds
         }
         foreach ($arms as $arm) {
             if ($arm instanceof Select) {
-                Check::input(!$arm->source instanceof LocalSource, 'A compound arm cannot contain WITH.');
+                Check::input((new LocalInputs())->occurrences($arm->source, $arm->joins) === [], 'A compound arm cannot contain WITH.');
                 Check::input($arm->orderBy === [] && $arm->limit === null, 'Compound ORDER BY and LIMIT belong to the outer query.');
             }
             $armWidth = $arm instanceof Select ? count($arm->columns) : count($arm->rows[0]->values);

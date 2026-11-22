@@ -29,6 +29,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalInputs;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -59,7 +60,7 @@ final class SelectBounds
     ): void {
         Check::input(count($results) <= 2000, 'A SELECT can have at most 2000 result columns in this profile.');
         Check::input(count($joins) < 64 && ($joins === [] || $source !== null), 'Joins require a first table and at most 64 inputs.');
-        Check::input(!$source instanceof LocalSource || $joins === [], 'A local row source requires a SELECT without joins.');
+        $local = (new LocalInputs())->checked($source, $joins);
         Check::input(count($orderBy) <= 2000, 'A SELECT can have at most 2000 ordering terms in this profile.');
         foreach ($orderBy as $order) {
             Check::input($order->position <= count($results), 'An output order position must belong to the projection.');
@@ -67,10 +68,10 @@ final class SelectBounds
 
         $widths = [$source === null ? 0 : count($source->columns)];
         $pending = [];
-        if ($source instanceof LocalSource && $source->query instanceof RecursiveDefinition) {
-            $pending = $source->query->scopedExpressions();
-        } elseif ($source instanceof LocalSource) {
-            foreach ($source->query->rows as $row) {
+        if ($local !== null && $local->query instanceof RecursiveDefinition) {
+            $pending = $local->query->scopedExpressions();
+        } elseif ($local !== null) {
+            foreach ($local->query->rows as $row) {
                 foreach ($row->values as $value) {
                     $pending[] = [$value, 0, 0];
                 }

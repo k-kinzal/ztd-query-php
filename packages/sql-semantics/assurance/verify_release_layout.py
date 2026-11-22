@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v12.json"
-CONTRACT = "e64b414040f7a048482eaa45f7c79c666138bc121b23f41be483b453fc604bc7"
+CONTRACT_NAME = "release-layout-v13.json"
+CONTRACT = "3f88d2975abd88e28aced74b63d8d41a386471380f4f84d0988415456c90a48d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -200,6 +200,8 @@ def verify_probe(raw, catalog):
         path = f"/stage/vendor/k-kinzal/{package}/src/Ir/" + item["role"].replace("\\", "/") + ".php"
         require(item["path"] == path and isinstance(item["sql"], str) and item["sql"] and item["profile"],
                 "unexpected-installed-publication", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Select"):
+            require(item.get("joinedLocal") == [True, 0, 1, 1], "installed-joined-local-source-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):

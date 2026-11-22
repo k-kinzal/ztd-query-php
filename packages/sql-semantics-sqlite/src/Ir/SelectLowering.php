@@ -30,7 +30,8 @@ final class SelectLowering
         $statement = $arm ?? $operation->statement;
         $local = null;
         if ($statement instanceof WithQuery) {
-            $local = (new LocalSourceLowering())->lower($operation, $statement);
+            $definition = (new LocalSourceLowering())->lower($operation, $statement);
+            $local = [$statement->with->tables[0], $definition];
             $statement = $statement->body;
         }
         Check::input($statement instanceof ParsedSelect, 'Complete SQLite IR currently supports a single projection SELECT.');
@@ -38,7 +39,7 @@ final class SelectLowering
             $statement->groupBy === [] && $statement->having === null && $statement->windows === [],
             'Complete SQLite IR currently supports projections without grouping or windows.',
         );
-        $binding = new SourceBinding($operation, $statement->from, $local?->columns);
+        $binding = new SourceBinding($operation, $statement->from, localDefinition: $local);
         $expressions = new ExpressionLowering();
         $fields = $arm === null ? $operation->facts->output?->fields() : $operation->facts->query($arm)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
@@ -65,7 +66,7 @@ final class SelectLowering
 
         return new Select(
             $results,
-            $local ?? $binding->source(),
+            $binding->input(),
             $joins,
             $where,
             $clauses->ordering($statement->orderBy),

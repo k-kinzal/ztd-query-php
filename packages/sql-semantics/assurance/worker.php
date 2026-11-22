@@ -193,14 +193,25 @@ function observeSource(TableSource $source): array
     )];
 }
 
+function directLocal(array $input): LocalSource
+{
+    return new LocalSource(directDefinition($input), array_map(
+        static fn (string $name): Identifier => new Identifier($name),
+        $input['names'],
+    ));
+}
+
+function directInput(array $input, array $definitions): TableSource|LocalSource
+{
+    return $input[0] === 'local' ? $definitions[$input[1]] : source($input);
+}
+
 function direct(array $input): Select
 {
-    $from = $input['source'] === null ? null : source($input['source']);
+    $definitions = array_map(directLocal(...), $input['locals'] ?? []);
+    $from = $input['source'] === null ? null : directInput($input['source'], $definitions);
     if (isset($input['local'])) {
-        $from = new LocalSource(directDefinition($input['local']), array_map(
-            static fn (string $name): Identifier => new Identifier($name),
-            $input['local']['names'],
-        ));
+        $from = directLocal($input['local']);
     }
     $columns = array_map(
         static fn (array $field): ResultColumn => new ResultColumn(operand($field[0]), new Identifier($field[1])),
@@ -209,7 +220,7 @@ function direct(array $input): Select
 
     $joins = array_map(static fn (array $step): Join => new Join(
         JoinKind::from($step[0]),
-        source($step[1]),
+        directInput($step[1], $definitions),
         $step[2] === null ? null : operand($step[2]),
     ), $input['joins'] ?? []);
     $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
@@ -807,19 +818,40 @@ function observeLocal(LocalSource $source): array
     ];
 }
 
+function observeInput(TableSource|LocalSource $source, array &$ids, array &$definitions): array
+{
+    if ($source instanceof TableSource) {
+        return observeSource($source);
+    }
+    $identity = spl_object_id($source);
+    if (!isset($ids[$identity])) {
+        $ids[$identity] = count($definitions);
+        $definitions[] = observeLocal($source);
+    }
+
+    return ['local', $ids[$identity]];
+}
+
 function observeSelect(Select $value): array
 {
     $source = $value->source;
-    $local = $source instanceof LocalSource ? observeLocal($source) : null;
+    $local = $source instanceof LocalSource && $value->joins === [] ? observeLocal($source) : null;
+    $ids = $definitions = $joins = [];
+    $first = $source === null || $local !== null ? null : observeInput($source, $ids, $definitions);
+    foreach ($value->joins as $join) {
+        $joins[] = [
+            $join->kind->value, observeInput($join->source, $ids, $definitions),
+            $join->on === null ? null : observeOperand($join->on),
+        ];
+    }
 
     return [
         'status' => 'constructed',
         'profile' => $value->profileId(),
-        'source' => $source instanceof TableSource ? observeSource($source) : null,
+        'source' => $first,
         ...($local === null ? [] : ['local' => $local]),
-        'joins' => array_map(static fn (Join $join): array => [
-            $join->kind->value, observeSource($join->source), $join->on === null ? null : observeOperand($join->on),
-        ], $value->joins),
+        ...($definitions === [] ? [] : ['locals' => $definitions]),
+        'joins' => $joins,
         'where' => $value->where === null ? null : observeOperand($value->where),
         'orderBy' => array_map(static fn (Order $order): array => [$order->position, $order->descending, $order->nullsFirst], $value->orderBy),
         'distinct' => $value->distinct,
