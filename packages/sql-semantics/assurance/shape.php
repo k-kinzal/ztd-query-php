@@ -341,6 +341,12 @@ if ($dialect !== 'sqlite') {
     ];
     $roots[] = 'Mutation\\InsertQuery';
     $properties['Mutation\\InsertQuery'] = ['target' => ['TableSource'], 'query' => ['Select']];
+    if ($dialect === 'postgres') {
+        $properties['Mutation\\Insert']['target'] = $properties['Mutation\\InsertQuery']['target'] = ['Mutation\\Insert\\Destination'];
+        $properties['Mutation\\Insert']['returning'] = $properties['Mutation\\InsertQuery']['returning'] = ['array'];
+        $properties['Mutation\\Insert\\Destination'] = ['relation' => ['TableSource'], 'written' => ['array']];
+        $methods['Mutation\\Insert\\Destination'] = ['__construct', 'toString'];
+    }
     $methods['Mutation\\InsertQuery'] = $methods['Select'];
     $internal[] = 'Mutation\\InsertTargetBinding';
     $methods['Mutation\\Insert'] = $methods['Select'];
@@ -574,9 +580,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v21.json';
+    $storagePath = __DIR__ . '/value-storage-v22.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '89730a0b88eaa168ea603bbba5492230459845cdc1fe2f48a65e0147a1c3be7e',
+        hash_file('sha256', $storagePath) === 'b634d606c8a95a1673e2201ce9cf79bc9ecdacbdcb31ec774ad40c86a7a83090',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

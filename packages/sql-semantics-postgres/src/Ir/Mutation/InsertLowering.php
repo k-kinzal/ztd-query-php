@@ -30,9 +30,11 @@ final class InsertLowering
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The INSERT requires the native language profile.');
-        Check::input($statement->with === null && $statement->overriding === null && $statement->conflict === null
-            && $statement->returning === [], 'A complete INSERT requires the ordinary VALUES operation.');
-        $target = (new InsertTargetBinding())->lower($operation, $statement);
+        Check::input(
+            $statement->with === null && $statement->overriding === null && $statement->conflict === null,
+            'A complete INSERT requires the ordinary VALUES operation.'
+        );
+        [$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);
         $searchPath = $operation->context->searchPath;
         $catalogFirst = ($searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value) === 'pg_catalog';
         $expression = new ExpressionLowering();
@@ -48,7 +50,7 @@ final class InsertLowering
             $rows[] = new InsertRow($values);
         }
 
-        return new Insert($target, $rows, $profile->grammar);
+        return new Insert($target, $rows, $profile->grammar, $returning);
     }
 
     /**
@@ -58,8 +60,10 @@ final class InsertLowering
     {
         $source = $statement->source;
         Check::input($source instanceof Select, 'The INSERT query requires a simple SELECT.');
-        Check::input($statement->with === null && $statement->overriding === null && $statement->conflict === null
-            && $statement->returning === [], 'A query INSERT requires an ordinary write without conflict modifiers.');
+        Check::input(
+            $statement->with === null && $statement->overriding === null && $statement->conflict === null,
+            'A query INSERT requires an ordinary write without conflict modifiers.'
+        );
         $query = (new SelectLowering())->lower($operation, $source);
         if ($query->distinct) {
             foreach ($query->columns as $column) {
@@ -70,6 +74,8 @@ final class InsertLowering
             }
         }
 
-        return new InsertQuery((new InsertTargetBinding())->lower($operation, $statement), $query);
+        [$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);
+
+        return new InsertQuery($target, $query, $returning);
     }
 }

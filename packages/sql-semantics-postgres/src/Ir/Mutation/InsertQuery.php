@@ -9,10 +9,10 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -31,13 +31,17 @@ final class InsertQuery implements SemanticsIR
     use Snapshot;
 
     /**
-     * Establishes the positional correspondence and checks the signed input roles.
+     * @var list<ReturnedColumn> The requested fields of the inserted row
      */
-    public function __construct(public readonly TableSource $target, public readonly Select $query)
+    public readonly array $returning;
+
+    /**
+     * Establishes the positional correspondence and checks the signed input roles.
+     * @param list<ReturnedColumn> $returning
+     */
+    public function __construct(public readonly Destination $target, public readonly Select $query, array $returning = [])
     {
-        $width = count($target->columns);
-        Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');
-        Check::input(!$target->only, 'A query INSERT target cannot use ONLY.');
+        $width = count($target->written);
         Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');
         Check::input(
             !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,
@@ -50,6 +54,9 @@ final class InsertQuery implements SemanticsIR
                 'Each query INSERT field requires a signed value or NULL.',
             );
         }
+        $checked = Check::listOf($returning, ReturnedColumn::class, 'A query INSERT needs checked RETURNING fields.');
+        (new ReturningLayout())->check($target->relation, $checked);
+        $this->returning = $checked;
     }
 
     /**
@@ -65,12 +72,7 @@ final class InsertQuery implements SemanticsIR
      */
     public function toString(): string
     {
-        $columns = [];
-        foreach ($this->target->columns as $column) {
-            $columns[] = $column->quoted();
-        }
-
-        return 'INSERT INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted()
-            . ' (' . implode(', ', $columns) . ') ' . (new SelectSql())->render($this->query, integerAssignment: true);
+        return 'INSERT INTO ' . $this->target->toString() . ' ' . (new SelectSql())->render($this->query, integerAssignment: true)
+            . (new ReturningSql())->clause($this->target->relation, $this->returning);
     }
 }

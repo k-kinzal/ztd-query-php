@@ -129,23 +129,6 @@ final class SourceBinding
     }
 
     /**
-     * Resolves the explicit write slots in their supplied order.
-     *
-     * @param list<string> $names
-     */
-    public function writeTarget(array $names): TableSource
-    {
-        $target = $this->source();
-        Check::input($target !== null, 'An INSERT requires a resolved write target.');
-        $columns = [];
-        foreach ($names as $name) {
-            $columns[] = new Identifier($this->writableColumn($name)->name->value);
-        }
-
-        return new TableSource($target->schema, $target->table, $columns);
-    }
-
-    /**
      * Resolves a name to a writable explicit member with the signed integer role.
      */
     public function writableColumn(string $name): Column

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
-use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -29,23 +29,31 @@ final class Insert implements SemanticsIR
     public readonly array $rows;
 
     /**
+     * @var list<ReturnedColumn> The requested fields of the inserted row
+     */
+    public readonly array $returning;
+
+    /**
      * Establishes the target and shape conditions before publishing this write.
      *
      * @param list<InsertRow> $rows
+     * @param list<ReturnedColumn> $returning
      */
     public function __construct(
-        public readonly TableSource $target,
+        public readonly Destination $target,
         array $rows,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        array $returning = [],
     ) {
-        $width = count($target->columns);
-        Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');
-        Check::input(!$target->only, 'An INSERT target has no ONLY policy.');
+        $width = count($target->written);
         $this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);
         Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');
         foreach ($this->rows as $row) {
             Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');
         }
+        $checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');
+        (new ReturningLayout())->check($target->relation, $checked);
+        $this->returning = $checked;
     }
 
     /**
@@ -61,17 +69,12 @@ final class Insert implements SemanticsIR
      */
     public function toString(): string
     {
-        $target = $this->target;
-        $columns = [];
-        foreach ($target->columns as $column) {
-            $columns[] = $column->quoted();
-        }
         $rows = [];
         foreach ($this->rows as $row) {
             $rows[] = $row->toString();
         }
 
-        return 'INSERT INTO ' . $target->schema->quoted() . '.' . $target->table->quoted()
-            . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $rows);
+        return 'INSERT INTO ' . $this->target->toString() . ' VALUES ' . implode(', ', $rows)
+            . (new ReturningSql())->clause($this->target->relation, $this->returning);
     }
 }

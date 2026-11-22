@@ -126,13 +126,14 @@ def controls():
 
 def faults(engine, tag):
     parent = f"sql-semantics-{engine}/src/Ir/Mutation/InsertQuery.php"
+    destination = parent if engine == "mysql" else "sql-semantics-postgres/src/Ir/Mutation/Insert/Destination.php"
     renderer = f"sql-semantics-{engine}/src/Ir/SelectSql.php"
     scan = table(engine, "ir_insert_scan")
     query = leaf(engine, tag, [[slot(0), "p0"], [slot(1), "p1"]], scan)
     first = leaf(engine, tag, [[slot(1), "p0"]], scan)
     target = "$input->columns[$expression->slot]->quoted()"
     result = [
-        RenderFault("reverse-query-insert-target", parent, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
+        RenderFault("reverse-query-insert-target", destination, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
                     case(engine, tag, ["id", "delta"], query), "meaning-mismatch"),
         RenderFault("switch-query-insert-slot", renderer, target, "$input->columns[0]->quoted()",
                     case(engine, tag, ["id"], first), "meaning-mismatch"),

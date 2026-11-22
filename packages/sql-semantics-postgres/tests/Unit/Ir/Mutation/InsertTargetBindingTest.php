@@ -18,11 +18,13 @@ final class InsertTargetBindingTest extends TestCase
     public function testLowerKeepsExplicitWriteOrder(): void
     {
         $inspection = new Inspection();
-        $declaration = $inspection->inspect('CREATE TABLE app.events (id INT, amount INT)');
-        $operation = $inspection->inspect('INSERT INTO app.events (amount, id) SELECT 2 AS x, 3 AS y', [$declaration]);
+        $declaration = $inspection->inspect('CREATE TABLE app.events (id INT, amount INT, stamp INT)');
+        $operation = $inspection->inspect('INSERT INTO app.events (amount, id) SELECT 2 AS x, 3 AS y RETURNING stamp', [$declaration]);
         self::assertInstanceOf(ParsedInsertQuery::class, $operation->statement);
-        $bound = (new InsertTargetBinding())->lower($operation->binding(), $operation->statement);
+        [$target, $returning] = (new InsertTargetBinding())->lower($operation->binding(), $operation->statement);
 
-        self::assertSame(['amount', 'id'], array_map(static fn ($column): string => $column->value, $bound->columns));
+        self::assertSame(['amount', 'id', 'stamp'], array_map(static fn ($column): string => $column->value, $target->relation->columns));
+        self::assertCount(2, $target->written);
+        self::assertSame(2, $returning[0]->reference->slot);
     }
 }

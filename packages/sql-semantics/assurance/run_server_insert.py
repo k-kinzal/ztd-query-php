@@ -101,14 +101,16 @@ def check_preparation(engine, environment, preparation):
 
 def faults(engine, tag):
     path = f"sql-semantics-{engine}/src/Ir/Mutation/Insert.php"
+    destination = path if engine == "mysql" else path.removesuffix(".php") + "/Destination.php"
+    target_name = "$target->table->quoted()" if engine == "mysql" else "$this->relation->table->quoted()"
     sample = case(engine, tag, ["id", "delta"], [["2", "3"], [None, "1"]])
     delimiter = chr(96) if engine == "mysql" else '"'
     return [
-        RenderFault("swap-insert-target-columns", path, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
+        RenderFault("swap-insert-target-columns", destination, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
                     sample, "meaning-mismatch"),
         RenderFault("omit-insert-final-row", path, "implode(', ', $rows)", "implode(', ', array_slice($rows, 0, -1))",
                     sample, "meaning-mismatch"),
-        RenderFault("redirect-insert-target", path, "$target->table->quoted()", f"'{delimiter}ir_insert_control{delimiter}'",
+        RenderFault("redirect-insert-target", destination, target_name, f"'{delimiter}ir_insert_control{delimiter}'",
                     sample, "meaning-mismatch"),
     ]
 

@@ -21,6 +21,9 @@ function admitInsertQuery(string $sql, string $schema): bool
     $column = $name('(?:id|delta|stamp)');
     $scan = $name($schema) . '\\.' . $name('ir_insert_(?:scan|zero|target)');
     $alias = $name('(?:__ztd_source|s)');
+    $returnQualifier = $name('(?:ir_insert_target|r)');
+    $returning = $schema === 'public' ? fixtureReturningClause('(?:' . $returnQualifier . '\\.)?' . $column, $returnQualifier) : '';
+    $targetAlias = $schema === 'public' ? '(?: AS r)?' : '';
     $qualified = '(?:' . $alias . '\\.)?' . $name('(?:id|delta)');
     $value = 'NULL|-?[0-9]{1,43}|CAST\\((?:-?[0-9]{1,10}|NULL) AS pg_catalog\\.int4\\)|' . $qualified;
     $arithmetic = '(?:[+*-]|OPERATOR\\(pg_catalog\\.[+*-]\\))';
@@ -31,8 +34,8 @@ function admitInsertQuery(string $sql, string $schema): bool
     $operator = '(?:<|>|=|<=|>=|<>|OPERATOR\\(pg_catalog\\.(?:<|>|=|<=|>=|<>)\\))';
     $filter = '(?:(?&value) ' . $operator . ' (?&value))';
     $where = '(?: WHERE (?:TRUE|FALSE|NULL|' . $filter . '|\\(' . $filter . '\\)))?';
-    $head = '\\AINSERT INTO ' . $target . '\\h*\\(' . $column . '(?:\\h*,\\h*' . $column . ')*\\) ';
-    $body = 'SELECT (?:DISTINCT )?' . $field . '(?:,\\h*' . $field . ')*' . $from . $where . '\\z';
+    $head = '\\AINSERT INTO ' . $target . $targetAlias . '\\h*\\(' . $column . '(?:\\h*,\\h*' . $column . ')*\\) ';
+    $body = 'SELECT (?:DISTINCT )?' . $field . '(?:,\\h*' . $field . ')*' . $from . $where . $returning . '\\z';
 
     return preg_match('/' . $definition . $head . $body . '/iD', $sql) === 1;
 }
@@ -58,7 +61,8 @@ while (($line = fgets(STDIN)) !== false) {
     $requests = array_is_list($item) ? $item : [$item];
     $responses = [];
     foreach ($requests as $request) {
-        $responses[] = insertEffect($pdo, $schema, $request['sql'], admitInsertQuery(...), queryInsertState(...));
+        $admit = $engine === 'postgres' && ($request['form'] ?? 'select') === 'values' ? admitInsert(...) : admitInsertQuery(...);
+        $responses[] = insertEffect($pdo, $schema, $request['sql'], $admit, queryInsertState(...));
     }
     echo json_encode(array_is_list($item) ? $responses : $responses[0], JSON_THROW_ON_ERROR) . "\n";
 }

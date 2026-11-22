@@ -62,19 +62,6 @@ final class SourceBindingTest extends TestCase
         self::assertSame(Builtin::Int4, $type->descriptor);
     }
 
-    public function testWriteTargetUsesTheDeclaredColumnSpellingAndOrder(): void
-    {
-        $semantics = new Inspection();
-        $declaration = $semantics->inspect('CREATE TABLE public.t (id INTEGER, payload INTEGER)');
-        $operation = $semantics->inspect('SELECT id FROM public.t', [$declaration]);
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
-        $target = $binding->writeTarget(['payload', 'id']);
-
-        self::assertSame('payload', $target->columns[0]->value);
-        self::assertSame('id', $target->columns[1]->value);
-    }
-
     public function testSlotForKeepsTheIdentityOfADeclaredColumn(): void
     {
         $inspection = new Inspection();

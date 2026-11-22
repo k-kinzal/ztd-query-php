@@ -24,11 +24,11 @@ function nativeBoundaryContract(string $dialect): array
         ],
         'mysql', 'postgres' => [
             ...($dialect === 'postgres' ? [
-                ['postgres-mutation-returning-boundaries-v1.json', '5701aa81aa9721b8ea6765b60de902624738bbc3b77431be99a65e14b64df15d'],
+                ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
                 ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
             ] : []),
-            ['native-boundaries-v16.json', '5ccabf64b93ec659c44f95f33ec69dc1c43dc17673d1df5dcca12d7e5ad8fb3f'],
-            ['native-insert-query-boundaries-v3.json', '60ebb905f691b9fd60b7d3df7e46895e0742d074e883a7431025c0f35137a129'],
+            ['native-boundaries-v17.json', '0c64f052b4b7c5cd8f0c42475cf9c5841f171eb0d634818bde3fc67b967f068d'],
+            ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
     $rules = [];
@@ -84,6 +84,7 @@ function checkNativeBoundaries(
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
             foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Predicate\\PredicateLowering',
                 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
+                'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',
                 'Statement\\Expression\\ColumnReference as ParsedReturnColumn',

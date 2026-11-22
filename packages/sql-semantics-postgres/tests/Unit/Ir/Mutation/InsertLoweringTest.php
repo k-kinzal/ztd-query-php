@@ -24,8 +24,8 @@ final class InsertLoweringTest extends TestCase
         self::assertInstanceOf(InsertRows::class, $operation->statement);
 
         $value = (new InsertLowering())->lower($operation->binding(), $operation->statement);
-        self::assertSame('val', $value->target->columns[0]->value);
-        self::assertSame('id', $value->target->columns[1]->value);
+        self::assertSame('val', $value->target->relation->columns[$value->target->written[0]->slot]->value);
+        self::assertSame('id', $value->target->relation->columns[$value->target->written[1]->slot]->value);
         self::assertNull($value->rows[0]->values[0]->value);
         self::assertSame('-2', $value->rows[0]->values[1]->value?->decimal);
     }
@@ -38,7 +38,7 @@ final class InsertLoweringTest extends TestCase
         self::assertInstanceOf(ParsedInsertQuery::class, $operation->statement);
 
         $query = (new InsertLowering())->lowerQuery($operation->binding(), $operation->statement);
-        self::assertSame('amount', $query->target->columns[0]->value);
+        self::assertSame('amount', $query->target->relation->columns[$query->target->written[0]->slot]->value);
         self::assertSame('value', $query->query->columns[0]->name->value);
     }
 }

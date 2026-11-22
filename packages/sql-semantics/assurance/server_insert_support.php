@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require __DIR__ . '/server_returning_observation.php';
+
 function insertFixture(PDO $pdo, string $engine, string $schema): void
 {
     $prefix = $schema . '.ir_insert_';
@@ -34,12 +36,16 @@ function admitInsert(string $sql, string $schema): bool
     $name = static fn (string $value): string => $quote . $value . $quote;
     $table = $name($schema) . '\\.' . $name('ir_insert_(?:target|control)');
     $column = $name('(?:id|delta|stamp)');
+    $qualifier = $name('(?:ir_insert_(?:target|control)|r)');
+    $reference = '(?:' . $qualifier . '\\.)?' . $column;
+    $returning = $schema === 'public' ? fixtureReturningClause($reference, $qualifier) : '';
+    $alias = $schema === 'public' ? '(?: AS r)?' : '';
     $integer = '-?[0-9]{1,10}';
     $operand = '(?:NULL|' . $integer . '|CAST\\(' . $integer . ' AS pg_catalog\\.int4\\))';
     $row = '\\(\\h*' . $operand . '(?:\\h*,\\h*' . $operand . ')*\\h*\\)';
 
-    return preg_match('/\\AINSERT INTO ' . $table . '\\h*\\(' . $column . '(?:\\h*,\\h*' . $column
-        . ')*\\) VALUES ' . $row . '(?:\\h*,\\h*' . $row . ')*\\z/iD', $sql) === 1;
+    return preg_match('/\\AINSERT INTO ' . $table . $alias . '\\h*\\(' . $column . '(?:\\h*,\\h*' . $column
+        . ')*\\) VALUES ' . $row . '(?:\\h*,\\h*' . $row . ')*' . $returning . '\\z/iD', $sql) === 1;
 }
 
 function insertedRows(PDO $pdo, string $schema): array
@@ -65,7 +71,7 @@ function insertEffect(PDO $pdo, string $schema, string $sql, callable $admit, ca
     try {
         $statement = $pdo->prepare($sql);
         $statement->execute();
-        $effect = ['status' => 'inserted', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount()];
+        $effect = ['status' => 'inserted', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount(), ...observeReturning($statement)];
         $statement->closeCursor();
         $effect['after'] = $snapshot($pdo, $schema);
     } catch (PDOException $error) {

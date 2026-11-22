@@ -423,16 +423,22 @@ function observeUpdate(string $namespace, object $value, string $dialect): array
 
 function constructInsertQuery(string $platform, array $input): SemanticsIR
 {
-    $type = $platform . 'Ir\\Mutation\\InsertQuery';
+    $namespace = $platform . 'Ir\\';
+    $type = $namespace . 'Mutation\\InsertQuery';
+    $target = constructInsertDestination($platform, $namespace, $input);
 
-    return new $type(constructSource($platform, $input['target'], $input['dialect']), constructSelect($platform, $input['insertQuery']));
+    return new $type(
+        $target,
+        constructSelect($platform, $input['insertQuery']),
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : [])
+    );
 }
 
 function observeInsertQuery(string $namespace, object $value, string $dialect): array
 {
     return [
         'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'target' => observeSource($value->target, $dialect, $namespace),
+        ...observeInsertDestination($namespace, $value, $dialect),
         'insertQuery' => observeSetQuery($namespace, $value->query, $dialect),
     ];
 }
@@ -445,7 +451,7 @@ function constructInsert(string $platform, array $input): SemanticsIR
     $cellClass = $namespace . 'Mutation\\InsertCell';
     $integer = $namespace . 'IntegerLiteral';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    $target = constructSource($platform, $input['target'], $input['dialect']);
+    $target = constructInsertDestination($platform, $namespace, $input);
     $rows = [];
     foreach ($input['rows'] as $entries) {
         $values = [];
@@ -455,7 +461,12 @@ function constructInsert(string $platform, array $input): SemanticsIR
         $rows[] = new $rowClass($values);
     }
 
-    return new $statement($target, $rows, $release::from($input['release']));
+    return new $statement(
+        $target,
+        $rows,
+        $release::from($input['release']),
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : [])
+    );
 }
 
 function observeInsert(string $namespace, object $value, string $dialect): array
@@ -466,8 +477,33 @@ function observeInsert(string $namespace, object $value, string $dialect): array
     }
 
     return [
-        'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace),
+        'status' => 'constructed', 'profile' => $value->profileId(), ...observeInsertDestination($namespace, $value, $dialect),
         'rows' => $rows, 'sql' => $value->toString(),
+    ];
+}
+
+function constructInsertDestination(string $platform, string $namespace, array $input): object
+{
+    $relation = constructSource($platform, $input['target'], $input['dialect']);
+    if ($input['dialect'] === 'mysql') {
+        return $relation;
+    }
+    $destination = $namespace . 'Mutation\\Insert\\Destination';
+    $slots = $input['written'] ?? array_map(static fn (int $number): array => ['slot', $number], array_keys($input['target']['columns']));
+
+    return new $destination($relation, array_map(static fn (array $slot): object => constructOperand($namespace, $slot), $slots));
+}
+
+function observeInsertDestination(string $namespace, object $value, string $dialect): array
+{
+    if ($dialect === 'mysql') {
+        return ['target' => observeSource($value->target, $dialect, $namespace)];
+    }
+
+    return [
+        'target' => observeSource($value->target->relation, $dialect, $namespace),
+        'written' => array_map(static fn ($slot): array => observeOperand($namespace, $slot), $value->target->written),
+        'returning' => observeReturnedColumns($namespace, $value->returning),
     ];
 }
 

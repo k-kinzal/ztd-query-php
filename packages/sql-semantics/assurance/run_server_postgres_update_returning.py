@@ -13,12 +13,12 @@ from server_returning_model import project_returned
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-update-returning"
-CONTRACT = "e31f1cdf37a91da0239c68cec6ef585b121969bd9233707ac4489c8c25828ed9"
+CONTRACT = "f5f5710892ada09c1ca26c102c6af730e4b9fbd5c077d2af0cb0847d8e5b0efa"
 OBSERVER = "server_update_observer.php"
 
 
 def specifications():
-    path, projection = TOOL / "postgres-update-returning-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "postgres-update-returning-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "postgres-update-returning-contract-mismatch")
     rules = json.loads(path.read_text())
     require(len(finite_ids("postgres", rules, "pg-17.2")) == rules["finite"]["identities"], "postgres-update-returning-domain-size")
