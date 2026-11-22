@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
+use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
@@ -17,7 +18,7 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Medium]
 final class JoinBindingTest extends TestCase
 {
-    public function testBindSourceKindAndReferenceKeepSelfJoinOccurrencesSeparate(): void
+    public function testReferenceKeepsSelfJoinOccurrencesSeparate(): void
     {
         $semantics = new Inspection();
         $table = $semantics->inspect('CREATE TABLE public.t (id INTEGER)');
@@ -29,9 +30,30 @@ final class JoinBindingTest extends TestCase
 
         $binding = JoinBinding::bind($operation->binding(), $select->from, true);
         self::assertInstanceOf(JoinBinding::class, $binding);
-        self::assertSame(JoinKind::Left, $binding->kind());
         self::assertSame(1, $binding->reference($column->expression)->occurrence);
         self::assertSame(0, $binding->reference($column->expression)->slot);
-        self::assertCount(2, $binding->source()->inputs());
+    }
+
+    public function testBindKeepsAnAbsentSource(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1');
+        $binding = JoinBinding::bind($operation->binding(), null, true);
+
+        self::assertInstanceOf(SourceBinding::class, $binding);
+        self::assertNull($binding->source());
+    }
+
+    public function testSourceClosesBothOperandsAndTheOperator(): void
+    {
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE public.t (id INTEGER)');
+        $operation = $semantics->inspect('SELECT 1 FROM public.t AS a LEFT JOIN public.t AS b ON a.id = b.id', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = JoinBinding::bind($operation->binding(), $operation->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $source = $binding->source();
+        self::assertSame(JoinKind::Left, $source->kind);
+        self::assertCount(2, $source->inputs());
     }
 }

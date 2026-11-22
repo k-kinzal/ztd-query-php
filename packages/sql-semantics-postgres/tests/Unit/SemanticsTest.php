@@ -11,6 +11,7 @@ use SqlSemantics\AnalysisContext;
 use SqlSemantics\AnalysisException;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
+use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Dependent;
 use SqlSemantics\Platform\PostgreSql\Semantics;
@@ -32,7 +33,7 @@ final class SemanticsTest extends TestCase
         $query = $analyze($semantics);
 
         self::assertInstanceOf(Select::class, $query);
-        self::assertNotNull($query->source);
+        self::assertInstanceOf(TableSource::class, $query->source);
         self::assertCount(1, $query->source->columns);
         self::assertEquals($query->columns[0]->expression, $query->columns[1]->expression);
     }

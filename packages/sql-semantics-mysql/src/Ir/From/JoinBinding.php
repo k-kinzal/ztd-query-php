@@ -60,6 +60,7 @@ final class JoinBinding
 
     /**
      * Resolves the exact input occurrence and allocates a slot within it.
+     * @throws InvalidConstruction when the occurrence is outside the subtree
      */
     public function reference(Scalar $scalar): ColumnReference
     {
@@ -89,14 +90,16 @@ final class JoinBinding
 
     /**
      * Fixes the effective operator in this dialect.
+     * @throws InvalidConstruction when the join has no matching IR operator
      */
-    public function kind(): JoinKind
+    private function kind(): JoinKind
     {
         return match ($this->join->operator) {
             JoinOperator::Join, JoinOperator::Cross, JoinOperator::Inner => $this->join->on === null ? JoinKind::Cross : JoinKind::Inner,
             JoinOperator::Left, JoinOperator::LeftOuter => JoinKind::Left,
             JoinOperator::Right, JoinOperator::RightOuter => JoinKind::Right,
-            default => throw new InvalidConstruction('The join operator has no complete MySQL representation.'),
+            JoinOperator::StraightJoin, JoinOperator::Natural, JoinOperator::NaturalLeft, JoinOperator::NaturalRight,
+            JoinOperator::NaturalInner, JoinOperator::NaturalLeftOuter, JoinOperator::NaturalRightOuter => throw new InvalidConstruction('The join operator has no complete MySQL representation.'),
         };
     }
 }

@@ -61,6 +61,7 @@ final class JoinBinding
 
     /**
      * Resolves the exact input occurrence and allocates a slot within it.
+     * @throws InvalidConstruction when the occurrence is outside the subtree
      */
     public function reference(Scalar $scalar): ColumnReference
     {
@@ -91,7 +92,7 @@ final class JoinBinding
     /**
      * Fixes the effective operator in this dialect.
      */
-    public function kind(): JoinKind
+    private function kind(): JoinKind
     {
         return JoinKind::from($this->join->kind->value);
     }
