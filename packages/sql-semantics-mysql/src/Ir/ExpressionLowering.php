@@ -39,17 +39,7 @@ final class ExpressionLowering
             $expression = $expression->operand;
         }
         if ($expression instanceof ParsedArithmetic) {
-            $operator = ArithmeticOperator::tryFrom($expression->operator->value);
-            Check::input($operator !== null, 'The operator has no checked MySQL signed arithmetic representation.');
-            $left = $this->lower($expression->left, $binding, $wide);
-            $right = $this->lower($expression->right, $binding, $wide);
-            Check::input(
-                ($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerLiteral || $left instanceof RangeIntegerLiteral)
-                    && ($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerLiteral || $right instanceof RangeIntegerLiteral),
-                'Arithmetic operands must have the signed integer role.',
-            );
-
-            return new Arithmetic($operator, $left, $right);
+            return $this->binary($expression, $binding, $wide);
         }
         $token = (new IntegerTokenLowering())->lower($expression);
         if ($token !== null) {
@@ -71,5 +61,24 @@ final class ExpressionLowering
             $expression instanceof ColumnUse => $binding->reference($expression),
             default => throw new InvalidConstruction('The operand has no complete MySQL projection representation.'),
         };
+    }
+
+    /**
+     * Resolves a signed arithmetic operation and its two checked operands.
+     * @throws InvalidConstruction When either operand has a different static role
+     */
+    public function binary(ParsedArithmetic $expression, SourceBinding|JoinBinding $binding, bool $wide): Arithmetic
+    {
+        $operator = ArithmeticOperator::tryFrom($expression->operator->value);
+        Check::input($operator !== null, 'The operator has no checked MySQL signed arithmetic representation.');
+        $left = $this->lower($expression->left, $binding, $wide);
+        $right = $this->lower($expression->right, $binding, $wide);
+        Check::input(
+            ($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerLiteral || $left instanceof RangeIntegerLiteral)
+                && ($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerLiteral || $right instanceof RangeIntegerLiteral),
+            'Arithmetic operands must have the signed integer role.',
+        );
+
+        return new Arithmetic($operator, $left, $right);
     }
 }
