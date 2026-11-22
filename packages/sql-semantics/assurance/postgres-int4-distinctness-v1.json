@@ -1,0 +1,47 @@
+{
+  "revision": "SemanticsIR/postgres-int4-distinctness-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2 with the registered search path and native parameter style.",
+  "scope": "IS DISTINCT FROM and IS NOT DISTINCT FROM over pure int4 leaves and SQL NULL.",
+  "constructors": {
+    "Predicate/IntegerDistinctness": {
+      "role": "A non-null Boolean test of equality or difference treating NULL as comparable.",
+      "structure": "Two ordered signed int4 column, signed literal or NULL operands and the requested equality polarity.",
+      "conditions": "The enclosing scope checks both references and counts both operands. Analyze only checked int4 leaves and NULL in the registered catalog-first profile. Bare NULL can be tested without an equality overload on its own.",
+      "meaning": "Two NULLs are equal. Exactly one NULL is different. Compare two nonnull int4 values using pg_catalog equality. The selected polarity determines the Boolean result. A WHERE filter admits true rows only.",
+      "externalInterpretation": "Read the same referenced physical slots using the fixed int4 domain. A competing operator in an earlier runtime schema cannot change the built-in equality.",
+      "sql": "Use COALESCE of the qualified nullable equality and the conjunction of both IS NULL tests. Emit NOT for the distinct polarity. Write each NULL operand as pg_catalog.int4.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "ColumnReference", "NullLiteral", "Predicate/LogicalPredicate", "Predicate/NullTest", "Expression/IntegerCaseArm"],
+  "observations": [
+    "Exact Boolean metadata and labels, equal and different nonnull values, both NULL, left or right NULL, duplicate rows and filtering.",
+    "A real earlier schema overload of int4 equality must produce a different result when selected. Compare the same emitted value under that runtime search path."
+  ],
+  "finite": {
+    "sources": ["unit", "only", "inherited"],
+    "placements": ["projection", "where"],
+    "negated": [false, true],
+    "literalValues": [-2, 2, null],
+    "slots": [0, 1],
+    "identity": "Every pair of ordered operands, both polarities and both placements. Source-free units omit slots. Require each of the 236 observed identities exactly once per release."
+  },
+  "exploration": {
+    "seeds": [23339, 35911, 46919],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Vary signed boundary values, NULL operand positions and binding slots. Vary row multiplicity, result widths and repeated labels. Compose with logical decisions, CASE and NULL tests."
+  },
+  "negative": ["Invisible left operand", "Invisible right operand", "Invisible WHERE occurrence", "Computed int4 operand", "Operand outside int4"],
+  "faults": ["Reverse the requested polarity", "Use ordinary nullable equality", "Read the left operand in both positions", "Resolve equality in a competing runtime schema"],
+  "open": ["Other scalar domains, user-defined equality operators and row-value comparisons."],
+  "trust": ["Independent two-valued comparison model", "Pinned PostgreSQL results and type metadata", "Checked qualified emission and constructor traversal"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/functions-comparison.html",
+    "https://www.postgresql.org/docs/17/functions-comparison.html",
+    "https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parse_expr.c"
+  ]
+}
