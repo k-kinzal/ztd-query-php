@@ -23,6 +23,13 @@ final class RealLiteralTest extends TestCase
         self::assertTrue($value->negative);
     }
 
+    public function testToStringKeepsTheSignPointAndExponent(): void
+    {
+        $value = new RealLiteral('', '0', '+0', true);
+
+        self::assertSame('-.0e+0', $value->toString());
+    }
+
     public function testRejectsAnIntegerInThePointFreeRealRole(): void
     {
         $this->expectExceptionMessage('signed INTEGER boundary');

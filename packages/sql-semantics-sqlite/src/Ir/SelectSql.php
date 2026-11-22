@@ -149,9 +149,7 @@ final class SelectSql
             $expression instanceof UnaryExpression => '(' . $expression->kind->value . ' ' . $this->expression($expression->operand, $source, $joins) . ')',
             $expression instanceof IntegerLiteral => $expression->decimal,
             $expression instanceof HexIntegerLiteral => ($expression->negated ? '-' : '') . '0x' . $expression->digits,
-            $expression instanceof RealLiteral => ($expression->negative ? '-' : '') . $expression->whole
-                . ($expression->fraction === null ? '' : '.' . $expression->fraction)
-                . ($expression->exponent === null ? '' : 'e' . $expression->exponent),
+            $expression instanceof RealLiteral => $expression->toString(),
             $expression instanceof TextLiteral => "'" . str_replace("'", "''", $expression->value) . "'",
             $expression instanceof BlobLiteral => "X'" . $expression->hex . "'",
             $expression instanceof NullLiteral => 'NULL',

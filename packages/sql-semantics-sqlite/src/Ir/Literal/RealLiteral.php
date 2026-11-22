@@ -39,4 +39,14 @@ final class RealLiteral
             Check::input(strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $boundary) > 0), 'A point-free, exponent-free REAL must exceed its signed INTEGER boundary.');
         }
     }
+
+    /**
+     * Emits the signed significand and optional exponent.
+     */
+    public function toString(): string
+    {
+        return ($this->negative ? '-' : '') . $this->whole
+            . ($this->fraction === null ? '' : '.' . $this->fraction)
+            . ($this->exponent === null ? '' : 'e' . $this->exponent);
+    }
 }

@@ -136,6 +136,7 @@ if ($dialect === 'sqlite') {
     $properties['Select']['where'] = $nullablePredicates;
     $properties['Select']['distinct'] = ['bool'];
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
+    $methods['Literal\\RealLiteral'][] = 'toString';
     $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
