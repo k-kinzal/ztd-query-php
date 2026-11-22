@@ -40,7 +40,7 @@
   "additionalMySqlNegatives": ["Negative integer padding", "Integer padding above the effective width", "Negative zero flag on a nonzero value"],
   "faults": ["Read the wrong local slot after reordering", "Collapse a duplicate row", "Change the definition selected by a one-use binding"],
   "dialectFaults": {"mysql": ["Erase the effective integer width while preserving the scalar value"]},
-  "changeFromRevision2": "The required MySQL field-width mutation is registered only for MySQL. PostgreSQL has no integer padding field. Retains all applicable faults and every comparison, rejection and execution bound.",,
+  "changeFromRevision2": "The required MySQL field-width mutation is registered only for MySQL. PostgreSQL has no integer padding field. Retains all applicable faults and every comparison, rejection and execution bound.",
   "trust": ["Fixed reference interpretation and native name profiles", "Independent evaluation of the existing signed projection rules and explicit slot mapping", "The registered definition forms have no volatile effects"],
   "sources": ["https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html", "https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_tmp_table.cc", "https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_tmp_table.cc", "https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html", "https://dev.mysql.com/doc/refman/8.4/en/with.html", "https://www.postgresql.org/docs/17/queries-with.html", "https://www.postgresql.org/docs/17/sql-select.html"]
 }

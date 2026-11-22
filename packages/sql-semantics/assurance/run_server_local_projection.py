@@ -13,7 +13,7 @@ from server_local_projection_cases import case, definition, expected, finite_id,
 from sqlite_domain import RenderFault
 
 LABEL = "local-projection"
-CONTRACT = "e19b2b0089b67803d0a3e3e4e88cac531b27fb7e8362f14b5f8d7e100aff9b99"
+CONTRACT = "70dbab57793ea2207c08636c1541b000c989b5c5f3b65ee7b5d1dfeccf35b0cb"
 
 
 def specifications():
