@@ -16,6 +16,7 @@ from grammar_scope import inventory as grammar_inventory
 from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
+from replay_native_boundary_faults import replay as replay_native_faults
 from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
 from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
@@ -491,8 +492,11 @@ def main():
         report["assuranceChanges"] = evidence.checked(revision)[1]
     else:
         report["assuranceChanges"] = None
-    report["valueClosure"] = report["scalarDispatch"] = None
+    report["valueClosure"] = report["scalarDispatch"] = report["nativeBoundaryFaultReplay"] = None
     if guards:
+        audit = output / "native-boundary-fault-replay.json"
+        write_json(audit, replay_native_faults(checkout, guards[0].parent, guards[2], manifest))
+        report["nativeBoundaryFaultReplay"] = evidence.checked(audit)[1]
         sources = {dialect: result["healthy"] for dialect, result in guards[2]["results"].items()}
         graph = certificate(manifest, roles["registeredConstructors"], sources)
         reference = guards[2]["valueClosure"]
@@ -531,6 +535,7 @@ def main():
     if report["valueClosure"] is not None:
         lines.append("The [checked value graph](value-closure.json) records the static closure of retained fields under the listed PHP and source-audit premises.")
         lines.append("The native constructor audit also links each checked scalar dispatch to the field types of its listed callers.")
+        lines.append("The [native boundary fault replay](native-boundary-fault-replay.json) links all required source patches and raw rejections.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")

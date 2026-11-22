@@ -2,6 +2,7 @@
 
 import argparse
 import difflib
+from hashlib import sha256
 from pathlib import Path
 from typing import NamedTuple, Optional
 
@@ -9,6 +10,11 @@ from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import DIALECTS, certificate
 from scope import declared_constructors
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
+
+
+ENGINES = ("mysql", "postgres", "sqlite")
+FAULT_REPLAY_NAME = "native-boundary-fault-replay-v1.json"
+FAULT_REPLAY = "24245e8ebb14fe057a5e6e7b0545f936b2176ee2c179ac4fc2d99659befe3d51"
 
 
 class Fault(NamedTuple):
@@ -308,9 +314,40 @@ def faults(engine):
     return shared
 
 
-def check_fault(args, engine, fault, distribution):
+def relative_path(engine, fault):
     model, _ = fault.role.split("::")
-    relative = Path(f"sql-semantics-{engine}") / (fault.artifact or f"src/Ir/{model}.php")
+    return f"sql-semantics-{engine}/" + (fault.artifact or f"src/Ir/{model}.php")
+
+
+def expected_rejection(engine, fault):
+    label = {"sqlite": "Folded binding", "postgres": "Integer binding"}.get(engine)
+    message = f"{label} source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
+    return {"status": "shape-mismatch", "message": fault.message or message}
+
+
+def fault_plan(candidate, distribution):
+    require(digest(TOOL / FAULT_REPLAY_NAME) == FAULT_REPLAY, "native-boundary-fault-replay-contract")
+    planned = {}
+    for engine in ENGINES:
+        entries = []
+        for fault in faults(engine):
+            relative = relative_path(engine, fault)
+            source = candidate / "packages" / relative
+            text = source.read_text()
+            require(text.count(fault.before) == 1, "native-boundary-fault-anchor", fault.name)
+            mutated = text.replace(fault.before, fault.after).encode()
+            before = distribution.get(f"packages/{relative}")
+            after = sha256(mutated).hexdigest()
+            require(before == digest(source) and after != before, "native-boundary-fault-source", fault.name)
+            entries.append({"name": fault.name, "role": fault.role, "path": relative, "source": before,
+                            "mutation": after, "expected": expected_rejection(engine, fault)})
+        require(entries and len({entry["name"] for entry in entries}) == len(entries), "native-boundary-fault-plan", engine)
+        planned[engine] = entries
+    return planned
+
+
+def check_fault(args, engine, fault, distribution):
+    relative = relative_path(engine, fault)
     original = args.candidate / "packages" / relative
     source = original.read_text()
     require(source.count(fault.before) == 1, "native-boundary-fault-anchor", fault.name)
@@ -320,21 +357,19 @@ def check_fault(args, engine, fault, distribution):
     altered.parent.mkdir(parents=True)
     altered.write_text(text)
     before, after = digest(original), digest(altered)
-    require(distribution[f"packages/{relative.as_posix()}"] == before and before != after,
+    require(distribution[f"packages/{relative}"] == before and before != after,
             "invalid-native-boundary-mutation", fault.name)
     diff = difflib.unified_diff(source.splitlines(keepends=True), text.splitlines(keepends=True),
-                                original.as_posix(), altered.as_posix())
+                                f"a/{relative}", f"b/{relative}")
     (overlay / "injected.diff").write_text("".join(diff))
 
     try:
         shape(args, overlay, engine)
     except Failure as failure:
-        label = {"sqlite": "Folded binding", "postgres": "Integer binding"}.get(engine)
-        message = f"{label} source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
-        expected = {"status": "shape-mismatch", "message": fault.message or message}
+        expected = expected_rejection(engine, fault)
         require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
                 {"fault": fault.name, "response": failure.detail})
-        record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative.as_posix(),
+        record = {"name": fault.name, "role": fault.role, "healthy": "verified", "path": relative,
                   "source": before, "mutation": after, "expected": expected, "observed": failure.detail}
         write_json(overlay / "result.json", record)
         return record
@@ -352,8 +387,10 @@ def main():
     args.out.mkdir(parents=True, exist_ok=False)
     identity, manifest = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", manifest)
+    plan_path = args.out / "fault-plan.json"
+    write_json(plan_path, {"candidate": identity, "contract": FAULT_REPLAY, "faults": fault_plan(args.candidate, manifest)})
     results = {}
-    for engine in ("mysql", "postgres", "sqlite"):
+    for engine in ENGINES:
         healthy = shape(args, dialect=engine)
         cases = faults(engine)
         require({fault.role for fault in cases if not fault.artifact} <= set(healthy["checkedBoundaries"])
@@ -373,7 +410,8 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v1.json", "native-boundaries-v28.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v3.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v16.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v5.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v27.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v1.json", "native-boundaries-v28.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v3.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v16.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v5.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v27.json", "value-primitives.json")},
+        "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},
     })
