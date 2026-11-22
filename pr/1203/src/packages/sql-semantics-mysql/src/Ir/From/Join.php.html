@@ -71,8 +71,8 @@
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">JoinKind</span> <span class="tok-var">$kind</span>,</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span>|<span class="tok-id">self</span> <span class="tok-var">$left</span>,</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span>|<span class="tok-id">self</span> <span class="tok-var">$right</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span>|<span class="tok-id">DerivedSource</span>|<span class="tok-id">self</span> <span class="tok-var">$left</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span>|<span class="tok-id">DerivedSource</span>|<span class="tok-id">self</span> <span class="tok-var">$right</span>,</span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">BooleanLiteral</span>|<span class="tok-id">IntegerComparison</span>|<span class="tok-id">LogicalPredicate</span>|<span class="tok-id">NullLiteral</span>|<span class="tok-id">NullTest</span>|<span class="tok-id">null</span> <span class="tok-var">$on</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    ) {</span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$inputs</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">inputs</span>();</span>
@@ -82,8 +82,8 @@
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Returns the table occurrences in lexical order.</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @return non-empty-list&lt;TableSource&gt;</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Returns the input occurrences in lexical order.</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @return non-empty-list&lt;TableSource|DerivedSource&gt;</span></span>
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">inputs</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    {</span>
