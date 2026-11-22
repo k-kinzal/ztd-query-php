@@ -166,7 +166,7 @@ Run `run_server_parameter.py` with the same native fixture options. Replay all r
 
 ## Native local projections
 
-The [local projection contract](server-local-projection-v2.json) specifies outer slot reads from a single independent SELECT. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, a one-use ordinary CTE that shadows a physical table. It also verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width.
+The [local projection contract](server-local-projection-v3.json) specifies outer slot reads from a single independent SELECT. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, a one-use ordinary CTE that shadows a physical table. It also verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width.
 
 Run `run_server_local_projection.py` with the native fixture options. Replay all releases with `combine_server_local_projection_evidence.py` and the per-release `index.json` paths.
 

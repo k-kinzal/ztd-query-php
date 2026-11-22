@@ -152,7 +152,7 @@ def inventory(root):
         for rule in local:
             for alternative in rules.get(rule, []):
                 if alternative in local_signatures or rule == "common_table_expr":
-                    related[alternative] = (*related.get(alternative, ()), "server-local-projection-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "server-local-projection-v3.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

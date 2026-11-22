@@ -13,11 +13,11 @@ from server_local_projection_cases import case, definition, expected, finite_id,
 from sqlite_domain import RenderFault
 
 LABEL = "local-projection"
-CONTRACT = "a94f6acffb9f27ae98445fceb61e2c03285d45a1d6d1f1b9c5dac389cfa9f934"
+CONTRACT = "e19b2b0089b67803d0a3e3e4e88cac531b27fb7e8362f14b5f8d7e100aff9b99"
 
 
 def specifications():
-    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v2.json", "server-projection-v1.json", "server-join-v1.json"))
+    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v3.json", "server-projection-v1.json", "server-join-v1.json"))
     require(all(digest(file) == checksum for file, checksum in ((path, CONTRACT), (projection, PROJECTION), (join, JOIN))),
             "server-local-projection-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
