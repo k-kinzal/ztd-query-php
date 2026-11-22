@@ -6,6 +6,8 @@ from run import digest, require
 from scope import CONTRACTS, public_scope
 
 
+DECLARATIONS = "constructor-declarations-v1.json"
+DECLARATION_DIGEST = "812b5d911e7b9fc509169f32f3a6dc75bc81a60bfd1f0630477f4e6791f31941"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 FIELDS = {
     "role": ("role", "roles"),
@@ -43,24 +45,39 @@ def check_scope(inventory, scope, distribution):
             {field: scope[field] for field in SCOPE_CHECKS if scope[field]})
 
 
-def role_declaration(record, name, role):
+def declaration_contract(path):
+    require(digest(path) == DECLARATION_DIGEST, "trace-declaration-contract-mismatch", str(path))
+    result = json.loads(path.read_text())
+    require(set(result["obligations"]) == OBLIGATIONS.keys(), "trace-declaration-obligations-incomplete")
+    for rule in result["obligations"].values():
+        require(bool(rule.get("criterion")) and bool(rule.get("checks")), "trace-missing-criterion", rule)
+    return result
+
+
+def pointer(value):
+    return value.replace("~", "~0").replace("/", "~1")
+
+
+def role_declaration(record, name, role, supplement):
     declarations = record["constructors"][role]
-    pointer = "/constructors/" + role.replace("~", "~0").replace("/", "~1")
-    indexed = {field: [f"{pointer}/{key}" for key in options if declarations.get(key)]
-               for field, options in FIELDS.items()}
+    prefix = "/constructors/" + pointer(role)
+    found = {field: [{"contract": name, "pointer": f"{prefix}/{key}"} for key in options if declarations.get(key)]
+             for field, options in FIELDS.items()}
     if declarations.get("values"):
-        indexed["conditions"].append(f"{pointer}/values")
-    planned = {key: [f"/evidence/{key}"] for key in OBLIGATIONS if isinstance(record.get("evidence"), dict)
-               and record["evidence"].get(key)}
+        found["conditions"].append({"contract": name, "pointer": f"{prefix}/values"})
+    for field, description in supplement.get(name, {}).get(role, {}).items():
+        require(field in found and not found[field] and bool(description), "trace-invalid-supplement", [name, role, field])
+        found[field].append({"contract": DECLARATIONS, "pointer": f"/additions/{pointer(name)}/{pointer(role)}/{field}"})
+    require(all(found.values()), "trace-role-field-missing", {"contract": name, "role": role,
+                                                            "fields": [field for field, refs in found.items() if not refs]})
+    planned = {key: [{"contract": DECLARATIONS, "pointer": f"/obligations/{key}"}] for key in OBLIGATIONS}
     for key in declarations.get("obligations", ()):
         require(key in OBLIGATIONS, "trace-unknown-obligation", [name, role, key])
-        planned.setdefault(key, []).append(f"{pointer}/obligations")
-    return {
-        "contract": name, "role": role, "declaredFields": indexed,
-        "undeclaredRoleFields": [field for field, paths in indexed.items() if not paths],
-        "declaredObligations": planned,
-        "undeclaredObligations": sorted(OBLIGATIONS.keys() - planned.keys()),
-    }
+        planned[key].append({"contract": name, "pointer": f"{prefix}/obligations"})
+    if isinstance(record.get("evidence"), dict):
+        for key in OBLIGATIONS.keys() & record["evidence"].keys():
+            planned[key].append({"contract": name, "pointer": f"/evidence/{key}"})
+    return {"contract": name, "role": role, "declaredFields": found, "declaredObligations": planned}
 
 
 def checked_methods(guard, dialect, role):
@@ -102,6 +119,9 @@ def installed_roots(staged, roots, manifest):
 
 
 def trace(scope, manifest, tools, sqlite, native, guards, staged):
+    declared = declaration_contract(tools / DECLARATIONS)
+    supplements = declared["additions"]
+    require(supplements.keys() <= CONTRACTS.keys(), "trace-unregistered-supplement")
     native_links = {item["contract"]: item for item in native.values()}
     sqlite_links = {} if sqlite is None else sqlite["domains"]
     records = {}
@@ -110,6 +130,8 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
         path = tools / name
         require(digest(path) == sha256, "trace-contract-digest-mismatch", name)
         record = json.loads(path.read_text())
+        require(supplements.get(name, {}).keys() <= record["constructors"].keys(),
+                "trace-unregistered-supplement-role", name)
         records[name] = record
         receipts = {}
         if name in native_links:
@@ -123,8 +145,11 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
             "domainEvidence": receipts,
             "evidenceKind": "related-domain" if receipts else "unconfirmed",
             "contractFields": sorted(record.keys() - {"constructors"}),
+            "profileFields": [field for field in ("profile", "profiles", "initialExecutableDomain") if record.get(field)],
         }
 
+    contracts[DECLARATIONS] = {"sha256": DECLARATION_DIGEST, "revision": declared["revision"], "approval": declared["approval"],
+                               "evidenceKind": "required-criteria", "domainEvidence": {}}
     values = scope["registeredConstructors"]
     installed = installed_roots(staged, {name: values[name] for name in scope["completeRootTypes"]}, manifest)
     constructors = {}
@@ -134,13 +159,11 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
             "dialect": DIALECTS[dialect], "publicAndMagicSignatures": item["paths"],
             "source": item["source"], "sourceDigest": item["sha256"],
             "publishers": [method for method, results in scope["publicationRoutes"].items() if name in results],
-            "declarations": [role_declaration(records[row["record"]], row["record"], row["role"])
+            "declarations": [role_declaration(records[row["record"]], row["record"], row["role"], supplements)
                              for row in item["contracts"]],
             "supplementalContracts": item["supplementalEvidence"],
             "auditedShape": checked_methods(guards, DIALECTS[dialect], role),
             "installedRootExamples": installed.get(name, []),
         }
-    gaps = {field: sum(any(declaration[field] for declaration in item["declarations"]) for item in constructors.values())
-            for field in ("undeclaredRoleFields", "undeclaredObligations")}
     return {"obligations": OBLIGATIONS, "contracts": contracts, "constructors": constructors,
-            "rolesWithDeclarationGaps": gaps, "status": "provisional-constructor-trace"}
+            "status": "provisional-constructor-trace"}

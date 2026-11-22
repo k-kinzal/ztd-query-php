@@ -8,7 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from constructor_trace import check_scope
+from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, digest, manifest, require, shape, write_json
@@ -88,6 +88,24 @@ def scope_controls(args, distribution):
         records.append({"case": name, "removed": removed, "control": "passed", "original": digest(path),
                         "mutated": digest(target), "expected": expected, "signal": failure.signal})
     return records
+
+
+def declaration_control(args):
+    original = TOOL / DECLARATIONS
+    valid = declaration_contract(original)
+    folder = args.out / "weakened-constructor-observation"
+    folder.mkdir()
+    target = folder / DECLARATIONS
+    valid["obligations"]["Q04"]["criterion"] = "Accept an output statement when the database executes it."
+    write_json(target, valid)
+    (folder / "injected.diff").write_text("".join(difflib.unified_diff(
+        original.read_text().splitlines(keepends=True), target.read_text().splitlines(keepends=True),
+        str(original), str(target),
+    )))
+    expected = "trace-declaration-contract-mismatch"
+    failure = observe_rejection(lambda: declaration_contract(target), expected)
+    return {"case": "weakened-constructor-observation", "control": "passed", "original": digest(original),
+            "mutated": digest(target), "expected": expected, "signal": failure.signal}
 
 
 def copy_package_metadata(args, fixture):
@@ -283,7 +301,7 @@ def main():
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
-              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution))
+              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution) + [declaration_control(args)])
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

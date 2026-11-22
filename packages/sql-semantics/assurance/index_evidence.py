@@ -259,7 +259,7 @@ def main():
         f"- {sum(not record['missing'] for record in native.values())} native domains with every required release replayed.",
         f"- {len(evidence.missing)} missing evidence records or release entries.",
         "", "The [machine-readable index](index.json) links to the source inventory, replay summaries, original requests and recorded database observations.",
-        "The [constructor trace](constructors.json) identifies declared fields, declaration gaps, related domain receipts and audited methods for each public role.",
+        "The [constructor trace](constructors.json) identifies contract fields, required obligations, related domain receipts and audited methods for each public role.",
     ]
     (output / "summary.md").write_text("\n".join(lines) + "\n")
 
