@@ -56,7 +56,13 @@ def faults(engine):
                   "$expression instanceof CastExpression, ", ""),
             Fault("allow-invalid-returning-slot", "Mutation/Delete::__construct", "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("allow-non-target-returned-field", "Mutation/ReturnedColumn::__construct", "$reference->source === 0,", "true,"),
-            Fault("skip-table-default-budget", "Schema/CreateTable::__construct", "(new ExpressionScope())->check([], $defaults);", ""),
+            Fault("skip-table-default-budget", "Schema/CreateTable::__construct", "(new ExpressionScope())->check([count($checked)], $conditions, false);", ""),
+            Fault("allow-unbound-check-operand", "Schema/Predicate/CheckConstraint::__construct",
+                  "(new ExpressionScope())->check([2000], [[$condition, 0, 1]], false);", "(new ExpressionScope())->check([2000], [[$condition, 0, 1]]);"),
+            Fault("ignore-owning-check-slot", "Schema/CreateTable::__construct",
+                  "($check->column === null || isset($checked[$owner])) && $owner >= $lastOwner", "$owner >= $lastOwner"),
+            Fault("retain-check-list-reference", "Schema/CreateTable::__construct",
+                  "$this->checks = $orderedChecks;", "$this->checks = $checks;"),
             Fault("allow-external-population-source", "Schema/Query/CreateTableAs::__construct",
                   "!$query instanceof Select || $query->source === null,", "true,"),
             Fault("skip-native-population-layout", "Schema/Query/CreateTableAs::__construct",
@@ -264,7 +270,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v24.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v7.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v24.json", "value-primitives.json")},
+                       "native-boundaries-v24.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v12.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

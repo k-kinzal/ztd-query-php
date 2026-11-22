@@ -200,10 +200,11 @@ def execute(args, contract, db, worker_factory=Worker):
 
 def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/Schema/Key/TableKeySql.php"
+    declaration = "sql-semantics-sqlite/src/Ir/Schema/TableDeclarationSql.php"
     return runner(args, db, [
         RenderFault("drop-inline-unique", renderer, "return ' UNIQUE' . $conflict;", "return '';",
                     layout("inline", "ABORT"), "meaning-mismatch"),
-        RenderFault("reverse-unique-constraints", renderer, "foreach ($keys as $key)", "foreach (array_reverse($keys) as $key)",
+        RenderFault("reverse-unique-constraints", declaration, "foreach ($keys as $key)", "foreach (array_reverse($keys) as $key)",
                     layout("ordered-conflicts", "IGNORE"), "meaning-mismatch"),
         RenderFault("replace-explicit-collation", renderer, " ? '' : ' COLLATE ' . $term->collation->value;", " ? '' : '';",
                     layout("table-binary-override", None), "meaning-mismatch"),

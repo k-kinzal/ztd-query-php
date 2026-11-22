@@ -259,7 +259,7 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\DropTable'] = $methods['Select'];
     $properties['Schema\\CreateTable'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'],
-        'strict' => ['bool'], 'withoutRowid' => ['bool'], 'keys' => ['array'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
+        'strict' => ['bool'], 'withoutRowid' => ['bool'], 'keys' => ['array'], 'checks' => ['array'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
     ];
     $properties['Schema\\Key\\KeyTerm'] = ['slot' => ['int'], 'descending' => ['bool'], 'collation' => ['Collation']];
     $properties['Schema\\Key\\PrimaryKey'] = [
@@ -273,6 +273,14 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Schema\\Key\\TableKeySql', 'Schema\\Key\\TableKeyLowering', 'Schema\\Key\\TableKeyLayout', 'Schema\\Key\\KeyTermLowering');
     array_push($pureCollaborators, 'Schema\\Key\\TableKeySql', 'Schema\\Key\\TableKeyLayout');
     $methods['Schema\\CreateTable'] = $methods['Select'];
+    $properties['Schema\\Predicate\\CheckConstraint'] = [
+        'label' => ['Identifier'], 'condition' => array_values(array_diff($operands, ['Parameter'])), 'column' => ['?int'],
+    ];
+    $methods['Schema\\Predicate\\CheckConstraint'] = ['__construct'];
+    $properties['Schema\\Predicate\\DefinitionSource'] = ['columns' => ['array']];
+    $methods['Schema\\Predicate\\DefinitionSource'] = ['__construct'];
+    array_push($internal, 'Schema\\Predicate\\CheckLowering', 'Schema\\TableDeclarationSql');
+    array_push($pureCollaborators, 'Schema\\Predicate\\DefinitionSource', 'Schema\\TableDeclarationSql');
     $properties['Schema\\Query\\CreateTableAs'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
     ];
@@ -685,9 +693,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v24.json';
+    $storagePath = __DIR__ . '/value-storage-v25.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '2ab31e92d80f9e50b851835e98ed45aa30b16056a4114ecdceff138c6cdc2b10',
+        hash_file('sha256', $storagePath) === '533c69d3a151f0b197a78e92e84ab8569442ba75b9c9cac22d604b4206bbb4cf',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

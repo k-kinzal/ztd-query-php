@@ -14,34 +14,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 final class TableKeySql
 {
     /**
-     * Emits inline clauses on their own columns and appends the table clauses.
-     *
-     * @param non-empty-list<TableColumn> $columns
-     * @param list<PrimaryKey|UniqueKey> $keys
-     * @return list<string>
-     */
-    public function declarations(array $columns, array $keys): array
-    {
-        $inline = [];
-        $table = [];
-        foreach ($keys as $key) {
-            if ($key->inline) {
-                $slot = $key->terms[0]->slot;
-                $inline[$slot] = ($inline[$slot] ?? '') . $this->inline($key);
-            } else {
-                $table[] = $this->table($key, $columns);
-            }
-        }
-
-        $parts = [];
-        foreach ($columns as $slot => $column) {
-            $parts[] = $column->toString() . ($inline[$slot] ?? '');
-        }
-
-        return [...$parts, ...$table];
-    }
-
-    /**
      * Emits the clause attached to one column.
      */
     public function inline(PrimaryKey|UniqueKey $key): string

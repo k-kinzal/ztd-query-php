@@ -539,6 +539,8 @@ The [SQLite population contract](sqlite-create-as-v5.json) checks the catalog an
 
 The [SQLite unique-key contract](sqlite-unique-keys-v1.json) covers ordered inline and table keys, default and explicit collations and conflict policies, equivalent indexes, and coexistence with a primary key. The fixture compares native index order, covering slots, nullable writes, colliding rows and rollback. Run `run_sqlite_unique_keys.py` with the pinned SQLite library and the ordinary SQLite fixture arguments.
 
+The named CHECK fixture independently models slot comparisons, NULL propagation and ordered CHECK failures. It measures ordinary INSERT and conflict overrides, column rename and drop, and coexistence with NOT NULL and UNIQUE. The journal preserves the full ALTER diagnostic and compares the resolved column dependency. Run `run_sqlite_named_checks.py` with the same arguments. [SQLite named CHECK contract](sqlite-named-checks-v2.json)
+
 ## SQLite literal defaults
 
 The [default record](sqlite-defaults-v2.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.

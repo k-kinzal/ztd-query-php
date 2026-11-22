@@ -10,9 +10,11 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation as ParsedCollation;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ConstraintName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
@@ -36,7 +38,7 @@ final class CreateColumnLowering
         $default = null;
         $collation = null;
         foreach ($column->constraints as $constraint) {
-            if ($constraint instanceof ColumnPrimaryKey || $constraint instanceof ColumnUnique) {
+            if ($constraint instanceof ColumnPrimaryKey || $constraint instanceof ColumnUnique || $constraint instanceof ColumnCheck || $constraint instanceof ConstraintName) {
                 continue;
             }
             if ($constraint instanceof ParsedCollation) {

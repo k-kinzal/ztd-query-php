@@ -25,6 +25,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Pattern\PatternTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
@@ -136,7 +137,7 @@ final class SelectSql
      */
     public function expression(
         Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
-        TableSource|LocalSource|null $source,
+        TableSource|LocalSource|DefinitionSource|null $source,
         array $joins = [],
     ): string {
         return match (true) {
@@ -168,7 +169,7 @@ final class SelectSql
      * Writes the built-in test, preserving its lexical parameter order.
      * @param list<Join> $joins The joined scope
      */
-    public function pattern(PatternTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function pattern(PatternTest $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         $subject = $this->expression($expression->subject, $source, $joins);
         $pattern = $this->expression($expression->pattern, $source, $joins);
@@ -181,12 +182,14 @@ final class SelectSql
      * Renders the column of a checked source occurrence.
      * @param list<Join> $joins The remaining source occurrences
      */
-    public function column(ColumnReference $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function column(ColumnReference $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         $source = $expression->source === 0 ? $source : ($joins[$expression->source - 1]->source ?? null);
         Check::invariant(isset($source->columns[$expression->slot]), 'A complete SELECT has this source slot.');
 
-        return $this->alias($expression->source) . '.' . $source->columns[$expression->slot]->quoted();
+        $name = $source->columns[$expression->slot]->quoted();
+
+        return $source instanceof DefinitionSource ? $name : $this->alias($expression->source) . '.' . $name;
     }
 
     /**
@@ -209,7 +212,7 @@ final class SelectSql
      * Emits membership syntax and visits every written candidate in order.
      * @param list<Join> $joins The remaining source occurrences
      */
-    public function membership(MembershipTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function membership(MembershipTest $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         $operand = $this->expression($expression->operand, $source, $joins);
         $members = [];
@@ -224,7 +227,7 @@ final class SelectSql
      * Emits one tested scalar and its ordered inclusive bounds.
      * @param list<Join> $joins The remaining source occurrences
      */
-    public function between(BetweenTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function between(BetweenTest $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         return '(' . $this->expression($expression->operand, $source, $joins)
             . ($expression->negated ? ' NOT BETWEEN ' : ' BETWEEN ')
@@ -236,7 +239,7 @@ final class SelectSql
      * Emits a Boolean test whose result is independent of visible truth-word names.
      * @param list<Join> $joins The subsequent input occurrences
      */
-    public function truth(TruthTest $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function truth(TruthTest $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         $value = $this->expression($expression->operand, $source, $joins);
         $condition = $expression->desired ? $value : '(NOT ' . $value . ')';
@@ -250,7 +253,7 @@ final class SelectSql
      *
      * @param list<Join> $joins The remaining source occurrences
      */
-    public function choice(CaseExpression $expression, TableSource|LocalSource|null $source, array $joins): string
+    public function choice(CaseExpression $expression, TableSource|LocalSource|DefinitionSource|null $source, array $joins): string
     {
         $sql = '(CASE';
         if ($expression->base !== null) {

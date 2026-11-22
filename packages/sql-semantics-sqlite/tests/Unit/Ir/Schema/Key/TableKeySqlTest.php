@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeySql;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 
 #[CoversClass(TableKeySql::class)]
@@ -50,17 +49,5 @@ final class TableKeySqlTest extends TestCase
         $key = new PrimaryKey([new KeyTerm(0, true)], conflict: KeyConflict::Fail, autoIncrement: true);
 
         self::assertSame('PRIMARY KEY ("id" DESC AUTOINCREMENT) ON CONFLICT FAIL', (new TableKeySql())->table($key, $columns));
-    }
-
-    public function testDeclarationsKeepOrderedKeysAndEffectiveCollations(): void
-    {
-        $column = new TableColumn(new Identifier('code'), collation: Collation::NoCase);
-        $inline = new UniqueKey([new KeyTerm(0, collation: Collation::NoCase)], inline: true);
-        $table = new UniqueKey([new KeyTerm(0)], conflict: KeyConflict::Ignore);
-
-        self::assertSame(
-            ['"code" COLLATE NOCASE UNIQUE', 'UNIQUE ("code" COLLATE BINARY) ON CONFLICT IGNORE'],
-            (new TableKeySql())->declarations([$column], [$inline, $table])
-        );
     }
 }

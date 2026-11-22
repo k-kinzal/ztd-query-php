@@ -10,7 +10,9 @@ use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ConstraintName;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableCheck;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TablePrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
 
@@ -34,6 +36,9 @@ final class TableKeyLowering
         $lowering = new KeyTermLowering();
         foreach ($definition->constraints as $run) {
             foreach ($run->items as $constraint) {
+                if ($constraint instanceof TableCheck || $constraint instanceof ConstraintName) {
+                    continue;
+                }
                 Check::input($constraint instanceof TablePrimaryKey || $constraint instanceof TableUnique, 'This table constraint has no complete CREATE TABLE representation.');
                 $terms = [];
                 foreach ($constraint->terms as $term) {

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v3.json"
-CONTRACT = "10bccfdd9c8e8076889c78c84878092ca4438f88b4a46c04acf15e80e1f17c02"
+CONTRACT_NAME = "release-layout-v4.json"
+CONTRACT = "070b012b0700c2efa06e71e354b564b00ee4e92ac829101229e37060d44b84b5"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -206,6 +206,7 @@ def verify_probe(raw, catalog):
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],
                 ["unique", False, 1, True, "BINARY", "IGNORE"],
             ], "installed-table-key-layout-mismatch", item)
+            require(item.get("namedChecks") == [["ref id", 1, 0]], "installed-table-check-mismatch", item)
         if item["role"] == "Schema\\Query\\CreateTableAs":
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

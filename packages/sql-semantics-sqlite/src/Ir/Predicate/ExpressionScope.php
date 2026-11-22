@@ -34,14 +34,16 @@ final class ExpressionScope
      *
      * @param list<int> $widths The number of slots per occurrence
      * @param list<ScopedExpression> $pending The expressions with height and scope width
+     * @param bool $allowParameters Whether the owner accepts parameter markers
      */
-    public function check(array $widths, array $pending): void
+    public function check(array $widths, array $pending, bool $allowParameters = true): void
     {
         $nodes = 0;
         $payloadBytes = 0;
         while ($pending !== []) {
             [$expression, $height, $visibility] = array_pop($pending);
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
+            Check::input($allowParameters || !$expression instanceof Parameter, 'A schema expression cannot contain a parameter.');
             if ($expression instanceof CaseExpression || $expression instanceof MembershipTest || $expression instanceof FoldedMembership || $expression instanceof PatternTest) {
                 foreach ($this->branches($expression, $height + 1, $visibility) as $operand) {
                     $pending[] = $operand;

@@ -42,6 +42,7 @@ import run_sqlite_strict_tables as strict_tables
 import run_sqlite_truth as truth
 import run_sqlite_unary as unary
 import run_sqlite_unique_keys as unique_keys
+import run_sqlite_named_checks as named_checks
 import run_sqlite_update as update
 import run_sqlite_upsert_nothing as upsert_nothing
 import run_sqlite_update_returning as update_returning
@@ -76,6 +77,7 @@ DOMAINS = {
     create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     primary_keys.CONTRACT_NAME: (primary_keys, primary_keys.FIXTURE),
+    named_checks.CONTRACT_NAME: (named_checks, named_checks.FIXTURE),
     unique_keys.CONTRACT_NAME: (unique_keys, unique_keys.FIXTURE),
     auto_rowid.CONTRACT_NAME: (auto_rowid, auto_rowid.FIXTURE),
     "sqlite-scalars-v2.json": (scalars, scalars.FIXTURE),
@@ -112,7 +114,8 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
     factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase, pattern: pattern.PatternDatabase,
                group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase,
                strict_tables: strict_tables.StrictDatabase, primary_keys: primary_keys.KeyDatabase,
-               auto_rowid: primary_keys.KeyDatabase, unique_keys: unique_keys.UniqueDatabase}.get(module, Database)
+               auto_rowid: primary_keys.KeyDatabase, unique_keys: unique_keys.UniqueDatabase,
+               named_checks: named_checks.NamedCheckDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

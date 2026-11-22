@@ -66,6 +66,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
@@ -472,6 +473,12 @@ function directCreateTable(array $input): CreateTable
         $input['strict'] ?? false,
         $input['withoutRowid'] ?? false,
         array_map(directTableKey(...), $keys),
+        array_map(
+            static fn (array $check): CheckConstraint => new CheckConstraint(
+                new Identifier($check['label']), operand($check['condition']), $check['column'],
+            ),
+            $input['checks'] ?? [],
+        ),
     );
 }
 
@@ -500,6 +507,11 @@ function observeCreateTable(CreateTable $value): array
         'withoutRowid' => $value->withoutRowid,
         'primaryKey' => observePrimaryKey($value->primaryKey),
         'keys' => array_map(observeTableKey(...), $value->keys),
+        'checks' => array_map(static fn (CheckConstraint $check): array => [
+            'label' => $check->label->value,
+            'column' => $check->column,
+            'condition' => observeOperand($check->condition),
+        ], $value->checks),
         'collations' => array_map(static fn (TableColumn $column): string => $column->collation->value, $value->columns),
         'sql' => $value->toString(),
     ];

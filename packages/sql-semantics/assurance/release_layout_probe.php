@@ -98,7 +98,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $queries['Aggregation\\GroupedSelect'] = "SELECT id, COUNT(*) AS entries FROM $table GROUP BY id";
     if ($platform === 'Sqlite') {
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
-        $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE, UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
+        $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE CONSTRAINT "ref id" CHECK(id), UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -148,6 +148,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $key->inline, $key->terms[0]->slot, $key->terms[0]->descending, $key->terms[0]->collation->value,
                 $key->conflict?->value,
             ], $result->keys);
+            $details['namedChecks'] = array_map(static function ($check) use ($namespace): array {
+                if ($check::class !== $namespace . 'Ir\\Schema\\Predicate\\CheckConstraint'
+                    || $check->condition::class !== $namespace . 'Ir\\ColumnReference' || $check->condition->source !== 0) {
+                    throw new RuntimeException('The installed table condition lost its constraint or reference role.');
+                }
+                return [$check->label->value, $check->column, $check->condition->slot];
+            }, $result->checks);
         }
         if ($role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

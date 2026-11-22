@@ -8,8 +8,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeyLayout;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeySql;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -37,6 +37,11 @@ final class CreateTable implements SemanticsIR
     public readonly array $keys;
 
     /**
+     * @var list<CheckConstraint>
+     */
+    public readonly array $checks;
+
+    /**
      * The primary key from the ordered declaration, when present.
      */
     public readonly ?PrimaryKey $primaryKey;
@@ -48,6 +53,7 @@ final class CreateTable implements SemanticsIR
      * @param bool $strict Whether the table applies SQLite strict typing
      * @param bool $withoutRowid Whether the table uses its primary key for storage
      * @param list<PrimaryKey|UniqueKey> $keys The checked key declaration order
+     * @param list<CheckConstraint> $checks The ordered row conditions
      */
     public function __construct(
         public readonly Identifier $schema,
@@ -57,6 +63,7 @@ final class CreateTable implements SemanticsIR
         public readonly bool $strict = false,
         public readonly bool $withoutRowid = false,
         array $keys = [],
+        array $checks = [],
     ) {
         Check::input($schema->value !== '', 'A CREATE TABLE needs a nonempty schema identifier.');
         Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A CREATE TABLE cannot use the reserved SQLite namespace.');
@@ -64,19 +71,28 @@ final class CreateTable implements SemanticsIR
         Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');
         [$orderedKeys, $primaryKey] = (new TableKeyLayout())->check($keys, $checked, $withoutRowid);
         $seen = [];
-        $defaults = [];
+        $conditions = [];
         foreach ($checked as $column) {
             Check::input(!$strict || $column->type !== DeclaredDatatypeName::Untyped, 'A STRICT table requires every column to declare a datatype.');
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'A CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
             if ($column->default !== null) {
-                $defaults[] = [$column->default, 0, 0];
+                $conditions[] = [$column->default, 0, 0];
             }
         }
-        (new ExpressionScope())->check([], $defaults);
+        $orderedChecks = Check::listOf($checks, CheckConstraint::class, 'A CREATE TABLE has an ordered list of checks.');
+        $lastOwner = -1;
+        foreach ($orderedChecks as $check) {
+            $owner = $check->column ?? count($checked);
+            Check::input(($check->column === null || isset($checked[$owner])) && $owner >= $lastOwner, 'A CHECK belongs to a visible owning column in declaration order or to the table.');
+            $lastOwner = $owner;
+            $conditions[] = [$check->condition, 0, 1];
+        }
+        (new ExpressionScope())->check([count($checked)], $conditions, false);
         $this->columns = $checked;
         $this->keys = $orderedKeys;
+        $this->checks = $orderedChecks;
         $this->primaryKey = $primaryKey;
     }
 
@@ -93,7 +109,7 @@ final class CreateTable implements SemanticsIR
      */
     public function toString(): string
     {
-        $columns = (new TableKeySql())->declarations($this->columns, $this->keys);
+        $columns = (new TableDeclarationSql())->declarations($this->columns, $this->keys, $this->checks);
         $options = $this->withoutRowid ? ($this->strict ? ' WITHOUT ROWID, STRICT' : ' WITHOUT ROWID')
             : ($this->strict ? ' STRICT' : '');
 
