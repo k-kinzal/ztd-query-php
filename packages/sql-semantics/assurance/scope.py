@@ -42,6 +42,8 @@ ROOTS = {
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\CreateTable",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Query\\CreateTableAs",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\RenameTable",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\Alter\\RenameColumn",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Transaction\\Transaction",
 }
 
@@ -256,7 +258,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal and query INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal and query INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE, DROP TABLE and checked table and column renames, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }
