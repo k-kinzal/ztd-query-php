@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-input-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under sqlite-insert-v1.json and sqlite-insert-query-v1.json.",
+  "scope": "Insert one row of defaults, or resolve the implicit writable target slots in declaration order for an admitted VALUES or SELECT input.",
+  "constructors": {
+    "defaults": {
+      "type": "Mutation/DefaultValues",
+      "role": "One INSERT input with one row supplied by the target column defaults",
+      "structure": "A final nullary value with no stored operands.",
+      "conditions": "The owning INSERT requires an empty supplied column list and a resolved ordinary base identity.",
+      "meaning": "For one new row, supply the target defaults for every writable column. The target applies generated values, affinity, constraints and triggers with the specified conflict policy.",
+      "externalInterpretation": "Resolve the same absolute table, defaults, constraints and triggers at execution.",
+      "sql": "Append DEFAULT VALUES to the INSERT head with no column list.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Mutation/Insert", "Mutation/InsertConflict", "TableSource", "Select", "Rows/ValuesQuery"],
+  "admission": [
+    "With an ordinary input and no written column list, analyze pairs its result positions with the declared writable columns in declaration order. Generated and implicit fields are excluded.",
+    "Direct construction supplies the resolved list for VALUES and SELECT. The existing width, role and local-source guards still apply.",
+    "DEFAULT VALUES supplies no list, fixed one-row behavior and the admitted inherited, ABORT or IGNORE policy."
+  ],
+  "observations": [
+    "Resolved absolute target and exact supplied column order",
+    "One default row with target affinity, generated values, trigger images and observed affected row count",
+    "Conflict behavior when a default duplicates an existing key, a separate target with a free default and complete rollback",
+    "Analysis of omitted target lists and explicit projections, parameters and source selection"
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "policies": ["inherit", "abort", "ignore"],
+    "inputs": ["defaults", "values", "select"],
+    "rowChoices": ["collision", "distinct", "typed nulls"],
+    "identity": "Cross schemas and policies with default input once and the three finite row choices for each explicit input role."
+  },
+  "exploration": {
+    "seeds": [7321, 13597, 27449],
+    "casesPerSeed": 16,
+    "timeoutSeconds": 140,
+    "allowedExclusions": [],
+    "structure": "Vary input role, target schema and conflict policy, bound parameters, written values and source filter."
+  },
+  "negative": ["An explicit target slot on a direct default input", "DEFAULT VALUES with a written column list", "An implicit write of the wrong width", "A generated column explicitly given a value"],
+  "faults": ["Change the absolute table of a default insert", "Replace the requested conflict behavior in the INSERT head", "Swap the implicit writable columns"],
+  "open": ["Other conflict policies, virtual tables, WITH, UPSERT, RETURNING, and more general INSERT query inputs."],
+  "trust": ["The external declared table and data fixture", "Independent assignment and conflict evaluator", "Pinned C observation of row and trigger effects"],
+  "sources": ["https://sqlite.org/lang_insert.html", "https://sqlite.org/lang_conflict.html"]
+}
