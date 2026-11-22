@@ -59,7 +59,8 @@ Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for th
 - Top-level INSERT writes one or more checked VALUES rows into one resolved table. The ordered targets are explicit writable signed integer columns. A supplied cell contains an integer or SQL NULL. Omitted columns use the same external defaults. The database applies constraints and triggers on execution.
 - Top-level UPDATE preserves the ordered assignment list and optional filter over one resolved base table. Assignment operands are signed integer literals, SQL NULL, or a read from that row. MySQL reads the current row as assignments proceed. PostgreSQL reads the old row and supports ONLY.
 - Plain BEGIN, COMMIT, ROLLBACK, SAVEPOINT, RELEASE and ROLLBACK TO describe a connection-local transition. A named command stores the decoded checkpoint identifier. MySQL explicitly completes with NO CHAIN and NO RELEASE. The analyzed MySQL statement uses the `completion_type=0` profile for omitted options.
-- Parameters, additional relation and predicate forms, grouping, expression ordering, other row bounds, further DML, DDL and advanced transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
+- DROP TABLE keeps the ordered, absolute identities of persistent table targets and the missing-table policy. PostgreSQL also retains CASCADE or RESTRICT. MySQL uses its release-specific effect and implicit commit rules.
+- Parameters, additional relation and predicate forms, grouping, expression ordering, other row bounds, further DML, further DDL and advanced transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
 
 ## Construction and evidence
 

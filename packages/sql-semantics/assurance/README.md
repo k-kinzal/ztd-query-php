@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [publication contract](publication-v7.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v8.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -70,7 +70,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v1.json) fix selected PHP guard sequences for row slots, joined sources, INSERT and UPDATE. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v2.json) fix selected PHP guard sequences for row slots, joined sources, INSERT, UPDATE, table removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -94,7 +94,7 @@ The SQLite evidence also writes `scope.json`. It compares the AST inventory with
 
 For a single declared release, pass `--engine mysql --release 8.4.7` or `--engine postgres --release 16.6` and connect the observer to that release. The runner checks the exact server version before comparing any case. The [manual release matrix](../../../.github/workflows/semantics-ir-release-matrix.yml) pins images for all nine MySQL releases and both PostgreSQL releases. Its artifacts are keyed by engine and release. Every matrix result remains specific to the native projection domain.
 
-The [native transport contract](server-projection-transport-v1.json) groups up to sixteen direct requests at a time. The database observer prepares and executes each SQL string separately. The controller checks the response cardinality, records each comparison, and replays the same request order. The join, result selection, INSERT, UPDATE and transaction runners also use this transport. Their ledgers record each dispatch, construction and individual observation in batch order. The existing timeout and case budgets apply.
+The [native transport contract](server-projection-transport-v1.json) groups up to sixteen direct requests at a time. The database observer prepares and executes each SQL string separately. The controller checks the response cardinality, records each comparison, and replays the same request order. The join, result selection, INSERT, UPDATE, transaction and table-removal runners also use this transport. Their ledgers record each dispatch, construction and individual observation in batch order. The existing timeout and case budgets apply.
 
 To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out server-matrix.json` with the paths to the per-release `index.json` files. The join checks the candidate checkout, the distribution, contract and tools. The join reproduces the required requests, recomputes the direct oracle and compares both recorded observations for analyzed statements. A missing or duplicate release, missing original observation or changed ledger fails the join. Collect server observations with the revised runner before replaying them.
 
@@ -133,6 +133,12 @@ Use `run_server_update.py` with the same options and pinned fixture settings as 
 The [native transaction contract](server-transaction-v1.json) covers plain BEGIN, COMMIT, ROLLBACK and the three savepoint roles. The experiment runs a generated program with a candidate transition between trusted setup and continuation steps. It observes transaction state and typed rows on the writer and an independent reader after every step. Programs include a second live checkpoint, repeated labels and BEGIN on an already active transaction.
 
 Run `run_server_transaction.py` with the same options and pinned fixture settings as the UPDATE runner. Run `combine_server_transaction_evidence.py` with all of the per-release `index.json` paths to replay the release set. The observer uses an InnoDB table for MySQL and fixes the session completion type to NO_CHAIN.
+
+## Native table removal
+
+The [native DROP TABLE contract](server-drop-table-v1.json) covers ordered persistent table targets, IF EXISTS and PostgreSQL dependency policy. The observer records retained typed rows, dependent view survival and changes to an open transaction. Its fixed fixtures distinguish partial deletion on MySQL 5.6 or 5.7 from DROP with a missing target on newer InnoDB releases. PostgreSQL exercises both dependency options and restoration on rollback.
+
+Run `run_server_drop_table.py` with the same native fixture options. Replay the pinned release set with `combine_server_drop_table_evidence.py` and the per-release `index.json` paths.
 
 ## SQLite joins, filters and ordering
 

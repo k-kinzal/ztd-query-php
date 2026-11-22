@@ -165,7 +165,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Transaction\\Transaction');
+    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -217,6 +217,16 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
+    $properties['Schema\\DropTable'] = [
+        'targets' => ['array'], 'ifExists' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+    ];
+    if ($dialect === 'postgres') {
+        $properties['Schema\\DropTable']['cascade'] = ['bool'];
+    }
+    $properties['Schema\\TableName'] = ['schema' => ['Identifier'], 'table' => ['Identifier']];
+    $methods['Schema\\DropTable'] = $methods['Select'];
+    $methods['Schema\\TableName'] = ['__construct', 'quoted'];
+    $internal[] = 'Schema\\DropTableLowering';
     $properties['Transaction\\Transaction'] = [
         'command' => ['Transaction\\TransactionCommand'], 'name' => ['?Identifier'],
         'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
@@ -299,6 +309,7 @@ try {
     $bind = '$this->binder->resolve($sql, $declarations)';
     $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
     $insert = $dialect === 'mysql' ? 'Dml\\Insert\\InsertRows' : 'Manipulation\\InsertRows';
+    $drop = $dialect === 'mysql' ? 'Alter\\DropTable' : 'Object\\Drop';
     $transactionNamespace = $platform . ($dialect === 'mysql' ? '\\Statement\\Server\\Transaction\\' : '\\Statement\\Utility\\Transaction\\');
     $transactionTypes = $dialect === 'mysql'
         ? ['Begin', 'Commit', 'Rollback', 'StartTransaction', 'Savepoint', 'ReleaseSavepoint', 'RollbackToSavepoint']
@@ -306,6 +317,7 @@ try {
     $transactions = implode(', ', array_map(static fn ($type) => '$statement instanceof \\' . $transactionNamespace . $type, $transactionTypes));
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
         . $transactions . ' => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($operation),'
@@ -347,9 +359,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v6.json';
+    $storagePath = __DIR__ . '/value-storage-v7.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'b7e1d7ce54ffc875cc99cd5f895097db6332803b3104033fe09b11cb50aa0e25',
+        hash_file('sha256', $storagePath) === '4144bf835b3f4093368a5be997c6c699d132185a7ac44cef08cf42a6c7c4c58f',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -392,6 +404,7 @@ try {
             requireShape($interfaces === [], "Unexpected collaborator interface in $short");
             $loweringRole = match ($short) {
                 'SelectLowering' => 'Select',
+                'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };

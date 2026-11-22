@@ -9,10 +9,12 @@ TOOL = Path(__file__).resolve().parent
 
 ROOTS = {
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
+    "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Insert",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Update",
     "SqlSemantics\\Platform\\MySql\\Ir\\Transaction\\Transaction",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Delete",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Schema\\DropTable",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Insert",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Update",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Transaction\\Transaction",
@@ -31,6 +33,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",
     "server-transaction-v1.json": "c0f7fb70d54ca3321d9104e0a239c62bdf24e48ce65febffb1906faae429dd09",
     "server-update-v1.json": "23adce1af48b017804aacbfc7de5b2df8d650a59b9645be44ca70c85319a5933",
     "server-insert-v1.json": "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79",
@@ -53,7 +56,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "af60a77bec1c74a88be03002fa8ce0c08a82c317ad181bbe49d85f61d7b8e7c8"
+PUBLICATION = "584f60fb384773a2ccc6b0ab08a545d9a83b33ba715c4f561a603e6999c8bf8d"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -63,7 +66,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v7.json").read_bytes()
+    publication = (TOOL / "publication-v8.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -156,7 +159,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections, binary joins, filters, row selection, single-target DELETE, literal INSERT, ordered UPDATE and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections, binary joins, filters, row selection, single-target DELETE, literal INSERT, ordered UPDATE, persistent table removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

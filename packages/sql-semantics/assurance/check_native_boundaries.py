@@ -23,6 +23,8 @@ def faults(engine):
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct", "isset($target->columns[$slot]),", "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
+        Fault("allow-repeated-drop-targets", "Schema/DropTable::__construct", "!isset($seen[$key]),", "true,"),
+        Fault("allow-invalid-savepoint-role", "Transaction/Transaction::__construct", "$named === ($name !== null),", "true,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
@@ -84,7 +86,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v1.json", "value_storage.php", "value-storage-v6.json", "value-primitives.json")},
+                       "native-boundaries-v2.json", "value_storage.php", "value-storage-v7.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

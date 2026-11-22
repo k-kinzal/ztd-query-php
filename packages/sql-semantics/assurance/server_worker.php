@@ -154,6 +154,25 @@ function constructPredicate(string $namespace, ?array $test): ?object
     };
 }
 
+function constructDropTable(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\DropTable';
+    $target = $namespace . 'Schema\\TableName';
+    $name = $namespace . 'Identifier';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $drop = $input['drop'];
+    $targets = [];
+    foreach ($drop['targets'] as [$schema, $table]) {
+        $targets[] = new $target(new $name($schema), new $name($table));
+    }
+    $version = $release::from($input['release']);
+
+    return $input['dialect'] === 'postgres'
+        ? new $statement($targets, $drop['ifExists'], $drop['cascade'], $version)
+        : new $statement($targets, $drop['ifExists'], $version);
+}
+
 function constructTransaction(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -267,6 +286,7 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['rows']) => constructInsert($platform, $input),
@@ -275,6 +295,16 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+    if ($value::class === $namespace . 'Schema\\DropTable') {
+        $observed = ['targets' => [], 'ifExists' => $value->ifExists];
+        foreach ($value->targets as $target) {
+            $observed['targets'][] = [$target->schema->value, $target->table->value];
+        }
+        if ($input['dialect'] === 'postgres') {
+            $observed['cascade'] = $value->cascade;
+        }
+        return ['status' => 'constructed', 'profile' => $value->profileId(), 'drop' => $observed, 'sql' => $value->toString()];
     }
     if ($value::class === $namespace . 'Transaction\\Transaction') {
         return [
