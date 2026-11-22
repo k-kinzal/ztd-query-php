@@ -1,0 +1,2221 @@
+[
+    {
+        "sources": {
+            "docs_analysis_0.php": "<?php\n\nnamespace App;\n\nuse PDO;\n\nenum Status: string\n{\n    case Active = 'active';\n    case Banned = 'banned';\n}\n\nfinal class UserRepository\n{\n    private const TABLE = 'users';\n\n    private string $order = 'name';\n\n    public function __construct(private PDO $pdo)\n    {\n    }\n\n    public function findByStatus(Status $status): array\n    {\n        $statement = $this->pdo->prepare('SELECT id FROM ' . self::TABLE . ' WHERE status = :status ORDER BY ' . $this->order);\n        $statement->execute([':status' => $status->value]);\n\n        return $statement->fetchAll();\n    }\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "794edf0b28bc",
+                    "kind": "select",
+                    "sql": "SELECT id FROM users WHERE status = :status ORDER BY name",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_analysis_0.php",
+                        "line": 25,
+                        "function": "App\\UserRepository::findByStatus",
+                        "sink": "pdo.prepare"
+                    },
+                    "through": [
+                        "App\\UserRepository::findByStatus"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": ":status",
+                            "position": 0,
+                            "name": "status",
+                            "value": {
+                                "type": "string",
+                                "values": [
+                                    "active",
+                                    "banned"
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_analysis_0.php": "<?php\n\nnamespace App;\n\nuse PDO;\n\nenum Status: string\n{\n    case Active = 'active';\n    case Banned = 'banned';\n}\n\nfinal class UserRepository\n{\n    private const TABLE = 'users';\n\n    private string $order = 'name';\n\n    public function __construct(private PDO $pdo)\n    {\n    }\n\n    public function findByStatus(Status $status): array\n    {\n        $statement = $this->pdo->prepare('SELECT id FROM ' . self::TABLE . ' WHERE status = :status ORDER BY ' . $this->order);\n        $statement->execute([':status' => $status->value]);\n\n        return $statement->fetchAll();\n    }\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "794edf0b28bc",
+                    "kind": "select",
+                    "sql": "SELECT id FROM users WHERE status = :status ORDER BY name",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_analysis_0.php",
+                        "line": 25,
+                        "function": "App\\UserRepository::findByStatus",
+                        "sink": "pdo.prepare"
+                    },
+                    "through": [
+                        "App\\UserRepository::findByStatus"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": ":status",
+                            "position": 0,
+                            "name": "status",
+                            "value": {
+                                "type": "string",
+                                "values": [
+                                    "active",
+                                    "banned"
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_analysis_1.php": "<?php\n$order = $asc ? 'ASC' : 'DESC';\n$pdo->query(\"SELECT id FROM posts ORDER BY created_at $order\");\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "c6f475a5bb05",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_analysis_1.php",
+                        "line": 3,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$pdo->query(\"SELECT id FROM posts ORDER BY created_at {$ord…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_analysis_1.php": "<?php\n$order = $asc ? 'ASC' : 'DESC';\n$pdo->query(\"SELECT id FROM posts ORDER BY created_at $order\");\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "c6f475a5bb05",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_analysis_1.php",
+                        "line": 3,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$pdo->query(\"SELECT id FROM posts ORDER BY created_at {$ord…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_0.php": "<?php\nuse SqlCatalog\\Facade\\Analyzer;\n\n$catalog = (new Analyzer())->analyzePaths(['src']);\n\nforeach ($catalog as $entry) {\n    echo $entry->site->display(), ' ', $entry->kind->value, ' ', $entry->sql(), \"\\n\";\n\n    foreach ($entry->placeholders as $placeholder) {\n        echo '  ', $placeholder->token, ' = ', $placeholder->value?->display() ?? '(unbound)', \"\\n\";\n    }\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_0.php": "<?php\nuse SqlCatalog\\Facade\\Analyzer;\n\n$catalog = (new Analyzer())->analyzePaths(['src']);\n\nforeach ($catalog as $entry) {\n    echo $entry->site->display(), ' ', $entry->kind->value, ' ', $entry->sql(), \"\\n\";\n\n    foreach ($entry->placeholders as $placeholder) {\n        echo '  ', $placeholder->token, ' = ', $placeholder->value?->display() ?? '(unbound)', \"\\n\";\n    }\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_1.php": "<?php\n$catalog = (new Analyzer())->analyzeSource([\n    'users.php' => '<?php function all(PDO $db) { return $db->query(\"SELECT id FROM users\"); }',\n]);\n$catalog->entries()[0]->sql(); // 'SELECT id FROM users'\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_1.php": "<?php\n$catalog = (new Analyzer())->analyzeSource([\n    'users.php' => '<?php function all(PDO $db) { return $db->query(\"SELECT id FROM users\"); }',\n]);\n$catalog->entries()[0]->sql(); // 'SELECT id FROM users'\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_2.php": "<?php\nuse SqlCatalog\\Core\\Analysis\\EvaluationBudget;\nuse SqlCatalog\\Facade\\AnalysisOptions;\n\n$options = new AnalysisOptions(\n    extensions: ['pdo', 'laravel'],\n    budget: new EvaluationBudget(maxSteps: 50000, maxDepth: 6, maxLoopPasses: 2),\n    dialect: 'mysql',\n);\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_2.php": "<?php\nuse SqlCatalog\\Core\\Analysis\\EvaluationBudget;\nuse SqlCatalog\\Facade\\AnalysisOptions;\n\n$options = new AnalysisOptions(\n    extensions: ['pdo', 'laravel'],\n    budget: new EvaluationBudget(maxSteps: 50000, maxDepth: 6, maxLoopPasses: 2),\n    dialect: 'mysql',\n);\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_3.php": "<?php\nuse SqlCatalog\\Core\\Catalog\\Severity;\nuse SqlCatalog\\Core\\Filter\\CatalogFilter;\n\n$risky = (new CatalogFilter(namespaces: ['App\\Repository'], minimumSeverity: Severity::High))->apply($catalog);\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_3.php": "<?php\nuse SqlCatalog\\Core\\Catalog\\Severity;\nuse SqlCatalog\\Core\\Filter\\CatalogFilter;\n\n$risky = (new CatalogFilter(namespaces: ['App\\Repository'], minimumSeverity: Severity::High))->apply($catalog);\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_4.php": "<?php\nuse SqlCatalog\\Facade\\Builtins;\n\n$artifacts = Builtins::reporters()->get('json')->render($catalog);\n$json = $artifacts->get('catalog.json');\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_4.php": "<?php\nuse SqlCatalog\\Facade\\Builtins;\n\n$artifacts = Builtins::reporters()->get('json')->render($catalog);\n$json = $artifacts->get('catalog.json');\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 2,
+                "resolved": 0,
+                "undetermined": 2,
+                "findings": 2
+            },
+            "statements": [
+                {
+                    "id": "1c2809eb145c",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_api_4.php",
+                        "line": 4,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`\\SqlCatalog\\Facade\\Builtins::reporters()->get('json')` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                },
+                {
+                    "id": "f0e1478afb00",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_api_4.php",
+                        "line": 5,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$artifacts->get('catalog.json')` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_5.php": "<?php\nuse SqlCatalog\\Core\\Analysis\\FunctionModel\\Registry;\nuse SqlCatalog\\Facade\\Analyzer;\nuse SqlCatalog\\Core\\Evaluation\\Domain;\n\n$models = Registry::withBuiltins();\n$models->register('App\\table_name', static fn (array $arguments): Domain => Domain::literal('users'));\n\n$catalog = (new Analyzer(functionModels: $models))->analyzePaths(['src']);\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_api_5.php": "<?php\nuse SqlCatalog\\Core\\Analysis\\FunctionModel\\Registry;\nuse SqlCatalog\\Facade\\Analyzer;\nuse SqlCatalog\\Core\\Evaluation\\Domain;\n\n$models = Registry::withBuiltins();\n$models->register('App\\table_name', static fn (array $arguments): Domain => Domain::literal('users'));\n\n$catalog = (new Analyzer(functionModels: $models))->analyzePaths(['src']);\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_configuration_0.php": "<?php\nnamespace App\\Catalog;\n\nuse SqlCatalog\\Core\\Evaluation\\Domain;\n\nfinal class TableNameModel\n{\n    /** @param list<Domain> $arguments */\n    public function __invoke(array $arguments): ?Domain\n    {\n        return Domain::literal('users');\n    }\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_configuration_0.php": "<?php\nnamespace App\\Catalog;\n\nuse SqlCatalog\\Core\\Evaluation\\Domain;\n\nfinal class TableNameModel\n{\n    /** @param list<Domain> $arguments */\n    public function __invoke(array $arguments): ?Domain\n    {\n        return Domain::literal('users');\n    }\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_configuration_1.php": "<?php\n$marks = implode(',', array_fill(0, count($ids), '?'));\n$db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "94281de5d8f5",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_configuration_1.php",
+                        "line": 3,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$db->prepare('SELECT * FROM users WHERE id IN (' . $marks .…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_configuration_1.php": "<?php\n$marks = implode(',', array_fill(0, count($ids), '?'));\n$db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "94281de5d8f5",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_configuration_1.php",
+                        "line": 3,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$db->prepare('SELECT * FROM users WHERE id IN (' . $marks .…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_0.php": "<?php\n/** @global PDO $db */\nglobal $db;\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_0.php": "<?php\n/** @global PDO $db */\nglobal $db;\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_1.php": "<?php\nuse SqlCatalog\\Facade\\AnalysisOptions;\nuse SqlCatalog\\Facade\\Analyzer;\nuse SqlCatalog\\Core\\Extension\\ExtensionInterface;\nuse SqlCatalog\\Facade\\Builtins;\nuse SqlCatalog\\Core\\Extension\\SinkCallKind;\nuse SqlCatalog\\Core\\Extension\\SinkRole;\nuse SqlCatalog\\Core\\Extension\\SinkSpec;\n\nfinal class AppDatabaseExtension implements ExtensionInterface\n{\n    public function name(): string { return 'app'; }\n    public function description(): string { return 'App\\Database'; }\n\n    public function sinks(): array\n    {\n        return [\n            new SinkSpec('app.select', SinkCallKind::Method, 'App\\Database', 'select', SinkRole::Query, sqlParameter: 0, valuesParameter: 1),\n        ];\n    }\n\n    public function globals(): array\n    {\n        return ['db' => 'App\\Database'];\n    }\n}\n\n$registry = Builtins::extensions();\n$registry->register(new AppDatabaseExtension());\n$catalog = (new Analyzer($registry))->analyzePaths(['src'], new AnalysisOptions(['pdo', 'app']));\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_1.php": "<?php\nuse SqlCatalog\\Facade\\AnalysisOptions;\nuse SqlCatalog\\Facade\\Analyzer;\nuse SqlCatalog\\Core\\Extension\\ExtensionInterface;\nuse SqlCatalog\\Facade\\Builtins;\nuse SqlCatalog\\Core\\Extension\\SinkCallKind;\nuse SqlCatalog\\Core\\Extension\\SinkRole;\nuse SqlCatalog\\Core\\Extension\\SinkSpec;\n\nfinal class AppDatabaseExtension implements ExtensionInterface\n{\n    public function name(): string { return 'app'; }\n    public function description(): string { return 'App\\Database'; }\n\n    public function sinks(): array\n    {\n        return [\n            new SinkSpec('app.select', SinkCallKind::Method, 'App\\Database', 'select', SinkRole::Query, sqlParameter: 0, valuesParameter: 1),\n        ];\n    }\n\n    public function globals(): array\n    {\n        return ['db' => 'App\\Database'];\n    }\n}\n\n$registry = Builtins::extensions();\n$registry->register(new AppDatabaseExtension());\n$catalog = (new Analyzer($registry))->analyzePaths(['src'], new AnalysisOptions(['pdo', 'app']));\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_2.php": "<?php\nuse PhpParser\\Node\\Expr\\FuncCall;\nuse SqlCatalog\\Core\\Evaluation\\Domain;\nuse SqlCatalog\\Core\\Extension\\Model\\CallContext;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelContext;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelProviderInterface;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelSet;\n\nfinal class ApplicationSql implements ModelProviderInterface\n{\n    public function name(): string { return 'application'; }\n    public function description(): string { return 'Application SQL helpers'; }\n    public function sinks(): array { return []; }\n    public function globals(): array { return []; }\n\n    public function models(ModelContext $context): ModelSet\n    {\n        return new ModelSet(calls: [\n            static fn (CallContext $call): ?Domain => $call->node instanceof FuncCall && $call->name === 'today_sql'\n                ? Domain::literal('CURRENT_DATE')\n                : null,\n        ]);\n    }\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_2.php": "<?php\nuse PhpParser\\Node\\Expr\\FuncCall;\nuse SqlCatalog\\Core\\Evaluation\\Domain;\nuse SqlCatalog\\Core\\Extension\\Model\\CallContext;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelContext;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelProviderInterface;\nuse SqlCatalog\\Core\\Extension\\Model\\ModelSet;\n\nfinal class ApplicationSql implements ModelProviderInterface\n{\n    public function name(): string { return 'application'; }\n    public function description(): string { return 'Application SQL helpers'; }\n    public function sinks(): array { return []; }\n    public function globals(): array { return []; }\n\n    public function models(ModelContext $context): ModelSet\n    {\n        return new ModelSet(calls: [\n            static fn (CallContext $call): ?Domain => $call->node instanceof FuncCall && $call->name === 'today_sql'\n                ? Domain::literal('CURRENT_DATE')\n                : null,\n        ]);\n    }\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_doctrine_0.php": "<?php\nuse Doctrine\\DBAL\\Connection;\n\nfunction findUser(Connection $connection, int $id): array\n{\n    return $connection->fetchAllAssociative('SELECT * FROM users WHERE id = :id', ['id' => $id]);\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_doctrine_0.php": "<?php\nuse Doctrine\\DBAL\\Connection;\n\nfunction findUser(Connection $connection, int $id): array\n{\n    return $connection->fetchAllAssociative('SELECT * FROM users WHERE id = :id', ['id' => $id]);\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "0cf108f35a8d",
+                    "kind": "select",
+                    "sql": "SELECT * FROM users WHERE id = :id",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_doctrine_0.php",
+                        "line": 6,
+                        "function": "findUser",
+                        "sink": "doctrine.fetchAllAssociative"
+                    },
+                    "through": [
+                        "findUser"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": ":id",
+                            "position": 0,
+                            "name": "id",
+                            "value": {
+                                "type": "int",
+                                "values": [],
+                                "exhaustive": false,
+                                "origins": [
+                                    "parameter"
+                                ]
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_0.php": "<?php\nuse Illuminate\\Support\\Facades\\DB;\n\n$query = DB::table('users');\n$alias = $query;\n$alias->where('active', 1);\n$query->orderBy('id')->get(['id', 'name']);\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_0.php": "<?php\nuse Illuminate\\Support\\Facades\\DB;\n\n$query = DB::table('users');\n$alias = $query;\n$alias->where('active', 1);\n$query->orderBy('id')->get(['id', 'name']);\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 2
+            },
+            "statements": [
+                {
+                    "id": "728749c133ad",
+                    "kind": "select",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "incomplete-model",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_laravel_0.php",
+                        "line": 7,
+                        "function": "{main}",
+                        "sink": "laravel.query.get"
+                    },
+                    "through": [
+                        "{main}"
+                    ],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "unresolved-sql",
+                            "severity": "low",
+                            "message": "The statement text did not resolve far enough to read what it does."
+                        },
+                        {
+                            "rule": "dynamic-sql",
+                            "severity": "medium",
+                            "message": "1 value(s) are spliced into the statement text rather than bound."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_0.php": "<?php\nuse Illuminate\\Support\\Facades\\DB;\n\n$query = DB::table('users');\n$alias = $query;\n$alias->where('active', 1);\n$query->orderBy('id')->get(['id', 'name']);\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "mysql",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "d1973fea78db",
+                    "kind": "select",
+                    "sql": "select `id`, `name` from `users` where `active` = ? order by `id` asc",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_laravel_0.php",
+                        "line": 7,
+                        "function": "{main}",
+                        "sink": "laravel.query.get"
+                    },
+                    "through": [
+                        "{main}"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": "?",
+                            "position": 0,
+                            "name": null,
+                            "value": {
+                                "type": "int",
+                                "values": [
+                                    1
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_0.php": "<?php\nuse Illuminate\\Support\\Facades\\DB;\n\n$query = DB::table('users');\n$alias = $query;\n$alias->where('active', 1);\n$query->orderBy('id')->get(['id', 'name']);\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "pgsql",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "4cf1acceeefc",
+                    "kind": "select",
+                    "sql": "select \"id\", \"name\" from \"users\" where \"active\" = ? order by \"id\" asc",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_laravel_0.php",
+                        "line": 7,
+                        "function": "{main}",
+                        "sink": "laravel.query.get"
+                    },
+                    "through": [
+                        "{main}"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": "?",
+                            "position": 0,
+                            "name": null,
+                            "value": {
+                                "type": "int",
+                                "values": [
+                                    1
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_0.php": "<?php\nuse Illuminate\\Support\\Facades\\DB;\n\n$query = DB::table('users');\n$alias = $query;\n$alias->where('active', 1);\n$query->orderBy('id')->get(['id', 'name']);\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "sqlite",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "4cf1acceeefc",
+                    "kind": "select",
+                    "sql": "select \"id\", \"name\" from \"users\" where \"active\" = ? order by \"id\" asc",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_laravel_0.php",
+                        "line": 7,
+                        "function": "{main}",
+                        "sink": "laravel.query.get"
+                    },
+                    "through": [
+                        "{main}"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": "?",
+                            "position": 0,
+                            "name": null,
+                            "value": {
+                                "type": "int",
+                                "values": [
+                                    1
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_1.php": "<?php\nfunction find(Request $request, array $ids)\n{\n    return DB::table('users')\n        ->where('group_id', $request->input('group_id'))\n        ->whereIn('id', $ids)\n        ->limit($request->integer('limit'))\n        ->get();\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 0,
+                "resolved": 0,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_1.php": "<?php\nfunction find(Request $request, array $ids)\n{\n    return DB::table('users')\n        ->where('group_id', $request->input('group_id'))\n        ->whereIn('id', $ids)\n        ->limit($request->integer('limit'))\n        ->get();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "b9796d49da86",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_laravel_1.php",
+                        "line": 4,
+                        "function": "find",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`\\DB::table('users')->where('group_id', $request->input('gro…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_1.php": "<?php\nfunction find(Request $request, array $ids)\n{\n    return DB::table('users')\n        ->where('group_id', $request->input('group_id'))\n        ->whereIn('id', $ids)\n        ->limit($request->integer('limit'))\n        ->get();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "mysql",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "b9796d49da86",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_laravel_1.php",
+                        "line": 4,
+                        "function": "find",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`\\DB::table('users')->where('group_id', $request->input('gro…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_1.php": "<?php\nfunction find(Request $request, array $ids)\n{\n    return DB::table('users')\n        ->where('group_id', $request->input('group_id'))\n        ->whereIn('id', $ids)\n        ->limit($request->integer('limit'))\n        ->get();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "pgsql",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "b9796d49da86",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_laravel_1.php",
+                        "line": 4,
+                        "function": "find",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`\\DB::table('users')->where('group_id', $request->input('gro…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_laravel_1.php": "<?php\nfunction find(Request $request, array $ids)\n{\n    return DB::table('users')\n        ->where('group_id', $request->input('group_id'))\n        ->whereIn('id', $ids)\n        ->limit($request->integer('limit'))\n        ->get();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "laravel"
+            ],
+            "dialect": "sqlite",
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "b9796d49da86",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_laravel_1.php",
+                        "line": 4,
+                        "function": "find",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`\\DB::table('users')->where('group_id', $request->input('gro…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_mysqli_0.php": "<?php\nfunction findUser(mysqli $db, int $id): array\n{\n    $statement = $db->prepare('SELECT * FROM users WHERE id = ?');\n    $statement->bind_param('i', $id);\n    $statement->execute();\n\n    return $statement->get_result()->fetch_all();\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "e4d89af4ad5d",
+                    "kind": "select",
+                    "sql": "SELECT * FROM users WHERE id = ?",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_mysqli_0.php",
+                        "line": 4,
+                        "function": "findUser",
+                        "sink": "mysqli.prepare"
+                    },
+                    "through": [
+                        "findUser"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": "?",
+                            "position": 0,
+                            "name": null,
+                            "value": {
+                                "type": "int",
+                                "values": [],
+                                "exhaustive": false,
+                                "origins": [
+                                    "parameter"
+                                ]
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_mysqli_0.php": "<?php\nfunction findUser(mysqli $db, int $id): array\n{\n    $statement = $db->prepare('SELECT * FROM users WHERE id = ?');\n    $statement->bind_param('i', $id);\n    $statement->execute();\n\n    return $statement->get_result()->fetch_all();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "e4d89af4ad5d",
+                    "kind": "select",
+                    "sql": "SELECT * FROM users WHERE id = ?",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_mysqli_0.php",
+                        "line": 4,
+                        "function": "findUser",
+                        "sink": "mysqli.prepare"
+                    },
+                    "through": [
+                        "findUser"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": "?",
+                            "position": 0,
+                            "name": null,
+                            "value": {
+                                "type": "int",
+                                "values": [],
+                                "exhaustive": false,
+                                "origins": [
+                                    "parameter"
+                                ]
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_pdo_0.php": "<?php\nfunction findUser(PDO $db, int $id): array\n{\n    $statement = $db->prepare('SELECT * FROM users WHERE id = :id AND role = :role');\n    $statement->bindValue(':id', $id, PDO::PARAM_INT);\n    $statement->bindValue('role', 'admin');\n    $statement->execute();\n\n    return $statement->fetchAll();\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "a8dbf57d69dc",
+                    "kind": "select",
+                    "sql": "SELECT * FROM users WHERE id = :id AND role = :role",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_pdo_0.php",
+                        "line": 4,
+                        "function": "findUser",
+                        "sink": "pdo.prepare"
+                    },
+                    "through": [
+                        "findUser"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": ":id",
+                            "position": 0,
+                            "name": "id",
+                            "value": {
+                                "type": "int",
+                                "values": [],
+                                "exhaustive": false,
+                                "origins": [
+                                    "parameter"
+                                ]
+                            }
+                        },
+                        {
+                            "token": ":role",
+                            "position": 1,
+                            "name": "role",
+                            "value": {
+                                "type": "string",
+                                "values": [
+                                    "admin"
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_pdo_0.php": "<?php\nfunction findUser(PDO $db, int $id): array\n{\n    $statement = $db->prepare('SELECT * FROM users WHERE id = :id AND role = :role');\n    $statement->bindValue(':id', $id, PDO::PARAM_INT);\n    $statement->bindValue('role', 'admin');\n    $statement->execute();\n\n    return $statement->fetchAll();\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 1,
+                "undetermined": 0,
+                "findings": 0
+            },
+            "statements": [
+                {
+                    "id": "a8dbf57d69dc",
+                    "kind": "select",
+                    "sql": "SELECT * FROM users WHERE id = :id AND role = :role",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [
+                        "users"
+                    ],
+                    "site": {
+                        "file": "docs_extensions_pdo_0.php",
+                        "line": 4,
+                        "function": "findUser",
+                        "sink": "pdo.prepare"
+                    },
+                    "through": [
+                        "findUser"
+                    ],
+                    "placeholders": [
+                        {
+                            "token": ":id",
+                            "position": 0,
+                            "name": "id",
+                            "value": {
+                                "type": "int",
+                                "values": [],
+                                "exhaustive": false,
+                                "origins": [
+                                    "parameter"
+                                ]
+                            }
+                        },
+                        {
+                            "token": ":role",
+                            "position": 1,
+                            "name": "role",
+                            "value": {
+                                "type": "string",
+                                "values": [
+                                    "admin"
+                                ],
+                                "exhaustive": true,
+                                "origins": []
+                            }
+                        }
+                    ],
+                    "findings": []
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_wordpress_0.php": "<?php\nfunction my_plugin_find_post(int $id)\n{\n    global $wpdb;\n\n    return $wpdb->get_row($wpdb->prepare(\"SELECT * FROM {$wpdb->posts} WHERE ID = %d\", $id));\n}\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "d4e0ed2fc556",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_0.php",
+                        "line": 6,
+                        "function": "my_plugin_find_post",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$wpdb->prepare(\"SELECT * FROM {$wpdb->posts} WHERE ID = %d\"…` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_wordpress_0.php": "<?php\nfunction my_plugin_find_post(int $id)\n{\n    global $wpdb;\n\n    return $wpdb->get_row($wpdb->prepare(\"SELECT * FROM {$wpdb->posts} WHERE ID = %d\", $id));\n}\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "d4abbddb2e48",
+                    "kind": "select",
+                    "sql": "SELECT * FROM {$} WHERE ID = %d",
+                    "exact": false,
+                    "resolution": "incomplete-model",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_0.php",
+                        "line": 6,
+                        "function": "my_plugin_find_post",
+                        "sink": "wordpress.get_row"
+                    },
+                    "through": [
+                        "my_plugin_find_post"
+                    ],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "dynamic-sql",
+                            "severity": "medium",
+                            "message": "1 value(s) are spliced into the statement text rather than bound."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_wordpress_1.php": "<?php\nglobal $wpdb;\ndo_action('before_cleanup');\n$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\"); // reported as unmatched\n"
+        },
+        "options": {
+            "extensions": null,
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "de943c422885",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_1.php",
+                        "line": 4,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\")` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_wordpress_1.php": "<?php\nglobal $wpdb;\ndo_action('before_cleanup');\n$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\"); // reported as unmatched\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "doctrine",
+                "laravel",
+                "wordpress"
+            ],
+            "dialect": null,
+            "budget": null
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 1,
+                "resolved": 0,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "de943c422885",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_1.php",
+                        "line": 4,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\")` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    },
+    {
+        "sources": {
+            "docs_extensions_wordpress_1.php": "<?php\nglobal $wpdb;\ndo_action('before_cleanup');\n$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\"); // reported as unmatched\n"
+        },
+        "options": {
+            "extensions": [
+                "pdo",
+                "mysqli",
+                "probe"
+            ],
+            "dialect": null,
+            "budget": null,
+            "probe": [
+                [
+                    "probe.do_action",
+                    "function",
+                    null,
+                    "do_action"
+                ]
+            ]
+        },
+        "report": {
+            "$schema": "catalog-schema.json",
+            "version": 2,
+            "analysis": {
+                "conditions": "not-evaluated",
+                "reachability": "not-assessed"
+            },
+            "summary": {
+                "statements": 2,
+                "resolved": 1,
+                "undetermined": 1,
+                "findings": 1
+            },
+            "statements": [
+                {
+                    "id": "a4f0c5eab0cf",
+                    "kind": "unknown",
+                    "sql": "before_cleanup",
+                    "exact": true,
+                    "resolution": "resolved",
+                    "searchClosed": true,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_1.php",
+                        "line": 3,
+                        "function": "{main}",
+                        "sink": "probe.do_action"
+                    },
+                    "through": [
+                        "{main}"
+                    ],
+                    "placeholders": [],
+                    "findings": []
+                },
+                {
+                    "id": "de943c422885",
+                    "kind": "unknown",
+                    "sql": "{$}",
+                    "exact": false,
+                    "resolution": "not-analyzed",
+                    "searchClosed": false,
+                    "correlated": true,
+                    "tables": [],
+                    "site": {
+                        "file": "docs_extensions_wordpress_1.php",
+                        "line": 4,
+                        "function": "{main}",
+                        "sink": "unmatched"
+                    },
+                    "through": [],
+                    "placeholders": [],
+                    "findings": [
+                        {
+                            "rule": "call-not-analyzed",
+                            "severity": "low",
+                            "message": "`$wpdb->query(\"DELETE FROM {$wpdb->prefix}logs\")` is written the way a database call is written, but what it is called on could not be identified."
+                        }
+                    ]
+                }
+            ],
+            "problems": []
+        }
+    }
+]
