@@ -1,0 +1,35 @@
+{
+  "revision": "SemanticsIR/server-projection-admission-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "existingRoles": ["Select", "Aggregation/GroupedSelect"],
+  "constructors": {},
+  "base": "server-projection-v1.json",
+  "grouped": "server-grouped-v3.json",
+  "finding": {
+    "candidate": "e98a7c6e2f9c087f44865c7e4afb1cbe30392a1f",
+    "case": "negative/8",
+    "observed": "The previously unsupported named grouping now publishes the checked GroupedSelect."
+  },
+  "profiles": "Use both native profiles and all releases in server-projection-v1.json.",
+  "scope": "Maintain a negative check for an analyzed GROUP BY outside the checked domain, and compare the newly admitted named grouping as a required positive case.",
+  "admit": {
+    "sql": "SELECT id FROM {table} GROUP BY id",
+    "operation": "Aggregation/GroupedSelect",
+    "name": "id",
+    "layout": "One signed key slot at ordinal zero, both as grouping input and as the only output."
+  },
+  "reject": {
+    "sql": "SELECT count(*) AS n FROM {table} GROUP BY id+1",
+    "exception": "InvalidConstruction",
+    "message": "The column must resolve to the projection source.",
+    "cause": "The computed key has no role in the named grouping key layout."
+  },
+  "observations": [
+    "For the named key, compare the original and emitted SQL with the independent grouped oracle, including label, native type, NULL, duplicate removal and release-specific implicit order.",
+    "The computed key causes the documented construction error. It yields no complete IR."
+  ],
+  "guard": "Keep the original finite IDs, seeds, execution budgets, observable values and supported SQL. Protect this revision with a digest and replay both cases.",
+  "allowedExclusions": [],
+  "trust": ["The unchanged native observer and grouped oracle, pinned profiles and fixed base contracts."]
+}
