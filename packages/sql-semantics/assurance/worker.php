@@ -12,6 +12,8 @@ use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
@@ -69,7 +71,7 @@ spl_autoload_register(static function (string $class) use ($root, $overlay): voi
     }
 });
 
-function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
+function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
 {
     return match ($input[0]) {
         'case' => new CaseExpression(
@@ -77,6 +79,7 @@ function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|ColumnRefe
             array_map(static fn (array $branch): CaseBranch => new CaseBranch(operand($branch[0]), operand($branch[1])), $input[2]),
             $input[3] === null ? null : operand($input[3]),
         ),
+        'cast' => new CastExpression(CastTarget::from($input[1]), operand($input[2])),
         'integer' => new IntegerLiteral($input[1]),
         'text' => new TextLiteral($input[1]),
         'blob' => new BlobLiteral($input[1]),
@@ -91,7 +94,7 @@ function operand(array $input): Arithmetic|BlobLiteral|CaseExpression|ColumnRefe
     };
 }
 
-function observeOperand(Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value): array
+function observeOperand(Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $value): array
 {
     return match (true) {
         $value instanceof CaseExpression => [
@@ -100,6 +103,7 @@ function observeOperand(Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Co
             array_map(static fn (CaseBranch $branch): array => [observeOperand($branch->when), observeOperand($branch->then)], $value->branches),
             $value->otherwise === null ? null : observeOperand($value->otherwise),
         ],
+        $value instanceof CastExpression => ['cast', $value->target->value, observeOperand($value->operand)],
         $value instanceof IntegerLiteral => ['integer', $value->decimal],
         $value instanceof TextLiteral => ['text', $value->value],
         $value instanceof BlobLiteral => ['blob', $value->hex],

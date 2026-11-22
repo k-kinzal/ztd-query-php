@@ -163,7 +163,7 @@ function checkScalarCopy(array $body, string $prefix, string $checkClass, Parser
 $closed = [];
 $pending = [];
 foreach ($values as $value) {
-    \CHECK::input($value instanceof \IR\Arithmetic || $value instanceof \IR\Literal\BlobLiteral || $value instanceof \IR\Expression\CaseExpression || $value instanceof \IR\Predicate\Comparison
+    \CHECK::input($value instanceof \IR\Arithmetic || $value instanceof \IR\Literal\BlobLiteral || $value instanceof \IR\Expression\CaseExpression || $value instanceof \IR\Expression\CastExpression || $value instanceof \IR\Predicate\Comparison
         || $value instanceof \IR\Literal\HexIntegerLiteral || $value instanceof \IR\IntegerLiteral || $value instanceof \IR\Predicate\Logical
         || $value instanceof \IR\NullLiteral || $value instanceof \IR\Parameter || $value instanceof \IR\Literal\RealLiteral || $value instanceof \IR\Literal\TextLiteral, 'A VALUES row needs a scalar operand independent of tables.');
     $closed[] = $value;

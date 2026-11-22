@@ -73,6 +73,8 @@ def children(expression):
             yield from children(when)
             yield from children(result)
         yield from children(expression[3])
+    elif expression[0] == "cast":
+        yield from children(expression[2])
 
 
 def parameter_names(item):
@@ -132,7 +134,7 @@ def order_value(value):
     if type(value) in (int, float):
         return (1, value)
     if type(value) is str:
-        return (2, value.encode())
+        return (2, value.encode(errors="surrogateescape"))
     assert type(value) is bytes
     return (3, value)
 

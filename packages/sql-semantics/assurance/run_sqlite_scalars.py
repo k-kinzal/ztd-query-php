@@ -9,6 +9,7 @@ from collections import Counter
 from cases import MAX, MIN, numeric
 from run import Ledger, Worker, compare, require, write_json
 from run_sqlite_values import names
+from sqlite_cast_semantics import comparison_values, convert
 from sqlite_domain import RenderFault, check_render_faults, complete_observations, run_domain
 from sqlite_engine import typed
 from sqlite_relational_cases import case as select_case, children, order_value, truth
@@ -48,6 +49,8 @@ def evaluate(term, bindings, row=(), case_equal=None):
     if kind == "column":
         return row[arguments[0]]
 
+    if kind == "cast":
+        return convert(arguments[0], evaluate(arguments[1], bindings, row, case_equal))
     if kind == "case":
         base, branches, fallback = arguments
         value = None if base is None else evaluate(base, bindings, row, case_equal)
@@ -58,7 +61,8 @@ def evaluate(term, bindings, row=(), case_equal=None):
                 if base is None:
                     matches = truth(decision) is True
                 elif case_equal is None:
-                    matches = order_value(value) == order_value(decision)
+                    a, b = comparison_values(base, when, value, decision)
+                    matches = order_value(a) == order_value(b)
                 else:
                     matches = case_equal(base, when, value, decision)
                 if matches:
@@ -78,6 +82,7 @@ def evaluate(term, bindings, row=(), case_equal=None):
     if kind == "comparison":
         if operator not in ("IS", "IS NOT") and (a is None or b is None):
             return None
+        a, b = comparison_values(left, right, a, b)
         p, q = order_value(a), order_value(b)
         return int({"=": p == q, "IS": p == q, "IS NOT": p != q, "<>": p != q,
                     "<": p < q, "<=": p <= q, ">": p > q, ">=": p >= q}[operator])

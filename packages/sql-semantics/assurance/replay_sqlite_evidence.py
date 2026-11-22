@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import run
 import run_sqlite_case as choice
+import run_sqlite_cast as cast
 import run_sqlite_compound as compound
 import run_sqlite_create_table as create
 import run_sqlite_delete as delete
@@ -32,6 +33,7 @@ from sqlite_engine import Database
 
 DOMAINS = {
     choice.CONTRACT_NAME: (choice, choice.FIXTURE),
+    cast.CONTRACT_NAME: (cast, cast.FIXTURE),
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
     returning.CONTRACT_NAME: (returning, returning.SCHEMA),
     "sqlite-relational-v1.json": (relational, relational.SCHEMA),
@@ -70,6 +72,8 @@ def replay(directory, contract_name, index, library):
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]
                 and database.digest == index["engine"]["libraryDigest"], "evidence-replay-engine-mismatch", contract_name)
         require(index["engine"].get("observerPolicy") == database.policy_digest, "evidence-observer-policy-mismatch", contract_name)
+        require(index["engine"].get("textObservation") == database.text_observation_digest,
+                "evidence-observer-text-mismatch", contract_name)
         if fixture:
             database.execute(fixture)
         with tempfile.TemporaryDirectory(prefix="semantics-ir-replay-") as temporary:

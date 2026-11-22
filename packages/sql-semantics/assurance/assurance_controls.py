@@ -11,7 +11,7 @@ from pathlib import Path
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
-from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, digest, manifest, require, shape, write_json
+from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
 
@@ -284,10 +284,28 @@ def observer_controls(args):
             require(database.observe(select, {}) == healthy, "sqlite-observer-fixture-changed", case)
         require({record["case"] for record in result} == observer_policy()["controls"].keys(),
                 "sqlite-observer-control-set-mismatch")
-        write_json(directory / "index.json", {"policy": OBSERVER_CONTRACT, "engine": database.version, "controls": result})
+        result.extend(text_controls(database))
+        write_json(directory / "index.json", {"policy": OBSERVER_CONTRACT, "engine": database.version,
+                                              "textObservation": database.text_observation_digest, "controls": result})
         return result
     finally:
         database.close(database.db)
+
+
+def text_controls(db):
+    query = "SELECT CAST(X'80FF00' AS TEXT), X'80FF00', CAST(X'410042' AS TEXT)"
+    expected = [[["text-bytes", "80ff00"], ["blob", "80ff00"], ["text", "A" + chr(0) + "B"]]]
+    observed = db.observe(query, {})["rows"]
+    compare(expected, observed)
+    signals = {}
+    for name, changed in (
+        ("invalid-text-converted-to-blob", [[expected[0][1], *expected[0][1:]]]),
+        ("embedded-zero-removed", [[*expected[0][:2], ["text", "AB"]]]),
+    ):
+        failure = observe_rejection(lambda: compare(expected, changed), "meaning-mismatch")
+        signals[name] = failure.signal
+    return [{"case": "lossless-native-text", "control": "passed", "sql": query, "expected": expected,
+             "observed": observed, "mismatches": signals}]
 
 
 def main():

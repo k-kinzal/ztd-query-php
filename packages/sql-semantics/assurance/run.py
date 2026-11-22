@@ -483,7 +483,7 @@ def main():
         "grammarScope": {"record": grammar_path.name, "sha256": digest(grammar_path),
                          "totalAlternatives": grammar_scope["totalAlternatives"], "emptyAlternatives": grammar_scope["emptyAlternatives"]},
         "engine": {
-            "observerPolicy": OBSERVER_CONTRACT,
+            "observerPolicy": OBSERVER_CONTRACT, "textObservation": db.text_observation_digest,
             "version": db.version, "source": db.source, "libraryDigest": db.digest,
             "compileOptions": db.metadata("compile_options"),
         },

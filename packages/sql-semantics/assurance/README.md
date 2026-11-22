@@ -424,6 +424,12 @@ The [CASE record](sqlite-case-v1.json) links the ordered branches, optional base
 
 Run `run_sqlite_case.py` with the SQLite fixture options. The SQLite collector requires and replays the CASE receipt.
 
+## SQLite scalar casts
+
+The [cast record](sqlite-cast-v1.json) fixes the conversion role from the declared type affinity. Its native comparisons preserve the stored result type, exact numeric and byte values, NULL, names and parameter slots. The [SQLite TEXT observation record](sqlite-text-observation-v1.json) retains bytes that fall outside UTF-8 and distinguishes them from BLOBs with the same content.
+
+Run `run_sqlite_cast.py` using the SQLite fixture options. Its observed identities, typed comparisons and renderer faults are required by the collector.
+
 ## SQLite compound queries
 
 Run the [compound contract](sqlite-compound-v1.json) with the pinned SQLite library:

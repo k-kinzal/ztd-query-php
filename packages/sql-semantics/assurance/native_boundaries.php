@@ -32,8 +32,8 @@ function nativeBoundaryContract(string $dialect): array
         $additional = json_decode(file_get_contents($insert), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite query INSERT cannot replace a fixed boundary');
         $rules += $additional;
-        $choice = __DIR__ . '/sqlite-case-boundaries-v1.json';
-        requireShape(hash_file('sha256', $choice) === 'f632bc623433c75ed8195410d97bfe3a63886cb87cf0b2300f396ee702ded46a', 'SQLite CASE boundary contract differs from the recorded revision');
+        $choice = __DIR__ . '/sqlite-scalar-boundaries-v2.json';
+        requireShape(hash_file('sha256', $choice) === '495f6ce919145e880379f6a2d506f26f4bfaa7e0ef31acd0ebf3149a9eb384be', 'SQLite CASE boundary contract differs from the recorded revision');
         $additional = json_decode(file_get_contents($choice), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite CASE cannot replace a fixed boundary');
         $rules += $additional;
@@ -81,7 +81,7 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     if ($dialect === 'sqlite') {
-        foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Literal\\BlobLiteral',
+        foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
             'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {

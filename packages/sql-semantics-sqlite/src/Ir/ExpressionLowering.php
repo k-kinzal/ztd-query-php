@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\Sqlite\Ir;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\BinaryOperatorLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\NumericLiteralLowering;
@@ -16,11 +18,11 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
-use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression as ParsedCase;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Cast as ParsedCast;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
@@ -32,8 +34,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as Par
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral as ParsedText;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
+use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
 /**
  * Resolves the closed scalar expressions used by queries and writes.
@@ -47,7 +49,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -64,21 +66,13 @@ final class ExpressionLowering
                 $operator instanceof LogicalOperator => new Logical($operator, $left, $right),
             };
         }
-        if ($expression instanceof Unary && in_array($expression->operator, [UnaryOperator::Plus, UnaryOperator::Minus], true)) {
-            $operand = $expression->operand;
-            while ($operand instanceof Grouped) {
-                $operand = $operand->operand;
-            }
-            Check::input(
-                $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal,
-                'A complete signed literal requires a single numeric literal operand.'
-            );
-
-            return (new NumericLiteralLowering())->lower($operand, $expression->operator === UnaryOperator::Minus);
+        if ($expression instanceof Unary) {
+            return (new NumericLiteralLowering())->signed($expression);
         }
 
         return match (true) {
             $expression instanceof ParsedCase => $this->choice($expression, $binding),
+            $expression instanceof ParsedCast => $this->cast($expression, $binding),
             $expression instanceof ParsedInteger, $expression instanceof ParsedHex, $expression instanceof ParsedReal => (new NumericLiteralLowering())->lower($expression, false),
             $expression instanceof ParsedText => new TextLiteral($expression->value),
             $expression instanceof ParsedBlob => new BlobLiteral($expression->hex),
@@ -106,5 +100,23 @@ final class ExpressionLowering
             $branches,
             $expression->otherwise === null ? null : $this->lower($expression->otherwise, $binding),
         );
+    }
+
+    /**
+     * Resolves the written type name to the effective SQLite cast affinity.
+     *
+     * @throws InvalidConstruction When the operand has no complete scalar representation
+     */
+    public function cast(ParsedCast $expression, SourceBinding $binding): CastExpression
+    {
+        $target = match ($expression->target?->affinity() ?? Affinity::Numeric) {
+            Affinity::Integer => CastTarget::Integer,
+            Affinity::Real => CastTarget::Real,
+            Affinity::Numeric => CastTarget::Numeric,
+            Affinity::Text => CastTarget::Text,
+            Affinity::Blob => CastTarget::Blob,
+        };
+
+        return new CastExpression($target, $this->lower($expression->operand, $binding));
     }
 }

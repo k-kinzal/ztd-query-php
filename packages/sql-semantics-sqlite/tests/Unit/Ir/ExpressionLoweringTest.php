@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
@@ -47,5 +49,18 @@ final class ExpressionLoweringTest extends TestCase
         self::assertInstanceOf(Parameter::class, $value->base);
         self::assertSame('02', $value->base->label);
         self::assertCount(1, $value->branches);
+    }
+
+    public function testCastResolvesTypeNamesToTheirEffectiveAffinity(): void
+    {
+        $operation = (new Inspection())->inspect("SELECT CAST('7.0' AS FLOATING POINT)");
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $column = $select->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        $cast = (new ExpressionLowering())->lower($column->expression, new SourceBinding($operation->binding(), $select->from));
+
+        self::assertInstanceOf(CastExpression::class, $cast);
+        self::assertSame(CastTarget::Integer, $cast->target);
     }
 }

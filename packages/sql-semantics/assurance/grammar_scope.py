@@ -11,6 +11,7 @@ RULE = re.compile(r"^    '([A-Za-z_][A-Za-z0-9_]*)' => \[$")
 ALTERNATIVE = re.compile(r"^        '([^'\\]*)',$")
 SQLITE = "packages/sql-semantics-sqlite/resources/productions/sqlite-3.47.2.php"
 RELATED_SQLITE_DOMAINS = {
+    "expr: CAST LP expr AS typetoken RP": ("sqlite-cast-v1.json",),
     "expr: CASE case_operand case_exprlist case_else END": ("sqlite-case-v1.json",),
     "case_exprlist: case_exprlist WHEN expr THEN expr": ("sqlite-case-v1.json",),
     "case_exprlist: WHEN expr THEN expr": ("sqlite-case-v1.json",),

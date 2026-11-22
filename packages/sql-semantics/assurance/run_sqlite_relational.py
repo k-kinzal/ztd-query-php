@@ -216,7 +216,7 @@ def main():
         "status": "provisional-sqlite-relational-domain", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "contract": CONTRACT, "distribution": digest(args.out / "distribution.json"),
         "isolation": "none" if args.local else IMAGE,
-        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": OBSERVER_CONTRACT},
+        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": OBSERVER_CONTRACT, "textObservation": db.text_observation_digest},
         "toolDigests": {p.name: digest(p) for p in TOOL.iterdir() if p.suffix in (".py", ".php", ".json")},
         "shape": scope, "checks": results, "mutations": mutations,
         "sources": ["events.jsonl", "distribution.json", "relational-faults/"],

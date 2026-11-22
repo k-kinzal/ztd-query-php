@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 OBSERVER_CONTRACT = "a3c8c144a57d14e01005bc7853ee084dff06ebed03bc4ebe69b2413c7eeb9250"
+TEXT_OBSERVATION_CONTRACT = "adc536e31e0fb7ee8ef3cd6edf8f83aed44938bebc551711dc0b6f80cdbf0591"
 AUTHORIZER = c.CFUNCTYPE(c.c_int, c.c_void_p, c.c_int, *([c.c_char_p] * 4))
 
 
@@ -33,14 +34,22 @@ def typed(value):
     if type(value) is bytes:
         return ["blob", value.hex()]
     if type(value) is str:
+        try:
+            value.encode()
+        except UnicodeEncodeError:
+            return ["text-bytes", value.encode(errors="surrogateescape").hex()]
         return ["text", value]
     raise TypeError(type(value))
 
 
 class Database:
     policy_digest = OBSERVER_CONTRACT
+    text_observation_digest = TEXT_OBSERVATION_CONTRACT
 
     def __init__(self, library, filename=b":memory:"):
+        contract = Path(__file__).with_name("sqlite-text-observation-v1.json")
+        if hashlib.sha256(contract.read_bytes()).hexdigest() != TEXT_OBSERVATION_CONTRACT:
+            raise ValueError("SQLite text observation differs from its recorded revision")
         self.library = library
         self.lib = c.CDLL(str(library))
         self.allowed_actions = frozenset(observer_policy()["allowedActions"].values())
@@ -49,7 +58,7 @@ class Database:
         for name, result, args in [
             ("libversion", s, []), ("sourceid", s, []),
             ("open", i, [s, c.POINTER(p)]), ("close", i, [p]),
-            ("errmsg", s, [p]), ("exec", i, [p, s, p, p, p]),
+            ("errmsg", s, [p]), ("errcode", i, [p]), ("exec", i, [p, s, p, p, p]),
             ("prepare_v2", i, [p, s, i, c.POINTER(p), c.POINTER(s)]),
             ("finalize", i, [p]), ("step", i, [p]),
             ("bind_parameter_count", i, [p]), ("bind_parameter_name", s, [p, i]),
@@ -96,7 +105,10 @@ class Database:
             return self.column_double(stmt, column)
         if storage == 3:
             data = self.column_text(stmt, column)
-            return c.string_at(data, self.column_bytes(stmt, column)).decode()
+            if not data:
+                self.check(self.errcode(self.db))
+                raise RuntimeError("SQLite TEXT result bytes are unavailable")
+            return c.string_at(data, self.column_bytes(stmt, column)).decode(errors="surrogateescape")
         if storage == 4:
             data = self.column_blob(stmt, column)
             return c.string_at(data, self.column_bytes(stmt, column))

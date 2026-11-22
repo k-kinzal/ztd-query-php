@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-cast-v1.json": "0f90c2950f97a37ccc5f8628ac5c418e7dde88ec9d4d3be8601a808dab05cedd",
     "sqlite-delete-returning-v1.json": "fc81fff184fd532c12fde78b63740676c6d40678331597a75409c95bdb6e97b0",
     "sqlite-defaults-v1.json": "613af1317285202748f74427bc54e379dfd2ffeaca132fb96dc434707b4b65a5",
     "sqlite-case-v1.json": "a8a4eddad1e405a41566c48439c7b521f2c787a606d90b93b8fcbbf875fa9179",

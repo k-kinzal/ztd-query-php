@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Rows;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -45,7 +46,7 @@ final class RecursiveDefinition
     public function __construct(
         public readonly ValuesQuery $anchor,
         array $step,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
         public readonly bool $unionAll = false,
     ) {
         $outputs = Check::listOf($step, RecursiveColumn::class, 'The recursive step needs checked output columns.', 1);

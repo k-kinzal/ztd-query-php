@@ -6,6 +6,7 @@ from string import ascii_lowercase, ascii_uppercase
 
 from run_sqlite_scalars import evaluate, query
 from run_sqlite_values import names
+from sqlite_cast_semantics import comparison_values
 from sqlite_engine import typed
 from sqlite_relational_cases import children, order_value, parameter_names, truth
 from sqlite_result_cases import integer
@@ -132,6 +133,7 @@ def equality(source, base, when, value, decision):
                 value = int(value)
             if type(decision) is str:
                 decision = int(decision)
+    value, decision = comparison_values(base, when, value, decision)
     return order_value(value) == order_value(decision)
 
 

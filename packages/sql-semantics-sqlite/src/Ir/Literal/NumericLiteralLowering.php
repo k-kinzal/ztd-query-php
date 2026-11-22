@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Literal;
 
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral as ParsedHex;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral as ParsedInteger;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral as ParsedReal;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 
 /**
  * Chooses the SQLite storage role of a directly signed numeric literal.
@@ -37,5 +42,28 @@ final class NumericLiteralLowering
         }
 
         return new IntegerLiteral($digits === '' ? '0' : ($negative ? '-' : '') . $digits);
+    }
+
+    /**
+     * Resolves the sign of a grouped or ungrouped numeric literal.
+     *
+     * @throws InvalidConstruction When the operand or unary operation has another role
+     */
+    public function signed(Unary $expression): IntegerLiteral|HexIntegerLiteral|RealLiteral
+    {
+        Check::input(
+            in_array($expression->operator, [UnaryOperator::Plus, UnaryOperator::Minus], true),
+            'This expression has no complete SQLite scalar representation.',
+        );
+        $operand = $expression->operand;
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        Check::input(
+            $operand instanceof ParsedInteger || $operand instanceof ParsedHex || $operand instanceof ParsedReal,
+            'A complete signed literal requires a single numeric literal operand.',
+        );
+
+        return $this->lower($operand, $expression->operator === UnaryOperator::Minus);
     }
 }

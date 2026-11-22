@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Predicate;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\CastExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -33,8 +34,8 @@ final class Comparison
      */
     public function __construct(
         public readonly ComparisonOperator $operator,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $left,
-        public readonly Arithmetic|BlobLiteral|CaseExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $right,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $left,
+        public readonly Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral $right,
     ) {
     }
 }
