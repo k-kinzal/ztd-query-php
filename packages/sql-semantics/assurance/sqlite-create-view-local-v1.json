@@ -1,0 +1,75 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-local-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "Define a completed SQLite view over a projection that reads its checked local definition.",
+      "structure": "The existing Select body with one shared immutable LocalSource definition and distinct input occurrences, inside the effective view naming boundary.",
+      "conditions": "The one local definition is an explicit VALUES query or the checked recursive definition already admitted by Select. A recursive definition has no joins. Every ordinary external source follows the view's schema policy. No parameter is registered in the local definition, its anchor and recursive step or in the projection. Other view construction rules still apply.",
+      "meaning": "Define and read the same local input on each later view scan. Preserve repeated local rows, NULL, distinct occurrence slots and output names, checked recursion, relevant external source identities, and guard behavior.",
+      "externalInterpretation": "The same resolved absolute schema and base tables interpret external occurrences. The local source identity is carried by the shared concrete definition. Fixture results have no promised row order.",
+      "sql": "Write one structural WITH definition before the checked SELECT body, with references using the established local scope. Emit the checked CREATE VIEW header and effective names.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "Compare the actual local definition identity, separate table occurrence ordering, source namespaces, result shape, metadata, duplicate rows and NULL.",
+    "Compare the ordered view declaration catalog effects and later reads with the same source fixture.",
+    "Exercise whether outer relation data changes can affect the local view and whether the exact original expanded-admission case constructs successfully."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "layouts": ["values-only", "values-repeated", "values-left", "values-right", "recursive-only"],
+    "guard": [false, true],
+    "identity": "Reconstruct all 20 destination, occurrence layout and guard identities from actual worker structure."
+  },
+  "exploration": {
+    "seeds": [1879, 9403, 55249],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary local row values, duplicate rows, NULL, binding permutations, join layouts, recursive anchor and bound, and view and column quoting."
+  },
+  "analysis": [
+    "A view-local VALUES source is distinct from a shadowing table of the same name.",
+    "Two occurrences share one VALUES source and project their independent slots.",
+    "A persistent mixed join resolves the base table in the target schema.",
+    "A temporary mixed join attaches the explicit main base table.",
+    "A persistent recursive view exposes the checked recurrence.",
+    "A native view reads its local CTE in the same schema despite a differently declared temporary table."
+  ],
+  "negative": [
+    "A parameter in local VALUES.",
+    "A folded parameter registration in local VALUES.",
+    "A recursive anchor contains a parameter.",
+    "A recursive step condition contains a parameter.",
+    "A persistent mixed join reads a foreign-schema external source.",
+    "Two different local definitions occur in one direct projection."
+  ],
+  "faults": [
+    "Redirect the view to the other schema.",
+    "Ignore the view guard.",
+    "Bind a later local occurrence to the first.",
+    "Replace the checked recursive step output."
+  ],
+  "evidence": {
+    "Q01": "Check local placement, common object identity, and every registered parameter boundary.",
+    "Q02": "Observe the 20 measured finite identities, six analyzed controls and original admission case.",
+    "Q03": "Reuse checked local projection and recurrence invariants, and separately verify own-schema external references.",
+    "Q04": "Compare independent local fixture evaluation with SQLite view reads, metadata and catalog effects.",
+    "Q05": "Observe the checked local-view definitions and the same identity when loading the installed Composer package."
+  },
+  "open": [
+    "Multiple common-table definitions, recursive joins, ordinary grouped WITH bodies and additional local definition forms require their own contracts."
+  ],
+  "trust": [
+    "The fixed view and CTE rules of SQLite 3.47.2 and the observed interpretation of the supplied external catalog.",
+    "The independent finite fixture interpreters for values, joins and recursive progression."
+  ],
+  "sources": [
+    "https://sqlite.org/lang_with.html",
+    "https://sqlite.org/lang_createview.html"
+  ]
+}
