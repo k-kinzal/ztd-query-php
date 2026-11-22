@@ -5,8 +5,8 @@ source:
   uri: 'https://www.php.net/manual/en/reserved.constants.php'
   format: html
   selector: '[id="reserved.constants.core"] dt code'
-  snapshot: .requirements-cache/reserved.constants.php
-  sha256: 743ed0195c448eaf1ff1f1e494b4eae504c745c762bbf7e03afacbc4499a498b
+  snapshot: requirements/manual/constants.html
+  sha256: 99f6fb4a5686b2e0190779cf108fabfee28655b9c3b36f69e1fcbc7a2ee7ff3e
 items:
   -
     id: PHP-CONSTANT-TRUE

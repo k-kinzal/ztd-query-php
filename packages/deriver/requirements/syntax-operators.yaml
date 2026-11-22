@@ -5,8 +5,8 @@ source:
   uri: 'https://www.php.net/manual/en/language.operators.precedence.php'
   format: html
   selector: '[id="language.operators.precedence"] > table.doctable > tbody > tr > td:nth-child(2) > code'
-  snapshot: .requirements-cache/language.operators.precedence.php
-  sha256: 4a26776b8e8f4c707544c3708a552829f0cb128a04b2722c55ba199df4a6442a
+  snapshot: requirements/manual/syntax-operators.html
+  sha256: eebf7928838e3511243601a169fee9aff6076bb0a9c5fa929e92e50cf4c0b95f
 items:
   -
     id: PHP-SYNTAX-OPERATORS-0001

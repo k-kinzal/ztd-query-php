@@ -5,8 +5,8 @@ source:
   uri: 'https://www.php.net/manual/en/reserved.keywords.php'
   format: html
   selector: '[id="reserved.keywords"] > table > tbody > tr > td a'
-  snapshot: .requirements-cache/reserved.keywords.php
-  sha256: 74edda643c4360ac6376a613aa70c6f6f777c78b4bd77385e7f83b5336ea1cce
+  snapshot: requirements/manual/syntax-keywords.html
+  sha256: a67b79c2ce444ae622093f56ab6ddb715a37e7db9840fe0c1909c21484d36eae
 items:
   -
     id: PHP-SYNTAX-KEYWORDS-0001
