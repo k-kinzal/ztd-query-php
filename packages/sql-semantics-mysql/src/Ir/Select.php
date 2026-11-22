@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Limit;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Order;
@@ -56,6 +57,11 @@ final class Select implements SemanticsIR
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
         (new SelectBounds())->check($results, $source, $where);
+        if ($source instanceof Join) {
+            foreach ($source->inputs() as $input) {
+                Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');
+            }
+        }
         $this->columns = $results;
         $this->orderBy = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of output keys.');
         Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');
@@ -69,7 +75,9 @@ final class Select implements SemanticsIR
      */
     public function profileId(): string
     {
-        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';
+        $optimization = $this->release === GrammarRelease::MySql5651 ? 'materialized' : 'derived-merge=on';
+
+        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/' . $optimization;
     }
 
     /**

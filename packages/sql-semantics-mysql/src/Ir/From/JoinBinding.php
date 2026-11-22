@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable as ParsedJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
@@ -24,11 +25,11 @@ use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
  */
 final class JoinBinding
 {
-    private readonly SourceBinding|self $left;
-    private readonly SourceBinding|self $right;
+    private readonly DerivedBinding|SourceBinding|self $left;
+    private readonly DerivedBinding|SourceBinding|self $right;
 
     /**
-     * @var non-empty-list<SourceBinding>
+     * @var non-empty-list<DerivedBinding|SourceBinding>
      */
     private readonly array $inputs;
 
@@ -38,8 +39,8 @@ final class JoinBinding
     public function __construct(private readonly BoundStatement $operation, private readonly ParsedJoin $join)
     {
         Check::input(!$join->operator->natural() && $join->using === [], 'A joined input requires explicit ON or CROSS without a merged column list.');
-        $this->left = self::bind($operation, $join->left);
-        $this->right = self::bind($operation, $join->right);
+        $this->left = self::bindChild($operation, $join->left);
+        $this->right = self::bindChild($operation, $join->right);
         $left = $this->left instanceof self ? $this->left->inputs : [$this->left];
         $right = $this->right instanceof self ? $this->right->inputs : [$this->right];
         $this->inputs = array_merge($left, $right);
@@ -51,11 +52,31 @@ final class JoinBinding
      */
     public static function bind(BoundStatement $operation, ?Relation $source): SourceBinding|self
     {
+        $source = self::ungroup($source);
+
+        return $source instanceof ParsedJoin ? new self($operation, $source) : new SourceBinding($operation, $source);
+    }
+
+    /**
+     * Opens a joined leaf or subtree in the join's occurrence order.
+     */
+    public static function bindChild(BoundStatement $operation, Relation $source): DerivedBinding|SourceBinding|self
+    {
+        $input = self::ungroup($source);
+
+        return $input instanceof DerivedTable ? new DerivedBinding($operation, $input) : self::bind($operation, $input);
+    }
+
+    /**
+     * Resolves transparent relation parentheses without collapsing the join.
+     */
+    public static function ungroup(?Relation $source): ?Relation
+    {
         while ($source instanceof NestedRelation) {
             $source = $source->relation;
         }
 
-        return $source instanceof ParsedJoin ? new self($operation, $source) : new SourceBinding($operation, $source);
+        return $source;
     }
 
     /**

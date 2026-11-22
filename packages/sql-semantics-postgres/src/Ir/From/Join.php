@@ -33,8 +33,8 @@ final class Join
      */
     public function __construct(
         public readonly JoinKind $kind,
-        public readonly TableSource|self $left,
-        public readonly TableSource|self $right,
+        public readonly TableSource|DerivedSource|self $left,
+        public readonly TableSource|DerivedSource|self $right,
         public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $on = null,
     ) {
         $inputs = $this->inputs();
@@ -53,8 +53,8 @@ final class Join
     }
 
     /**
-     * Returns the table occurrences in lexical order.
-     * @return non-empty-list<TableSource>
+     * Returns the input occurrences in lexical order.
+     * @return non-empty-list<TableSource|DerivedSource>
      */
     public function inputs(): array
     {

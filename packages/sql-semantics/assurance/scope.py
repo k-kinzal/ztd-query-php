@@ -41,6 +41,8 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-derived-join-v1.json": "131a8055798d3395508fc269cfd895c123ac896a9f17168eedcd2b124453df1d",
+    "server-derived-join-v2.json": "3d2b1652912fe098f37f7a11248f81c791762a690b799f53beac73678d1844ee",
     "server-recursive-series-v2.json": "57ec24e29d2ed8d9ff1a18cd899165303c9dc3032db1738feb61a973da7842ff",
     "server-truth-v2.json": "8ecb535370bab902634dc06671fd19fecd1bc9d1e770e501a1cb212365738f61",
     "server-local-projection-v4.json": "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9",
@@ -173,7 +175,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

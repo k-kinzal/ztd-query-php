@@ -55,7 +55,7 @@ The independent evaluator reads the direct construction inputs and implements se
 
 The checked domain supports a composition argument. Every leaf has one of the closed roles. Each arithmetic node has two ordered children of those roles. The constructor visits every occurrence, checks the source slot range, and bounds expansion. All lists and children have immutable value semantics. The renderer emits the two operands with the recorded operator inside parentheses, or an explicit leaf representation. A schema-qualified source and an explicit output alias preserve the external identity and result names. This is an argument for human review. The finite and seeded SQLite comparisons are empirical evidence. The PHP code shape audit checks the recorded property types, method names, traits, dependencies and known dynamic constructs. It does not prove arbitrary method bodies or establish the correctness of parser lowering and declaration resolution.
 
-Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth,recursive_series}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
+Consolidate completed replays for an exact candidate with `index_evidence.py --candidate "$candidate" --verifier "$verifier" --evidence-root "$evidence" --out "$evidence/review"`. Set `$verifier` to the archived assurance directory selected for those runs. Under the evidence root, keep the initial records in `semantics-ir-evidence/`, the SQLite replay in `sqlite-index/index.json` and the native collectors in `native-replay/{projection,delete,join,result,insert,update,transaction,drop_table,create_table,parameter,compound,local_projection,truth,recursive_series,derived_join}.json`. Preserve the relative paths to their raw records. The indexer verifies the candidate, recorded tool digests and replayed event references. It lists missing evidence and open acceptance requirements in the index.
 
 ## Establish independent acceptance
 
@@ -183,6 +183,12 @@ Run `run_server_truth.py` with the native fixture options and replay with `combi
 The [recursive series contract](server-recursive-series-v2.json) fixes the signed one-column anchor, increment, strict comparison, UNION policy and output roles. The oracle computes the expected admitted rows directly from the distance to the bound and the increment. The observer compares native field types and verifies an analyzed recursive CTE that shadows a physical table.
 
 Run `run_server_recursive_series.py` on pinned MySQL releases from 8.0 onward and PostgreSQL. On MySQL 5.6 and 5.7, use `check_recursive_availability.py` to check native syntax rejection, the analyzed and direct construction boundaries, and a positive native projection. Replay the accepted recursive statements with `combine_server_recursive_series_evidence.py`, the supported release `index.json` paths and one `--unavailable` record per MySQL 5.x release.
+
+## Native signed derived join inputs
+
+The [derived join record](server-derived-join-v2.json) checks external and independent sources in the same join tree. Derived references use an outer occurrence and an inner ordinal. The direct finite domain crosses both input positions, four join kinds and both observed output layouts. The seeded cases add nested joins, repeated input names, filters and distinct definitions. The native comparator checks result labels, exact type tags, multiplicities and NULL extension.
+
+Run `run_server_derived_join.py` with the native fixture options. Replay all releases with `combine_server_derived_join_evidence.py` and the per-release `index.json` paths. Its mutation probes change occurrence selection, field position and outer join behavior.
 
 ## SQLite joins, filters and ordering
 

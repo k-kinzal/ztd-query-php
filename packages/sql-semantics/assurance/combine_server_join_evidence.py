@@ -11,7 +11,7 @@ from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from run_server import check_profile, check_transport, same
 import run_server_join
-from run_server_join import negative_count, request_batches, tools, version_tag
+from run_server_join import negative_count, rejects, request_batches, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -36,7 +36,7 @@ def replay(path, report, specification, domain=run_server_join):
         if batch[0][3] is not None:
             key, _, _, rejection = batch[0]
             response = matched(key, "rejected")["response"]
-            require(response["status"] == "rejected" and rejection in response["message"], f"server-{label}-replay-rejection", key)
+            require(rejects(response, rejection), f"server-{label}-replay-rejection", key)
             continue
         replies = []
         for key, _, item, _ in batch:

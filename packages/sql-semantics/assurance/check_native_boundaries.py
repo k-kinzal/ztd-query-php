@@ -19,7 +19,13 @@ def faults(engine):
     shared = [
         Fault("ignore-negative-ordinal", "ColumnReference::__construct", "$occurrence >= 0,", "true,"),
         Fault("reverse-join-occurrences", "From/Join::inputs", "array_merge($left, $right)", "array_merge($right, $left)"),
-        Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "isset($inputs[$operand->occurrence]->columns[$operand->slot])", "true"),
+        Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "$this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot)", "true"),
+        Fault("allow-computed-derived-slot", "From/DerivedSource::__construct",
+              "$column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference,", "true,"),
+        Fault("ignore-derived-binding-identity", "From/DerivedBinding::reference",
+              "$resolution->relation === $this->input,", "true,"),
+        Fault("ignore-derived-profile", "Select::__construct",
+              "!$input instanceof DerivedSource || $input->definition->release === $release,", "true,"),
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct", "isset($target->columns[$slot]),", "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
@@ -114,7 +120,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v9.json", "value_storage.php", "value-storage-v10.json", "value-primitives.json")},
+                       "native-boundaries-v10.json", "value_storage.php", "value-storage-v10.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

@@ -23,7 +23,7 @@ final class OccurrenceScope
 {
     /**
      * Closes each predicate over the owning occurrence layout and bounds its expanded tree.
-     * @param list<TableSource> $inputs
+     * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
         BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $condition,
@@ -38,7 +38,7 @@ final class OccurrenceScope
     /**
      * Validates one subtree and returns the number of visited occurrences.
      *
-     * @param list<TableSource> $inputs The visible input occurrences
+     * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
         BooleanLiteral|ColumnReference|IntegerComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $operand,
@@ -49,7 +49,7 @@ final class OccurrenceScope
     ): int {
         Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');
         if ($operand instanceof ColumnReference) {
-            Check::input(isset($inputs[$operand->occurrence]->columns[$operand->slot]), $invalidSlot);
+            Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);
         }
         $children = match (true) {
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
@@ -62,5 +62,13 @@ final class OccurrenceScope
         }
 
         return $count;
+    }
+
+    /**
+     * Checks the ordinal against the input's owned layout.
+     */
+    public function hasSlot(TableSource|DerivedSource|null $input, int $slot): bool
+    {
+        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot]) : isset($input->columns[$slot]);
     }
 }

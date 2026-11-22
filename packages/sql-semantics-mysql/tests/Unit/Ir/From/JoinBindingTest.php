@@ -7,11 +7,13 @@ namespace Tests\Unit\Ir\From;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(JoinBinding::class)]
@@ -55,5 +57,18 @@ final class JoinBindingTest extends TestCase
         $source = $binding->source();
         self::assertSame(JoinKind::Left, $source->kind);
         self::assertCount(2, $source->inputs());
+    }
+
+    public function testBindChildRecognizesAResolvedDerivedInput(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT q.x FROM (SELECT 3 AS x) q');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(DerivedTable::class, $operation->statement->from);
+        self::assertInstanceOf(DerivedBinding::class, JoinBinding::bindChild($operation->binding(), $operation->statement->from));
+    }
+
+    public function testUngroupPreservesAnAbsentSource(): void
+    {
+        self::assertNull(JoinBinding::ungroup(null));
     }
 }

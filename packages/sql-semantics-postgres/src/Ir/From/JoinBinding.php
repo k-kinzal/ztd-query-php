@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join as ParsedJoin;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind as ParsedKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
@@ -25,11 +26,11 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
  */
 final class JoinBinding
 {
-    private readonly SourceBinding|self $left;
-    private readonly SourceBinding|self $right;
+    private readonly DerivedBinding|SourceBinding|self $left;
+    private readonly DerivedBinding|SourceBinding|self $right;
 
     /**
-     * @var non-empty-list<SourceBinding>
+     * @var non-empty-list<DerivedBinding|SourceBinding>
      */
     private readonly array $inputs;
 
@@ -39,8 +40,8 @@ final class JoinBinding
     public function __construct(private readonly BoundStatement $operation, private readonly ParsedJoin $join, private readonly bool $catalogFirst)
     {
         Check::input(!$join->natural && ($join->condition === null || $join->condition instanceof JoinOn), 'A joined input requires explicit ON or CROSS without a merged column list.');
-        $this->left = self::bind($operation, $join->left, $catalogFirst);
-        $this->right = self::bind($operation, $join->right, $catalogFirst);
+        $this->left = self::bindChild($operation, $join->left, $catalogFirst);
+        $this->right = self::bindChild($operation, $join->right, $catalogFirst);
         $left = $this->left instanceof self ? $this->left->inputs : [$this->left];
         $right = $this->right instanceof self ? $this->right->inputs : [$this->right];
         $this->inputs = array_merge($left, $right);
@@ -52,12 +53,32 @@ final class JoinBinding
      */
     public static function bind(BoundStatement $operation, ?Relation $source, bool $catalogFirst): SourceBinding|self
     {
+        $source = self::ungroup($source);
+
+        return $source instanceof ParsedJoin ? new self($operation, $source, $catalogFirst) : new SourceBinding($operation, $source);
+    }
+
+    /**
+     * Opens a joined leaf or subtree in the join's occurrence order.
+     */
+    public static function bindChild(BoundStatement $operation, Relation $source, bool $catalogFirst): DerivedBinding|SourceBinding|self
+    {
+        $input = self::ungroup($source);
+
+        return $input instanceof DerivedTable ? new DerivedBinding($operation, $input) : self::bind($operation, $input, $catalogFirst);
+    }
+
+    /**
+     * Resolves transparent relation parentheses without collapsing the join.
+     */
+    public static function ungroup(?Relation $source): ?Relation
+    {
         while ($source instanceof ParenthesizedJoin) {
             Check::input($source->alias === null, 'An alias on a whole join is outside this source domain.');
             $source = $source->join;
         }
 
-        return $source instanceof ParsedJoin ? new self($operation, $source, $catalogFirst) : new SourceBinding($operation, $source);
+        return $source;
     }
 
     /**

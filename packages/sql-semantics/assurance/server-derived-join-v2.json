@@ -1,0 +1,106 @@
+{
+  "revision": "SemanticsIR/server-derived-join-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "The pinned native projection releases and settings. MySQL uses the same optimizer profile as server-local-projection-v4.json.",
+  "scope": "An independent derived SELECT used as a leaf in a checked native join. Its output fields are signed integer literals or reads of signed columns from one external table. Each consumer reference records the exact join occurrence and the ordinal in that definition.",
+  "open": [
+    "Derived leaves with noninteger or computed output fields",
+    "Joined or local input inside the derived definition",
+    "Shared, recursive or dependent definitions",
+    "LATERAL, correlation, NATURAL, USING, aliases on whole joins and generated join projections"
+  ],
+  "constructors": {
+    "DerivedSource": {
+      "type": "From/DerivedSource",
+      "role": "An independent, signed integer row source owned by one outer occurrence",
+      "fields": [
+        "definition"
+      ],
+      "invariants": [
+        "The definition is a complete SELECT over zero or one external relation.",
+        "The definition has no row bound, ordering or parameters.",
+        "Every field is a signed integer literal or a checked signed column reference.",
+        "The consumer checks every reference against this definition's output layout and the owner's visible occurrences."
+      ],
+      "externalInterpretation": "Only the definition's named external relations need declarations and data. The derived binding is local to its existing outer occurrence.",
+      "meaning": "Evaluate the complete child and use its ordered columns as one input to the join. Preserve NULLs, bag multiplicities, filtering, DISTINCT and native type tags.",
+      "sql": "Emit a parenthesized child SELECT with unique aliases for each defined column and a generated alias for the source occurrence. Resolve each outer slot against that alias and the assigned inner name.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Establish the finite independent definition. Resolve every consumed derived column by its bound slot identity in that occurrence. Use the same checked operand and join constructors as direct construction.",
+  "observations": [
+    "Ordered output names and exact native types",
+    "Typed row multiplicity and NULL extension",
+    "Identity of the two outer occurrences even when both reference the same underlying table or share output labels",
+    "Read-only effects"
+  ],
+  "finite": {
+    "definitions": [
+      "two signed literals",
+      "two columns of the ordinary fixture",
+      "two columns of the empty fixture"
+    ],
+    "sides": [
+      "left",
+      "right"
+    ],
+    "joinKinds": [
+      "CROSS",
+      "INNER",
+      "LEFT",
+      "RIGHT"
+    ],
+    "referenceLayouts": [
+      "first occurrence then second",
+      "second occurrence then first"
+    ],
+    "completeness": "Require the exact product observed from actual derived definitions, source placements, join operations and output reference layouts."
+  },
+  "exploration": {
+    "seeds": [
+      9419,
+      12281,
+      21713
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": [],
+    "constructors": "Trees with two to four leaf occurrences, independently generated two- to four-slot derived children, computed filter placement, distinct and duplicate rows, physical and derived locations, and closed scoped ON positions. PostgreSQL also uses typed FULL JOIN."
+  },
+  "negative": [
+    "Noninteger derived field",
+    "Bound inside the definition",
+    "Joined child source",
+    "Out-of-range derived column",
+    "Invisible occurrence in ON",
+    "A lateral definition",
+    "A derived definition with a different release"
+  ],
+  "faults": [
+    "Read the first occurrence in a derived join",
+    "Use the first field of the definition in place of the second",
+    "Remove null extension of a missing derived match"
+  ],
+  "trust": [
+    "Native projection and declared-name profiles",
+    "Independent fixture relation and bag join evaluator",
+    "The child has no volatile effects and the analysis proves that it is independently scoped"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html",
+    "https://www.postgresql.org/docs/17/queries-table-expressions.html"
+  ],
+  "negativeLateral": "The test expects rejection during binding when LATERAL parses, and syntax rejection on MySQL releases before the operator was available."
+}

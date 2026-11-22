@@ -24,7 +24,7 @@ final class LocalProjectionTest extends TestCase
         $select = new Select([new ResultColumn(new IntegerLiteral('1'), $name), new ResultColumn(new IntegerLiteral('2'), $name)]);
         $local = new LocalProjection($select, [new LocalResultColumn(1, $name)]);
 
-        self::assertSame($select->profileId() . '/derived-merge=on', $local->profileId());
+        self::assertSame($select->profileId(), $local->profileId());
     }
 
     public function testToStringUsesTheDefinedOrdinalAndUniqueInnerNames(): void

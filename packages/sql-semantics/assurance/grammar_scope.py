@@ -154,6 +154,16 @@ def inventory(root):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v4.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
+        derived_join_signatures = {
+            "table_factor: derived_table",
+            "derived_table: table_subquery opt_table_alias opt_derived_column_list",
+            "table_ref: select_with_parens opt_alias_clause",
+            "table_factor: select_derived_init get_select_lex select_derived2",
+            "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",
+            "table_factor: ( select_derived_union ) opt_table_alias",
+        }
+        for alternative in sorted(derived_join_signatures & signatures):
+            related[alternative] = (*related.get(alternative, ()), "server-derived-join-v2.json")
         truth_signatures = {
             "expr: expr or expr", "expr: expr XOR expr", "expr: expr and expr", "expr: NOT_SYM expr",
             "bool_pri: bool_pri IS NULL_SYM", "bool_pri: bool_pri IS not NULL_SYM",

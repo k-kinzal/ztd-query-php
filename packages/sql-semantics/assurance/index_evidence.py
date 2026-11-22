@@ -9,7 +9,7 @@ from run import candidate_distribution, digest, require, verify_candidate, verif
 
 NATIVE = (
     "projection", "delete", "join", "result", "insert", "update", "transaction",
-    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series",
+    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series", "derived_join",
 )
 SQLITE = {
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",
@@ -101,6 +101,7 @@ class Evidence:
             item = self.optional(f"native-replay/{domain}.json")
             if item is None:
                 continue
+            path, origin, report = item
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
             unavailable = {}
             if domain == "recursive_series":
@@ -116,7 +117,6 @@ class Evidence:
                             and raw["contract"] == report["contract"], "bundle-recursive-availability-identity", release)
                     unavailable[release] = link
             required = {f"{engine} {release}" for engine, releases in registered.items() for release in releases}
-            path, origin, report = item
             reports = report["releaseReports"]
             missing = sorted(required - reports.keys())
             require(not (reports.keys() - required) and report["missing"] == [list(role.split(" ")) for role in missing],

@@ -11,8 +11,8 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(string $dialect): array
 {
-    $file = __DIR__ . '/native-boundaries-v9.json';
-    requireShape(hash_file('sha256', $file) === '650f3dcc41e4165a78a6ca0d14107ed4a5d68a7657a9e55a68fadbae996d032d', 'Native boundary contract differs from the recorded revision');
+    $file = __DIR__ . '/native-boundaries-v10.json';
+    requireShape(hash_file('sha256', $file) === 'd0bfad61f5530cbc8e263a13403f907db4264ce3efb64f70e56a176bdaf5d026', 'Native boundary contract differs from the recorded revision');
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 
@@ -30,12 +30,15 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
         'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
-        'Model\\Contract\\GrammarRelease'] as $name) {
+        'Model\\Contract\\GrammarRelease', 'Statement\\Query\\ParenthesizedQuery', 'Statement\\Relation\\DerivedTable',
+        'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
+    $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";
+    $imports .= 'use ' . $platform . '\\Statement\\Relation\\' . ($dialect === 'mysql' ? 'JoinedTable' : 'Join') . ' as ParsedJoin;' . "\n";
     $verified = [];
     foreach ($rules as $id => $rule) {
         [$type, $method] = explode('::', $id);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
 use SqlSemantics\Platform\MySql\Ir\Select;
-use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -55,12 +54,7 @@ final class LocalProjection implements SemanticsIR
      */
     public function profileId(): string
     {
-        if ($this->definition instanceof self) {
-            return $this->definition->profileId();
-        }
-        $optimization = $this->definition->release === GrammarRelease::MySql5651 ? 'materialized' : 'derived-merge=on';
-
-        return $this->definition->profileId() . '/' . $optimization;
+        return $this->definition->profileId();
     }
 
     /**

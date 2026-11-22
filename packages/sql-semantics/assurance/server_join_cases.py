@@ -208,15 +208,22 @@ def truth(condition, row, dialect):
     return admits(condition, lambda operand: value(operand, row, dialect))
 
 
-def rows(source, dialect):
+def input_width(source):
+    return len((source["derived"] if "derived" in source else source)["columns"])
+
+
+def rows(source, dialect, derived_rows=None):
     if source is None:
         return [()]
+    if "derived" in source:
+        return [(tuple(row),) for row in derived_rows(source["derived"])]
     if not is_join(source):
         role = next(role for role, relation in NAMES_BY_TABLE.items() if relation == source["table"])
         physical = DATA[role] + (CHILD_ROWS if role == "accounts" and dialect == "postgres" and not source["only"] else [])
         columns = [NAMES[dialect].index(column) for column in source["columns"]]
         return [(tuple(row[index] for index in columns),) for row in physical]
-    left, right = rows(source["left"], dialect), rows(source["right"], dialect)
+    left = rows(source["left"], dialect, derived_rows)
+    right = rows(source["right"], dialect, derived_rows)
     joined = []
     remaining = set(range(len(right)))
     for lhs in left:
@@ -224,9 +231,9 @@ def rows(source, dialect):
         joined.extend(row for _, row in matches)
         remaining.difference_update(index for index, _ in matches)
         if not matches and source["kind"] in ("LEFT", "FULL"):
-            joined.append(lhs + tuple((None,) * len(item["columns"]) for item in leaves(source["right"])))
+            joined.append(lhs + tuple((None,) * input_width(item) for item in leaves(source["right"])))
     if source["kind"] in ("RIGHT", "FULL"):
-        nulls = tuple((None,) * len(item["columns"]) for item in leaves(source["left"]))
+        nulls = tuple((None,) * input_width(item) for item in leaves(source["left"]))
         joined.extend(nulls + right[index] for index in sorted(remaining))
     return joined
 

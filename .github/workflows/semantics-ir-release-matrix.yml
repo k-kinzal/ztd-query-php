@@ -308,6 +308,24 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-truth-evidence"
+      - name: Compare native derived join results
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_derived_join.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-derived-join-evidence"
       - name: Check recursive syntax on the pinned MySQL 5.x releases
         if: ${{ !cancelled() && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
         env:
@@ -446,6 +464,12 @@ jobs:
         with:
           name: native-truth-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-truth-evidence/
+      - name: Preserve native derived join observations and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-derived-join-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-derived-join-evidence/
       - name: Preserve native recursive syntax availability controls
         if: ${{ always() && (matrix.release == '5.6.51' || matrix.release == '5.7.44') }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -557,6 +581,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh run download "$GITHUB_RUN_ID" --pattern 'native-truth-*' --dir "$RUNNER_TEMP/truth-matrix"
+      - name: Download the protected derived join records
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern 'native-derived-join-*' --dir "$RUNNER_TEMP/derived-join-matrix"
       - name: Download the protected recursive availability records
         if: ${{ !cancelled() }}
         env:
@@ -705,6 +735,17 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/combine_server_truth_evidence.py \
             --candidate "$CANDIDATE" --candidate-root candidate \
             --out "$RUNNER_TEMP/truth-matrix.json" "${indexes[@]}"
+      - name: Require all native derived join releases
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          shopt -s nullglob
+          indexes=("$RUNNER_TEMP"/derived-join-matrix/*/index.json)
+          python3 trusted/packages/sql-semantics/assurance/combine_server_derived_join_evidence.py \
+            --candidate "$CANDIDATE" --candidate-root candidate \
+            --out "$RUNNER_TEMP/derived-join-matrix.json" "${indexes[@]}"
       - name: Require all native recursive series releases
         if: ${{ !cancelled() }}
         env:
@@ -808,6 +849,12 @@ jobs:
         with:
           name: native-truth-matrix
           path: ${{ runner.temp }}/truth-matrix.json
+      - name: Preserve the native derived join matrix report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-derived-join-matrix
+          path: ${{ runner.temp }}/derived-join-matrix.json
       - name: Preserve the native recursive series matrix report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

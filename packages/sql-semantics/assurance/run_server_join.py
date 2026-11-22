@@ -126,6 +126,14 @@ def negative_count(specification, engine, tag):
     return len(specification["negative"]) + len(specific.get(tag, specific.get("default", ()))) + len(specification.get(dialect, ()))
 
 
+def rejects(response, boundary):
+    if response["status"] != "rejected":
+        return False
+    if isinstance(boundary, str):
+        return boundary in response["message"]
+    return response["exception"] == boundary["exception"] and boundary["message"] in response["message"]
+
+
 def execute(args, specification, tag, worker, db, domain=None):
     if domain is None:
         domain = sys.modules[__name__]
@@ -148,7 +156,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                 if batch[0][3] is not None:
                     key, current, _, rejection = batch[0]
                     response = replies[0]
-                    require(response["status"] == "rejected" and rejection in response["message"], f"server-{label}-negative-boundary", response)
+                    require(rejects(response, rejection), f"server-{label}-negative-boundary", response)
                     ledger.record(key, "rejected", response=response)
                     continue
                 for (key, current, item, _), response in zip(batch, replies):

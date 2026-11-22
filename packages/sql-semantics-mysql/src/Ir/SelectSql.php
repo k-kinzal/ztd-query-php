@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -63,9 +64,15 @@ final class SelectSql
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
             $input = $inputs[$expression->occurrence] ?? null;
-            Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
+            if ($input instanceof DerivedSource) {
+                Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
+                $name = $this->localColumn($expression->slot);
+            } else {
+                Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
+                $name = $input->columns[$expression->slot]->quoted();
+            }
 
-            return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $input->columns[$expression->slot]->quoted();
+            return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;
         }
 
         return match (true) {
@@ -80,8 +87,11 @@ final class SelectSql
     /**
      * Emits a table or a fully parenthesized join tree, using its global alias offset.
      */
-    public function from(TableSource|Join $source, int $offset = 0): string
+    public function from(TableSource|DerivedSource|Join $source, int $offset = 0): string
     {
+        if ($source instanceof DerivedSource) {
+            return '(' . $this->render($source->definition, true) . ') AS ' . $this->alias($offset);
+        }
         if ($source instanceof TableSource) {
             return $source->schema->quoted() . '.' . $source->table->quoted() . ' AS ' . $this->alias($offset);
         }

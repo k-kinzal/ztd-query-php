@@ -186,16 +186,18 @@ if ($dialect !== 'sqlite') {
     $properties['Ordering\\Limit'] = ['count' => [$dialect === 'mysql' ? 'int' : '?int'], 'offset' => ['int']];
     $methods['Ordering\\Order'] = $methods['Ordering\\Limit'] = ['__construct'];
     $properties['From\\Join'] = [
-        'kind' => ['From\\JoinKind'], 'left' => ['From\\Join', 'TableSource'],
-        'right' => ['From\\Join', 'TableSource'], 'on' => $conditions,
+        'kind' => ['From\\JoinKind'], 'left' => ['From\\DerivedSource', 'From\\Join', 'TableSource'],
+        'right' => ['From\\DerivedSource', 'From\\Join', 'TableSource'], 'on' => $conditions,
     ];
+    $properties['From\\DerivedSource'] = ['definition' => ['Select']];
+    $methods['From\\DerivedSource'] = ['__construct'];
     $methods['From\\Join'] = ['__construct', 'inputs'];
     $properties['From\\JoinKind'] = $methods['From\\JoinKind'] = [];
     $enumCases['From\\JoinKind'] = ['Cross' => 'CROSS', 'Inner' => 'INNER', 'Left' => 'LEFT', 'Right' => 'RIGHT'];
     if ($dialect === 'postgres') {
         $enumCases['From\\JoinKind']['Full'] = 'FULL';
     }
-    array_push($internal, 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering', 'Ordering\\ResultLowering', 'Ordering\\ResultSql');
+    array_push($internal, 'From\\DerivedBinding', 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering', 'Ordering\\ResultLowering', 'Ordering\\ResultSql');
     array_push($pureCollaborators, 'From\\OccurrenceScope', 'Ordering\\ResultSql');
     $internal[] = 'Mutation\\DeleteLowering';
     $properties['Mutation\\Delete'] = [
@@ -501,6 +503,16 @@ try {
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
             }
         }
+        array_push($checkedBoundaries, ...checkNativeBoundaries(
+            $class,
+            str_replace('\\', '/', $short),
+            $platform,
+            $dialect,
+            $boundaries,
+            $parser,
+            $traverser,
+            $printer,
+        ));
         if (in_array($short, $internal, true) && !in_array($short, $pureCollaborators, true)) {
             continue;
         }
@@ -526,16 +538,6 @@ try {
             || $node instanceof Expr\MethodCall && !$node->name instanceof Identifier
             || $node instanceof Expr\PropertyFetch && !$node->name instanceof Identifier);
         requireShape($danger === null, "Unexpected dynamic PHP in $short");
-        array_push($checkedBoundaries, ...checkNativeBoundaries(
-            $class,
-            str_replace('\\', '/', $short),
-            $platform,
-            $dialect,
-            $boundaries,
-            $parser,
-            $traverser,
-            $printer,
-        ));
         if (!isset($properties[$short])) {
             requireShape($class instanceof Class_ && $class->isFinal() && $class->getProperties() === [], "Stateful SELECT collaborator $short");
             continue;

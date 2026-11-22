@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Limit;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
@@ -56,6 +57,11 @@ final class Select implements SemanticsIR
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
         (new SelectBounds())->check($results, $source, $where);
+        if ($source instanceof Join) {
+            foreach ($source->inputs() as $input) {
+                Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');
+            }
+        }
         $this->columns = $results;
         $this->orderBy = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of output keys.');
         Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');

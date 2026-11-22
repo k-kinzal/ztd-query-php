@@ -32,7 +32,8 @@ final class SelectBounds
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
-        (new OccurrenceScope())->predicate($where, $inputs);
+        $scope = new OccurrenceScope();
+        $scope->predicate($where, $inputs);
         $nodes = 0;
         $position = 0;
         foreach ($results as $result) {
@@ -42,7 +43,7 @@ final class SelectBounds
                 Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
                 match (true) {
                     $expression instanceof ColumnReference => Check::input(
-                        isset($inputs[$expression->occurrence]->columns[$expression->slot]),
+                        $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
                         'Column slot must belong to the SELECT source.',
                     ),
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),

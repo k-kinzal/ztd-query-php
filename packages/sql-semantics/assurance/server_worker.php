@@ -66,18 +66,23 @@ function observeOperand(string $namespace, object $value): array
     };
 }
 
-function constructSource(string $namespace, array $source, string $dialect): object
+function constructSource(string $platform, array $source, string $dialect): object
 {
+    $namespace = $platform . 'Ir\\';
     if (isset($source['kind'])) {
         $join = $namespace . 'From\\Join';
         $kind = $namespace . 'From\\JoinKind';
 
         return new $join(
             $kind::from($source['kind']),
-            constructSource($namespace, $source['left'], $dialect),
-            constructSource($namespace, $source['right'], $dialect),
+            constructSource($platform, $source['left'], $dialect),
+            constructSource($platform, $source['right'], $dialect),
             constructPredicate($namespace, $source['on']),
         );
+    }
+    if (isset($source['derived'])) {
+        $derived = $namespace . 'From\\DerivedSource';
+        return new $derived(constructSelect($platform, $source['derived']));
     }
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'TableSource';
@@ -104,7 +109,7 @@ function constructSelect(string $platform, array $input): SemanticsIR
         $keys[] = $raw === null ? null : new $order($raw[0], $raw[1], ...($input['dialect'] === 'postgres' ? [$raw[2]] : []));
     }
     $bound = $input['limit'] ?? null;
-    $from = $input['source'] === null ? null : constructSource($namespace, $input['source'], $input['dialect']);
+    $from = $input['source'] === null ? null : constructSource($platform, $input['source'], $input['dialect']);
     foreach ($input['columns'] as [$expr, $name]) {
         $columns[] = new $column(constructOperand($namespace, $expr), new $identifier($name));
     }
@@ -136,6 +141,13 @@ function observeSource(object $source, string $dialect, string $namespace): arra
             'right' => observeSource($source->right, $dialect, $namespace),
             'on' => observePredicate($namespace, $source->on),
         ];
+    }
+
+    if ($source::class === $namespace . 'From\\DerivedSource') {
+        return ['derived' => observeSetQuery($namespace, $source->definition, $dialect)];
+    }
+    if ($source::class !== $namespace . 'TableSource') {
+        throw new RuntimeException('Unknown native table source role.');
     }
 
     return [
@@ -321,7 +333,7 @@ function constructUpdate(string $platform, array $input): SemanticsIR
     $statement = $namespace . 'Mutation\\Update';
     $assignment = $namespace . 'Mutation\\UpdateAssignment';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    $target = constructSource($namespace, $input['target'], $input['dialect']);
+    $target = constructSource($platform, $input['target'], $input['dialect']);
     $sets = [];
     foreach ($input['assignments'] as [$slot, $value]) {
         $sets[] = new $assignment(constructOperand($namespace, $slot), constructOperand($namespace, $value));
@@ -351,7 +363,7 @@ function constructInsert(string $platform, array $input): SemanticsIR
     $cellClass = $namespace . 'Mutation\\InsertCell';
     $integer = $namespace . 'IntegerLiteral';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    $target = constructSource($namespace, $input['target'], $input['dialect']);
+    $target = constructSource($platform, $input['target'], $input['dialect']);
     $rows = [];
     foreach ($input['rows'] as $entries) {
         $values = [];
@@ -384,7 +396,7 @@ function constructDelete(string $platform, array $input): SemanticsIR
     $delete = $namespace . 'Mutation\\Delete';
     $where = constructPredicate($namespace, $input['where']);
 
-    return new $delete(constructSource($namespace, $input['target'], $input['dialect']), $where, $release::from($input['release']));
+    return new $delete(constructSource($platform, $input['target'], $input['dialect']), $where, $release::from($input['release']));
 }
 
 function observePredicate(string $namespace, ?object $condition): ?array
