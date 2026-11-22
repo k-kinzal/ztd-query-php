@@ -81,6 +81,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Ir\Transaction\SavepointName;
@@ -310,7 +311,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|RenameTable|RenameColumn|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|DropView|CreateTable|CreateTableAs|CreateView|RenameTable|RenameColumn|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -608,6 +609,32 @@ function observeCreateTableAs(CreateTableAs $value): array
     ];
 }
 
+function directCreateView(array $input): CreateView
+{
+    return new CreateView(
+        new Identifier($input['schema']),
+        new Identifier($input['view']),
+        array_map(static fn (string $name): Identifier => new Identifier($name), $input['columns']),
+        directArm($input['query']),
+        $input['ifNotExists'],
+    );
+}
+
+function observeCreateView(CreateView $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'create-view',
+        'profile' => $value->profileId(),
+        'schema' => $value->schema->value,
+        'view' => $value->view->value,
+        'ifNotExists' => $value->ifNotExists,
+        'query' => observeArm($value->query),
+        'columns' => array_map(static fn (Identifier $name): string => $name->value, $value->columns),
+        'sql' => $value->toString(),
+    ];
+}
+
 function directTransaction(array $input): Transaction
 {
     $name = isset($input['nameHex']) ? hex2bin($input['nameHex']) : ($input['name'] ?? null);
@@ -712,6 +739,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'drop-view' => new DropView(new Identifier($input['schema']), new Identifier($input['view']), $input['ifExists']),
             ($input['operation'] ?? null) === 'create-table' => directCreateTable($input),
             ($input['operation'] ?? null) === 'create-as' => directCreateTableAs($input),
+            ($input['operation'] ?? null) === 'create-view' => directCreateView($input),
             ($input['operation'] ?? null) === 'transaction' => directTransaction($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
@@ -764,6 +792,9 @@ function runCase(array $input): array
     }
     if ($value instanceof CreateTable) {
         return observeCreateTable($value);
+    }
+    if ($value instanceof CreateView) {
+        return observeCreateView($value);
     }
     if ($value instanceof CreateTableAs) {
         return observeCreateTableAs($value);

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v15.json"
-CONTRACT = "789a24cdb0244ad41d8e731572bb1032281628fcdc42b2d041fbd7b9cff2e5be"
+CONTRACT_NAME = "release-layout-v16.json"
+CONTRACT = "9a19d64382e201dd7c4535142aca3d6f8cd7340aa4e527b3e279d7e5a4b535b3"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -225,6 +225,9 @@ def verify_probe(raw, catalog):
                     "installed-generated-column-mismatch", item)
             require(item.get("implicitCheck") == ["a", "==", False, " ", "", 1, "=", 0],
                     "installed-implicit-check-presentation-mismatch", item)
+        if item["role"] == "Schema\\View\\CreateView":
+            require(item.get("createView") == ["main", "view_result", ["column1"], ["main", "accounts"], False],
+                    "installed-view-definition-mismatch", item)
         if item["role"] == "Schema\\DropView":
             require(item.get("dropView") == ["main", "removable", True], "installed-view-removal-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameTable":

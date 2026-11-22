@@ -327,6 +327,14 @@ if ($dialect === 'sqlite') {
     $properties['Schema\\Alter\\RenameTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'destination' => ['Identifier']];
     $properties['Schema\\Alter\\RenameColumn'] = [...$properties['Schema\\Alter\\RenameTable'], 'column' => ['Identifier'], 'quoteReferences' => ['bool']];
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
+    $properties['Schema\\View\\CreateView'] = [
+        'schema' => ['Identifier'], 'view' => ['Identifier'], 'columns' => ['array'],
+        'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
+    ];
+    $methods['Schema\\View\\CreateView'] = $methods['Select'];
+    $roots[] = 'Schema\\View\\CreateView';
+    array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
+    $pureCollaborators[] = 'Schema\\View\\ViewQueryBounds';
     $roots[] = 'Schema\\Query\\CreateTableAs';
     array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
@@ -707,6 +715,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\Drop => (new \\' . $prefix . 'Schema\\DropRelationLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateTableAs => (new \\' . $prefix . 'Schema\\Query\\CreateTableAsLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameColumn, $statement instanceof \\' . $platform . '\\Statement\\Schema\\AlterRenameTable => (new \\' . $prefix . 'Schema\\Alter\\RenameLowering())->lower($operation, $statement),'
             . 'default => (new \\' . $prefix . 'Transaction\\TransactionLowering())->lower($statement), };';
     }
@@ -747,6 +756,16 @@ try {
             requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite rename binding source differs: $path");
         }
     }
+    if ($dialect === 'sqlite') {
+        $path = __DIR__ . '/sqlite-view-binding-sources-v1.json';
+        requireShape(hash_file('sha256', $path) === 'bc8238f90755008a1b6a683216c264e5181bf9541bf5976a9707cedc053babc6', 'SQLite view binding contract differs from its fixed revision');
+        $sources = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
+        foreach ($sources as $relative => $expected) {
+            $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $relative;
+            $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $relative;
+            requireShape(is_file($file) && hash_file('sha256', $file) === $expected, "SQLite view binding source differs: $relative");
+        }
+    }
     $checkedBindingSources = [];
     $binding = match ($dialect) {
         'sqlite' => ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
@@ -766,9 +785,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v26.json';
+    $storagePath = __DIR__ . '/value-storage-v27.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '3a2bc040b3940ae0867315d4d3ad372b6a2f2192b5c55e142dac5b032a8d4223',
+        hash_file('sha256', $storagePath) === '42e4617fb2a7893c885123ab2c3f9b1d25363926a4a0f6da4e6ec14b519b8ece',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -859,6 +878,7 @@ try {
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
+                'Schema\\View\\CreateViewLowering' => 'Schema\\View\\CreateView',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DeclaredDatatypeLowering' => 'Schema\\DeclaredDatatypeName',
                 'Expression\\Nulls\\CoalesceLowering' => 'Expression\\Nulls\\Coalesce',

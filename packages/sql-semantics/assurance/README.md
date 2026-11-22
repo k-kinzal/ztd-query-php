@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v23.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v24.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -563,6 +563,8 @@ The [implicit comparison CHECK contract](sqlite-implicit-checks-v1.json) observe
 The [SQLite joined local-source contract](sqlite-joined-local-source-v1.json) uses one immutable VALUES definition in either input position and in several occurrences of an explicit join. The independent observer checks the shared value identity, scoped operands, typed rows and parameter registration. It uses the same-named base table as a distinct source for comparison. Run `run_sqlite_joined_local_source.py` with the standard fixture arguments.
 
 The [SQLite generated-column contract](sqlite-generated-columns-v2.json) checks resolved dependencies across VIRTUAL and STORED columns, forward references and multiple parents. An independent evaluator predicts typed rows from ordinary inserts and updates, and the native fixture measures storage metadata, writable columns, constraint effects, marker registrations, rename and dependent-drop rejection. The fixture reads durable schema and rows after recovering a fixed inner savepoint. SQLite 3.47.2 can temporarily omit generated columns in a connection-local projection immediately after a failed DROP with a double-quoted reference. The raw diagnostic and the recovered state remain observable evidence. Run `run_sqlite_generated_columns.py` with the same SQLite fixture options.
+
+The [SQLite CREATE VIEW contract](sqlite-create-view-v1.json) checks view declarations with a projection or VALUES body. The native observation covers both schema catalogs, ordered column metadata, typed results, guarded declarations, and later reads after base-table changes. Run `run_sqlite_create_view.py` with the same fixture arguments.
 
 The [SQLite DROP VIEW contract](sqlite-drop-view-v1.json) verifies the selected view's schema under temp/main collisions. It compares owned-trigger removal, catalog membership, dependent reads and unchanged underlying data. The finite identities use both the actual IR and the verified catalog before removal. Run `run_sqlite_drop_view.py` with the same fixture arguments.
 

@@ -65,6 +65,7 @@ RELATED_SQLITE_DOMAINS = {
     "insert_cmd: INSERT orconf": ("sqlite-mutation-conflicts-v2.json",),
     "insert_cmd: REPLACE": ("sqlite-mutation-conflicts-v2.json", "sqlite-upsert-nothing-v1.json"),
     "upsert: ON CONFLICT DO NOTHING returning": ("sqlite-upsert-nothing-v1.json",),
+    "cmd: createkw temp VIEW ifnotexists nm dbnm eidlist_opt AS select": ("sqlite-create-view-v1.json",),
     "cmd: DROP VIEW ifexists fullname": ("sqlite-drop-view-v1.json",),
     "cmd: DROP TABLE ifexists fullname": ("sqlite-drop-table-v1.json",),
     "cmd: ALTER TABLE fullname RENAME TO nm": ("sqlite-rename-v4.json",),

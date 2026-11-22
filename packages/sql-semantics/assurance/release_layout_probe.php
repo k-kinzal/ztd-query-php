@@ -107,6 +107,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\DropView'] = 'DROP VIEW IF EXISTS main.removable';
         $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE CONSTRAINT "ref id" CHECK(id), UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
+        $queries['Schema\\View\\CreateView'] = 'CREATE VIEW view_result("true") AS SELECT id FROM accounts';
         $queries['Schema\\Alter\\RenameTable'] = "ALTER TABLE $table RENAME TO renamed";
         $queries['Schema\\Alter\\RenameColumn'] = "ALTER TABLE $table RENAME COLUMN ID TO renamed";
     } else {
@@ -242,6 +243,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 }
                 $details['generatedColumns'][] = [$slot, $rule->mode->value, $rule->expression->slot];
             }
+        }
+        if ($role === 'Schema\\View\\CreateView') {
+            $shadow = $semantics->context(['CREATE TABLE main.accounts (id INTEGER)', 'CREATE TEMP TABLE accounts (id TEXT)'], true);
+            $view = $semantics->analyze($sql, $shadow);
+            if ($view::class !== $namespace . 'Ir\\Schema\\View\\CreateView' || $view->query::class !== $namespace . 'Ir\\Select'
+                || $view->query->source === null || $view->query->source::class !== $namespace . 'Ir\\TableSource') {
+                throw new RuntimeException('Installed SQLite view lost the checked definition and external table occurrence.');
+            }
+            $details['createView'] = [$view->schema->value, $view->view->value, array_column($view->columns, 'value'),
+                [$view->query->source->schema->value, $view->query->source->table->value], $view->ifNotExists];
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];

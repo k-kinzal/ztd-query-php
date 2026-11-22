@@ -36,9 +36,10 @@ final class ExpressionScope
      * @param list<int> $widths The number of slots per occurrence
      * @param list<ScopedExpression> $pending The expressions with height and scope width
      * @param bool $allowLiveParameters Whether the owner accepts parameters that are evaluated
+     * @param bool $allowRegistrations Whether the owner accepts inert parameter registrations
      * @return list<ColumnReference> The checked occurrences in the expanded operand graph
      */
-    public function check(array $widths, array $pending, bool $allowLiveParameters = true): array
+    public function check(array $widths, array $pending, bool $allowLiveParameters = true, bool $allowRegistrations = true): array
     {
         $references = [];
         $nodes = 0;
@@ -55,7 +56,7 @@ final class ExpressionScope
             }
             match (true) {
                 $expression instanceof ColumnReference => $references[] = $this->checkReference($expression, $widths, $visibility),
-                $expression instanceof Parameter => $payloadBytes += $this->parameterBytes($expression, $allowLiveParameters, isset($frame[3])),
+                $expression instanceof Parameter => $payloadBytes += $this->parameterBytes($expression, $allowLiveParameters, isset($frame[3]), $allowRegistrations),
                 $expression instanceof CastExpression, $expression instanceof CollatedExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression
                     => $pending[] = [$expression->operand, $height + 1, $visibility],
                 $expression instanceof BetweenTest => array_push(
@@ -80,9 +81,9 @@ final class ExpressionScope
     /**
      * Checks the marker's role and counts its SQL payload.
      */
-    public function parameterBytes(Parameter $parameter, bool $allowLiveParameters, bool $registration): int
+    public function parameterBytes(Parameter $parameter, bool $allowLiveParameters, bool $registration, bool $allowRegistrations = true): int
     {
-        Check::input($allowLiveParameters || $registration, 'A schema expression cannot contain a parameter.');
+        Check::input($allowLiveParameters || ($allowRegistrations && $registration), 'A schema expression cannot contain a parameter.');
 
         return strlen($parameter->label);
     }

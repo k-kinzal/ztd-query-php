@@ -27,7 +27,7 @@ SQLITE = {
     "sqlite-update-returning-v1.json", "sqlite-insert-returning-v1.json", "sqlite-numeric-operators-v1.json", "sqlite-unary-v1.json",
     "sqlite-truth-v2.json", "sqlite-between-v1.json", "sqlite-membership-v1.json", "sqlite-folded-membership-v1.json", "sqlite-collation-v1.json", "sqlite-concatenation-v1.json",
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v3.json", "sqlite-create-as-v5.json", "sqlite-strict-tables-v2.json", "sqlite-primary-keys-v2.json", "sqlite-auto-rowid-v1.json", "sqlite-unique-keys-v1.json", "sqlite-named-checks-v4.json", "sqlite-folded-checks-v1.json", "sqlite-implicit-checks-v1.json", "sqlite-generated-columns-v2.json", "sqlite-rename-v4.json", "sqlite-delete-v1.json",
-    "sqlite-drop-table-v1.json", "sqlite-drop-view-v1.json", "sqlite-insert-v1.json", "sqlite-local-source-v2.json", "sqlite-joined-local-source-v1.json",
+    "sqlite-drop-table-v1.json", "sqlite-drop-view-v1.json", "sqlite-create-view-v1.json", "sqlite-insert-v1.json", "sqlite-local-source-v2.json", "sqlite-joined-local-source-v1.json",
     "sqlite-recursive-source-v1.json", "sqlite-relational-v1.json", "sqlite-result-v1.json", "sqlite-scalars-v2.json",
     "wildcard-projection-v2.json", "sqlite-grouped-v2.json", "sqlite-insert-query-v1.json", "sqlite-insert-input-v2.json",
     "sqlite-transaction-v1.json", "sqlite-update-v1.json", "sqlite-values-v1.json",

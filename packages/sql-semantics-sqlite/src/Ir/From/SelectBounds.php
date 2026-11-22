@@ -50,6 +50,7 @@ final class SelectBounds
      * @param TableSource|LocalSource|null $source The first input
      * @param list<Join> $joins The remaining inputs
      * @param list<Order> $orderBy The output ordering
+     * @param bool $allowParameters Whether the owner accepts parameter registrations
      */
     public function check(
         array $results,
@@ -58,6 +59,7 @@ final class SelectBounds
         Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         array $orderBy = [],
         ?Limit $limit = null,
+        bool $allowParameters = true,
     ): void {
         Check::input(count($results) <= 2000, 'A SELECT can have at most 2000 result columns in this profile.');
         Check::input(count($joins) < 64 && ($joins === [] || $source !== null), 'Joins require a first table and at most 64 inputs.');
@@ -93,6 +95,6 @@ final class SelectBounds
             }
         }
 
-        (new ExpressionScope())->check($widths, $pending);
+        (new ExpressionScope())->check($widths, $pending, $allowParameters, $allowParameters);
     }
 }
