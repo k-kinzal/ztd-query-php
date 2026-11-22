@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join as ParsedJoin;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind as ParsedKind;
@@ -134,5 +135,13 @@ final class JoinBinding
         Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
 
         return new Join($kind, $left, $right, $on);
+    }
+
+    /**
+     * Reads the resolved scalar type for this analysis occurrence.
+     */
+    public function typeOf(Scalar $expression): TypeFact
+    {
+        return $this->operation->facts->scalar($expression)->type;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
@@ -59,7 +60,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
@@ -77,11 +78,37 @@ final class SelectSql
 
         return match (true) {
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
+            $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits the ordered decisions and one optional fallback in the resolved int4 domain.
+     */
+    public function integerCase(IntegerCase $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $sql = '(CASE';
+        foreach ($expression->arms as $arm) {
+            $sql .= ' WHEN ' . $this->predicate($arm->condition, $source, $offset, $qualify)
+                . ' THEN ' . $this->caseResult($arm->result, $source, $offset, $qualify);
+        }
+        if ($expression->otherwise !== null) {
+            $sql .= ' ELSE ' . $this->caseResult($expression->otherwise, $source, $offset, $qualify);
+        }
+
+        return $sql . ' END)';
+    }
+
+    /**
+     * Emits a value with the type required by an int4 CASE result position.
+     */
+    public function caseResult(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $value, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        return $value instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.int4)' : $this->expression($value, $source, $offset, $qualify);
     }
 
     /**

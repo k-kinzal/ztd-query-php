@@ -33,6 +33,7 @@ function constructOperand(string $namespace, array $data): object
         'null' => 'NullLiteral',
         'slot' => 'ColumnReference',
         'operation' => 'Arithmetic',
+        'int4-case' => 'Expression\\IntegerCase',
     };
     $operator = $namespace . 'ArithmeticOperator';
 
@@ -45,6 +46,14 @@ function constructOperand(string $namespace, array $data): object
             $operator::from($data[1]),
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
+        ),
+        'int4-case' => new $type(
+            array_map(static function (array $branch) use ($namespace): object {
+                $arm = $namespace . 'Expression\\IntegerCaseArm';
+
+                return new $arm(constructPredicate($namespace, $branch[0]), constructOperand($namespace, $branch[1]));
+            }, $data[1]),
+            $data[2] === null ? null : constructOperand($namespace, $data[2]),
         ),
     };
 }
@@ -63,6 +72,9 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
+        $namespace . 'Expression\\IntegerCase' => ['int4-case',
+            array_map(static fn ($arm) => [observePredicate($namespace, $arm->condition), observeOperand($namespace, $arm->result)], $value->arms),
+            $value->otherwise === null ? null : observeOperand($namespace, $value->otherwise)],
     };
 }
 

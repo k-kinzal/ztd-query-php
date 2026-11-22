@@ -9,8 +9,10 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(SourceBinding::class)]
@@ -45,6 +47,19 @@ final class SourceBindingTest extends TestCase
         $operation = (new Inspection())->inspect('SELECT 1');
 
         self::assertNull((new SourceBinding($operation->binding(), null))->relation());
+    }
+
+    public function testTypeOfKeepsTheResolvedResultDomain(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT CASE WHEN TRUE THEN 2 ELSE NULL END');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $target = $operation->statement->targets[0];
+        self::assertInstanceOf(ExpressionTarget::class, $target);
+
+        $type = (new SourceBinding($operation->binding(), null))->typeOf($target->expression);
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertSame(Builtin::Int4, $type->descriptor);
     }
 
     public function testWriteTargetUsesTheDeclaredColumnSpellingAndOrder(): void

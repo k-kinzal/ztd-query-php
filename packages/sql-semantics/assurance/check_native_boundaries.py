@@ -68,7 +68,9 @@ def faults(engine):
         Fault("ignore-query-insert-width", "Mutation/InsertQuery::__construct",
               "count($query->columns) === $width,", "true,"),
         Fault("allow-foreign-query-insert-field", "Mutation/InsertQuery::__construct",
-              "$value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,", "true,"),
+              "$value instanceof ColumnReference || $value instanceof Arithmetic || "
+              + ("$value instanceof IntegerCase || " if engine == "postgres" else "")
+              + "$value instanceof IntegerLiteral || $value instanceof NullLiteral,", "true,"),
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct", "isset($target->columns[$slot]),", "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
@@ -94,6 +96,12 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
+        shared.append(Fault("allow-excessive-int4-case-arms", "Expression/IntegerCase::__construct",
+                            "count($arms) <= 32,", "true,"))
+        shared.append(Fault("ignore-case-condition-scope", "SelectBounds::check",
+                            "$nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);", ""))
+        shared.append(Fault("ignore-case-result-scope", "SelectBounds::check",
+                            "$pending[] = [$arm->result, $height + 1];", ""))
         shared.append(Fault("allow-foreign-int4-operator", "ExpressionLowering::binary",
                             "($qualifiers === [] && $catalogFirst) || $qualifiers === ['pg_catalog'],", "true,"))
         shared.append(Fault("ignore-wildcard-occurrence-ambiguity", "From/JoinBinding::resolved", "$expanded === null,", "true,"))
@@ -170,7 +178,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v18.json", "value-primitives.json")},
+                       "native-boundaries-v14.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v19.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

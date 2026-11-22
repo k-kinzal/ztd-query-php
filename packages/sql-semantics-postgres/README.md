@@ -14,6 +14,6 @@ $ir = $semantics->analyze('SELECT id, accounts.id FROM public.accounts', $contex
 echo $ir->toString();
 ```
 
-The checked complete domain covers signed integer projections. Built-in integer operators are emitted with their pg_catalog identity. The profile includes the schema search path.
+The checked complete domain covers signed integer projections, including searched CASE expressions whose result resolves to int4. Built-in integer operators are emitted with their pg_catalog identity. The profile includes the schema search path.
 
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

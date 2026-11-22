@@ -216,6 +216,8 @@ Run `run_server_mysql_signed_quotient.py` on the nine pinned MySQL releases. Rep
 
 The [int4 operator record](postgres-int4-operators-v1.json) checks ordered int4 operands, type and result values, SQLSTATE 22012 for a zero divisor and SQLSTATE 22003 for division overflow. Each evaluation outcome is checked against the independent rules for its exact operands. The fixture sets a distinguishing search path with an identically named division operator and measures both operation identities. Run `run_server_postgres_int4.py` for both pinned PostgreSQL releases. Replay the exact reports with `combine_server_postgres_int4_evidence.py`.
 
+The [searched int4 CASE record](postgres-int4-case-v1.json) exhausts the ordered one- and two-arm finite domain and explores nested, repeated and nullable branches. The fixture compares exact int4 metadata, scoped reads and row-dependent guarded arithmetic. Run `run_server_postgres_int4_case.py` for both pinned PostgreSQL releases. Replay the reports with `combine_server_postgres_int4_case_evidence.py`.
+
 ## Native grouped projections
 
 The [grouped projection record](server-grouped-v3.json) defines signed input slots, COUNT, SUM, MIN and MAX, argument duplicate policy and ordered grouping fields. Its oracle partitions the fixture by declared key tuples, computes typed aggregate outputs and exercises both keyed and global queries over empty inputs. The comparator preserves exact decimal text and native metadata. On PostgreSQL the observer supplies a competing `count(int4)` and measures the distinct results of qualified and unqualified calls.

@@ -25,8 +25,8 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
             ] : []),
-            ['native-boundaries-v13.json', '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3'],
-            ['native-insert-query-boundaries-v2.json', '527e7d1284a409e72b022a14f1280ee2d7ed1cc738b47b5d61df3a72e9cc8ee2'],
+            ['native-boundaries-v14.json', '5a5b4c9a9574dbb3b9a1496e83609af4424272fcbd00d2e37a77eba8099a33ef'],
+            ['native-insert-query-boundaries-v3.json', '60ebb905f691b9fd60b7d3df7e46895e0742d074e883a7431025c0f35137a129'],
         ],
     };
     $rules = [];
@@ -76,6 +76,13 @@ function checkNativeBoundaries(
     } else {
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
+            foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Predicate\\PredicateLowering',
+                'Statement\\Expression\\Cast', 'Statement\\Literal\\NullLiteral as ParsedNull', 'Statement\\Expression\\BinaryOperation as ParsedComparison',
+                'Statement\\Expression\\Operator\\BooleanOperation as ParsedLogical', 'Statement\\Expression\\Operator\\BooleanOperator',
+                'Statement\\Expression\\Operator\\Negation as ParsedNot', 'Statement\\Expression\\Predicate\\NullTest as ParsedNullTest',
+                'Model\\Statement\\Type\\Known', 'Statement\\Type\\Descriptor\\Builtin', 'Ir\\Rows\\Compound', 'Ir\\Rows\\ResultKind'] as $name) {
+                $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
+            }
         }
         $imports .= 'use ' . $platform . '\\Ir\\Binding\\Parameter;' . "\n";
     }

@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedCo
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\TypeFact;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
@@ -156,5 +157,13 @@ final class SourceBinding
         Check::input(!$column->generated && !$column->identity && $column->type === Builtin::Int4, 'A write column must be a writable signed 32-bit integer.');
 
         return $column;
+    }
+
+    /**
+     * Reads the resolved scalar type for this analysis occurrence.
+     */
+    public function typeOf(Scalar $expression): TypeFact
+    {
+        return $this->operation->facts->scalar($expression)->type;
     }
 }

@@ -7,6 +7,9 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
@@ -51,6 +54,24 @@ final class SelectSqlTest extends TestCase
     public function testPredicateEmitsNullInItsOwnRole(): void
     {
         self::assertSame('NULL', (new SelectSql())->predicate(new NullLiteral(), null));
+    }
+
+    public function testIntegerCaseKeepsArmOrderAndAbsentElse(): void
+    {
+        $value = new IntegerCase([
+            new IntegerCaseArm(new BooleanLiteral(true), new NullLiteral()),
+            new IntegerCaseArm(new BooleanLiteral(false), new IntegerLiteral('2')),
+        ]);
+
+        self::assertSame(
+            '(CASE WHEN TRUE THEN CAST(NULL AS pg_catalog.int4) WHEN FALSE THEN CAST(2 AS pg_catalog.int4) END)',
+            (new SelectSql())->integerCase($value, null, 0, true)
+        );
+    }
+
+    public function testCaseResultTypesExplicitNull(): void
+    {
+        self::assertSame('CAST(NULL AS pg_catalog.int4)', (new SelectSql())->caseResult(new NullLiteral(), null, 0, true));
     }
     public function testLocalColumnNamesTheResultOrdinal(): void
     {

@@ -137,7 +137,7 @@ class Evidence:
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
-            single_engine = {"postgres_int4": "postgres", "mysql_signed_quotient": "mysql"}.get(domain)
+            single_engine = {"postgres_int4": "postgres", "postgres_int4_case": "postgres", "mysql_signed_quotient": "mysql"}.get(domain)
             if single_engine:
                 registered = {single_engine: registered[single_engine]}
             unavailable = {}

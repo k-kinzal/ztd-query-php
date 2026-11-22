@@ -4,6 +4,8 @@ import itertools
 import json
 import random
 
+from server_truth_model import predicate_value
+
 ATOMS = [["integer", "-2"], ["integer", "0"], ["integer", "3"]]
 REFERENCES = [["slot", 0], ["slot", 1]]
 OTHER_LEAVES = [["boolean", False], ["boolean", True], ["null"]]
@@ -109,6 +111,12 @@ def evaluate(operand, row, dialect, release=None):
         return operand[1] if dialect == "postgres" else int(operand[1])
     if tag == "null":
         return None
+    if tag == "int4-case":
+        _, arms, otherwise = operand
+        for condition, result in arms:
+            if predicate_value(condition, lambda value: evaluate(value, row, dialect, release)) is True:
+                return evaluate(result, row, dialect, release)
+        return None if otherwise is None else evaluate(otherwise, row, dialect, release)
     assert tag == "operation"
     left, right = [evaluate(child, row, dialect, release) for child in operand[2:]]
     if left is None or right is None:

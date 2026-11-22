@@ -131,6 +131,11 @@ def inventory(root):
                 "a_expr: a_expr / a_expr", "a_expr: a_expr % a_expr", "a_expr: a_expr qual_Op a_expr",
                 "b_expr: b_expr / b_expr", "b_expr: b_expr % b_expr", "b_expr: b_expr qual_Op b_expr",
             )})
+            related.update({alternative: ("postgres-int4-case-v1.json",) for alternative in (
+                "c_expr: case_expr", "case_expr: CASE case_arg when_clause_list case_default END_P",
+                "when_clause_list: when_clause", "when_clause_list: when_clause_list when_clause",
+                "when_clause: WHEN a_expr THEN a_expr", "case_default: ELSE a_expr", "case_default:", "case_arg:",
+            )})
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

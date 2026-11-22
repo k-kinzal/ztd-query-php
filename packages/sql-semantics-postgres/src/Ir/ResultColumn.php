@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -23,7 +24,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression,
+        public readonly Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression,
         public readonly Identifier $name,
     ) {
     }

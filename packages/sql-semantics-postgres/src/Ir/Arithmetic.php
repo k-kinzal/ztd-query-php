@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
@@ -24,8 +25,8 @@ final class Arithmetic
      */
     public function __construct(
         public readonly ArithmeticOperator $operator,
-        public readonly self|ColumnReference|IntegerLiteral $left,
-        public readonly self|ColumnReference|IntegerLiteral $right,
+        public readonly self|ColumnReference|IntegerCase|IntegerLiteral $left,
+        public readonly self|ColumnReference|IntegerCase|IntegerLiteral $right,
     ) {
     }
 }

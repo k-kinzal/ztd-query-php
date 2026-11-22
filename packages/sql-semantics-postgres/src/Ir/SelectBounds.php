@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -41,6 +42,16 @@ final class SelectBounds
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
                 Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
+                if ($expression instanceof IntegerCase) {
+                    foreach ($expression->arms as $arm) {
+                        $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);
+                        $pending[] = [$arm->result, $height + 1];
+                    }
+                    if ($expression->otherwise !== null) {
+                        $pending[] = [$expression->otherwise, $height + 1];
+                    }
+                    continue;
+                }
                 match (true) {
                     $expression instanceof ColumnReference => Check::input(
                         $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),

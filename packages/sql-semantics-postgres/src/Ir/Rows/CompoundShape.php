@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
@@ -63,7 +64,7 @@ final class CompoundShape
         return match (true) {
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral => ResultKind::Boolean,
-            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,
+            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,
         };
     }
 
