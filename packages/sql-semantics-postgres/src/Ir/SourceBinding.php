@@ -85,6 +85,14 @@ final class SourceBinding
     }
 
     /**
+     * Identifies the analysis occurrence that this binding owns.
+     */
+    public function relation(): ?Relation
+    {
+        return $this->source;
+    }
+
+    /**
      * Exports the absolute external identity and consumed column names.
      */
     public function source(): ?TableSource

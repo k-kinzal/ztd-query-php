@@ -36,7 +36,8 @@ function constructOperand(string $namespace, array $data): object
     $operator = $namespace . 'ArithmeticOperator';
 
     return match ($data[0]) {
-        'integer', 'boolean', 'slot' => new $type($data[1]),
+        'integer', 'boolean' => new $type($data[1]),
+        'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
             $operator::from($data[1]),
@@ -52,7 +53,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],
-        $namespace . 'ColumnReference' => ['slot', $value->slot],
+        $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
     };
@@ -60,6 +61,17 @@ function observeOperand(string $namespace, object $value): array
 
 function constructSource(string $namespace, array $source, string $dialect): object
 {
+    if (isset($source['kind'])) {
+        $join = $namespace . 'From\\Join';
+        $kind = $namespace . 'From\\JoinKind';
+
+        return new $join(
+            $kind::from($source['kind']),
+            constructSource($namespace, $source['left'], $dialect),
+            constructSource($namespace, $source['right'], $dialect),
+            constructPredicate($namespace, $source['on']),
+        );
+    }
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'TableSource';
 
@@ -83,7 +95,7 @@ function constructSelect(string $platform, array $input): SemanticsIR
         $columns[] = new $column(constructOperand($namespace, $expr), new $identifier($name));
     }
 
-    return new $select($columns ?? [], $from, $release::from($input['release']));
+    return new $select($columns ?? [], $from, $release::from($input['release']), constructPredicate($namespace, $input['where'] ?? null));
 }
 
 function analyzeStatement(string $platform, array $input): SemanticsIR
@@ -93,8 +105,17 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
 }
 
-function observeSource(object $source, string $dialect): array
+function observeSource(object $source, string $dialect, string $namespace): array
 {
+    if ($source::class === $namespace . 'From\\Join') {
+        return [
+            'kind' => $source->kind->value,
+            'left' => observeSource($source->left, $dialect, $namespace),
+            'right' => observeSource($source->right, $dialect, $namespace),
+            'on' => observePredicate($namespace, $source->on),
+        ];
+    }
+
     return [
         'schema' => $source->schema->value,
         'table' => $source->table->value,
@@ -103,15 +124,11 @@ function observeSource(object $source, string $dialect): array
     ];
 }
 
-function constructDelete(string $platform, array $input): SemanticsIR
+function constructPredicate(string $namespace, ?array $test): ?object
 {
-    $namespace = $platform . 'Ir\\';
-    $release = $platform . 'Model\\Contract\\GrammarRelease';
-    $delete = $namespace . 'Mutation\\Delete';
     $comparison = $namespace . 'Predicate\\IntegerComparison';
     $operator = $namespace . 'Predicate\\IntegerOperator';
-    $test = $input['where'];
-    $where = match (true) {
+    return match (true) {
         $test === null => null,
         $test[0] === 'comparison' => new $comparison(
             $operator::from($test[1]),
@@ -120,24 +137,35 @@ function constructDelete(string $platform, array $input): SemanticsIR
         ),
         default => constructOperand($namespace, $test),
     };
+}
+
+function constructDelete(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $delete = $namespace . 'Mutation\\Delete';
+    $where = constructPredicate($namespace, $input['where']);
 
     return new $delete(constructSource($namespace, $input['target'], $input['dialect']), $where, $release::from($input['release']));
 }
 
-function observeDelete(string $namespace, object $value, string $dialect): array
+function observePredicate(string $namespace, ?object $condition): ?array
 {
-    $where = $value->where;
-    if ($where === null) {
-        $test = null;
-    } elseif ($where::class === $namespace . 'Predicate\\IntegerComparison') {
-        $test = ['comparison', $where->operator->value, observeOperand($namespace, $where->left), observeOperand($namespace, $where->right)];
-    } else {
-        $test = observeOperand($namespace, $where);
+    if ($condition === null) {
+        return null;
+    }
+    if ($condition::class === $namespace . 'Predicate\\IntegerComparison') {
+        return ['comparison', $condition->operator->value, observeOperand($namespace, $condition->left), observeOperand($namespace, $condition->right)];
     }
 
+    return observeOperand($namespace, $condition);
+}
+
+function observeDelete(string $namespace, object $value, string $dialect): array
+{
     return [
         'status' => 'constructed', 'profile' => $value->profileId(),
-        'target' => observeSource($value->target, $dialect), 'where' => $test, 'sql' => $value->toString(),
+        'target' => observeSource($value->target, $dialect, $namespace), 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
     ];
 }
 
@@ -166,7 +194,8 @@ function observeStatement(array $input): array
         'status' => 'constructed',
         'profile' => $value->profileId(),
         'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
-        'source' => $source === null ? null : observeSource($source, $input['dialect']),
+        'source' => $source === null ? null : observeSource($source, $input['dialect'], $namespace),
+        'where' => observePredicate($namespace, $value->where),
         'sql' => $value->toString(),
     ];
 }

@@ -37,7 +37,7 @@ final class Delete implements SemanticsIR
     ) {
         if ($where instanceof IntegerComparison) {
             foreach ([$where->left, $where->right] as $operand) {
-                Check::input(!$operand instanceof ColumnReference || isset($target->columns[$operand->slot]), 'A DELETE predicate slot must belong to its target.');
+                Check::input(!$operand instanceof ColumnReference || ($operand->occurrence === 0 && isset($target->columns[$operand->slot])), 'A DELETE predicate slot must belong to its target.');
             }
         }
     }

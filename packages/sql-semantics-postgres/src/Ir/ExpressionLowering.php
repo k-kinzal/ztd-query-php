@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
@@ -31,7 +32,7 @@ final class ExpressionLowering
      */
     public function lower(
         Scalar $expression,
-        SourceBinding $binding,
+        SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
     ): Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral {
         while ($expression instanceof Grouped) {

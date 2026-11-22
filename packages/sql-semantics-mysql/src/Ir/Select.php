@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\Join;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A complete MySQL projection over zero or one external table.
+ * A complete MySQL projection over an optional external source or joined source tree.
  *
  * @visibility public
  * @example Constructing a projection directly
@@ -30,16 +32,17 @@ final class Select implements SemanticsIR
      * Establishes the list and scope conditions before publication.
      *
      * @param non-empty-list<ResultColumn> $columns The ordered result columns
-     * @param TableSource|null $source The external input slots
+     * @param TableSource|Join|null $source The resolved input occurrences
      * @param GrammarRelease $release The selected MySQL release
      */
     public function __construct(
         array $columns,
-        public readonly ?TableSource $source = null,
+        public readonly TableSource|Join|null $source = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
+        public readonly BooleanLiteral|IntegerComparison|NullLiteral|null $where = null,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
-        (new SelectBounds())->check($results, $source);
+        (new SelectBounds())->check($results, $source, $where);
         $this->columns = $results;
     }
 

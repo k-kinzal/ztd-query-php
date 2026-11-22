@@ -8,7 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * A reference to a zero-based column slot of the SELECT's sole source.
+ * A reference to a zero-based slot within a visible table occurrence.
  *
  * @visibility public
  * @example Referring to the first source column
@@ -19,10 +19,11 @@ final class ColumnReference
     use Snapshot;
 
     /**
-     * Identifies a nonnegative position in a SELECT source.
+     * Identifies a nonnegative column and occurrence position in a source.
      */
-    public function __construct(public readonly int $slot)
+    public function __construct(public readonly int $slot, public readonly int $occurrence = 0)
     {
         Check::input($slot >= 0, 'A column slot must be nonnegative.');
+        Check::input($occurrence >= 0, 'A table occurrence must be nonnegative.');
     }
 }

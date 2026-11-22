@@ -96,7 +96,13 @@ To join the independent evidence from all native server releases, run `combine_s
 
 The [native DELETE contract](server-delete-v1.json) covers single-target removal on the same pinned releases and profiles. Its observer runs one checked statement against disposable parent, descendant and control tables. It compares the affected-row count, remaining rows, deletion log and restored state. PostgreSQL observations distinguish ONLY from deletion through an inheritance hierarchy. The oracle models predicates independently of the emitted SQL and preserves typed NULLs and duplicate rows.
 
-Run `run_server_delete.py` with the same native fixture environment and `--candidate`, `--tool-autoload`, `--engine`, `--release` and `--out` as the projection runner. The observer requires a disposable `ir_fixture` database. The manual release matrix runs both domains. Combine the per-release DELETE `index.json` paths using `combine_server_delete_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out delete-matrix.json`. The collector replays the state comparisons and verifies the recorded fault results for the tested distribution.
+Run `run_server_delete.py` with the same native fixture environment and `--candidate`, `--tool-autoload`, `--engine`, `--release` and `--out` as the projection runner. The observer requires a disposable `ir_fixture` database. The manual release matrix runs DELETE alongside the projection and join domains. Combine the per-release DELETE `index.json` paths using `combine_server_delete_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out delete-matrix.json`. The collector replays the state comparisons and verifies the recorded fault results for the tested distribution.
+
+## Native joined projections
+
+The [native join contract](server-join-v1.json) checks a binary tree of ordinary table occurrences, Boolean and signed-integer predicates, and WHERE. MySQL and PostgreSQL cases exercise both nesting directions and self joins. PostgreSQL cases distinguish inherited scans from ONLY and compare cross-side integer equality in FULL joins. The reference evaluator computes scoped row products, unmatched-row extension, filtering and typed projection. Observations retain ordered result metadata and a bag of rows with duplicates and NULL.
+
+Run `run_server_join.py` with the native fixture environment and the same arguments as the DELETE runner. The join matrix preserves each release's request transcript and the observed SQL for three output mutations. It permits no case exclusions. Use `combine_server_join_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out join-matrix.json` followed by each release's `index.json` to replay and verify the complete release set.
 
 ## SQLite joins, filters and ordering
 

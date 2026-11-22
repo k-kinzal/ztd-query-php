@@ -1,6 +1,6 @@
 # Complete SemanticsIR values
 
-`SqlSemantics\SemanticsIR` and `SqlSemantics\Analyzer` are shared interfaces. The database package supplies the operation classes, operand types, scope checks, and SQL representation. All three database packages provide checked projections. SQLite also supports a chain of joined base-table occurrences. Each implementation fixes its own language profile and operand roles.
+`SqlSemantics\SemanticsIR` and `SqlSemantics\Analyzer` are shared interfaces. The database package supplies the operation classes, operand types, scope checks, and SQL representation. All three database packages provide checked projections. Each package supports joined base-table occurrences in its checked projection domain. Each implementation fixes its own language profile and operand roles.
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -50,11 +50,12 @@ Use `Semantics::context()` to provide a catalog of relation definitions for name
 
 Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for the target release. Their database-owned `Ir` namespaces provide direct construction with the same invariant checks.
 
-- The projection supports one ordinary base-table input, explicit result expressions, signed 32-bit integer literals and column slots, truth values, NULL, and signed addition, subtraction and multiplication. Truth values and literal NULL occupy result positions. Signed arithmetic takes integer expressions.
+- The projection supports zero or one ordinary base-table input or a binary tree of such inputs. It supports explicit result expressions, signed 32-bit integer literals and column slots, truth values, NULL, and signed addition, subtraction and multiplication. Truth values and literal NULL occupy result positions. Signed arithmetic takes integer expressions.
+- CROSS, INNER, LEFT and RIGHT joins preserve operand grouping and scopes. PostgreSQL also supports FULL joins with signed integer equality between opposite inputs. ON sees the leaves of that specific join. WHERE sees the full source and keeps only true rows. Expressions refer to each occurrence by its ordinal and local column slot, including both sides of a self join.
 - MySQL records the named database and uses the native default lexical settings, UTF-8 through `utf8mb4`, `lower_case_table_names=0`, and empty `sql_mode`. An unqualified table requires a declaration context with a named current database. MySQL reports signed INT table values, integer arithmetic, and the NULL result with their native result types.
 - PostgreSQL binds integer slots to `int4` declarations, preserves `ONLY`, and emits `pg_catalog`-qualified integer operators. Unqualified input operators require `pg_catalog` ahead of user schemas in the relevant search path. An explicitly qualified builtin operator can supply its identity directly.
 - Top-level DELETE supports one resolved ordinary target and an optional Boolean, NULL or signed-integer comparison filter. PostgreSQL preserves ONLY and includes descendant tables when ONLY is absent. The IR records the target and the filter slots. The database applies deletion and triggers when the SQL runs.
-- Parameterized server projections, joins, projection filters, additional query clauses, other DML, DDL and transaction effects remain open in the complete domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
+- Parameters, additional relation and predicate forms, grouping, ordering, row bounds, other DML, DDL and transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
 
 ## Construction and evidence
 
@@ -67,4 +68,4 @@ Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for th
 | P05 | Every published property is readonly. The operand types and list element classes are closed. `Snapshot` blocks cloning, dynamic properties and PHP serialization and restoration. |
 | P06 | The emitter visits every expression alternative, writes grouping explicitly, quotes identifiers, and emits a result name for every projection. Independent execution checks the observations on SQLite 3.47.2 within the recorded domain. |
 
-The table applies to the checked projection roles. The SQLite [relational evidence record](../assurance/sqlite-relational-v1.json) adds checked join, predicate and ordering roles. The [result selection record](../assurance/sqlite-result-v1.json) covers duplicate equivalence, limit and offset composition, and allowed results when bounds cut through a tie. The server projection record specifies the additional MySQL and PostgreSQL conditions and observations. The full scope and status of the remaining obligations are recorded in the [contract ledger](../assurance/contract-v1.json) and the [evidence guide](../assurance/README.md).
+The table applies to the checked projection roles. The SQLite [relational evidence record](../assurance/sqlite-relational-v1.json) adds checked join, predicate and ordering roles. The [result selection record](../assurance/sqlite-result-v1.json) covers duplicate equivalence, limit and offset composition, and allowed results when bounds cut through a tie. The [server projection record](../assurance/server-projection-v1.json) and [server join record](../assurance/server-join-v1.json) specify the native conditions and observations. The full scope and status of the remaining obligations are recorded in the [contract ledger](../assurance/contract-v1.json) and the [evidence guide](../assurance/README.md).

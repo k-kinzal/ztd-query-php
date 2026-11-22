@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -12,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget as ParsedC
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
- * Resolves the supported SELECT projection and constructs its complete value.
+ * Resolves the supported SELECT and constructs its complete value.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
@@ -29,15 +31,17 @@ final class SelectLowering
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
         Check::input(
-            $statement->where === null && $statement->groupBy === [] && $statement->having === null
+            $statement->groupBy === [] && $statement->having === null
                 && $statement->windows === [] && $statement->distinct === null && $statement->into === null && $statement->options === null,
-            'Complete PostgreSQL IR currently supports unfiltered, unordered bag projections.',
+            'Complete PostgreSQL IR currently supports unordered bag projections.',
         );
         Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');
-        $binding = new SourceBinding($operation, $statement->from);
         $expressions = new ExpressionLowering();
         $searchPath = $operation->context->searchPath;
         $operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;
+        $catalogFirst = $operators === 'pg_catalog';
+        $binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);
+        $where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);
         $fields = $operation->facts->output?->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
@@ -45,9 +49,9 @@ final class SelectLowering
             Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
             $name = $fields->at($index)->name;
             Check::input($name !== null, 'The result must have a resolved name.');
-            $results[] = new ResultColumn($expressions->lower($column->expression, $binding, $operators === 'pg_catalog'), new Identifier($name->value));
+            $results[] = new ResultColumn($expressions->lower($column->expression, $binding, $catalogFirst), new Identifier($name->value));
         }
 
-        return new Select($results, $binding->source(), $profile->grammar);
+        return new Select($results, $binding->source(), $profile->grammar, $where);
     }
 }

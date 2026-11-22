@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -14,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression as ParsedColumn
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 
 /**
- * Resolves the supported SELECT projection and constructs its complete value.
+ * Resolves the supported SELECT and constructs its complete value.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -32,15 +34,16 @@ final class SelectLowering
         $statement = $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');
         Check::input(
-            $statement->where === null && $statement->groupBy === null && $statement->having === null
+            $statement->groupBy === null && $statement->having === null
                 && $statement->windows === [] && $statement->qualify === null && $statement->orderBy === []
                 && $statement->limit === null && $statement->procedure === null && $statement->locking === []
                 && $statement->into === null && $statement->late === null
                 && ($statement->options === [] || $statement->options === [SelectOption::All]),
-            'Complete MySQL IR currently supports unfiltered, unordered bag projections.',
+            'Complete MySQL IR currently supports unordered bag projections.',
         );
-        $binding = new SourceBinding($operation, $statement->from);
         $expressions = new ExpressionLowering();
+        $binding = JoinBinding::bind($operation, $statement->from);
+        $where = (new PredicateLowering())->lower($statement->where, $binding);
         $fields = $operation->facts->output?->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
@@ -51,6 +54,6 @@ final class SelectLowering
             $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier(ltrim($name->value, " \t\r\n\v\f")));
         }
 
-        return new Select($results, $binding->source(), $profile->grammar);
+        return new Select($results, $binding->source(), $profile->grammar, $where);
     }
 }

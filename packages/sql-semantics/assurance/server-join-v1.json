@@ -42,7 +42,7 @@
     "completeness": "Encode response shape as the product of input identity, operator and predicate, output filter and descendant policy. Check every ID exactly once against a separately constructed set."
   },
   "exploration": {"seeds": [578, 4363, 8123], "casesPerSeed": 36, "timeoutSecondsPerRelease": 170, "allowedExclusions": [], "requiredForms": "Two and more than two input occurrences, a join on each side of a tree, both present and absent filters, source references on multiple occurrences and all registered join kinds."},
-  "negative": ["CROSS with ON", "Outer join without ON", "A projection slot outside its occurrence", "An ON slot outside its local subtree", "An occurrence with no input", "A WHERE slot outside its input", "A SELECT over more than 61 inputs", "PostgreSQL FULL with a comparison other than cross-side equality"],
+  "negative": ["CROSS with ON", "Outer join without ON", "A projection slot outside its occurrence", "An ON slot outside its local subtree", "An occurrence with no input", "A WHERE slot outside its input", "A SELECT over more than 61 inputs", "PostgreSQL FULL with a comparison other than cross-side equality, or MySQL NATURAL without an explicit column merge model"],
   "faults": ["Erase left null extension", "Render a right projection slot from the left occurrence", "Omit WHERE"],
   "evidence": "Retain source and output structure, release and distribution digests, SQL, native metadata and row observations, raw case reconciliation, fault deltas and machine replay.",
   "trust": ["Closed readonly runtime values, checks and emitter", "Resolved input bindings and declared type roles", "Pinned database instances, read-only observer and independent relational evaluator"],

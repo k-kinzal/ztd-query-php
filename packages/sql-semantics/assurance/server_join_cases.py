@@ -1,0 +1,259 @@
+"""Independent relational semantics and direct cases for native joined projections."""
+
+import itertools
+import random
+
+from run import require
+from server_cases import CHILD_ROWS, NAMES, ROWS, SCHEMAS, evaluate, observation, validate_width
+from server_delete_cases import OPERATORS, literal
+
+DATA = {"accounts": ROWS, "independent": [(3, 15), (2, 11), (2, 11), (None, 31)], "empty": []}
+NAMES_BY_TABLE = {"accounts": "ir_join_accounts", "independent": "ir_join_independent", "empty": "ir_join_empty"}
+
+
+def slot(column, occurrence=0):
+    return ["slot", column, occurrence] if occurrence else ["slot", column]
+
+
+def compare(operator, left, right):
+    return ["comparison", operator, left, right]
+
+
+def table(dialect, name, only=False, columns=None):
+    return {
+        "schema": SCHEMAS[dialect], "table": NAMES_BY_TABLE[name],
+        "columns": list(NAMES[dialect]) if columns is None else list(columns),
+        **({"only": only} if dialect == "postgres" else {}),
+    }
+
+
+def join(kind, left, right, on=None):
+    return {"kind": kind, "left": left, "right": right, "on": on}
+
+
+def case(dialect, tag, source, fields, where=None):
+    return {"dialect": dialect, "release": tag, "source": source, "columns": fields, "where": where}
+
+
+def is_join(source):
+    return "kind" in source
+
+
+def leaves(source):
+    if source is None:
+        return []
+    return leaves(source["left"]) + leaves(source["right"]) if is_join(source) else [source]
+
+
+def registered(dialect):
+    equal = compare("=", slot(0), slot(0, 1))
+    less = compare("<", slot(0), slot(0, 1))
+    conditions = [equal, less, ["boolean", False], ["null"]]
+    return [("CROSS", None), *((kind, on) for kind in ("INNER", "LEFT", "RIGHT") for on in conditions),
+            *([("FULL", equal)] if dialect == "postgres" else [])]
+
+
+FILTERS = (None, compare("<", slot(1), literal(3)), ["boolean", False])
+PROJECTION = [[slot(0), "left"], [slot(1, 1), "right"], [["operation", "-", slot(1), slot(1, 1)], "difference"]]
+
+
+def finite_cases(dialect, tag):
+    policies = (False, True) if dialect == "postgres" else (False,)
+    for name, (kind, on), where, only in itertools.product(("independent", "empty", "accounts"), registered(dialect), FILTERS, policies):
+        source = join(kind, table(dialect, "accounts", only), table(dialect, name), on)
+        yield case(dialect, tag, source, PROJECTION, where)
+
+
+def finite_id(dialect, response):
+    source = response["source"]
+    return (source["right"]["table"], registered(dialect).index((source["kind"], source["on"])),
+            FILTERS.index(response["where"]), bool(source["left"].get("only")))
+
+
+def finite_ids(dialect, specification):
+    policy_count = len(specification["finite"]["onlyPolicies"][dialect])
+    variants = specification["finite"]["identities"][dialect] // (9 * policy_count)
+    return {(table, variant, filter_id, bool(policy))
+            for table in ("ir_join_independent", "ir_join_empty", "ir_join_accounts")
+            for variant in range(variants) for filter_id in range(3) for policy in range(policy_count)}
+
+
+def seeded(dialect, tag, seed, count):
+    rng = random.Random(seed)
+    kinds = ("CROSS", "INNER", "LEFT", "RIGHT") + (("FULL",) if dialect == "postgres" else ())
+
+    def tree(size):
+        if size == 1:
+            return table(dialect, rng.choice(tuple(DATA)), bool(rng.getrandbits(1)))
+        split = rng.randint(1, size - 1)
+        kind = rng.choice(kinds)
+        if kind == "CROSS":
+            on = None
+        elif kind == "FULL":
+            on = compare("=", slot(0, rng.randrange(split)), slot(0, rng.randrange(split, size)))
+        else:
+            on = rng.choice((["boolean", True], ["boolean", False], ["null"],
+                             compare(rng.choice(tuple(OPERATORS)), slot(rng.randrange(2), rng.randrange(size)),
+                                     slot(rng.randrange(2), rng.randrange(size)))))
+        return join(kind, tree(split), tree(size - split), on)
+
+    def expr(width, depth):
+        if depth and rng.random() < 0.5:
+            return ["operation", rng.choice(("+", "-", "*")), expr(width, depth - 1), expr(width, depth - 1)]
+        return rng.choice((slot(rng.randrange(2), rng.randrange(width)), literal(rng.randrange(-2, 4))))
+
+    for _ in range(count):
+        width = rng.randint(2, 5)
+        fields = [[rng.choice((["boolean", False], ["null"], expr(width, 3), expr(width, 2), expr(width, 1))), label]
+                  for label in ("k", "k", "値")]
+        where = rng.choice((None, None, ["boolean", False], ["null"],
+                            compare(rng.choice(tuple(OPERATORS)), slot(rng.randrange(2), rng.randrange(width)),
+                                    literal(rng.randrange(-1, 17)))))
+        yield case(dialect, tag, tree(width), fields, where)
+
+
+def declarations(dialect):
+    schema = SCHEMAS[dialect]
+    key = NAMES[dialect][0]
+    return [f"CREATE TABLE {schema}.{name} ({key} INTEGER, delta INTEGER)" for name in NAMES_BY_TABLE.values()]
+
+
+def fixture(dialect):
+    schema = SCHEMAS[dialect]
+    child = schema + ".ir_join_child"
+    setup = [*([f"DROP TABLE IF EXISTS {child}"] if dialect == "postgres" else []),
+             *(f"DROP TABLE IF EXISTS {schema}.{table}" for table in NAMES_BY_TABLE.values()), *declarations(dialect)]
+    for role, data in DATA.items():
+        if data:
+            values = ",".join("(" + ",".join("NULL" if part is None else str(part) for part in row) + ")" for row in data)
+            setup.append(f"INSERT INTO {schema}.{NAMES_BY_TABLE[role]} VALUES {values}")
+    if dialect == "postgres":
+        setup += [f"CREATE TABLE {child} () INHERITS ({schema}.ir_join_accounts)",
+                  f"INSERT INTO {child} VALUES (-1,2),(1,3)"]
+    return setup
+
+
+def analyzed(dialect, tag):
+    schema = SCHEMAS[dialect]
+    one, two, three = (f"{schema}.{name}" for name in NAMES_BY_TABLE.values())
+    identifier = NAMES[dialect][0]
+    scenarios = [
+        (f"SELECT a.{identifier} AS x,b.delta AS y FROM {one} a LEFT JOIN {two} b ON a.{identifier}=b.{identifier} WHERE a.delta<2",
+         join("LEFT", table(dialect, "accounts", columns=["delta", identifier]), table(dialect, "independent", columns=["delta", identifier]),
+              compare("=", slot(1), slot(1, 1))), [[slot(1), "x"], [slot(0, 1), "y"]], compare("<", slot(0), literal(2))),
+        (f"SELECT a.{identifier} AS x,b.{identifier} AS y,a.{identifier} AS again FROM {one} a JOIN {one} b ON a.{identifier}=b.{identifier}",
+         join("INNER", table(dialect, "accounts", columns=[identifier]), table(dialect, "accounts", columns=[identifier]),
+              compare("=", slot(0), slot(0, 1))), [[slot(0), "x"], [slot(0, 1), "y"], [slot(0), "again"]], None),
+        (f"SELECT a.{identifier} AS x,c.delta AS y FROM {one} a LEFT JOIN ({two} b RIGHT JOIN {three} c ON b.{identifier}=c.{identifier}) ON a.{identifier}=b.{identifier}",
+         join("LEFT", table(dialect, "accounts", columns=[identifier]),
+              join("RIGHT", table(dialect, "independent", columns=[identifier]), table(dialect, "empty", columns=["delta", identifier]),
+                   compare("=", slot(0), slot(1, 1))), compare("=", slot(0), slot(0, 1))),
+         [[slot(0), "x"], [slot(0, 2), "y"]], None),
+        (f"SELECT b.{identifier} AS x,c.delta AS y FROM ({one} a RIGHT JOIN {two} b ON a.{identifier}=b.{identifier}) CROSS JOIN {three} c",
+         join("CROSS", join("RIGHT", table(dialect, "accounts", columns=[identifier]), table(dialect, "independent", columns=[identifier]),
+                            compare("=", slot(0), slot(0, 1))), table(dialect, "empty", columns=["delta"])),
+         [[slot(0, 1), "x"], [slot(0, 2), "y"]], None),
+        (f"SELECT {identifier} AS x FROM {one} WHERE NULL", table(dialect, "accounts", columns=[identifier]),
+         [[slot(0), "x"]], ["null"]),
+    ]
+    if dialect == "postgres":
+        scenarios.append((f"SELECT a.id AS x,b.id AS y FROM ONLY {one} a FULL JOIN {two} b ON a.id=b.id",
+                          join("FULL", table(dialect, "accounts", True, ["id"]), table(dialect, "independent", columns=["id"]),
+                               compare("=", slot(0), slot(0, 1))), [[slot(0), "x"], [slot(0, 1), "y"]], None))
+    for sql, source, fields, where in scenarios:
+        yield {"dialect": dialect, "release": tag, "sql": sql, "declarations": declarations(dialect)}, case(dialect, tag, source, fields, where)
+
+
+def negatives(dialect, tag):
+    left, right = table(dialect, "accounts"), table(dialect, "independent")
+    fields = [[slot(0), "answer"]]
+    product = join("CROSS", left, right)
+    yield case(dialect, tag, join("CROSS", left, right, ["boolean", True]), fields), "Only CROSS has no join predicate."
+    yield case(dialect, tag, join("LEFT", left, right), fields), "Only CROSS has no join predicate."
+    yield case(dialect, tag, product, [[slot(2, 1), "answer"]]), "Column slot must belong to the SELECT source."
+    subquery = join("INNER", left, right, compare("=", slot(0), slot(0, 2)))
+    yield case(dialect, tag, join("CROSS", right, subquery), fields), "must belong to a visible input occurrence"
+    yield case(dialect, tag, product, [[slot(0, 2), "answer"]]), "Column slot must belong to the SELECT source."
+    yield case(dialect, tag, product, fields, compare("=", slot(2), literal(0))), "must belong to a visible input occurrence"
+    oversized = left
+    for _ in range(61):
+        oversized = join("CROSS", oversized, right)
+    yield case(dialect, tag, oversized, fields), "at most 61 input occurrences"
+    if dialect == "postgres":
+        yield case(dialect, tag, join("FULL", left, right, compare("<", slot(0), slot(0, 1))), fields), "requires integer equality between opposite inputs"
+    else:
+        yield {
+            "dialect": dialect, "release": tag, "declarations": declarations(dialect),
+            "sql": f"SELECT 1 AS answer FROM {SCHEMAS[dialect]}.ir_join_accounts a NATURAL JOIN {SCHEMAS[dialect]}.ir_join_independent b",
+        }, "requires explicit ON or CROSS"
+
+
+def value(expression, row, dialect):
+    role = expression[0]
+    if role == "slot":
+        return row[expression[2] if len(expression) == 3 else 0][expression[1]]
+    if role != "operation":
+        return evaluate(expression, None, dialect)
+    _, symbol, left, right = expression
+    a, b = value(left, row, dialect), value(right, row, dialect)
+    if a is None or b is None:
+        return None
+    return validate_width({"+": lambda: a + b, "-": lambda: a - b, "*": lambda: a * b}[symbol](), dialect)
+
+
+def truth(condition, row, dialect):
+    if condition is None:
+        return True
+    if condition[0] == "boolean":
+        return condition[1]
+    if condition[0] == "null":
+        return False
+    _, symbol, left, right = condition
+    a, b = value(left, row, dialect), value(right, row, dialect)
+    return a is not None and b is not None and OPERATORS[symbol](a, b)
+
+
+def rows(source, dialect):
+    if source is None:
+        return [()]
+    if not is_join(source):
+        role = next(role for role, relation in NAMES_BY_TABLE.items() if relation == source["table"])
+        physical = DATA[role] + (CHILD_ROWS if role == "accounts" and dialect == "postgres" and not source["only"] else [])
+        columns = [NAMES[dialect].index(column) for column in source["columns"]]
+        return [(tuple(row[index] for index in columns),) for row in physical]
+    left, right = rows(source["left"], dialect), rows(source["right"], dialect)
+    joined = []
+    remaining = set(range(len(right)))
+    for lhs in left:
+        matches = [(index, lhs + rhs) for index, rhs in enumerate(right) if truth(source["on"], lhs + rhs, dialect)]
+        joined.extend(row for _, row in matches)
+        remaining.difference_update(index for index, _ in matches)
+        if not matches and source["kind"] in ("LEFT", "FULL"):
+            joined.append(lhs + tuple((None,) * len(item["columns"]) for item in leaves(source["right"])))
+    if source["kind"] in ("RIGHT", "FULL"):
+        nulls = tuple((None,) * len(item["columns"]) for item in leaves(source["left"]))
+        joined.extend(nulls + right[index] for index in sorted(remaining))
+    return joined
+
+
+def expected(item):
+    dialect = item["dialect"]
+    default = "int4" if dialect == "postgres" else "LONGLONG"
+    metadata = {"boolean": "bool", "null": "text"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
+    fields = [[name, metadata.get(expr[0], default)] for expr, name in item["columns"]]
+    observed = [[value(expr, row, dialect) for expr, _ in item["columns"]] for row in rows(item["source"], dialect)
+                if truth(item["where"], row, dialect)]
+    return observation({"status": "rows", "fields": fields, "rows": observed})
+
+
+def requests(dialect, tag, specification):
+    for index, item in enumerate(finite_cases(dialect, tag)):
+        yield f"finite/{index}", item, item, None
+    exploration = specification["exploration"]
+    for seed in exploration["seeds"]:
+        for index, item in enumerate(seeded(dialect, tag, seed, exploration["casesPerSeed"])):
+            yield f"seed/{seed}/{index}", item, item, None
+    for index, (item, meaning) in enumerate(analyzed(dialect, tag)):
+        yield f"analysis/{index}", item, meaning, None
+    for index, (item, reason) in enumerate(negatives(dialect, tag)):
+        yield f"negative/{index}", item, None, reason

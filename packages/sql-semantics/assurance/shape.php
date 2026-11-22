@@ -165,6 +165,22 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     $roots[] = 'Mutation\\Delete';
+    $properties['ColumnReference']['occurrence'] = ['int'];
+    $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
+    $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
+    $properties['Select']['where'] = $conditions;
+    $properties['From\\Join'] = [
+        'kind' => ['From\\JoinKind'], 'left' => ['From\\Join', 'TableSource'],
+        'right' => ['From\\Join', 'TableSource'], 'on' => $conditions,
+    ];
+    $methods['From\\Join'] = ['__construct', 'inputs'];
+    $properties['From\\JoinKind'] = $methods['From\\JoinKind'] = [];
+    $enumCases['From\\JoinKind'] = ['Cross' => 'CROSS', 'Inner' => 'INNER', 'Left' => 'LEFT', 'Right' => 'RIGHT'];
+    if ($dialect === 'postgres') {
+        $enumCases['From\\JoinKind']['Full'] = 'FULL';
+    }
+    array_push($internal, 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering');
+    $pureCollaborators[] = 'From\\OccurrenceScope';
     $internal[] = 'Mutation\\DeleteLowering';
     $properties['Mutation\\Delete'] = [
         'target' => ['TableSource'],
@@ -188,7 +204,7 @@ $allowed = [
     $platform . '\\Model\\Contract\\GrammarRelease',
     ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
-$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_is_list','strpbrk','substr_count'];
+$pureFunctions = ['strlen','str_contains','str_starts_with','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','array_merge','array_is_list','strpbrk','substr_count'];
 
 function requireShape(bool $condition, string $detail): void
 {

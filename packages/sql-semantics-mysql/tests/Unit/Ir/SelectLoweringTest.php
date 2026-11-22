@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SelectLowering::class)]
@@ -26,7 +27,8 @@ final class SelectLoweringTest extends TestCase
         self::assertInstanceOf(ColumnReference::class, $unqualified);
         self::assertInstanceOf(ColumnReference::class, $qualified);
         self::assertSame($unqualified->slot, $qualified->slot);
-        self::assertSame('ir_fixture', $value->source?->schema->value);
+        self::assertInstanceOf(TableSource::class, $value->source);
+        self::assertSame('ir_fixture', $value->source->schema->value);
         self::assertSame('id', $value->columns[1]->name->value);
         self::assertCount(1, $value->source->columns);
     }

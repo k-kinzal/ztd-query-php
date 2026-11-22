@@ -27,6 +27,7 @@ final class SourceBindingTest extends TestCase
         self::assertInstanceOf(ExpressionTarget::class, $result);
 
         $binding = new SourceBinding($operation->binding(), $select->from);
+        self::assertSame($select->from, $binding->relation());
         self::assertSame(0, $binding->reference($result->expression)->slot);
         self::assertSame('A', $binding->source()?->columns[0]->value);
     }
@@ -36,5 +37,12 @@ final class SourceBindingTest extends TestCase
         $operation = (new Inspection())->inspect('SELECT 1');
 
         self::assertNull((new SourceBinding($operation->binding(), null))->source());
+    }
+
+    public function testRelationReturnsTheBoundOccurrence(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1');
+
+        self::assertNull((new SourceBinding($operation->binding(), null))->relation());
     }
 }

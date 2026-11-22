@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
@@ -30,7 +31,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the operand has no representation in this domain
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral
+    public function lower(Scalar $expression, SourceBinding|JoinBinding $binding): Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
