@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -44,7 +45,7 @@ final class Update implements SemanticsIR
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);

@@ -26,7 +26,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
             ] : []),
-            ['native-boundaries-v19.json', 'a9c771f34e571b9deeeef6b36a4b760b2be4e54b3a3c12843b44c495ef772faa'],
+            ['native-boundaries-v20.json', '8b0211512fc6790f745424e6b3afbe025ed704cdda8bbec90bbe47575db3ce97'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
@@ -100,6 +100,18 @@ function checkNativeBoundaries(
                 'Statement\\Expression\\Operator\\BooleanOperation as ParsedLogical', 'Statement\\Expression\\Operator\\BooleanOperator',
                 'Statement\\Expression\\Operator\\Negation as ParsedNot', 'Statement\\Expression\\Predicate\\NullTest as ParsedNullTest',
                 'Model\\Statement\\Type\\Known', 'Statement\\Type\\Descriptor\\Builtin', 'Ir\\Rows\\Compound', 'Ir\\Rows\\ResultKind'] as $name) {
+                $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
+            }
+        }
+        if ($dialect === 'mysql') {
+            foreach (['Ir\\ArithmeticOperator', 'Ir\\Literal\\IntegerTokenLowering', 'Ir\\Predicate\\IntegerRange',
+                'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\RangeIntegerLiteral',
+                'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',
+                'Statement\\Literal\\BooleanLiteral as ParsedBoolean', 'Statement\\Literal\\NullLiteral as ParsedNull',
+                'Statement\\Name\\ColumnUse', 'Statement\\Expression\\Operator\\Unary', 'Statement\\Expression\\Operator\\UnaryOperator',
+                'Statement\\Literal\\NumberForm', 'Statement\\Literal\\NumberLiteral','Statement\\Literal\\SignedLiteral',
+                'Statement\\Expression\\Comparison as ParsedComparison', 'Statement\\Expression\\Logical as ParsedLogical',
+                'Statement\\Expression\\Not as ParsedNot', 'Statement\\Expression\\NullTest as ParsedNullTest'] as $name) {
                 $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
             }
         }

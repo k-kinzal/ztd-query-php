@@ -9,8 +9,10 @@ use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
@@ -61,7 +63,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|Parameter $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($expression instanceof ColumnReference) {
             $inputs = $source instanceof Join ? $source->inputs() : [$source];
@@ -79,11 +81,32 @@ final class SelectSql
 
         return match (true) {
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
+            $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => $expression->toString(),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits the native signed comparison without coercing or reordering the operands.
+     */
+    public function integerRange(IntegerRange $range, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    {
+        $subject = $this->rangeOperand($range->subject, $source, $offset, $qualify);
+        $lower = $this->rangeOperand($range->lower, $source, $offset, $qualify);
+        $upper = $this->rangeOperand($range->upper, $source, $offset, $qualify);
+
+        return '(' . $subject . ($range->negated ? ' NOT BETWEEN ' : ' BETWEEN ') . $lower . ' AND ' . $upper . ')';
+    }
+
+    /**
+     * Renders a range atom in its signed or referenced role.
+     */
+    public function rangeOperand(ColumnReference|RangeIntegerLiteral|NullLiteral $operand, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        return $operand instanceof RangeIntegerLiteral ? $operand->toString() : $this->expression($operand, $source, $offset, $qualify);
     }
 
     /**
@@ -109,7 +132,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

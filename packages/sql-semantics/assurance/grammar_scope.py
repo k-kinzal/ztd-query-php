@@ -121,6 +121,8 @@ def inventory(root):
             related.update({alternative: ("mysql-signed-quotient-v1.json",) for alternative in (
                 "bit_expr: bit_expr % bit_expr", "bit_expr: bit_expr DIV_SYM bit_expr", "bit_expr: bit_expr MOD_SYM bit_expr",
             )})
+            related.update({alternative: ("mysql-signed-range-v3.json",) for alternative in rules["predicate"]
+                            if " BETWEEN_SYM " in alternative})
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

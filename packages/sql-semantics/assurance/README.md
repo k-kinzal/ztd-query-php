@@ -69,7 +69,7 @@ It also emits `constructors.json` with each audited type, source digest, constru
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v1.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
-### Compare assurance revisions
+### Reproduce the native release matrix
 
 To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
 
@@ -81,6 +81,8 @@ python3 "$verifier/collect_native_replays.py" --layout release --candidate "$can
 ```
 
 Use `--profile postgres-16.6` to diagnose a single release in a fresh evidence directory. The bundle lists every omitted profile. The local launcher and the manual workflow produce provisional evidence for the same native replay checks.
+
+### Compare assurance revisions
 
 Select the previous verifier archive independently of the candidate. Pass its assurance directory to the indexer with `--previous-verifier` to include the change record in the review bundle. To compare the verifier revisions before running the database matrix, use the standalone comparator.
 
@@ -113,7 +115,7 @@ The initial runner does not establish complete coverage of the existing grammar 
 
 ## Native construction boundary audit
 
-The [native boundary rules](native-boundaries-v19.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
+The [native boundary rules](native-boundaries-v20.json) fix selected PHP guard sequences for row slots, projected parameters, joined and local sources, compound roles, INSERT, UPDATE, table declaration and removal and transaction roles. The shape checker resolves class names and compares each method body with its fixed template. It also verifies closed property types, checked list storage and the publication path. The templates and primitive digests form part of the reviewable checker.
 
 Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /path/to/trusted/vendor/autoload.php --out boundary-evidence` from the trusted assurance directory. It saves each applied source mutation, the exact rejection and the candidate distribution. The independent engine observations remain the evidence for SQL meaning in each tested domain.
 
@@ -242,6 +244,9 @@ Run `run_server_derived_join.py` with the native fixture options. Replay all rel
 The [signed quotient record](mysql-signed-quotient-v1.json) specifies ordered signed `DIV` and infix remainder operands, the signed result, NULL, zero-divisor diagnostics and the signed 64-bit boundaries. The runner compares signed values, ordered field names, native metadata, duplicates and warning counts. Its observer checks that enabling a different SQL mode actually makes a division warning visible before it restores the empty mode.
 
 Run `run_server_mysql_signed_quotient.py` on the nine pinned MySQL releases. Replay their reports with `combine_server_mysql_signed_quotient_evidence.py`. The original boundary failure resulted from evaluating a nested multiplication before DIV. The schedule retains that expression and also constructs the same minimum value by addition so the two behaviors can be compared independently.
+
+
+The [signed range record](mysql-signed-range-v3.json) checks the ordered subject and inclusive endpoints, both placements, negation and signed precision beyond binary64. Its observer checks the integer result type, NULL, duplicates and warning counts. Run `run_server_mysql_signed_range.py` and replay the nine pinned releases with `combine_server_mysql_signed_range_evidence.py`.
 
 ## PostgreSQL int4 operators
 

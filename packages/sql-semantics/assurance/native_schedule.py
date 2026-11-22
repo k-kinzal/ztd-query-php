@@ -9,6 +9,7 @@ NATIVE = {
     "postgres_delete_returning": "postgres-delete-returning-v1.json",
     "postgres_update_returning": "postgres-update-returning-v2.json",
     "postgres_insert_returning": "postgres-insert-returning-v1.json",
+    "mysql_signed_range": "mysql-signed-range-v3.json",
     "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v1.json",
@@ -37,6 +38,7 @@ SINGLE_ENGINE = {
     "postgres_delete_returning": "postgres",
     "postgres_update_returning": "postgres",
     "postgres_insert_returning": "postgres",
+    "mysql_signed_range": "mysql",
     "mysql_signed_quotient": "mysql",
 }
 

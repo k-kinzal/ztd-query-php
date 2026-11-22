@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -34,7 +35,7 @@ final class Delete implements SemanticsIR
      */
     public function __construct(
         public readonly TableSource $target,
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
         (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');

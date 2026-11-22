@@ -62,6 +62,8 @@ def faults(engine):
             Fault("ignore-resolved-collation", "Aggregation/GroupBinding::key", "$explicit ?? $default", "$default"),
         ]
     shared = [
+        Fault("skip-range-upper-slot", "From/OccurrenceScope::checkTree",
+              "[$operand->subject, $operand->lower, $operand->upper]", "[$operand->subject, $operand->lower]"),
         Fault("allow-argumentless-sum", "Aggregation/Aggregate::__construct",
               "$operator === AggregateOperator::Count && !$distinct", "!$distinct"),
         Fault("ignore-aggregate-scope", "Aggregation/GroupedSelect::__construct",
@@ -108,8 +110,6 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
-        shared.append(Fault("skip-range-upper-slot", "From/OccurrenceScope::checkTree",
-                            "[$operand->subject, $operand->lower, $operand->upper]", "[$operand->subject, $operand->lower]"))
         shared.append(Fault("accept-unknown-comparison-pair", "Predicate/IntegerRangeLowering::lower",
                             "$knownSubject || ($knownLower && $knownUpper)", "true"))
         shared.append(Fault("admit-invisible-pg-write-slot", "Mutation/Insert/Destination::__construct",
@@ -143,6 +143,8 @@ def faults(engine):
         shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
+        shared.append(Fault("admit-an-unsigned-bound", "Predicate/RangeIntegerLiteral::__construct",
+                            "'9223372036854775807'", "'9223372036854775808'"))
         shared.append(Fault("ignore-intrinsic-result-label", "SelectBounds::check",
                             "$table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,", "true,"))
         shared.append(Fault("ignore-intrinsic-group-label", "Aggregation/GroupedSelect::__construct",
@@ -213,7 +215,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v19.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
+                       "native-boundaries-v20.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v11.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v22.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

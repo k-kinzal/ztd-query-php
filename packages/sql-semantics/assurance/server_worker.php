@@ -34,12 +34,13 @@ function constructOperand(string $namespace, array $data): object
         'slot' => 'ColumnReference',
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
-        'int4-range' => 'Predicate\\IntegerRange',
+        'int4-range', 'signed-range' => 'Predicate\\IntegerRange',
+        'range-integer' => 'Predicate\\RangeIntegerLiteral',
     };
     $operator = $namespace . 'ArithmeticOperator';
 
     return match ($data[0]) {
-        'integer' => new $type(...array_slice($data, 1)),
+        'integer', 'range-integer' => new $type(...array_slice($data, 1)),
         'boolean', 'parameter' => new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
@@ -47,6 +48,12 @@ function constructOperand(string $namespace, array $data): object
             $operator::from($data[1]),
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
+        ),
+        'signed-range' => new $type(
+            constructOperand($namespace, $data[2]),
+            constructOperand($namespace, $data[3]),
+            constructOperand($namespace, $data[4]),
+            $data[1],
         ),
         'int4-range' => new $type(
             constructOperand($namespace, $data[3]),
@@ -80,8 +87,12 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
-        $namespace . 'Predicate\\IntegerRange' => ['int4-range', $value->negated, $value->symmetric,
-            observeOperand($namespace, $value->subject), observeOperand($namespace, $value->lower), observeOperand($namespace, $value->upper)],
+        $namespace . 'Predicate\\IntegerRange' => [
+            ...($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange
+                ? ['int4-range', $value->negated, $value->symmetric] : ['signed-range', $value->negated]),
+            observeOperand($namespace, $value->subject), observeOperand($namespace, $value->lower), observeOperand($namespace, $value->upper),
+        ],
+        $namespace . 'Predicate\\RangeIntegerLiteral' => ['range-integer', $value->decimal, $value->leadingZeroes, $value->negativeZero],
         $namespace . 'Expression\\IntegerCase' => ['int4-case',
             array_map(static fn ($arm) => [observePredicate($namespace, $arm->condition), observeOperand($namespace, $arm->result)], $value->arms),
             $value->otherwise === null ? null : observeOperand($namespace, $value->otherwise)],
@@ -202,7 +213,7 @@ function constructPredicate(string $namespace, ?array $test): ?object
             constructPredicate($namespace, $test[3] ?? null),
         ),
         'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
-        'boolean', 'null', 'slot', 'integer', 'int4-range' => constructOperand($namespace, $test),
+        'boolean', 'null', 'slot', 'integer', 'int4-range', 'signed-range' => constructOperand($namespace, $test),
     };
 }
 

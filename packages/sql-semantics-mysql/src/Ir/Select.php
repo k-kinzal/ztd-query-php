@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Limit;
 use SqlSemantics\Platform\MySql\Ir\Ordering\Order;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -50,7 +51,7 @@ final class Select implements SemanticsIR
         array $columns,
         public readonly TableSource|Join|null $source = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly bool $distinct = false,
         array $orderBy = [],
         public readonly ?Limit $limit = null,

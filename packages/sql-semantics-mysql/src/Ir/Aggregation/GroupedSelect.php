@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -51,7 +52,7 @@ final class GroupedSelect implements SemanticsIR
         array $keys,
         array $columns,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
-        public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
     ) {
         $grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);

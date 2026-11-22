@@ -105,14 +105,15 @@ def evaluate(operand, row, dialect, release=None):
     tag = operand[0]
     if tag == "slot":
         return row[operand[1]]
-    if tag == "integer":
+    if tag in ("integer", "range-integer"):
         return int(operand[1])
     if tag == "boolean":
         return operand[1] if dialect == "postgres" else int(operand[1])
     if tag == "null":
         return None
-    if tag == "int4-range":
-        return predicate_value(operand, lambda leaf: evaluate(leaf, row, dialect, release))
+    if tag in ("int4-range", "signed-range"):
+        result = predicate_value(operand, lambda leaf: evaluate(leaf, row, dialect, release))
+        return int(result) if dialect == "mysql" and result is not None else result
     if tag == "int4-case":
         _, arms, otherwise = operand
         for condition, result in arms:

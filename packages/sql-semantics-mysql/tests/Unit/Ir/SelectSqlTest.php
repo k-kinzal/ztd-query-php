@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -23,6 +25,20 @@ use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 #[Small]
 final class SelectSqlTest extends TestCase
 {
+    public function testIntegerRangeEmitsTheSignedOrderedPredicate(): void
+    {
+        $range = new IntegerRange(new RangeIntegerLiteral('2'), new RangeIntegerLiteral('3'), new NullLiteral(), true);
+
+        self::assertSame('(2 NOT BETWEEN 3 AND NULL)', (new SelectSql())->integerRange($range, null));
+    }
+
+    public function testRangeOperandWritesTheFullSignedMinimum(): void
+    {
+        $operand = new RangeIntegerLiteral('-9223372036854775808');
+
+        self::assertSame('-9223372036854775808', (new SelectSql())->rangeOperand($operand, null, 0, true));
+    }
+
     public function testRenderAddsOutputAliases(): void
     {
         $select = new Select([new ResultColumn(new IntegerLiteral('2'), new Identifier('`'))]);
