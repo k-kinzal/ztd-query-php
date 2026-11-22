@@ -354,7 +354,7 @@ def run(args, db, contract, output, worker_factory=Worker):
                 (case(None, [["parameter", "32767"]]), "between 1 and 32766", "rejected"),
                 (case(None, [["null"]], labels=["a\0b"]), "without NUL", "rejected"),
                 (case(None, [["null"]], labels=["a" * 256]), "at most 255 bytes", "rejected"),
-                ({"sql": "SELECT id FROM accounts", "declarations": []}, "resolved, complete base table", "rejected"),
+                ({"sql": "SELECT id FROM accounts", "declarations": []}, "resolved, complete table or view declaration", "rejected"),
                 ({"sql": "SELECT 1 GROUP BY 1", "declarations": []}, "without grouping or windows", "rejected"),
                 ({"sql": "SELECT ?", "declarations": []}, "numbered parameter label", "rejected"),
                 ({"sql": "SELECT id FROM", "declarations": []}, "Unexpected", "analysis-rejected"),

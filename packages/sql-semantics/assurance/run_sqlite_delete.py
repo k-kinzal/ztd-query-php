@@ -169,7 +169,7 @@ def returning_contract():
 def negatives():
     yield item(predicate=["column", 0, 1]), "rejected", "visible occurrence"
     yield item(predicate=["column", 2]), "rejected", "visible occurrence"
-    yield {"sql": "DELETE FROM unavailable", "declarations": []}, "rejected", "resolved, complete base table"
+    yield {"sql": "DELETE FROM unavailable", "declarations": []}, "rejected", "A mutation target requires a base table"
     transition = returning_contract()["baseSuiteTransition"]
     yield {"sql": transition["negative"], "declarations": DECLARATIONS}, "rejected", "requires an unqualified target column"
 
