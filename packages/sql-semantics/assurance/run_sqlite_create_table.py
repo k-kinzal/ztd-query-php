@@ -206,7 +206,7 @@ def check_faults(args, db, runner=check_render_faults):
     fixtures = [
         RenderFault("change-declared-type", column, "' ' . $this->type->value", "' TEXT'",
                     case([["a", "INTEGER", False]]), "meaning-mismatch"),
-        RenderFault("drop-not-null", column, "($this->notNull ? ' NOT NULL' : '')", "''",
+        RenderFault("drop-not-null", column, "$type . $constraint . $default;", "$type . $default;",
                     case([["a", "INTEGER", True]]), "meaning-mismatch"),
         RenderFault("omit-if-not-exists", table, "($this->ifNotExists ? 'IF NOT EXISTS ' : '')", "''",
                     case([["a", "INTEGER", False]], table=EXISTING, guard=True), "meaning-mismatch"),

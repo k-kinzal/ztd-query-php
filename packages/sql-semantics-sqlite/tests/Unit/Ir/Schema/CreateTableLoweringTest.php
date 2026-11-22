@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable as ParsedCreateTable;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -28,7 +29,7 @@ final class CreateTableLoweringTest extends TestCase
 
         self::assertSame('temp', $value->schema->value);
         self::assertSame(DeclaredDatatypeName::Text, $value->columns[0]->type);
-        self::assertTrue($value->columns[0]->notNull);
+        self::assertSame(NotNullConflict::Abort, $value->columns[0]->notNull);
         self::assertSame(DeclaredDatatypeName::Integer, $value->columns[1]->type);
         self::assertSame(DeclaredDatatypeName::Untyped, $value->columns[2]->type);
         $published = $semantics->analyze($sql);

@@ -21,6 +21,7 @@ import run_sqlite_insert_input as insert_input
 import run_sqlite_insert_query as insert_query
 import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
+import run_sqlite_not_null_conflict as not_null_conflict
 import run_sqlite_numeric as numeric
 import run_sqlite_mutation_conflicts as mutation_conflicts
 import run_sqlite_pattern as pattern
@@ -51,6 +52,7 @@ DOMAINS = {
     choice.CONTRACT_NAME: (choice, choice.FIXTURE),
     cast.CONTRACT_NAME: (cast, cast.FIXTURE),
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
+    not_null_conflict.CONTRACT_NAME: (not_null_conflict, not_null_conflict.FIXTURE),
     returning.CONTRACT_NAME: (returning, returning.SCHEMA),
     "sqlite-relational-v1.json": (relational, relational.SCHEMA),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),

@@ -28,11 +28,12 @@ final class CreateColumnLowering
      */
     public function lower(ColumnDefinition $column, BoundStatement $operation): TableColumn
     {
-        $notNull = false;
+        $notNull = null;
         $default = null;
         foreach ($column->constraints as $constraint) {
-            if ($constraint instanceof NotNull && $constraint->conflict === null && !$notNull) {
-                $notNull = true;
+            if ($constraint instanceof NotNull) {
+                Check::input($notNull === null, 'A checked CREATE TABLE column can declare one NOT NULL constraint.');
+                $notNull = $constraint->conflict === null ? NotNullConflict::Abort : NotNullConflict::from($constraint->conflict->value);
                 continue;
             }
             if ($constraint instanceof DefaultLiteral || $constraint instanceof DefaultExpression || $constraint instanceof DefaultWord) {

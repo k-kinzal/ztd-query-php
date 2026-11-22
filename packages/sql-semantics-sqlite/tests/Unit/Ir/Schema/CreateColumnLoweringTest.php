@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateColumnLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Testing\Sqlite\Inspection;
 
@@ -23,7 +24,7 @@ final class CreateColumnLoweringTest extends TestCase
 
         $column = (new CreateColumnLowering())->lower($operation->statement->columns[0], $operation->binding());
 
-        self::assertTrue($column->notNull);
+        self::assertSame(NotNullConflict::Abort, $column->notNull);
         self::assertInstanceOf(IntegerLiteral::class, $column->default);
         self::assertSame('-7', $column->default->decimal);
     }

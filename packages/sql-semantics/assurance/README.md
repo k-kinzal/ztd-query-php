@@ -511,9 +511,11 @@ The observer compares ordered native column metadata, implicit rowids and data w
 
 ## SQLite literal defaults
 
-The [default record](sqlite-defaults-v1.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.
+The [default record](sqlite-defaults-v2.json) extends the ordinary declaration with a checked literal operand. The runner records both raw catalog values and declared default presence and compares omitted, overridden and explicit NULL writes against an independent affinity model. It checks both schema locations, the effects of IF NOT EXISTS, constraint violations, and restoration of the fixture.
 
 Run `run_sqlite_defaults.py` using the SQLite fixture options. The SQLite collector requires and replays the default receipt.
+
+The [column policy record](sqlite-not-null-conflict-v1.json) checks INSERT and UPDATE behavior after the declaration is installed. It crosses all five algorithms, explicit statement overrides, absence of the constraint, three fixed defaults and two transaction states. The explorer varies column count, storage type and the column receiving NULL. Run `run_sqlite_not_null_conflict.py` with the same options and retain the catalog, conflict write and transaction records.
 
 ## SQLite literals and scalar composition
 

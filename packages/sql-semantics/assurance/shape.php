@@ -243,7 +243,7 @@ if ($dialect === 'sqlite') {
     $properties['Schema\\CreateTable'] = ['schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool']];
     $methods['Schema\\CreateTable'] = $methods['Select'];
     $properties['Schema\\TableColumn'] = [
-        'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['bool'],
+        'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
         'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
             'Literal\\TextLiteral', 'NullLiteral', 'null'],
     ];
@@ -275,13 +275,15 @@ if ($dialect === 'sqlite') {
     $enumCases['Mutation\\UpdateConflict'] = [
         'Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore', 'Fail' => 'fail', 'Rollback' => 'rollback', 'Replace' => 'replace',
     ];
+    $enumCases['Schema\\NotNullConflict'] = ['Abort' => 'ABORT', 'Fail' => 'FAIL', 'Ignore' => 'IGNORE',
+        'Replace' => 'REPLACE', 'Rollback' => 'ROLLBACK'];
     $enumCases['Schema\\DeclaredDatatypeName'] = ['Untyped' => '', 'Integer' => 'INTEGER', 'Text' => 'TEXT', 'Real' => 'REAL', 'Blob' => 'BLOB'];
     $enumCases['Predicate\\ComparisonOperator'] = [
         'Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=',
         'Greater' => '>', 'GreaterOrEqual' => '>=', 'Is' => 'IS', 'IsNot' => 'IS NOT',
     ];
     $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR'];
-    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Mutation\\InsertConflictHandler', 'Mutation\\UpdateConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator', 'Schema\\DeclaredDatatypeName'] as $enum) {
+    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Mutation\\InsertConflictHandler', 'Mutation\\UpdateConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator', 'Schema\\DeclaredDatatypeName', 'Schema\\NotNullConflict'] as $enum) {
         $methods[$enum] = $properties[$enum] = [];
     }
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {

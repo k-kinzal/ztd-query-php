@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 
 /**
@@ -25,7 +26,7 @@ final class CreateTableTest extends TestCase
 
     public function testToStringKeepsColumnOrderWhenTheCallerModifiesItsArray(): void
     {
-        $column = new TableColumn(new Identifier('value'), DeclaredDatatypeName::Text, true);
+        $column = new TableColumn(new Identifier('value'), DeclaredDatatypeName::Text, NotNullConflict::Abort);
         $columns = [&$column, new TableColumn(new Identifier('id'), DeclaredDatatypeName::Integer)];
         $table = new CreateTable(new Identifier('temp'), new Identifier('records'), $columns, true);
         $column = new TableColumn(new Identifier('replaced'));

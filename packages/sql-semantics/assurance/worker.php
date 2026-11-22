@@ -63,6 +63,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -417,7 +418,11 @@ function directCreateTable(array $input): CreateTable
         array_map(static fn (array $slot): TableColumn => new TableColumn(
             new Identifier($slot[0]),
             DeclaredDatatypeName::from($slot[1]),
-            $slot[2],
+            match ($slot[2]) {
+                false => null,
+                true => NotNullConflict::Abort,
+                default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
+            },
             isset($slot[3]) ? operand($slot[3]) : null,
         ), $input['columns']),
         $input['ifNotExists'],
@@ -434,7 +439,12 @@ function observeCreateTable(CreateTable $value): array
         'table' => $value->table->value,
         'columns' => array_map(
             static fn (TableColumn $column): array => [
-                $column->name->value, $column->type->value, $column->notNull,
+                $column->name->value, $column->type->value,
+                match ($column->notNull) {
+                    null => false,
+                    NotNullConflict::Abort => true,
+                    default => $column->notNull->value,
+                },
                 ...($column->default === null ? [] : [observeOperand($column->default)]),
             ],
             $value->columns,
