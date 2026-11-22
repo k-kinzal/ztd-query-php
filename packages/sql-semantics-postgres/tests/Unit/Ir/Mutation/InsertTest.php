@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
-use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertRow;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertCell;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\InsertRow;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 
 #[CoversClass(Insert::class)]
