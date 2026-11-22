@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-input-boundaries-2",
+  "approval": "pending-human-review",
+  "extends": "sqlite-insert-query-boundaries-v1.json",
+  "scope": "Keep width and query closure checks while admitting the default input and ordered writable slots.",
+  "rules": {
+    "Mutation/Insert::__construct": {
+      "common": [
+        "$width = count($target->columns);",
+        "if ($input instanceof DefaultRow) {",
+        "    Check::input($width === 0, 'A DEFAULT VALUES input has no supplied target columns.');",
+        "} else {",
+        "    Check::input($width !== 0, 'An INSERT must name at least one target column.');",
+        "    if ($input instanceof Select) {",
+        "        Check::input(!$input->source instanceof LocalSource, 'The INSERT projection requires an independent source without a local definition.');",
+        "    }",
+        "    $inputWidth = $input instanceof ValuesQuery ? count($input->rows[0]->values) : count($input->columns);",
+        "    Check::input($width === $inputWidth, 'INSERT target width must match the input rows.');",
+        "}"
+      ]
+    },
+    "Mutation/Insert::profileId": {
+      "common": [
+        "return $this->input instanceof DefaultRow",
+        "    ? 'sqlite-3.47.2/utf8/short-column-names/numbered-parameters'",
+        "    : $this->input->profileId();"
+      ]
+    },
+    "Mutation/Insert::toString": {
+      "common": [
+        "$columns = [];",
+        "foreach ($this->target->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "$conflict = match ($this->conflict) {",
+        "    InsertConflict::Inherit => '',",
+        "    InsertConflict::Abort => ' OR ABORT',",
+        "    InsertConflict::Ignore => ' OR IGNORE',",
+        "};",
+        "",
+        "$head = 'INSERT' . $conflict . ' INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted();",
+        "if ($this->input instanceof DefaultRow) {",
+        "    return $head . ' DEFAULT VALUES';",
+        "}",
+        "",
+        "return $head . ' (' . implode(', ', $columns) . ') ' . $this->input->toString();"
+      ]
+    },
+    "Mutation/InsertTargetLowering::lower": {
+      "common": [
+        "$targets = (new SourceDeclarations())->bind($operation, $into->target);",
+        "Check::invariant(isset($targets[0]), 'A resolved INSERT has a target.');",
+        "[, $table] = $targets[0];",
+        "$columns = [];",
+        "if ($defaults) {",
+        "    Check::input($into->columns === [], 'DEFAULT VALUES does not admit a written column list.');",
+        "} elseif ($into->columns === []) {",
+        "    foreach ($table->columns as $column) {",
+        "        if (!$column->generated) {",
+        "            $columns[] = new Identifier($column->name->value);",
+        "        }",
+        "    }",
+        "} else {",
+        "    foreach ($into->columns as $name) {",
+        "        $matching = $table->matchingColumns($name->value, NameComparison::AsciiInsensitive);",
+        "        Check::input(",
+        "            count($matching) === 1 && in_array($matching[0], $table->columns, true) && !$matching[0]->generated,",
+        "            'An INSERT column must resolve to a writable declared column.',",
+        "        );",
+        "        $columns[] = new Identifier($matching[0]->name->value);",
+        "    }",
+        "}",
+        "",
+        "return new TableSource(",
+        "    new Identifier(($table->name->schema ?? $operation->context->declarationSchema)->value),",
+        "    new Identifier($table->name->name->value),",
+        "    $columns,",
+        ");"
+      ]
+    }
+  }
+}

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Ir\Mutation;
 
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -36,7 +38,7 @@ final class InsertLoweringTest extends TestCase
         self::assertEquals($insert, $published);
     }
 
-    public function testLowerRetainsTheSignedSourceProjection(): void
+    public function testLowerRetainsTheCheckedSourceProjection(): void
     {
         $inspection = new Inspection();
         $target = $inspection->inspect('CREATE TABLE main.received (id INTEGER, payload BLOB)');
@@ -51,5 +53,16 @@ final class InsertLoweringTest extends TestCase
 
         self::assertSame('payload', $statement->target->columns[0]->value);
         self::assertSame('value', $statement->input->columns[0]->name->value);
+    }
+
+    public function testInputIdentifiesTheDefaultRowRole(): void
+    {
+        $context = (new Semantics())->context(['CREATE TABLE entries (id INTEGER DEFAULT 7)']);
+        $operation = (new Inspection())->inspect('INSERT INTO entries DEFAULT VALUES', $context);
+        self::assertInstanceOf(InsertDefaults::class, $operation->statement);
+
+        $input = (new InsertLowering())->input($operation->binding(), $operation->statement);
+
+        self::assertInstanceOf(DefaultRow::class, $input);
     }
 }

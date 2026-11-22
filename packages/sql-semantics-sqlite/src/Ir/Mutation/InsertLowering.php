@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
-use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
-use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Select as CheckedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
-use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -30,11 +29,11 @@ final class InsertLowering
      *
      * @throws InvalidConstruction When the INSERT is outside this domain
      */
-    public function lower(BoundStatement $operation, InsertRows|InsertSelect $statement): Insert
+    public function lower(BoundStatement $operation, InsertRows|InsertSelect|InsertDefaults $statement): Insert
     {
         $into = $statement->into;
         Check::input(
-            $into->with === null && !$into->replace && $statement->upserts === [] && $statement->returning === [],
+            $into->with === null && !$into->replace && ($statement instanceof InsertDefaults || $statement->upserts === []) && $statement->returning === [],
             'Complete SQLite INSERT does not support WITH, REPLACE, UPSERT or RETURNING.',
         );
         $policy = match ($into->resolution) {
@@ -44,32 +43,27 @@ final class InsertLowering
             ConflictResolution::Fail, ConflictResolution::Replace, ConflictResolution::Rollback
                 => throw new InvalidConstruction('This conflict policy has no complete SQLite INSERT representation.'),
         };
-        $targets = (new SourceDeclarations())->bind($operation, $into->target);
-        Check::invariant(isset($targets[0]), 'A resolved INSERT has a target.');
-        [, $table] = $targets[0];
-        $columns = [];
-        foreach ($into->columns as $name) {
-            $matching = $table->matchingColumns($name->value, Comparison::AsciiInsensitive);
-            Check::input(
-                count($matching) === 1 && in_array($matching[0], $table->columns, true) && !$matching[0]->generated,
-                'An INSERT column must resolve to a writable declared column.',
-            );
-            $columns[] = new Identifier($matching[0]->name->value);
-        }
-        $target = new TableSource(
-            new Identifier(($table->name->schema ?? $operation->context->declarationSchema)->value),
-            new Identifier($table->name->name->value),
-            $columns,
-        );
+        $target = (new InsertTargetLowering())->lower($operation, $into, $statement instanceof InsertDefaults);
 
+        return new Insert($target, $this->input($operation, $statement), $policy);
+    }
+
+    /**
+     * Resolves the checked input role independently of the write target.
+     *
+     * @throws InvalidConstruction When the input is outside the checked query forms
+     */
+    public function input(BoundStatement $operation, InsertRows|InsertSelect|InsertDefaults $statement): ValuesQuery|CheckedSelect|DefaultRow
+    {
+        if ($statement instanceof InsertDefaults) {
+            return new DefaultRow();
+        }
         if ($statement instanceof InsertRows) {
-            $input = (new ValuesLowering())->lower($operation, $statement->rows);
-        } else {
-            $query = $statement->query;
-            Check::input($query instanceof Select, 'A query INSERT requires an independent ordinary SELECT.');
-            $input = (new SelectLowering())->lower($operation, $query);
+            return (new ValuesLowering())->lower($operation, $statement->rows);
         }
+        $query = $statement->query;
+        Check::input($query instanceof Select, 'A query INSERT requires an independent ordinary SELECT.');
 
-        return new Insert($target, $input, $policy);
+        return (new SelectLowering())->lower($operation, $query);
     }
 }

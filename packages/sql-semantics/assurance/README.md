@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v16.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v17.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -301,6 +301,12 @@ The evaluator supplies the definition's independently evaluated rows as the loca
 The [query INSERT record](sqlite-insert-query-v1.json) checks the composed source query, writable target positions and conflict policy. It evaluates the typed input independently, including DISTINCT, bounds and binding positions, and compares affected rows, generated columns, shadowed tables, triggers and rollback.
 
 Run `run_sqlite_insert_query.py` using the SQLite fixture options. The SQLite collector requires its finite cases and replays the statement effects alongside the other domains.
+
+## SQLite default input and implicit write targets
+
+The [INSERT input record](sqlite-insert-input-v2.json) checks a default-only row and an omitted column list. The completed write records its absolute target and effective conflict policy. A supplied VALUES or SELECT input retains its resolved writable positions. The fixture distinguishes a default that collides with an existing key from a default that inserts a new row and computes a generated value.
+
+Run `run_sqlite_insert_input.py` with the SQLite fixture options. The collector replays typed rows, constraint outcomes, trigger effects and rollback.
 
 ## SQLite grouped counts
 

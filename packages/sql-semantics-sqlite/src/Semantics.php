@@ -41,6 +41,7 @@ use SqlSemantics\Platform\Sqlite\Model\Facade\Catalog;
 use SqlSemantics\Platform\Sqlite\Model\Facade\Splitter;
 use SqlSemantics\Platform\Sqlite\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertDefaults as ParsedInsertDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect as ParsedInsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
@@ -136,7 +137,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedSelect, $statement instanceof WithQuery => (new SelectLowering())->lower($operation),
             $statement instanceof ParsedCompound => (new CompoundLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
-            $statement instanceof ParsedInsert, $statement instanceof ParsedInsertSelect => (new InsertLowering())->lower($operation, $statement),
+            $statement instanceof ParsedInsert, $statement instanceof ParsedInsertSelect, $statement instanceof ParsedInsertDefaults => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
             $statement instanceof ValuesClause => (new ValuesLowering())->lower($operation, $statement),
             $statement instanceof Drop => (new DropTableLowering())->lower($operation, $statement),

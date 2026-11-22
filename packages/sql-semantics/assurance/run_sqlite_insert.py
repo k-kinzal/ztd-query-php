@@ -78,12 +78,12 @@ def integer_affinity(value):
     return value
 
 
-def expected(request):
+def expected(request, omitted_id=None):
     rows = ((evaluate(value, (), request["bindings"]) for value in row) for row in request["rows"])
-    return expected_assignment(request, rows, names(request["rows"]))
+    return expected_assignment(request, rows, names(request["rows"]), omitted_id)
 
 
-def expected_assignment(request, rows, parameters):
+def expected_assignment(request, rows, parameters, omitted_id=None):
     schema, _, columns = request["target"]
     policy = request["conflict"]
     old = MAIN if schema == "main" else TEMP
@@ -92,7 +92,7 @@ def expected_assignment(request, rows, parameters):
     known = {record[0] for record in old}
     for row in rows:
         values = dict(zip(columns, row))
-        key = integer_affinity(values.get("id"))
+        key = integer_affinity(values.get("id", omitted_id))
         if key is not None and key in known:
             if policy == "ignore" or (policy == "inherit" and schema == "main"):
                 continue

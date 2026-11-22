@@ -34,7 +34,7 @@ SQLITE = {
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",
     "sqlite-drop-table-v1.json", "sqlite-insert-v1.json", "sqlite-local-source-v1.json",
     "sqlite-recursive-source-v1.json", "sqlite-relational-v1.json", "sqlite-result-v1.json", "sqlite-scalars-v1.json",
-    "wildcard-projection-v2.json", "sqlite-grouped-v1.json", "sqlite-insert-query-v1.json",
+    "wildcard-projection-v2.json", "sqlite-grouped-v1.json", "sqlite-insert-query-v1.json", "sqlite-insert-input-v2.json",
     "sqlite-transaction-v1.json", "sqlite-update-v1.json", "sqlite-values-v1.json",
 }
 BASE = "semantics-ir-evidence"

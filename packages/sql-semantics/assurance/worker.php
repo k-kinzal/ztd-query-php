@@ -22,6 +22,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\DefaultRow;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
@@ -266,7 +267,11 @@ function observeDelete(Delete $value): array
 
 function directInsert(array $input): Insert
 {
-    $rows = isset($input['query']) ? direct($input['query']) : directValues($input);
+    $rows = match (true) {
+        ($input['defaults'] ?? false) === true => new DefaultRow(),
+        isset($input['query']) => direct($input['query']),
+        default => directValues($input),
+    };
 
     return new Insert(source($input['target']), $rows, InsertConflict::from($input['conflict']));
 }
@@ -279,7 +284,11 @@ function observeInsert(Insert $value): array
         'profile' => $value->profileId(),
         'target' => observeSource($value->target),
         'conflict' => $value->conflict->value,
-        ...($value->input instanceof Select ? ['query' => observeArm($value->input)] : ['rows' => valueRows($value->input)]),
+        ...match (true) {
+            $value->input instanceof DefaultRow => ['defaults' => true],
+            $value->input instanceof Select => ['query' => observeArm($value->input)],
+            $value->input instanceof ValuesQuery => ['rows' => valueRows($value->input)],
+        },
         'sql' => $value->toString(),
     ];
 }

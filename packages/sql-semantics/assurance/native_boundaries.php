@@ -27,8 +27,8 @@ function nativeBoundaryContract(string $dialect): array
         $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite wildcard cannot replace a fixed boundary');
         $rules += $additional;
-        $insert = __DIR__ . '/sqlite-insert-query-boundaries-v1.json';
-        requireShape(hash_file('sha256', $insert) === '3e049f960236f3ff9b883fc24b161741f7c70b7655e3462e09d5b99be1b38a6d', 'SQLite INSERT boundary contract differs from the recorded revision');
+        $insert = __DIR__ . '/sqlite-insert-input-boundaries-v2.json';
+        requireShape(hash_file('sha256', $insert) === 'ae80b074879fb11e7fa16fc5c45ab1789b313e0192ffc688590b19b92182eb8f', 'SQLite INSERT boundary contract differs from the recorded revision');
         $additional = json_decode(file_get_contents($insert), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'SQLite query INSERT cannot replace a fixed boundary');
         $rules += $additional;
@@ -83,10 +83,11 @@ function checkNativeBoundaries(
     if ($dialect === 'sqlite') {
         foreach (['Ir\\Parameter', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Statement\\Type\\Affinity', 'Ir\\Literal\\BlobLiteral',
             'Ir\\Literal\\HexIntegerLiteral', 'Ir\\Literal\\RealLiteral', 'Ir\\Literal\\TextLiteral', 'Ir\\Predicate\\Comparison', 'Ir\\Predicate\\Logical', 'Ir\\Predicate\\ExpressionScope', 'Ir\\Schema\\TableColumn',
-            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Statement\\Schema\\Column\\NotNull',
+            'Ir\\Schema\\DeclaredDatatypeName', 'Ir\\Schema\\DefaultLowering', 'Ir\\Mutation\\ReturnedColumn', 'Ir\\Mutation\\DefaultRow', 'Ir\\From\\SourceDeclarations', 'Statement\\Schema\\Column\\NotNull',
             'Statement\\Schema\\Column\\DefaultLiteral', 'Statement\\Schema\\Column\\DefaultExpression', 'Statement\\Schema\\Column\\DefaultWord'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }
+        $imports .= 'use ' . $platform . '\\Model\\Statement\\Identifier\\Comparison as NameComparison;' . "\n";
     } else {
         $imports .= 'use ' . $platform . '\\Ir\\Binding\\Parameter;' . "\n";
     }
