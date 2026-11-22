@@ -242,6 +242,9 @@ if ($dialect === 'sqlite') {
     $methods['Literal\\RealLiteral'][] = 'toString';
     $methods['Literal\\HexIntegerLiteral'][] = 'toString';
     $methods['Literal\\TextLiteral'] = ['__construct', 'toString', 'payloadBytes'];
+    $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];
+    $properties['From\\ExternalRelationKind'] = $methods['From\\ExternalRelationKind'] = [];
+    $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'View' => 'view'];
     $properties['Select']['source'] = ['Rows\\LocalSource', 'TableSource', 'null'];
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['Rows\\LocalSource', 'TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];

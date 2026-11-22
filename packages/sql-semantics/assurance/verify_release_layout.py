@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v20.json"
-CONTRACT = "085a2f76a72be0bd193f02fbf92331a68caa16d1af2e088420b5502637eb3fdc"
+CONTRACT_NAME = "release-layout-v21.json"
+CONTRACT = "c9ba5bb01bf334c3ae0524ad497a49775467185e8fc1c6c5cba6e5edf921ad40"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -206,6 +206,8 @@ def verify_probe(raw, catalog):
             require(item.get("joinedLocal") == [True, 0, 1, 1], "installed-joined-local-source-mismatch", item)
             require(item.get("coalesce") == [2, "007", 'SELECT COALESCE(NULL, ?007) AS "chosen"'],
                     "installed-coalesce-mismatch", item)
+            require(item.get("viewInput") == ["main", "removable", "view", ["id"], 0],
+                    "installed-external-view-input-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):

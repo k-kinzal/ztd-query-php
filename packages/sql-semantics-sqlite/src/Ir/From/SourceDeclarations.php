@@ -67,10 +67,11 @@ final class SourceDeclarations
                 $usesLocal = true;
                 continue;
             }
+            $kinds = $term instanceof TableInput ? [RelationKind::BaseTable, RelationKind::View] : [RelationKind::BaseTable];
             Check::input(
                 $resolution instanceof DeclaredTable && $resolution->table->complete
-                    && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->name->catalog === null,
-                'The projection requires a resolved, complete base table declaration.',
+                    && in_array($resolution->table->kind, $kinds, true) && $resolution->table->name->catalog === null,
+                'Reading requires a resolved, complete table or view declaration. A mutation target requires a base table.',
             );
             $tables[] = [$term, $resolution->table];
         }

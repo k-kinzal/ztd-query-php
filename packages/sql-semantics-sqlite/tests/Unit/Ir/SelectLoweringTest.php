@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -34,9 +35,23 @@ final class SelectLoweringTest extends TestCase
         self::assertCount(1, $value->source->columns);
     }
 
+    public function testLowerIdentifiesAResolvedViewSource(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE accounts (id INTEGER)');
+        $view = $inspection->inspect('CREATE VIEW identifiers AS SELECT id FROM main.accounts', [$table]);
+        $operation = $inspection->inspect('SELECT * FROM main.identifiers', [$view]);
+
+        $value = (new SelectLowering())->lower($operation->binding());
+
+        self::assertInstanceOf(TableSource::class, $value->source);
+        self::assertSame(ExternalRelationKind::View, $value->source->kind);
+        self::assertSame('identifiers', $value->source->table->value);
+    }
+
     public function testLowerRefusesAnUnresolvedSource(): void
     {
-        $this->expectExceptionMessage('resolved, complete base table');
+        $this->expectExceptionMessage('resolved, complete table or view');
 
         (new SelectLowering())->lower((new Inspection())->inspect('SELECT id FROM accounts')->binding());
     }

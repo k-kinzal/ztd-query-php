@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -70,6 +71,7 @@ final class Update implements SemanticsIR
         public readonly UpdateConflict $conflict = UpdateConflict::Inherit,
         array $returning = [],
     ) {
+        Check::input($target->kind === ExternalRelationKind::BaseTable, 'A mutation target must be a base table.');
         $checked = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty ordered assignment list.', 1);
         Check::input(count($checked) <= 2000, 'An UPDATE can have at most 2000 assignments in this profile.');
         $pending = $where === null ? [] : [[$where, 0, 1]];

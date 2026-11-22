@@ -21,6 +21,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
@@ -193,7 +194,7 @@ function source(array $specification): TableSource
     return new TableSource(new Identifier($specification[0]), new Identifier($specification[1]), array_map(
         static fn (string $name): Identifier => new Identifier($name),
         $specification[2],
-    ));
+    ), ExternalRelationKind::from($specification[3] ?? 'table'));
 }
 
 function observeSource(TableSource $source): array
@@ -201,7 +202,7 @@ function observeSource(TableSource $source): array
     return [$source->schema->value, $source->table->value, array_map(
         static fn (Identifier $name): string => $name->value,
         $source->columns,
-    )];
+    ), ...($source->kind === ExternalRelationKind::View ? [$source->kind->value] : [])];
 }
 
 function directLocal(array $input): LocalSource

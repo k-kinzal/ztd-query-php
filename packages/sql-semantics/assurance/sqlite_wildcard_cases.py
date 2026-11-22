@@ -95,5 +95,5 @@ def analyzed():
 def negatives():
     yield {"sql": "SELECT * FROM unregistered_source", "declarations": DECLARATIONS}, "analysis-rejected", "unregistered_source"
     yield {"sql": "SELECT absent.* FROM ir_left", "declarations": DECLARATIONS}, "analysis-rejected", "absent"
-    yield {"sql": "SELECT * FROM derived_view", "declarations": [*DECLARATIONS, "CREATE VIEW derived_view AS SELECT key, value FROM ir_left"]}, \
-        "rejected", "resolved, complete base table declaration"
+    yield {"sql": "SELECT * FROM (SELECT key, value FROM ir_left) AS derived", "declarations": DECLARATIONS}, \
+        "rejected", "must be an ordinary table input"

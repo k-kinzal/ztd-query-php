@@ -199,6 +199,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed first non-NULL scalar lost its ordered operand roles.');
             }
             $details['coalesce'] = [count($expression->arguments), $expression->arguments[1]->expression->label, $selection->toString()];
+            $read = $semantics->analyze('SELECT * FROM main.removable', $context);
+            if ($read->source === null || $read->source::class !== $namespace . 'Ir\\TableSource'
+                || $read->source->kind::class !== $namespace . 'Ir\\From\\ExternalRelationKind') {
+                throw new RuntimeException('Installed SQLite read lost its resolved view occurrence.');
+            }
+            $details['viewInput'] = [$read->source->schema->value, $read->source->table->value, $read->source->kind->value,
+                array_column($read->source->columns, 'value'), $read->columns[0]->expression->slot];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [

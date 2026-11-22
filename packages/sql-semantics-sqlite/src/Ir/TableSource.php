@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A schema-qualified external source and the named column slots it supplies.
+ * A schema-qualified table or view and the named column slots it supplies.
  *
  * The slots identify inputs. Evaluation supplies the corresponding table
- * and columns, with their SQLite row values.
+ * or view and columns, with their SQLite row values.
  *
  * @visibility public
  * @example Identifying a column of an external table
@@ -28,12 +29,16 @@ final class TableSource
     public readonly array $columns;
 
     /**
-     * Establishes a fixed external table identity and an ordered list of unique column slots.
+     * Establishes a fixed external relation identity and an ordered list of unique column slots.
      *
      * @param list<Identifier> $columns The names at those slots
      */
-    public function __construct(public readonly Identifier $schema, public readonly Identifier $table, array $columns)
-    {
+    public function __construct(
+        public readonly Identifier $schema,
+        public readonly Identifier $table,
+        array $columns,
+        public readonly ExternalRelationKind $kind = ExternalRelationKind::BaseTable,
+    ) {
         $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
         $seen = [];
         foreach ($names as $name) {

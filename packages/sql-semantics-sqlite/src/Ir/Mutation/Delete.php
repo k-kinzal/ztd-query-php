@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CollatedExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Concatenation;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\HexIntegerLiteral;
@@ -60,6 +61,7 @@ final class Delete implements SemanticsIR
         public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|Coalesce|CollatedExpression|ColumnReference|Comparison|Concatenation|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|PatternTest|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $where = null,
         array $returning = [],
     ) {
+        Check::input($target->kind === ExternalRelationKind::BaseTable, 'A mutation target must be a base table.');
         $checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');
         Check::input(count($checked) <= 2000, 'A DELETE can return at most 2000 fields in this profile.');
         foreach ($checked as $column) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Mutation;
 
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalInputs;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
@@ -55,6 +56,7 @@ final class Insert implements SemanticsIR
         array $returning = [],
         public readonly InsertConflictHandler $handler = InsertConflictHandler::None,
     ) {
+        Check::input($target->kind === ExternalRelationKind::BaseTable, 'A mutation target must be a base table.');
         $supplied = Check::listOf($writes, ColumnReference::class, 'An INSERT needs checked write slots.');
         $seen = [];
         foreach ($supplied as $column) {

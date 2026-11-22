@@ -1,0 +1,140 @@
+{
+  "revision": "SemanticsIR/sqlite-resolved-view-input-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "Sqlite"
+  ],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "constructors": {
+    "TableSource": {
+      "role": "Address one absolute SQLite table or read-only view occurrence and its consumed columns.",
+      "structure": "An absolute schema and relation name, a BaseTable or View kind, and the ordered list of distinct decoded column names at the occurrence.",
+      "conditions": "The kind is a closed enum. Names and slots obey the existing source rules. Analysis resolves a complete relation and its kind. View sources are legal in read positions. Base table targets are required at the direct INSERT, UPDATE and DELETE boundaries for the admitted mutation forms.",
+      "meaning": "Read the exact named source and interpret its slots under the same schema and relation kind. Preserve the projection of underlying view rows, including column names, types, NULL, multiplicity and reuse of multiple occurrences.",
+      "externalInterpretation": "The named external relation, its kind, column declarations and database state have the same interpretation. A view reads its supplied database definition and is referenced by identity. The source carries no external definition or catalog object.",
+      "sql": "Write the absolute schema and relation in FROM and qualify each bound column with its occurrence alias.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "ExternalRelationKind": {
+      "role": "Identify the two admitted kinds of external input relation.",
+      "structure": "BaseTable or View.",
+      "conditions": "Both are declared enum singletons and no other value constructs this role.",
+      "meaning": "The referenced object is a base table or view respectively. Mutation target owners demand BaseTable.",
+      "externalInterpretation": "The engine resolves the absolute address to a relation of the recorded kind.",
+      "sql": "The source syntax addresses the chosen relation using the same quoted qualification for either kind.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ],
+      "type": "From/ExternalRelationKind"
+    }
+  },
+  "existingRoles": [
+    "Select",
+    "ColumnReference",
+    "ResultColumn",
+    "Aggregation/GroupedSelect",
+    "Mutation/Insert",
+    "Mutation/Update",
+    "Mutation/Delete",
+    "Schema/View/CreateView"
+  ],
+  "admissionChange": "The exact previously refused view-backed wildcard is now a positive native fixture. The wildcard suite continues to check rejection of an unsupported complete derived-relation layout.",
+  "observations": [
+    "Exact absolute occurrence identities and kind, native column labels and observed values and types, duplicates, NULL and all consumed view slots.",
+    "Equal names in temp and main yield different rows or types. Two references to one view have independent occurrence slots.",
+    "A subsequent view definition reads an existing view under its explicit schema policy and keeps the external reference.",
+    "All three normalized writable-root constructors reject a View as target."
+  ],
+  "finite": {
+    "schemas": [
+      "main",
+      "temp"
+    ],
+    "projection": [
+      "ordered-fields",
+      "reverse-fields",
+      "repeat-slot"
+    ],
+    "layout": [
+      "single",
+      "self-join"
+    ],
+    "nullFilter": [
+      false,
+      true
+    ],
+    "identity": "Check all 24 destination, field, occurrence and filter combinations using the actual published graph and native relation kind."
+  },
+  "exploration": {
+    "seeds": [
+      6029,
+      14369,
+      40351
+    ],
+    "casesPerSeed": 28,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary field order, bound occurrence and column slots, alias spelling, NULL filtering, duplicated rows, temporary shadowing and join predicates."
+  },
+  "analysis": [
+    "Read the complete wildcard previously denied on the resolved view.",
+    "Bind an unqualified shadowed view to temp.",
+    "Bind schema-qualified references to main.",
+    "Use two occurrences of one existing view with separate slots.",
+    "Group a declared view and compare COUNT and NULL behavior.",
+    "Define a view over an existing view using a checked external view occurrence."
+  ],
+  "negative": [
+    "INSERT targets a view.",
+    "UPDATE targets a view.",
+    "DELETE targets a view.",
+    "A native statement tries to use a view as the base-table write case."
+  ],
+  "faults": [
+    "Emit a view read from the other schema.",
+    "Renumber a later view occurrence to the first.",
+    "Remove an emitted projection slot.",
+    "Allow a View kind as a writable target."
+  ],
+  "evidence": {
+    "Q01": "Check the closed relation kind and reject wrong placement through direct constructors.",
+    "Q02": "Enumerate and compare the 24 finite cases and six analyzed cases.",
+    "Q03": "Check every named consumed field by absolute relation occurrence and metadata fixture.",
+    "Q04": "Independently derive the rows of fixture views and compare direct and analyzed SQL in SQLite.",
+    "Q05": "Observe the installed View kind and output slots through Composer and analyze."
+  },
+  "open": [
+    "Writable views, virtual sources and incomplete declarations require separate role contracts."
+  ],
+  "trust": [
+    "SQLite native catalog and name-resolution rules",
+    "The supplied external view declarations and independent base fixture row model."
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createview.html",
+    "https://sqlite.org/lang_select.html"
+  ],
+  "extends": "sqlite-resolved-view-input-v1.json"
+}

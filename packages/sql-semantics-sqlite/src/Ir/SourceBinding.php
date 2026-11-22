@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
@@ -179,6 +181,7 @@ final class SourceBinding
 
     /**
      * Exports the external identity and consumed column names.
+     * @throws InvalidConstruction When the occurrence lacks an admitted external kind
      */
     public function source(int $index = 0): ?TableSource
     {
@@ -186,10 +189,22 @@ final class SourceBinding
 
         Check::invariant($table === null || $table instanceof Table, 'This occurrence has an external table identity.');
 
-        return $table === null ? null : new TableSource(
+        if ($table === null) {
+            return null;
+        }
+
+        $kind = match ($table->kind) {
+            RelationKind::BaseTable => ExternalRelationKind::BaseTable,
+            RelationKind::View => ExternalRelationKind::View,
+            RelationKind::MaterializedView, RelationKind::ForeignTable, RelationKind::Sequence
+                => throw new InvalidConstruction('An external SQLite occurrence requires an ordinary table or view.'),
+        };
+
+        return new TableSource(
             new Identifier(($table->name->schema ?? $this->operation->context->declarationSchema)->value),
             new Identifier($table->name->name->value),
             $this->names[$index] ?? [],
+            $kind,
         );
     }
 
