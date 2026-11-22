@@ -1,6 +1,8 @@
 """Index replayed evidence and identify outstanding acceptance requirements."""
 
 import argparse
+from difflib import unified_diff
+from hashlib import sha256
 import json
 from pathlib import Path
 import re
@@ -334,7 +336,41 @@ class Evidence:
         return item
 
 
-def replay_staged(evidence, artifact, manifest, inventory):
+def replay_installed_mutation(fault, patch, manifest, checkout, specification):
+    package, relative = specification["mutationReplay"]["package"], specification["mutationReplay"]["path"]
+    path = f"packages/{package}/{relative}"
+    original = (checkout / path).read_bytes()
+    changed = original + b"\n"
+    before, after = sha256(original).hexdigest(), sha256(changed).hexdigest()
+    changed_text = changed.decode().splitlines(keepends=True)
+    original_text = original.decode().splitlines(keepends=True)
+    expected_patch = "".join(unified_diff(original_text, changed_text, f"a/{relative}", f"b/{relative}"))
+    require(patch == expected_patch, "bundle-installed-fault-patch", relative)
+    require(before == manifest[path] and after != before and fault == {
+        "injection": "installed-mutation.diff",
+        "control": "verified",
+        "detected": "installed-distribution-mismatch",
+        "package": package,
+        "path": relative,
+        "before": before,
+        "after": after,
+        "detail": {relative: {"expected": before, "actual": after}},
+    }, "bundle-installed-fault-result", relative)
+
+
+def replay_profile_mutation(evidence, profile_path, record, manifest, checkout, specification):
+    paths = record["installedMutation"]
+    require(set(paths) == {"installed-mutation.diff", "installed-mutation.json"},
+            "bundle-installed-fault-artifacts", profile_path.name)
+    files = {name: evidence.checked(profile_path / name, checksum)[0] for name, checksum in paths.items()}
+    fault = json.loads(files["installed-mutation.json"].read_text())
+    patch = files["installed-mutation.diff"].read_text()
+    replay_installed_mutation(fault, patch, manifest, checkout, specification)
+
+    return fault, patch
+
+
+def replay_staged(evidence, artifact, manifest, inventory, checkout):
     if artifact is None:
         return None
     path, origin, report = artifact
@@ -352,14 +388,7 @@ def replay_staged(evidence, artifact, manifest, inventory):
         roots, roles, controls = verify_probe(raw.read_text(), expected)
         require(roots == record["runtime"] and roles == record["roles"] and controls == record["roleControls"],
                 "bundle-installed-probe-replay-mismatch", profile)
-        mutation = record["installedMutation"]
-        require(set(mutation) == {"installed-mutation.diff", "installed-mutation.json"}, "bundle-installed-fault-artifacts", profile)
-        files = {name: evidence.checked(path.parent / profile / name, checksum)[0] for name, checksum in mutation.items()}
-        fault = json.loads(files["installed-mutation.json"].read_text())
-        source = "packages/" + fault["package"] + "/" + fault["path"]
-        require(fault["injection"] == "installed-mutation.diff" and fault["control"] == "verified"
-                and fault["detected"] == "installed-distribution-mismatch" and fault["before"] == manifest[source]
-                and fault["after"] != fault["before"], "bundle-installed-fault-result", profile)
+        replay_profile_mutation(evidence, path.parent / profile, record, manifest, checkout, specification)
     return artifact
 
 
@@ -431,7 +460,7 @@ def main():
         _, _, observed = preflight
         verify_sqlite_preflight(observed, checkout, manifest)
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
-    staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest, classes)
+    staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest, classes, checkout)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)

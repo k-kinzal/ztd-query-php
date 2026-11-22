@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v17.json"
-CONTRACT = "5ec1883d9b7ece46839a882865249429c490c74382d3cd866acd682fe3880999"
+CONTRACT_NAME = "release-layout-v18.json"
+CONTRACT = "648b159fa2b26a8ed9bae1283135d38b1c86e2cb8b8eced237acf0c64dcd163a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
