@@ -75,6 +75,8 @@ def children(expression):
         yield from children(expression[3])
     elif expression[0] in ("cast", "unary"):
         yield from children(expression[2])
+    elif expression[0] == "truth":
+        yield from children(expression[3])
 
 
 def parameter_names(item):

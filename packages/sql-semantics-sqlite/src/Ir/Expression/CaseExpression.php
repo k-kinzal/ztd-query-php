@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
@@ -35,14 +36,14 @@ final class CaseExpression
     public readonly array $branches;
 
     /**
-     * @param Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression|null $base The base evaluated once in a simple CASE
+     * @param Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base The base evaluated once in a simple CASE
      * @param list<CaseBranch> $branches The branches in evaluation order
-     * @param Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression|null $otherwise The result selected when every branch misses
+     * @param Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise The result selected when every branch misses
      */
     public function __construct(
-        public readonly Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression|null $base,
+        public readonly Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $base,
         array $branches,
-        public readonly Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression|null $otherwise = null,
+        public readonly Arithmetic|BlobLiteral|self|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression|null $otherwise = null,
     ) {
         Check::input(count($branches) <= 32, 'A CASE expression can have at most 32 branches.');
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression needs at least one checked branch.', 1);

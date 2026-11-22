@@ -59,6 +59,10 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
             return int(not truth(value))
         assert operator == "~"
         return ~convert("INTEGER", value)
+    if kind == "truth":
+        desired, negated, operand = arguments
+        decision = truth(evaluate(operand, bindings, row, case_equal, comparison_inputs))
+        return int((decision is desired) != negated)
     if kind == "cast":
         return convert(arguments[0], evaluate(arguments[1], bindings, row, case_equal, comparison_inputs))
     if kind == "case":

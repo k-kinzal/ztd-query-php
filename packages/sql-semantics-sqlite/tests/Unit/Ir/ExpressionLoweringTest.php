@@ -15,9 +15,13 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\CastTarget;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryExpression;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Testing\Sqlite\Inspection;
@@ -81,5 +85,32 @@ final class ExpressionLoweringTest extends TestCase
         self::assertSame(UnaryKind::Not, $value->kind);
         self::assertInstanceOf(Parameter::class, $value->operand);
         self::assertSame(2, $value->operand->slot);
+    }
+
+    public function testBinaryRecognizesTheGroupedTruthTestOperand(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 7 IS NOT (FALSE)');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $column = $operation->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(Binary::class, $column->expression);
+        $value = (new ExpressionLowering())->binary($column->expression, new SourceBinding($operation->binding(), null));
+
+        self::assertInstanceOf(TruthTest::class, $value);
+        self::assertFalse($value->desired);
+        self::assertTrue($value->negated);
+    }
+
+    public function testTruthWordProducesAnIntegerInAnOrdinaryScalarRole(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT TRUE');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $column = $operation->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(TruthWord::class, $column->expression);
+        $value = (new ExpressionLowering())->truthWord($column->expression, new SourceBinding($operation->binding(), null));
+
+        self::assertInstanceOf(IntegerLiteral::class, $value);
+        self::assertSame('1', $value->decimal);
     }
 }

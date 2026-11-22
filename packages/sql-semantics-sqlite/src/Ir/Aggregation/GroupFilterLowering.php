@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 
 /**
  * Resolves the group-time aggregate separately from its scalar threshold.
@@ -42,6 +43,12 @@ final class GroupFilterLowering
         $threshold = $thresholdFirst ? $left : $right;
         Check::input($aggregate instanceof FunctionCall && !$threshold instanceof FunctionCall, 'HAVING requires a comparison of one COUNT and one threshold.');
         $count = (new CountBinding())->lower($aggregate, $binding);
+        if (!$thresholdFirst && ($operator === ComparisonOperator::Is || $operator === ComparisonOperator::IsNot)
+            && $threshold instanceof TruthWord && ($desired = $source->constantTruth($threshold)) !== null) {
+            $nonzero = $desired === ($operator === ComparisonOperator::Is);
+
+            return new CountComparison($count, $nonzero ? ComparisonOperator::NotEqual : ComparisonOperator::Equal, new IntegerLiteral('0'));
+        }
         $value = (new ExpressionLowering())->lower($threshold, $source);
         Check::input($value instanceof IntegerLiteral || $value instanceof NullLiteral || $value instanceof Parameter, 'HAVING requires an integer, NULL or numbered threshold.');
 

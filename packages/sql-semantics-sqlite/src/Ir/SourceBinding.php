@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 
@@ -130,6 +131,14 @@ final class SourceBinding
         }
 
         return $writes;
+    }
+
+    /**
+     * Returns a Boolean constant once lookup has established its literal role.
+     */
+    public function constantTruth(TruthWord $word): ?bool
+    {
+        return $this->operation->facts->scalar($word)->resolution === null ? $word->value : null;
     }
 
     /**

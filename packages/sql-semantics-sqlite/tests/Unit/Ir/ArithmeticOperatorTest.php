@@ -15,7 +15,7 @@ final class ArithmeticOperatorTest extends TestCase
 {
     public function testCasesMatchTheSupportedArithmetic(): void
     {
-        self::assertSame(['+', '-', '*'], array_map(
+        self::assertSame(['+', '-', '*', '/', '%', '&', '|', '<<', '>>'], array_map(
             static fn (ArithmeticOperator $operator): string => $operator->value,
             ArithmeticOperator::cases(),
         ));

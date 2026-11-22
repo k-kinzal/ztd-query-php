@@ -27,6 +27,7 @@ import run_sqlite_relational as relational
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
+import run_sqlite_truth as truth
 import run_sqlite_unary as unary
 import run_sqlite_update as update
 import run_sqlite_update_returning as update_returning
@@ -59,6 +60,7 @@ DOMAINS = {
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
+    truth.CONTRACT_NAME: (truth, truth.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
     group_filter.CONTRACT_NAME: (group_filter, group_filter.FIXTURE),
@@ -79,7 +81,7 @@ def replay(directory, contract_name, index, library):
 
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
     factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase,
-               group_filter: group_filter.GroupedDatabase}.get(module, Database)
+               group_filter: grouped.GroupedDatabase, truth: grouped.GroupedDatabase}.get(module, Database)
     database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]

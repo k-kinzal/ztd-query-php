@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
@@ -79,5 +80,12 @@ final class SelectSqlTest extends TestCase
         $choice = new CaseExpression($one, [new CaseBranch($one, $two), new CaseBranch($two, $one)], $two);
 
         self::assertSame('(CASE 1 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 2 END)', (new SelectSql())->choice($choice, null, []));
+    }
+
+    public function testTruthUsesTheNumberedOperandOnce(): void
+    {
+        $test = new TruthTest(new Parameter('02'), false, true);
+
+        self::assertSame('(CASE WHEN (NOT ?02) THEN 0 ELSE 1 END)', (new SelectSql())->truth($test, null, []));
     }
 }

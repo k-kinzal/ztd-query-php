@@ -13,11 +13,11 @@ function nativeBoundaryContract(string $dialect): array
 {
     $records = match ($dialect) {
         'sqlite' => [
-            ['sqlite-grouped-boundaries-v3.json', 'a2a412c86bd0d805dea49b84a59887964d26353432d7dd7bc3cbfbeef17cac56'],
+            ['sqlite-grouped-boundaries-v4.json', 'a2143615c38f12336e258504adf8837d18dc8dff57f696df588794a81d480103'],
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
             ['sqlite-insert-slots-boundaries-v1.json', 'cde9f0df0d6f1ca8ff20ddac140fd96577cf456c2facfd00e809f5d89a717d9e'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
-            ['sqlite-scalar-boundaries-v3.json', '5354b5274f93618a83cf7ad602ebd23318c371c050fa8a9234c58ddb2a70463c'],
+            ['sqlite-scalar-boundaries-v4.json', 'c6edf41d6e4e2cae472e60bead0d4d81ca6a62d18af5ad33228c040b6b160f7e'],
             ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
             ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
         ],
@@ -58,7 +58,7 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     if ($dialect === 'sqlite') {
-        foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\ArithmeticOperator', 'Statement\\Expression\\Operator\\BinaryOperator', 'Ir\\Predicate\\ComparisonOperator',
+        foreach (['Ir\\Parameter', 'Ir\\Expression\\BinaryOperatorLowering', 'Ir\\ArithmeticOperator', 'Statement\\Expression\\Operator\\BinaryOperator', 'Ir\\Predicate\\ComparisonOperator', 'Ir\\Predicate\\TruthTest', 'Statement\\Expression\\TruthWord',
             'Statement\\Expression\\FunctionCall', 'Statement\\Expression\\Operator\\Binary', 'Ir\\Expression\\CaseExpression', 'Ir\\Expression\\CaseBranch', 'Ir\\Expression\\CastExpression', 'Ir\\Expression\\CastTarget', 'Ir\\Expression\\UnaryExpression', 'Ir\\Expression\\UnaryKind',
             'Ir\\Literal\\NumericLiteralLowering', 'Statement\\Expression\\Operator\\Unary', 'Statement\\Expression\\Operator\\UnaryOperator',
             'Statement\\Expression\\Literal\\IntegerLiteral as ParsedInteger', 'Statement\\Expression\\Literal\\HexLiteral as ParsedHex',

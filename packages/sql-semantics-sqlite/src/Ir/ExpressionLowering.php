@@ -20,6 +20,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
@@ -40,6 +41,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\NullTestForm;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 
 /**
@@ -54,22 +56,14 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
 
         if ($expression instanceof Binary) {
-            $operator = (new BinaryOperatorLowering())->lower($expression->operator);
-            $left = $this->lower($expression->left, $binding);
-            $right = $this->lower($expression->right, $binding);
-
-            return match (true) {
-                $operator instanceof ArithmeticOperator => new Arithmetic($operator, $left, $right),
-                $operator instanceof ComparisonOperator => new Comparison($operator, $left, $right),
-                $operator instanceof LogicalOperator => new Logical($operator, $left, $right),
-            };
+            return $this->binary($expression, $binding);
         }
         if ($expression instanceof Unary) {
             return $this->prefix($expression, $binding);
@@ -91,9 +85,46 @@ final class ExpressionLowering
             $expression instanceof ParsedBlob => new BlobLiteral($expression->hex),
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof BindParameter && $expression->prefix === ParameterPrefix::Question => new Parameter($expression->label),
+            $expression instanceof TruthWord => $this->truthWord($expression, $binding),
             $expression instanceof ColumnUse, $expression instanceof DoubleQuotedWord => $binding->reference($expression),
             default => throw new InvalidConstruction('This expression has no complete SQLite scalar representation.'),
         };
+    }
+
+    /**
+     * Selects the ordered operation and recognizes the native truth-test operand.
+     * @throws InvalidConstruction When an operation or binding has no checked representation
+     */
+    public function binary(Binary $expression, SourceBinding $binding): Arithmetic|Comparison|Logical|TruthTest
+    {
+        $operator = (new BinaryOperatorLowering())->lower($expression->operator);
+        $left = $this->lower($expression->left, $binding);
+        $writtenRight = $expression->right;
+        while ($writtenRight instanceof Grouped) {
+            $writtenRight = $writtenRight->operand;
+        }
+        if (($operator === ComparisonOperator::Is || $operator === ComparisonOperator::IsNot)
+            && $writtenRight instanceof TruthWord && ($desired = $binding->constantTruth($writtenRight)) !== null) {
+            return new TruthTest($left, $desired, $operator === ComparisonOperator::IsNot);
+        }
+        $right = $this->lower($writtenRight, $binding);
+
+        return match (true) {
+            $operator instanceof ArithmeticOperator => new Arithmetic($operator, $left, $right),
+            $operator instanceof ComparisonOperator => new Comparison($operator, $left, $right),
+            $operator instanceof LogicalOperator => new Logical($operator, $left, $right),
+        };
+    }
+
+    /**
+     * Resolves a truth word to its column or integer role.
+     * @throws InvalidConstruction When the written name has no checked column binding
+     */
+    public function truthWord(TruthWord $expression, SourceBinding $binding): ColumnReference|IntegerLiteral
+    {
+        $truth = $binding->constantTruth($expression);
+
+        return $truth === null ? $binding->reference($expression) : new IntegerLiteral($truth ? '1' : '0');
     }
 
     /**

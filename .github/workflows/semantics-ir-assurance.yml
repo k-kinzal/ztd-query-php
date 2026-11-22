@@ -295,6 +295,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-unary-evidence"
+      - name: Collect SQLite resolved truth-word and Boolean test observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_truth.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-truth-evidence"
       - name: Collect SQLite literal default observations
         if: ${{ !cancelled() }}
         env:
@@ -410,6 +419,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-cast-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-numeric-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-unary-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-truth-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/

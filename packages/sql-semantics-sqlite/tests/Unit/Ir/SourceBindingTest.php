@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -102,5 +103,16 @@ final class SourceBindingTest extends TestCase
         self::assertNotNull($target);
         self::assertSame('first', $target->columns[0]->value);
         self::assertSame('last', $target->columns[1]->value);
+    }
+
+    public function testConstantTruthDistinguishesAnUnshadowedWord(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT FALSE');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $column = $operation->statement->columns[0];
+        self::assertInstanceOf(ResultColumn::class, $column);
+        self::assertInstanceOf(TruthWord::class, $column->expression);
+
+        self::assertFalse((new SourceBinding($operation->binding(), null))->constantTruth($column->expression));
     }
 }

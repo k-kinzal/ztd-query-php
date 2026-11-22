@@ -22,8 +22,9 @@ def faults(engine):
                   "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("skip-group-row-filter-scope", "Aggregation/GroupedSelect::__construct", "$predicates[] = [$where, 0, count($widths)];", ""),
             Fault("ignore-having-count-slot", "Aggregation/GroupedSelect::__construct", "$argument === null || isset($source->columns[$argument->slot]),", "true,"),
+            Fault("skip-truth-operand-scope", "Predicate/ExpressionScope::check", ", $expression instanceof TruthTest", ""),
             Fault("skip-unary-operand-scope", "Predicate/ExpressionScope::check",
-                  ", $expression instanceof UnaryExpression => $pending[]", " => $pending[]"),
+                  ", $expression instanceof UnaryExpression", ""),
             Fault("substitute-numeric-operation", "Expression/BinaryOperatorLowering::lower",
                   "ArithmeticOperator::from($operator->value)", "ArithmeticOperator::from($operator === BinaryOperator::Divide ? '%' : $operator->value)"),
             Fault("ignore-inserted-output-slot", "Mutation/Insert::__construct",
@@ -32,7 +33,7 @@ def faults(engine):
             Fault("allow-supplied-default-slot", "Mutation/Insert::__construct", "$width === 0,", "true,"),
             Fault("allow-generated-implicit-target", "SourceBinding::implicitWrites", "if (!$column->generated)", "if (true)"),
             Fault("skip-cast-operand-scope", "Predicate/ExpressionScope::check",
-                  "$pending[] = [$expression->operand, $height + 1, $visibility],", "null,"),
+                  "$expression instanceof CastExpression, ", ""),
             Fault("allow-invalid-returning-slot", "Mutation/Delete::__construct", "isset($target->columns[$column->reference->slot]),", "true,"),
             Fault("allow-non-target-returned-field", "Mutation/ReturnedColumn::__construct", "$reference->source === 0,", "true,"),
             Fault("skip-table-default-budget", "Schema/CreateTable::__construct", "(new ExpressionScope())->check([], $defaults);", ""),
@@ -167,7 +168,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v3.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v3.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v4.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v4.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v16.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

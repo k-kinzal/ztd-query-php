@@ -32,7 +32,7 @@ $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
 $prefix = $platform . '\\Ir\\';
 $operands = ['Arithmetic', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Parameter'];
 if ($dialect === 'sqlite') {
-    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
+    array_push($operands, 'Expression\\CaseExpression', 'Expression\\CastExpression', 'Expression\\UnaryExpression', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Predicate\\Comparison', 'Predicate\\Logical', 'Predicate\\TruthTest', 'Literal\\RealLiteral', 'Literal\\TextLiteral');
     sort($operands);
 }
 $properties = [
@@ -85,6 +85,8 @@ if ($dialect === 'sqlite') {
     $methods['Expression\\UnaryExpression'] = ['__construct'];
     $properties['Expression\\UnaryKind'] = $methods['Expression\\UnaryKind'] = [];
     $enumCases['Expression\\UnaryKind'] = ['Plus' => '+', 'Not' => 'NOT', 'Complement' => '~'];
+    $properties['Predicate\\TruthTest'] = ['operand' => $operands, 'desired' => ['bool'], 'negated' => ['bool']];
+    $methods['Predicate\\TruthTest'] = ['__construct'];
     $roots[] = 'Aggregation\\GroupedSelect';
     $properties['Aggregation\\GroupedSelect'] = [
         'source' => ['?TableSource'], 'keys' => ['array'], 'columns' => ['array'], 'where' => [...$operands, 'null'],

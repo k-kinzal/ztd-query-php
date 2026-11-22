@@ -166,7 +166,7 @@ foreach ($values as $value) {
     \CHECK::input($value instanceof \IR\Arithmetic || $value instanceof \IR\Literal\BlobLiteral || $value instanceof \IR\Expression\CaseExpression || $value instanceof \IR\Expression\CastExpression || $value instanceof \IR\Predicate\Comparison
         || $value instanceof \IR\Literal\HexIntegerLiteral || $value instanceof \IR\IntegerLiteral || $value instanceof \IR\Predicate\Logical
         || $value instanceof \IR\NullLiteral || $value instanceof \IR\Parameter || $value instanceof \IR\Literal\RealLiteral || $value instanceof \IR\Literal\TextLiteral
-        || $value instanceof \IR\Expression\UnaryExpression, 'A VALUES row needs a scalar operand independent of tables.');
+        || $value instanceof \IR\Predicate\TruthTest || $value instanceof \IR\Expression\UnaryExpression, 'A VALUES row needs a scalar operand independent of tables.');
     $closed[] = $value;
     $pending[] = [$value, 0, 0];
 }
