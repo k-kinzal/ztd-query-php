@@ -161,6 +161,7 @@
 
 <span class="tok-kw">echo</span> <span class="tok-var">$ir</span>-&gt;<span class="tok-id">toString</span>();</code></pre>
 </div><div class="doc-block" data-diff="added"><p>The checked complete domain includes projections, joins, predicates, ordering, values, compound queries, selected table changes and transaction control. The default search order gives temporary tables precedence over main.</p>
+</div><div class="doc-block" data-diff="added"><p>INSERT and UPDATE keep their explicit conflict strategy or inherit the target schema&#039;s policy. REPLACE is an INSERT with an explicit REPLACE strategy. Execution uses the target&#039;s constraint and trigger definitions.</p>
 </div><div class="doc-block" data-diff="added"><p>Concrete types are under <code>SqlSemantics\Platform\Sqlite\Ir</code>. See the <span class="md-target" title="../sql-semantics/docs/semantics-ir.md">semantic roles and checked profiles</span>, <span class="md-target" title="../sql-semantics/docs/contexts.md">catalog construction</span>, and <span class="md-target" title="../sql-semantics/assurance/README.md">native evidence</span>.</p>
 </div></section>
 </main>
