@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v18.json"
-CONTRACT = "648b159fa2b26a8ed9bae1283135d38b1c86e2cb8b8eced237acf0c64dcd163a"
+CONTRACT_NAME = "release-layout-v19.json"
+CONTRACT = "51b2adad200b744362526bd4f4ed84d40d721940b4ca48f5f5e4e9f10b5c74a5"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -231,6 +231,9 @@ def verify_probe(raw, catalog):
             require(item.get("groupedView") == [["id", "n"], 0, 1, "BINARY",
                                                "sqlite-3.47.2/utf8/short-column-names/numbered-parameters/grouped-builtin"],
                     "installed-grouped-view-definition-mismatch", item)
+            require(item.get("compoundView") == [["selected"], "UNION ALL",
+                                                'CREATE VIEW "main"."view_set" ("selected") AS VALUES (4), (4) UNION ALL SELECT 2 AS "item"'],
+                    "installed-compound-view-definition-mismatch", item)
         if item["role"] == "Schema\\DropView":
             require(item.get("dropView") == ["main", "removable", True], "installed-view-removal-mismatch", item)
         if item["role"] == "Schema\\Alter\\RenameTable":

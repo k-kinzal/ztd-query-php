@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema\View;
 
 use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
@@ -37,13 +38,18 @@ final class CreateView implements SemanticsIR
         public readonly Identifier $schema,
         public readonly Identifier $view,
         array $columns,
-        public readonly GroupedSelect|Select|ValuesQuery $query,
+        public readonly Compound|GroupedSelect|Select|ValuesQuery $query,
         public readonly bool $ifNotExists = false,
     ) {
         Check::input($schema->value !== '', 'A CREATE VIEW needs a nonempty schema identifier.');
         Check::input(!str_starts_with($view->key(), 'sqlite_'), 'A CREATE VIEW cannot use the reserved SQLite namespace.');
         $names = Check::listOf($columns, Identifier::class, 'A CREATE VIEW needs effective column names.', 1);
-        (new ViewQueryBounds())->check($schema, $query, count($names));
+        Check::input(count($names) <= 2000, 'View output count exceeds the SQLite profile.');
+        if ($query instanceof Compound) {
+            (new CompoundViewBounds())->check($schema, $query, count($names), strlen((new ViewSql())->header($schema, $view, $names, $ifNotExists)));
+        } else {
+            (new ViewQueryBounds())->check($schema, $query, count($names));
+        }
         $seen = [];
         foreach ($names as $name) {
             $key = $name->key();
@@ -67,13 +73,6 @@ final class CreateView implements SemanticsIR
      */
     public function toString(): string
     {
-        $columns = [];
-        foreach ($this->columns as $name) {
-            $columns[] = $name->quoted();
-        }
-
-        return 'CREATE VIEW ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '')
-            . $this->schema->quoted() . '.' . $this->view->quoted()
-            . ' (' . implode(', ', $columns) . ') AS ' . $this->query->toString();
+        return (new ViewSql())->header($this->schema, $this->view, $this->columns, $this->ifNotExists) . $this->query->toString();
     }
 }

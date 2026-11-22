@@ -15,6 +15,7 @@ import run_sqlite_create_table as create
 import run_sqlite_create_as as create_as
 import run_sqlite_create_view as create_view
 import run_sqlite_create_view_grouped as create_view_grouped
+import run_sqlite_create_view_compound as create_view_compound
 import run_sqlite_delete as delete
 import run_sqlite_delete_returning as returning
 import run_sqlite_defaults as defaults
@@ -89,6 +90,7 @@ DOMAINS = {
     create_as.CONTRACT_NAME: (create_as, create_as.FIXTURE),
     create_view.CONTRACT_NAME: (create_view, create_view.FIXTURE),
     create_view_grouped.CONTRACT_NAME: (create_view_grouped, create_view_grouped.FIXTURE),
+    create_view_compound.CONTRACT_NAME: (create_view_compound, create_view_compound.FIXTURE),
     strict_tables.CONTRACT_NAME: (strict_tables, strict_tables.FIXTURE),
     primary_keys.CONTRACT_NAME: (primary_keys, primary_keys.FIXTURE),
     rename.CONTRACT_NAME: (rename, rename.FIXTURE),
@@ -139,6 +141,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                rename: rename.RenameDatabase, drop_view: drop_view.DropViewDatabase,
                create_view: create_view.CreateViewDatabase,
                create_view_grouped: create_view_grouped.GroupedViewDatabase,
+               create_view_compound: create_view_compound.CreateViewDatabase,
                joined_local: joined_local.JoinedLocalDatabase, coalesce: coalesce.CoalesceDatabase}.get(module, Database)
     database = factory(library)
     try:

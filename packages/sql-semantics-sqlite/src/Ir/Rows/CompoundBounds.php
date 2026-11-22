@@ -24,13 +24,14 @@ final class CompoundBounds
      * Checks arm positions, width and the length of the emitted query.
      *
      * @param non-empty-list<CompoundStep> $steps
+     * @param int $prefixBytes The containing declaration bytes, when any
      * @param list<Order> $orderBy
      */
-    public function check(Select|ValuesQuery $first, array $steps, array $orderBy, ?Limit $limit): void
+    public function check(Select|ValuesQuery $first, array $steps, array $orderBy, ?Limit $limit, int $prefixBytes = 0): void
     {
         Check::input(count($steps) < 500, 'A compound can have at most 500 arms.');
         $width = null;
-        $bytes = 0;
+        $bytes = $prefixBytes;
         $arms = [$first];
         foreach ($steps as $step) {
             $arms[] = $step->query;

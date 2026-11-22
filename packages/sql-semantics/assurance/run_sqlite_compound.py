@@ -92,7 +92,7 @@ def seeded(domain, settings, seed):
         yield query(members[0], steps, order, limit)
 
 
-def expected(request):
+def expected(request, read_select=None):
     first, steps = request["first"], request["steps"]
     bindings = request["bindings"]
 
@@ -100,6 +100,8 @@ def expected(request):
         return member["rows"] if member["operation"] == "values" else [[value for value, _ in member["columns"]]]
 
     def arm_rows(member):
+        if read_select is not None and member["operation"] == "select":
+            return [tuple(row) for row in read_select(member)]
         return [tuple(evaluate(value, bindings) for value in row) for row in terms(member)]
 
     def representatives(rows):

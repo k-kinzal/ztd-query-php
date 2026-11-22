@@ -5,6 +5,7 @@ import hashlib
 from itertools import product
 
 from run import Failure, Worker, compare, require
+from run_sqlite_compound import expected as compound_expected
 from run_sqlite_create_table import quoted
 from run_sqlite_unique_keys import values_sql
 from sqlite_create_view_cases import SCHEMAS, TABLES, analyzed_cases, finite_case, finite_id, finite_ids, kind, negatives, requests, storage
@@ -162,14 +163,21 @@ def expected(item):
     exists = item["occupied"]
     query = item["query"]
     columns = ["existing"] if exists else item["columns"]
-    types = ([""] if exists else [""] * len(columns) if query["operation"] == "values"
+    types = ([""] if exists else [""] * len(columns) if query["operation"] in ("values", "compound")
              else [declared_type(query, expression) for expression, _ in query["columns"]])
     data = item["data"]
     changed = deepcopy(data)
     for schema in SCHEMAS:
         changed[schema]["base"].append((EXTRA, EXTRA if schema == "main" else "new-value"))
     ordered = not exists and bool(query.get("orderBy"))
-    read = lambda source_data: {**READ_RESULT, "names": columns, "rows": sorted_rows(rows_for(item, source_data), ordered)}
+    def read(source_data):
+        if not exists and query["operation"] == "compound":
+            result = compound_expected({**query, "bindings": {}}, lambda arm: projection(arm, source_data))["rows"]
+        else:
+            result = sorted_rows(rows_for(item, source_data), ordered)
+
+        return {**READ_RESULT, "names": columns, "rows": result}
+
     conflict = exists and not item["ifNotExists"]
     return {
         "before": expected_catalog(item, exists),
@@ -322,13 +330,14 @@ def execute(args, contract, db, worker_factory=Worker):
 
 def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/Schema/View/CreateView.php"
+    header = "sql-semantics-sqlite/src/Ir/Schema/View/ViewSql.php"
     simple = finite_case("main", "projection", False, False)
     guarded = finite_case("main", "projection", True, True)
     return runner(args, db, [
-        RenderFault("erase-view-if-not-exists", renderer, "($this->ifNotExists ? 'IF NOT EXISTS ' : '')", "''", guarded, "meaning-mismatch"),
-        RenderFault("redirect-view-schema", renderer, "$this->schema->quoted()", "'temp'", simple, "meaning-mismatch"),
+        RenderFault("erase-view-if-not-exists", header, "($ifNotExists ? 'IF NOT EXISTS ' : '')", "''", guarded, "meaning-mismatch"),
+        RenderFault("redirect-view-schema", header, "$schema->quoted()", "'temp'", simple, "meaning-mismatch"),
         RenderFault("replace-view-query-body", renderer, "$this->query->toString()", "'SELECT 1, 2, 3'", simple, "meaning-mismatch"),
-        RenderFault("replace-first-view-column", renderer, "$columns[] = $name->quoted();",
+        RenderFault("replace-first-view-column", header, "$columns[] = $name->quoted();",
                     "$columns[] = $columns === [] ? 'changed' : $name->quoted();", simple, "meaning-mismatch"),
     ], probe)
 

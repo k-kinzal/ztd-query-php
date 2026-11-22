@@ -181,14 +181,14 @@ def execute(args, contract, db, worker_factory=Worker):
 
 
 def check_faults(args, db, runner=check_render_faults):
-    view = "sql-semantics-sqlite/src/Ir/Schema/View/CreateView.php"
+    header = "sql-semantics-sqlite/src/Ir/Schema/View/ViewSql.php"
     grouped_sql = "sql-semantics-sqlite/src/Ir/Aggregation/GroupedSql.php"
     no_guard = finite_case("main", "grouped-count", False, False)
     guarded = finite_case("main", "grouped-count", True, True)
     filter_case = finite_case("main", "having", False, False)
     return runner(args, db, [
-        RenderFault("erase-grouped-view-guard", view, "($this->ifNotExists ? 'IF NOT EXISTS ' : '')", "''", guarded, "meaning-mismatch"),
-        RenderFault("redirect-grouped-view-schema", view, "$this->schema->quoted()", "'temp'", no_guard, "meaning-mismatch"),
+        RenderFault("erase-grouped-view-guard", header, "($ifNotExists ? 'IF NOT EXISTS ' : '')", "''", guarded, "meaning-mismatch"),
+        RenderFault("redirect-grouped-view-schema", header, "$schema->quoted()", "'temp'", no_guard, "meaning-mismatch"),
         RenderFault("erase-view-grouping", grouped_sql, "if ($keys !== [])", "if (false)", no_guard, "meaning-mismatch"),
         RenderFault("erase-view-having", grouped_sql, "if ($query->having !== null)", "if (false)", filter_case, "meaning-mismatch"),
     ], probe)

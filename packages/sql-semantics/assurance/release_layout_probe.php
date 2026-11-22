@@ -263,6 +263,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['groupedView'] = [array_column($group->columns, 'value'), $group->query->keys[0]->column->slot,
                 $group->query->columns[1]->value->argument->slot, $group->query->keys[0]->collation->value, $group->profileId()];
+            $merged = $semantics->analyze('CREATE VIEW view_set(selected) AS VALUES(4),(4) UNION ALL SELECT 2 AS item');
+            if ($merged::class !== $namespace . 'Ir\\Schema\\View\\CreateView'
+                || $merged->query::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $merged->query->first::class !== $namespace . 'Ir\\Rows\\ValuesQuery'
+                || $merged->query->steps[0]->query::class !== $namespace . 'Ir\\Select') {
+                throw new RuntimeException('Installed SQLite compound view lost its checked arm roles.');
+            }
+            $details['compoundView'] = [array_column($merged->columns, 'value'), $merged->query->steps[0]->operator->value, $merged->toString()];
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];

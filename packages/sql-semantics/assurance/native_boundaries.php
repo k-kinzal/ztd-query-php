@@ -15,7 +15,7 @@ function nativeBoundaryContract(string $dialect): array
         'sqlite' => [
             ['sqlite-rename-boundaries-v1.json', '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
-            ['sqlite-query-scope-boundaries-v3.json', 'ecb38b458a3188c5c08de89bcb38944762ea71cd9d50630da91bf551336d2bb5'],
+            ['sqlite-query-scope-boundaries-v4.json', '8acf5078d8b1ed8d7d340cc71b7fe18cf9659ab79d453b2fcf1d61505ac0f641'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
             ['sqlite-wildcard-boundaries-v2.json', 'd99c3b27baca5b0790eef7989859cbe300ed5eabbf37130300bffb45d5c8c858'],
             ['sqlite-insert-slots-boundaries-v4.json', '2261bc988c9f5a7f89ca6b8f6d0121c749150d5d0cdd52795fdaba107494b6a7'],
@@ -23,7 +23,7 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-scalar-boundaries-v16.json', 'ea516f9710372604edb7f0bf280eeba605ac692d4177e433336e0da7d7c8dd1c'],
             ['sqlite-default-boundaries-v10.json', 'c8f8df9a7f46f80a597729373e56e103d17fb025edc4213be5c4a51fd932725a'],
             ['sqlite-drop-view-boundaries-v1.json', '565bcb84c952123e8e1c311606be91b0f0e7a04e63833aa025ea883852df1f02'],
-            ['sqlite-create-view-boundaries-v2.json', '34ca5761af3701c6bf01ee13bc736b36d2f484f3bb426b5fbe8c951350438e37'],
+            ['sqlite-create-view-boundaries-v3.json', 'a8d1269e1fe10f58953450e1ff055f8dc43b7947f5ab36501907165213f55f71'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
@@ -111,7 +111,9 @@ function checkNativeBoundaries(
             'Ir\\Schema\\DeclaredDatatypeLowering', 'Statement\\Schema\\Column\\Generated', 'Statement\\Schema\\Column\\GeneratedStorage', 'Statement\\Type\\ColumnDomain',
             'Ir\\Schema\\CreateSchema', 'Ir\\Schema\\Query\\CreateTableAs', 'Ir\\Schema\\Query\\CreateAsAffinity',
             'Ir\\Schema\\Query\\CreateAsLayout', 'Ir\\Schema\\Query\\CreatedColumn', 'Ir\\Schema\\Query\\CreatedColumnDeclaration',
-            'Ir\\Aggregation\\GroupedSelect', 'Ir\\Aggregation\\GroupedLowering',
+            'Ir\\Aggregation\\GroupedSelect', 'Ir\\Aggregation\\GroupedLowering', 'Ir\\Rows\\Compound as CompoundQuery',
+            'Ir\\Rows\\CompoundLowering', 'Ir\\Rows\\CompoundBounds', 'Statement\\Query\\Compound as ParsedCompound',
+            'Ir\\Schema\\View\\CompoundViewBounds', 'Ir\\Schema\\View\\ViewSql',
             'Ir\\Schema\\View\\ViewQueryBounds', 'Ir\\Schema\\View\\CreateView', 'Statement\\Schema\\CreateView as ParsedCreateView',
             'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";

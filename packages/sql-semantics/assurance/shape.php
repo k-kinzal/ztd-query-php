@@ -329,12 +329,13 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Alter\\RenameTable'] = $methods['Schema\\Alter\\RenameColumn'] = $methods['Select'];
     $properties['Schema\\View\\CreateView'] = [
         'schema' => ['Identifier'], 'view' => ['Identifier'], 'columns' => ['array'],
-        'query' => ['Aggregation\\GroupedSelect', 'Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
+        'query' => ['Aggregation\\GroupedSelect', 'Rows\\Compound', 'Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
     ];
     $methods['Schema\\View\\CreateView'] = $methods['Select'];
     $roots[] = 'Schema\\View\\CreateView';
     array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
-    $pureCollaborators[] = 'Schema\\View\\ViewQueryBounds';
+    array_push($internal, 'Schema\\View\\CompoundViewBounds', 'Schema\\View\\ViewSql');
+    array_push($pureCollaborators, 'Schema\\View\\ViewQueryBounds', 'Schema\\View\\CompoundViewBounds', 'Schema\\View\\ViewSql');
     $roots[] = 'Schema\\Query\\CreateTableAs';
     array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
