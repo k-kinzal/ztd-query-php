@@ -13,14 +13,15 @@ function nativeBoundaryContract(string $dialect): array
 {
     $records = match ($dialect) {
         'sqlite' => [
+            ['sqlite-conflict-boundaries-v1.json', '784b84227271e0fb18189c532fcbadfdccabd02537dba086ba13f156cf8c398c'],
             ['sqlite-query-scope-boundaries-v1.json', '8deaf1505b4e3dac0dcf73c7b4149862b9145530824cb89b08933b3599c68906'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
-            ['sqlite-insert-slots-boundaries-v1.json', 'cde9f0df0d6f1ca8ff20ddac140fd96577cf456c2facfd00e809f5d89a717d9e'],
+            ['sqlite-insert-slots-boundaries-v2.json', '6d4c287949c1b4339ab506e29f6c1e15885c76ca441aaa1cf30aefe1c8358aab'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v11.json', 'c0774a7a164324280a42032b79ea1d4c58e22dd4eef0bdbe098edcecc0a8a949'],
             ['sqlite-default-boundaries-v1.json', 'c2f126dd959b203343c615191d06ddc04a97d085534da70b0137ab57f819600a'],
-            ['sqlite-mutation-returning-boundaries-v1.json', '551ad79f5e71906743b7e256a7f492034d5f27e4f2fee852a5241138410ea07f'],
+            ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
             ...($dialect === 'postgres' ? [
@@ -65,7 +66,9 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\Ir\\From\\SelectBounds;' . "\n";
         $imports .= 'use ' . $platform . '\\Ir\\Rows\\RecursiveDefinition;' . "\n";
         $imports .= 'use ' . $platform . '\\Platform;' . "\n";
-        foreach (['Ir\\Predicate\\Pattern\\PatternTest', 'Ir\\Predicate\\Pattern\\PatternKind', 'Statement\\Expression\\Operator\\PatternOperator',
+        foreach (['Ir\\SourceBinding', 'Ir\\From\\QueryClauses', 'Ir\\Mutation\\InsertTargetLowering', 'Ir\\Mutation\\ReturningLowering',
+            'Statement\\Mutation\\InsertDefaults', 'Statement\\Mutation\\Assignment', 'Statement\\Mutation\\ConflictResolution',
+            'Ir\\Predicate\\Pattern\\PatternTest', 'Ir\\Predicate\\Pattern\\PatternKind', 'Statement\\Expression\\Operator\\PatternOperator',
             'Statement\\Expression\\Operator\\PatternMatch as ParsedPattern'] as $name) {
             $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
         }

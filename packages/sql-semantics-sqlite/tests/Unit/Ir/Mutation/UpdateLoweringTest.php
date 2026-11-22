@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Mutation;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateLowering;
 use SqlSemantics\Platform\Sqlite\Semantics;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update as ParsedUpdate;
@@ -33,5 +34,16 @@ final class UpdateLoweringTest extends TestCase
         $published = $semantics->analyze($sql, $semantics->context(['CREATE TABLE records (A INTEGER, b INTEGER)']));
         self::assertInstanceOf(Update::class, $published);
         self::assertEquals($update, $published);
+    }
+
+    public function testLowerPreservesTheRollbackPolicy(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context(['CREATE TABLE records (id INTEGER PRIMARY KEY)']);
+        $update = $semantics->analyze('UPDATE OR ROLLBACK records SET id = 2 WHERE id = 1', $context);
+
+        self::assertInstanceOf(Update::class, $update);
+        self::assertSame(UpdateConflict::Rollback, $update->conflict);
+        self::assertStringStartsWith('UPDATE OR ROLLBACK ', $update->toString());
     }
 }

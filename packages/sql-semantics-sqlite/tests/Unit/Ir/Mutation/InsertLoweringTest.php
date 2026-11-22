@@ -38,6 +38,19 @@ final class InsertLoweringTest extends TestCase
         self::assertEquals($insert, $published);
     }
 
+    public function testLowerUsesTheSameConflictRoleForReplaceAndInsertOrReplace(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context(['CREATE TABLE entries (id INTEGER PRIMARY KEY)']);
+        $replace = $semantics->analyze('REPLACE INTO entries (id) VALUES (1)', $context);
+        $insert = $semantics->analyze('INSERT OR REPLACE INTO entries (id) VALUES (1)', $context);
+
+        self::assertInstanceOf(Insert::class, $replace);
+        self::assertSame(InsertConflict::Replace, $replace->conflict);
+        self::assertEquals($insert, $replace);
+        self::assertStringStartsWith('INSERT OR REPLACE INTO ', $replace->toString());
+    }
+
     public function testLowerRetainsTheCheckedSourceProjection(): void
     {
         $inspection = new Inspection();

@@ -24,7 +24,7 @@ final class UpdateLowering
 {
     /**
      * Builds the single-target UPDATE in assignment order.
-     * @throws InvalidConstruction When the conflict policy is outside the complete UPDATE domain
+     * @throws InvalidConstruction When a clause or assignment lies outside the complete UPDATE domain
      */
     public function lower(BoundStatement $operation, ParsedUpdate $statement): Update
     {
@@ -36,8 +36,9 @@ final class UpdateLowering
             null => UpdateConflict::Inherit,
             ConflictResolution::Abort => UpdateConflict::Abort,
             ConflictResolution::Ignore => UpdateConflict::Ignore,
-            ConflictResolution::Fail, ConflictResolution::Replace, ConflictResolution::Rollback
-                => throw new InvalidConstruction('This conflict policy has no complete SQLite UPDATE representation.'),
+            ConflictResolution::Fail => UpdateConflict::Fail,
+            ConflictResolution::Rollback => UpdateConflict::Rollback,
+            ConflictResolution::Replace => UpdateConflict::Replace,
         };
         $binding = new SourceBinding($operation, $statement->target);
         $lowering = new ExpressionLowering();

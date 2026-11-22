@@ -22,6 +22,7 @@ import run_sqlite_insert_query as insert_query
 import run_sqlite_insert_returning as insert_returning
 import run_sqlite_local_source as local
 import run_sqlite_numeric as numeric
+import run_sqlite_mutation_conflicts as mutation_conflicts
 import run_sqlite_pattern as pattern
 import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
@@ -66,6 +67,7 @@ DOMAINS = {
     "sqlite-scalars-v2.json": (scalars, scalars.FIXTURE),
     numeric.CONTRACT_NAME: (numeric, numeric.FIXTURE),
     pattern.CONTRACT_NAME: (pattern, pattern.FIXTURE),
+    mutation_conflicts.CONTRACT_NAME: (mutation_conflicts, mutation_conflicts.FIXTURE),
     unary.CONTRACT_NAME: (unary, unary.FIXTURE),
     concatenation.CONTRACT_NAME: (concatenation, concatenation.FIXTURE),
     collation.CONTRACT_NAME: (collation, collation.FIXTURE),

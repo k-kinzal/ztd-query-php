@@ -16,4 +16,7 @@ enum InsertConflict: string
     case Inherit = 'inherit';
     case Abort = 'abort';
     case Ignore = 'ignore';
+    case Fail = 'fail';
+    case Rollback = 'rollback';
+    case Replace = 'replace';
 }

@@ -102,6 +102,9 @@ final class Insert implements SemanticsIR
             InsertConflict::Inherit => '',
             InsertConflict::Abort => ' OR ABORT',
             InsertConflict::Ignore => ' OR IGNORE',
+            InsertConflict::Fail => ' OR FAIL',
+            InsertConflict::Rollback => ' OR ROLLBACK',
+            InsertConflict::Replace => ' OR REPLACE',
         };
 
         $head = 'INSERT' . $conflict . ' INTO ' . $this->target->schema->quoted() . '.' . $this->target->table->quoted();

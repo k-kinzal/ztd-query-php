@@ -35,15 +35,16 @@ final class InsertLowering
     {
         $into = $statement->into;
         Check::input(
-            $into->with === null && !$into->replace && ($statement instanceof InsertDefaults || $statement->upserts === []),
-            'Complete SQLite INSERT does not support WITH, REPLACE or UPSERT.',
+            $into->with === null && ($statement instanceof InsertDefaults || $statement->upserts === []),
+            'Complete SQLite INSERT does not support WITH or UPSERT.',
         );
-        $policy = match ($into->resolution) {
+        $policy = match ($into->replace ? ConflictResolution::Replace : $into->resolution) {
             null => InsertConflict::Inherit,
             ConflictResolution::Abort => InsertConflict::Abort,
             ConflictResolution::Ignore => InsertConflict::Ignore,
-            ConflictResolution::Fail, ConflictResolution::Replace, ConflictResolution::Rollback
-                => throw new InvalidConstruction('This conflict policy has no complete SQLite INSERT representation.'),
+            ConflictResolution::Fail => InsertConflict::Fail,
+            ConflictResolution::Rollback => InsertConflict::Rollback,
+            ConflictResolution::Replace => InsertConflict::Replace,
         };
         $binding = new SourceBinding($operation, $into->target);
         $writes = (new InsertTargetLowering())->lower($binding, $into, $statement instanceof InsertDefaults);

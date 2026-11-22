@@ -239,6 +239,10 @@ The [derived join record](server-derived-join-v2.json) checks external and indep
 
 Run `run_server_derived_join.py` with the native fixture options. Replay all releases with `combine_server_derived_join_evidence.py` and the per-release `index.json` paths. Its mutation probes change occurrence selection, field position and outer join behavior.
 
+## SQLite statement conflict policies
+
+The [conflict policy contract](sqlite-mutation-conflicts-v1.json) compares inherited behavior and each of the five explicit SQLite conflict algorithms. Every direct case runs in autocommit and inside an explicit transaction, each with recursive triggers on and off. The observer records ordered trigger events, typed returned fields, exact errors, changes and transaction state. Run `run_sqlite_mutation_conflicts.py`. The SQLite collector replays this domain with the other required receipts.
+
 ## MySQL signed quotient and remainder
 
 The [signed quotient record](mysql-signed-quotient-v1.json) specifies ordered signed `DIV` and infix remainder operands, the signed result, NULL, zero-divisor diagnostics and the signed 64-bit boundaries. The runner compares signed values, ordered field names, native metadata, duplicates and warning counts. Its observer checks that enabling a different SQL mode actually makes a division warning visible before it restores the empty mode.

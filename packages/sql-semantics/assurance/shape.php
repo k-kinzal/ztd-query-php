@@ -260,8 +260,12 @@ if ($dialect === 'sqlite') {
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
-    $enumCases['Mutation\\InsertConflict'] = ['Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore'];
-    $enumCases['Mutation\\UpdateConflict'] = ['Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore'];
+    $enumCases['Mutation\\InsertConflict'] = [
+        'Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore', 'Fail' => 'fail', 'Rollback' => 'rollback', 'Replace' => 'replace',
+    ];
+    $enumCases['Mutation\\UpdateConflict'] = [
+        'Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore', 'Fail' => 'fail', 'Rollback' => 'rollback', 'Replace' => 'replace',
+    ];
     $enumCases['Schema\\DeclaredDatatypeName'] = ['Untyped' => '', 'Integer' => 'INTEGER', 'Text' => 'TEXT', 'Real' => 'REAL', 'Blob' => 'BLOB'];
     $enumCases['Predicate\\ComparisonOperator'] = [
         'Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=',

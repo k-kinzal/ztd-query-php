@@ -105,6 +105,9 @@ final class Update implements SemanticsIR
             UpdateConflict::Inherit => '',
             UpdateConflict::Abort => ' OR ABORT',
             UpdateConflict::Ignore => ' OR IGNORE',
+            UpdateConflict::Fail => ' OR FAIL',
+            UpdateConflict::Rollback => ' OR ROLLBACK',
+            UpdateConflict::Replace => ' OR REPLACE',
         };
         $assignments = [];
         foreach ($this->assignments as $assignment) {

@@ -16,4 +16,6 @@ echo $ir->toString();
 
 The checked complete domain includes projections, joins, predicates, ordering, values, compound queries, selected table changes and transaction control. The default search order gives temporary tables precedence over main.
 
+INSERT and UPDATE keep their explicit conflict strategy or inherit the target schema's policy. REPLACE is an INSERT with an explicit REPLACE strategy. Execution uses the target's constraint and trigger definitions.
+
 Concrete types are under `SqlSemantics\Platform\Sqlite\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).
