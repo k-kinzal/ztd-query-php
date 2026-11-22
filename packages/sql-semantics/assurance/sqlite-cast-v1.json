@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/sqlite-cast-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 with UTF-8 and numbered native parameters under the checked scalar profile.",
+  "scope": "Resolve CAST to one of the five SQLite affinity roles with one checked scalar operand. Compose in the existing scalar expression locations.",
+  "constructors": {
+    "cast": {
+      "type": "Expression/CastExpression",
+      "role": "One checked conversion with the effective affinity of its type-name target",
+      "structure": "An immutable CastTarget and a single closed scalar operand.",
+      "conditions": "The owning statement checks the operand, including references, height, expanded nodes and literal payload. Analysis binds the effective affinity in the order of SQLite's type-name rules.",
+      "meaning": "Apply the selected conversion to the operand under SQLite's numeric, textual and byte rules. Preserve SQL NULL and the effective expression affinity for composition.",
+      "externalInterpretation": "The same input value and SQLite UTF-8 conversion rules, with any external fields or numbered bindings supplied in their resolved positions.",
+      "sql": "Emit CAST of the checked expression with the canonical type keyword for the stored affinity and preserve precedence.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "target": {
+      "type": "Expression/CastTarget",
+      "role": "The effective cast conversion and expression affinity",
+      "values": ["INTEGER", "REAL", "NUMERIC", "TEXT", "BLOB"],
+      "meaning": "Select signed integer, real, numeric, text or binary conversion. NUMERIC retains a numeric operand's storage class and chooses the applicable numeric class for text and binary values.",
+      "sql": "Use the literal keyword named by the enum value.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "Rows/ValuesQuery", "Arithmetic", "Expression/CaseExpression", "Predicate/Comparison"],
+  "observations": [
+    "Exact SQLite storage classes, numbers, Unicode text, text with arbitrary bytes, BLOB bytes and NULL",
+    "Result labels and positions, repeated rows and named binding slots",
+    "Affinity follows the written type-name rules on analysis and remains observable in a comparison",
+    "Original analyzed SQL and emitted SQL agree with the independent conversion rules"
+  ],
+  "finite": {
+    "roots": ["select", "values"],
+    "targets": ["INTEGER", "REAL", "NUMERIC", "TEXT", "BLOB"],
+    "atoms": [["null"], ["integer", "-7"], ["real", "2", "5", null, false],
+              ["real", "3", "0", null, false], ["real", "0", "0", null, true],
+              ["text", "003.0"], ["text", "3e4"], ["text", "-4.5tail"], ["text", "0x1F"], ["text", "9223372036854776000"],
+              ["blob", "3132"], ["blob", "80FF00"], ["blob", "410042"], ["text", "."]],
+    "completeness": "Check each observed root, target and operand identity once."
+  },
+  "exploration": {
+    "seeds": [4319, 8837, 17977],
+    "casesPerSeed": 24,
+    "timeoutSeconds": 130,
+    "allowedExclusions": [],
+    "structure": "Vary the effective target, typed scalar source, parameter labels and values, repeated fields, nested casts and CASE operands."
+  },
+  "negative": ["A converted column outside the visible scope", "Expanded cast depth exceeds the limit", "Unresolved cast operand in analyzed SQL", "A row value supplied to a scalar cast"],
+  "faults": ["Omit the CAST operation", "Emit another affinity", "Replace the cast operand"],
+  "open": ["Full composition with all scalar roles and aggregate result effects. Exhaustive numeric rounding and floating-point formatting outside the fixed observer domain."],
+  "trust": ["Pinned SQLite UTF-8 conversion semantics under the recorded role", "Independent numeric and byte interpreter for the admitted evidence domain", "Observed raw text bytes from sqlite-text-observation-v1.json"],
+  "sources": ["https://sqlite.org/lang_expr.html#castexpr", "https://sqlite.org/datatype3.html#determination_of_column_affinity"]
+}
