@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
+use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
@@ -58,11 +59,12 @@ final class CompoundShape
     public static function type(Select|Compound $query, int $position): ResultKind
     {
         if ($query instanceof Compound) {
-            return self::merge(self::type($query->left, $position), self::type($query->right, $position));
+            return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));
         }
         $column = $query->columns[$position]->expression;
 
         return match (true) {
+            $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof ColumnReference => ResultKind::Integer,
             $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
@@ -72,8 +74,22 @@ final class CompoundShape
     /**
      * Combines the supported native type roles at a set node.
      */
-    public static function merge(ResultKind $left, ResultKind $right): ResultKind
+    public static function merge(ResultKind $left, ResultKind $right, bool $legacy): ResultKind
     {
+        if ($left === ResultKind::DecimalInteger || $right === ResultKind::DecimalInteger) {
+            return ResultKind::DecimalInteger;
+        }
+        if ($left === ResultKind::UnsignedInteger || $right === ResultKind::UnsignedInteger) {
+            if ($legacy) {
+                return $left === ResultKind::UnsignedInteger ? ResultKind::UnsignedInteger : ResultKind::WideInteger;
+            }
+            $other = $left === ResultKind::UnsignedInteger ? $right : $left;
+
+            return match ($other) {
+                ResultKind::Unknown, ResultKind::NullOnly, ResultKind::UnsignedInteger => ResultKind::UnsignedInteger,
+                ResultKind::Integer, ResultKind::WideInteger => ResultKind::DecimalInteger,
+            };
+        }
         if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {
             return ResultKind::WideInteger;
         }

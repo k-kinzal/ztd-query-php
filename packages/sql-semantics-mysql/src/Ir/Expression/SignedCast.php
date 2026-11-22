@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -27,7 +28,7 @@ final class SignedCast
      * Owns the checked input to the signed conversion.
      */
     public function __construct(
-        public readonly Arithmetic|BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|self $operand,
+        public readonly Arithmetic|BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|RangeIntegerLiteral|UnsignedCast|self $operand,
     ) {
     }
 }

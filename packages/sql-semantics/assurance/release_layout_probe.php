@@ -116,7 +116,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
 
     if ($platform === 'MySql') {
-        $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer WHERE (NOT NULL) IS NULL';
+        $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'PostgreSql') {
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer WHERE (NOT NULL) IS NULL';
@@ -134,6 +134,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost the signed conversion.');
             }
             $details['signedCast'] = $value->operand->decimal;
+            $unsigned = $result->columns[1]->expression;
+            if ($unsigned::class !== $namespace . 'Ir\\Expression\\UnsignedCast'
+                || $unsigned->operand::class !== $namespace . 'Ir\\IntegerLiteral') {
+                throw new RuntimeException('The installed projection lost the unsigned conversion.');
+            }
+            $details['unsignedCast'] = $unsigned->operand->decimal;
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';

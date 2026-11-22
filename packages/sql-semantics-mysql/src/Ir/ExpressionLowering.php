@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\IntegerTokenLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRangeLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
@@ -28,9 +29,11 @@ final class ExpressionLowering
     /**
      * Converts a resolved operand, refusing expressions outside the projection contract.
      *
+     * @param bool $wide Whether the enclosing conversion admits native 64-bit literals
+     * @return ($wide is true ? Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral : Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral)
      * @throws InvalidConstruction When the operand has no representation in this domain
      */
-    public function lower(Scalar $expression, SourceBinding|JoinBinding $binding): Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral
+    public function lower(Scalar $expression, SourceBinding|JoinBinding $binding, bool $wide = false): Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|RangeIntegerLiteral
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -38,11 +41,11 @@ final class ExpressionLowering
         if ($expression instanceof ParsedArithmetic) {
             $operator = ArithmeticOperator::tryFrom($expression->operator->value);
             Check::input($operator !== null, 'The operator has no checked MySQL signed arithmetic representation.');
-            $left = $this->lower($expression->left, $binding);
-            $right = $this->lower($expression->right, $binding);
+            $left = $this->lower($expression->left, $binding, $wide);
+            $right = $this->lower($expression->right, $binding, $wide);
             Check::input(
-                ($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerLiteral)
-                    && ($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerLiteral),
+                ($left instanceof Arithmetic || $left instanceof ColumnReference || $left instanceof IntegerLiteral || $left instanceof RangeIntegerLiteral)
+                    && ($right instanceof Arithmetic || $right instanceof ColumnReference || $right instanceof IntegerLiteral || $right instanceof RangeIntegerLiteral),
                 'Arithmetic operands must have the signed integer role.',
             );
 
@@ -50,6 +53,14 @@ final class ExpressionLowering
         }
         $token = (new IntegerTokenLowering())->lower($expression);
         if ($token !== null) {
+            if ($wide) {
+                $magnitude = ltrim($token[0], '-');
+                $limit = $token[0][0] === '-' ? '2147483648' : '2147483647';
+                if (strlen($magnitude) > 10 || (strlen($magnitude) === 10 && strcmp($magnitude, $limit) > 0)) {
+                    return new RangeIntegerLiteral($token[0], $token[1], $token[2]);
+                }
+            }
+
             return new IntegerLiteral($token[0], $token[1], $token[2]);
         }
 

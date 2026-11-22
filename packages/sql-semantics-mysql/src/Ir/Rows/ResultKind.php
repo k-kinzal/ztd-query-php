@@ -15,6 +15,8 @@ enum ResultKind: string
 {
     case Integer = 'int32';
     case WideInteger = 'int64';
+    case UnsignedInteger = 'uint64';
+    case DecimalInteger = 'decimal-integer';
     case Unknown = 'unknown';
     case NullOnly = 'null-only';
 }

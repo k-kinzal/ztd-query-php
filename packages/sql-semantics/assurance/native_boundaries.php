@@ -28,7 +28,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
             ] : []),
-            ['native-boundaries-v24.json', '473f2b1cf85a87b42967d42b2f9d5a4bd5eeff82642bb2c75ec7b43101466f92'],
+            ['native-boundaries-v25.json', '43dbea5cedb77329375ed72c324895d6454789e95f2f4893c8601cc0162a5a62'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
@@ -128,7 +128,8 @@ function checkNativeBoundaries(
         }
         if ($dialect === 'mysql') {
             foreach (['Ir\\ArithmeticOperator', 'Ir\\Literal\\IntegerTokenLowering', 'Ir\\Predicate\\IntegerRange',
-                'Ir\\Expression\\SignedCast', 'Ir\\Expression\\SignedCastLowering',
+                'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
+                'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',
                 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\RangeIntegerLiteral',
                 'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',

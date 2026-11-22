@@ -162,11 +162,15 @@ def inventory(root):
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")
             cast_suffix = "" if "/mysql-5." in path else " opt_array_cast"
-            related.update({alternative: ("mysql-signed-casts-v1.json",) for alternative in (
+            related.update({alternative: ("mysql-signed-casts-v2.json",) for alternative in (
                 f"simple_expr: CAST_SYM ( expr AS cast_type{cast_suffix} )",
                 "simple_expr: CONVERT_SYM ( expr , cast_type )",
                 "cast_type: SIGNED_SYM", "cast_type: SIGNED_SYM INT_SYM",
             )})
+            for alternative in (f"simple_expr: CAST_SYM ( expr AS cast_type{cast_suffix} )",
+                                "simple_expr: CONVERT_SYM ( expr , cast_type )",
+                                "cast_type: UNSIGNED_SYM", "cast_type: UNSIGNED_SYM INT_SYM"):
+                related[alternative] = (*related.get(alternative, ()), "mysql-unsigned-casts-v3.json")
             create = ("create_table_stmt", "create_table", "column_def", "field_def", "column_attribute")
             drop = ("drop_table_stmt", "drop")
             transaction = ("begin", "start", "commit", "rollback", "savepoint", "release", "opt_chain", "opt_release")

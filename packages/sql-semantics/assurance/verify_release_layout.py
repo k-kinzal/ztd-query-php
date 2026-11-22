@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v5.json"
-CONTRACT = "27f1492dd87b51807df447cfa8fb9c36e5969285f9dc6b65d14da7c896498ec0"
+CONTRACT_NAME = "release-layout-v6.json"
+CONTRACT = "13d56c4767c308e6ec4057005a179dd870eec7db0ce3054e7c4db1888b8005b6"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -200,7 +200,7 @@ def verify_probe(raw, catalog):
         require(item["path"] == path and isinstance(item["sql"], str) and item["sql"] and item["profile"],
                 "unexpected-installed-publication", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
-            require(item.get("signedCast") == "42", "installed-signed-cast-mismatch", item)
+            require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):

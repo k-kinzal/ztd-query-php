@@ -36,6 +36,7 @@ function constructOperand(string $namespace, array $data): object
         'int4-case' => 'Expression\\IntegerCase',
         'builtin-cast' => 'Expression\\BuiltinCast',
         'signed-cast' => 'Expression\\SignedCast',
+        'unsigned-cast' => 'Expression\\UnsignedCast',
         'int4-range', 'signed-range' => 'Predicate\\IntegerRange',
         'int4-distinctness' => 'Predicate\\IntegerDistinctness',
         'truth-test' => 'Predicate\\TruthTest',
@@ -55,7 +56,7 @@ function constructOperand(string $namespace, array $data): object
             constructOperand($namespace, $data[2]),
             constructOperand($namespace, $data[3]),
         ),
-        'signed-cast' => new $type(constructOperand($namespace, $data[1])),
+        'signed-cast', 'unsigned-cast' => new $type(constructOperand($namespace, $data[1])),
         'builtin-cast' => new $type($castTarget::from($data[1]), constructOperand($namespace, $data[2])),
         'truth-test' => new $type($truth::from($data[1]), constructPredicate($namespace, $data[2])),
         'int4-distinctness' => new $type(
@@ -102,6 +103,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Expression\\SignedCast' => ['signed-cast', observeOperand($namespace, $value->operand)],
+        $namespace . 'Expression\\UnsignedCast' => ['unsigned-cast', observeOperand($namespace, $value->operand)],
         $namespace . 'Expression\\BuiltinCast' => ['builtin-cast', $value->target->value, observeOperand($namespace, $value->operand)],
         $namespace . 'Predicate\\TruthTest' => ['truth-test', $value->operator->value, observePredicate($namespace, $value->operand)],
         $namespace . 'Predicate\\IntegerDistinctness' => ['int4-distinctness', $value->negated,
@@ -294,6 +296,17 @@ function constructSetQuery(string $platform, array $input): SemanticsIR
         $tree['all'],
         constructSetQuery($platform, $tree['right']),
     );
+}
+
+function mysqlSetKinds(SqlSemantics\Platform\MySql\Ir\Rows\Compound $value): array
+{
+    $shape = SqlSemantics\Platform\MySql\Ir\Rows\CompoundShape::class;
+    $kinds = [];
+    for ($position = 0; $position < $shape::width($value); ++$position) {
+        $kinds[] = $shape::type($value, $position)->value;
+    }
+
+    return $kinds;
 }
 
 function observeSetQuery(string $namespace, object $value, string $dialect): array
@@ -691,6 +704,7 @@ function observeStatement(array $input): array
         'status' => 'constructed',
         'profile' => $value->profileId(),
         ...observeSetQuery($namespace, $value, $input['dialect']),
+        ...($value instanceof SqlSemantics\Platform\MySql\Ir\Rows\Compound ? ['resultKinds' => mysqlSetKinds($value)] : []),
         'sql' => $value->toString(),
     ];
 }

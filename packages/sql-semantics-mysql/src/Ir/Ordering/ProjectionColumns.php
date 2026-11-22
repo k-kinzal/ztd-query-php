@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Ordering;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
-use SqlSemantics\Platform\MySql\Ir\Expression\SignedCastLowering;
+use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
@@ -30,7 +30,7 @@ final class ProjectionColumns
     public function lower(BoundStatement $operation, Select $statement, SourceBinding|JoinBinding $binding): array
     {
         $expressions = new ExpressionLowering();
-        $casts = new SignedCastLowering();
+        $casts = new IntegralCastLowering();
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];

@@ -71,8 +71,17 @@ final class CompoundShapeTest extends TestCase
 
     public function testMergeUsesTheKnownIntegerRole(): void
     {
-        self::assertSame(ResultKind::Integer, CompoundShape::merge(ResultKind::Unknown, ResultKind::Integer));
+        self::assertSame(ResultKind::Integer, CompoundShape::merge(ResultKind::Unknown, ResultKind::Integer, false));
     }
+
+    public function testMergeKeepsLegacyFirstArmSignednessAndModernDecimalPromotion(): void
+    {
+        self::assertSame(ResultKind::UnsignedInteger, CompoundShape::merge(ResultKind::UnsignedInteger, ResultKind::WideInteger, true));
+        self::assertSame(ResultKind::WideInteger, CompoundShape::merge(ResultKind::WideInteger, ResultKind::UnsignedInteger, true));
+        self::assertSame(ResultKind::DecimalInteger, CompoundShape::merge(ResultKind::UnsignedInteger, ResultKind::WideInteger, false));
+        self::assertSame(ResultKind::UnsignedInteger, CompoundShape::merge(ResultKind::UnsignedInteger, ResultKind::Unknown, false));
+    }
+
     public function testTypeResolvesTwoBareNullArms(): void
     {
         $row = new Select([new ResultColumn(new NullLiteral(), new Identifier('a'))]);
@@ -80,5 +89,4 @@ final class CompoundShapeTest extends TestCase
 
         self::assertSame(ResultKind::NullOnly, CompoundShape::type($value, 0));
     }
-
 }

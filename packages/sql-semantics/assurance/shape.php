@@ -141,7 +141,16 @@ if ($dialect === 'mysql') {
     $methods[$signedCast] = ['__construct'];
     $properties['ResultColumn']['expression'][] = $signedCast;
     sort($properties['ResultColumn']['expression']);
-    $internal[] = 'Expression\\SignedCastLowering';
+    $unsignedCast = 'Expression\\UnsignedCast';
+    array_push($properties[$signedCast]['operand'], $unsignedCast, 'Predicate\\RangeIntegerLiteral');
+    sort($properties[$signedCast]['operand']);
+    $properties[$unsignedCast] = $properties[$signedCast];
+    $properties['Arithmetic']['left'][] = 'Predicate\\RangeIntegerLiteral';
+    $properties['Arithmetic']['right'][] = 'Predicate\\RangeIntegerLiteral';
+    $methods[$unsignedCast] = ['__construct'];
+    $properties['ResultColumn']['expression'][] = $unsignedCast;
+    sort($properties['ResultColumn']['expression']);
+    $internal[] = 'Expression\\IntegralCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {
@@ -506,7 +515,7 @@ if ($dialect !== 'sqlite') {
     $properties['Rows\\ResultKind'] = $methods['Rows\\ResultKind'] = [];
     $enumCases['Rows\\CompoundOperator'] = ['Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $enumCases['Rows\\ResultKind'] = $dialect === 'mysql'
-        ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
+        ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'UnsignedInteger' => 'uint64', 'DecimalInteger' => 'decimal-integer', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
         : ['Integer' => 'int32', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
     array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');
     $pureCollaborators[] = 'Rows\\CompoundShape';

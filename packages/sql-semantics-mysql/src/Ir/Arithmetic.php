@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -24,8 +25,8 @@ final class Arithmetic
      */
     public function __construct(
         public readonly ArithmeticOperator $operator,
-        public readonly self|ColumnReference|IntegerLiteral $left,
-        public readonly self|ColumnReference|IntegerLiteral $right,
+        public readonly self|ColumnReference|IntegerLiteral|RangeIntegerLiteral $left,
+        public readonly self|ColumnReference|IntegerLiteral|RangeIntegerLiteral $right,
     ) {
     }
 }

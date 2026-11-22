@@ -104,7 +104,7 @@ def negatives(tag):
     for _ in range(32):
         nested = cast(nested)
     yield single(tag, nested), "Expression height or expanded node count exceeds"
-    yield analyzed("mysql", "SELECT CAST(1 AS UNSIGNED)", version=tag), "A projection cast must have the scalar MySQL SIGNED target."
+    yield analyzed("mysql", "SELECT CAST(1 AS DECIMAL)", version=tag), "A projection cast requires a checked scalar integer target."
     yield analyzed("mysql", "SELECT CAST('hello' AS SIGNED)", version=tag), "The operand has no complete MySQL projection representation."
 
 

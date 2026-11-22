@@ -14,7 +14,8 @@ NATIVE = {
     "postgres_insert_returning": "postgres-insert-returning-v1.json",
     "mysql_signed_range": "mysql-signed-range-v3.json",
     "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
-    "mysql_signed_casts": "mysql-signed-casts-v1.json",
+    "mysql_signed_casts": "mysql-signed-casts-v2.json",
+    "mysql_unsigned_casts": "mysql-unsigned-casts-v3.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v1.json",
     "result": "server-result-v1.json",
@@ -48,6 +49,7 @@ SINGLE_ENGINE = {
     "mysql_signed_range": "mysql",
     "mysql_signed_quotient": "mysql",
     "mysql_signed_casts": "mysql",
+    "mysql_unsigned_casts": "mysql",
 }
 
 

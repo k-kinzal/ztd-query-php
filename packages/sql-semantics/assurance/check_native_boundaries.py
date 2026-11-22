@@ -208,10 +208,13 @@ def faults(engine):
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
         shared.append(Fault("ignore-signed-cast-slot", "SelectBounds::check",
-                            "$expression instanceof SignedCast => $pending[] = [$expression->operand, $height + 1],",
-                            "$expression instanceof SignedCast => null,"))
-        shared.append(Fault("admit-unsigned-into-signed-cast", "Expression/SignedCastLowering::lower",
-                            "$expression->target->kind === CastKind::Signed", "$expression->target->kind === CastKind::Unsigned"))
+                            "$expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
+                            "$expression instanceof SignedCast, $expression instanceof UnsignedCast => null,"))
+        shared.append(Fault("admit-unchecked-integer-cast-role", "Expression/IntegralCastLowering::lower",
+                            "($target === CastKind::Signed || $target === CastKind::Unsigned)", "true"))
+        shared.append(Fault("erase-unsigned-set-promotion", "Rows/CompoundShape::merge",
+                            "ResultKind::Integer, ResultKind::WideInteger => ResultKind::DecimalInteger,",
+                            "ResultKind::Integer, ResultKind::WideInteger => ResultKind::UnsignedInteger,"))
         shared.append(Fault("erase-signed-compound-type", "Rows/CompoundShape::type",
                             ", $column instanceof SignedCast => ResultKind::WideInteger", " => ResultKind::WideInteger"))
         shared.append(Fault("admit-an-unsigned-bound", "Predicate/RangeIntegerLiteral::__construct",
@@ -286,7 +289,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v24.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v12.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
+                       "native-boundaries-v25.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v12.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v1.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

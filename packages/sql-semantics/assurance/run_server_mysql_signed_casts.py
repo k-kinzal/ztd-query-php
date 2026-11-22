@@ -12,8 +12,8 @@ from server_cases import fixtures, observation
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-signed-casts"
-CONTRACT_NAME = "mysql-signed-casts-v1.json"
-CONTRACT = "d63858dc81b7cde9024e2d084529f87af9136bd563368fdc0227e76052e98d32"
+CONTRACT_NAME = "mysql-signed-casts-v2.json"
+CONTRACT = "b6a092682ba55ea4ca044c0131d35612de5cb42a8d85130e2834bb8ea395c069"
 OBSERVER = "mysql_cast_observer.php"
 
 

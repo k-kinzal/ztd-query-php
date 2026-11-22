@@ -9,7 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * A signed 64-bit integer constant in a MySQL range predicate.
+ * A signed 64-bit integer constant in a MySQL range predicate or integral conversion.
  *
  * @visibility public
  * @example Keeping a signed endpoint beyond the table column domain
