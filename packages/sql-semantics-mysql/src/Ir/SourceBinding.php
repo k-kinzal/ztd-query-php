@@ -14,12 +14,13 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\MySql\Model\Statement\Relation;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 
 /**
- * Allocates local slots for the resolved columns of a projection.
+ * Allocates local slots for a resolved table occurrence.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -44,7 +45,7 @@ final class SourceBinding
     {
         $resolution = null;
         if ($source !== null) {
-            Check::input($source instanceof TableReference && $source->indexHints === [] && $source->partitions === [] && $source->sample === null, 'The projection source must be an ordinary table input.');
+            Check::input((($source instanceof TableReference && $source->indexHints === [] && $source->sample === null) || $source instanceof WriteTarget) && $source->partitions === [], 'The projection source must be an ordinary table input.');
             Check::input(
                 $operation->context->relationNames === Comparison::Sensitive
                     && $operation->context->columnNames === Comparison::AsciiInsensitive,

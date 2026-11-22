@@ -20,11 +20,11 @@ TRANSPORT = "64a958eac4238161c3c1fb4242af55d7c4042ed1123d984e671e1b5338c9da1e"
 
 
 class Observer(Worker):
-    def __init__(self, dialect, deadline):
+    def __init__(self, dialect, deadline, script="server_observer.php"):
         self.deadline = deadline
         self.startup_timeout = None
         self.proc = subprocess.Popen(
-            ["php", str(TOOL / "server_observer.php"), dialect],
+            ["php", str(TOOL / script), dialect],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0,
         )
         self.buffer = b""
@@ -39,7 +39,7 @@ def same(expected_value, actual_value):
     compare(json.dumps(expected_value, sort_keys=True), json.dumps(actual_value, sort_keys=True))
 
 
-def check_server(dialect, release, db):
+def check_profile(dialect, release, db):
     settings = db.environment["database"]
     if dialect == "mysql":
         require(settings == [release, 0, "", "utf8mb4", "utf8mb4"], "mysql-profile-mismatch", settings)
@@ -47,6 +47,10 @@ def check_server(dialect, release, db):
         major, minor = map(int, release.split("."))
         require(settings == [str(major * 10000 + minor), "UTF8", "UTF8", "on", "pg_catalog, public"],
                 "postgres-profile-mismatch", settings)
+
+
+def check_server(dialect, release, db):
+    check_profile(dialect, release, db)
     same({"status": "fixture"}, db.request({"fixture": fixtures(dialect)}))
 
 

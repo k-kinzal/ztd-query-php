@@ -34,7 +34,7 @@ Use `--verify-distribution "$evidence/distribution.json"` with the same argument
 
 ## Publication contract
 
-The [publication contract](publication-v3.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v4.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -91,6 +91,12 @@ For a single declared release, pass `--engine mysql --release 8.4.7` or `--engin
 The [native transport contract](server-projection-transport-v1.json) groups up to sixteen direct requests at a time. The database observer prepares and executes each SQL string separately. The controller checks the response cardinality, records each comparison, and replays the same request order. The existing timeout and case budgets apply.
 
 To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out server-matrix.json` with the paths to the per-release `index.json` files. The join checks the candidate checkout, the distribution, contract and tools. The join reproduces the required requests, recomputes the direct oracle and compares both recorded observations for analyzed statements. A missing or duplicate release, missing original observation or changed ledger fails the join. Collect server observations with the revised runner before replaying them.
+
+## Native DELETE effects
+
+The [native DELETE contract](server-delete-v1.json) covers single-target removal on the same pinned releases and profiles. Its observer runs one checked statement against disposable parent, descendant and control tables. It compares the affected-row count, remaining rows, deletion log and restored state. PostgreSQL observations distinguish ONLY from deletion through an inheritance hierarchy. The oracle models predicates independently of the emitted SQL and preserves typed NULLs and duplicate rows.
+
+Run `run_server_delete.py` with the same native fixture environment and `--candidate`, `--tool-autoload`, `--engine`, `--release` and `--out` as the projection runner. The observer requires a disposable `ir_fixture` database. The manual release matrix runs both domains. Combine the per-release DELETE `index.json` paths using `combine_server_delete_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out delete-matrix.json`. The collector replays the state comparisons and verifies the recorded fault results for the tested distribution.
 
 ## SQLite joins, filters and ordering
 

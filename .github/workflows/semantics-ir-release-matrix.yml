@@ -128,12 +128,36 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-evidence"
+      - name: Observe native DELETE effects and rollback
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_delete.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-delete-evidence"
       - name: Preserve observations and any failure
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: semantics-ir-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-evidence/
+      - name: Preserve native DELETE observations and any failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-delete-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-delete-evidence/
 
   collect:
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
@@ -166,6 +190,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh run download "$GITHUB_RUN_ID" --pattern 'semantics-ir-*' --dir "$RUNNER_TEMP/server-matrix"
+          gh run download "$GITHUB_RUN_ID" --pattern 'native-delete-*' --dir "$RUNNER_TEMP/delete-matrix"
       - name: Require all native projection releases
         if: ${{ !cancelled() }}
         env:
@@ -180,9 +205,26 @@ jobs:
           python3 trusted/packages/sql-semantics/assurance/combine_server_evidence.py \
             --candidate "$CANDIDATE" --candidate-root candidate \
             --out "$RUNNER_TEMP/server-matrix.json" "${indexes[@]}"
+      - name: Require all native DELETE releases
+        if: ${{ !cancelled() }}
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          shopt -s nullglob
+          indexes=("$RUNNER_TEMP"/delete-matrix/*/index.json)
+          python3 trusted/packages/sql-semantics/assurance/combine_server_delete_evidence.py \
+            --candidate "$CANDIDATE" --candidate-root candidate \
+            --out "$RUNNER_TEMP/delete-matrix.json" "${indexes[@]}"
       - name: Preserve the native projection matrix report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-projection-matrix
           path: ${{ runner.temp }}/server-matrix.json
+      - name: Preserve the native DELETE matrix report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-delete-matrix
+          path: ${{ runner.temp }}/delete-matrix.json

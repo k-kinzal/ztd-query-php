@@ -13,11 +13,12 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedCo
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 
 /**
- * Allocates local slots for the resolved columns of a projection.
+ * Allocates local slots for a resolved table occurrence.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
@@ -42,7 +43,7 @@ final class SourceBinding
     {
         $resolution = null;
         if ($source !== null) {
-            Check::input($source instanceof TableInput && $source->sample === null, 'The projection source must be an ordinary table input.');
+            Check::input(($source instanceof TableInput && $source->sample === null) || $source instanceof TargetTable, 'The projection source must be an ordinary table input.');
             Check::input(
                 $operation->context->relationNames === Comparison::Sensitive
                     && $operation->context->columnNames === Comparison::Sensitive,
@@ -88,7 +89,7 @@ final class SourceBinding
      */
     public function source(): ?TableSource
     {
-        if ($this->table === null || !$this->source instanceof TableInput) {
+        if ($this->table === null || (!$this->source instanceof TableInput && !$this->source instanceof TargetTable)) {
             return null;
         }
 

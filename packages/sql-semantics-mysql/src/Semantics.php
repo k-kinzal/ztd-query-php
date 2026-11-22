@@ -10,6 +10,8 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
+use SqlSemantics\Platform\MySql\Ir\Mutation\Delete;
+use SqlSemantics\Platform\MySql\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
@@ -22,6 +24,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException;
 use SqlSemantics\Platform\MySql\Model\Facade\Catalog;
 use SqlSemantics\Platform\MySql\Model\Facade\Splitter;
 use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
+use SqlSemantics\Platform\MySql\Statement\Dml\Delete as ParsedDelete;
 
 /**
  * Binds SQL under a fixed dialect profile and publishes complete semantic values.
@@ -97,10 +100,14 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Select
+    public function analyze(string $sql, ?Context $context = null): Delete|Select
     {
         $declarations = $this->catalog->resolve($context);
-        return (new SelectLowering())->lower($this->binder->resolve($sql, $declarations));
+        $operation = $this->binder->resolve($sql, $declarations);
+        $statement = $operation->statement;
+        return $statement instanceof ParsedDelete
+            ? (new DeleteLowering())->lower($operation, $statement)
+            : (new SelectLowering())->lower($operation);
     }
 
     /**
@@ -108,7 +115,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Select>
+     * @return list<Delete|Select>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

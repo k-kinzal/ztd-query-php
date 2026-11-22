@@ -163,6 +163,23 @@ if ($dialect === 'sqlite') {
         'RollbackTo' => 'ROLLBACK TO SAVEPOINT',
     ];
 }
+if ($dialect !== 'sqlite') {
+    $roots[] = 'Mutation\\Delete';
+    $internal[] = 'Mutation\\DeleteLowering';
+    $properties['Mutation\\Delete'] = [
+        'target' => ['TableSource'],
+        'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+        'where' => ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'],
+    ];
+    $properties['Predicate\\IntegerComparison'] = [
+        'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
+    ];
+    $properties['Predicate\\IntegerOperator'] = [];
+    $methods['Mutation\\Delete'] = $methods['Select'];
+    $methods['Predicate\\IntegerComparison'] = ['__construct'];
+    $methods['Predicate\\IntegerOperator'] = [];
+    $enumCases['Predicate\\IntegerOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
+}
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
     $snapshot, 'SqlSemantics\\SemanticsIR',
@@ -204,9 +221,9 @@ try {
     requireShape($facade instanceof Class_ && $facade->isFinal() && $facade->extends === null
         && $facade->namespacedName->toString() === $platform . '\\Semantics', 'The complete façade must be a final dialect class');
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
-    $publication = __DIR__ . '/publication-v3.json';
+    $publication = __DIR__ . '/publication-v4.json';
     requireShape(
-        hash_file('sha256', $publication) === '2db9cf3b281a06db68f38492c93fa464bd0126f9afebe15cbb3d61b2974d0a2a',
+        hash_file('sha256', $publication) === '1684d19b60c780dd84f56994283dcfe6913b6071de61dcdc418f7366fe25c5f5',
         'Publication contract differs from the recorded revision'
     );
     $surface = json_decode(file_get_contents($publication), true, 512, JSON_THROW_ON_ERROR)['surface'];
@@ -228,7 +245,11 @@ try {
         === $printer->prettyPrint($parser->parse('<?php ' . $constructor)), 'Unexpected façade initialization');
     $resolve = '$declarations = $this->catalog->resolve($context);';
     $bind = '$this->binder->resolve($sql, $declarations)';
-    $analyze = $resolve . ' return (new \\' . $prefix . 'SelectLowering())->lower(' . $bind . ');';
+    $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
+    $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement;'
+        . ' return $statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete'
+        . ' ? (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement)'
+        . ' : (new \\' . $prefix . 'SelectLowering())->lower($operation);';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'

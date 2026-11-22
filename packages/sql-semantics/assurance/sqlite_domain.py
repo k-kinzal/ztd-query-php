@@ -23,8 +23,8 @@ class RenderFault(NamedTuple):
     signal: str
 
 
-def check_render_faults(args, db, fixtures, probe):
-    with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+def check_render_faults(args, db, fixtures, probe, script="worker.php"):
+    with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
         for fault in fixtures:
             probe(fault.item, worker.request(fault.item), db)
     results = []
@@ -42,7 +42,7 @@ def check_render_faults(args, db, fixtures, probe):
             original.splitlines(keepends=True), mutant.splitlines(keepends=True),
             f"a/{fault.path}", f"b/{fault.path}",
         )))
-        with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+        with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
             try:
                 probe(fault.item, worker.request(fault.item), db)
             except Failure as failure:

@@ -8,6 +8,8 @@ from pathlib import Path
 TOOL = Path(__file__).resolve().parent
 
 ROOTS = {
+    "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
+    "SqlSemantics\\Platform\\PostgreSql\\Ir\\Mutation\\Delete",
     "SqlSemantics\\Platform\\MySql\\Ir\\Select",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Select",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Select",
@@ -23,6 +25,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "server-delete-v1.json": "13b9d85f1893ef514ddedd636212b9bc8289980871139c4dad6176e4569b734a",
     "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",
     "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",
     "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",
@@ -39,7 +42,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "2db9cf3b281a06db68f38492c93fa464bd0126f9afebe15cbb3d61b2974d0a2a"
+PUBLICATION = "1684d19b60c780dd84f56994283dcfe6913b6071de61dcdc418f7366fe25c5f5"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -49,31 +52,34 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v3.json").read_bytes()
+    publication = (TOOL / "publication-v4.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
     prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
     routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
-    sqlite_roots = []
+    roots_by_dialect = {dialect: [] for dialect in publication["dialects"]}
     for name, sha256 in CONTRACTS.items():
         raw = (TOOL / name).read_bytes()
         if hashlib.sha256(raw).hexdigest() != sha256:
             raise ValueError(f"Constructor contract differs from its recorded revision: {name}")
         contract = json.loads(raw)
-        sqlite_roots.extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
+        dialects = contract.get("dialects", ("MySql", "PostgreSql") if name == "server-projection-v1.json" else ("Sqlite",))
+        for dialect in dialects:
+            roots_by_dialect[dialect].extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
         for role, record in contract["constructors"].items():
             concrete = record.get("type", role)
             if name == "sqlite-scalars-v1.json":
                 concrete = SQLITE_LITERAL_TYPES.get(concrete, concrete)
             concrete = concrete.replace("/", "\\")
-            for platform in prefixes[:2] if name == "server-projection-v1.json" else prefixes[2:]:
-                clas = platform + "\\Ir\\" + concrete
+            for dialect in dialects:
+                clas = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
-    for platform in prefixes:
-        roles = [publication["single"]["result"]]
-        if platform.endswith("\\Sqlite"):
-            roles.extend(sqlite_roots)
+    for platform, dialect in zip(prefixes, publication["dialects"]):
+        additions = roots_by_dialect[dialect]
+        if dialect != "Sqlite" and sorted(additions) != sorted(publication["single"]["additionalDialectResults"].get(dialect, [])):
+            raise ValueError(f"Publication contract does not match the recorded roots for {dialect}")
+        roles = [publication["single"]["result"], *additions]
         routes[platform + "\\" + publication["single"]["method"]] = sorted(platform + "\\" + role for role in roles)
     batch_routes = {
         platform + "\\" + publication["batch"]["method"]: ["array"] for platform in prefixes
@@ -139,7 +145,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections and single-target DELETE (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

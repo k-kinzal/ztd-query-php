@@ -46,14 +46,15 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 
 Use `Semantics::context()` to provide a catalog of relation definitions for name resolution. Each call to `analyzeAll()` binds against the same context. The result contains the complete statements in script order.
 
-## MySQL and PostgreSQL projections
+## MySQL and PostgreSQL statements
 
 Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for the target release. Their database-owned `Ir` namespaces provide direct construction with the same invariant checks.
 
 - The projection supports one ordinary base-table input, explicit result expressions, signed 32-bit integer literals and column slots, truth values, NULL, and signed addition, subtraction and multiplication. Truth values and literal NULL occupy result positions. Signed arithmetic takes integer expressions.
 - MySQL records the named database and uses the native default lexical settings, UTF-8 through `utf8mb4`, `lower_case_table_names=0`, and empty `sql_mode`. An unqualified table requires a declaration context with a named current database. MySQL reports signed INT table values, integer arithmetic, and the NULL result with their native result types.
 - PostgreSQL binds integer slots to `int4` declarations, preserves `ONLY`, and emits `pg_catalog`-qualified integer operators. Unqualified input operators require `pg_catalog` ahead of user schemas in the relevant search path. An explicitly qualified builtin operator can supply its identity directly.
-- Parameterized server projections, joins, filters, additional query clauses, DML, DDL and transaction effects remain open in the complete domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
+- Top-level DELETE supports one resolved ordinary target and an optional Boolean, NULL or signed-integer comparison filter. PostgreSQL preserves ONLY and includes descendant tables when ONLY is absent. The IR records the target and the filter slots. The database applies deletion and triggers when the SQL runs.
+- Parameterized server projections, joins, projection filters, additional query clauses, other DML, DDL and transaction effects remain open in the complete domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
 
 ## Construction and evidence
 

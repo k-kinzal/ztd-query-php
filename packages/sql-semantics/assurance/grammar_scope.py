@@ -78,6 +78,10 @@ def inventory(root):
     for path, record in json.loads(requirements)["artifacts"].items():
         rules = parse(root, path, record)
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
+        if "sql-semantics-mysql/resources/" in path:
+            related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
+        elif "sql-semantics-postgres/resources/" in path:
+            related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):
