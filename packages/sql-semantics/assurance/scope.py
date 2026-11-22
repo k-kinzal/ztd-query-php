@@ -122,9 +122,10 @@ CONTRACTS = {
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",
     "sqlite-create-as-v5.json": "06b5c313bc7d216a77787303c104b7bcc9fb8cab1f494eeaaa922b330ed1a372",
     "sqlite-create-table-v2.json": "be2c9f922e27b7106b63cd201b04cfecef60b035c27dd74366ad7b8b0650e99e",
+    "sqlite-rename-v1.json": "08999acafc047e19d7a913c62a87650b938fcecc0f877eb1daf51066de332c3c",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "3f8e308b116fa76af2a9c12618d32c84be445e5470ad673ada3a5889d8b5576c"
+PUBLICATION = "6559f1ac44f78e8fa9412e602c7b2a1182a05d0aa02de7b0e03ffcfec9273718"
 
 
 def declared_constructors(dialects):
@@ -154,7 +155,7 @@ def declared_constructors(dialects):
 
 
 def constructor_scope(by_class):
-    publication = (TOOL / "publication-v20.json").read_bytes()
+    publication = (TOOL / "publication-v21.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
