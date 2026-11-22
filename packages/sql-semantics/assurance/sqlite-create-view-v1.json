@@ -1,0 +1,99 @@
+{
+  "revision": "SemanticsIR/sqlite-create-view-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "additionalPublicRoots": ["Schema/View/CreateView"],
+  "constructors": {
+    "Schema/View/CreateView": {
+      "role": "Define an explicitly addressed SQLite view over a checked projection or VALUES statement.",
+      "structure": "An absolute schema, a decoded view name, a nonempty ordered list of effective view column names, a Select or ValuesQuery value, and the IF NOT EXISTS policy.",
+      "conditions": "The schema is nonempty and the view name does not start with sqlite_. The column list has precisely the query width and contains unique ASCII-insensitive names. Effective names never equal true or false under that comparison. The query has no parameters, including markers left by folded constructs. A projection uses only external base-table occurrences. Each persistent-view occurrence belongs to the destination schema. A temporary view can use other known schemas. During analysis unqualified persistent-view sources resolve to the declaration schema, and temporary-view sources use the ordinary search path. A determined name and a complete binding are required.",
+      "meaning": "Record a view over the same bound query for future evaluation. Expose the effective column names in projection order and the native declared types from the query. Preserve absence of writes to source data, future detection of name conflicts, and IF NOT EXISTS behavior. Predicates, duplicates, NULL, and specified ordering follow the checked query. Relative ties and results without a guaranteed order are observed as multisets.",
+      "externalInterpretation": "Interpret schema names, each external table identity and its column slots against the same database state and profile. Rows are read when the view is queried. The external database may reject an occupied destination or report later source or environment changes.",
+      "sql": "Quote the absolute destination and all effective names, emit an explicit column list, preserve IF NOT EXISTS, and append the structurally rendered checked SELECT or VALUES query. The schema and query remain explicit even though sqlite_schema stores its own normalized source text.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "observations": [
+    "The ordered PRAGMA table_xinfo fields, names, native declared types, and native result column metadata, with typed values including duplicate and NULL rows.",
+    "The absence of bound parameters, native outcome and the schema containing the declaration, with the catalog identity of a pre-existing view preserved on guarded creation.",
+    "Qualified and search-path source selection use distinct fixture values. Source data is unchanged by declaration and a later source insert is visible when the view is read again."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "queries": ["projection", "bound-table", "joined-tables", "values"],
+    "guard": [false, true],
+    "occupied": [false, true],
+    "identity": "Independently verify all 32 destination, body, guard and occupancy combinations against actual constructed structure and native catalog pre-state."
+  },
+  "exploration": {
+    "seeds": [719, 8081, 21929],
+    "casesPerSeed": 36,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary output width, identifier quoting, operands, VALUES row count, duplicate and NULL data, predicates, reference positions, source schemas for temporary views, and target occupancy."
+  },
+  "analysis": [
+    "A permanent view resolves an unqualified source against main even with a shadowing temp table.",
+    "A temporary view resolves an unqualified source against temp.",
+    "An explicitly qualified temporary view can read main.",
+    "An explicit list preserves quoting, blank names, duplicate disambiguation and truth-word conversion.",
+    "An implicit list preserves declared-column spelling, duplicate disambiguation and truth-word conversion.",
+    "A join references distinct sources and projection slots in the owning schema.",
+    "A VALUES body has the default names by position.",
+    "An explicit list names an ordered VALUES body.",
+    "A guarded persistent view preserves an existing view and its output.",
+    "A guarded temporary view preserves an existing view and its output.",
+    "A source-free expression preserves an explicit cast's native column type.",
+    "A bound projection with unique descending order and limit keeps the same ordered result."
+  ],
+  "negative": [
+    "Empty destination schema",
+    "Reserved destination name",
+    "Effective-name list width mismatch",
+    "Duplicate effective names under ASCII comparison",
+    "Truth word used as an effective name",
+    "Evaluated parameter in the SELECT projection",
+    "Folded marker still registered in SELECT",
+    "Parameter in a later VALUES row",
+    "A local CTE source in the direct projection body",
+    "A main view whose projection joins a temp source"
+  ],
+  "analysisNegative": [
+    "Persistent view references an explicit foreign schema",
+    "Persistent view refers to a source present only in temp",
+    "An evaluated parameter",
+    "A marker inside empty IN",
+    "A column not declared by the bound table",
+    "Column list arity differs from the query",
+    "A duplicate column label with native nondeterministic disambiguation"
+  ],
+  "faults": [
+    "Erase IF NOT EXISTS",
+    "Choose the other destination schema",
+    "Replace the query body with a constant projection",
+    "Change the first effective column name"
+  ],
+  "evidence": {
+    "Q01": "Validate the candidate role and its complete constructor body, inspect actual runtime structure, and require independently warranted typed boundary refusals.",
+    "Q02": "Consume the 32 direct cases and all analysis cases, with expected native conflict observed as an operation result.",
+    "Q03": "Check view scope and all descendants across the projection, joins, row operands, and selected source tables.",
+    "Q04": "Compare independent catalog and query predictions, output SQL, and original SQL for analysis fixtures on the pinned native engine.",
+    "Q05": "Replay the exact role, scope and checked publication paths through the staged Composer entry point."
+  },
+  "open": [
+    "Other view body families including grouping, compound queries and recursive WITH.",
+    "Views used as source relations, and SQLite builds or schema configurations outside the pinned independent fixtures."
+  ],
+  "trust": [
+    "SQLite 3.47.2 name assignment, view scope and C metadata rules",
+    "Fixed disclosure of the external catalog, base-table identities and later source inputs",
+    "Reviewed checker and independent native observation model, including which order the query guarantees"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createview.html",
+    "https://sqlite.org/lang_naming.html",
+    "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip"
+  ]
+}
