@@ -90,7 +90,7 @@ CONTRACTS = {
     "server-recursive-series-v2.json": "57ec24e29d2ed8d9ff1a18cd899165303c9dc3032db1738feb61a973da7842ff",
     "server-truth-v2.json": "8ecb535370bab902634dc06671fd19fecd1bc9d1e770e501a1cb212365738f61",
     "server-local-projection-v4.json": "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9",
-    "server-parameter-v1.json": "a25669b690cb52522a4fc0af7f35d6fee5cb3ac597dabd72383dee3f14d77052",
+    "server-parameter-v2.json": "c0630bf1c688b6a0797d33aebb77d640d3715ce37549e8ed695598827713c377",
     "server-create-table-v1.json": "1b9ce10f3903792d68b307e0b92d0bf3008e3ff0af150bfc4b3d8438dde23b4f",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
     "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",

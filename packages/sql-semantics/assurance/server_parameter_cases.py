@@ -64,13 +64,15 @@ def analyzed(engine, tag):
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": []}, case(engine, tag, [ref(i) for i in indices], values)
 
 
-def negatives(engine, tag):
+def negatives(engine, tag, specification):
     for position in (0, 1025):
         yield case(engine, tag, [ref(position)], [0]), "between 1 and 1024"
     signal = "lexical projection order" if engine == "mysql" else "contiguous bound slots"
     yield case(engine, tag, [ref(2)], [0, 1]), signal
-    sql = "SELECT CAST(? AS UNSIGNED) AS a0" if engine == "mysql" else "SELECT CAST($1 AS bigint) AS a0"
-    yield {"dialect": engine, "release": tag, "sql": sql, "declarations": []}, "has no complete"
+    boundary = specification["invalidCastBoundary"][engine]
+    yield {"dialect": engine, "release": tag, "sql": boundary["sql"], "declarations": []}, {
+        "exception": boundary["exception"], "message": boundary["message"],
+    }
     if engine == "mysql":
         yield case(engine, tag, [ref(2), ref(1)], [0, 1]), signal
         yield case(engine, tag, [ref(1), ref(1)], [0]), signal
@@ -84,7 +86,7 @@ def requests(engine, tag, specification):
             yield f"seed/{seed}/{i}", item, item, None
     for i, (request, item) in enumerate(analyzed(engine, tag)):
         yield f"analyzed/{i}", request, item, None
-    for i, (item, signal) in enumerate(negatives(engine, tag)):
+    for i, (item, signal) in enumerate(negatives(engine, tag, specification)):
         yield f"negative/{i}", item, item, signal
 
 

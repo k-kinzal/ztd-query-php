@@ -223,7 +223,7 @@ Run `run_server_compound.py` with the same native fixture options. Replay all re
 
 ## Native projected parameters
 
-The [native parameter contract](server-parameter-v1.json) fixes the binding position and builtin cast for explicitly cast native markers in output columns. The observer binds distinct integers and NULL through MySQL's native prepared protocol or PostgreSQL PREPARE with int4 arguments. The independent comparison checks the exact vector lookup, output order and native types. PostgreSQL uses repeated and reordered positions.
+The [native parameter contract](server-parameter-v2.json) fixes the binding position and builtin cast for explicitly cast native markers in output columns. The observer binds distinct integers and NULL through MySQL's native prepared protocol or PostgreSQL PREPARE with int4 arguments. The independent comparison checks the exact vector lookup, output order and native types. PostgreSQL uses repeated and reordered positions.
 
 Run `run_server_parameter.py` with the same native fixture options. Replay all releases with `combine_server_parameter_evidence.py` and the per-release `index.json` paths.
 

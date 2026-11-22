@@ -245,7 +245,7 @@ def inventory(root):
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
-                    related[alternative] = (*related.get(alternative, ()), "server-parameter-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "server-parameter-v2.json")
         local_signatures = {
             "table_factor: select_derived_init get_select_lex select_derived2",
             "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",
