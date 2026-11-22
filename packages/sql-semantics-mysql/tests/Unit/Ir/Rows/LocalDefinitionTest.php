@@ -22,6 +22,6 @@ final class LocalDefinitionTest extends TestCase
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(DerivedTable::class, $query->statement->from);
 
-        self::assertSame($query->statement->from->query, (new LocalDefinition())->resolve($query->binding(), $query->statement));
+        self::assertSame($query->statement->from->query, (new LocalDefinition())->resolve($query->binding(), $query->statement, $query->statement));
     }
 }

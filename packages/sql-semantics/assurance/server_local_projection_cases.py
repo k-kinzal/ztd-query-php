@@ -27,20 +27,34 @@ def definition(engine, tag, source, width=2):
 
 
 def finite_cases(engine, tag):
-    for source, outputs in product(SOURCES, LAYOUTS):
-        yield case(engine, tag, definition(engine, tag, source), outputs)
+    for depth, source, outputs in product((1, 2), SOURCES, LAYOUTS):
+        base = definition(engine, tag, source)
+        if depth == 2:
+            base = case(engine, tag, base, [1, 0])
+        yield case(engine, tag, base, outputs)
+
+
+def base_definition(local):
+    base, depth = local["definition"], 1
+    while "local" in base:
+        base = base["local"]["definition"]
+        depth += 1
+    return base, depth
 
 
 def finite_id(_, response, _item):
     local = response["local"]
-    source = local["definition"]["source"]
+    base, depth = base_definition(local)
+    if depth == 2 and [slot for slot, _ in local["definition"]["local"]["columns"]] != [1, 0]:
+        raise ValueError("The nested finite definition must reverse the immediate layout")
+    source = base["source"]
     kind = 0 if source is None else tuple(NAMES_BY_TABLE.values()).index(source["table"]) + 1
-    return kind, tuple(slot for slot, _ in local["columns"])
+    return depth, kind, tuple(slot for slot, _ in local["columns"])
 
 
 def finite_ids(_, specification, _tag):
     finite = specification["finite"]
-    return set(product(range(len(finite["definitions"])), map(tuple, finite["layouts"])))
+    return set(product(finite["depths"], range(len(finite["definitions"])), map(tuple, finite["layouts"])))
 
 
 def seeded(engine, tag, seed, count):
@@ -58,6 +72,15 @@ def seeded(engine, tag, seed, count):
         yield case(engine, tag, definition_, positions)
 
 
+def nested_seeded(engine, tag, seed, count):
+    rng = Random(seed + 40009)
+    for item in seeded(engine, tag, seed, count):
+        for _ in range(rng.randint(1, 7)):
+            width = len(item["local"]["columns"])
+            item = case(engine, tag, item, [rng.randrange(width) for _ in range(rng.randint(1, 6))])
+        yield item
+
+
 def analyzed(engine, tag):
     scalar = definition(engine, tag, None)
     schema, column = SCHEMAS[engine], NAMES[engine][0]
@@ -70,11 +93,18 @@ def analyzed(engine, tag):
         (f"SELECT local.c0 AS r0, local.c0 AS r1 FROM (SELECT {column} AS c0, delta AS c1 FROM {schema}.{name}) AS local",
          case(engine, tag, base, [0, 0])),
     ]
+    inner = case(engine, tag, scalar, [1, 0], ["c0", "c1"])
+    outer = case(engine, tag, inner, [1, 0, 1])
+    consume = "SELECT oq.c1 AS r0, oq.c0 AS r1, oq.c1 AS r2 FROM "
+    wrapped = "SELECT iq.c1 AS c0, iq.c0 AS c1 FROM "
+    literals = "SELECT -3 AS c0, 9 AS c1"
+    forms.append((consume + f"({wrapped}({literals}) AS iq) AS oq", outer))
     if not legacy(tag):
         alias = NAMES_BY_TABLE["independent"]
         forms.append((f"WITH {alias}(selected, extra) AS (SELECT {column} AS c0, delta AS c1 FROM {schema}.{name}) "
                       f"SELECT extra AS r0, {alias}.selected AS r1, extra AS r2 FROM {alias}",
                       case(engine, tag, base, [1, 0, 1])))
+        forms.append((f"WITH oq AS (WITH iq AS ({literals}) {wrapped}iq) {consume}oq", outer))
     if engine == "mysql":
         fields = [
             ("000000001", ["integer", "1", 8, False]),
@@ -110,6 +140,8 @@ def negatives(engine, tag):
     yield case(engine, tag, {**scalar, "limit": [1, 0]}, [0]), "unbounded projection"
     yield {"dialect": engine, "release": tag, "declarations": [],
            "sql": "SELECT q.x+1 AS r0 FROM (SELECT 1 AS x) AS q"}, "read a resolved local slot"
+    yield case(engine, tag, case(engine, tag, scalar, [2]), [0]), "must belong to the definition"
+    yield chain(engine, tag, scalar, 17), "at most sixteen definition boundaries"
     if engine == "mysql":
         padding = leaf(engine, tag, [[["integer", "1", -1, False], "c0"]])
         yield case(engine, tag, padding, [0]), "effective field width"
@@ -125,12 +157,22 @@ def requests(engine, tag, specification):
     for seed in specification["exploration"]["seeds"]:
         for i, item in enumerate(seeded(engine, tag, seed, specification["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{i}", item, item, None
+        for i, item in enumerate(nested_seeded(engine, tag, seed, specification["exploration"]["nestedCasesPerSeed"])):
+            yield f"seed/{seed}/nested/{i}", item, item, None
     for i, (request, item) in enumerate(analyzed(engine, tag)):
         yield f"analyzed/{i}", request, item, None
     for i, item in enumerate(metadata_boundaries(engine, tag)):
         yield f"metadata/{i}", item, item, None
+    depth = chain(engine, tag, definition(engine, tag, None), 16)
+    yield "depth/16", depth, depth, None
     for i, (item, signal) in enumerate(negatives(engine, tag)):
         yield f"negative/{i}", item, item, signal
+
+
+def chain(engine, tag, base, depth):
+    for _ in range(depth):
+        base = case(engine, tag, base, [1, 0])
+    return base
 
 
 def mysql_materialized_tags(tag, columns):
@@ -156,14 +198,15 @@ def mysql_materialized_tags(tag, columns):
 def expected(item):
     local = item["local"]
     definition_ = local["definition"]
-    comparison = source_expected(definition_)
+    nested = "local" in definition_
+    comparison = expected(definition_) if nested else source_expected(definition_)
     data = comparison["rows"]
-    if definition_["distinct"]:
+    if not nested and definition_["distinct"]:
         data = [json.loads(row) for row in dict.fromkeys(json.dumps(row) for row in data)]
     columns = local["columns"]
     types = [tag for _, tag in comparison["fields"]]
     tag = item["release"]
-    if item["dialect"] == "mysql" and (tag.startswith("mysql-5.6.") or definition_["source"] is None or definition_["distinct"]):
+    if not nested and item["dialect"] == "mysql" and (tag.startswith("mysql-5.6.") or definition_["source"] is None or definition_["distinct"]):
         types = mysql_materialized_tags(tag, definition_["columns"])
     return observation({"status": "rows", "fields": [[name, types[slot]] for slot, name in columns],
                         "rows": [[row[slot] for slot, _ in columns] for row in data]})
@@ -171,4 +214,6 @@ def expected(item):
 
 def structural_model(item):
     local = item["local"]
-    return {**local, "definition": without_profiles(local["definition"])}
+    definition_ = local["definition"]
+    shape = {"local": structural_model(definition_)} if "local" in definition_ else without_profiles(definition_)
+    return {**local, "definition": shape}

@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
-use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A checked projection of a single independent query.
+ * A checked projection over the immediately enclosing local input.
  *
  * @visibility public
  * @example Projecting a slot from a derived query
@@ -34,9 +33,13 @@ final class LocalProjection implements SemanticsIR
      *
      * @param list<LocalResultColumn> $columns The outer result positions
      */
-    public function __construct(public readonly Select $definition, array $columns)
+    public function __construct(public readonly Select|self $definition, array $columns)
     {
-        Check::input($definition->orderBy === [] && $definition->limit === null, 'The local definition requires an unbounded projection without ordering.');
+        Check::input($definition instanceof self || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');
+        $layers = 1;
+        for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {
+            Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');
+        }
         $checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);
         Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');
         foreach ($checked as $column) {
@@ -58,13 +61,6 @@ final class LocalProjection implements SemanticsIR
      */
     public function toString(): string
     {
-        $renderer = new SelectSql();
-        $alias = '"__ztd_local"';
-        $columns = [];
-        foreach ($this->columns as $column) {
-            $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $column->name->quoted();
-        }
-
-        return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $renderer->render($this->definition, true) . ') AS ' . $alias;
+        return (new LocalProjectionSql())->render($this);
     }
 }

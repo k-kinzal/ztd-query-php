@@ -183,8 +183,10 @@ function constructLocalProjection(string $platform, array $input): SemanticsIR
     foreach ($local['columns'] as [$slot, $label]) {
         $columns[] = new $column($slot, new $name($label));
     }
+    $definition = $local['definition'];
+    $source = isset($definition['local']) ? constructLocalProjection($platform, $definition) : constructSelect($platform, $definition);
 
-    return new $statement(constructSelect($platform, $local['definition']), $columns);
+    return new $statement($source, $columns);
 }
 
 function constructSetQuery(string $platform, array $input): SemanticsIR
@@ -213,6 +215,12 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
             'right' => observeSetQuery($namespace, $value->right, $dialect),
             'operator' => $value->operator->value,
             'all' => $value->all,
+        ]];
+    }
+    if ($value::class === $namespace . 'Rows\\LocalProjection') {
+        return ['local' => [
+            'definition' => observeSetQuery($namespace, $value->definition, $dialect),
+            'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
         ]];
     }
     if ($value::class !== $namespace . 'Select') {
@@ -397,17 +405,6 @@ function observeStatement(array $input): array
         };
     } catch (AnalysisException $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
-    }
-    if ($value::class === $namespace . 'Rows\\LocalProjection') {
-        return [
-            'status' => 'constructed',
-            'profile' => $value->profileId(),
-            'local' => [
-                'definition' => observeSetQuery($namespace, $value->definition, $input['dialect']),
-                'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
-            ],
-            'sql' => $value->toString(),
-        ];
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $observed = [

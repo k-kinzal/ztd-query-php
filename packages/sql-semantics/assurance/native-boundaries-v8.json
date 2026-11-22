@@ -1,0 +1,416 @@
+{
+  "revision": "SemanticsIR/native-boundaries-8",
+  "approval": "pending-human-review",
+  "scope": "The guarded native projection, parameter, truth, local binding, join, compound, mutation, declaration and transaction boundaries.",
+  "trust": [
+    "The closed readonly property and publication checker establishes the declared roles and normal construction paths.",
+    "The value primitive digests bind the checked list copy, assertion behavior and snapshot restrictions.",
+    "The method checker compares resolved PHP syntax trees with the expected sequences below. The engine evidence independently checks SQL meaning."
+  ],
+  "rules": {
+    "Binding/Parameter::__construct": {
+      "common": [
+        "Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');"
+      ],
+      "mysql": [],
+      "postgres": []
+    },
+    "ColumnReference::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A column slot must be nonnegative.');",
+        "Check::input($occurrence >= 0, 'A table occurrence must be nonnegative.');"
+      ]
+    },
+    "From/Join::__construct": {
+      "common": [
+        "$inputs = $this->inputs();",
+        "Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');",
+        "Check::input(($kind === JoinKind::Cross) === ($on === null), 'Only CROSS has no join predicate.');",
+        "(new OccurrenceScope())->predicate($on, $inputs);"
+      ],
+      "postgres": [
+        "if ($kind === JoinKind::Full) {",
+        "    $leftWidth = $left instanceof self ? count($left->inputs()) : 1;",
+        "    Check::input($on instanceof IntegerComparison && $on->operator === IntegerOperator::Equal",
+        "        && $on->left instanceof ColumnReference && $on->right instanceof ColumnReference",
+        "        && ($on->left->occurrence < $leftWidth) !== ($on->right->occurrence < $leftWidth),",
+        "        'A PostgreSQL FULL join requires integer equality between opposite inputs.',",
+        "    );",
+        "}"
+      ]
+    },
+    "From/Join::inputs": {
+      "common": [
+        "$left = $this->left instanceof self ? $this->left->inputs() : [$this->left];",
+        "$right = $this->right instanceof self ? $this->right->inputs() : [$this->right];",
+        "return array_merge($left, $right);"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "common": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference) {",
+        "    Check::input(isset($inputs[$operand->occurrence]->columns[$operand->slot]), $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof NullTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ]
+    },
+    "From/OccurrenceScope::predicate": {
+      "common": [
+        "if ($condition !== null) {",
+        "    $this->checkTree($condition, $inputs, $invalidSlot, 0, 0);",
+        "}"
+      ]
+    },
+    "IntegerLiteral::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(preg_match('/\\A(?:0|-?[1-9][0-9]{0,9})\\z/', $decimal) === 1, 'Expected a normalized signed decimal integer.');",
+        "$magnitude = ltrim($decimal, '-');",
+        "$maximum = $decimal[0] === '-' ? '2147483648' : '2147483647';",
+        "Check::input(strlen($magnitude) < 10 || strcmp($magnitude, $maximum) <= 0, 'Integer is outside the signed 32-bit range.');",
+        "Check::input($leadingZeroes >= 0 && $leadingZeroes <= self::MAX_LEADING_ZEROES, 'Integer padding exceeds the effective field width.');",
+        "Check::input(!$negativeZero || $decimal === '0', 'A separate negative sign applies only to zero.');"
+      ]
+    },
+    "IntegerLiteral::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$sign = $this->negativeZero || $this->decimal[0] === '-' ? '-' : '';",
+        "return $sign . str_repeat('0', $this->leadingZeroes) . ltrim($this->decimal, '-');"
+      ]
+    },
+    "Mutation/Delete::__construct": {
+      "common": [
+        "(new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');"
+      ]
+    },
+    "Mutation/Insert::__construct": {
+      "common": [
+        "$width = count($target->columns);",
+        "Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');"
+      ],
+      "postgres": [
+        "Check::input(!$target->only, 'An INSERT target has no ONLY policy.');"
+      ],
+      "tail": [
+        "$this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);",
+        "Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');",
+        "foreach ($this->rows as $row) {",
+        "    Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');",
+        "}"
+      ]
+    },
+    "Mutation/Update::__construct": {
+      "common": [
+        "$this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);",
+        "Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');"
+      ],
+      "mysql": [
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "}"
+      ],
+      "postgres": [
+        "$written = [];",
+        "foreach ($this->assignments as $assignment) {",
+        "    $slot = $assignment->target->slot;",
+        "    Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');",
+        "    $value = $assignment->value;",
+        "    Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');",
+        "    Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');",
+        "    $written[$slot] = true;",
+        "}"
+      ],
+      "tail": [
+        "(new OccurrenceScope())->predicate($where, [$target]);"
+      ]
+    },
+    "Mutation/UpdateAssignment::__construct": {
+      "common": [
+        "Check::input($target->occurrence === 0, 'An UPDATE target slot must belong to occurrence zero.');",
+        "Check::input(!$value instanceof ColumnReference || $value->occurrence === 0, 'An UPDATE read slot must belong to occurrence zero.');"
+      ]
+    },
+    "Predicate/LogicalPredicate::__construct": {
+      "common": [
+        "Check::input(($operator === LogicalOperator::Not) === ($right === null), 'Only logical NOT has one operand.');"
+      ]
+    },
+    "Rows/Compound::__construct": {
+      "common": [
+        "Check::input($left->profileId() === $right->profileId(), 'Compound operands must have the same language profile.');",
+        "Check::input(CompoundShape::width($left) === CompoundShape::width($right), 'Compound operands must have the same width.');",
+        "Check::input(CompoundShape::arms($left) + CompoundShape::arms($right) <= 64, 'A compound can expand to at most 64 query arms.');",
+        "foreach ([$left, $right] as $operand) {",
+        "    Check::input(!$operand instanceof Select || ($operand->orderBy === [] && $operand->limit === null), 'A compound arm requires an unbounded projection without ordering.');",
+        "    Check::input(CompoundShape::depth($operand) < 16, 'A compound has at most 16 nested operations.');",
+        "}"
+      ],
+      "mysql": [
+        "if (CompoundShape::legacy($left)) {",
+        "    Check::input($operator === CompoundOperator::Union && $right instanceof Select, 'MySQL 5.x compounds require a left-associated UNION.');",
+        "}"
+      ],
+      "postgres": [
+        "for ($index = 0; $index < CompoundShape::width($left); ++$index) {",
+        "    CompoundShape::merge(CompoundShape::type($left, $index), CompoundShape::type($right, $index));",
+        "}"
+      ]
+    },
+    "Rows/CompoundShape::merge": {
+      "common": [],
+      "mysql": [
+        "if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {",
+        "    return ResultKind::WideInteger;",
+        "}",
+        "",
+        "return $left === ResultKind::Integer || $right === ResultKind::Integer ? ResultKind::Integer : ResultKind::NullOnly;"
+      ],
+      "postgres": [
+        "if ($left === ResultKind::Unknown) {",
+        "    return $right === ResultKind::Unknown ? ResultKind::Text : $right;",
+        "}",
+        "Check::input($right === ResultKind::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');",
+        "",
+        "return $left;"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "common": [
+        "Check::input($definition instanceof self || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "foreach ($checked as $column) {",
+        "    Check::input(isset($definition->columns[$column->slot]), 'The local slot must belong to the definition.');"
+      ],
+      "mysql": [
+        "    Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ],
+      "postgres": [
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/LocalProjection::toString": {
+      "common": [
+        "return (new LocalProjectionSql())->render($this);"
+      ]
+    },
+    "Rows/LocalProjectionSql::render": {
+      "common": [
+        "$renderer = new SelectSql();"
+      ],
+      "mysql": [
+        "$alias = '`__ztd_local`';"
+      ],
+      "postgres": [
+        "$alias = '\"__ztd_local\"';"
+      ],
+      "tail": [
+        "$columns = [];",
+        "foreach ($projection->columns as $position => $column) {",
+        "    $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();",
+        "    $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;",
+        "}",
+        "$source = $projection->definition;",
+        "$input = $source instanceof Select ? $renderer->render($source, true) : $this->render($source, true);",
+        "",
+        "return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;"
+      ]
+    },
+    "Rows/LocalResultColumn::__construct": {
+      "common": [
+        "Check::input($slot >= 0, 'A local result slot must be nonnegative.');"
+      ],
+      "mysql": [],
+      "postgres": []
+    },
+    "Schema/CreateTable::__construct": {
+      "common": [
+        "$checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');",
+        "$seen = [];",
+        "foreach ($checked as $column) {"
+      ],
+      "mysql": [
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $checked;"
+      ],
+      "postgres": [
+        "    $key = $column->name->value;",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/DropTable::__construct": {
+      "common": [
+        "$names = Check::listOf($targets, TableName::class, 'DROP TABLE needs a nonempty target list.', 1);",
+        "$seen = [];",
+        "foreach ($names as $target) {",
+        "    $key = $target->quoted();",
+        "    Check::input(!isset($seen[$key]), 'DROP TABLE cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->targets = $names;"
+      ]
+    },
+    "Schema/TableColumn::__construct": {
+      "common": [],
+      "mysql": [
+        "Check::input(preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $name->value) === 1, 'This MySQL declaration requires an ASCII column name of 1 to 64 characters without a trailing space.');",
+        "Check::input($nullable || !$default instanceof NullLiteral, 'A MySQL NOT NULL column cannot declare a NULL default.');",
+        "if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {",
+        "    $integer = (int) $default->decimal;",
+        "    Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');",
+        "}"
+      ],
+      "postgres": [
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {",
+        "    $integer = (int) $default->decimal;",
+        "    Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');",
+        "}"
+      ]
+    },
+    "Schema/TableName::__construct": {
+      "common": [],
+      "mysql": [
+        "foreach ([$schema, $table] as $identifier) {",
+        "    Check::input(",
+        "        strpbrk($identifier->value, '/\\\\.') === false && preg_match('/\\A.{1,64}(?<! )\\z/us', $identifier->value) === 1,",
+        "        'An absolute MySQL table name needs 1 to 64 characters without path separators or a trailing space.',",
+        "    );",
+        "}"
+      ],
+      "postgres": [
+        "Check::input($schema->value !== 'pg_temp', 'A persistent PostgreSQL relation requires an absolute schema.');"
+      ]
+    },
+    "SelectBounds::check": {
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "(new OccurrenceScope())->predicate($where, $inputs);",
+        "$nodes = 0;"
+      ],
+      "mysql": [
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                isset($inputs[$expression->occurrence]->columns[$expression->slot]),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,",
+        "        };",
+        "    }",
+        "}"
+      ],
+      "postgres": [
+        "$positions = [];",
+        "foreach ($results as $result) {",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                isset($inputs[$expression->occurrence]->columns[$expression->slot]),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => $positions[$expression->position] = true,",
+        "            $expression instanceof IntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "for ($position = 1; $position <= count($positions); ++$position) {",
+        "    Check::input(isset($positions[$position]), 'PostgreSQL parameter positions must cover the contiguous bound slots.');",
+        "}"
+      ]
+    },
+    "SelectSql::predicate": {
+      "common": [
+        "if ($condition instanceof IntegerComparison) {",
+        "    $left = $this->expression($condition->left, $source, $offset, $qualify);",
+        "    $right = $this->expression($condition->right, $source, $offset, $qualify);"
+      ],
+      "mysql": [
+        "    $operator = $condition->operator->value;"
+      ],
+      "postgres": [
+        "    $operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';"
+      ],
+      "tail": [
+        "",
+        "    return '(' . $left . ' ' . $operator . ' ' . $right . ')';",
+        "}",
+        "",
+        "if ($condition instanceof LogicalPredicate) {",
+        "    $left = $this->predicate($condition->left, $source, $offset, $qualify);",
+        "    if ($condition->right === null) {",
+        "        return '(NOT ' . $left . ')';",
+        "    }",
+        "",
+        "    return '(' . $left . ' ' . $condition->operator->value . ' ' . $this->predicate($condition->right, $source, $offset, $qualify) . ')';",
+        "}",
+        "if ($condition instanceof NullTest) {",
+        "    $operand = $this->predicate($condition->operand, $source, $offset, $qualify);",
+        "",
+        "    return '(' . $operand . ($condition->negated ? ' IS NOT NULL)' : ' IS NULL)');",
+        "}",
+        "",
+        "return $this->expression($condition, $source, $offset, $qualify);"
+      ]
+    },
+    "Transaction/Transaction::__construct": {
+      "common": [
+        "$named = match ($command) {",
+        "    TransactionCommand::Begin, TransactionCommand::Commit, TransactionCommand::Rollback => false,",
+        "    TransactionCommand::Savepoint, TransactionCommand::Release, TransactionCommand::RollbackTo => true,",
+        "};",
+        "Check::input($named === ($name !== null), 'Only a savepoint operation requires a name.');"
+      ],
+      "mysql": [
+        "Check::input($name === null || preg_match('/\\A[\\x{1}-\\x{FFFF}]{1,64}\\z/u', $name->value) === 1, 'A savepoint requires a representable native label.');"
+      ]
+    }
+  },
+  "extends": "SemanticsIR/native-boundaries-5"
+}

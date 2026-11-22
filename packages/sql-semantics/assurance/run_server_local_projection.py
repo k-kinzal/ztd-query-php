@@ -9,15 +9,15 @@ from run_server import CONTRACT as PROJECTION, same
 from run_server_join import CONTRACT as JOIN, OBSERVER, main, observer_request, prepare as prepare_join
 from server_join_cases import fixture
 from server_compound_cases import leaf
-from server_local_projection_cases import case, definition, expected, finite_id, finite_ids, observation, requests, structural_model
+from server_local_projection_cases import base_definition, case, definition, expected, finite_id, finite_ids, observation, requests, structural_model
 from sqlite_domain import RenderFault
 
 LABEL = "local-projection"
-CONTRACT = "70dbab57793ea2207c08636c1541b000c989b5c5f3b65ee7b5d1dfeccf35b0cb"
+CONTRACT = "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9"
 
 
 def specifications():
-    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v3.json", "server-projection-v1.json", "server-join-v1.json"))
+    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v4.json", "server-projection-v1.json", "server-join-v1.json"))
     require(all(digest(file) == checksum for file, checksum in ((path, CONTRACT), (projection, PROJECTION), (join, JOIN))),
             "server-local-projection-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
@@ -64,12 +64,13 @@ def check_preparation(engine, environment, preparation):
 
 def required_forms(_engine, _tag):
     return {"source/absent", "source/present", "order/repeated", "order/reordered", "width/single", "width/multiple",
-            "distinct/True", "distinct/False", "field/literal", "field/reference", "field/null"}
+            "distinct/True", "distinct/False", "field/literal", "field/reference", "field/null", "depth/1", "depth/2", "depth/8"}
 
 
 def sample_forms(forms, response, _, _item):
     local = response["local"]
-    definition_ = local["definition"]
+    definition_, depth = base_definition(local)
+    forms[f"depth/{depth}"] += 1
     forms["source/" + ("present" if definition_["source"] is not None else "absent")] += 1
     forms[f"distinct/{definition_['distinct']}"] += 1
     positions = [slot for slot, _ in local["columns"]]
@@ -105,7 +106,7 @@ def controls():
 
 
 def faults(engine, tag):
-    target = f"sql-semantics-{engine}/src/Ir/Rows/LocalProjection.php"
+    target = f"sql-semantics-{engine}/src/Ir/Rows/LocalProjectionSql.php"
     synthetic = chr(96) if engine == "mysql" else '"'
     wrong_query = repr("SELECT -19 AS " + synthetic + "__ztd_c0" + synthetic)
     result = [
@@ -113,8 +114,10 @@ def faults(engine, tag):
                     case(engine, tag, definition(engine, tag, None), [1, 0]), "meaning-mismatch"),
         RenderFault("remove-local-row-multiplicity", target, "return 'SELECT '", "return 'SELECT DISTINCT '",
                     case(engine, tag, definition(engine, tag, "accounts"), [0]), "meaning-mismatch"),
-        RenderFault("replace-local-definition", target, "$renderer->render($this->definition, true)", wrong_query,
+        RenderFault("replace-local-definition", target, "$renderer->render($source, true)", wrong_query,
                     case(engine, tag, definition(engine, tag, None), [0]), "meaning-mismatch"),
+        RenderFault("bypass-nested-slot-layout", target, "$this->render($source, true)", "$renderer->render($source->definition, true)",
+                    case(engine, tag, case(engine, tag, definition(engine, tag, None), [1, 0]), [0]), "meaning-mismatch"),
     ]
     if engine == "mysql":
         padded = leaf(engine, tag, [[["integer", "1", 9, False], "c0"]])

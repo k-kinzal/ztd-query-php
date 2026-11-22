@@ -27,10 +27,9 @@ final class LocalDefinition
      *
      * @throws InvalidConstruction When the local source is outside the independent domain
      */
-    public function resolve(BoundStatement $operation, Select $body): Select
+    public function resolve(BoundStatement $operation, Select $body, Select|QueryExpression $statement): Select|QueryExpression
     {
         $source = $body->from;
-        $statement = $operation->statement;
         if ($statement === $body && $source instanceof DerivedTable) {
             Check::input(!$source->lateral, 'The local definition cannot depend on a lateral scope.');
             $query = $source->query;
@@ -47,7 +46,7 @@ final class LocalDefinition
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
         }
-        Check::input($query instanceof Select, 'A local definition requires an independent SELECT.');
+        Check::input($query instanceof Select || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');
 
         return $query;
     }

@@ -239,11 +239,12 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
-    $properties['Rows\\LocalProjection'] = ['definition' => ['Select'], 'columns' => ['array']];
+    $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
     $properties['Rows\\LocalResultColumn'] = ['slot' => ['int'], 'name' => ['Identifier']];
     $methods['Rows\\LocalProjection'] = $methods['Select'];
     $methods['Rows\\LocalResultColumn'] = ['__construct'];
-    array_push($internal, 'Rows\\LocalProjectionLowering', 'Rows\\LocalDefinition');
+    array_push($internal, 'Rows\\LocalProjectionLowering', 'Rows\\LocalDefinition', 'Rows\\LocalProjectionSql');
+    $pureCollaborators[] = 'Rows\\LocalProjectionSql';
     $properties['Rows\\Compound'] = [
         'left' => ['Rows\\Compound', 'Select'], 'operator' => ['Rows\\CompoundOperator'],
         'all' => ['bool'], 'right' => ['Rows\\Compound', 'Select'],

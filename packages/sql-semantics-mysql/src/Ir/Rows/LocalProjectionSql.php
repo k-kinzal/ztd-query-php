@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Ir\Rows;
+
+use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\SelectSql;
+
+/**
+ * Emits the local scopes in closed definition order.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class LocalProjectionSql
+{
+    /**
+     * Supplies stable input aliases by ordinal at each independent scope boundary.
+     */
+    public function render(LocalProjection $projection, bool $localNames = false): string
+    {
+        $renderer = new SelectSql();
+        $alias = '`__ztd_local`';
+        $columns = [];
+        foreach ($projection->columns as $position => $column) {
+            $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();
+            $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;
+        }
+        $source = $projection->definition;
+        $input = $source instanceof Select ? $renderer->render($source, true) : $this->render($source, true);
+
+        return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;
+    }
+}

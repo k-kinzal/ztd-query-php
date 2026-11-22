@@ -452,7 +452,10 @@ def main():
     write_json(args.out / "distribution.json", distribution)
     inventory = args.out / "inventory.json"
     with inventory.open("w") as stream:
-        subprocess.run(["php", str(TOOL / "inventory.php"), str(args.candidate), str(args.tool_autoload)], stdout=stream, check=True, timeout=60)
+        subprocess.run(
+            ["php", str(TOOL / "inventory.php"), str(args.candidate), str(args.tool_autoload)],
+            stdout=stream, check=True, timeout=60, env={**os.environ, "XDEBUG_MODE": "off"},
+        )
     types = json.loads(inventory.read_text())
     scope = public_scope(types, distribution)
     write_json(args.out / "scope.json", scope)
@@ -493,6 +496,7 @@ def main():
         "shape": code_shape, "checks": checks, "faults": faults,
         "proof": "none", "open": ["full constructor ledger", "server projection evidence is recorded separately", "remaining semantic families and profiles", "human review", "protected acceptance configuration"],
         "files": ["summary.md", "distribution.json", "scope.json", "grammar-scope.json", "inventory.json", "events.jsonl", "faults/"],
+        "inventorySettings": {"timeoutSeconds": 60, "xdebugMode": "off"},
     }
     write_json(args.out / "index.json", index)
     write_summary(args.out / "summary.md", index)

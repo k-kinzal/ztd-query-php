@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Rows;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjectionLowering;
 use SqlSemantics\Testing\MySql\Inspection;
 
@@ -23,5 +24,16 @@ final class LocalProjectionLoweringTest extends TestCase
         self::assertSame(1, $local->columns[0]->slot);
         self::assertSame('selected_b', $local->columns[0]->name->value);
         self::assertSame(0, $local->columns[1]->slot);
+    }
+
+    public function testLowerKeepsTheImmediateDefinitionOfEachSlot(): void
+    {
+        $query = (new Inspection())->inspect(
+            'SELECT oq.x FROM (SELECT iq.b AS x FROM (SELECT 1 AS a, 2 AS b) AS iq) AS oq'
+        );
+        $local = (new LocalProjectionLowering())->lower($query->binding());
+
+        self::assertInstanceOf(LocalProjection::class, $local->definition);
+        self::assertSame([0, 1], [$local->columns[0]->slot, $local->definition->columns[0]->slot]);
     }
 }

@@ -35,6 +35,7 @@ def faults(engine):
         Fault("allow-zero-parameter-position", "Binding/Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
         Fault("allow-missing-local-slot", "Rows/LocalProjection::__construct", "isset($definition->columns[$column->slot]),", "true,"),
         Fault("allow-negative-local-slot", "Rows/LocalResultColumn::__construct", "$slot >= 0,", "true,"),
+        Fault("ignore-local-chain-bound", "Rows/LocalProjection::__construct", "++$layers <= 16,", "true,"),
         Fault("ignore-truth-operator-arity", "Predicate/LogicalPredicate::__construct",
               "($operator === LogicalOperator::Not) === ($right === null),", "true,"),
         Fault("ignore-expanded-predicate-size", "From/OccurrenceScope::checkTree",
@@ -108,7 +109,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v7.json", "value_storage.php", "value-storage-v9.json", "value-primitives.json")},
+                       "native-boundaries-v8.json", "value_storage.php", "value-storage-v9.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)
