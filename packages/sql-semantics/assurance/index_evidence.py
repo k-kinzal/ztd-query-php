@@ -4,13 +4,31 @@ import argparse
 import json
 from pathlib import Path
 
+from constructor_trace import check_scope, trace
+from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 
 
-NATIVE = (
-    "projection", "delete", "join", "result", "insert", "update", "transaction",
-    "drop_table", "create_table", "parameter", "compound", "local_projection", "truth", "recursive_series", "derived_join", "grouped", "insert_query", "wildcard",
-)
+NATIVE = {
+    "projection": "server-projection-v1.json",
+    "delete": "server-delete-v2.json",
+    "join": "server-join-v1.json",
+    "result": "server-result-v1.json",
+    "insert": "server-insert-v1.json",
+    "update": "server-update-v2.json",
+    "transaction": "server-transaction-v1.json",
+    "drop_table": "server-drop-table-v1.json",
+    "create_table": "server-create-table-v1.json",
+    "parameter": "server-parameter-v1.json",
+    "compound": "server-compound-v2.json",
+    "local_projection": "server-local-projection-v4.json",
+    "truth": "server-truth-v2.json",
+    "recursive_series": "server-recursive-series-v2.json",
+    "derived_join": "server-derived-join-v2.json",
+    "grouped": "server-grouped-v3.json",
+    "insert_query": "server-insert-query-v2.json",
+    "wildcard": "wildcard-projection-v2.json",
+}
 SQLITE = {
     "contract-v1.json", "sqlite-compound-v1.json", "sqlite-create-table-v1.json", "sqlite-delete-v1.json",
     "sqlite-drop-table-v1.json", "sqlite-insert-v1.json", "sqlite-local-source-v1.json",
@@ -98,11 +116,15 @@ class Evidence:
 
     def native(self, profiles):
         domains = {}
-        for domain in NATIVE:
+        for domain, contract in NATIVE.items():
             item = self.optional(f"native-replay/{domain}.json")
             if item is None:
                 continue
             path, origin, report = item
+            require(report["contract"] == CONTRACTS[contract], "bundle-unregistered-native-contract", origin)
+            if domain == "projection":
+                require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
+                        "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
             unavailable = {}
             if domain == "recursive_series":
@@ -141,8 +163,7 @@ class Evidence:
                 else:
                     releases[release] = self.raw(path.parent / receipt["index"], receipt["indexDigest"],
                                                  "events.jsonl", receipt["eventsDigest"], report["contract"], self.tools)
-            require(report["contract"] in self.tools.values(), "bundle-unregistered-native-contract", origin)
-            domains[domain] = {"replay": origin, "releases": releases, "execution": report["execution"], "missing": missing}
+            domains[domain] = {"replay": origin, "contract": contract, "releases": releases, "execution": report["execution"], "missing": missing}
             if unavailable:
                 domains[domain]["unavailableProfiles"] = unavailable
         return domains
@@ -151,11 +172,16 @@ class Evidence:
         item = self.optional(path)
         if item is None:
             return None
-        _, origin, report = item
+        path, origin, report = item
         require(report["status"] == status, "bundle-unexpected-status", origin)
         if distribution:
             require(report["distribution"] == self.distribution, "bundle-runtime-mismatch", origin)
-        return origin
+            self.checked(path.parent / "distribution.json", self.distribution)
+        procedures = report.get("procedures", report.get("tools"))
+        if procedures is not None:
+            require(procedures and all(self.tools.get(name) == sha256 for name, sha256 in procedures.items()),
+                    "bundle-artifact-tool-mismatch", origin)
+        return item
 
 
 def main():
@@ -166,18 +192,22 @@ def main():
     cli.add_argument("--out", required=True, type=Path)
     args = cli.parse_args()
     root, checkout, tools, output = (item.resolve() for item in (args.evidence_root, args.candidate, args.verifier, args.out))
+    require(tools == Path(__file__).resolve().parent, "bundle-verifier-location-mismatch", str(tools))
     require(root in output.parents and checkout not in root.parents and checkout != root, "bundle-output-location")
     identity, manifest = candidate_distribution(checkout)
     dist = root / BASE / "distribution.json"
     verify_distribution(json.loads(dist.read_text()), manifest)
     evidence = Evidence(root, identity, digest(dist), tools)
     _, original, base = evidence.record(f"{BASE}/index.json")
-    require(base["status"] == "provisional-initial-domain" and base["distribution"] == evidence.distribution,
-            "bundle-initial-domain-mismatch", original)
+    require(base["status"] == "provisional-initial-domain" and base["distribution"] == evidence.distribution
+            and base["contract"] == CONTRACTS["contract-v1.json"], "bundle-initial-domain-mismatch", original)
+    require(base["toolDigests"] == {name: sha for name, sha in evidence.tools.items() if not name.endswith(".md")},
+            "bundle-initial-tools-mismatch", original)
     _, grammar = evidence.checked(f"{BASE}/grammar-scope.json", base["grammarScope"]["sha256"])
-    _, inventory = evidence.checked(f"{BASE}/inventory.json")
-    scope_file, scope = evidence.checked(f"{BASE}/scope.json")
+    inventory_file, inventory = evidence.checked(f"{BASE}/inventory.json", base["inventoryArtifacts"]["inventory.json"])
+    scope_file, scope = evidence.checked(f"{BASE}/scope.json", base["inventoryArtifacts"]["scope.json"])
     roles = json.loads(scope_file.read_text())
+    check_scope(json.loads(inventory_file.read_text()), roles, manifest)
     faults = {}
     for receipt in base["faults"]:
         fault = receipt["id"]
@@ -194,6 +224,7 @@ def main():
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
     staged = evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True)
+    role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
     statuses = [] if rule_link is None else [
@@ -206,8 +237,8 @@ def main():
         "inventory": inventory, "scope": scope, "grammar": grammar, "initial": original,
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
         "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native,
-        "nativeConstructorAudit": guards, "stagedDistribution": staged, "requiredFaults": faults,
-        "faultAndIntegrityControls": controls, "formalProof": base["proof"],
+        "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
+        "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,
         "missingEvidence": evidence.missing, "humanReview": "pending", "acceptanceProtection": "unverified",
         "requiredScope": base["scope"], "unresolved": base["open"],
@@ -215,6 +246,8 @@ def main():
     }
     verify_candidate(checkout, identity, manifest)
     output.mkdir(parents=True, exist_ok=False)
+    write_json(output / "constructors.json", role_trace)
+    report["constructorTrace"] = evidence.checked(output / "constructors.json")[1]
     write_json(output / "index.json", report)
     lines = [
         "# SemanticsIR evidence", "", f"Tested candidate `{identity}`.", "",
@@ -225,6 +258,7 @@ def main():
         f"- {sum(not record['missing'] for record in native.values())} native domains with every required release replayed.",
         f"- {len(evidence.missing)} missing evidence records or release entries.",
         "", "The [machine-readable index](index.json) links to the source inventory, replay summaries, original requests and recorded database observations.",
+        "The [constructor trace](constructors.json) identifies declared fields, declaration gaps, related domain receipts and audited methods for each public role.",
     ]
     (output / "summary.md").write_text("\n".join(lines) + "\n")
 

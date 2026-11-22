@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from constructor_trace import check_scope
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, digest, manifest, require, shape, write_json
@@ -60,6 +61,33 @@ def evidence_controls(args):
             "expected": expected, "signal": failure.signal, "detail": failure.detail,
         })
     return results
+
+
+def scope_controls(args, distribution):
+    root = args.root / "semantics-ir-evidence"
+    path = root / "scope.json"
+    scope = json.loads(path.read_text())
+    inventory = json.loads((root / "inventory.json").read_text())
+    check_scope(inventory, scope, distribution)
+    records = []
+    for name, field in (("missing-constructor-obligation", "registeredConstructors"),
+                        ("missing-publication-route", "publicationRoutes")):
+        mutated = copy.deepcopy(scope)
+        removed = sorted(mutated[field])[0]
+        del mutated[field][removed]
+        folder = args.out / name
+        folder.mkdir()
+        target = folder / path.name
+        write_json(target, mutated)
+        (folder / "injected.diff").write_text("".join(difflib.unified_diff(
+            path.read_text().splitlines(keepends=True), target.read_text().splitlines(keepends=True),
+            str(path), str(target),
+        )))
+        expected = "trace-scope-mismatch"
+        failure = observe_rejection(lambda: check_scope(inventory, mutated, distribution), expected)
+        records.append({"case": name, "removed": removed, "control": "passed", "original": digest(path),
+                        "mutated": digest(target), "expected": expected, "signal": failure.signal})
+    return records
 
 
 def copy_package_metadata(args, fixture):
@@ -255,7 +283,7 @@ def main():
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
-              + storage_controls(args) + publication_controls(args) + observer_controls(args))
+              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})
