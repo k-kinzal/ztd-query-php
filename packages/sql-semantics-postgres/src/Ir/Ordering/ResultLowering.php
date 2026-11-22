@@ -6,7 +6,10 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Ordering;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
-use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
@@ -59,9 +62,15 @@ final class ResultLowering
         if ($operand === null) {
             return null;
         }
-        $value = (new Positions())->value($operand);
-        Check::input($value !== null, 'A row bound requires a literal signed 32-bit integer.');
+        $negative = false;
+        while ($operand instanceof Grouped || ($operand instanceof UnaryOperation
+            && $operand->operator->name->value === '-' && !$operand->operator->explicit && $operand->operator->qualifiers === [])) {
+            $negative = $negative !== ($operand instanceof UnaryOperation);
+            $operand = $operand->operand;
+        }
+        Check::input($operand instanceof Constant && $operand->value instanceof IntegerConstant, 'A row bound requires a literal signed 32-bit integer.');
+        $value = (int) $operand->value->digits;
 
-        return (int) $value;
+        return $negative ? -$value : $value;
     }
 }

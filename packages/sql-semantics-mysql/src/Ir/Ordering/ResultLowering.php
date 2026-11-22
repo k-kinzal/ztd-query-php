@@ -52,7 +52,8 @@ final class ResultLowering
     public function bound(Scalar $operand): int
     {
         Check::input($operand instanceof NumberLiteral, 'A row bound requires a literal integer.');
-        $value = new IntegerLiteral(ltrim($operand->text, '0') ?: '0');
+        $digits = ltrim($operand->text, '0');
+        $value = new IntegerLiteral($digits === '' ? '0' : $digits);
 
         return (int) $value->decimal;
     }
