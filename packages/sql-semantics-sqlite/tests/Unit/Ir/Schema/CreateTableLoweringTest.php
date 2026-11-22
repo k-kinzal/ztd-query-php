@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Ir\Schema;
 
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Semantics;
@@ -70,5 +72,23 @@ final class CreateTableLoweringTest extends TestCase
         self::assertNotNull($value->primaryKey);
         self::assertTrue($value->primaryKey->autoIncrement);
         self::assertSame('CREATE TABLE "main"."data" ("id" INTEGER PRIMARY KEY AUTOINCREMENT)', $value->toString());
+    }
+
+    public function testAnalyzeBindsForwardGeneratedSlotsAndResolvesStorage(): void
+    {
+        $semantics = new Semantics();
+        $value = $semantics->analyze('CREATE TABLE data (first INTEGER GENERATED ALWAYS AS (later) STORED, a INTEGER, later AS (a))');
+
+        self::assertInstanceOf(CreateTable::class, $value);
+        $first = $value->columns[0]->generated;
+        $later = $value->columns[2]->generated;
+        self::assertNotNull($first);
+        self::assertNotNull($later);
+        self::assertEquals(new ColumnReference(2), $first->expression);
+        self::assertEquals(new ColumnReference(1), $later->expression);
+        self::assertSame(Storage::Stored, $first->mode);
+        self::assertSame(Storage::Virtual, $later->mode);
+        self::assertSame(DeclaredDatatypeName::Untyped, $value->columns[2]->type);
+        self::assertEquals($value, $semantics->analyze($value->toString()));
     }
 }

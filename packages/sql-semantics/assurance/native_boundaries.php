@@ -20,8 +20,8 @@ function nativeBoundaryContract(string $dialect): array
             ['sqlite-wildcard-boundaries-v1.json', 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d'],
             ['sqlite-insert-slots-boundaries-v3.json', 'ff1868cce0bf4174b3bbadde618f58a9383fa73c70c37ab300d83962aac00af4'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
-            ['sqlite-scalar-boundaries-v13.json', 'cf821bda8dca92c3d2994348120071a9b89b6dc2a1f9ba01a77941cc9065d7e4'],
-            ['sqlite-default-boundaries-v9.json', '36541a31d6e2081bbd649b01c90f145347b46fddfc98ce34db76a6c2836f8778'],
+            ['sqlite-scalar-boundaries-v14.json', 'bd0f8ba761ef84f4a2a81952c3d2714dc0c3bbad33f16cf9902e179f1e5bdd29'],
+            ['sqlite-default-boundaries-v10.json', 'c8f8df9a7f46f80a597729373e56e103d17fb025edc4213be5c4a51fd932725a'],
             ['sqlite-mutation-returning-boundaries-v2.json', 'bc18d0046658c381649211e67f76dbd4faaba16e37526e35eca14e1e6a9fd956'],
         ],
         'mysql', 'postgres' => [
@@ -94,6 +94,8 @@ function checkNativeBoundaries(
             'Statement\\Schema\\Column\\ColumnUnique', 'Statement\\Schema\\Table\\TableUnique',
             'Statement\\Schema\\Column\\Collation as ParsedCollation',
             'Ir\\Schema\\Predicate\\CheckConstraint', 'Ir\\Schema\\Predicate\\CheckLowering', 'Ir\\Schema\\Predicate\\ImplicitCheckLabel', 'Ir\\Schema\\Predicate\\ComparisonSpelling', 'Ir\\Schema\\Predicate\\ImplicitCheckLowering', 'Ir\\Schema\\Predicate\\DefinitionSource', 'Ir\\Schema\\TableDeclarationSql', 'Statement\\Schema\\Column\\ColumnCheck', 'Statement\\Schema\\Column\\ConstraintName', 'Statement\\Schema\\Table\\TableCheck',
+            'Ir\\Schema\\Generation\\GeneratedGraph', 'Ir\\Schema\\Generation\\GeneratedLowering', 'Ir\\Schema\\Generation\\ColumnGeneration', 'Ir\\Schema\\Generation\\Storage',
+            'Ir\\Schema\\DeclaredDatatypeLowering', 'Statement\\Schema\\Column\\Generated', 'Statement\\Schema\\Column\\GeneratedStorage', 'Statement\\Type\\ColumnDomain',
             'Ir\\Schema\\CreateSchema', 'Ir\\Schema\\Query\\CreateTableAs', 'Ir\\Schema\\Query\\CreateAsAffinity',
             'Ir\\Schema\\Query\\CreateAsLayout', 'Ir\\Schema\\Query\\CreatedColumn', 'Ir\\Schema\\Query\\CreatedColumnDeclaration',
             'Ir\\Rows\\ValuesLowering', 'Statement\\Query\\ValuesClause'] as $name) {

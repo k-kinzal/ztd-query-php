@@ -329,8 +329,17 @@ if ($dialect === 'sqlite') {
         'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
             'Literal\\TextLiteral', 'NullLiteral', 'null'],
     ];
-    array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\DefaultLowering');
-    $methods['Schema\\TableColumn'] = ['__construct', 'toString'];
+    $properties['Schema\\TableColumn']['generated'] = ['?Schema\\Generation\\ColumnGeneration'];
+    $methods['Schema\\TableColumn'] = ['__construct'];
+    $properties['Schema\\Generation\\ColumnGeneration'] = [
+        'mode' => ['Schema\\Generation\\Storage'], 'expression' => array_values(array_diff($operands, ['Parameter'])),
+    ];
+    $methods['Schema\\Generation\\ColumnGeneration'] = ['__construct'];
+    $methods['Schema\\Generation\\Storage'] = $properties['Schema\\Generation\\Storage'] = [];
+    $enumCases['Schema\\Generation\\Storage'] = ['Virtual' => 'VIRTUAL', 'Stored' => 'STORED'];
+    array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\DefaultLowering', 'Schema\\DeclaredDatatypeLowering',
+        'Schema\\Generation\\GeneratedLowering', 'Schema\\Generation\\GeneratedGraph');
+    $pureCollaborators[] = 'Schema\\Generation\\GeneratedGraph';
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Mutation\\Insert';
     $roots[] = 'Mutation\\Update';
@@ -723,7 +732,7 @@ try {
     }
     $checkedBindingSources = [];
     $binding = match ($dialect) {
-        'sqlite' => ['sqlite-folded-binding-sources-v2.json', 'd7cb693f8d7c41253b7eb0b5c5b3de0beda70c437d209795af10886d0750ba39', 'Folded binding'],
+        'sqlite' => ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
         'postgres' => ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
         'mysql' => null,
     };
@@ -832,6 +841,8 @@ try {
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
+                'Schema\\DeclaredDatatypeLowering' => 'Schema\\DeclaredDatatypeName',
+                'Schema\\Generation\\GeneratedLowering' => 'Schema\\Generation\\ColumnGeneration',
                 'Schema\\DropTableLowering' => 'Schema\\DropTable',
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,

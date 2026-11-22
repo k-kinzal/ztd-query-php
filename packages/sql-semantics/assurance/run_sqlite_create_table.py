@@ -202,11 +202,11 @@ def execute(args, specification, db, worker_factory=Worker):
 
 def check_faults(args, db, runner=check_render_faults):
     table = "sql-semantics-sqlite/src/Ir/Schema/CreateTable.php"
-    column = "sql-semantics-sqlite/src/Ir/Schema/TableColumn.php"
+    column = "sql-semantics-sqlite/src/Ir/Schema/TableDeclarationSql.php"
     fixtures = [
-        RenderFault("change-declared-type", column, "' ' . $this->type->value", "' TEXT'",
+        RenderFault("change-declared-type", column, "' ' . $column->type->value", "' TEXT'",
                     case([["a", "INTEGER", False]]), "meaning-mismatch"),
-        RenderFault("drop-not-null", column, "$type . $constraint . $default . $collation;", "$type . $default . $collation;",
+        RenderFault("drop-not-null", column, "$type . $constraint . $default . $collation . $generation;", "$type . $default . $collation . $generation;",
                     case([["a", "INTEGER", True]]), "meaning-mismatch"),
         RenderFault("omit-if-not-exists", table, "($this->ifNotExists ? 'IF NOT EXISTS ' : '')", "''",
                     case([["a", "INTEGER", False]], table=EXISTING, guard=True), "meaning-mismatch"),

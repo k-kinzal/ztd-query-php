@@ -123,6 +123,7 @@ CONTRACTS = {
     "sqlite-unique-keys-v1.json": "926f08200f9d461f38153c2a342632d1fa176e13877544bc83a077dd3a99a457",
     "sqlite-folded-checks-v1.json": "cb60008a2bfcb42854ec8b7ffb17f7be4eeae896460beb054c1f54928e931741",
     "sqlite-named-checks-v4.json": "8f50053817516e759452a0da21ed563479f48a61b9c22a2a725b4cb29fa93290",
+    "sqlite-generated-columns-v2.json": "726bb6dedb51a5535f4494046043e5777b9f16984fbd12146c2c75ec61c9a9fe",
     "sqlite-implicit-checks-v1.json": "94101eaf66395a96c32aca5cc6e4b79f210b0436962f1712c08e0fc14f75b766",
     "sqlite-primary-keys-v2.json": "b5ed249813c2bf4d36b971033e76bad276ad617b0cea5cc6c9cbcfc518e3a51b",
     "sqlite-auto-rowid-v1.json": "530a93ca4c873c4560f3401a65d5aeb396a2ff5275881c76c4a089e39e89d4c7",

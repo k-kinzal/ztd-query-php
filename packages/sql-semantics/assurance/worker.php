@@ -64,6 +64,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
@@ -472,6 +474,7 @@ function directCreateTable(array $input): CreateTable
             },
             isset($slot[3]) ? operand($slot[3]) : null,
             Collation::from($slot[4] ?? 'BINARY'),
+            isset($slot[5]) ? new ColumnGeneration(GeneratedStorage::from($slot[5][0]), operand($slot[5][1])) : null,
         ), $input['columns']),
         $input['ifNotExists'],
         $input['strict'] ?? false,
@@ -511,6 +514,13 @@ function observeCheckLabel(Identifier|ImplicitCheckLabel $label): string|array
 
 function observeCreateTable(CreateTable $value): array
 {
+    $generated = [];
+    foreach ($value->columns as $slot => $column) {
+        if ($column->generated !== null) {
+            $generated[] = [$slot, $column->generated->mode->value, observeOperand($column->generated->expression)];
+        }
+    }
+
     return [
         'status' => 'constructed',
         'operation' => 'create-table',
@@ -540,6 +550,7 @@ function observeCreateTable(CreateTable $value): array
             'condition' => observeOperand($check->condition),
         ], $value->checks),
         'collations' => array_map(static fn (TableColumn $column): string => $column->collation->value, $value->columns),
+        ...($generated === [] ? [] : ['generated' => $generated]),
         'sql' => $value->toString(),
     ];
 }

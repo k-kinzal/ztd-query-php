@@ -200,6 +200,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed declaration lost the folded empty membership.');
             }
             $details['foldedCheckBindings'] = array_column($folded->bindings, 'label');
+            $generated = $semantics->analyze('CREATE TABLE generation (recorded INTEGER GENERATED ALWAYS AS (computed) STORED, source INTEGER, computed INTEGER AS (source))');
+            $details['generatedColumns'] = [];
+            foreach ($generated->columns as $slot => $field) {
+                $rule = $field->generated;
+                if ($rule === null) {
+                    continue;
+                }
+                if ($rule::class !== $namespace . 'Ir\\Schema\\Generation\\ColumnGeneration'
+                    || $rule->mode::class !== $namespace . 'Ir\\Schema\\Generation\\Storage'
+                    || $rule->expression::class !== $namespace . 'Ir\\ColumnReference' || $rule->expression->source !== 0) {
+                    throw new RuntimeException('Installed SQLite generation lost a resolved slot or storage role.');
+                }
+                $details['generatedColumns'][] = [$slot, $rule->mode->value, $rule->expression->slot];
+            }
         }
         if ($role === 'Schema\\Alter\\RenameTable') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];

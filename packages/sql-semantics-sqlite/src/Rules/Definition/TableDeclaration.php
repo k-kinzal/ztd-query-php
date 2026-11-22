@@ -58,7 +58,7 @@ final class TableDeclaration
     {
         $domains = [];
         foreach ($definition->columns as $column) {
-            $domains[] = (new TypeRecording())->domain($column->type, $definition->strict());
+            $domains[] = (new TypeRecording())->domain($column->type, $definition->strict(), $column->typeLayout);
         }
 
         return $domains;

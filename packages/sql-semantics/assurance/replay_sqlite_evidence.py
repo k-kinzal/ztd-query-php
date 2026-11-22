@@ -45,6 +45,7 @@ import run_sqlite_unique_keys as unique_keys
 import run_sqlite_named_checks as named_checks
 import run_sqlite_folded_checks as folded_checks
 import run_sqlite_implicit_checks as implicit_checks
+import run_sqlite_generated_columns as generated_columns
 import run_sqlite_rename as rename
 import run_sqlite_update as update
 import run_sqlite_upsert_nothing as upsert_nothing
@@ -83,6 +84,7 @@ DOMAINS = {
     rename.CONTRACT_NAME: (rename, rename.FIXTURE),
     folded_checks.CONTRACT_NAME: (folded_checks, folded_checks.FIXTURE),
     implicit_checks.CONTRACT_NAME: (implicit_checks, implicit_checks.FIXTURE),
+    generated_columns.CONTRACT_NAME: (generated_columns, generated_columns.FIXTURE),
     named_checks.CONTRACT_NAME: (named_checks, named_checks.FIXTURE),
     unique_keys.CONTRACT_NAME: (unique_keys, unique_keys.FIXTURE),
     auto_rowid.CONTRACT_NAME: (auto_rowid, auto_rowid.FIXTURE),
@@ -123,6 +125,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                auto_rowid: primary_keys.KeyDatabase, unique_keys: unique_keys.UniqueDatabase,
                named_checks: named_checks.NamedCheckDatabase, folded_checks: folded_checks.FoldedCheckDatabase,
                implicit_checks: implicit_checks.ImplicitCheckDatabase,
+               generated_columns: generated_columns.GeneratedColumnDatabase,
                rename: rename.RenameDatabase}.get(module, Database)
     database = factory(library)
     try:

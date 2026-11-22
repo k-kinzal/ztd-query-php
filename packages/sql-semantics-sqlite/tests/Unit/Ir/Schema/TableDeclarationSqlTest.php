@@ -11,11 +11,16 @@ use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\DefinitionSource;
@@ -49,5 +54,28 @@ final class TableDeclarationSqlTest extends TestCase
         $check = new CheckConstraint($label, $condition);
 
         self::assertSame('CHECK (Id ==01)', (new TableDeclarationSql())->checkClause($check, new SelectSql(), new DefinitionSource([$column])));
+    }
+
+    public function testColumnWritesTypeDefaultAndConflictPolicy(): void
+    {
+        $name = new Identifier('c');
+        $column = new TableColumn($name, DeclaredDatatypeName::Blob, NotNullConflict::Replace, new NullLiteral());
+
+        self::assertSame(
+            '"c" BLOB NOT NULL ON CONFLICT REPLACE DEFAULT NULL',
+            (new TableDeclarationSql())->column($column, new SelectSql(), new DefinitionSource([$name])),
+        );
+    }
+
+    public function testColumnWritesTheExpressionOverItsResolvedSlot(): void
+    {
+        $name = new Identifier('derived');
+        $value = new ColumnGeneration(Storage::Stored, new ColumnReference(1));
+        $column = new TableColumn($name, DeclaredDatatypeName::Integer, generated: $value);
+
+        self::assertSame(
+            '"derived" INTEGER GENERATED ALWAYS AS ("source") STORED',
+            (new TableDeclarationSql())->column($column, new SelectSql(), new DefinitionSource([$name, new Identifier('source')])),
+        );
     }
 }

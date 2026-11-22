@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Node;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Spelling\Layout;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
@@ -47,9 +48,15 @@ final class ColumnDefinition implements Node
      * @param Name $name The column name
      * @param TypeName|null $type The declared type
      * @param list<ColumnConstraint> $constraints The constraints in written order
+     * @param Layout|null $typeLayout The type spelling when a generation suffix is part of its token list
      */
-    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $constraints = [])
-    {
+    public function __construct(
+        public readonly Name $name,
+        public readonly ?TypeName $type = null,
+        array $constraints = [],
+        public readonly ?Layout $typeLayout = null,
+    ) {
+        Check::input($typeLayout === null || $type !== null, 'A type layout requires a declared type.');
         $this->constraints = Check::listOf($constraints, ColumnConstraint::class, 'Column constraints are an ordered list of column constraints.');
     }
 
@@ -136,7 +143,10 @@ final class ColumnDefinition implements Node
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, NameUse::Column)->node($this->type);
+        $out->name($this->name, NameUse::Column);
+        if ($this->type !== null) {
+            $out->layout($this->typeLayout, $this->type);
+        }
         foreach ($this->constraints as $constraint) {
             $out->node($constraint);
         }

@@ -35,9 +35,11 @@ final class ExpressionScope
      * @param list<int> $widths The number of slots per occurrence
      * @param list<ScopedExpression> $pending The expressions with height and scope width
      * @param bool $allowLiveParameters Whether the owner accepts parameters that are evaluated
+     * @return list<ColumnReference> The checked occurrences in the expanded operand graph
      */
-    public function check(array $widths, array $pending, bool $allowLiveParameters = true): void
+    public function check(array $widths, array $pending, bool $allowLiveParameters = true): array
     {
+        $references = [];
         $nodes = 0;
         $payloadBytes = 0;
         while ($pending !== []) {
@@ -51,7 +53,7 @@ final class ExpressionScope
                 continue;
             }
             match (true) {
-                $expression instanceof ColumnReference => $this->checkReference($expression, $widths, $visibility),
+                $expression instanceof ColumnReference => $references[] = $this->checkReference($expression, $widths, $visibility),
                 $expression instanceof Parameter => $payloadBytes += $this->parameterBytes($expression, $allowLiveParameters, isset($frame[3])),
                 $expression instanceof CastExpression, $expression instanceof CollatedExpression, $expression instanceof TruthTest, $expression instanceof UnaryExpression
                     => $pending[] = [$expression->operand, $height + 1, $visibility],
@@ -70,6 +72,8 @@ final class ExpressionScope
             };
             Check::input($payloadBytes <= 990000000, 'Scalar payloads exceed the SQLite statement size budget.');
         }
+
+        return $references;
     }
 
     /**
@@ -86,12 +90,14 @@ final class ExpressionScope
      * Checks one slot against the visible input prefix.
      * @param list<int> $widths The widths of the declared input occurrences
      */
-    public function checkReference(ColumnReference $expression, array $widths, int $visibility): void
+    public function checkReference(ColumnReference $expression, array $widths, int $visibility): ColumnReference
     {
         Check::input(
             $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),
             'Column slot must belong to the statement source at a visible occurrence.',
         );
+
+        return $expression;
     }
 
     /**

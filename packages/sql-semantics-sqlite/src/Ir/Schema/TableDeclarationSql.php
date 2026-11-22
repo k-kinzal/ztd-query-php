@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
@@ -42,26 +43,24 @@ final class TableDeclarationSql
                 $table[] = $keySql->table($key, $columns);
             }
         }
-        if ($checks !== []) {
-            $names = [];
-            foreach ($columns as $column) {
-                $names[] = $column->name;
-            }
-            $source = new DefinitionSource($names);
-            $expressions = new SelectSql();
-            foreach ($checks as $check) {
-                $sql = $this->checkClause($check, $expressions, $source);
-                if ($check->column === null) {
-                    $table[] = $sql;
-                } else {
-                    $inline[$check->column] = ($inline[$check->column] ?? '') . ' ' . $sql;
-                }
+        $names = [];
+        foreach ($columns as $column) {
+            $names[] = $column->name;
+        }
+        $source = new DefinitionSource($names);
+        $expressions = new SelectSql();
+        foreach ($checks as $check) {
+            $sql = $this->checkClause($check, $expressions, $source);
+            if ($check->column === null) {
+                $table[] = $sql;
+            } else {
+                $inline[$check->column] = ($inline[$check->column] ?? '') . ' ' . $sql;
             }
         }
 
         $parts = [];
         foreach ($columns as $slot => $column) {
-            $parts[] = $column->toString() . ($inline[$slot] ?? '');
+            $parts[] = $this->column($column, $expressions, $source) . ($inline[$slot] ?? '');
         }
 
         return [...$parts, ...$table];
@@ -80,5 +79,32 @@ final class TableDeclarationSql
         }
 
         return 'CONSTRAINT ' . $check->label->quoted() . ' CHECK (' . $expressions->expression($condition, $source) . ')';
+    }
+
+    /**
+     * Emits the column declaration, keeping the untyped case distinct.
+     */
+    public function column(TableColumn $column, SelectSql $expressions, DefinitionSource $source): string
+    {
+        $type = $column->type === DeclaredDatatypeName::Untyped ? '' : ' ' . $column->type->value;
+
+        $default = $column->default === null ? '' : ' DEFAULT ' . $expressions->expression($column->default, null);
+
+        $constraint = match ($column->notNull) {
+            null => '',
+            NotNullConflict::Abort => ' NOT NULL',
+            NotNullConflict::Fail => ' NOT NULL ON CONFLICT FAIL',
+            NotNullConflict::Ignore => ' NOT NULL ON CONFLICT IGNORE',
+            NotNullConflict::Replace => ' NOT NULL ON CONFLICT REPLACE',
+            NotNullConflict::Rollback => ' NOT NULL ON CONFLICT ROLLBACK',
+        };
+
+        $collation = $column->collation === Collation::Binary ? '' : ' COLLATE ' . $column->collation->value;
+
+        $generated = $column->generated;
+        $generation = $generated === null ? '' : ' GENERATED ALWAYS AS ('
+            . $expressions->expression($generated->expression, $source) . ') ' . $generated->mode->value;
+
+        return $column->name->quoted() . $type . $constraint . $default . $collation . $generation;
     }
 }

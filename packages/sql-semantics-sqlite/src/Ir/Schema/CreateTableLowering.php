@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeyLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckLowering;
+use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -30,10 +31,19 @@ final class CreateTableLowering
             Check::input($option->kind() === TableOptionKind::Strict || $option->kind() === TableOptionKind::WithoutRowid, 'This table option has no complete CREATE TABLE representation.');
         }
         $schema = (new CreateSchema())->resolve($operation, $statement->name, $statement->temporary);
+        $names = [];
+        foreach ($statement->columns as $column) {
+            $names[] = new Identifier($column->name->value);
+        }
+        $binding = new SourceBinding($operation, $statement, $names);
+        $table = $operation->facts->declarations[0] ?? null;
+        Check::invariant($table !== null && $operation->statement === $statement, 'The binding describes the table being lowered.');
         $columns = [];
         $lowering = new CreateColumnLowering();
-        foreach ($statement->columns as $column) {
-            $columns[] = $lowering->lower($column, $operation);
+        foreach ($statement->columns as $slot => $column) {
+            $declared = $table->columns[$slot] ?? null;
+            Check::invariant($declared !== null && $declared->name === $column->name, 'The binding describes the same ordered column declaration.');
+            $columns[] = $lowering->lower($column, $operation, $binding, $declared->type);
         }
         return new CreateTable(
             $schema,

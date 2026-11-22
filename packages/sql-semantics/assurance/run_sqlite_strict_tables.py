@@ -145,9 +145,9 @@ def execute(args, specification, db, worker_factory=Worker):
 
 def check_faults(args, db, runner=check_render_faults):
     table = "sql-semantics-sqlite/src/Ir/Schema/CreateTable.php"
-    column = "sql-semantics-sqlite/src/Ir/Schema/TableColumn.php"
+    column = "sql-semantics-sqlite/src/Ir/Schema/TableDeclarationSql.php"
     suffix = "($this->strict ? ' STRICT' : '')"
-    kind = "' ' . $this->type->value"
+    kind = "' ' . $column->type->value"
     strict_any = declaration([["value", "ANY", False]], True)
     ordinary_any = declaration([["value", "ANY", False]])
     strict_int = declaration([["value", "INT", False]], True)

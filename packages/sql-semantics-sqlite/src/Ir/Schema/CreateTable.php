@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\GeneratedGraph;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeyLayout;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
@@ -80,6 +81,9 @@ final class CreateTable implements SemanticsIR
             if ($column->default !== null) {
                 $conditions[] = [$column->default, 0, 0];
             }
+            if ($column->generated !== null) {
+                $conditions[] = [$column->generated->expression, 0, 1];
+            }
         }
         $orderedChecks = Check::listOf($checks, CheckConstraint::class, 'A CREATE TABLE has an ordered list of checks.');
         $lastOwner = -1;
@@ -91,6 +95,7 @@ final class CreateTable implements SemanticsIR
             $conditions[] = [$check->condition, 0, 1];
         }
         (new ExpressionScope())->check([count($checked)], $conditions, false);
+        (new GeneratedGraph())->check($checked, $primaryKey);
         $this->columns = $checked;
         $this->keys = $orderedKeys;
         $this->checks = $orderedChecks;

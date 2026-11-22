@@ -176,14 +176,14 @@ def execute(args, specification, db, worker_factory=Worker):
 
 
 def check_faults(args, db, runner=check_render_faults):
-    column = "sql-semantics-sqlite/src/Ir/Schema/TableColumn.php"
+    column = "sql-semantics-sqlite/src/Ir/Schema/TableDeclarationSql.php"
 
     def example(algorithm, **probe):
         return plan(case([["value", "INTEGER", algorithm, ["integer", "-7"]]], table=TABLE), **probe)
 
     return runner(args, db, [
-        RenderFault("force-implicit-abort", column, "$type . $constraint . $default . $collation;",
-                    "$type . ($this->notNull === null ? '' : ' NOT NULL') . $default . $collation;", example("IGNORE"), "meaning-mismatch"),
+        RenderFault("force-implicit-abort", column, "$type . $constraint . $default . $collation . $generation;",
+                    "$type . ($column->notNull === null ? '' : ' NOT NULL') . $default . $collation . $generation;", example("IGNORE"), "meaning-mismatch"),
         RenderFault("discard-prefix-on-fail", column, "NotNullConflict::Fail => ' NOT NULL ON CONFLICT FAIL'",
                     "NotNullConflict::Fail => ' NOT NULL'", example("FAIL"), "meaning-mismatch"),
         RenderFault("keep-transaction-on-rollback", column, "NotNullConflict::Rollback => ' NOT NULL ON CONFLICT ROLLBACK'",

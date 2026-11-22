@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Lowering\Definition;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Model\Construction\Layouts;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Form;
 use SqlSemantics\Platform\Sqlite\Model\Lowering\Lists;
@@ -66,9 +67,15 @@ final class ColumnRule
             throw ImplementationGap::production($form);
         }
         $column = $this->lowering->names->name($form->node(0));
-        $type = $this->lowering->typeNames->named($form->node(1));
+        $tokens = $form->node(1);
+        $type = $this->lowering->typeNames->named($tokens);
+        $layout = null;
+        $words = $type->words ?? [];
+        if ($type !== null && count($words) >= 2 && $words[count($words) - 2]->is('GENERATED') && $words[count($words) - 1]->is('ALWAYS')) {
+            $layout = (new Layouts())->of($tokens);
+        }
 
-        return new ColumnDefinition($column, $type, $this->constraints($constraints));
+        return new ColumnDefinition($column, $type, $this->constraints($constraints), $layout);
     }
 
     /**
