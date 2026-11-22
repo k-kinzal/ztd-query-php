@@ -107,7 +107,7 @@ def faults(engine):
             Fault("allow-unbound-check-operand", "Schema/Predicate/CheckConstraint::__construct",
                   "(new ExpressionScope())->check([2000], [[$condition, 0, 1]], false);", "(new ExpressionScope())->check([2000], [[$condition, 0, 1]]);"),
             Fault("allow-all-check-parameters", "Predicate/ExpressionScope::parameterBytes",
-                  "$allowLiveParameters || $registration", "true"),
+                  "$allowLiveParameters || ($allowRegistrations && $registration)", "true"),
             Fault("deny-folded-check-registration", "Predicate/ExpressionScope::branches",
                   "[$binding, $height, $visibility, true]", "[$binding, $height, $visibility]"),
             Fault("ignore-owning-check-slot", "Schema/CreateTable::__construct",
