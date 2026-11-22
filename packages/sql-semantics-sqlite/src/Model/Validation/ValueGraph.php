@@ -9,6 +9,7 @@ use ReflectionProperty;
 use ReflectionReference;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use UnitEnum;
 
 /**
@@ -37,12 +38,13 @@ final class ValueGraph
     }
 
     /**
-     * Answers every object reachable from a root, the root included, after auditing each.
+     * Answers reachable objects, including the root, after auditing each value.
+     * @param bool $includeDiscarded Follow operands that SQLite discards before binding
      *
      * @return list<object>
      * @throws \SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction When a reachable value is outside the closed immutable domain
      */
-    public function objects(object $root): array
+    public function objects(object $root, bool $includeDiscarded = true): array
     {
         $objects = [];
         $seen = [];
@@ -67,6 +69,9 @@ final class ValueGraph
             $objects[] = $value;
             foreach ($this->members($value) as $property) {
                 Check::input($property->isInitialized($value), 'A semantic value has no uninitialised property.');
+                if (!$includeDiscarded && $value instanceof InList && $value->items === [] && $property->getName() === 'operand') {
+                    continue;
+                }
                 $pending[] = $property->getValue($value);
             }
         }

@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -34,7 +35,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         public readonly Identifier $name,
     ) {
     }

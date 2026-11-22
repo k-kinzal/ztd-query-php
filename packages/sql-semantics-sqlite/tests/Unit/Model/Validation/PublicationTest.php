@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Script;
 use SqlSemantics\Platform\Sqlite\Model\Validation\Publication;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
@@ -63,5 +64,20 @@ final class PublicationTest extends TestCase
         $empty = $publication->root([]);
         self::assertInstanceOf(Script::class, $empty);
         self::assertSame([], $empty->statements);
+    }
+
+    public function testFactsOnlyBindsTheLiveOccurrenceOfASharedNode(): void
+    {
+        $use = new ColumnUse(new Name('a'));
+        $semantics = new Inspection();
+        $table = $semantics->inspect('CREATE TABLE t (a INTEGER)');
+        $context = $semantics->context([$table]);
+        $folded = new InList($use, []);
+        $statement = new Select([new ResultColumn($folded), new ResultColumn($use)], new TableInput(new QualifiedName(new Name('t'))));
+
+        $facts = (new Publication())->facts($context, $statement);
+
+        self::assertTrue($facts->covers($folded));
+        self::assertInstanceOf(ResolvedColumn::class, $facts->scalar($use)->resolution);
     }
 }

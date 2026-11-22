@@ -77,6 +77,9 @@ def children(expression):
         yield from children(expression[2])
     elif expression[0] == "truth":
         yield from children(expression[3])
+    elif expression[0] == "folded-membership":
+        for label in expression[2]:
+            yield ["parameter", label]
     elif expression[0] == "membership":
         yield from children(expression[2])
         for term in expression[3]:

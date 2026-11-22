@@ -17,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Expression\UnaryKind;
 use SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
@@ -126,6 +127,7 @@ final class ExpressionLoweringTest extends TestCase
 
         $test = (new ExpressionLowering())->membership($column->expression, new SourceBinding($operation->binding(), $select->from));
 
+        self::assertInstanceOf(MembershipTest::class, $test);
         self::assertTrue($test->negated);
         self::assertInstanceOf(Parameter::class, $test->operand);
         self::assertSame('02', $test->operand->label);

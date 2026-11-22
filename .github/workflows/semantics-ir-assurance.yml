@@ -322,6 +322,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-membership-evidence"
+      - name: Collect SQLite folded membership binding observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_folded_membership.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-folded-membership-evidence"
       - name: Collect SQLite literal default observations
         if: ${{ !cancelled() }}
         env:
@@ -449,6 +458,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-truth-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-between-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-membership-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-folded-membership-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-defaults-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-returning-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-update-returning-evidence/

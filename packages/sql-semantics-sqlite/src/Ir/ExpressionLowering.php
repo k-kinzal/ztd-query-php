@@ -19,6 +19,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ComparisonOperator;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembershipLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
@@ -61,7 +63,7 @@ final class ExpressionLowering
      *
      * @throws InvalidConstruction When the expression is unsupported or a reference is unresolved
      */
-    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
+    public function lower(Scalar $expression, SourceBinding $binding): Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -107,8 +109,11 @@ final class ExpressionLowering
      * Resolves the tested value followed by every ordered list member.
      * @throws InvalidConstruction When a member or tested value is unsupported or unresolved
      */
-    public function membership(ParsedMembership $expression, SourceBinding $binding): MembershipTest
+    public function membership(ParsedMembership $expression, SourceBinding $binding): FoldedMembership|MembershipTest
     {
+        if ($expression->items === []) {
+            return (new FoldedMembershipLowering())->lower($expression->operand, $expression->negated);
+        }
         $operand = $this->lower($expression->operand, $binding);
         $members = [];
         foreach ($expression->items as $item) {

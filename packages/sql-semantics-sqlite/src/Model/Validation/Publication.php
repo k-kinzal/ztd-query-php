@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Statement;
 use SqlSemantics\Platform\Sqlite\Platform;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 
 /**
  * Checks the internal statement graph and derives its binding facts.
@@ -22,13 +23,19 @@ use SqlSemantics\Platform\Sqlite\Platform;
 final class Publication
 {
     /**
-     * Derives and verifies the facts covering every statement node.
+     * Audits the whole syntax graph and derives facts for the nodes SQLite binds.
      */
     public function facts(AnalysisContext $context, Statement $statement): Facts
     {
         $platform = Platform::shared();
         $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Model\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Model\\Contract\\', $platform->statementNamespace()]);
         $objects = $graph->objects($statement);
+        foreach ($objects as $object) {
+            if ($object instanceof InList && $object->items === []) {
+                $objects = $graph->objects($statement, includeDiscarded: false);
+                break;
+            }
+        }
 
         $derivation = new Derivation($context);
         $derivation->statement($statement);

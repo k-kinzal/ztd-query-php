@@ -35,8 +35,8 @@ final class Comparison
      */
     public function __construct(
         public readonly ComparisonOperator $operator,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
-        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $left,
+        public readonly Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|self|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $right,
     ) {
     }
 }

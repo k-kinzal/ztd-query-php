@@ -337,6 +337,8 @@ The [unary record](sqlite-unary-v1.json) tests direct prefix expressions, comput
 
 ## SQLite truth tests
 
+The [folded membership record](sqlite-folded-membership-v1.json) checks constant empty-list outcomes and surviving numbered registrations. Analysis audits the whole syntax graph and binds only the live part. It preserves bindings from the discarded operand in their original lexical order. The comparison pairs the written statements with emitted SQL and distinguishes the first label of a shared slot and gaps before the highest slot. Run `run_sqlite_folded_membership.py` with the SQLite fixture options.
+
 The [membership record](sqlite-membership-v1.json) covers scalar IN and NOT IN with ordered candidate expressions. It compares the numbered binding count and first labels for empty lists, where SQLite folds the result. The observer distinguishes left affinity and collation from a list member's discarded affinity and implicit collation. Run `run_sqlite_membership.py` with the SQLite fixture options.
 
 The [range test record](sqlite-between-v1.json) covers positive and negated scalar BETWEEN in the same projection and VALUES roles. The independent evaluator applies affinity and collation to each comparison before combining the two truth values. Run `run_sqlite_between.py` with the SQLite fixture options. The recorded faults erase a bound, move the bounds or omit negation.

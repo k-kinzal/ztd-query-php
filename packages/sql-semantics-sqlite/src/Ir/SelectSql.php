@@ -16,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -129,7 +130,7 @@ final class SelectSql
      * @param list<Join> $joins The remaining source occurrences
      */
     public function expression(
-        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
+        Arithmetic|BetweenTest|BlobLiteral|CaseExpression|CastExpression|ColumnReference|Comparison|FoldedMembership|HexIntegerLiteral|IntegerLiteral|Logical|MembershipTest|NullLiteral|Parameter|RealLiteral|TextLiteral|TruthTest|UnaryExpression $expression,
         TableSource|LocalSource|null $source,
         array $joins = [],
     ): string {
@@ -144,6 +145,7 @@ final class SelectSql
             $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
                 => '(' . $this->expression($expression->left, $source, $joins) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $joins) . ')',
             $expression instanceof BetweenTest => $this->between($expression, $source, $joins),
+            $expression instanceof FoldedMembership => $this->foldedMembership($expression),
             $expression instanceof MembershipTest => $this->membership($expression, $source, $joins),
             $expression instanceof CaseExpression => $this->choice($expression, $source, $joins),
             $expression instanceof CastExpression => '(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))',
@@ -157,6 +159,22 @@ final class SelectSql
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => '?' . $expression->label,
         };
+    }
+
+    /**
+     * Emits the decided value while registering every numbered marker in order.
+     */
+    public function foldedMembership(FoldedMembership $expression): string
+    {
+        if ($expression->bindings === []) {
+            return $expression->matches ? '1' : '0';
+        }
+        $branches = [];
+        foreach ($expression->bindings as $binding) {
+            $branches[] = ' WHEN ?' . $binding->label . ' THEN 0';
+        }
+
+        return '((CASE' . implode('', $branches) . ' END)' . ($expression->matches ? ' NOT IN ())' : ' IN ())');
     }
 
     /**

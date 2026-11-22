@@ -86,10 +86,10 @@ def boundaries():
 
 def analyzed():
     yield ("SELECT ?02 IN () AS folded, ?7 NOT IN () AS inverse, ?2 AS shared", [],
-           statement("select-unit", [[membership(["parameter", "02"], []), membership(["parameter", "7"], [], True), ["parameter", "2"]]],
+           statement("select-unit", [[["folded-membership", False, ["02"]], ["folded-membership", True, ["7"]], ["parameter", "2"]]],
                      ["folded", "inverse", "shared"]))
     yield ("SELECT NULL IN () AS empty, NULL NOT IN () AS inverse", [],
-           statement("select-unit", [[membership(["null"], []), membership(["null"], [], True)]], ["empty", "inverse"]))
+           statement("select-unit", [[["folded-membership", False, []], ["folded-membership", True, []]]], ["empty", "inverse"]))
     yield ("SELECT n,t,'2' IN (n) AS numeric_right,n IN ('2') AS numeric_left,"
            "'APPLE' IN (t) AS collation_right,t IN ('APPLE') AS collation_left FROM ir_range_inputs",
            [DDL], column_witness())

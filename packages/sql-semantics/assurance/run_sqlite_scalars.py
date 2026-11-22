@@ -84,6 +84,8 @@ def evaluate(term, bindings, row=(), case_equal=None, comparison_inputs=comparis
                     break
         return None if result is None else evaluate(result, bindings, row, case_equal, comparison_inputs)
 
+    if kind == "folded-membership":
+        return int(arguments[0])
     if kind == "membership":
         negated, operand, items = arguments
         if not items:

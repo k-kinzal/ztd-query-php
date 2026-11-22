@@ -40,6 +40,7 @@ DOMAINS = (
     Domain("semantics-ir-sqlite-scalars-evidence", "sqlite-scalars-v1.json", 2280, 2482, 8, 3),
     Domain("semantics-ir-sqlite-numeric-evidence", "sqlite-numeric-operators-v1.json", 1728, 1832, 4, 4),
     Domain("semantics-ir-sqlite-unary-evidence", "sqlite-unary-v1.json", 120, 212, 4, 4),
+    Domain("semantics-ir-sqlite-folded-membership-evidence", "sqlite-folded-membership-v1.json", 52, 133, 4, 4),
     Domain("semantics-ir-sqlite-membership-evidence", "sqlite-membership-v1.json", 1418, 1498, 6, 4),
     Domain("semantics-ir-sqlite-between-evidence", "sqlite-between-v1.json", 1186, 1266, 5, 4),
     Domain("semantics-ir-sqlite-truth-evidence", "sqlite-truth-v2.json", 80, 163, 4, 4),

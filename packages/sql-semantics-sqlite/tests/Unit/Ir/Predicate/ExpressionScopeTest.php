@@ -11,7 +11,9 @@ use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseBranch;
 use SqlSemantics\Platform\Sqlite\Ir\Expression\CaseExpression;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 
@@ -45,5 +47,14 @@ final class ExpressionScopeTest extends TestCase
         $test = new MembershipTest($operand, [new MembershipItem($first), new MembershipItem($second)]);
 
         self::assertSame([[$operand, 2, 4], [$first, 2, 4], [$second, 2, 4]], (new ExpressionScope())->members($test, 2, 4));
+    }
+
+    public function testBranchesReachEachFoldedBindingRegistration(): void
+    {
+        $a = new Parameter('02');
+        $b = new Parameter('2');
+        $value = new FoldedMembership(true, [$a, $b]);
+
+        self::assertSame([[$a, 2, 4], [$b, 2, 4]], (new ExpressionScope())->branches($value, 2, 4));
     }
 }

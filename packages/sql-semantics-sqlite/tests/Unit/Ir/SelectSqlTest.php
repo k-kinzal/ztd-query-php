@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\BetweenTest;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\FoldedMembership;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipItem;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\MembershipTest;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\TruthTest;
@@ -108,5 +109,14 @@ final class SelectSqlTest extends TestCase
 
         self::assertSame('(?02 NOT IN (?3, ?1))', $renderer->membership(new MembershipTest($operand, [$three, $one], true), null, []));
         self::assertSame('(?02 IN ())', $renderer->membership(new MembershipTest($operand, []), null, []));
+    }
+
+    public function testFoldedMembershipWritesTheDecidedValueAndTheSurvivingBindings(): void
+    {
+        $renderer = new SelectSql();
+        $value = new FoldedMembership(true, [new Parameter('02'), new Parameter('2'), new Parameter('7')]);
+
+        self::assertSame('((CASE WHEN ?02 THEN 0 WHEN ?2 THEN 0 WHEN ?7 THEN 0 END) NOT IN ())', $renderer->foldedMembership($value));
+        self::assertSame('0', $renderer->foldedMembership(new FoldedMembership(false)));
     }
 }

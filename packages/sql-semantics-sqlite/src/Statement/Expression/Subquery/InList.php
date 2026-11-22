@@ -55,6 +55,9 @@ final class InList implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->items === []) {
+            return new ScalarFact(new Known(Storage::Integer), Nullability::NotNull);
+        }
         $operand = $derivation->scalar($this->operand, $environment);
         $nullability = $operand->nullability;
         $elements = [];
@@ -64,7 +67,7 @@ final class InList implements Scalar
         }
         (new RowValueUse())->elements($operand, $elements, $derivation);
 
-        return new ScalarFact(new Known(Storage::Integer), $this->items === [] ? Nullability::NotNull : $nullability);
+        return new ScalarFact(new Known(Storage::Integer), $nullability);
     }
 
     /**

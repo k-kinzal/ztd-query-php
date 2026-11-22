@@ -34,7 +34,7 @@ RELATED_SQLITE_DOMAINS = {
     "expr: BITNOT expr": ("sqlite-unary-v1.json",),
     "expr: PLUS|MINUS expr": ("sqlite-unary-v1.json",),
     "expr: expr ISNULL|NOTNULL": ("sqlite-unary-v1.json",),
-    "expr: expr in_op LP exprlist RP": ("sqlite-membership-v1.json",),
+    "expr: expr in_op LP exprlist RP": ("sqlite-membership-v1.json", "sqlite-folded-membership-v1.json"),
     "expr: expr between_op expr AND expr": ("sqlite-between-v1.json",),
     "expr: expr NOT NULL": ("sqlite-unary-v1.json",),
     "expr: expr LT|GT|GE|LE expr": ("sqlite-scalars-v1.json",),
