@@ -23,7 +23,7 @@ final class BuiltinCastLoweringTest extends TestCase
 {
     public function testLowerResolvesTheNestedInputAndOutputTypes(): void
     {
-        $operation = (new Inspection())->inspect('SELECT CAST((TRUE) AS INTEGER)::bool');
+        $operation = (new Inspection())->inspect('SELECT CAST((TRUE) AS INTEGER)::pg_catalog.bool');
         self::assertInstanceOf(Select::class, $operation->statement);
         $target = $operation->statement->targets[0];
         self::assertInstanceOf(ExpressionTarget::class, $target);
