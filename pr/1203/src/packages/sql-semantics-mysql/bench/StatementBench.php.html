@@ -45,7 +45,8 @@
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PhpBench\Attributes</span> <span class="tok-kw">as</span> <span class="tok-id">Bench</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Mode</span>;</span>
-<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Testing\MySql\Inspection</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> * Measures the analysis of a statement: parsing, lowering, derivation and rendering with its checks.</span></span>
@@ -59,8 +60,9 @@
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">benchSelect</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    {</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">24</span>        <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&quot;SELECT t.a, COUNT(*) AS n, &#039;label&#039;, 0x1F, @@session.sql_mode, ROW_NUMBER() OVER w FROM shop.t AS t LEFT JOIN u USING (id) WHERE t.b &gt; 1 GROUP BY t.a WINDOW w AS (ORDER BY t.a) ORDER BY n DESC LIMIT 10&quot;</span>);</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Inspection</span>();</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&quot;SELECT t.a, COUNT(*) AS n, &#039;label&#039;, 0x1F, @@session.sql_mode, ROW_NUMBER() OVER w FROM shop.t AS t LEFT JOIN u USING (id) WHERE t.b &gt; 1 GROUP BY t.a WINDOW w AS (ORDER BY t.a) ORDER BY n DESC LIMIT 10&quot;</span>);</span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    }</span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a></span>
@@ -69,8 +71,9 @@
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">benchLegacySelect</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    {</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-5.7.44&#039;</span>, <span class="tok-id">Mode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>(<span class="tok-str">&#039;mysql-5.7.44&#039;</span>, <span class="tok-id">Mode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES&#039;</span>));</span>
 <span class="src-line" data-diff="removed"><span class="ln">33</span>        <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT t.a, &quot;b&quot; AS total, \&#039;label\&#039;, ? FROM shop.t AS t WHERE t.a &lt;=&gt; NULL&#039;</span>);</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Inspection</span>(<span class="tok-str">&#039;mysql-5.7.44&#039;</span>, <span class="tok-id">Mode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES&#039;</span>));</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;SELECT t.a, &quot;b&quot; AS total, \&#039;label\&#039;, ? FROM shop.t AS t WHERE t.a &lt;=&gt; NULL&#039;</span>);</span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    }</span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>}</span>

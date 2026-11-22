@@ -50,26 +50,26 @@
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com"> * constraints are always copied.</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-createtable.html.</span></span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * @example Reading a LIKE option</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> * @example Reading a LIKE option</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE TABLE t (LIKE u INCLUDING ALL EXCLUDING INDEXES)&#039;);</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;inspect(&#039;CREATE TABLE t (LIKE u INCLUDING ALL EXCLUDING INDEXES)&#039;);</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $create-&gt;statement-&gt;definition-&gt;elements[0]-&gt;options[1]-&gt;kind // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind::Indexes</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">enum</span> <span class="tok-id">LikeOptionKind</span>: <span class="tok-id">string</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">case</span> <span class="tok-id">Comments</span> = <span class="tok-str">&#039;COMMENTS&#039;</span>;</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    <span class="tok-kw">case</span> <span class="tok-id">Compression</span> = <span class="tok-str">&#039;COMPRESSION&#039;</span>;</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    <span class="tok-kw">case</span> <span class="tok-id">Constraints</span> = <span class="tok-str">&#039;CONSTRAINTS&#039;</span>;</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">case</span> <span class="tok-id">Defaults</span> = <span class="tok-str">&#039;DEFAULTS&#039;</span>;</span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    <span class="tok-kw">case</span> <span class="tok-id">Identity</span> = <span class="tok-str">&#039;IDENTITY&#039;</span>;</span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-kw">case</span> <span class="tok-id">Generated</span> = <span class="tok-str">&#039;GENERATED&#039;</span>;</span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">case</span> <span class="tok-id">Indexes</span> = <span class="tok-str">&#039;INDEXES&#039;</span>;</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    <span class="tok-kw">case</span> <span class="tok-id">Statistics</span> = <span class="tok-str">&#039;STATISTICS&#039;</span>;</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    <span class="tok-kw">case</span> <span class="tok-id">Storage</span> = <span class="tok-str">&#039;STORAGE&#039;</span>;</span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">case</span> <span class="tok-id">All</span> = <span class="tok-str">&#039;ALL&#039;</span>;</span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>}</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com"> *     $create-&gt;statement-&gt;definition-&gt;elements[0]-&gt;options[1]-&gt;kind // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind::Indexes</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">enum</span> <span class="tok-id">LikeOptionKind</span>: <span class="tok-id">string</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>{</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>    <span class="tok-kw">case</span> <span class="tok-id">Comments</span> = <span class="tok-str">&#039;COMMENTS&#039;</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    <span class="tok-kw">case</span> <span class="tok-id">Compression</span> = <span class="tok-str">&#039;COMPRESSION&#039;</span>;</span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>    <span class="tok-kw">case</span> <span class="tok-id">Constraints</span> = <span class="tok-str">&#039;CONSTRAINTS&#039;</span>;</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">case</span> <span class="tok-id">Defaults</span> = <span class="tok-str">&#039;DEFAULTS&#039;</span>;</span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    <span class="tok-kw">case</span> <span class="tok-id">Identity</span> = <span class="tok-str">&#039;IDENTITY&#039;</span>;</span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    <span class="tok-kw">case</span> <span class="tok-id">Generated</span> = <span class="tok-str">&#039;GENERATED&#039;</span>;</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">case</span> <span class="tok-id">Indexes</span> = <span class="tok-str">&#039;INDEXES&#039;</span>;</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    <span class="tok-kw">case</span> <span class="tok-id">Statistics</span> = <span class="tok-str">&#039;STATISTICS&#039;</span>;</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-kw">case</span> <span class="tok-id">Storage</span> = <span class="tok-str">&#039;STORAGE&#039;</span>;</span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">case</span> <span class="tok-id">All</span> = <span class="tok-str">&#039;ALL&#039;</span>;</span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>}</span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

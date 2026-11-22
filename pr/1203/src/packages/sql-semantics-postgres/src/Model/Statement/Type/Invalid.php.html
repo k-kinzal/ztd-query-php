@@ -49,26 +49,25 @@
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com"> * The absence of a type because the SQL request itself is semantically wrong.</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Typing a reference to a column that the complete context does not declare</span></span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> * @example Typing a reference to a column that the complete context does not declare</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> *     $table = $semantics-&gt;analyze(&#039;CREATE TABLE t (a INTEGER)&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com"> *     $semantics-&gt;analyze(&#039;SELECT b FROM t&#039;, [$table]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Column b does not exist.</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $table = $semantics-&gt;inspect(&#039;CREATE TABLE t (a INTEGER)&#039;);</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $semantics-&gt;inspect(&#039;SELECT b FROM t&#039;, [$table]) // throws \SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException: Column b does not exist.</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Invalid</span> <span class="tok-kw">implements</span> <span class="tok-id">TypeFact</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param Diagnostic $cause The semantic problem that leaves the expression without a type</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$cause</span>)</span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    {</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    }</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>}</span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Invalid</span> <span class="tok-kw">implements</span> <span class="tok-id">TypeFact</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com">     * @param Diagnostic $cause The semantic problem that leaves the expression without a type</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Diagnostic</span> <span class="tok-var">$cause</span>)</span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    {</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    }</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>}</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

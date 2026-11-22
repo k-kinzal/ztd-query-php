@@ -48,7 +48,8 @@
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Type\Invalid</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Testing\Sqlite\Inspection</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">Invalid</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a>#[<span class="tok-id">Medium</span>]</span>
@@ -56,8 +57,9 @@
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>{</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCauseIsTheDiagnosticThatLeavesTheExpressionWithoutAType</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    {</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">21</span>        <span class="tok-var">$table</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE t (a INTEGER)&#039;</span>);</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Inspection</span>();</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-var">$table</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE t (a INTEGER)&#039;</span>);</span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">23</span>        <span class="tok-var">$field</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;SELECT b FROM t&#039;</span>, [<span class="tok-var">$table</span>])-&gt;<span class="tok-id">field</span>(<span class="tok-str">&#039;b&#039;</span>);</span>

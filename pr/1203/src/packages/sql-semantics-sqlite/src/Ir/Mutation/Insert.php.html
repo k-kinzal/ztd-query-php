@@ -54,61 +54,60 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * A complete INSERT of ordered rows into declared writable column slots.</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Reading the inserted row and its target</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\Sqlite\Semantics();</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $table = $semantics-&gt;inspect(&#039;CREATE TABLE accounts (id INTEGER)&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $insert = $semantics-&gt;analyze(&#039;INSERT INTO accounts (id) VALUES (42)&#039;, [$table]);</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     [$insert-&gt;target-&gt;table-&gt;value, $insert-&gt;input-&gt;rows[0]-&gt;values[0]-&gt;decimal] // =&gt; [&#039;accounts&#039;, &#039;42&#039;]</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Insert</span> <span class="tok-kw">implements</span> <span class="tok-id">SemanticsIR</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * Pairs each value position with a writable target column.</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param TableSource $target The absolute target and its ordered writable column slots</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param ValuesQuery $input The rows supplying the column values</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param InsertConflict $conflict The statement&#039;s conflict policy</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span> <span class="tok-var">$target</span>,</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ValuesQuery</span> <span class="tok-var">$input</span>,</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">InsertConflict</span> <span class="tok-var">$conflict</span> = <span class="tok-id">InsertConflict</span>::<span class="tok-id">Inherit</span>,</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    ) {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$width</span> = <span class="tok-id">count</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">columns</span>);</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$width</span> !== <span class="tok-num">0</span>, <span class="tok-str">&#039;An INSERT must name at least one target column.&#039;</span>);</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$width</span> === <span class="tok-id">count</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">rows</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">values</span>), <span class="tok-str">&#039;INSERT target width must match the input rows.&#039;</span>);</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * Identifies the fixed SQLite language profile.</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profileId</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">profileId</span>();</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * Writes the target and the values using the same slot order.</span></span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    {</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-var">$columns</span> = [];</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">columns</span> <span class="tok-kw">as</span> <span class="tok-var">$column</span>) {</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-var">$columns</span>[] = <span class="tok-var">$column</span>-&gt;<span class="tok-id">quoted</span>();</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        }</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-var">$conflict</span> = <span class="tok-kw">match</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">conflict</span>) {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Inherit</span> =&gt; <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Abort</span> =&gt; <span class="tok-str">&#039; OR ABORT&#039;</span>,</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Ignore</span> =&gt; <span class="tok-str">&#039; OR IGNORE&#039;</span>,</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        };</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;INSERT&#039;</span> . <span class="tok-var">$conflict</span> . <span class="tok-str">&#039; INTO &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">schema</span>-&gt;<span class="tok-id">quoted</span>() . <span class="tok-str">&#039;.&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">table</span>-&gt;<span class="tok-id">quoted</span>()</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            . <span class="tok-str">&#039; (&#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039;, &#039;</span>, <span class="tok-var">$columns</span>) . <span class="tok-str">&#039;) &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">toString</span>();</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>}</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Preparing a checked INSERT operation</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $sqlite = new \SqlSemantics\Platform\Sqlite\Semantics();</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $catalog = $sqlite-&gt;context([&#039;CREATE TABLE items (id INTEGER)&#039;]);</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $sqlite-&gt;analyze(&#039;INSERT INTO items (id) VALUES (1)&#039;, $catalog) instanceof \SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert // =&gt; true</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Insert</span> <span class="tok-kw">implements</span> <span class="tok-id">SemanticsIR</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>{</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * Pairs each value position with a writable target column.</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param TableSource $target The absolute target and its ordered writable column slots</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param ValuesQuery $input The rows supplying the column values</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param InsertConflict $conflict The statement&#039;s conflict policy</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TableSource</span> <span class="tok-var">$target</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">ValuesQuery</span> <span class="tok-var">$input</span>,</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">InsertConflict</span> <span class="tok-var">$conflict</span> = <span class="tok-id">InsertConflict</span>::<span class="tok-id">Inherit</span>,</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    ) {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$width</span> = <span class="tok-id">count</span>(<span class="tok-var">$target</span>-&gt;<span class="tok-id">columns</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$width</span> !== <span class="tok-num">0</span>, <span class="tok-str">&#039;An INSERT must name at least one target column.&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$width</span> === <span class="tok-id">count</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">rows</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">values</span>), <span class="tok-str">&#039;INSERT target width must match the input rows.&#039;</span>);</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Identifies the fixed SQLite language profile.</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">profileId</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    {</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">profileId</span>();</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    }</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * Writes the target and the values using the same slot order.</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">toString</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    {</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-var">$columns</span> = [];</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">columns</span> <span class="tok-kw">as</span> <span class="tok-var">$column</span>) {</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-var">$columns</span>[] = <span class="tok-var">$column</span>-&gt;<span class="tok-id">quoted</span>();</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$conflict</span> = <span class="tok-kw">match</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">conflict</span>) {</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Inherit</span> =&gt; <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Abort</span> =&gt; <span class="tok-str">&#039; OR ABORT&#039;</span>,</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-id">InsertConflict</span>::<span class="tok-id">Ignore</span> =&gt; <span class="tok-str">&#039; OR IGNORE&#039;</span>,</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        };</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;INSERT&#039;</span> . <span class="tok-var">$conflict</span> . <span class="tok-str">&#039; INTO &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">schema</span>-&gt;<span class="tok-id">quoted</span>() . <span class="tok-str">&#039;.&#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>-&gt;<span class="tok-id">table</span>-&gt;<span class="tok-id">quoted</span>()</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            . <span class="tok-str">&#039; (&#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039;, &#039;</span>, <span class="tok-var">$columns</span>) . <span class="tok-str">&#039;) &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">toString</span>();</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>}</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

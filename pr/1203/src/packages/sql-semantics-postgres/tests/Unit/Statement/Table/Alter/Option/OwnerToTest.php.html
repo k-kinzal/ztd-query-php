@@ -53,8 +53,9 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a>{</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveClauseHasNoOperand</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a>    {</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">18</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;ALTER TABLE t OWNER TO bob&#039;</span>, []);</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;ALTER TABLE t OWNER TO bob&#039;</span>, []);</span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>          <span class="tok-num">0</span> =&gt; <span class="tok-str">&#039;Relation t does not exist.&#039;</span>,</span>
@@ -63,8 +64,9 @@
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderWritesTheClauseAsWritten</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    {</span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">27</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;ALTER VIEW v OWNER TO SESSION_USER&#039;</span>, []);</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;ALTER VIEW v OWNER TO SESSION_USER&#039;</span>, []);</span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;ALTER VIEW v OWNER TO SESSION_USER&#039;</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    }</span>

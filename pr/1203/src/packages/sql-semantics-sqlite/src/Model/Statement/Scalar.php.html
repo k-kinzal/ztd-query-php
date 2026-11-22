@@ -53,20 +53,20 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * Its type, NULL fact and name resolution are not stored on the node; the</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * operation that contains the node derives and owns them.</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the facts an operation derived for an expression</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-com"> * @example Reading the facts an operation derived for an expression</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())-&gt;analyze(&#039;SELECT 1&#039;);</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\Sqlite\Semantics())-&gt;inspect(&#039;SELECT 1&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $operation-&gt;facts-&gt;scalar($operation-&gt;field(0)-&gt;expression)-&gt;nullability // =&gt; \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">interface</span> <span class="tok-id">Scalar</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>{</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     * Derives the facts of this expression at its use position.</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveScalar</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span>;</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>}</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $operation-&gt;facts-&gt;scalar($operation-&gt;field(0)-&gt;expression)-&gt;nullability // =&gt; \SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability::NotNull</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">interface</span> <span class="tok-id">Scalar</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com">     * Derives the facts of this expression at its use position.</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveScalar</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">Environment</span> <span class="tok-var">$environment</span>): <span class="tok-id">ScalarFact</span>;</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>}</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

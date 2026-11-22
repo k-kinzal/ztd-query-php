@@ -46,7 +46,7 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\ExpressionLowering</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\SourceBinding</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Operation</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Lowers rows with an empty local relation scope.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, <span class="tok-id">ValuesClause</span> <span class="tok-var">$statement</span>): <span class="tok-id">ValuesQuery</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$operation</span>, <span class="tok-id">ValuesClause</span> <span class="tok-var">$statement</span>): <span class="tok-id">ValuesQuery</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    {</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-var">$expressions</span> = <span class="tok-kw">new</span> <span class="tok-id">ExpressionLowering</span>();</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-var">$scope</span> = <span class="tok-kw">new</span> <span class="tok-id">SourceBinding</span>(<span class="tok-var">$operation</span>, <span class="tok-id">null</span>);</span>

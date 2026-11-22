@@ -53,27 +53,27 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * Mirrors the `targtype`, `objtype` and `objects` of `GrantStmt`.</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-grant.html.</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the kind of the objects of a grant</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-com"> * @example Reading the kind of the objects of a grant</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;GRANT USAGE ON SCHEMA app TO joe&#039;);</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;inspect(&#039;GRANT USAGE ON SCHEMA app TO joe&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $operation-&gt;statement-&gt;target-&gt;object() // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">interface</span> <span class="tok-id">PrivilegeTarget</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>{</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     * Answers the kind of object the privileges are granted on.</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">object</span>(): <span class="tok-id">PrivilegeObjectKind</span>;</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     * Derives the facts of the objects for the privileges granted on them.</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param list&lt;Privilege&gt; $privileges The privileges of the statement</span></span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveTarget</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$privileges</span>): <span class="tok-id">void</span>;</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>}</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $operation-&gt;statement-&gt;target-&gt;object() // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">interface</span> <span class="tok-id">PrivilegeTarget</span> <span class="tok-kw">extends</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com">     * Answers the kind of object the privileges are granted on.</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">object</span>(): <span class="tok-id">PrivilegeObjectKind</span>;</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     * Derives the facts of the objects for the privileges granted on them.</span></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param list&lt;Privilege&gt; $privileges The privileges of the statement</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deriveTarget</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$privileges</span>): <span class="tok-id">void</span>;</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>}</span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

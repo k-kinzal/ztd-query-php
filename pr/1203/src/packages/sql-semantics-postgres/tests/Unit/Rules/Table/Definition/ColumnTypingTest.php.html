@@ -53,8 +53,9 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a>{</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSerialAnswersTheIntegerType</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a>    {</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">18</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE n (a bigserial, b public.serial)&#039;</span>);</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE n (a bigserial, b public.serial)&#039;</span>);</span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>        <span class="tok-var">$n1</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">statement</span>;</span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable</span>::<span class="tok-kw">class</span>, <span class="tok-var">$n1</span>);</span>
@@ -77,8 +78,9 @@
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a></span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescriptorIsNullForATypeNameThatIsAnError</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    {</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">41</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE n (a int, c serial[], d int)&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE n (a int, c serial[], d int)&#039;</span>);</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>          <span class="tok-num">0</span> =&gt; <span class="tok-str">&#039;a integer Nullable&#039;</span>,</span>
@@ -87,8 +89,9 @@
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a></span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescriptorNamesATypeTheContextCannotIdentify</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    {</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">49</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">50</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE n (a int, b mood, c text NOT NULL, d app.money[], e int)&#039;</span>);</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE n (a int, b mood, c text NOT NULL, d app.money[], e int)&#039;</span>);</span>
 <span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>          <span class="tok-num">0</span> =&gt; <span class="tok-str">&#039;a integer Nullable&#039;</span>,</span>
@@ -102,8 +105,9 @@
 <span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
 <span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescriptorIsTheCatalogTypeInACompleteContext</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    {</span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">64</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE n (c text, d date[])&#039;</span>, []);</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE n (c text, d date[])&#039;</span>, []);</span>
 <span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>          <span class="tok-num">0</span> =&gt;</span>
@@ -114,8 +118,9 @@
 <span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a></span>
 <span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescriptorOfAnotherStatementKeepsItsShape</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>    {</span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">74</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\PostgreSql\Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">75</span>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE n (a int)&#039;</span>);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Testing\PostgreSql\Inspection</span>();</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">diagnose</span>(<span class="tok-str">&#039;CREATE TABLE n (a int)&#039;</span>);</span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([</span>
 <span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>          <span class="tok-num">0</span> =&gt; <span class="tok-str">&#039;a integer Nullable&#039;</span>,</span>

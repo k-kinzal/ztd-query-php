@@ -49,28 +49,28 @@
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-com"> * Mirrors `TRIGGER_TYPE_BEFORE`, `TRIGGER_TYPE_AFTER` and `TRIGGER_TYPE_INSTEAD`.</span></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading the timing of a trigger</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-com"> * @example Reading the timing of a trigger</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-com"> *     (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE TRIGGER g INSTEAD OF INSERT ON v FOR EACH ROW EXECUTE FUNCTION f()&#039;)-&gt;statement-&gt;timing // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming::InsteadOf</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;inspect(&#039;CREATE TRIGGER g INSTEAD OF INSERT ON v FOR EACH ROW EXECUTE FUNCTION f()&#039;)-&gt;statement-&gt;timing // =&gt; \SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming::InsteadOf</span></span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">enum</span> <span class="tok-id">TriggerTiming</span>: <span class="tok-id">string</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>{</span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    <span class="tok-kw">case</span> <span class="tok-id">Before</span> = <span class="tok-str">&#039;BEFORE&#039;</span>;</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>    <span class="tok-kw">case</span> <span class="tok-id">After</span> = <span class="tok-str">&#039;AFTER&#039;</span>;</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">case</span> <span class="tok-kw">InsteadOf</span> = <span class="tok-str">&#039;INSTEAD OF&#039;</span>;</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com">     * Answers the keywords.</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">keywords</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    {</span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>        <span class="tok-kw">return</span> <span class="tok-id">explode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>);</span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>}</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">enum</span> <span class="tok-id">TriggerTiming</span>: <span class="tok-id">string</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>    <span class="tok-kw">case</span> <span class="tok-id">Before</span> = <span class="tok-str">&#039;BEFORE&#039;</span>;</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>    <span class="tok-kw">case</span> <span class="tok-id">After</span> = <span class="tok-str">&#039;AFTER&#039;</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    <span class="tok-kw">case</span> <span class="tok-kw">InsteadOf</span> = <span class="tok-str">&#039;INSTEAD OF&#039;</span>;</span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com">     * Answers the keywords.</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">keywords</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    {</span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>        <span class="tok-kw">return</span> <span class="tok-id">explode</span>(<span class="tok-str">&#039; &#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    }</span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>}</span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

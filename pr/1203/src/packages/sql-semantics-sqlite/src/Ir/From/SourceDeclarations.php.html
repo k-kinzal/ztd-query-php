@@ -45,10 +45,10 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\From</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Operation</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Relation</span>;</span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget</span>;</span>
@@ -67,7 +67,7 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @return list&lt;array{TableInput|MutationTarget, Table}&gt;</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bind</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, ?<span class="tok-id">Relation</span> <span class="tok-var">$source</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bind</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$operation</span>, ?<span class="tok-id">Relation</span> <span class="tok-var">$source</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    {</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">if</span> (<span class="tok-var">$source</span> === <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-kw">return</span> [];</span>

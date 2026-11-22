@@ -51,7 +51,8 @@
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Shape\DependentField</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Shape\FieldLookup</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Shape\UniqueField</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Testing\Sqlite\Inspection</span>;</span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">FieldLookup</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>#[<span class="tok-id">Medium</span>]</span>
@@ -59,8 +60,9 @@
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTheFourOutcomesAreTheOnlyLookupResults</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    {</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">24</span>        <span class="tok-var">$complete</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT 1 AS a, 2 AS b, 3 AS b&#039;</span>);</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Inspection</span>();</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-var">$complete</span> = <span class="tok-var">$semantics</span>-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;SELECT 1 AS a, 2 AS b, 3 AS b&#039;</span>);</span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">UniqueField</span>::<span class="tok-kw">class</span>, <span class="tok-var">$complete</span>-&gt;<span class="tok-id">lookupField</span>(<span class="tok-str">&#039;a&#039;</span>));</span>

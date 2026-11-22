@@ -50,8 +50,8 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Ir\TableSource</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Operation</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a></span>
@@ -67,7 +67,7 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @throws InvalidConstruction When the INSERT is outside this domain</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">Operation</span> <span class="tok-var">$operation</span>, <span class="tok-id">InsertRows</span> <span class="tok-var">$statement</span>): <span class="tok-id">Insert</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lower</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$operation</span>, <span class="tok-id">InsertRows</span> <span class="tok-var">$statement</span>): <span class="tok-id">Insert</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    {</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-var">$into</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">into</span>;</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(</span>

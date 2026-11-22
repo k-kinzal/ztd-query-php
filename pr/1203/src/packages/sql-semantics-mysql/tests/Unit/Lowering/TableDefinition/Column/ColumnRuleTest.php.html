@@ -52,11 +52,12 @@
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException</span>;</span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Model\Lowering\Leaves</span>;</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Platform</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>;</span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn</span>;</span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage</span>;</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Semantics</span>;</span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>;</span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn</span>;</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn</span>;</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Testing\MySql\Inspection</span>;</span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">ColumnRule</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>#[<span class="tok-id">Medium</span>]</span>
@@ -109,7 +110,8 @@
 <span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
 <span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRefuseNamesTheFirstRefusedAttribute</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-var">$semantics</span> = <span class="tok-kw">new</span> <span class="tok-id">Inspection</span>();</span>
 <span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a></span>
 <span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">AnalysisException</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Incorrect usage of COLUMN_FORMAT and generated column&#039;</span>);</span>
@@ -124,13 +126,13 @@
 <span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Incorrect usage of SERIAL and generated column&#039;</span>);</span>
 <span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">86</span>        (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;ALTER TABLE t ADD g SERIAL AS (1)&#039;</span>);</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;ALTER TABLE t ADD g SERIAL AS (1)&#039;</span>);</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        (<span class="tok-kw">new</span> <span class="tok-id">Inspection</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;ALTER TABLE t ADD g SERIAL AS (1)&#039;</span>);</span>
 <span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>    }</span>
 <span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a></span>
 <span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRefuseAcceptsTheOtherAttributes</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">91</span>        <span class="tok-var">$create</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \&#039;c\&#039; INVISIBLE)&#039;</span>);</span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-var">$create</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \&#039;c\&#039; INVISIBLE)&#039;</span>);</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-var">$create</span> = (<span class="tok-kw">new</span> <span class="tok-id">Inspection</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \&#039;c\&#039; INVISIBLE)&#039;</span>);</span>
 <span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a></span>
 <span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$create</span>-&gt;<span class="tok-id">facts</span>-&gt;<span class="tok-id">diagnostics</span>);</span>
 <span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a>    }</span>

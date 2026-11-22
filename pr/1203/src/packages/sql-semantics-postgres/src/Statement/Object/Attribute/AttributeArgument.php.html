@@ -53,20 +53,20 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * written value is kept so the attribute is written back as it was given.</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * Source: `src/backend/commands/define.c` of PostgreSQL 17.</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading the function of an operator</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-com"> * @example Reading the function of an operator</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;analyze(&#039;CREATE OPERATOR === (rightarg = int4, function = int4eq)&#039;);</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $operation = (new \SqlSemantics\Platform\PostgreSql\Semantics())-&gt;inspect(&#039;CREATE OPERATOR === (rightarg = int4, function = int4eq)&#039;);</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $operation-&gt;statement-&gt;definition[1]-&gt;value instanceof \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeArgument // =&gt; true</span></span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">interface</span> <span class="tok-id">AttributeArgument</span> <span class="tok-kw">extends</span> <span class="tok-id">Clause</span></span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>{</span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     * Tells whether the value is what the reading yields.</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fits</span>(<span class="tok-id">Reading</span> <span class="tok-var">$reading</span>): <span class="tok-id">bool</span>;</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>}</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $operation-&gt;statement-&gt;definition[1]-&gt;value instanceof \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeArgument // =&gt; true</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility SqlSemantics</span></span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">interface</span> <span class="tok-id">AttributeArgument</span> <span class="tok-kw">extends</span> <span class="tok-id">Clause</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>{</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com">     * Tells whether the value is what the reading yields.</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fits</span>(<span class="tok-id">Reading</span> <span class="tok-var">$reading</span>): <span class="tok-id">bool</span>;</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>}</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

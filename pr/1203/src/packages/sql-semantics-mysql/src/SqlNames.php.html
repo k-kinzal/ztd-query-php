@@ -55,35 +55,33 @@
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * assembled with its help is unchecked until it is analyzed.</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * @example Spelling a relation name read from one query for another statement</span></span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-com"> * @example Spelling a relation name read from one query for another statement</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\MySql\Semantics();</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com"> *     $input = $semantics-&gt;analyze(&#039;SELECT a FROM `order items`&#039;)-&gt;singleNamedInput();</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $input = $semantics-&gt;inspect(&#039;SELECT a FROM `order items`&#039;)-&gt;singleNamedInput();</span></span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $table = \SqlSemantics\Platform\MySql\SqlNames::table($input-&gt;name(), $semantics-&gt;profile());</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> *     $table = \SqlSemantics\Platform\MySql\SqlNames::table($input-&gt;name(), $semantics-&gt;profile());</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> *     $semantics-&gt;analyze(&quot;SELECT * FROM {$table}&quot;)-&gt;singleNamedInput()-&gt;name()-&gt;name-&gt;value // =&gt; &#039;order items&#039;</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $semantics-&gt;inspect(&quot;SELECT * FROM {$table}&quot;)-&gt;singleNamedInput()-&gt;name()-&gt;name-&gt;value // =&gt; &#039;order items&#039;</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SqlNames</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>{</span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     * Spells a decoded, optionally qualified relation name for a relation name position.</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">table</span>(<span class="tok-id">QualifiedName</span> <span class="tok-var">$name</span>, <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    {</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-var">$codec</span> = <span class="tok-id">Platform</span>::<span class="tok-id">shared</span>()-&gt;<span class="tok-id">codec</span>(<span class="tok-var">$profile</span>);</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>        <span class="tok-var">$parts</span> = [];</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">catalog</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">catalog</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>);</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        }</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>);</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>        }</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Relation</span>);</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a></span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;.&#039;</span>, <span class="tok-var">$parts</span>);</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>}</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SqlNames</span></span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>{</span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com">     * Spells a decoded, optionally qualified relation name for a relation name position.</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">table</span>(<span class="tok-id">QualifiedName</span> <span class="tok-var">$name</span>, <span class="tok-id">LanguageProfile</span> <span class="tok-var">$profile</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    {</span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>        <span class="tok-var">$codec</span> = <span class="tok-id">Platform</span>::<span class="tok-id">shared</span>()-&gt;<span class="tok-id">codec</span>(<span class="tok-var">$profile</span>);</span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>        <span class="tok-var">$parts</span> = [];</span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">catalog</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">catalog</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>);</span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>        }</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-kw">if</span> (<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>            <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">schema</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Qualifier</span>);</span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>        }</span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>        <span class="tok-var">$parts</span>[] = <span class="tok-var">$codec</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$name</span>-&gt;<span class="tok-id">name</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Relation</span>);</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;.&#039;</span>, <span class="tok-var">$parts</span>);</span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    }</span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>}</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

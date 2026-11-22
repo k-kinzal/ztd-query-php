@@ -46,9 +46,10 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Medium</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Connection\Detach</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Connection\Detach</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Connection\NameOperand</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Testing\Sqlite\Inspection</span>;</span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">Detach</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a>#[<span class="tok-id">Medium</span>]</span>
@@ -57,7 +58,7 @@
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeriveStatementDerivesTheOperand</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">20</span>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;DETACH aux&#039;</span>, []);</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;DETACH aux&#039;</span>, []);</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Inspection</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;DETACH aux&#039;</span>, []);</span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>;</span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">Detach</span>::<span class="tok-kw">class</span>, <span class="tok-var">$statement</span>);</span>
@@ -68,7 +69,7 @@
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderDropsTheOptionalKeyword</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">30</span>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;detach database aux&#039;</span>);</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Semantics</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;detach database aux&#039;</span>);</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">Inspection</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;detach database aux&#039;</span>);</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">Detach</span>::<span class="tok-kw">class</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>);</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">NameOperand</span>::<span class="tok-kw">class</span>, <span class="tok-var">$operation</span>-&gt;<span class="tok-id">statement</span>-&gt;<span class="tok-id">schema</span>);</span>
