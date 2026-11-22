@@ -57,14 +57,14 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     label = "$expression->collation->value"
 
     def witness(sequence, left, right):
         return statement("select-unit", [[expression("=", collate(sequence, left), right)]])
 
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("binary-for-nocase", renderer, "' COLLATE ' . " + label, "' COLLATE BINARY'",
                     witness("NOCASE", text("a"), text("A")), "meaning-mismatch"),
         RenderFault("binary-for-rtrim", renderer, "' COLLATE ' . " + label, "' COLLATE BINARY'",

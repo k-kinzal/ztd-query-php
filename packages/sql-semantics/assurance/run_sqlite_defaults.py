@@ -151,13 +151,13 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     column = "sql-semantics-sqlite/src/Ir/Schema/TableColumn.php"
     null = case([["value", "BLOB", False, ["null"]]], table=TABLE)
     integer = case([["value", "INTEGER", False, ["integer", "7"]]], table=TABLE)
     blob = case([["value", "BLOB", False, ["blob", "00FF"]]], table=TABLE)
     render = "' DEFAULT ' . (new SelectSql())->expression($this->default, null)"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-default-clause", column, " . $default;", ";", null, "meaning-mismatch"),
         RenderFault("replace-default-with-null", column, render, "' DEFAULT NULL'", integer, "meaning-mismatch"),
         RenderFault("stringify-blob-default", column, render, "\" DEFAULT '\" . $this->default->hex . \"'\"", blob, "meaning-mismatch"),

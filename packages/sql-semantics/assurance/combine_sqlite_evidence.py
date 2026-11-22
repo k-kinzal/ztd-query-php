@@ -8,6 +8,7 @@ from typing import NamedTuple
 
 from evidence_transcript import REPLAY_CONTRACT, load_replay_contract
 from replay_sqlite_evidence import replay
+from replay_sqlite_faults import CONTRACT as FAULT_REPLAY_CONTRACT
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from scope import CONTRACTS
 
@@ -61,7 +62,7 @@ DOMAINS = (
 )
 
 
-def collect(path, domain, commit, tools, allow_local, library):
+def collect(path, domain, commit, tools, allow_local, library, candidate, manifest):
     index_path = path / "index.json"
     distribution = digest(path / "distribution.json")
     index = json.loads(index_path.read_text())
@@ -91,14 +92,14 @@ def collect(path, domain, commit, tools, allow_local, library):
         require(len({fault["case"] for fault in fault_records}) == domain.faults and
                 all(fault["control"] == "passed" and fault["expected"] == fault["observed"] for fault in fault_records),
                 "domain-fault-signal-mismatch", str(index_path))
-    replayed = replay(path, domain.contract, index, library)
-    require(replayed == counts["attempted"], "evidence-replay-count-mismatch", domain.contract)
+    replayed, fault_replay = replay(path, domain.contract, index, library, candidate=candidate, manifest=manifest)
+    require(replayed == counts["attempted"] and len(fault_replay) == domain.faults, "evidence-replay-count-mismatch", domain.contract)
     return {
         "index": str(index_path), "indexDigest": digest(index_path), "eventsDigest": digest(path / "events.jsonl"),
         "contract": index["contract"], "distribution": distribution, "engine": index["engine"]["libraryDigest"],
         "isolation": isolation, "finite": len(finite_ids), "compared": counts["compared"],
         "rejected": counts["rejected"], "faults": len(fault_records),
-        "replayedRequests": replayed,
+        "replayedRequests": replayed, "faultReplay": fault_replay,
     }
 
 
@@ -121,7 +122,7 @@ def main():
     initial = args.root / DOMAINS[0].directory / "distribution.json"
     verify_distribution(json.loads(initial.read_text()), actual)
     tools = {file.name: digest(file) for file in TOOL.iterdir() if file.suffix in (".py", ".php", ".json")}
-    domains = {domain.contract: collect(args.root / domain.directory, domain, args.candidate, tools, args.allow_local, args.sqlite_library)
+    domains = {domain.contract: collect(args.root / domain.directory, domain, args.candidate, tools, args.allow_local, args.sqlite_library, candidate, actual)
                for domain in DOMAINS}
     require(len({record["distribution"] for record in domains.values()}) == 1, "mixed-evidence-distribution")
     require(len({record["engine"] for record in domains.values()}) == 1, "mixed-evidence-engine")
@@ -133,6 +134,7 @@ def main():
         "candidate": args.candidate, "status": "provisional", "domains": domains,
         "repositoryAcceptanceProtection": "unconfigured", "humanApproval": "pending",
         "classification": "independent database evidence in the checked domains",
+        "faultReplayContract": FAULT_REPLAY_CONTRACT,
         "replayContract": REPLAY_CONTRACT, "candidateIdentityContract": IDENTITY_CONTRACT,
     })
     lines = [

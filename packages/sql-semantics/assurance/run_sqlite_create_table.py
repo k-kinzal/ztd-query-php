@@ -200,7 +200,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "forms": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     table = "sql-semantics-sqlite/src/Ir/Schema/CreateTable.php"
     column = "sql-semantics-sqlite/src/Ir/Schema/TableColumn.php"
     fixtures = [
@@ -213,8 +213,8 @@ def check_mutations(args, db):
         RenderFault("choose-other-schema", table, "$this->schema->quoted()", "'temp'",
                     case([["a", "INTEGER", False]]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("CREATE TABLE", "sqlite-create-table-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("CREATE TABLE", "sqlite-create-table-v1.json", CONTRACT, FIXTURE, execute, check_faults)

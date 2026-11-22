@@ -20,7 +20,10 @@ CONTRACT = "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d"
 def inspect_direct(worker, db, item, ledger=None, key=None):
     if ledger is not None:
         ledger.record(key, "attempted", input=item)
-    result = worker.request(item)
+    return inspect_response(item, worker.request(item), db, ledger, key)
+
+
+def inspect_response(item, result, db, ledger=None, key=None):
     require(result["status"] == "constructed", "relational-positive-rejected", result)
     if ledger is not None:
         ledger.record(key, "constructed", response=result)
@@ -210,7 +213,7 @@ def main():
     db.execute(SCHEMA)
     scope = shape(args)
     results = execute(args, specification, db, args.out / "events.jsonl")
-    mutations = check_mutations(args, db, args.out, inspect_direct)
+    mutations = check_mutations(args, db, args.out, inspect_response)
     verify_candidate(args.candidate, commit, distribution)
     write_json(args.out / "index.json", {
         "status": "provisional-sqlite-relational-domain", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
@@ -219,7 +222,7 @@ def main():
         "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": OBSERVER_CONTRACT, "textObservation": db.text_observation_digest},
         "toolDigests": {p.name: digest(p) for p in TOOL.iterdir() if p.suffix in (".py", ".php", ".json")},
         "shape": scope, "checks": results, "mutations": mutations,
-        "sources": ["events.jsonl", "distribution.json", "relational-faults/"],
+        "sources": ["events.jsonl", "distribution.json", "faults/", "relational-faults/"],
     })
     counts = results["execution"]
     (args.out / "summary.md").write_text(

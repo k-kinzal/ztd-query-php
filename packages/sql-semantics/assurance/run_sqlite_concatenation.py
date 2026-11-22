@@ -58,7 +58,7 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     left = "$this->expression($expression->left, $source, $joins)"
     right = "$this->expression($expression->right, $source, $joins)"
@@ -67,7 +67,7 @@ def check_faults(args, db):
     def witness(a, b):
         return statement("select-unit", [[concat(a, b)]])
 
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("reverse-text-operands", renderer, body, f"'(' . {right} . ' || ' . {left} . ')'",
                     witness(text("left"), text("right")), "meaning-mismatch"),
         RenderFault("drop-right-text-operand", renderer, body, left, witness(text("hi"), text(" all")), "meaning-mismatch"),

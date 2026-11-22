@@ -108,12 +108,12 @@ def execute(args, specification, db, worker_factory=Worker):
     return {**execute_schedule(args, specification, db, worker_factory, schedule, observe), "observerControls": fixture}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     operation = "$expression->kind->value . ' ' . $pattern . $escape"
     negation = "($expression->negated ? ' NOT ' : ' ') . $expression->kind->value"
     where = "'(' . $subject . ($expression->negated ? ' NOT ' : ' ') . $expression->kind->value . ' ' . $pattern . $escape"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("reverse-pattern-operands", renderer, where,
                     "'(' . $pattern . ($expression->negated ? ' NOT ' : ' ') . $expression->kind->value . ' ' . $subject . $escape",
                     statement("select-unit", [[pattern("LIKE", text("abc"), text("a%"))]]), "meaning-mismatch"),

@@ -188,10 +188,10 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(finite), "forms": dict(forms), "php": worker.environment, "controls": comparisons}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     target = "sql-semantics-sqlite/src/Ir/Aggregation/GroupedSql.php"
     bag = source("bag")
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("wrong-count-slot", target, "$renderer->expression($value->argument, $query->source)", "$renderer->expression(new ColumnReference(0), $query->source)",
                     case(bag, [], [[count(slot(1), "NOCASE"), "n"]]), "meaning-mismatch"),
         RenderFault("wrong-group-collation", target, "$key->collation->value", "'BINARY'",

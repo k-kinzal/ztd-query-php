@@ -60,13 +60,13 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     unary = "$expression->kind->value . ' '"
     operand = "$this->expression($expression->operand, $source, $joins)"
     emission = f"{unary} . {operand}"
     binary = "$expression->operator->value"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("erase-plus-affinity-rule", renderer, emission, f"($expression->kind->value === '+' ? '' : {unary}) . {operand}",
                     affinity_witness(), "meaning-mismatch"),
         RenderFault("complement-instead-of-not", renderer, emission, f"($expression->kind->value === 'NOT' ? '~ ' : {unary}) . {operand}",

@@ -24,9 +24,12 @@ class RenderFault(NamedTuple):
 
 
 def check_render_faults(args, db, fixtures, probe, script="worker.php"):
+    healthy = {}
     with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
         for fault in fixtures:
-            probe(fault.item, worker.request(fault.item), db)
+            response = worker.request(fault.item)
+            probe(fault.item, response, db)
+            healthy[fault.name] = response
     results = []
     for fault in fixtures:
         original_path = args.candidate / "packages" / fault.path
@@ -43,13 +46,15 @@ def check_render_faults(args, db, fixtures, probe, script="worker.php"):
             f"a/{fault.path}", f"b/{fault.path}",
         )))
         with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+            response = worker.request(fault.item)
             try:
-                probe(fault.item, worker.request(fault.item), db)
+                probe(fault.item, response, db)
             except Failure as failure:
                 result = {
                     "case": fault.name, "file": fault.path, "source": digest(original_path), "mutation": digest(mutation),
                     "input": fault.item, "control": "passed", "expected": fault.signal,
                     "observed": failure.signal, "detail": failure.detail,
+                    "healthyResponse": healthy[fault.name], "mutantResponse": response,
                 }
                 write_json(overlay / "result.json", result)
                 require(failure.signal == fault.signal, "wrong-render-fault-signal", result)

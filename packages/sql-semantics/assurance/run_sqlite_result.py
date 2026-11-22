@@ -164,7 +164,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(seen), "coverage": dict(coverage), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
         RenderFault("distinct", path, "$select->distinct ? 'DISTINCT ' : ''", "$select->distinct ? '' : ''",
@@ -175,8 +175,8 @@ def check_mutations(args, db):
                     projection(order=ORDERS[2], limit=[["parameter", "2"], ["parameter", "02"], True], bindings={"2": 2}),
                     "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("result", "sqlite-result-v1.json", CONTRACT, SCHEMA + PAGE_DDL + ";" + PAGE_ROWS, execute, check_mutations)
+    run_domain("result", "sqlite-result-v1.json", CONTRACT, SCHEMA + PAGE_DDL + ";" + PAGE_ROWS, execute, check_faults)

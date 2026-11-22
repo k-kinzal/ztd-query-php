@@ -218,7 +218,7 @@ def execute(args, spec, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "operands": dict(graph), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     delete = "sql-semantics-sqlite/src/Ir/Mutation/Delete.php"
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
@@ -229,8 +229,8 @@ def check_mutations(args, db):
         RenderFault("slot", renderer, "$source->columns[$expression->slot]->quoted()", "$source->columns[1 - $expression->slot]->quoted()",
                     item(predicate=["column", 0]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("DELETE", "sqlite-delete-v1.json", CONTRACT, SCHEMA, execute, check_mutations)
+    run_domain("DELETE", "sqlite-delete-v1.json", CONTRACT, SCHEMA, execute, check_faults)

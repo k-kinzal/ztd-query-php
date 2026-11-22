@@ -92,10 +92,10 @@ def execute(args, specification, db, worker_factory=Worker):
                             ScalarSchedule(requests, negatives, finite_id, finite_ids, forms, required, controls), probe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     insert = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
     select = "sql-semantics-sqlite/src/Ir/SelectSql.php"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-uniqueness-handler", insert, "InsertConflictHandler::DoNothing => ' ON CONFLICT DO NOTHING'",
                     "InsertConflictHandler::DoNothing => ''", values(INSERT_CASES["rowid"], "replace", "do-nothing"), "meaning-mismatch"),
         RenderFault("apply-handler-to-all-constraint-errors", insert, "match ($this->conflict)",

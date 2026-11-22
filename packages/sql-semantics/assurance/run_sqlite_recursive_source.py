@@ -351,7 +351,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "forms": dict(forms), "php": worker.environment, "observerControls": controls}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
         RenderFault("toggle-recursive-union", path, "$definition->unionAll ? ' UNION ALL SELECT ' : ' UNION SELECT '",
@@ -364,8 +364,8 @@ def check_mutations(args, db):
         RenderFault("drop-recursive-guard", path, "$query .= ' WHERE ' . $this->expression($definition->where, $source);",
                     "$query .= '';", case([[ATOMS[1]]], [ATOMS[0]], NULL, False), "row-bound-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("recursive source", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_mutations, RecursiveDatabase)
+    run_domain("recursive source", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_faults, RecursiveDatabase)

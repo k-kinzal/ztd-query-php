@@ -136,12 +136,12 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     root = "sql-semantics-sqlite/src/Ir/Mutation/Delete.php"
     renderer = "sql-semantics-sqlite/src/Ir/Mutation/ReturningSql.php"
     item = request(returning=LAYOUTS["both"])
     field = "$target->columns[$column->reference->slot]->quoted()"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("erase-delete-returning", root, "$target . $where . $returning;", "$target . $where;", item, "meaning-mismatch"),
         RenderFault("return-wrong-slot", renderer, field, "$target->columns[0]->quoted()", item, "meaning-mismatch"),
         RenderFault("return-wrong-names", renderer, "$column->name->quoted()", "'\"unrelated\"'", item, "meaning-mismatch"),

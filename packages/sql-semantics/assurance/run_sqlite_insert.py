@@ -221,7 +221,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "forms": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
     fixtures = [
         RenderFault("reverse-target-order", path, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
@@ -231,8 +231,8 @@ def check_mutations(args, db):
         RenderFault("discard-target-schema", path, "$this->target->schema->quoted()", "'temp'",
                     case([[integer(2), integer(8)]]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("INSERT", "sqlite-insert-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("INSERT", "sqlite-insert-v1.json", CONTRACT, FIXTURE, execute, check_faults)

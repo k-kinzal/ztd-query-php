@@ -273,7 +273,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(visited), "structures": dict(structures), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     left, right = singleton("select", ["integer", "1"]), singleton("select", ["integer", "2"])
     path = "sql-semantics-sqlite/src/Ir/Rows/Compound.php"
     fixtures = [
@@ -285,8 +285,8 @@ def check_mutations(args, db):
         RenderFault("drop-outer-order", path, "$renderer->ordering($this->orderBy)", "''",
                     query(left, [["UNION ALL", right]], [[1, True, False]]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("compound", "sqlite-compound-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("compound", "sqlite-compound-v1.json", CONTRACT, FIXTURE, execute, check_faults)

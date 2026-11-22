@@ -166,7 +166,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "forms": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
         RenderFault("reverse-definition-slots", path, "implode(', ', $names)", "implode(', ', array_reverse($names))",
@@ -176,8 +176,8 @@ def check_mutations(args, db):
                     case([[["parameter", "02"], ATOMS[1]]], columns=[[["parameter", "2"], "answer"]], bindings={"2": 3}),
                     "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("local source", "sqlite-local-source-v1.json", CONTRACT, DATA, execute, check_mutations)
+    run_domain("local source", "sqlite-local-source-v1.json", CONTRACT, DATA, execute, check_faults)

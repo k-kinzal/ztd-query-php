@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
@@ -14,6 +15,8 @@ from evidence_transcript import events, load_replay_contract
 from index_evidence import replay_grammar
 from run_native_matrix import RELEASE_ROW, release_fixtures
 from replay_sqlite_evidence import replay
+from replay_sqlite_faults import replay_registered
+from run_sqlite_mutation_conflicts import FIXTURE as CONFLICT_FIXTURE, check_faults as conflict_faults
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
@@ -328,6 +331,53 @@ def grammar_control(args):
             "original": digest(source), "mutated": digest(target), "expected": expected, "signal": failure.signal}
 
 
+def fault_replay_controls(args, distribution):
+    origin = args.root / "semantics-ir-sqlite-mutation-conflicts-evidence"
+    originals = json.loads((origin / "index.json").read_text())["faults"]
+    case = "discard-failed-insert-prefix"
+
+    def run(directory, records):
+        db = Database(args.sqlite_library)
+        try:
+            db.execute(CONFLICT_FIXTURE)
+            evidence = SimpleNamespace(directory=directory, candidate=args.candidate, manifest=distribution, records=records)
+            return conflict_faults(evidence, db, runner=replay_registered)
+        finally:
+            db.close(db.db)
+
+    healthy = run(origin, originals)
+    require(case in healthy and all(record["status"] == "native-replayed" for record in healthy.values()),
+            "sqlite-fault-replay-control-healthy", sorted(healthy))
+    results = []
+    for label, expected in (
+        ("omit-healthy-report", "sqlite-fault-witness-missing"),
+        ("replace-mutant-response", "sqlite-fault-replay-accepted-mutant"),
+        ("change-fault-patch", "sqlite-fault-patch-mismatch"),
+    ):
+        folder = args.out / label
+        shutil.copytree(origin / "faults", folder / "faults")
+        records = copy.deepcopy(originals)
+        changed = next(record for record in records if record["case"] == case)
+        result = folder / "faults" / case / "result.json"
+        if label == "change-fault-patch":
+            target = result.with_name("injected.diff")
+            baseline = digest(target)
+            target.write_text(target.read_text() + "\n")
+        else:
+            target = result
+            baseline = digest(target)
+            if label == "omit-healthy-report":
+                del changed["healthyResponse"]
+            else:
+                changed["mutantResponse"] = changed["healthyResponse"]
+            write_json(result, changed)
+        write_json(folder / "fault-records.json", records)
+        failure = observe_rejection(lambda: run(folder, records), expected)
+        results.append({"case": label, "control": "passed", "fault": case, "expected": expected, "signal": failure.signal,
+                        "path": target.relative_to(folder).as_posix(), "source": baseline, "mutated": digest(target)})
+    return results
+
+
 def native_schedule_control(args):
     workflow = TOOL.parents[2] / ".github/workflows/semantics-ir-release-matrix.yml"
     profile_contract = TOOL / "server-projection-v1.json"
@@ -399,7 +449,8 @@ def main():
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
-              + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)])
+              + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
+              + fault_replay_controls(args, distribution))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

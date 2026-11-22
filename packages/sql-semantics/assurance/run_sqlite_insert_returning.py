@@ -136,12 +136,12 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     root = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
     renderer = "sql-semantics-sqlite/src/Ir/Mutation/ReturningSql.php"
     field = "$target->columns[$column->reference->slot]->quoted()"
     item = with_returning(values([[integer(5), integer(41)]], columns=("payload", "id")), LAYOUTS["all"])
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-inserted-row-output", root, "$this->input->toString() . $returning;", "$this->input->toString();", item, "meaning-mismatch"),
         RenderFault("read-other-inserted-field", renderer, field, "$target->columns[0]->quoted()", item, "meaning-mismatch"),
         RenderFault("change-insert-result-label", renderer, "$column->name->quoted()", "'\"changed\"'", item, "meaning-mismatch"),

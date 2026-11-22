@@ -124,10 +124,10 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, probe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     insert_file = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
     update_file = "sql-semantics-sqlite/src/Ir/Mutation/Update.php"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("discard-failed-insert-prefix", insert_file, "InsertConflict::Fail => ' OR FAIL'",
                     "InsertConflict::Fail => ' OR ABORT'", insert(INSERT_CASES["rowid"], "fail"), "meaning-mismatch"),
         RenderFault("retain-transaction-after-rollback", insert_file, "InsertConflict::Rollback => ' OR ROLLBACK'",

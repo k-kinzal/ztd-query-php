@@ -68,11 +68,11 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     sql = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     input_item = query("select", [[cast("TEXT", integer(7))]])
     render = "'(CAST(' . $this->expression($expression->operand, $source, $joins) . ' AS ' . $expression->target->value . '))'"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-native-cast", sql, render, "$this->expression($expression->operand, $source, $joins)", input_item, "meaning-mismatch"),
         RenderFault("substitute-cast-affinity", sql, "$expression->target->value", "'BLOB'", input_item, "meaning-mismatch"),
         RenderFault("substitute-cast-operand", sql, render, "'(CAST(0 AS ' . $expression->target->value . '))'", input_item, "meaning-mismatch"),

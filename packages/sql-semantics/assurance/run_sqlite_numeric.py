@@ -55,7 +55,7 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     opcode = "$expression->operator->value"
     left = "$this->expression($expression->left, $source, $joins)"
@@ -69,7 +69,7 @@ def check_faults(args, db):
     cases.append(RenderFault("swap-quotient-operands", renderer, f"{left} . ' ' . {opcode} . ' ' . {right}",
                              f"{right} . ' ' . {opcode} . ' ' . {left}",
                              query("select", [[operation("/", integer(-11), integer(3))]]), "meaning-mismatch"))
-    return check_render_faults(args, db, cases, probe)
+    return runner(args, db, cases, probe)
 
 
 if __name__ == "__main__":

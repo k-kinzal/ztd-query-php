@@ -175,11 +175,11 @@ def execute(args, specification, db, worker_factory=Worker):
                 "structure": dict(explored), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     prefix = PREFIXES["explicit transaction with duplicate and nested savepoints"]
     path = "sql-semantics-sqlite/src/Ir/Transaction/Transaction.php"
     command = "return $this->command->value ."
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("release-rollback-target", path, command,
                     "return ($this->command === TransactionCommand::RollbackTo ? TransactionCommand::Release : $this->command)->value .",
                     request("ROLLBACK TO SAVEPOINT", "s", prefix, [["ROLLBACK TO SAVEPOINT", "s"]]), "meaning-mismatch"),
@@ -192,4 +192,4 @@ def check_mutations(args, db):
 
 
 if __name__ == "__main__":
-    run_domain("Transaction", "sqlite-transaction-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("Transaction", "sqlite-transaction-v1.json", CONTRACT, FIXTURE, execute, check_faults)

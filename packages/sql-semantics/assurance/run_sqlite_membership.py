@@ -64,7 +64,7 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     list_sql = "implode(', ', $members)"
     negation = "($expression->negated ? ' NOT IN (' : ' IN (')"
@@ -74,7 +74,7 @@ def check_faults(args, db):
     hit = statement("select-unit", [[membership(integer(7), [integer(4), integer(7)])]])
     inverse = statement("select-unit", [[membership(integer(7), [integer(7)], True)]])
     unknown = statement("select-unit", [[membership(integer(7), [integer(3), ["null"]])]])
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("erase-empty-membership-bindings", renderer, output, f"($members === [] ? '0' : ({output}))",
                     empty, "meaning-mismatch"),
         RenderFault("append-only-first-member", renderer, list_sql, "implode(', ', array_slice($members, 0, 1))",

@@ -57,7 +57,7 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     listing = "foreach ($expression->bindings as $binding)"
     condition = "if ($expression->bindings === [])"
@@ -68,7 +68,7 @@ def check_faults(args, db):
         item["bindings"] = {}
         return item
 
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("discard-binding-footprint", renderer, condition, "if (true)", witness(False, "02"), "meaning-mismatch"),
         RenderFault("reorder-lexical-binding-aliases", renderer, listing, "foreach (array_reverse($expression->bindings) as $binding)",
                     witness(True, "02", "2"), "meaning-mismatch"),

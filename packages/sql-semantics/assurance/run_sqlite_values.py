@@ -148,15 +148,15 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "operands": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     fixtures = [
         RenderFault("drop-row", "sql-semantics-sqlite/src/Ir/Rows/ValuesQuery.php", "$rows[] = $row->toString();",
                     "if ($rows === []) { $rows[] = $row->toString(); }", case([[ATOMS[0]], [ATOMS[0]]]), "meaning-mismatch"),
         RenderFault("swap-positions", "sql-semantics-sqlite/src/Ir/Rows/ValueRow.php", "implode(', ', $operands)",
                     "implode(', ', array_reverse($operands))", case([[ATOMS[0], ATOMS[2]]]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("VALUES", "sqlite-values-v1.json", CONTRACT, "", execute, check_mutations)
+    run_domain("VALUES", "sqlite-values-v1.json", CONTRACT, "", execute, check_faults)

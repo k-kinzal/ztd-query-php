@@ -145,12 +145,12 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     root = "sql-semantics-sqlite/src/Ir/Mutation/Update.php"
     renderer = "sql-semantics-sqlite/src/Ir/Mutation/ReturningSql.php"
     field = "$target->columns[$column->reference->slot]->quoted()"
     item = request()
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-new-row-output", root, " . $where . $returning;", " . $where;", item, "meaning-mismatch"),
         RenderFault("read-another-return-slot", renderer, field, "$target->columns[0]->quoted()", item, "meaning-mismatch"),
         RenderFault("replace-return-label", renderer, "$column->name->quoted()", "'\"changed\"'", item, "meaning-mismatch"),

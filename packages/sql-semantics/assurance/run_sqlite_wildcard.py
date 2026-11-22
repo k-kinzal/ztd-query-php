@@ -105,11 +105,11 @@ def execute(args, specification, db, worker_factory=Worker):
                 "php": worker.environment, "controls": comparison}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     _, ordinary = shape("ordinary", "unqualified")
     _, joined = shape("self-join", "qualified")
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("reverse-expanded-field-order", path, "foreach ($select->columns as $column)",
                     "foreach (array_reverse($select->columns) as $column)", ordinary, "meaning-mismatch"),
         RenderFault("use-first-expanded-occurrence", path, "$this->alias($expression->source)", "$this->alias(0)",

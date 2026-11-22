@@ -65,10 +65,10 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     output = "return '(CASE WHEN ' . $condition . ' THEN ' . $matched . ' ELSE ' . $unmatched . ' END)';"
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("mistake-truth-for-integer-equality", renderer, output,
                     "return '(' . $value . ' IS ' . ($expression->desired ? '1' : '0') . ')';",
                     query("select", [[test(integer(7))]]), "meaning-mismatch"),

@@ -214,7 +214,7 @@ def execute(args, specification, db, worker_factory=Worker):
                 "foreignKeys": "enabled"}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     path = "sql-semantics-sqlite/src/Ir/Schema/DropTable.php"
     fixtures = [
         RenderFault("omit-if-exists", path, "($this->ifExists ? 'IF EXISTS ' : '')", "''",
@@ -222,8 +222,8 @@ def check_mutations(args, db):
         RenderFault("choose-other-schema", path, "$this->schema->quoted()", "'temp'",
                     case("main", "ir_drop", False), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("DROP TABLE", "sqlite-drop-table-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("DROP TABLE", "sqlite-drop-table-v1.json", CONTRACT, FIXTURE, execute, check_faults)

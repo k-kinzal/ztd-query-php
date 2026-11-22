@@ -130,14 +130,14 @@ def execute(args, specification, db, worker_factory=Worker):
                 "php": worker.environment, "controls": comparison}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     insert = "sql-semantics-sqlite/src/Ir/Mutation/Insert.php"
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     example = case(query(None, [[integer(7), "p0"], [integer(12), "p1"]]))
     source = case(query(LEFT, [[column(1), "p0"]], order=[[1,False,True]]), ("payload",))
     distinct = case(query(LEFT, [[column(0), "p0"]], distinct=True, order=[[1,False,True]]), ("payload",))
     filtered = case(query(None, [[integer(7), "p0"]], where=integer(0)), ("id",))
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("reverse-query-insert-columns", insert, "implode(', ', $columns)", "implode(', ', array_reverse($columns))",
                     example, "meaning-mismatch"),
         RenderFault("wrong-query-insert-field", renderer, "$source->columns[$expression->slot]->quoted()",

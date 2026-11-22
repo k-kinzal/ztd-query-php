@@ -57,7 +57,7 @@ def execute(args, specification, db, worker_factory=Worker):
     return execute_schedule(args, specification, db, worker_factory, schedule, observe)
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     tested = "$this->expression($expression->operand, $source, $joins)"
     lower = "$this->expression($expression->lower, $source, $joins)"
@@ -68,7 +68,7 @@ def check_faults(args, db):
     def witness(value, low, high, negated=False):
         return statement("select-unit", [[between(integer(value), integer(low), integer(high), negated)]])
 
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("drop-upper-range-bound", renderer, body, f"return '(' . {tested} . ' >= ' . {lower} . ')';",
                     witness(7, 2, 4), "meaning-mismatch"),
         RenderFault("drop-lower-range-bound", renderer, body, f"return '(' . {tested} . ' <= ' . {upper} . ')';",

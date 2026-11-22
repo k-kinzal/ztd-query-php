@@ -9,6 +9,7 @@ from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
 from grammar_scope import inventory as grammar_inventory
 from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
+from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
@@ -91,7 +92,8 @@ class Evidence:
         if item is None:
             return None
         path, origin, report = item
-        require(report["status"] == "provisional" and set(report["domains"]) == SQLITE,
+        require(report["status"] == "provisional" and set(report["domains"]) == SQLITE
+                and report["faultReplayContract"] == SQLITE_FAULT_REPLAY,
                 "bundle-sqlite-domain-mismatch", origin)
         domains = {}
         tools = {name: sha for name, sha in self.tools.items() if not name.endswith(".md")}
@@ -100,8 +102,21 @@ class Evidence:
                                "events.jsonl", receipt["eventsDigest"], self.tools[contract], tools)
             require(receipt["contract"] == self.tools[contract] and receipt["compared"] > 0,
                     "bundle-sqlite-contract-mismatch", origin_)
+            raw_index = (self.root / origin_["file"]).parent
+            fault_replay = receipt["faultReplay"]
+            require(len(fault_replay) == receipt["faults"], "bundle-sqlite-fault-replay-count", contract)
+            fault_paths = {}
+            for case, record in fault_replay.items():
+                prefix = f"relational-faults/{case}/" if case == "restore" and contract == "sqlite-relational-v1.json" else f"faults/{case}/"
+                expected_mode = "overlay-audited" if contract == "contract-v1.json" or prefix.startswith("relational-faults/") else "native-replayed"
+                artifacts = record["artifacts"]
+                require(len(artifacts) == 3 and all(name.startswith(prefix) for name in artifacts)
+                        and artifacts.get(prefix + "injected.diff") == record["patch"]
+                        and artifacts.get(prefix + "result.json") == record["receipt"] and record["status"] == expected_mode,
+                        "bundle-sqlite-fault-replay-artifacts", {"contract": contract, "case": case})
+                fault_paths[case] = {**record, "files": [self.checked(raw_index / name, sha)[1] for name, sha in artifacts.items()]}
             domains[contract] = {"receipt": origin_, "finite": receipt["finite"], "compared": receipt["compared"],
-                                 "rejected": receipt["rejected"], "faults": receipt["faults"]}
+                                 "rejected": receipt["rejected"], "faults": receipt["faults"], "faultReplay": fault_paths}
         return {"replay": origin, "domains": domains}
 
     def native_launch(self):

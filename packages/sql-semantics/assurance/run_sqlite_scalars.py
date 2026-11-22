@@ -415,7 +415,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(visited), "operands": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     real = "sql-semantics-sqlite/src/Ir/Literal/RealLiteral.php"
     hex_integer = "sql-semantics-sqlite/src/Ir/Literal/HexIntegerLiteral.php"
@@ -427,11 +427,11 @@ def check_mutations(args, db):
         ("drop-real-sign", real, "($this->negative ? '-' : '') . $this->whole", "$this->whole", ["real", "0", "0", None, True]),
         ("drop-hex-sign", hex_integer, "($this->negated ? '-' : '') . '0x'", "'0x'", ["hex", "FFFFFFFFFFFFFFFF", True]),
     ]
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault(name, path, before, after, query("select", [[term]]), "meaning-mismatch")
         for name, path, before, after, term in cases
     ], probe)
 
 
 if __name__ == "__main__":
-    run_domain("scalars", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("scalars", CONTRACT_NAME, CONTRACT, FIXTURE, execute, check_faults)

@@ -43,6 +43,7 @@ import run_sqlite_values as values
 import run_sqlite_wildcard as wildcard
 from cases import SCHEMA
 from evidence_transcript import Transcript, canonical, require_reproduced
+from replay_sqlite_faults import audit_initial, contract as fault_contract, replay_registered, replay_relational
 from run import TOOL, require
 from sqlite_engine import Database
 
@@ -85,7 +86,7 @@ DOMAINS = {
 }
 
 
-def replay(directory, contract_name, index, library):
+def replay(directory, contract_name, index, library, *, candidate=None, manifest=None):
     contract = json.loads((TOOL / contract_name).read_text())
     path = directory / "events.jsonl"
     checks = index["checks"]
@@ -121,6 +122,17 @@ def replay(directory, contract_name, index, library):
         # JSON object keys in the generated histograms can be ints before serialization.
         serialized = json.loads(json.dumps(regenerated))
         require(canonical(serialized) == canonical(checks), "evidence-summary-mismatch", contract_name)
-        return transcript.consumed
+        faults = {}
+        if candidate is not None:
+            fault_contract()
+            records = index.get("faults", index.get("mutations"))
+            args = SimpleNamespace(directory=directory, candidate=candidate, manifest=manifest, records=records)
+            if initial:
+                faults = audit_initial(directory, records, candidate, manifest)
+            elif module is relational:
+                faults = replay_relational(args, database, module.inspect_response)
+            else:
+                faults = module.check_faults(args, database, runner=replay_registered)
+        return transcript.consumed, faults
     finally:
         database.close(database.db)

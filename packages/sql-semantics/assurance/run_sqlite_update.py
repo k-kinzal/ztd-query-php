@@ -243,7 +243,7 @@ def execute(args, specification, db, worker_factory=Worker):
         return {"counts": counts, "finiteIds": sorted(observed), "forms": dict(forms), "php": worker.environment}
 
 
-def check_mutations(args, db):
+def check_faults(args, db, runner=check_render_faults):
     update = "sql-semantics-sqlite/src/Ir/Mutation/Update.php"
     render = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     fixtures = [
@@ -257,8 +257,8 @@ def check_mutations(args, db):
         RenderFault("choose-other-schema", update, "$renderer->source($this->target, 0)", "'temp.ir_update AS \"__ztd_source\"'",
                     case([[0, integer(8)]]), "meaning-mismatch"),
     ]
-    return check_render_faults(args, db, fixtures, probe)
+    return runner(args, db, fixtures, probe)
 
 
 if __name__ == "__main__":
-    run_domain("UPDATE", "sqlite-update-v1.json", CONTRACT, FIXTURE, execute, check_mutations)
+    run_domain("UPDATE", "sqlite-update-v1.json", CONTRACT, FIXTURE, execute, check_faults)

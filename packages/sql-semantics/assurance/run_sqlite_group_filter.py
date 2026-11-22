@@ -132,11 +132,11 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     target = "sql-semantics-sqlite/src/Ir/Aggregation/GroupedSql.php"
     bag, columns = source("bag"), [[count(), "n"]]
     nonnull = ["comparison", "IS NOT", slot(1), ["null"]]
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("omit-having", target, "if ($query->having !== null)", "if (false)",
                     grouped(bag, [], columns, None, [count(), ">", integer(20), False]), "meaning-mismatch"),
         RenderFault("reverse-having-order", target, "$condition->thresholdFirst ?", "!$condition->thresholdFirst ?",

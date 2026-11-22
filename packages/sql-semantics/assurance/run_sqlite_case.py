@@ -112,12 +112,12 @@ def execute(args, specification, db, worker_factory=Worker):
                 "controls": comparator}
 
 
-def check_faults(args, db):
+def check_faults(args, db, runner=check_render_faults):
     renderer = "sql-semantics-sqlite/src/Ir/SelectSql.php"
     first = query("select", [[choice(None, [[integer(1), integer(7)], [integer(1), integer(9)]])]])
     missing = query("select", [[choice(None, [[integer(0), integer(7)]], integer(11))]])
     base = query("select", [[choice(integer(2), [[integer(1), integer(7)], [integer(2), integer(9)]])]])
-    return check_render_faults(args, db, [
+    return runner(args, db, [
         RenderFault("reverse-case-precedence", renderer, "foreach ($expression->branches as $branch)",
                     "foreach (array_reverse($expression->branches) as $branch)", first, "meaning-mismatch"),
         RenderFault("use-condition-as-result", renderer, "$this->expression($branch->then, $source, $joins)",
