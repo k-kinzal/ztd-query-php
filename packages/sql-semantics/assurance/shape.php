@@ -69,9 +69,10 @@ if ($dialect === 'postgres') {
     $castDestination = 'Expression\\CastDestination';
     $properties[$builtinCast] = [
         'target' => [$castDestination],
-        'operand' => ['BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
+        'operand' => ['Binding\\Parameter', 'BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
     ];
     $properties[$castDestination] = $methods[$castDestination] = [];
+    $properties['Binding\\Parameter']['input'] = [$castDestination];
     $methods[$builtinCast] = ['__construct'];
     $properties['Expression\\WideIntegerLiteral'] = ['decimal' => ['string']];
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
@@ -135,6 +136,10 @@ if ($dialect === 'mysql') {
     array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
+if ($dialect === 'postgres') {
+    $internal[] = 'Binding\\ParameterSignature';
+    $pureCollaborators[] = 'Binding\\ParameterSignature';
+}
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'mysql') {

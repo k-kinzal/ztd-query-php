@@ -68,7 +68,7 @@ final class CompoundShape
         $column = $query->columns[$position]->expression;
 
         return match (true) {
-            $column instanceof BuiltinCast => match ($column->target) {
+            $column instanceof BuiltinCast, $column instanceof Parameter => match ($column instanceof BuiltinCast ? $column->target : $column->input) {
                 CastDestination::Integer => ResultKind::Integer,
                 CastDestination::WideInteger => ResultKind::WideInteger,
                 CastDestination::Boolean => ResultKind::Boolean,
@@ -76,7 +76,7 @@ final class CompoundShape
             $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof TruthTest => ResultKind::Boolean,
-            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,
+            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,
         };
     }
 

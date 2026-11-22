@@ -157,6 +157,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost a bigint operand or result.');
             }
             $details['wideCast'] = [$wide->target->value, $wide->operand->target->value, $wide->operand->operand->decimal, $exact->decimal];
+            $bindings = $semantics->analyze('SELECT $2::integer AS a0, $1::bigint AS a1, $1::integer AS a2', $context)->columns;
+            $int4 = $bindings[0]->expression;
+            $int8 = $bindings[1]->expression;
+            $narrow = $bindings[2]->expression;
+            $parameterRole = $namespace . 'Ir\\Binding\\Parameter';
+            if ($int4::class !== $parameterRole || $int8::class !== $parameterRole || $narrow::class !== $castRole
+                || $narrow->operand::class !== $parameterRole) {
+                throw new RuntimeException('The installed projection lost the distinction between a binding and conversion.');
+            }
+            $details['typedParameters'] = [
+                [$int4->position, $int4->input->value], [$int8->position, $int8->input->value],
+                [$narrow->operand->position, $narrow->operand->input->value, $narrow->target->value],
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [

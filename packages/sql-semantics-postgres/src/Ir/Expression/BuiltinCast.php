@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Expression;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
@@ -29,12 +30,13 @@ final class BuiltinCast
      */
     public function __construct(
         public readonly CastDestination $target,
-        public readonly BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|WideIntegerLiteral|self $operand,
+        public readonly BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|Parameter|WideIntegerLiteral|self $operand,
     ) {
         $source = match (true) {
             $operand instanceof BooleanLiteral => CastDestination::Boolean,
             $operand instanceof WideIntegerLiteral => CastDestination::WideInteger,
             $operand instanceof self => $operand->target,
+            $operand instanceof Parameter => $operand->input,
             $operand instanceof ColumnReference, $operand instanceof IntegerLiteral => CastDestination::Integer,
             $operand instanceof NullLiteral => null,
         };

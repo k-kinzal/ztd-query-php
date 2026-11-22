@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
@@ -24,9 +25,10 @@ final class SelectLowering
 {
     /**
      * Converts the checked operation into a complete value.
+     * @param array<int, CastDestination> $inputTypes Native input types inferred in statement order
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null, array &$inputTypes = []): Select
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
@@ -60,7 +62,7 @@ final class SelectLowering
                 $results[] = new ResultColumn($binding->resolved($resolution), $label);
                 continue;
             }
-            $parameter = $parameters->lower($expression, $operation->context);
+            $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
             $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst), $label);
         }
 

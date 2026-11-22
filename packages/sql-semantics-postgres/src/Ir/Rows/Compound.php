@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterSignature;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -38,6 +39,7 @@ final class Compound implements SemanticsIR
             Check::input(!$operand instanceof Select || ($operand->orderBy === [] && $operand->limit === null), 'A compound arm requires an unbounded projection without ordering.');
             Check::input(CompoundShape::depth($operand) < 16, 'A compound has at most 16 nested operations.');
         }
+        ParameterSignature::check($left, $right);
         for ($index = 0; $index < CompoundShape::width($left); ++$index) {
             CompoundShape::merge(CompoundShape::type($left, $index), CompoundShape::type($right, $index));
         }

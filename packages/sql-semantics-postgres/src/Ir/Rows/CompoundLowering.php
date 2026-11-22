@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -23,19 +24,20 @@ final class CompoundLowering
 {
     /**
      * Preserves the set tree and lowers each projection with its own facts.
+     * @param array<int, CastDestination> $inputTypes Native input types inferred in statement order
      *
      * @throws InvalidConstruction When a query uses an unsupported arm
      */
-    public function lower(BoundStatement $operation, Query $query): Select|Compound
+    public function lower(BoundStatement $operation, Query $query, array &$inputTypes = []): Select|Compound
     {
         return match (true) {
-            $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),
-            $query instanceof ParenthesizedQuery => $this->lower($operation, $query->query),
+            $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query, $inputTypes),
+            $query instanceof ParenthesizedQuery => $this->lower($operation, $query->query, $inputTypes),
             $query instanceof SetOperation => new Compound(
-                $this->lower($operation, $query->left),
+                $this->lower($operation, $query->left, $inputTypes),
                 CompoundOperator::from($query->operator->value),
                 $query->quantifier === SetQuantifier::All,
-                $this->lower($operation, $query->right),
+                $this->lower($operation, $query->right, $inputTypes),
             ),
             default => throw new InvalidConstruction('A native compound requires checked SELECT arms.'),
         };

@@ -49,7 +49,8 @@ function constructOperand(string $namespace, array $data): object
 
     return match ($data[0]) {
         'integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
-        'boolean', 'parameter' => new $type($data[1]),
+        'boolean' => new $type($data[1]),
+        'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
@@ -98,7 +99,12 @@ function observeOperand(string $namespace, object $value): array
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
         $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
-        $namespace . 'Binding\\Parameter' => ['parameter', $value->position],
+        $namespace . 'Binding\\Parameter' => match (true) {
+            !($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter),
+            $value->input === SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination::Integer
+                => ['parameter', $value->position],
+            default => ['parameter', $value->position, $value->input->value],
+        },
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],

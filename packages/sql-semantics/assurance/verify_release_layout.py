@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors
 
-CONTRACT_NAME = "release-layout-v8.json"
-CONTRACT = "4b51863acd13bd2163722c49b86c6c99d6b97547ded58849a94c33970c2aa4eb"
+CONTRACT_NAME = "release-layout-v9.json"
+CONTRACT = "7afff4f06ce7639803eac914f6d6a2ff8122e53323f05295db7825e9fea0fdcf"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 COMMON = {"Select", "Rows\\Compound", "Mutation\\Delete", "Mutation\\Insert", "Mutation\\Update",
           "Schema\\CreateTable", "Schema\\DropTable", "Transaction\\Transaction"}
@@ -205,6 +205,8 @@ def verify_probe(raw, catalog):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
             require(item.get("wideCast") == ["int4", "int8", "2147483648", "-9223372036854775808"],
                     "installed-bigint-role-mismatch", item)
+            require(item.get("typedParameters") == [[2, "int4"], [1, "int8"], [1, "int8", "int4"]],
+                    "installed-binding-input-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],
