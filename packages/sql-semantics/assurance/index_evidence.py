@@ -9,8 +9,10 @@ from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
 from grammar_scope import inventory as grammar_inventory
 from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
+from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
+from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
@@ -118,6 +120,51 @@ class Evidence:
             domains[contract] = {"receipt": origin_, "finite": receipt["finite"], "compared": receipt["compared"],
                                  "rejected": receipt["rejected"], "faults": receipt["faults"], "faultReplay": fault_paths}
         return {"replay": origin, "domains": domains}
+
+    def sqlite_launch(self):
+        index = self.root / "sqlite-launch/index.json"
+        if not index.is_file():
+            return None
+        path, origin, report = self.record(index)
+        require(report["distribution"] == self.distribution
+                and report["launcherDigest"] == self.tools["run_sqlite_matrix.py"]
+                and report["runnerTimeoutSeconds"] == SQLITE_RUNNER_SECONDS
+                and re.fullmatch(r"[a-f0-9]{64}", report["sqliteLibraryDigest"]) is not None,
+                "bundle-sqlite-launch-identity", origin)
+        self.checked(path.parent / "distribution.json", self.distribution)
+        omitted = report["omittedDomains"]
+        require(omitted == sorted(set(omitted)) and set(omitted) < SQLITE, "bundle-sqlite-launch-domain-set", omitted)
+        expected = sqlite_jobs(omitted)
+        entries = report["executions"]
+        require([(entry["job"], entry["runner"], entry["directory"]) for entry in entries] == expected,
+                "bundle-sqlite-launch-schedule", origin)
+        failed = []
+        for ordinal, entry in enumerate(entries):
+            name, directory = entry["job"], entry["directory"]
+            log = f"{ordinal:02d}-{directory}.log"
+            code, outcome = entry["exitCode"], entry["outcome"]
+            require(entry["runnerDigest"] == self.tools[entry["runner"]] and entry["log"] == log
+                    and (outcome == "exited" and type(code) is int
+                         or outcome in {"timeout", "launch-error"} and code is None),
+                    "bundle-sqlite-launch-execution", name)
+            self.checked(path.parent / log, entry["logDigest"])
+            artifact = self.root / directory / "index.json"
+            fingerprint = entry["artifactDigest"]
+            require(artifact.is_file() == (fingerprint is not None), "bundle-sqlite-launch-artifact", name)
+            if fingerprint is not None:
+                self.checked(artifact, fingerprint)
+                _, _, receipt = self.record(artifact)
+                if name in SQLITE:
+                    require(receipt["engine"]["libraryDigest"] == report["sqliteLibraryDigest"]
+                            and receipt["distribution"] == self.distribution
+                            and receipt["contract"] == self.tools[name],
+                            "bundle-sqlite-launch-engine-or-contract", name)
+            if code != 0 or fingerprint is None:
+                failed.append(name)
+        expected_status = "incomplete" if failed else "observed-subset" if omitted else "observed-matrix"
+        require(report["failed"] == failed and report["status"] == expected_status, "bundle-sqlite-launch-balance", origin)
+        self.missing.extend(f"sqlite-launch/{key}" for key in [*failed, *omitted])
+        return origin
 
     def native_launch(self):
         index = self.root / "native-launch/index.json"
@@ -299,6 +346,12 @@ def replay_staged(evidence, artifact, manifest):
     return artifact
 
 
+def verify_sqlite_preflight(observed, candidate, manifest):
+    require(observed["status"] == "verified" and not observed["failures"], "bundle-sqlite-fault-preflight-failed")
+    expected_plan, failures = sqlite_fault_plan(candidate, manifest)
+    require(not failures and observed["domains"] == expected_plan, "bundle-sqlite-fault-preflight-source")
+
+
 def replay_grammar(path, candidate, summary):
     expected = grammar_inventory(candidate)
     require(json.loads(path.read_text()) == expected, "bundle-grammar-inventory-mismatch", str(path))
@@ -350,17 +403,13 @@ def main():
     native_collection = evidence.native_collection()
     native_launch = evidence.native_launch()
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
+    sqlite_launch = evidence.sqlite_launch()
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     preflight_file = root / "sqlite-fault-preflight/index.json"
     preflight = evidence.record(preflight_file) if preflight_file.is_file() else None
     if preflight:
-        _, origin, observed = preflight
-        require(observed["status"] == "verified" and not observed["failures"],
-                "bundle-sqlite-fault-preflight-failed", origin)
-        require(all(entry["anchorMatches"] == 1
-                    and manifest.get("packages/" + entry["file"]) == entry["sourceDigest"]
-                    for cases in observed["domains"].values() for entry in cases),
-                "bundle-sqlite-fault-preflight-source", origin)
+        _, _, observed = preflight
+        verify_sqlite_preflight(observed, checkout, manifest)
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
     staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
@@ -376,7 +425,7 @@ def main():
         "inventory": inventory, "scope": scope, "grammar": grammar, "initial": original,
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
         "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
-        "nativeLaunch": native_launch,
+        "nativeLaunch": native_launch, "sqliteLaunch": sqlite_launch,
         "sqliteFaultPreflight": preflight[1] if preflight else None,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],

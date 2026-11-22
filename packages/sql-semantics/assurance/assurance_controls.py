@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
-from index_evidence import replay_grammar
+from index_evidence import replay_grammar, verify_sqlite_preflight
 from run_native_matrix import RELEASE_ROW, release_fixtures
 from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
@@ -378,6 +378,26 @@ def fault_replay_controls(args, distribution):
     return results
 
 
+def sqlite_preflight_control(args, distribution):
+    original = args.root / "sqlite-fault-preflight/index.json"
+    record = json.loads(original.read_text())
+    verify_sqlite_preflight(record, args.candidate, distribution)
+    domain = "sqlite-mutation-conflicts-v2.json"
+    original_record = record["domains"][domain].pop()
+    folder = args.out / "omitted-sqlite-fault-placement"
+    folder.mkdir()
+    target = folder / "index.json"
+    write_json(target, record)
+    fault = observe_rejection(lambda: verify_sqlite_preflight(record, args.candidate, distribution),
+                              "bundle-sqlite-fault-preflight-source")
+    (folder / "injected.diff").write_text("".join(difflib.unified_diff(
+        original.read_text().splitlines(keepends=True), target.read_text().splitlines(keepends=True),
+        "healthy/index.json", "mutant/index.json",
+    )))
+    return {"case": folder.name, "control": "passed", "original": digest(original), "mutated": digest(target),
+            "signal": fault.signal, "omitted": {"domain": domain, **original_record}}
+
+
 def native_schedule_control(args):
     workflow = TOOL.parents[2] / ".github/workflows/semantics-ir-release-matrix.yml"
     profile_contract = TOOL / "server-projection-v1.json"
@@ -450,7 +470,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
-              + fault_replay_controls(args, distribution))
+              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

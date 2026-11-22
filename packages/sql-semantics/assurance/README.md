@@ -69,6 +69,22 @@ It also emits `constructors.json` with each audited type, source digest, constru
 
 The [folded SQLite binding record](sqlite-folded-binding-sources-v1.json) ties the empty-membership checks to the exact transient syntax sources. The graph audit follows all syntax edges. The binding walk omits only the operand edge identified by the SQLite wiring for an empty IN list. Two source mutations exercise the full audit and the edge classifier independently.
 
+### Reproduce the SQLite matrix
+
+Use an archived verifier checkout and a new evidence directory for the complete SQLite schedule. The launcher checks that every domain has both a runner and a replay observer. It checks that each source mutation can be applied, executes each domain in its own process, and runs the independent collector after all domain attempts. The launch receipt links the exit outcomes, logs and artifacts to the measured candidate and SQLite binary.
+
+```sh
+candidate=/path/to/candidate
+verifier=/path/to/archived-verifier/packages/sql-semantics/assurance
+tool_autoload=/path/to/trusted-verifier/packages/sql-semantics-sqlite/vendor/autoload.php
+candidate_sha=$(git -C "$candidate" rev-parse HEAD)
+evidence=$(mktemp -d)
+python3 "$verifier/run_sqlite_matrix.py" --candidate "$candidate" --candidate-sha "$candidate_sha" \
+  --tool-autoload "$tool_autoload" --sqlite-library "$third_party/libsqlite3.so" --evidence-root "$evidence"
+```
+
+For example, `--diagnostic sqlite-not-null-conflict-v1.json` runs one named contract. Its receipt lists all omitted domains. The bundle checks the exact schedule and absence of skipped executions for a full matrix. The matrix runner retains raw outputs even if a domain exits with an error.
+
 ### Reproduce the native release matrix
 
 To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
