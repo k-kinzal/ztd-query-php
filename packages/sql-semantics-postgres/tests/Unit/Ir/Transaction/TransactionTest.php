@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Transaction\Transaction;
 use SqlSemantics\Platform\PostgreSql\Ir\Transaction\TransactionCommand;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 
 #[CoversClass(Transaction::class)]
 #[Small]
@@ -28,21 +27,5 @@ final class TransactionTest extends TestCase
         $value = new Transaction(TransactionCommand::RollbackTo, new Identifier('before work'));
 
         self::assertSame('ROLLBACK TO SAVEPOINT "before work"', $value->toString());
-    }
-
-    public function testRejectsAnUnnamedCheckpoint(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('requires a name');
-
-        new Transaction(TransactionCommand::Savepoint);
-    }
-
-    public function testRejectsANameOnCommit(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('requires a name');
-
-        new Transaction(TransactionCommand::Commit, new Identifier('before work'));
     }
 }

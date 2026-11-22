@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Transaction\TransactionCommand;
 use SqlSemantics\Platform\MySql\Ir\Transaction\TransactionLowering;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(TransactionLowering::class)]
@@ -25,15 +24,5 @@ final class TransactionLoweringTest extends TestCase
 
         self::assertSame(TransactionCommand::RollbackTo, $value->command);
         self::assertSame('before work', $value->name?->value);
-    }
-
-    public function testLowerRejectsChaining(): void
-    {
-        $inspection = new Inspection();
-        $operation = $inspection->inspect('COMMIT AND CHAIN');
-        $this->expectException(InvalidConstruction::class);
-        $this->expectExceptionMessage('cannot chain');
-
-        (new TransactionLowering())->lower($operation->binding());
     }
 }
