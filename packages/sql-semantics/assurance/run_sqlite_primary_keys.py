@@ -194,12 +194,12 @@ def execute(args, specification, db, worker_factory=Worker):
 
 
 def check_faults(args, db, runner=check_render_faults):
-    key = "sql-semantics-sqlite/src/Ir/Schema/Key/PrimaryKeySql.php"
+    key = "sql-semantics-sqlite/src/Ir/Schema/Key/TableKeySql.php"
     table = "sql-semantics-sqlite/src/Ir/Schema/CreateTable.php"
     return runner(args, db, [
         RenderFault("alias-inline-descending-integer", key, "($key->terms[0]->descending ? ' DESC' : '')", "''",
                     example("inline-integer-descending"), "meaning-mismatch"),
-        RenderFault("read-key-slot-zero", key, "$columns[$term->slot]->name", "$columns[0]->name",
+        RenderFault("read-key-slot-zero", key, "$column = $columns[$term->slot];", "$column = $columns[0];",
                     example("table-pair-reversed"), "meaning-mismatch"),
         RenderFault("restore-hidden-rowid", table, "' WITHOUT ROWID, STRICT' : ' WITHOUT ROWID'", "' STRICT' : ''",
                     example("table-integer-descending", "without-rowid"), "meaning-mismatch"),

@@ -164,10 +164,10 @@ def execute(args, specification, db, worker_factory=Worker):
 
 
 def check_faults(args, db, runner=check_render_faults):
-    key = "sql-semantics-sqlite/src/Ir/Schema/Key/PrimaryKeySql.php"
+    key = "sql-semantics-sqlite/src/Ir/Schema/Key/TableKeySql.php"
     table = "sql-semantics-sqlite/src/Ir/Schema/CreateTable.php"
     inline = ". ($key->autoIncrement ? ' AUTOINCREMENT' : '');"
-    subclause = " . ($key->autoIncrement ? ' AUTOINCREMENT' : '') . ')'"
+    subclause = " . $auto . ')'"
     return runner(args, db, [
         RenderFault("drop-inline-autoincrement", key, inline, ". '';", item(), "meaning-mismatch"),
         RenderFault("drop-table-autoincrement", key, subclause, " . ')'",

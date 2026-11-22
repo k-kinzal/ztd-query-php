@@ -8,13 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\Collation;
+use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTermLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 
 #[CoversClass(KeyTermLowering::class)]
 #[Small]
@@ -25,7 +26,7 @@ final class KeyTermLoweringTest extends TestCase
         $column = new ColumnUse(new Name('CODE'));
         $expression = new Collate(new Collate($column, new Name('RTRIM')), new Name('nocase'));
         $term = new SortTerm($expression, SortDirection::Descending);
-        $columns = [new ColumnDefinition(new Name('message')), new ColumnDefinition(new Name('code'))];
+        $columns = [new TableColumn(new Identifier('message')), new TableColumn(new Identifier('code'))];
 
         $resolved = (new KeyTermLowering())->lower($term, $columns);
 

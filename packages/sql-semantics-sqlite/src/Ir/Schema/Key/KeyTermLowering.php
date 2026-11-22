@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema\Key;
 
 use SqlSemantics\Platform\Sqlite\Ir\Collation;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
@@ -14,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 
 /**
@@ -26,18 +26,18 @@ final class KeyTermLowering
 {
     /**
      * Resolves a column term within its owning declaration.
-     * @param list<ColumnDefinition> $columns The declaration's ordered columns
+     * @param list<TableColumn> $columns The declaration's ordered columns
      * @throws InvalidConstruction When the term does not denote a column in the admitted key domain
      */
     public function lower(SortTerm $term, array $columns): KeyTerm
     {
-        Check::input($term->nulls === null, 'A primary key term does not have an explicit NULL order.');
+        Check::input($term->nulls === null, 'A key term does not have an explicit NULL order.');
         $expression = $term->expression;
         $collation = null;
         while ($expression instanceof Grouped || $expression instanceof Collate) {
             if ($expression instanceof Collate) {
-                $explicit = Collation::tryFrom(strtoupper($expression->collation->value));
-                Check::input($explicit !== null, 'A primary key term needs a builtin collation.');
+                $explicit = Collation::tryFrom(strtr($expression->collation->value, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));
+                Check::input($explicit !== null, 'A key term needs a builtin collation.');
                 $collation ??= $explicit;
             }
             $expression = $expression->operand;
@@ -48,13 +48,13 @@ final class KeyTermLowering
             $expression instanceof LiteralColumn => $expression->name(),
             default => null,
         };
-        Check::input($name !== null, 'A primary key term needs one unqualified declared column.');
+        Check::input($name !== null, 'A key term needs one unqualified declared column.');
         foreach ($columns as $slot => $column) {
             if (Comparison::AsciiInsensitive->equal($column->name->value, $name->value)) {
-                return new KeyTerm($slot, $term->direction === SortDirection::Descending, $collation ?? Collation::Binary);
+                return new KeyTerm($slot, $term->direction === SortDirection::Descending, $collation ?? $column->collation);
             }
         }
 
-        throw new InvalidConstruction('A primary key term has no owning column.');
+        throw new InvalidConstruction('A key term has no owning column.');
     }
 }

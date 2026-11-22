@@ -7,7 +7,9 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKeySql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeyLayout;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeySql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
@@ -30,12 +32,22 @@ final class CreateTable implements SemanticsIR
     public readonly array $columns;
 
     /**
+     * @var list<PrimaryKey|UniqueKey>
+     */
+    public readonly array $keys;
+
+    /**
+     * The primary key from the ordered declaration, when present.
+     */
+    public readonly ?PrimaryKey $primaryKey;
+
+    /**
      * Checks the location and ordered columns before making the declaration available.
      *
      * @param list<TableColumn> $columns The declared columns
      * @param bool $strict Whether the table applies SQLite strict typing
      * @param bool $withoutRowid Whether the table uses its primary key for storage
-     * @param PrimaryKey|null $primaryKey The key bound to the ordered column layout
+     * @param list<PrimaryKey|UniqueKey> $keys The checked key declaration order
      */
     public function __construct(
         public readonly Identifier $schema,
@@ -44,22 +56,13 @@ final class CreateTable implements SemanticsIR
         public readonly bool $ifNotExists = false,
         public readonly bool $strict = false,
         public readonly bool $withoutRowid = false,
-        public readonly ?PrimaryKey $primaryKey = null,
+        array $keys = [],
     ) {
         Check::input($schema->value !== '', 'A CREATE TABLE needs a nonempty schema identifier.');
         Check::input(!str_starts_with($table->key(), 'sqlite_'), 'A CREATE TABLE cannot use the reserved SQLite namespace.');
         $checked = Check::listOf($columns, TableColumn::class, 'A CREATE TABLE needs a nonempty ordered column list.', 1);
         Check::input(count($checked) <= 2000, 'A CREATE TABLE can have at most 2000 columns in this profile.');
-        Check::input(!$withoutRowid || $primaryKey !== null, 'A WITHOUT ROWID table needs a primary key.');
-        foreach ($primaryKey->terms ?? [] as $term) {
-            Check::input($term->slot < count($checked), 'A primary key term belongs to the declared column layout.');
-        }
-        if ($primaryKey !== null && $primaryKey->autoIncrement) {
-            Check::input(
-                !$withoutRowid && $checked[$primaryKey->terms[0]->slot]->type === DeclaredDatatypeName::Integer,
-                'AUTOINCREMENT requires one INTEGER rowid alias.'
-            );
-        }
+        [$orderedKeys, $primaryKey] = (new TableKeyLayout())->check($keys, $checked, $withoutRowid);
         $seen = [];
         $defaults = [];
         foreach ($checked as $column) {
@@ -73,6 +76,8 @@ final class CreateTable implements SemanticsIR
         }
         (new ExpressionScope())->check([], $defaults);
         $this->columns = $checked;
+        $this->keys = $orderedKeys;
+        $this->primaryKey = $primaryKey;
     }
 
     /**
@@ -88,16 +93,7 @@ final class CreateTable implements SemanticsIR
      */
     public function toString(): string
     {
-        $columns = [];
-        $key = $this->primaryKey;
-        $keySql = new PrimaryKeySql();
-        foreach ($this->columns as $slot => $column) {
-            $inline = $key !== null && $key->inline && $key->terms[0]->slot === $slot ? $keySql->inline($key) : '';
-            $columns[] = $column->toString() . $inline;
-        }
-        if ($key !== null && !$key->inline) {
-            $columns[] = $keySql->table($key, $this->columns);
-        }
+        $columns = (new TableKeySql())->declarations($this->columns, $this->keys);
         $options = $this->withoutRowid ? ($this->strict ? ' WITHOUT ROWID, STRICT' : ' WITHOUT ROWID')
             : ($this->strict ? ' STRICT' : '');
 

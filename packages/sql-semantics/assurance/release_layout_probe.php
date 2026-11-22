@@ -98,6 +98,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     $queries['Aggregation\\GroupedSelect'] = "SELECT id, COUNT(*) AS entries FROM $table GROUP BY id";
     if ($platform === 'Sqlite') {
         $queries['Rows\\ValuesQuery'] = 'VALUES (1), (2)';
+        $queries['Schema\\CreateTable'] = 'CREATE TABLE other (id INTEGER PRIMARY KEY, code TEXT COLLATE NOCASE UNIQUE, UNIQUE(code COLLATE BINARY DESC) ON CONFLICT IGNORE)';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE TABLE made AS SELECT CAST(9 AS INTEGER) AS result';
     } else {
         $queries['Mutation\\InsertQuery'] = "INSERT INTO $table (id) SELECT 7 AS value";
@@ -140,6 +141,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost an explicit scalar conversion.');
             }
             $details['nestedCast'] = [$value->target->value, $value->operand->target->value, $value->operand->operand->decimal];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
+            $details['keyLayout'] = array_map(static fn ($key): array => [
+                $key instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey ? 'primary' : 'unique',
+                $key->inline, $key->terms[0]->slot, $key->terms[0]->descending, $key->terms[0]->collation->value,
+                $key->conflict?->value,
+            ], $result->keys);
         }
         if ($role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();

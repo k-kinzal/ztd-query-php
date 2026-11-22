@@ -201,6 +201,11 @@ def verify_probe(raw, catalog):
             require(item.get("signedCast") == "42", "installed-signed-cast-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
+            require(item.get("keyLayout") == [
+                ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],
+                ["unique", False, 1, True, "BINARY", "IGNORE"],
+            ], "installed-table-key-layout-mismatch", item)
         if item["role"] == "Schema\\Query\\CreateTableAs":
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)

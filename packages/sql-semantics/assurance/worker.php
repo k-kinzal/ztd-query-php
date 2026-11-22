@@ -65,6 +65,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
@@ -415,17 +416,26 @@ function valueRows(ValuesQuery $value): array
     return array_map(static fn (ValueRow $row): array => array_map(observeOperand(...), $row->values), $value->rows);
 }
 
-function directPrimaryKey(?array $value): ?PrimaryKey
+function directTableKey(array $value): PrimaryKey|UniqueKey
 {
-    if ($value === null) {
-        return null;
-    }
-    return new PrimaryKey(
-        array_map(static fn (array $term): KeyTerm => new KeyTerm($term[0], $term[1], Collation::from($term[2])), $value['terms']),
-        $value['inline'],
-        KeyConflict::from($value['conflict']),
-        $value['autoIncrement'] ?? false,
-    );
+    $terms = array_map(static fn (array $term): KeyTerm => new KeyTerm($term[0], $term[1], Collation::from($term[2])), $value['terms']);
+    $conflict = isset($value['conflict']) ? KeyConflict::from($value['conflict']) : null;
+
+    return match ($value['kind']) {
+        'primary' => new PrimaryKey($terms, $value['inline'], $conflict, $value['autoIncrement'] ?? false),
+        'unique' => new UniqueKey($terms, $value['inline'], $conflict),
+    };
+}
+
+function observeTableKey(PrimaryKey|UniqueKey $value): array
+{
+    return [
+        'kind' => $value instanceof PrimaryKey ? 'primary' : 'unique',
+        'terms' => array_map(static fn (KeyTerm $term): array => [$term->slot, $term->descending, $term->collation->value], $value->terms),
+        'inline' => $value->inline,
+        'conflict' => $value->conflict?->value,
+        ...($value instanceof PrimaryKey ? ['autoIncrement' => $value->autoIncrement] : []),
+    ];
 }
 
 function observePrimaryKey(?PrimaryKey $value): ?array
@@ -433,16 +443,17 @@ function observePrimaryKey(?PrimaryKey $value): ?array
     if ($value === null) {
         return null;
     }
-    return [
-        'terms' => array_map(static fn (KeyTerm $term): array => [$term->slot, $term->descending, $term->collation->value], $value->terms),
-        'inline' => $value->inline,
-        'conflict' => $value->conflict->value,
-        'autoIncrement' => $value->autoIncrement,
-    ];
+    $key = observeTableKey($value);
+    unset($key['kind']);
+    $key['conflict'] ??= 'ABORT';
+
+    return $key;
 }
 
 function directCreateTable(array $input): CreateTable
 {
+    $keys = $input['keys'] ?? (isset($input['primaryKey']) ? [['kind' => 'primary', ...$input['primaryKey']]] : []);
+
     return new CreateTable(
         new Identifier($input['schema']),
         new Identifier($input['table']),
@@ -455,11 +466,12 @@ function directCreateTable(array $input): CreateTable
                 default => NotNullConflict::tryFrom($slot[2]) ?? $slot[2],
             },
             isset($slot[3]) ? operand($slot[3]) : null,
+            Collation::from($slot[4] ?? 'BINARY'),
         ), $input['columns']),
         $input['ifNotExists'],
         $input['strict'] ?? false,
         $input['withoutRowid'] ?? false,
-        directPrimaryKey($input['primaryKey'] ?? null),
+        array_map(directTableKey(...), $keys),
     );
 }
 
@@ -487,6 +499,8 @@ function observeCreateTable(CreateTable $value): array
         'strict' => $value->strict,
         'withoutRowid' => $value->withoutRowid,
         'primaryKey' => observePrimaryKey($value->primaryKey),
+        'keys' => array_map(observeTableKey(...), $value->keys),
+        'collations' => array_map(static fn (TableColumn $column): string => $column->collation->value, $value->columns),
         'sql' => $value->toString(),
     ];
 }

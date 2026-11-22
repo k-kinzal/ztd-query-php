@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKeyLowering;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeyLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -41,7 +41,7 @@ final class CreateTableLowering
             $statement->ifNotExists,
             $statement->strict(),
             $statement->withoutRowid(),
-            (new PrimaryKeyLowering())->lower($statement)
+            (new TableKeyLowering())->lower($statement, $columns)
         );
     }
 }

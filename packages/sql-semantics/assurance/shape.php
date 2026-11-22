@@ -259,18 +259,19 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\DropTable'] = $methods['Select'];
     $properties['Schema\\CreateTable'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'columns' => ['array'], 'ifNotExists' => ['bool'],
-        'strict' => ['bool'], 'withoutRowid' => ['bool'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
+        'strict' => ['bool'], 'withoutRowid' => ['bool'], 'keys' => ['array'], 'primaryKey' => ['?Schema\\Key\\PrimaryKey'],
     ];
     $properties['Schema\\Key\\KeyTerm'] = ['slot' => ['int'], 'descending' => ['bool'], 'collation' => ['Collation']];
     $properties['Schema\\Key\\PrimaryKey'] = [
-        'terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['Schema\\Key\\KeyConflict'], 'autoIncrement' => ['bool'],
+        'terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['?Schema\\Key\\KeyConflict'], 'autoIncrement' => ['bool'],
     ];
-    $methods['Schema\\Key\\KeyTerm'] = $methods['Schema\\Key\\PrimaryKey'] = ['__construct'];
+    $properties['Schema\\Key\\UniqueKey'] = ['terms' => ['array'], 'inline' => ['bool'], 'conflict' => ['?Schema\\Key\\KeyConflict']];
+    $methods['Schema\\Key\\KeyTerm'] = $methods['Schema\\Key\\PrimaryKey'] = $methods['Schema\\Key\\UniqueKey'] = ['__construct'];
     $properties['Schema\\Key\\KeyConflict'] = $methods['Schema\\Key\\KeyConflict'] = [];
     $enumCases['Schema\\Key\\KeyConflict'] = ['Abort' => 'ABORT', 'Fail' => 'FAIL', 'Ignore' => 'IGNORE',
         'Replace' => 'REPLACE', 'Rollback' => 'ROLLBACK'];
-    array_push($internal, 'Schema\\Key\\PrimaryKeySql', 'Schema\\Key\\PrimaryKeyLowering', 'Schema\\Key\\KeyTermLowering');
-    $pureCollaborators[] = 'Schema\\Key\\PrimaryKeySql';
+    array_push($internal, 'Schema\\Key\\TableKeySql', 'Schema\\Key\\TableKeyLowering', 'Schema\\Key\\TableKeyLayout', 'Schema\\Key\\KeyTermLowering');
+    array_push($pureCollaborators, 'Schema\\Key\\TableKeySql', 'Schema\\Key\\TableKeyLayout');
     $methods['Schema\\CreateTable'] = $methods['Select'];
     $properties['Schema\\Query\\CreateTableAs'] = [
         'schema' => ['Identifier'], 'table' => ['Identifier'], 'query' => ['Rows\\ValuesQuery', 'Select'], 'ifNotExists' => ['bool'],
@@ -284,7 +285,7 @@ if ($dialect === 'sqlite') {
     array_push($internal, 'Schema\\CreateSchema', 'Schema\\Query\\CreateTableAsLowering', 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     array_push($pureCollaborators, 'Schema\\Query\\CreateAsLayout', 'Schema\\Query\\CreateAsAffinity');
     $properties['Schema\\TableColumn'] = [
-        'name' => ['Identifier'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
+        'name' => ['Identifier'], 'collation' => ['Collation'], 'type' => ['Schema\\DeclaredDatatypeName'], 'notNull' => ['?Schema\\NotNullConflict'],
         'default' => ['IntegerLiteral', 'Literal\\BlobLiteral', 'Literal\\HexIntegerLiteral', 'Literal\\RealLiteral',
             'Literal\\TextLiteral', 'NullLiteral', 'null'],
     ];
@@ -684,9 +685,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v23.json';
+    $storagePath = __DIR__ . '/value-storage-v24.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'c7e7c39048a4faa3a18d40b3a976549ac7bae54b807940927a96f9f130f8dcd8',
+        hash_file('sha256', $storagePath) === '2ab31e92d80f9e50b851835e98ed45aa30b16056a4114ecdceff138c6cdc2b10',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

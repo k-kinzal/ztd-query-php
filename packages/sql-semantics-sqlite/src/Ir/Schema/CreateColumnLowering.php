@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation as ParsedCollation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
@@ -31,8 +34,15 @@ final class CreateColumnLowering
     {
         $notNull = null;
         $default = null;
+        $collation = null;
         foreach ($column->constraints as $constraint) {
-            if ($constraint instanceof ColumnPrimaryKey) {
+            if ($constraint instanceof ColumnPrimaryKey || $constraint instanceof ColumnUnique) {
+                continue;
+            }
+            if ($constraint instanceof ParsedCollation) {
+                Check::input($collation === null, 'A checked column can declare one default collation.');
+                $collation = Collation::tryFrom(strtr($constraint->name->value, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'));
+                Check::input($collation !== null, 'A checked column needs a builtin collation.');
                 continue;
             }
             if ($constraint instanceof NotNull) {
@@ -56,6 +66,6 @@ final class CreateColumnLowering
             Check::input($type !== null && $type !== DeclaredDatatypeName::Untyped, 'This declared type has no complete CREATE TABLE representation.');
         }
 
-        return new TableColumn(new Identifier($column->name->value), $type, $notNull, $default);
+        return new TableColumn(new Identifier($column->name->value), $type, $notNull, $default, $collation ?? Collation::Binary);
     }
 }

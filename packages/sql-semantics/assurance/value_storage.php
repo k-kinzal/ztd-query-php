@@ -121,6 +121,20 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'ordered-table-key-copy') {
+            requireShape($short === 'Schema\\CreateTable' && $property === 'keys'
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'orderedKeys',
+                'The table key list must come from the checked layout.');
+            $inputs = storageWrites($finder, $body, '$orderedKeys');
+            $expected = '<?php [$orderedKeys, $primaryKey] = (new \\' . $prefix
+                . 'Schema\\Key\\TableKeyLayout())->check($keys, $checked, $withoutRowid);';
+            requireShape(count($inputs) === 1 && $inputs[0] instanceof Expr\Assign
+                && $printer->prettyPrint([$inputs[0]]) === $printer->prettyPrint([$parser->parse($expected)[0]->expr]),
+                'The table key layout must detach the ordered list.');
+
+            continue;
+        }
+
         [$type, $minimum] = $rule;
         $source = $write->expr;
         if ($source instanceof Expr\Variable) {

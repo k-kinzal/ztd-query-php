@@ -12,33 +12,35 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKeySql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\TableKeySql;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 
-#[CoversClass(PrimaryKeySql::class)]
+#[CoversClass(TableKeySql::class)]
 #[Small]
-final class PrimaryKeySqlTest extends TestCase
+final class TableKeySqlTest extends TestCase
 {
     public function testTableUsesTheOwningLayoutAndTermOrder(): void
     {
         $columns = [new TableColumn(new Identifier('code')), new TableColumn(new Identifier('id'))];
         $key = new PrimaryKey([new KeyTerm(1, true), new KeyTerm(0, false, Collation::RightTrim)], conflict: KeyConflict::Fail);
 
-        self::assertSame('PRIMARY KEY ("id" DESC, "code" COLLATE RTRIM) ON CONFLICT FAIL', (new PrimaryKeySql())->table($key, $columns));
+        self::assertSame('PRIMARY KEY ("id" DESC, "code" COLLATE RTRIM) ON CONFLICT FAIL', (new TableKeySql())->table($key, $columns));
     }
 
     public function testInlineKeepsDescendingAndOmitsTheDefaultAlgorithm(): void
     {
         $key = new PrimaryKey([new KeyTerm(0, true)], inline: true);
 
-        self::assertSame(' PRIMARY KEY DESC', (new PrimaryKeySql())->inline($key));
+        self::assertSame(' PRIMARY KEY DESC', (new TableKeySql())->inline($key));
     }
 
     public function testConflictAddsTheExplicitPolicyClause(): void
     {
-        $renderer = new PrimaryKeySql();
+        $renderer = new TableKeySql();
 
-        self::assertSame('', $renderer->conflict(KeyConflict::Abort));
+        self::assertSame('', $renderer->conflict(null));
+        self::assertSame(' ON CONFLICT ABORT', $renderer->conflict(KeyConflict::Abort));
         self::assertSame(' ON CONFLICT ROLLBACK', $renderer->conflict(KeyConflict::Rollback));
     }
 
@@ -47,6 +49,18 @@ final class PrimaryKeySqlTest extends TestCase
         $columns = [new TableColumn(new Identifier('id'))];
         $key = new PrimaryKey([new KeyTerm(0, true)], conflict: KeyConflict::Fail, autoIncrement: true);
 
-        self::assertSame('PRIMARY KEY ("id" DESC AUTOINCREMENT) ON CONFLICT FAIL', (new PrimaryKeySql())->table($key, $columns));
+        self::assertSame('PRIMARY KEY ("id" DESC AUTOINCREMENT) ON CONFLICT FAIL', (new TableKeySql())->table($key, $columns));
+    }
+
+    public function testDeclarationsKeepOrderedKeysAndEffectiveCollations(): void
+    {
+        $column = new TableColumn(new Identifier('code'), collation: Collation::NoCase);
+        $inline = new UniqueKey([new KeyTerm(0, collation: Collation::NoCase)], inline: true);
+        $table = new UniqueKey([new KeyTerm(0)], conflict: KeyConflict::Ignore);
+
+        self::assertSame(
+            ['"code" COLLATE NOCASE UNIQUE', 'UNIQUE ("code" COLLATE BINARY) ON CONFLICT IGNORE'],
+            (new TableKeySql())->declarations([$column], [$inline, $table])
+        );
     }
 }

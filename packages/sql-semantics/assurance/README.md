@@ -516,7 +516,7 @@ The fixture enables foreign keys before construction and compares object identit
 
 ## SQLite CREATE TABLE effects
 
-Run the [CREATE TABLE effect contract](sqlite-create-table-v1.json) with the same engine:
+Run the [CREATE TABLE effect contract](sqlite-create-table-v2.json) with the same engine:
 
 ```sh
 create_table_evidence=$(mktemp -d)/sqlite-create-table-evidence
@@ -536,6 +536,8 @@ The [SQLite primary key contract](sqlite-primary-keys-v2.json) follows resolved 
 The [SQLite automatic rowid contract](sqlite-auto-rowid-v1.json) preserves the distinction between the ordinary allocator and AUTOINCREMENT. It compares alias values and the owning schema's sqlite_sequence after deletions, commits and rollbacks. The fixed histories also verify SQLITE_FULL after exhausting the signed range. Run `run_sqlite_auto_rowid.py` with the same SQLite fixture options.
 
 The [SQLite population contract](sqlite-create-as-v5.json) checks the catalog and contents of CREATE TABLE AS. It compares declaration names, affinity, read-back storage classes, rowid order, parameters and the guarded destination. Run `run_sqlite_create_as.py` with the SQLite fixture options. The contract preserves the independent counterexamples for compound type selection and population affinity.
+
+The [SQLite unique-key contract](sqlite-unique-keys-v1.json) covers ordered inline and table keys, default and explicit collations and conflict policies, equivalent indexes, and coexistence with a primary key. The fixture compares native index order, covering slots, nullable writes, colliding rows and rollback. Run `run_sqlite_unique_keys.py` with the pinned SQLite library and the ordinary SQLite fixture arguments.
 
 ## SQLite literal defaults
 

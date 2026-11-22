@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir\Schema;
 
+use SqlSemantics\Platform\Sqlite\Ir\Collation;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\BlobLiteral;
@@ -15,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A table column with its declared type, NOT NULL policy and optional literal default.
+ * A table column with its declared type, builtin collation, NOT NULL policy and optional default.
  *
  * @visibility public
  * @example Declaring a column that refuses NULL
@@ -38,6 +39,7 @@ final class TableColumn
         public readonly DeclaredDatatypeName $type = DeclaredDatatypeName::Untyped,
         public readonly ?NotNullConflict $notNull = null,
         public readonly BlobLiteral|HexIntegerLiteral|IntegerLiteral|NullLiteral|RealLiteral|TextLiteral|null $default = null,
+        public readonly Collation $collation = Collation::Binary,
     ) {
     }
 
@@ -59,6 +61,8 @@ final class TableColumn
             NotNullConflict::Rollback => ' NOT NULL ON CONFLICT ROLLBACK',
         };
 
-        return $this->name->quoted() . $type . $constraint . $default;
+        $collation = $this->collation === Collation::Binary ? '' : ' COLLATE ' . $this->collation->value;
+
+        return $this->name->quoted() . $type . $constraint . $default . $collation;
     }
 }
