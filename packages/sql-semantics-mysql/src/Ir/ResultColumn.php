@@ -27,6 +27,6 @@ final class ResultColumn
         public readonly Arithmetic|ColumnReference|IntegerLiteral|BooleanLiteral|NullLiteral|Parameter $expression,
         public readonly Identifier $name,
     ) {
-        Check::input($name->value === ltrim($name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');
+        Check::input($expression instanceof ColumnReference || $name->value === ltrim($name->value, " \t\r\n\v\f"), 'A MySQL result name cannot start with SQL whitespace.');
     }
 }

@@ -11,14 +11,15 @@ from server_cases import SCHEMAS, observation as bag
 from server_delete_cases import literal
 from server_grouped_cases import ADDITIONAL_ROWS, aggregate, case, expected, finite_id, finite_ids, ordered, requests
 from server_join_cases import NAMES_BY_TABLE, compare, fixture, slot, table
+from server_wildcard_cases import LABEL_DDL, LABEL_RELATION
 from sqlite_domain import RenderFault
 
 LABEL = "grouped"
-CONTRACT = "9bbd02f35dced65558725061c0b5b796d5856e60791190ef931b58ff999a927b"
+CONTRACT = "d927ba45c6a8c77e669b6da5551e099a815d38dc63dd8338b97553d4cd0cb199"
 
 
 def specifications():
-    path = TOOL / "server-grouped-v2.json"
+    path = TOOL / "server-grouped-v3.json"
     require(digest(path) == CONTRACT, "server-grouped-contract-mismatch")
     _, profiles = join_specification()
     return json.loads(path.read_text()), profiles
@@ -55,6 +56,8 @@ def prepare(engine, db):
     values = ",".join(f"({key},{value})" for key, value in ADDITIONAL_ROWS)
     statements = [*fixture(engine), f"INSERT INTO {SCHEMAS[engine]}.{NAMES_BY_TABLE['accounts']} VALUES {values}"]
     if engine == "mysql":
+        statements += [f"DROP TABLE IF EXISTS ir_fixture.{LABEL_RELATION}", LABEL_DDL,
+                       f"INSERT INTO ir_fixture.{LABEL_RELATION} VALUES (1,2),(3,NULL),(1,2)"]
         return {"fixture": db.request({"fixture": statements})}
     statements += [
         "DROP FUNCTION IF EXISTS public.count(integer)",
@@ -140,6 +143,12 @@ def faults(engine, tag):
         RenderFault("erase-group-input-filter", target, "if ($query->where !== null)", "if (false)",
                     case(engine, tag, source, [], count, compare(">", slot(1), literal(1))), "meaning-mismatch"),
     ]
+    if engine == "mysql":
+        role = {"schema": "ir_fixture", "table": LABEL_RELATION, "columns": [" lead"]}
+        intrinsic = case(engine, tag, role, [slot(0)], [[slot(0), " lead"], [aggregate("count"), "n"]])
+        result.append(RenderFault("alias-physical-group-label", target,
+                                  """($name === ltrim($name, " \\t\\r\\n\\v\\f") ? ' AS ' . $column->name->quoted() : '')""",
+                                  "(' AS ' . $column->name->quoted())", intrinsic, "meaning-mismatch"))
     if engine == "postgres":
         result.append(RenderFault("unbind-aggregate-routine", target, "'pg_catalog.' . $value->operator->value", "$value->operator->value",
                                   column_count, "meaning-mismatch"))

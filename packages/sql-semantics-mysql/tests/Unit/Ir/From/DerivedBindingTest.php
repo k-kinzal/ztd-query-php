@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -18,7 +19,7 @@ use SqlSemantics\Testing\MySql\Inspection;
 #[Medium]
 final class DerivedBindingTest extends TestCase
 {
-    public function testReferenceUsesTheExactBoundOrdinal(): void
+    public function testResolvedUsesTheExactBoundOrdinal(): void
     {
         $operation = (new Inspection())->inspect('SELECT r.y FROM (SELECT 1 AS x) l CROSS JOIN (SELECT 2 AS x, 3 AS y) r');
         $statement = $operation->statement;
@@ -28,9 +29,12 @@ final class DerivedBindingTest extends TestCase
         self::assertInstanceOf(DerivedTable::class, $right);
         $column = $statement->items[0];
         self::assertInstanceOf(SelectExpression::class, $column);
-        $binding = new DerivedBinding($operation->binding(), $right);
+        $bound = $operation->binding();
+        $binding = new DerivedBinding($bound, $right);
 
-        self::assertSame(1, $binding->reference($column->expression)->slot);
+        $resolution = $bound->facts->scalar($column->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        self::assertSame(1, $binding->resolved($resolution)->slot);
     }
 
     public function testRelationRetainsIdentityDuringBinding(): void

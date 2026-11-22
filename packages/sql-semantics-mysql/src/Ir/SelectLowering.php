@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
-use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\MySql\Ir\Ordering\ProjectionColumns;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression as ParsedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 
@@ -44,24 +43,9 @@ final class SelectLowering
                 && ($statement->options === [] || $statement->options === [SelectOption::All] || $statement->options === [SelectOption::Distinct]),
             'Complete MySQL IR currently supports projections with positional result selection.',
         );
-        $expressions = new ExpressionLowering();
         $binding = JoinBinding::bind($operation, $statement->from instanceof Dual ? null : $statement->from);
         $where = (new PredicateLowering())->lower($statement->where, $binding);
-        $fields = $operation->facts->query($statement)->fields();
-        Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
-        $results = [];
-        $parameters = new ParameterLowering();
-        $parameterPosition = 0;
-        foreach ($statement->items as $index => $column) {
-            Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $fields->at($index)->name;
-            Check::input($name !== null, 'The result must have a resolved name.');
-            $parameter = $parameters->lower($column->expression, $parameterPosition + 1);
-            if ($parameter !== null) {
-                ++$parameterPosition;
-            }
-            $results[] = new ResultColumn($parameter ?? $expressions->lower($column->expression, $binding), new Identifier(ltrim($name->value, " \t\r\n\v\f")));
-        }
+        $results = (new ProjectionColumns())->lower($operation, $statement, $binding);
 
         $result = new ResultLowering();
         $order = [];

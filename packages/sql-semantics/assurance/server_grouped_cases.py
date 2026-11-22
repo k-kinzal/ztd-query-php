@@ -7,6 +7,7 @@ from server_cases import NAMES, SCHEMAS, observation
 from server_compound_cases import legacy
 from server_delete_cases import literal
 from server_join_cases import NAMES_BY_TABLE, compare, declarations, rows, slot, table, truth
+from server_wildcard_cases import LABEL_DDL, LABEL_RELATION, LABEL_ROWS, LABEL_SOURCE
 
 OPERATORS = ("count", "sum", "min", "max")
 POLICIES = (("count", False, False), ("count", True, False), ("count", True, True),
@@ -92,6 +93,12 @@ def analyzed(engine, tag):
                [aggregate("sum", slot(1)), "total"], [aggregate("min", slot(1)), "m"]]
     yield {"dialect": engine, "release": tag, "sql": query, "declarations": declarations(engine)}, case(
         engine, tag, source, [slot(0)], columns, compare(">", slot(1), literal(-5)))
+    if engine == "mysql":
+        role = {"schema": schema, "table": LABEL_RELATION, "columns": [" lead"]}
+        word = chr(96) + " lead" + chr(96)
+        raw = f"SELECT {word}, count(*) AS n FROM {schema}.{LABEL_RELATION} GROUP BY {word}"
+        yield {"dialect": engine, "release": tag, "sql": raw, "declarations": [LABEL_DDL]}, case(
+            engine, tag, role, [slot(0)], [[slot(0), " lead"], [aggregate("count"), "n"]])
 
 
 def negatives(engine, tag):
@@ -117,6 +124,9 @@ def negatives(engine, tag):
         yield {**route, "sql": window}, "The grouped aggregate requires one supported builtin without a window"
     if engine == "postgres":
         yield {**route, "sql": f"SELECT count(delta) AS n FROM {name}"}, "exclusive pg_catalog function search path"
+    else:
+        yield case(engine, tag, source, [], [[aggregate("count"), " invalid"]]), "grouped result name cannot start"
+        yield case(engine, tag, source, [slot(0)], [[slot(0), " invalid"]]), "must equal its physical input field"
 
 
 def diagnostic(engine, name="InvalidConstruction"):
@@ -187,6 +197,10 @@ def expected(item):
 
 
 def fixture_rows(source, engine):
+    if source["table"] == LABEL_RELATION:
+        positions = [LABEL_SOURCE.index(name) for name in source["columns"]]
+        yield from ((tuple(row[position] for position in positions),) for row in LABEL_ROWS)
+        return
     yield from rows(source, engine)
     if source["table"] == NAMES_BY_TABLE["accounts"]:
         positions = [NAMES[engine].index(name) for name in source["columns"]]

@@ -15,16 +15,24 @@ function nativeBoundaryContract(string $dialect): array
         $file = __DIR__ . '/sqlite-grouped-boundaries-v2.json';
         requireShape(hash_file('sha256', $file) === '0d054f583a15cc1ccc76a45d79b3cf2420279d8b26f51d112f4ec6bf022285e7', 'SQLite grouping boundary contract differs from the recorded revision');
     } else {
-        $file = __DIR__ . '/native-boundaries-v12.json';
-        requireShape(hash_file('sha256', $file) === '2c59c1aa6f5f8d109a3c70c9d14dfe022ddcd1211824a5500439b7795b9eff7c', 'Native boundary contract differs from the recorded revision');
+        $file = __DIR__ . '/native-boundaries-v13.json';
+        requireShape(hash_file('sha256', $file) === '07a00e74fa719f98db2c26bb83b399336a62674ecf4604e9d3bfb96eee9099d3', 'Native boundary contract differs from the recorded revision');
     }
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 
-    if ($dialect !== 'sqlite') {
-        $extension = __DIR__ . '/native-insert-query-boundaries-v1.json';
-        requireShape(hash_file('sha256', $extension) === '014c93bc01fee8b088b1fffb9eda93aa1da5a242e031eabf0a4b5a3308f0f4f1',
-            'Native query INSERT boundary contract differs from the recorded revision');
+    if ($dialect === 'sqlite') {
+        $extension = __DIR__ . '/sqlite-wildcard-boundaries-v1.json';
+        requireShape(hash_file('sha256', $extension) === 'df1e85f4672df520cfbaed5e39260a25324c8c95cc02a38c94e1fc8baa847a1d', 'SQLite wildcard boundary contract differs from its recorded revision');
+        $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
+        requireShape(array_intersect_key($additional, $rules) === [], 'SQLite wildcard cannot replace a fixed boundary');
+        $rules += $additional;
+    } else {
+        $extension = __DIR__ . '/native-insert-query-boundaries-v2.json';
+        requireShape(
+            hash_file('sha256', $extension) === '527e7d1284a409e72b022a14f1280ee2d7ed1cc738b47b5d61df3a72e9cc8ee2',
+            'Native query INSERT boundary contract differs from the recorded revision'
+        );
         $additional = json_decode(file_get_contents($extension), true, 512, JSON_THROW_ON_ERROR)['rules'];
         requireShape(array_intersect_key($additional, $rules) === [], 'Native query INSERT cannot replace a fixed boundary');
         $rules += $additional;
@@ -44,11 +52,12 @@ function checkNativeBoundaries(
     Standard $printer,
 ): array {
     $imports = '';
-    foreach (['Model\\Diagnostic\\Check', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\Ordering\\ResultSql', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
+    foreach (['Model\\Diagnostic\\Check', 'Model\\Diagnostic\\InvalidConstruction', 'Ir\\Identifier', 'Ir\\ColumnReference', 'Ir\\Arithmetic', 'Ir\\BooleanLiteral', 'Ir\\Binding\\Parameter', 'Ir\\From\\Join', 'Ir\\From\\DerivedSource', 'Ir\\TableSource', 'Ir\\SelectBounds', 'Ir\\Ordering\\Order', 'Ir\\Ordering\\ResultSql', 'Ir\\ResultColumn', 'Ir\\IntegerLiteral', 'Ir\\NullLiteral', 'Ir\\Select', 'Ir\\From\\JoinKind', 'Ir\\From\\OccurrenceScope',
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
         'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
         'Model\\Contract\\GrammarRelease', 'Statement\\Query\\ParenthesizedQuery', 'Statement\\Relation\\DerivedTable',
-        'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering', 'Statement\\Expression\\Collate', 'Statement\\Expression\\Grouped'] as $name) {
+        'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering', 'Statement\\Expression\\Collate',  'Statement\\Expression\\Grouped', 'Statement\\Query\\SelectExpression', 'Ir\\ExpressionLowering',
+        'Ir\\Binding\\ParameterLowering', 'Ir\\Ordering\\ProjectionLabel'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";

@@ -20,6 +20,7 @@ import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
 import run_sqlite_update as update
 import run_sqlite_values as values
+import run_sqlite_wildcard as wildcard
 from cases import SCHEMA
 from evidence_transcript import Transcript, canonical, require_reproduced
 from run import TOOL, require
@@ -39,6 +40,7 @@ DOMAINS = {
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
     grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
+    wildcard.CONTRACT_NAME: (wildcard, wildcard.SCHEMA),
     "sqlite-transaction-v1.json": (transaction, transaction.FIXTURE),
 }
 

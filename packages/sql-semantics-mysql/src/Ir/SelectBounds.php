@@ -37,6 +37,16 @@ final class SelectBounds
         $nodes = 0;
         $position = 0;
         foreach ($results as $result) {
+            $label = $result->name->value;
+            if ($label !== ltrim($label, " \t\r\n\v\f")) {
+                $reference = $result->expression;
+                Check::invariant($reference instanceof ColumnReference, 'An intrinsic label belongs to a column reference.');
+                $table = $inputs[$reference->occurrence] ?? null;
+                Check::input(
+                    $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,
+                    'An intrinsic MySQL result name must equal its physical input field.'
+                );
+            }
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);

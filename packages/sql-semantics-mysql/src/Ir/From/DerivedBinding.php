@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -51,11 +50,10 @@ final class DerivedBinding
     /**
      * Resolves the ordinal in the derived definition without allocating a table-catalog slot.
      */
-    public function reference(Scalar $expression): ColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference
     {
-        $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input(
-            $resolution instanceof ResolvedColumn && $resolution->depth === 0 && $resolution->relation === $this->input,
+            $resolution->depth === 0 && $resolution->relation === $this->input,
             'A derived reference must belong to its join input.'
         );
         $slots = $this->operation->facts->relation($this->input)->shape->slots;

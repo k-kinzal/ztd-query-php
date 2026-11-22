@@ -24,7 +24,7 @@ final class InsertQueryTest extends TestCase
         $select = new Select([new ResultColumn(new IntegerLiteral('7'), new Identifier('n'))]);
         $insert = new InsertQuery($target, $select);
 
-        self::assertStringEndsWith($select->toString(), $insert->toString());
+        self::assertSame('INSERT INTO "app"."events" ("id") ' . $select->toString(), $insert->toString());
     }
 
     public function testProfileIdUsesTheSourceProfile(): void

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
@@ -83,5 +84,22 @@ final class SourceBindingTest extends TestCase
         $this->expectExceptionMessage('writable signed 32-bit integer');
 
         $binding->writableColumn('a');
+    }
+
+    public function testResolvedReadsTheDeclarationSelectedByTheWildcard(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id INTEGER, amount INTEGER)');
+        $operation = $inspection->inspect('SELECT * FROM app.t', [$table]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(1)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $source = new SourceBinding($binding, $statement->from);
+        self::assertSame(0, $source->resolved($resolution)->slot);
+        self::assertSame('amount', $source->source()?->columns[0]->value);
     }
 }

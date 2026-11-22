@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -66,5 +67,22 @@ final class SourceBindingTest extends TestCase
         self::assertSame(0, $binding->write(new Name('a')));
         self::assertSame(0, $binding->write(new Name('A')));
         self::assertSame('A', $binding->source()?->columns[0]->value);
+    }
+
+    public function testResolvedReadsTheDeclarationSelectedByTheWildcard(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE main.t (id INTEGER, amount INTEGER)');
+        $operation = $inspection->inspect('SELECT * FROM main.t', [$table]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(1)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $source = new SourceBinding($binding, $statement->from);
+        self::assertSame(0, $source->resolved($resolution)->slot);
+        self::assertSame('amount', $source->source()?->columns[0]->value);
     }
 }

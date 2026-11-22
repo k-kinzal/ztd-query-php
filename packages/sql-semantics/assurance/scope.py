@@ -46,10 +46,11 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
     "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
     "sqlite-grouped-v1.json": "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1",
 
-    "server-grouped-v2.json": "9bbd02f35dced65558725061c0b5b796d5856e60791190ef931b58ff999a927b",
+    "server-grouped-v3.json": "d927ba45c6a8c77e669b6da5551e099a815d38dc63dd8338b97553d4cd0cb199",
 
     "server-derived-join-v1.json": "131a8055798d3395508fc269cfd895c123ac896a9f17168eedcd2b124453df1d",
     "server-derived-join-v2.json": "3d2b1652912fe098f37f7a11248f81c791762a690b799f53beac73678d1844ee",
@@ -92,6 +93,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
+    supplemental = {}
     publication = (TOOL / "publication-v15.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
@@ -106,6 +108,9 @@ def constructor_scope(by_class):
         contract = json.loads(raw)
         dialects = contract.get("dialects", ("MySql", "PostgreSql") if name == "server-projection-v1.json" else ("Sqlite",))
         for dialect in dialects:
+            for role in contract.get("existingRoles", []):
+                concrete = "SqlSemantics\\Platform\\" + dialect + "\\Ir\\" + role.replace("/", "\\")
+                supplemental.setdefault(concrete, []).append(name)
             roots_by_dialect[dialect].extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
         for role, record in contract["constructors"].items():
             concrete = record.get("type", role)
@@ -129,6 +134,8 @@ def constructor_scope(by_class):
         if record["visibility"] == "public" and record["kind"] in ("Stmt_Class", "Stmt_Enum")
         and clas.startswith(tuple(prefix + "\\Ir\\" for prefix in prefixes))
     }
+    if not supplemental.keys() <= definitions.keys():
+        raise ValueError("An evidence supplement references an unregistered constructor")
     publication_types = set(definitions) | {kind for cases in routes.values() for kind in cases}
     found = {}
     for clas, record in by_class.items():
@@ -145,7 +152,7 @@ def constructor_scope(by_class):
     routes.update(batch_routes)
     return {
         "registeredConstructors": {name: {
-            "contracts": definitions[name], "source": by_class[name]["file"],
+            "contracts": definitions[name], "supplementalEvidence": supplemental.get(name, []), "source": by_class[name]["file"],
             "sha256": by_class[name]["sha256"], "paths": by_class[name]["public_and_magic_signatures"],
         } for name in sorted(published & set(definitions))},
         "unregisteredConstructors": sorted(published - set(definitions)),

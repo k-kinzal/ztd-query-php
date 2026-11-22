@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
@@ -83,19 +82,38 @@ final class JoinBinding
 
     /**
      * Resolves the exact input occurrence and allocates a slot within it.
-     * @throws InvalidConstruction when the occurrence is outside the subtree
      */
     public function reference(Scalar $scalar): ColumnReference
     {
         $resolution = $this->operation->facts->scalar($scalar)->resolution;
-        Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'A column must resolve within this join scope.');
+        Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
+
+        return $this->resolved($resolution);
+    }
+
+    /**
+     * Allocates a checked field in the join occurrence containing its resolved input.
+     */
+    public function resolved(ResolvedColumn $resolution): ColumnReference
+    {
+        Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
+        $wholeJoin = self::ungroup($resolution->relation) === $this->join;
+        $expanded = null;
         foreach ($this->inputs as $occurrence => $binding) {
-            if ($binding->relation() === $resolution->relation) {
-                return new ColumnReference($binding->reference($scalar)->slot, $occurrence);
+            $relation = $binding->relation();
+            if ($relation === $resolution->relation) {
+                return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);
+            }
+            if ($wholeJoin && $relation !== null
+                && in_array($resolution->slot, $this->operation->facts->relation($relation)->shape->slots, true)) {
+                Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');
+                $bound = $binding->resolved(new ResolvedColumn($relation, $resolution->slot));
+                $expanded = new ColumnReference($bound->slot, $occurrence);
             }
         }
+        Check::input($expanded !== null, 'A column must resolve within this join scope.');
 
-        throw new InvalidConstruction('A column must resolve within this join scope.');
+        return $expanded;
     }
 
     /**

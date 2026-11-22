@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -70,5 +71,25 @@ final class JoinBindingTest extends TestCase
     public function testUngroupPreservesAnAbsentSource(): void
     {
         self::assertNull(JoinBinding::ungroup(null));
+    }
+
+    public function testResolvedFindsTheQualifiedWildcardOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id INTEGER, amount INTEGER)');
+        $operation = $inspection->inspect('SELECT b.* FROM app.t AS a CROSS JOIN app.t AS b', [$table]);
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(1)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $source = JoinBinding::bind($binding, $statement->from);
+        self::assertInstanceOf(JoinBinding::class, $source);
+        $reference = $source->resolved($resolution);
+
+        self::assertSame(1, $reference->occurrence);
+        self::assertSame(0, $reference->slot);
     }
 }

@@ -60,7 +60,20 @@ final class SourceBinding
     public function reference(Scalar $expression): ColumnReference
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
-        Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'The column must resolve to the projection source.');
+        Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
+
+        return $this->resolved($resolution);
+    }
+
+    /**
+     * Allocates the occurrence slot of an already resolved projection field.
+     */
+    public function resolved(ResolvedColumn $resolution): ColumnReference
+    {
+        Check::input(
+            $resolution->depth === 0,
+            'The column must resolve to the projection source.'
+        );
         if ($this->localColumns !== null) {
             $name = $resolution->slot->name;
             Check::input($resolution->relation === $this->source && $name !== null, 'The column must resolve to the local input occurrence.');

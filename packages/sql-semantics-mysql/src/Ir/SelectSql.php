@@ -32,7 +32,9 @@ final class SelectSql
         $items = [];
         foreach ($select->columns as $slot => $column) {
             $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();
-            $items[] = $this->expression($column->expression, $source) . ' AS ' . $name;
+            $label = $column->name->value;
+            $alias = $localNames || $label === ltrim($label, " \t\r\n\v\f") ? ' AS ' . $name : '';
+            $items[] = $this->expression($column->expression, $source) . $alias;
         }
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {

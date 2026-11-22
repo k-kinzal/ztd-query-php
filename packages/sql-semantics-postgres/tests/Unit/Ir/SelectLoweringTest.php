@@ -39,4 +39,14 @@ final class SelectLoweringTest extends TestCase
 
         (new SelectLowering())->lower((new Inspection())->inspect('SELECT id FROM public.accounts')->binding());
     }
+
+    public function testLowerExpandsWildcardFieldsInTheirBoundOrder(): void
+    {
+        $inspection = new Inspection();
+        $declaration = $inspection->inspect('CREATE TABLE app.events (id INT, amount INT)');
+        $operation = $inspection->inspect('SELECT s.amount AS chosen, s.* FROM app.events AS s', [$declaration]);
+        $value = (new SelectLowering())->lower($operation->binding());
+
+        self::assertSame(['chosen', 'id', 'amount'], array_map(static fn ($column): string => $column->name->value, $value->columns));
+    }
 }

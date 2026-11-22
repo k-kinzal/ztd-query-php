@@ -185,6 +185,9 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
+    if ($dialect === 'mysql') {
+        array_push($internal, 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns');
+    }
     $internal[] = 'Binding\\ParameterLowering';
     array_push($roots, 'Aggregation\\GroupedSelect', 'Rows\\Compound', 'Rows\\LocalProjection', 'Rows\\RecursiveSeries', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['Aggregation\\GroupedSelect'] = [

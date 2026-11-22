@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
+use SqlSemantics\Platform\MySql\Ir\TableSource;
 
 #[CoversClass(Select::class)]
 #[Small]
@@ -39,5 +40,16 @@ final class SelectTest extends TestCase
         $this->expectExceptionMessage('belong to the SELECT source');
 
         new Select([new ResultColumn(new ColumnReference(0), new Identifier('a'))]);
+    }
+
+    public function testToStringUsesTheIntrinsicFieldLabel(): void
+    {
+        $field = new Identifier(' amount');
+        $source = new TableSource(new Identifier('app'), new Identifier('events'), [$field]);
+        $value = new Select([new ResultColumn(new ColumnReference(0), $field)], $source);
+
+        $quote = chr(96);
+        self::assertSame('SELECT ' . $quote . '__ztd_source' . $quote . '.' . $quote . ' amount' . $quote
+            . ' FROM ' . $quote . 'app' . $quote . '.' . $quote . 'events' . $quote . ' AS ' . $quote . '__ztd_source' . $quote, $value->toString());
     }
 }

@@ -86,10 +86,20 @@ final class JoinBinding
     public function reference(Scalar $scalar): ColumnReference
     {
         $resolution = $this->operation->facts->scalar($scalar)->resolution;
-        Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'A column must resolve within this join scope.');
+        Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
+
+        return $this->resolved($resolution);
+    }
+
+    /**
+     * Allocates a checked field in the join occurrence containing its resolved input.
+     */
+    public function resolved(ResolvedColumn $resolution): ColumnReference
+    {
+        Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         foreach ($this->inputs as $occurrence => $binding) {
             if ($binding->relation() === $resolution->relation) {
-                return new ColumnReference($binding->reference($scalar)->slot, $occurrence);
+                return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);
             }
         }
 

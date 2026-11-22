@@ -36,7 +36,7 @@ def faults(engine):
         Fault("ignore-join-scope", "From/OccurrenceScope::checkTree", "$this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot)", "true"),
         Fault("allow-computed-derived-slot", "From/DerivedSource::__construct",
               "$column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference,", "true,"),
-        Fault("ignore-derived-binding-identity", "From/DerivedBinding::reference",
+        Fault("ignore-derived-binding-identity", "From/DerivedBinding::resolved",
               "$resolution->relation === $this->input,", "true,"),
         Fault("ignore-derived-profile", "Select::__construct",
               "!$input instanceof DerivedSource || $input->definition->release === $release,", "true,"),
@@ -69,12 +69,17 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
+        shared.append(Fault("ignore-wildcard-occurrence-ambiguity", "From/JoinBinding::resolved", "$expanded === null,", "true,"))
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
                             "!== ($on->right->occurrence < $leftWidth)", "=== ($on->right->occurrence < $leftWidth)"))
         shared.append(Fault("allow-repeated-pg-update-targets", "Mutation/Update::__construct", "!isset($written[$slot]),", "true,"))
         shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
+        shared.append(Fault("ignore-intrinsic-result-label", "SelectBounds::check",
+                            "$table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,", "true,"))
+        shared.append(Fault("ignore-intrinsic-group-label", "Aggregation/GroupedSelect::__construct",
+                            "$source->columns[$value->slot]->value === $name,", "true,"))
         shared.append(Fault("ignore-mysql-parameter-order", "SelectBounds::check", "$expression->position === ++$position,", "true,"))
         shared.append(Fault("ignore-recursive-release-capability", "Rows/RecursiveSeries::__construct",
                             "Check::input($available,", "Check::input(true,"))
@@ -138,7 +143,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v12.json", "native-insert-query-boundaries-v1.json", "sqlite-grouped-boundaries-v2.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
+                       "native-boundaries-v13.json", "native-insert-query-boundaries-v2.json", "sqlite-grouped-boundaries-v2.json", "sqlite-wildcard-boundaries-v1.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

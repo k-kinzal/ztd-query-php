@@ -159,6 +159,16 @@ def inventory(root):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):
                 related[alternative] = (*related.get(alternative, ()), "server-insert-query-v2.json")
+        wildcard_signatures = {
+            "select_item: table_wild",
+            "select_item_list: *",
+            "target_list: *",
+            "target_el: *",
+            "selcollist: sclp STAR",
+            "selcollist: sclp nm DOT STAR",
+        }
+        for alternative in sorted(wildcard_signatures & signatures):
+            related[alternative] = (*related.get(alternative, ()), "wildcard-projection-v2.json")
         grouped_signatures = {
             "opt_group_clause: GROUP_SYM BY group_list olap_opt",
             "opt_group_clause: GROUP_SYM BY group_list",
@@ -166,7 +176,7 @@ def inventory(root):
             "group_by_item: a_expr",
         }
         for alternative in sorted(grouped_signatures & signatures):
-            related[alternative] = (*related.get(alternative, ()), "server-grouped-v2.json")
+            related[alternative] = (*related.get(alternative, ()), "server-grouped-v3.json")
         derived_join_signatures = {
             "table_factor: derived_table",
             "derived_table: table_subquery opt_table_alias opt_derived_column_list",

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget as ParsedColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
@@ -49,13 +49,22 @@ final class SelectLowering
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         $parameters = new ParameterLowering();
-        foreach ($statement->targets as $index => $column) {
-            Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $fields->at($index)->name;
+        foreach ($fields as $field) {
+            $name = $field->name;
             Check::input($name !== null, 'The result must have a resolved name.');
-            $parameter = $parameters->lower($column->expression, $operation->context);
-            $results[] = new ResultColumn($parameter ?? $expressions->lower($column->expression, $binding, $catalogFirst), new Identifier($name->value));
+            $label = new Identifier($name->value);
+            $expression = $field->expression;
+            if ($expression === null) {
+                $resolution = $field->resolution;
+                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
+                $results[] = new ResultColumn($binding->resolved($resolution), $label);
+                continue;
+            }
+            $parameter = $parameters->lower($expression, $operation->context);
+            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst), $label);
         }
+
+        Check::input($results !== [], 'A complete projection requires at least one resolved output field.');
 
         $result = new ResultLowering();
         $order = [];

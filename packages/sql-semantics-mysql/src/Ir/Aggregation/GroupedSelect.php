@@ -65,6 +65,11 @@ final class GroupedSelect implements SemanticsIR
             $value = $result->value;
             if ($value instanceof ColumnReference) {
                 Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');
+                $name = $result->name->value;
+                Check::input(
+                    $name === ltrim($name, " \t\r\n\v\f") || $source->columns[$value->slot]->value === $name,
+                    'An intrinsic MySQL grouped name must equal its physical input field.'
+                );
             } else {
                 Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'The aggregate slot must belong to the group input.');
             }

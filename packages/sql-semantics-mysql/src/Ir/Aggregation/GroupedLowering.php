@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
-use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Ordering\ProjectionLabel;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -54,14 +54,16 @@ final class GroupedLowering
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');
         $columns = [];
+        $labels = new ProjectionLabel();
         foreach ($statement->items as $index => $target) {
             Check::input($target instanceof Target, 'A grouped projection requires explicit result fields.');
-            $name = $fields->at($index)->name;
+            $field = $fields->at($index);
+            $name = $field->name;
             Check::input($name !== null, 'A grouped result must have a resolved name.');
             $value = $target->expression instanceof ParsedAggregate
                 ? (new AggregateBinding())->lower($target->expression, $binding)
                 : $binding->reference($target->expression);
-            $columns[] = new GroupColumn($value, new Identifier(ltrim($name->value, " \t\r\n\v\f")));
+            $columns[] = new GroupColumn($value, $labels->lower($statement, $field, $name->value));
         }
         $source = $binding->source();
         Check::input($source !== null, 'A grouped SELECT needs one resolved input and at least one named result.');

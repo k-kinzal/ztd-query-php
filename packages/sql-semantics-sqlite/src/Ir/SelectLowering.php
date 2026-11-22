@@ -9,7 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn as ParsedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
@@ -43,12 +43,21 @@ final class SelectLowering
         $fields = $arm === null ? $operation->facts->output?->fields() : $operation->facts->query($arm)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
-        foreach ($statement->columns as $index => $column) {
-            Check::input($column instanceof ParsedColumn, 'A complete projection currently requires explicit result expressions.');
-            $name = $fields->at($index)->name;
+        foreach ($fields as $field) {
+            $name = $field->name;
             Check::input($name !== null, 'The result must have a resolved name.');
-            $results[] = new ResultColumn($expressions->lower($column->expression, $binding), new Identifier($name->value));
+            $label = new Identifier($name->value);
+            $expression = $field->expression;
+            if ($expression === null) {
+                $resolution = $field->resolution;
+                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
+                $results[] = new ResultColumn($binding->resolved($resolution), $label);
+                continue;
+            }
+            $results[] = new ResultColumn($expressions->lower($expression, $binding), $label);
         }
+
+        Check::input($results !== [], 'A complete projection requires at least one resolved output field.');
 
         $clauses = new QueryClauses();
         $where = $clauses->predicate($statement->where, $binding);

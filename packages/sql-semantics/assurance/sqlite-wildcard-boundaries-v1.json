@@ -1,0 +1,35 @@
+{
+  "revision": "SemanticsIR/sqlite-wildcard-boundaries-1",
+  "approval": "pending-human-review",
+  "scope": "Allocate an exact SQLite input occurrence and slot for a bound result field.",
+  "rules": {
+    "SourceBinding::resolved": {
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0,",
+        "    'The column must resolve to the projection source.'",
+        ");",
+        "if ($this->localColumns !== null) {",
+        "    $name = $resolution->slot->name;",
+        "    Check::input($resolution->relation === $this->source && $name !== null, 'The column must resolve to the local input occurrence.');",
+        "    $key = (new Identifier($name->value))->key();",
+        "    foreach ($this->localColumns as $index => $column) {",
+        "        if ($column->key() === $key) {",
+        "            return new ColumnReference($index);",
+        "        }",
+        "    }",
+        "    throw new InvalidConstruction('The column must belong to the local input.');",
+        "}",
+        "$column = $resolution->declaration();",
+        "foreach ($this->tables as $index => [$occurrence, $table]) {",
+        "    if ($resolution->relation === $occurrence) {",
+        "        Check::input($column !== null, 'The column must be an explicit member of the projection source.');",
+        "        return new ColumnReference($this->slot($index, $column), $index);",
+        "    }",
+        "}",
+        "",
+        "throw new InvalidConstruction('The column must resolve to a local base-table occurrence.');"
+      ]
+    }
+  }
+}

@@ -17,6 +17,9 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\PositionalArgument;
  */
 final class AggregateBinding
 {
+    /**
+     * Whether unqualified exact signatures search the builtin catalog first.
+     */
     public readonly bool $catalogFirst;
 
     private readonly bool $exclusiveCatalog;

@@ -47,6 +47,8 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 
 Use `Semantics::context()` to provide a catalog of relation definitions for name resolution. Each call to `analyzeAll()` binds against the same context. The result contains the complete statements in script order.
 
+Wildcards expand into the same explicit result columns as individually written fields. A wildcard needs a closed declaration layout. The result retains each output name and its exact input occurrence. A qualifier on a self join selects the specific occurrence.
+
 ## MySQL and PostgreSQL statements
 
 Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for the target release. Their database-owned `Ir` namespaces provide direct construction with the same invariant checks.

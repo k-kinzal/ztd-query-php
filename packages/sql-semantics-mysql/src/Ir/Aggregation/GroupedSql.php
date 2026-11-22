@@ -29,7 +29,8 @@ final class GroupedSql
                 $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
                 $result = $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';
             }
-            $items[] = $result . ' AS ' . $column->name->quoted();
+            $name = $column->name->value;
+            $items[] = $result . ($name === ltrim($name, " \t\r\n\v\f") ? ' AS ' . $column->name->quoted() : '');
         }
         $sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);
         if ($query->where !== null) {

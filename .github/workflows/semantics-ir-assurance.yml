@@ -223,6 +223,15 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-grouped-evidence"
+      - name: Collect SQLite wildcard projection observations
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_sqlite_wildcard.py \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --sqlite-library "$RUNNER_TEMP/libsqlite3.so" --out "$RUNNER_TEMP/semantics-ir-sqlite-wildcard-evidence"
       - name: Collect MySQL and PostgreSQL projection observations
         if: ${{ !cancelled() }}
         env:
@@ -294,6 +303,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-sqlite-compound-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-transaction-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-grouped-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-wildcard-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-index/
             ${{ runner.temp }}/semantics-ir-controls/
             ${{ runner.temp }}/semantics-ir-native-boundaries/
