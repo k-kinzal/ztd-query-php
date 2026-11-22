@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 
 from compare_assurance_revisions import review
+from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
@@ -460,7 +461,7 @@ def main():
         report["assuranceChanges"] = evidence.checked(revision)[1]
     else:
         report["assuranceChanges"] = None
-    report["valueClosure"] = None
+    report["valueClosure"] = report["scalarDispatch"] = None
     if guards:
         sources = {dialect: result["healthy"] for dialect, result in guards[2]["results"].items()}
         graph = certificate(manifest, roles["registeredConstructors"], sources)
@@ -469,6 +470,13 @@ def main():
         require(json.loads(recorded.read_text()) == {
             "candidate": identity, "distribution": evidence.distribution, "certificate": graph,
         }, "bundle-value-closure-mismatch", str(recorded))
+        proof = dispatch_certificate(sources, graph)
+        reference = guards[2]["scalarDispatch"]
+        recorded, link = evidence.checked(guards[0].parent / reference["path"], reference["sha256"])
+        require(json.loads(recorded.read_text()) == {
+            "candidate": identity, "distribution": evidence.distribution, "certificate": proof,
+        }, "bundle-scalar-dispatch-mismatch", str(recorded))
+        report["scalarDispatch"] = link
         graph["candidate"] = identity
         graph["distribution"] = report["distribution"]
         graph["sourceAudit"] = guards[1]
@@ -492,6 +500,7 @@ def main():
     ]
     if report["valueClosure"] is not None:
         lines.append("The [checked value graph](value-closure.json) records the static closure of retained fields under the listed PHP and source-audit premises.")
+        lines.append("The native constructor audit also links each checked scalar dispatch to the field types of its listed callers.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")

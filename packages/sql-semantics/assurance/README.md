@@ -327,6 +327,8 @@ The evaluator treats outer joins as filtered products with unmatched-row extensi
 
 The [closed value contract](closed-value-graph-v1.json) fixes the static argument for declared fields and retained children. The source audit requires each nonpromoted readonly field to receive one unconditional constructor initialization. The bundle reconciles the audited fields with the independently extracted inventory, verified list copies and pinned release enums. Its machine-readable graph records the argument's premises and the omission, open-edge, unchecked-list, external-definition and initialization controls.
 
+The [scalar dispatch contract](scalar-dispatch-v1.json) checks that each admitted operand type reaches one explicit branch or a typed delegation. The audit compares the renderer's PHP argument union with the checked fields of the listed callers. Removing a branch, adding a fallback, or narrowing both the signature and dispatch while still accepting a wider field fails the corresponding check. This evidence concerns coverage of the dispatch, with SQL semantics checked by the native comparisons.
+
 The source audit also checks the baseline digests of the value primitives used by all three dialects. A change to list copying, constructor checks, name comparison or the snapshot restoration guard is visible to the verifier. Any intentional revision of those primitives belongs in the review of the assurance mechanism.
 
 ## SQLite DISTINCT and row bounds

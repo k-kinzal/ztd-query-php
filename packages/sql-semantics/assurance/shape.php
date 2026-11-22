@@ -20,6 +20,7 @@ use PhpParser\PrettyPrinter\Standard;
 
 require $argv[1];
 require __DIR__ . '/value_storage.php';
+require __DIR__ . '/scalar_dispatch.php';
 require __DIR__ . '/native_boundaries.php';
 $root = $argv[2];
 $overlay = $argv[3] ?? '';
@@ -737,6 +738,7 @@ try {
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
     $listFields = [];
     $checkedValues = [];
+    $checkedDispatch = [];
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
@@ -814,6 +816,12 @@ try {
                 ));
                 requireShape($publicMethods === ($short === 'Aggregation\\GroupedLowering' ? ['applies', 'lower'] : ['lower']), "Unexpected lowering entry point in $short");
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
+            }
+        }
+        if ($short === 'SelectSql') {
+            $checkedDispatch['expression'] = checkedScalarDispatch($class, 'expression', $prefix);
+            if ($dialect !== 'sqlite') {
+                $checkedDispatch['predicate'] = checkedScalarDispatch($class, 'predicate', $prefix, $checkedDispatch['expression']);
             }
         }
         array_push($checkedBoundaries, ...checkNativeBoundaries(
@@ -919,7 +927,7 @@ try {
     sort($expectedBoundaries);
     requireShape($checkedBoundaries === $expectedBoundaries, 'Native boundary coverage differs');
     echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields, 'checkedBoundaries' => $checkedBoundaries,
-        'checkedBindingSources' => (object) $checkedBindingSources, 'checkedValues' => (object) $checkedValues]) . "\n";
+        'checkedBindingSources' => (object) $checkedBindingSources, 'checkedValues' => (object) $checkedValues, 'checkedDispatch' => $checkedDispatch]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);

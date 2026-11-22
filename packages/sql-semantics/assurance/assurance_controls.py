@@ -260,7 +260,7 @@ def identity_controls(args):
     return results
 
 
-def storage_mutation(args, dialect, file, name, original, replacement, detail):
+def source_shape_mutation(args, dialect, file, name, original, replacement, detail):
     relative = Path(f"sql-semantics-{dialect}/src/Ir/{file}")
     source = args.candidate / "packages" / relative
     text = source.read_text()
@@ -274,7 +274,7 @@ def storage_mutation(args, dialect, file, name, original, replacement, detail):
         text.splitlines(keepends=True), mutated.splitlines(keepends=True), f"a/{relative}", f"b/{relative}",
     )))
     failure = observe_rejection(lambda: shape(args, overlay, dialect), "shape-mismatch")
-    require(detail in failure.detail["message"], "wrong-storage-control-detail", failure.detail)
+    require(detail in failure.detail["message"], "wrong-source-shape-control-detail", failure.detail)
     return {"case": name, "dialect": dialect, "control": "passed", "original": digest(source), "mutated": digest(target),
             "expected": "shape-mismatch", "signal": failure.signal, "detail": failure.detail}
 
@@ -287,15 +287,27 @@ def storage_controls(args):
             ("store-unchecked-list", "$this->columns = $columns;"),
             ("rewrite-checked-list", "[$names] = [$columns];\n        $this->columns = $names;"),
         ):
-            results.append(storage_mutation(args, dialect, "TableSource.php", name, "$this->columns = $names;",
+            results.append(source_shape_mutation(args, dialect, "TableSource.php", name, "$this->columns = $names;",
                                             replacement, "List was not assigned from one checked local"))
         name = "Ordering/Order.php"
         location = args.candidate / f"packages/sql-semantics-{dialect}/src/Ir" / name
         assignments = [line for line in location.read_text().splitlines(keepends=True) if line.startswith("        $this->nullsFirst = ")]
         require(len(assignments) == 1, "uninitialized-field-control-anchor", dialect)
-        results.append(storage_mutation(args, dialect, name, "leave-readonly-field-uninitialized", assignments[0], "",
+        results.append(source_shape_mutation(args, dialect, name, "leave-readonly-field-uninitialized", assignments[0], "",
                                         "Value field needs one unconditional initialization in Ordering\\Order::nullsFirst"))
     return results
+
+
+def dispatch_controls(args):
+    source = "SelectSql.php"
+    branch = "            $expression instanceof IntegerLiteral => $expression->decimal,"
+    shape(args, dialect="sqlite")
+    return [
+        source_shape_mutation(args, "sqlite", source, "omit-required-scalar-dispatch", branch, "",
+                              "Incomplete scalar dispatch in expression"),
+        source_shape_mutation(args, "sqlite", source, "insert-silent-scalar-fallback", branch,
+                              branch + "\n            default => '0',", "Unhandled fallback in scalar dispatch expression"),
+    ]
 
 
 def publication_controls(args):
@@ -541,7 +553,7 @@ def main():
     args.out.mkdir(parents=True)
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
-              + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
+              + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
               + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
