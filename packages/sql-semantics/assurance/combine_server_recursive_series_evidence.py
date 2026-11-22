@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from os.path import relpath
 from pathlib import Path
 
 from check_recursive_availability import CONTROL, QUERY, classifications
@@ -12,7 +13,7 @@ from run_server_delete import tools
 from server_recursive_series_cases import case
 
 
-def unavailable(paths, checkout, candidate, specification):
+def unavailable(paths, checkout, candidate, specification, output):
     expected = set(specification["unavailableSyntax"]["mysql"])
     _, manifest = candidate_distribution(checkout, candidate)
     reports = {}
@@ -36,7 +37,7 @@ def unavailable(paths, checkout, candidate, specification):
         require(measured["requests"] == [case("mysql", tag, 1, 1, 3), {**parsed, "sql": QUERY}, {**parsed, "sql": CONTROL}],
                 "recursive-availability-request-mismatch", str(index))
         classifications(release, measured["native"], *measured["responses"])
-        reports[release] = {"index": str(index.resolve()), "indexDigest": digest(index),
+        reports[release] = {"index": relpath(index.resolve(), output.parent.resolve()), "indexDigest": digest(index),
                             "observationsDigest": digest(observations)}
     require(reports.keys() == expected, "recursive-availability-evidence-missing", sorted(expected - reports.keys()))
     return reports
@@ -52,7 +53,7 @@ def main():
     args = parser.parse_args()
     args.candidate_root = args.candidate_root.resolve()
     specification, _ = domain.specifications()
-    missing_syntax = unavailable(args.unavailable, args.candidate_root, args.candidate, specification)
+    missing_syntax = unavailable(args.unavailable, args.candidate_root, args.candidate, specification, args.out)
     combine(args.candidate, args.candidate_root, args.indexes, args.out, domain)
     results = json.loads(args.out.read_text())
     write_json(args.out, {**results, "unavailableProfiles": missing_syntax})

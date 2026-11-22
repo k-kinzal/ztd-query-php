@@ -4,6 +4,7 @@ import argparse
 import difflib
 import json
 from collections import Counter
+from os.path import relpath
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -121,7 +122,7 @@ def combine(candidate, checkout, paths, output, domain):
         results = replay(ledger, raw, specification, domain)
         check_faults(path.parent, raw, manifest, checkout, domain)
         counts.update(results)
-        releases[role] = {"index": str(path), "indexDigest": digest(path), "eventsDigest": digest(ledger),
+        releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
                           "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results}
     verify_candidate(checkout, candidate, manifest)
     missing = sorted(required - releases.keys())

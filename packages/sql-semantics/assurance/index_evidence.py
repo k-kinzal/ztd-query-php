@@ -5,33 +5,12 @@ import json
 from pathlib import Path
 
 from constructor_trace import check_scope, trace
+from native_schedule import NATIVE, reports as native_reports
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from verify_release_layout import CONTRACT as RELEASE_LAYOUT, CONTRACT_NAME as RELEASE_LAYOUT_NAME, runtime_catalog, verify_probe
 
 
-NATIVE = {
-    "projection": "server-projection-v1.json",
-    "postgres_int4": "postgres-int4-operators-v1.json",
-    "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
-    "delete": "server-delete-v2.json",
-    "join": "server-join-v1.json",
-    "result": "server-result-v1.json",
-    "insert": "server-insert-v1.json",
-    "update": "server-update-v2.json",
-    "transaction": "server-transaction-v1.json",
-    "drop_table": "server-drop-table-v1.json",
-    "create_table": "server-create-table-v1.json",
-    "parameter": "server-parameter-v1.json",
-    "compound": "server-compound-v2.json",
-    "local_projection": "server-local-projection-v4.json",
-    "truth": "server-truth-v2.json",
-    "recursive_series": "server-recursive-series-v2.json",
-    "derived_join": "server-derived-join-v2.json",
-    "grouped": "server-grouped-v3.json",
-    "insert_query": "server-insert-query-v2.json",
-    "wildcard": "wildcard-projection-v2.json",
-}
 SQLITE = {
     "sqlite-case-v1.json", "sqlite-cast-v1.json", "sqlite-defaults-v1.json", "sqlite-delete-returning-v1.json", "sqlite-group-filter-v1.json",
     "sqlite-update-returning-v1.json", "sqlite-insert-returning-v1.json", "sqlite-numeric-operators-v1.json", "sqlite-unary-v1.json",
@@ -119,6 +98,32 @@ class Evidence:
             domains[contract] = {"receipt": origin_, "finite": receipt["finite"], "compared": receipt["compared"],
                                  "rejected": receipt["rejected"], "faults": receipt["faults"]}
         return {"replay": origin, "domains": domains}
+
+    def native_collection(self):
+        item = self.optional("native-replay/index.json")
+        if item is None:
+            return None
+        path, origin, report = item
+        records, layout = report["records"], report["layout"]
+        require(records.keys() == NATIVE.keys() and layout in {"release", "workflow"}
+                and report["collector"] == self.tools["collect_native_replays.py"],
+                "bundle-native-collection-identity", origin)
+        raw = self.root / "native"
+        for domain, result in records.items():
+            require(result["records"] == [index.relative_to(raw).as_posix() for index in native_reports(raw, layout, domain)],
+                    "bundle-native-collection-records", domain)
+            unavailable = native_reports(raw, layout, "recursive_unavailable") if domain == "recursive_series" else ()
+            require(result["unavailable"] == [index.relative_to(raw).as_posix() for index in unavailable],
+                    "bundle-native-collection-availability", domain)
+            self.checked(path.parent / f"{domain}.log", result["log"]["sha256"])
+            receipt = result["receipt"]
+            if receipt is not None:
+                require(receipt["file"] == f"{domain}.json", "bundle-native-collection-receipt", domain)
+                self.checked(path.parent / receipt["file"], receipt["sha256"])
+        failed = [domain for domain in NATIVE if records[domain]["exitCode"] or records[domain]["receipt"] is None]
+        require(failed == report["failed"], "bundle-native-collection-balance", origin)
+        self.missing.extend(f"native-replay/{domain}/collector" for domain in failed)
+        return origin
 
     def native(self, profiles):
         domains = {}
@@ -255,6 +260,7 @@ def main():
         faults[fault] = {"receipt": origin, "signal": receipt["signal"]}
     require(set(faults) == {f"F{number:02}" for number in range(1, 13)}, "bundle-missing-required-fault")
     profiles = json.loads((tools / "server-projection-v1.json").read_text())["profiles"]
+    native_collection = evidence.native_collection()
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
     controls = evidence.artifact("assurance-controls/index.json", "verified")
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
@@ -271,7 +277,7 @@ def main():
         "indexer": digest(Path(__file__)), "verifierFiles": evidence.tools,
         "inventory": inventory, "scope": scope, "grammar": grammar, "initial": original,
         "publicRoots": roles["completeRootTypes"], "constructors": roles["registeredConstructors"],
-        "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native,
+        "routes": roles["publicationRoutes"], "sqlite": sqlite, "native": native, "nativeCollection": native_collection,
         "nativeConstructorAudit": guards[1] if guards else None, "stagedDistribution": staged[1] if staged else None,
         "requiredFaults": faults, "faultAndIntegrityControls": controls[1] if controls else None, "formalProof": base["proof"],
         "observedBranchRules": rule_link, "requiredBranchStatuses": statuses,
