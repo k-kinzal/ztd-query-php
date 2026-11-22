@@ -46,6 +46,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "postgres-delete-returning-v1.json": "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6",
     "postgres-int4-case-v1.json": "7eb2ce7eefebccb894a7b47ce725a08d381978f2ff235a7475533f074da1620b",
     "sqlite-concatenation-v1.json": "0e6cf551291823e3fa6a60bcb9ffc0624b0583533c244aa68fc27c47a24842e4",
     "sqlite-collation-v1.json": "e6095ab2d70045c9ab7f0d49ea8c06248dd2195dd0828968690a35221d45dcd6",

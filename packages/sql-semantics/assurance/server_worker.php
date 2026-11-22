@@ -471,7 +471,17 @@ function constructDelete(string $platform, array $input): SemanticsIR
     $delete = $namespace . 'Mutation\\Delete';
     $where = constructPredicate($namespace, $input['where']);
 
-    return new $delete(constructSource($platform, $input['target'], $input['dialect']), $where, $release::from($input['release']));
+    $returning = [];
+    if ($input['dialect'] === 'postgres') {
+        $field = $namespace . 'Mutation\\ReturnedColumn';
+        $identifier = $namespace . 'Identifier';
+        foreach ($input['returning'] ?? [] as [$reference, $label]) {
+            $returning[] = new $field(constructOperand($namespace, $reference), new $identifier($label));
+        }
+    }
+
+    return new $delete(constructSource($platform, $input['target'], $input['dialect']), $where, $release::from($input['release']),
+        ...($input['dialect'] === 'postgres' ? [$returning] : []));
 }
 
 function observePredicate(string $namespace, ?object $condition): ?array
@@ -492,6 +502,9 @@ function observeDelete(string $namespace, object $value, string $dialect): array
     return [
         'status' => 'constructed', 'profile' => $value->profileId(),
         'target' => observeSource($value->target, $dialect, $namespace), 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
+        ...($dialect === 'postgres' ? ['returning' => array_map(static fn ($field): array => [
+            observeOperand($namespace, $field->reference), $field->name->value,
+        ], $value->returning)] : []),
     ];
 }
 

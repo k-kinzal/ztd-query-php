@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Delete;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\ReturnedColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -32,6 +33,16 @@ final class DeleteTest extends TestCase
         $source = new TableSource(new Identifier('public'), new Identifier('accounts'), []);
 
         self::assertStringStartsWith('pg-', (new Delete($source))->profileId());
+    }
+
+    public function testToStringReturnsAFieldFromEachDeletedRow(): void
+    {
+        $target = new TableSource(new Identifier('public'), new Identifier('accounts'), [new Identifier('id')]);
+        $field = new ReturnedColumn(new ColumnReference(0), new Identifier('removed'));
+        $delete = new Delete($target, returning: [$field]);
+
+        self::assertSame([$field], $delete->returning);
+        self::assertSame('DELETE FROM "public"."accounts" RETURNING "id" AS "removed"', $delete->toString());
     }
 
     public function testRejectsAnOutOfScopePredicateSlot(): void

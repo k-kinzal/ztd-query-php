@@ -25,7 +25,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
             ] : []),
-            ['native-boundaries-v14.json', '5a5b4c9a9574dbb3b9a1496e83609af4424272fcbd00d2e37a77eba8099a33ef'],
+            ['native-boundaries-v15.json', 'ad4cfd6a169e109a4f7d4c8119e10dd236756d595b1ae3fef07b775f4c940c8b'],
             ['native-insert-query-boundaries-v3.json', '60ebb905f691b9fd60b7d3df7e46895e0742d074e883a7431025c0f35137a129'],
         ],
     };

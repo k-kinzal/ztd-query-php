@@ -19,6 +19,9 @@ function deleteFixture(PDO $pdo, string $engine, string $schema): void
     $child = $schema . '.ir_delete_child';
     $control = $schema . '.ir_delete_control';
     $events = $schema . '.ir_delete_events';
+    foreach ([$child, $target, $control, $events] as $name) {
+        $pdo->exec('DROP TABLE IF EXISTS ' . $name);
+    }
     $pdo->exec('CREATE TABLE ' . $target . ' (id INTEGER, delta INTEGER)');
     $pdo->exec('CREATE TABLE ' . $child . ($engine === 'postgres' ? ' () INHERITS (' . $target . ')' : ' (id INTEGER, delta INTEGER)'));
     $pdo->exec('CREATE TABLE ' . $control . ' (id INTEGER, delta INTEGER)');
@@ -39,7 +42,7 @@ function deleteFixture(PDO $pdo, string $engine, string $schema): void
     }
 }
 
-function admitDelete(string $sql, string $schema): bool
+function admitDelete(string $sql, string $schema, string $engine): bool
 {
     // Fixtures admit simple quoted names, signed scalars and the registered DELETE forms.
     $quote = '["' . chr(96) . ']?';
@@ -49,7 +52,13 @@ function admitDelete(string $sql, string $schema): bool
     $integer = '-?[0-9]{1,10}';
     $operand = '(?:' . $integer . '|CAST\\(' . $integer . ' AS pg_catalog\\.int4\\)|' . $reference . ')';
     $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
-    return preg_match('/\\ADELETE FROM (?:ONLY )?' . $table . '(?: AS r)?(?: WHERE (?&truth))?\\z'
+    $returning = '';
+    if ($engine === 'postgres') {
+        $alias = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\\x00]|"")+")';
+        $field = '(?:' . $reference . '(?: AS ' . $alias . ')?|(?:' . $name('(?:ir_delete_(?:target|child|control)|r)') . '\\.)?\\*)';
+        $returning = '(?: RETURNING ' . $field . '(?:, ' . $field . ')*)?';
+    }
+    return preg_match('/\\ADELETE FROM (?:ONLY )?' . $table . '(?: AS r)?(?: WHERE (?&truth))?' . $returning . '\\z'
         . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
 }
 
@@ -71,7 +80,7 @@ function physicalRows(PDO $pdo, string $engine, string $schema): array
 
 function deleteEffect(PDO $pdo, string $engine, string $schema, string $sql): array
 {
-    if (!admitDelete($sql, $schema)) {
+    if (!admitDelete($sql, $schema, $engine)) {
         return ['status' => 'outside-observer-scope'];
     }
     $pdo->beginTransaction();
@@ -79,6 +88,14 @@ function deleteEffect(PDO $pdo, string $engine, string $schema, string $sql): ar
         $statement = $pdo->prepare($sql);
         $statement->execute();
         $effect = ['status' => 'deleted', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount()];
+        if ($effect['columns'] > 0) {
+            $effect['fields'] = [];
+            for ($index = 0; $index < $effect['columns']; ++$index) {
+                $meta = $statement->getColumnMeta($index);
+                $effect['fields'][] = [$meta['name'], $meta['native_type']];
+            }
+            $effect['rows'] = $statement->fetchAll(PDO::FETCH_NUM);
+        }
         $statement->closeCursor();
         $effect['after'] = physicalRows($pdo, $engine, $schema);
     } catch (PDOException $error) {

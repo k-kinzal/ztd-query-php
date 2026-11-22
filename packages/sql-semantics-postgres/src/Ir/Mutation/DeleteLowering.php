@@ -20,21 +20,22 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete as ParsedDele
 final class DeleteLowering
 {
     /**
-     * Rejects unsupported clauses and closes the filter before exporting the target's slots.
+     * Closes the filter and output layout before exporting the target's slots.
      */
     public function lower(BoundStatement $operation, ParsedDelete $statement): Delete
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The DELETE requires the native language profile.');
-        Check::input($statement->with === null && $statement->using === null && $statement->returning === []
-            && !$statement->where instanceof CurrentOf, 'Complete PostgreSQL DELETE requires one target without WITH, USING, a cursor or RETURNING.');
+        Check::input($statement->with === null && $statement->using === null
+            && !$statement->where instanceof CurrentOf, 'Complete PostgreSQL DELETE requires one target without WITH, USING or a cursor.');
         $path = $operation->context->searchPath;
         $catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';
         $binding = new SourceBinding($operation, $statement->target);
         $where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);
+        $returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);
         $target = $binding->source();
         Check::input($target !== null, 'A complete DELETE requires a resolved target.');
 
-        return new Delete($target, $where, $profile->grammar);
+        return new Delete($target, $where, $profile->grammar, $returning);
     }
 }

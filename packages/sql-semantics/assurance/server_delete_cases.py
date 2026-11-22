@@ -113,9 +113,10 @@ def negatives(dialect, tag):
         "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation} WHERE id = 1",
         "declarations": [f"CREATE TABLE {relation} (id TEXT, delta INTEGER)"],
     }, "signed 32-bit integer"
-    clause = " LIMIT 1" if dialect == "mysql" else " RETURNING id"
+    clause = " LIMIT 1" if dialect == "mysql" else f" USING {schema}.ir_delete_control"
+    declarations = [base] if dialect == "mysql" else [base, f"CREATE TABLE {schema}.ir_delete_control (id INTEGER, delta INTEGER)"]
     yield {
-        "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}" + clause, "declarations": [base],
+        "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}" + clause, "declarations": declarations,
     }, "Complete MySQL DELETE requires" if dialect == "mysql" else "Complete PostgreSQL DELETE requires"
 
 

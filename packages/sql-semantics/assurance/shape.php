@@ -310,6 +310,13 @@ if ($dialect !== 'sqlite') {
         'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         'where' => $conditions,
     ];
+    if ($dialect === 'postgres') {
+        $properties['Mutation\\Delete']['returning'] = ['array'];
+        $properties['Mutation\\ReturnedColumn'] = ['reference' => ['ColumnReference'], 'name' => ['Identifier']];
+        $methods['Mutation\\ReturnedColumn'] = ['__construct'];
+        array_push($internal, 'Mutation\\ReturningLowering', 'Mutation\\ReturningSql');
+        $pureCollaborators[] = 'Mutation\\ReturningSql';
+    }
     $properties['Predicate\\IntegerComparison'] = [
         'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
     ];
@@ -548,9 +555,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v19.json';
+    $storagePath = __DIR__ . '/value-storage-v20.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '01cc4025d83f77aba76aa068ad7ffebcd163022c15da98991f56ed515d23018e',
+        hash_file('sha256', $storagePath) === '8e8b9f648860f9274b1133e8b3747f9f38fa0f34d2306c23d2d0bfa86d4ab117',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

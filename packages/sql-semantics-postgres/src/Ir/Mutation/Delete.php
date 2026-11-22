@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
@@ -30,14 +31,28 @@ final class Delete implements SemanticsIR
     use Snapshot;
 
     /**
-     * Closes the filter over the target occurrence.
+     * @var list<ReturnedColumn> The output fields in their observed order
+     */
+    public readonly array $returning;
+
+    /**
+     * Closes the filter and returned fields over the target occurrence.
+     *
+     * @param list<ReturnedColumn> $returning The output layout. An empty layout is command-only.
      */
     public function __construct(
         public readonly TableSource $target,
         public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        array $returning = [],
     ) {
         (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
+        Check::input(count($returning) <= 1024, 'A DELETE can return at most 1024 fields.');
+        $checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');
+        foreach ($checked as $field) {
+            Check::input(isset($target->columns[$field->reference->slot]), 'A DELETE returned slot must belong to its target.');
+        }
+        $this->returning = $checked;
     }
 
     /**
@@ -49,14 +64,15 @@ final class Delete implements SemanticsIR
     }
 
     /**
-     * Renders one absolute target and the closed predicate, when present.
+     * Renders one absolute target, the closed predicate and the output layout.
      */
     public function toString(): string
     {
         $sql = 'DELETE FROM ' . ($this->target->only ? 'ONLY ' : '') . $this->target->schema->quoted() . '.' . $this->target->table->quoted();
+        $returning = (new ReturningSql())->clause($this->target, $this->returning);
         if ($this->where === null) {
-            return $sql;
+            return $sql . $returning;
         }
-        return $sql . ' WHERE ' . (new SelectSql())->predicate($this->where, $this->target, qualify: false);
+        return $sql . ' WHERE ' . (new SelectSql())->predicate($this->where, $this->target, qualify: false) . $returning;
     }
 }

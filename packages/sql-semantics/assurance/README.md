@@ -120,6 +120,8 @@ To join the independent evidence from all native server releases, run `combine_s
 
 The [native DELETE contract](server-delete-v2.json) covers single-target removal on the same pinned releases and profiles. Its observer runs one checked statement against disposable parent, descendant and control tables. It compares the affected-row count, remaining rows, deletion log and restored state. PostgreSQL observations distinguish ONLY from deletion through an inheritance hierarchy. The oracle models predicates independently of the emitted SQL and preserves typed NULLs and duplicate rows.
 
+The [PostgreSQL RETURNING extension](postgres-delete-returning-v1.json) also compares ordered column names and native types, the returned row bag, and the same physical effects. The prior unsupported-clause case now checks `USING`, and `RETURNING id` is an analyzed positive case. Run `run_server_postgres_delete_returning.py` for 16.6 and 17.2, then `combine_server_postgres_delete_returning_evidence.py` for the complete pinned replay.
+
 Run `run_server_delete.py` with the same native fixture environment and `--candidate`, `--tool-autoload`, `--engine`, `--release` and `--out` as the projection runner. The observer requires a disposable `ir_fixture` database. The manual release matrix runs DELETE alongside the projection, join and row selection domains. Combine the per-release DELETE `index.json` paths using `combine_server_delete_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out delete-matrix.json`. The collector replays the state comparisons and verifies the recorded fault results for the tested distribution.
 
 ## Native joined projections
