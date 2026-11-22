@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\DefaultExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\NotNull;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\NullAllowed;
@@ -37,9 +37,9 @@ final class CreateColumnLowering
             $column->storage === null && $column->compression === null && $column->options === [],
             'CREATE TABLE requires an ordinary column definition.'
         );
-        $typing = new ColumnTyping();
-        Check::input($typing->serial($column->type) === null && !$column->type->setOf, 'The column requires a builtin signed integer storage role.');
-        $kind = match ($typing->descriptor($column->type, $operation->context)) {
+        $type = $column->type->typeFact($operation->context);
+        Check::input($type instanceof Known && !$column->type->setOf, 'The column requires a builtin signed integer storage role.');
+        $kind = match ($type->descriptor) {
             Builtin::Int2 => IntegerStorage::Small,
             Builtin::Int4 => IntegerStorage::Standard,
             Builtin::Int8 => IntegerStorage::Wide,

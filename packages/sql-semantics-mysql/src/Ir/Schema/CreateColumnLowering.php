@@ -57,7 +57,9 @@ final class CreateColumnLowering
                 $nullable = match ($attribute->keyword) {
                     ColumnKeyword::Null => true,
                     ColumnKeyword::NotNull => false,
-                    default => throw new InvalidConstruction('The column attribute is outside the native declaration domain.'),
+                    ColumnKeyword::NotSecondary, ColumnKeyword::AutoIncrement, ColumnKeyword::SerialDefaultValue,
+                    ColumnKeyword::PrimaryKey, ColumnKeyword::Unique, ColumnKeyword::Visible,
+                    ColumnKeyword::Invisible => throw new InvalidConstruction('The column attribute is outside the native declaration domain.'),
                 };
             } else {
                 throw new InvalidConstruction('The column attribute is outside the native declaration domain.');
