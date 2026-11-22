@@ -3,9 +3,9 @@
 
 NATIVE = {
     "projection": "server-projection-v1.json",
-    "postgres_int4": "postgres-int4-operators-v1.json",
+    "postgres_int4": "postgres-int4-operators-v2.json",
     "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
-    "postgres_builtin_casts": "postgres-builtin-casts-v2.json",
+    "postgres_builtin_casts": "postgres-builtin-casts-v3.json",
     "postgres_int4_distinctness": "postgres-int4-distinctness-v1.json",
     "postgres_int4_range": "postgres-int4-range-v1.json",
     "postgres_int4_case": "postgres-int4-case-v1.json",
@@ -24,7 +24,7 @@ NATIVE = {
     "transaction": "server-transaction-v1.json",
     "drop_table": "server-drop-table-v1.json",
     "create_table": "server-create-table-v1.json",
-    "parameter": "server-parameter-v2.json",
+    "parameter": "server-parameter-v3.json",
     "compound": "server-compound-v2.json",
     "local_projection": "server-local-projection-v4.json",
     "truth": "server-truth-v2.json",

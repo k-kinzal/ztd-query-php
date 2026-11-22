@@ -61,6 +61,12 @@ final class CompoundShapeTest extends TestCase
         self::assertSame('(' . $value->toString() . ')', CompoundShape::sql($value));
     }
 
+    public function testMergePromotesEitherOrderOfNativeIntegerTypes(): void
+    {
+        self::assertSame(ResultKind::WideInteger, CompoundShape::merge(ResultKind::Integer, ResultKind::WideInteger));
+        self::assertSame(ResultKind::WideInteger, CompoundShape::merge(ResultKind::WideInteger, ResultKind::Integer));
+    }
+
     public function testMergeUsesTheKnownIntegerRole(): void
     {
         self::assertSame(ResultKind::Integer, CompoundShape::merge(ResultKind::Unknown, ResultKind::Integer));

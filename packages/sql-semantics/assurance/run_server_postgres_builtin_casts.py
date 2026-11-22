@@ -13,8 +13,8 @@ from server_cases import fixtures, observation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-builtin-casts"
-CONTRACT_NAME = "postgres-builtin-casts-v2.json"
-CONTRACT = "ea6139a89394b54599ab3329d9a7aee9251bde2201858ebe84f56fa2aa11a2d0"
+CONTRACT_NAME = "postgres-builtin-casts-v3.json"
+CONTRACT = "b439bb017cc95d4da5c419bb7e5f6229992d39a311009b1348caa5e2e5d562ad"
 OBSERVER = "server_observer.php"
 
 
@@ -67,10 +67,16 @@ def check_fault_witness(item, witness):
 def required_forms(_engine, _tag):
     return {"source/unit", "source/only", "source/inherited", "leaf/slot/0", "leaf/slot/1",
             "leaf/null", "leaf/boolean", "leaf/integer", "width/5", "depth/6", "distinct/True", "distinct/False",
-            "target/bool", "target/int4", "child/bool/bool", "child/bool/int4", "child/int4/bool", "child/int4/int4"}
+            "target/bool", "target/int4", "target/int8", "leaf/wide-integer", "compound/union-all", "child/bool/bool", "child/bool/int4", "child/int4/bool", "child/int4/int4"}
 
 
-def sample_forms(forms, response, _engine, _item):
+def sample_forms(forms, response, engine, item):
+    if "compound" in response:
+        forms["compound/union-all"] += 1
+        compound = response["compound"]
+        for side in ("left", "right"):
+            sample_forms(forms, compound[side], engine, item)
+        return
     forms["source/" + source_role(response["source"])] += 1
     forms[f"width/{len(response['columns'])}"] += 1
     forms[f"distinct/{response['distinct']}"] += 1
@@ -122,8 +128,20 @@ def faults(_engine, tag):
         ("drop-nested-conversion", "$expression->operand", "$expression->operand->operand",
          project(tag, cast("int4", cast("bool", leaf(11))))),
     )
-    return [RenderFault(name, renderer, original, original.replace(before, after), case, "meaning-mismatch")
-            for name, before, after, case in replacements]
+    wide_operand = project(tag, cast("int8", leaf(0)))
+    narrowing = project(tag, cast("int8", cast("int4", ["wide-integer", "2147483648"])))
+    prior = [RenderFault(name, renderer, original, original.replace(before, after), case, "meaning-mismatch")
+             for name, before, after, case in replacements]
+    wide_format = "$expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)'"
+    return prior + [
+        RenderFault("emit-int4-literal-for-wide", renderer, wide_format, wide_format.replace("int8", "int4"),
+                    project(tag, ["wide-integer", "1"]), "meaning-mismatch"),
+        RenderFault("erase-wide-target", renderer, original, original.replace(target, "'int4'"),
+                    wide_operand, "meaning-mismatch"),
+        RenderFault("remove-narrowing-before-promotion", renderer, original,
+                    original.replace("$expression->operand", "($expression->operand instanceof BuiltinCast ? $expression->operand->operand : $expression->operand)"),
+                    narrowing, "meaning-mismatch"),
+    ]
 
 
 if __name__ == "__main__":

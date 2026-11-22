@@ -6,8 +6,8 @@ from run import digest, require
 from scope import CONTRACTS, public_scope
 
 
-DECLARATIONS = "constructor-declarations-v3.json"
-DECLARATION_DIGEST = "90693429d53e40114f1ce5dd5af1151f80a2d6b04d78433239f9cd81aebf9749"
+DECLARATIONS = "constructor-declarations-v4.json"
+DECLARATION_DIGEST = "6f6747ef3adc2e9a5a1879526ba2aead39c087c4ed0c9c155bb68f0228dc7531"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 FIELDS = {
     "role": ("role", "roles"),
@@ -96,7 +96,10 @@ def checked_methods(guard, dialect, role):
         "boundaryTemplates": [method for method in healthy["checkedBoundaries"] if method.startswith(prefix)],
         "checkedLists": healthy["checkedLists"].get(role, []),
         "faults": [fault["name"] for fault in audited["faults"] if fault["role"].startswith(prefix)],
-        **({"checkedBindingSources": healthy["checkedBindingSources"]} if dialect == "sqlite" and role == "Predicate/FoldedMembership" else {}),
+        **({"checkedBindingSources": healthy["checkedBindingSources"]} if (dialect, role) in {
+            ("sqlite", "Predicate/FoldedMembership"), ("postgres", "Expression/WideIntegerLiteral"),
+            ("postgres", "Expression/BuiltinCast"),
+        } else {}),
     }
 
 

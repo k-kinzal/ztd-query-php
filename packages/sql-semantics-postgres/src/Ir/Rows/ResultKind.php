@@ -14,6 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 enum ResultKind: string
 {
     case Integer = 'int32';
+    case WideInteger = 'int64';
     case Boolean = 'bool';
     case Unknown = 'unknown';
     case Text = 'text';

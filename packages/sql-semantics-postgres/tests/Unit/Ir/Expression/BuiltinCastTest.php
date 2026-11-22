@@ -15,6 +15,13 @@ use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 #[Small]
 final class BuiltinCastTest extends TestCase
 {
+    public function testRejectsAnInvalidEdgeEvenForTypedNull(): void
+    {
+        $this->expectExceptionMessage('no direct cast between bigint and boolean');
+
+        new BuiltinCast(CastDestination::Boolean, new BuiltinCast(CastDestination::WideInteger, new NullLiteral()));
+    }
+
     public function testKeepsAnExplicitTypedNullAcrossConversions(): void
     {
         $null = new NullLiteral();

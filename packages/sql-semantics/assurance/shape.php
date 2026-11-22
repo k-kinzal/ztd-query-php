@@ -69,11 +69,13 @@ if ($dialect === 'postgres') {
     $castDestination = 'Expression\\CastDestination';
     $properties[$builtinCast] = [
         'target' => [$castDestination],
-        'operand' => ['BooleanLiteral', 'ColumnReference', $builtinCast, 'IntegerLiteral', 'NullLiteral'],
+        'operand' => ['BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
     ];
     $properties[$castDestination] = $methods[$castDestination] = [];
     $methods[$builtinCast] = ['__construct'];
-    $properties['ResultColumn']['expression'][] = $builtinCast;
+    $properties['Expression\\WideIntegerLiteral'] = ['decimal' => ['string']];
+    $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
+    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral');
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -154,7 +156,7 @@ if ($dialect === 'mysql') {
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {
-    $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'Boolean' => 'bool'];
+    $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool'];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
 if ($dialect === 'sqlite') {
@@ -516,7 +518,7 @@ if ($dialect !== 'sqlite') {
     $enumCases['Rows\\CompoundOperator'] = ['Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $enumCases['Rows\\ResultKind'] = $dialect === 'mysql'
         ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'UnsignedInteger' => 'uint64', 'DecimalInteger' => 'decimal-integer', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
-        : ['Integer' => 'int32', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
+        : ['Integer' => 'int32', 'WideInteger' => 'int64', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
     array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');
     $pureCollaborators[] = 'Rows\\CompoundShape';
     $properties['Schema\\CreateTable'] = [
@@ -704,17 +706,20 @@ try {
         }
     }
     $checkedBindingSources = [];
-    if ($dialect === 'sqlite') {
-        $bindingRecord = __DIR__ . '/sqlite-folded-binding-sources-v2.json';
-        requireShape(
-            hash_file('sha256', $bindingRecord) === 'd7cb693f8d7c41253b7eb0b5c5b3de0beda70c437d209795af10886d0750ba39',
-            'Folded binding contract differs from its recorded revision'
-        );
+    $binding = match ($dialect) {
+        'sqlite' => ['sqlite-folded-binding-sources-v2.json', 'd7cb693f8d7c41253b7eb0b5c5b3de0beda70c437d209795af10886d0750ba39', 'Folded binding'],
+        'postgres' => ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
+        'mysql' => null,
+    };
+    if ($binding !== null) {
+        [$name, $digest, $label] = $binding;
+        $bindingRecord = __DIR__ . '/' . $name;
+        requireShape(hash_file('sha256', $bindingRecord) === $digest, "$label contract differs from its recorded revision");
         $bindingSources = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
         foreach ($bindingSources as $path => $approved) {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
             $file = is_file($patched) ? $patched : $root . '/packages/' . $package . '/' . $path;
-            requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], "Folded binding source differs in $path");
+            requireShape(is_file($file) && hash_file('sha256', $file) === $approved['sha256'], "$label source differs in $path");
             $checkedBindingSources[$path] = $approved;
         }
     }

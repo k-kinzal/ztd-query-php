@@ -91,7 +91,7 @@ def negatives(tag):
     for left, right in ((["slot", 0], integer(1)), (integer(1), ["slot", 0])):
         yield projection(tag, operation("/", left, right)), "belong to the SELECT source"
     yield analyzed("postgres", "SELECT 7 OPERATOR(public./) 2 AS n", version=tag), "pg_catalog operator"
-    yield analyzed("postgres", "SELECT 2147483648 % 2 AS n", version=tag), "no complete PostgreSQL projection representation"
+    yield analyzed("postgres", "SELECT 2147483648 % 2 AS n", version=tag), "Arithmetic operands must have the int4 role."
 
 
 def requests(_engine, tag, specification):

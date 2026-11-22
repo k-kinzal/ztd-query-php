@@ -14,5 +14,6 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Expression;
 enum CastDestination: string
 {
     case Integer = 'int4';
+    case WideInteger = 'int8';
     case Boolean = 'bool';
 }

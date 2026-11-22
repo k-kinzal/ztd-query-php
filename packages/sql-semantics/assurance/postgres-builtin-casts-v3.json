@@ -49,7 +49,7 @@
         "Q05"
       ]
     },
-    "WideIntegerLiteral": {
+    "Expression/WideIntegerLiteral": {
       "role": "An explicitly typed signed 64-bit integer scalar.",
       "structure": "A canonical decimal value independent of PHP integer width.",
       "conditions": "Accept zero and the signed interval from -9223372036854775808 to 9223372036854775807, with no leading zeroes on nonzero values and no negative zero. The analyzed literal must have a resolved PostgreSQL int8 type.",
@@ -139,8 +139,18 @@
     "An analyzed cast to an unsupported builtin such as int2",
     "A static cast of a wide input directly to bool",
     "A cast of a textual value whose input conversion is outside this domain",
-    "Canonical int8 storage rejects overflows in either direction, leading zeroes and negative zero.",
-    "Reject direct and analyzed int8-to-bool and bool-to-int8 edges including typed NULL; reject a set node that combines bool and int8."
+    "Direct bigint value one above the signed maximum",
+    "Direct bigint value one below the signed minimum",
+    "Direct bigint value with negative zero spelling",
+    "Direct bigint value with a leading zero",
+    "Direct Boolean to bigint edge",
+    "Direct bigint to Boolean edge",
+    "Direct bigint-typed NULL to Boolean edge",
+    "Direct Boolean-typed NULL to bigint edge",
+    "Analyzed Boolean to bigint edge",
+    "Analyzed bigint-typed NULL to Boolean edge",
+    "An analyzed bare constant larger than int8, with native numeric type",
+    "A completed set node joining a Boolean arm and a bigint-typed NULL arm"
   ],
   "faults": [
     "Change the target type",
@@ -216,7 +226,12 @@
       "existing-first",
       "wide-first"
     ],
-    "identity": "Reconstruct every positive from the value graph, including native errors. Check all 108 source/target/wide/option cells, all 36 source/int4-or-untyped-null/option promotions, eight reference promotions, 18 standalone wide values and 18 combinations of three wide boundary operands, three paired types and two arm orders. Preserve all 112 predecessor cells."
+    "identity": "Reconstruct every positive from the value graph, including native errors. Check all 108 source/target/wide/option cells, all 36 source/int4-or-untyped-null/option promotions, eight reference promotions, 18 standalone wide values and 18 combinations of three wide boundary operands, three paired types and two arm orders. Preserve all 112 predecessor cells.",
+    "pairWideOperands": [
+      "-9223372036854775808",
+      "2147483648",
+      "9223372036854775807"
+    ]
   },
   "wideExploration": {
     "seeds": [

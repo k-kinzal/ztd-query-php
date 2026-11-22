@@ -184,7 +184,7 @@ def inventory(root):
             related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v1.json") for alternative in rules.get("DeleteStmt", [])}
             related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v1.json", "postgres-update-returning-v2.json",
                                                                   "postgres-insert-returning-v1.json")
-            related.update({alternative: ("postgres-int4-operators-v1.json",) for alternative in (
+            related.update({alternative: ("postgres-int4-operators-v2.json",) for alternative in (
                 "a_expr: a_expr / a_expr", "a_expr: a_expr % a_expr", "a_expr: a_expr qual_Op a_expr",
                 "b_expr: b_expr / b_expr", "b_expr: b_expr % b_expr", "b_expr: b_expr qual_Op b_expr",
             )})
@@ -200,7 +200,7 @@ def inventory(root):
             related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]
                             if any(alternative.endswith(" " + mode) for mode in ("TRUE_P", "FALSE_P", "UNKNOWN"))
                             and " IS " in alternative})
-            related.update({alternative: ("postgres-builtin-casts-v2.json",) for alternative in (
+            related.update({alternative: ("postgres-builtin-casts-v3.json",) for alternative in (
                 "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
                 "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
             )})
@@ -250,7 +250,7 @@ def inventory(root):
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):
-                    related[alternative] = (*related.get(alternative, ()), "server-parameter-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "server-parameter-v3.json")
         local_signatures = {
             "table_factor: select_derived_init get_select_lex select_derived2",
             "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",

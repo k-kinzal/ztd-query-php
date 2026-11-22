@@ -15,6 +15,6 @@ final class CastDestinationTest extends TestCase
 {
     public function testEachDestinationHasItsCatalogName(): void
     {
-        self::assertSame(['int4', 'bool'], array_column(CastDestination::cases(), 'value'));
+        self::assertSame(['int4', 'int8', 'bool'], array_column(CastDestination::cases(), 'value'));
     }
 }

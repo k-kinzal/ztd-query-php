@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -69,8 +70,10 @@ final class CompoundShape
         return match (true) {
             $column instanceof BuiltinCast => match ($column->target) {
                 CastDestination::Integer => ResultKind::Integer,
+                CastDestination::WideInteger => ResultKind::WideInteger,
                 CastDestination::Boolean => ResultKind::Boolean,
             },
+            $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof TruthTest => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral, $column instanceof Parameter => ResultKind::Integer,
@@ -84,6 +87,10 @@ final class CompoundShape
     {
         if ($left === ResultKind::Unknown) {
             return $right === ResultKind::Unknown ? ResultKind::Text : $right;
+        }
+        if (($left === ResultKind::Integer && $right === ResultKind::WideInteger)
+            || ($left === ResultKind::WideInteger && $right === ResultKind::Integer)) {
+            return ResultKind::WideInteger;
         }
         Check::input($right === ResultKind::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');
 

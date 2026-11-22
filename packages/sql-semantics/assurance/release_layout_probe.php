@@ -119,7 +119,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'PostgreSql') {
-        $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer WHERE (NOT NULL) IS NULL';
+        $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
     foreach ($queries as $role => $sql) {
         $result = $semantics->analyze($sql, $context);
@@ -149,6 +149,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost an explicit scalar conversion.');
             }
             $details['nestedCast'] = [$value->target->value, $value->operand->target->value, $value->operand->operand->decimal];
+            $wide = $result->columns[1]->expression;
+            $exact = $result->columns[2]->expression;
+            $wideRole = $namespace . 'Ir\\Expression\\WideIntegerLiteral';
+            if ($wide::class !== $castRole || $wide->operand::class !== $castRole
+                || $wide->operand->operand::class !== $wideRole || $exact::class !== $wideRole) {
+                throw new RuntimeException('The installed projection lost a bigint operand or result.');
+            }
+            $details['wideCast'] = [$wide->target->value, $wide->operand->target->value, $wide->operand->operand->decimal, $exact->decimal];
         }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [

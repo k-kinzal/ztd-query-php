@@ -12,12 +12,12 @@ from server_cases import expected, fixtures, observation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-int4"
-CONTRACT = "7b47e38df2f8e6947ecdeff7c78e0fb86306b5d795d24a2754bbb0ce8450c94f"
+CONTRACT = "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa"
 OBSERVER = "server_observer.php"
 
 
 def specification():
-    path = TOOL / "postgres-int4-operators-v1.json"
+    path = TOOL / "postgres-int4-operators-v2.json"
     require(digest(path) == CONTRACT, "postgres-int4-contract-mismatch")
     return json.loads(path.read_text())
 

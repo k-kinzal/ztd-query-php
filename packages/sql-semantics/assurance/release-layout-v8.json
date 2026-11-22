@@ -1,0 +1,50 @@
+{
+  "revision": "SemanticsIR/release-layout-8",
+  "approval": "pending-human-review",
+  "recipe": {
+    "path": ".github/workflows/split.yml",
+    "sha256": "68a692747c399644db1a5ffc7abcc85418b11750cac3c73ff4c9e79c5843df8f"
+  },
+  "profiles": {
+    "main": {
+      "version": "dev-main",
+      "constraint": ""
+    },
+    "tag-example": {
+      "version": "1.0.0",
+      "constraint": "^1.0"
+    }
+  },
+  "packages": "The exact runtime package set and source and resource paths from runtime-package-v1.json.",
+  "acceptance": "Apply the fixed package metadata transform, install offline through Composer, verify exact installed source and resource bytes, verify dependency metadata, and observe every registered root through installed autoload.",
+  "fault": "Append a newline to one installed PHP file after its healthy measurement. Require exact installed-path digest rejection.",
+  "trust": [
+    "Pinned package split recipe and package contract",
+    "Composer invoked without plugins, scripts, network or development dependencies",
+    "Isolated read-only PHP worker",
+    "Staged local package installations and their measured provenance"
+  ],
+  "extends": "release-layout-v7.json",
+  "runtimeRoles": {
+    "inventory": "Every closed concrete role in the pinned constructor contracts, reconciled with the independent PHP inventory in the review bundle.",
+    "interfaces": {
+      "SqlSemantics\\AnalysisContext": "src/AnalysisContext.php",
+      "SqlSemantics\\Analyzer": "src/Analyzer.php",
+      "SqlSemantics\\SemanticsIR": "src/SemanticsIR.php"
+    },
+    "observation": "Load each role through the installed Composer loader. Record and check the exact reflected name, kind, installed source path and in-container source hash. Every concrete role is final. Preserve the publication probes of every root.",
+    "controls": {
+      "omitted-role": "Remove a known role from the measurement and require the coverage check to fail.",
+      "wrong-source": "Replace one measured path by another installed source path and require the path check to fail."
+    }
+  },
+  "enumRoutes": {
+    "observation": "For each registered IR enum, native case constants, cases(), from(), tryFrom() and serialized restoration identify the same declared singleton. Verify unknown backing values through from() and tryFrom(). Check the installed ordered cases against the independently read PHP source and the fixed shape rules.",
+    "fault": "Delete one observed installed enum case while leaving its role, source path and bytes untouched. Require the independent case comparison to reject."
+  },
+  "sqliteCheckPublication": "Analyze a CREATE TABLE with checked keys and an inline named CHECK through the installed SQLite Semantics API. Verify the final operand role, owner slot, label and different referenced slot.",
+  "sqliteRenamePublication": "Exercise both SQLite rename roots through installed analyze(), preserving the absolute table and explicit rewrite mode of a column destination.",
+  "mysqlIntegralCasts": "Preserve separate signed and unsigned operands, and check both new MySQL set-result enum cases through the installed Composer paths.",
+  "sqliteFoldedChecks": "Execute the installed SQLite analyze() path on a named CHECK with a discarded subquery. Require the exact folded decision and ordered marker labels, including distinct zero padding on the repeated slot.",
+  "postgresWideCast": "Analyze a nested bigint to integer conversion and a standalone bigint endpoint. Verify both signed widths and exact decimal payloads through the installed Composer loader."
+}

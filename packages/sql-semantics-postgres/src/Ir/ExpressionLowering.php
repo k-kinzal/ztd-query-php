@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCastLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
@@ -49,7 +50,7 @@ final class ExpressionLowering
         Scalar $expression,
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
-    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral {
+    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|WideIntegerLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -75,25 +76,39 @@ final class ExpressionLowering
     }
 
     /**
-     * Decodes the checked spelling of an int4 literal and its signed endpoint.
+     * Decodes canonical integer constants and the native folded sign.
      */
-    public function integerLiteral(Scalar $expression, bool $catalogFirst): ?IntegerLiteral
+    public function integerLiteral(Scalar $expression, bool $catalogFirst): IntegerLiteral|WideIntegerLiteral|null
     {
-        if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {
-            return new IntegerLiteral($expression->value->digits);
+        $negative = $expression instanceof UnaryOperation && !$expression->operator->explicit
+            && $expression->operator->name->value === '-';
+        if ($negative) {
+            $expression = $expression->operand;
+            while ($expression instanceof Grouped) {
+                $expression = $expression->operand;
+            }
         }
-        if ($expression instanceof UnaryOperation && $expression->operand instanceof Constant
-            && [$expression->operator->name->value, $expression->operator->explicit] === ['-', false]) {
-            $number = $expression->operand->value;
-            if ($number instanceof IntegerConstant && $catalogFirst) {
-                return new IntegerLiteral($number->digits === '0' ? '0' : '-' . $number->digits);
-            }
-            if ($number instanceof NumericConstant && $number->text === '2147483648') {
-                return new IntegerLiteral('-2147483648');
-            }
+        if (!$expression instanceof Constant) {
+            return null;
+        }
+        $number = $expression->value;
+        if ($number instanceof IntegerConstant && (!$negative || $catalogFirst)) {
+            return new IntegerLiteral($negative && $number->digits !== '0' ? '-' . $number->digits : $number->digits);
+        }
+        if (!$number instanceof NumericConstant) {
+            return null;
         }
 
-        return null;
+        $digits = $number->integerDigits();
+        $maximum = $negative ? '9223372036854775808' : '9223372036854775807';
+        if ($digits === null || strlen($digits) > 19 || (strlen($digits) === 19 && strcmp($digits, $maximum) > 0)) {
+            return null;
+        }
+        if ($negative && $digits === '2147483648') {
+            return new IntegerLiteral('-2147483648');
+        }
+
+        return new WideIntegerLiteral($negative ? '-' . $digits : $digits);
     }
 
     /**

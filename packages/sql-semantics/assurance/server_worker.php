@@ -28,6 +28,7 @@ function constructOperand(string $namespace, array $data): object
 {
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
+        'wide-integer' => 'Expression\\WideIntegerLiteral',
         'parameter' => 'Binding\\Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
@@ -47,7 +48,7 @@ function constructOperand(string $namespace, array $data): object
     $truth = $namespace . 'Predicate\\TruthOperator';
 
     return match ($data[0]) {
-        'integer', 'range-integer' => new $type(...array_slice($data, 1)),
+        'integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
         'boolean', 'parameter' => new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
@@ -96,6 +97,7 @@ function observeOperand(string $namespace, object $value): array
     }
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
+        $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
         $namespace . 'Binding\\Parameter' => ['parameter', $value->position],
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],

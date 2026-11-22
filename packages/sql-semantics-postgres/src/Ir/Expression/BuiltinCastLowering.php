@@ -37,8 +37,9 @@ final class BuiltinCastLowering
         Check::input(!$cast->type->setOf && $type instanceof Known, 'The cast must resolve to a scalar pg_catalog target.');
         $target = match ($type->descriptor) {
             Builtin::Int4 => CastDestination::Integer,
+            Builtin::Int8 => CastDestination::WideInteger,
             Builtin::Bool => CastDestination::Boolean,
-            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4 or pg_catalog.bool.'),
+            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8 or pg_catalog.bool.'),
         };
         $operand = $cast->operand;
         while ($operand instanceof Grouped) {
@@ -48,9 +49,9 @@ final class BuiltinCastLowering
             return new BuiltinCast($target, new NullLiteral());
         }
         $input = $binding->typeOf($operand);
-        Check::input($input instanceof Known && ($input->descriptor === Builtin::Int4 || $input->descriptor === Builtin::Bool), 'The cast input must resolve to pg_catalog.int4, pg_catalog.bool or NULL.');
+        Check::input($input instanceof Known && in_array($input->descriptor, [Builtin::Int4, Builtin::Int8, Builtin::Bool], true), 'The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or NULL.');
         $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst);
-        Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');
+        Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');
 
         return new BuiltinCast($target, $value);
     }

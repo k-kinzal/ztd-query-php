@@ -161,6 +161,17 @@ def faults(engine):
               "$depth <= 32 && ++$count <= 8192,", "$depth <= 32,"),
     ]
     if engine == "postgres":
+        shared.extend([
+            Fault("lose-wide-token-magnitude", "Numerals::integer",
+                  "$this->integral($text) ? $this->decimal($text) : null", "$this->integral($text) ? '2147483648' : null",
+                  "src/Rules/Lexical/Numerals.php"),
+            Fault("allow-nonexistent-wide-boolean-cast", "Expression/BuiltinCast::__construct",
+                  "!($source === CastDestination::Boolean && $target === CastDestination::WideInteger)", "true"),
+            Fault("reject-upper-bigint-endpoint", "Expression/WideIntegerLiteral::__construct",
+                  "'9223372036854775807'", "'9223372036854775806'"),
+            Fault("derive-bigint-cast-as-int4", "Rows/CompoundShape::type",
+                  "CastDestination::WideInteger => ResultKind::WideInteger", "CastDestination::WideInteger => ResultKind::Integer"),
+        ])
         shared.append(Fault("skip-cast-child-scope", "SelectBounds::check",
                             "$expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],",
                             "$expression instanceof BuiltinCast => null,"))
@@ -258,7 +269,8 @@ def check_fault(args, engine, fault, distribution):
     try:
         shape(args, overlay, engine)
     except Failure as failure:
-        message = f"Folded binding source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
+        label = {"sqlite": "Folded binding", "postgres": "Integer binding"}.get(engine)
+        message = f"{label} source differs in {fault.artifact}" if fault.artifact else f"Native boundary differs in {fault.role}"
         expected = {"status": "shape-mismatch", "message": message}
         require(failure.signal == "shape-mismatch" and failure.detail == expected, "wrong-native-boundary-fault-signal",
                 {"fault": fault.name, "response": failure.detail})
@@ -293,7 +305,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v25.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v13.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v2.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
+                       "native-boundaries-v26.json", "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v3.json", "sqlite-scalar-boundaries-v13.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v8.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v2.json", "sqlite-query-scope-boundaries-v1.json", "sqlite-conflict-boundaries-v2.json", "sqlite-folded-binding-sources-v2.json", "postgres-integer-binding-sources-v1.json", "value_storage.php", "value-storage-v25.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

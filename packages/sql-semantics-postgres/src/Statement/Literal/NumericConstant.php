@@ -42,6 +42,14 @@ final class NumericConstant implements Node
     }
 
     /**
+     * Returns canonical decimal digits for an integer token.
+     */
+    public function integerDigits(): ?string
+    {
+        return (new Numerals())->integer($this->text);
+    }
+
+    /**
      * Writes the text as it was written.
      */
     public function render(Output $out): void
