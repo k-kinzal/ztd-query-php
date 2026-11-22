@@ -1,0 +1,46 @@
+{
+  "revision": "SemanticsIR/server-recursive-series-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": {
+    "mysql": ["8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+    "postgres": ["16.6", "17.2"]
+  },
+  "unavailableSyntax": {
+    "mysql": ["5.6.51", "5.7.44"]
+  },
+  "scope": "One recursive CTE with one nonrecursive signed integer literal, a single self-reference and one signed literal increment. The continuation compares the current column against a signed literal with a strict inequality. The outer query reads the current column once or more under explicit resolved result names.",
+  "open": ["More than one recursive column, source or branch", "Additional anchors, arithmetic roles, comparisons or predicates", "Nested or multiple-use recursive bindings", "Recursive and dependent definitions in the same WITH list", "SEARCH, CYCLE and additional query clauses"],
+  "additionalPublicRoots": ["Rows/RecursiveSeries"],
+  "constructors": {
+    "RecursiveSeries": {
+      "type": "Rows/RecursiveSeries",
+      "role": "A query whose recursive input is its single-column working relation",
+      "fields": ["start", "increment", "boundary", "comparison", "all", "columns", "release"],
+      "invariants": [
+        "The release admits recursive WITH.",
+        "The continuation is a strict comparison of the current value to the boundary.",
+        "Less-than uses a positive increment and greater-than uses a negative increment.",
+        "The nonempty ordered result has at most 1024 fields and every reference selects slot zero."
+      ],
+      "meaning": "Admit the initial row. While the current value passes the continuation test, add the signed increment in the native integer domain and admit the following row. UNION ALL preserves admissions. UNION removes already admitted rows. Each output position reads the same resolved slot under its own name.",
+      "sql": "Emit one WITH RECURSIVE definition using canonical relation and column names. Emit the selected UNION policy, signed native literals, and the continuation with its original operand roles. Quote each consumer output name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Verify that the recursive and consuming inputs resolve to the exact same CTE definition by binding identity. Resolve the step, condition and consumer references against the corresponding one-slot layout. An original external table with the same spelling is irrelevant to the verified local binding.",
+  "observations": ["Ordered output names and native type tags", "Multiset of typed rows, including no-step and one-step cases and repeated reads", "Whether each continued row satisfies the signed step rule", "Read-only effects"],
+  "finite": {
+    "starts": [-2, 0, 2],
+    "increments": [-2, -1, 1, 2],
+    "boundaries": [-3, 0, 3],
+    "quantifiers": ["UNION", "UNION ALL"],
+    "layout": "One output field called value",
+    "completeness": "Observe the exact product of start, increment, boundary and quantifier from directly constructed values with comparison determined by the sign of the increment."
+  },
+  "exploration": {"seeds": [6761, 16981, 22573], "casesPerSeed": 24, "timeoutSecondsPerRelease": 175, "allowedExclusions": []},
+  "negative": ["Zero increment", "Advance away from the continuation boundary", "Non-strict continuation operation", "Missing output column", "Reference outside the one-column definition", "Step reference to a different relation"],
+  "faults": ["Reverse the strict comparison", "Drop the initially admitted row", "Change the step operand", "Lose a repeated output slot"],
+  "trust": ["Native integer evaluation and anchor field types are interpreted under the fixed language profile.", "The independent interpreter evaluates short walks from the model. Arithmetic overflow, configured recursion exhaustion and execution failures belong to runtime evaluation."],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/with.html", "https://www.postgresql.org/docs/17/queries-with.html"]
+}
