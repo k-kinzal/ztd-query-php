@@ -1,0 +1,46 @@
+{
+  "revision": "SemanticsIR/sqlite-insert-returning-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2 under the target, input and conflict conditions in sqlite-insert-input-v2.json and the result-slot conditions in sqlite-delete-returning-v1.json.",
+  "constructors": {},
+  "existingRoles": ["Mutation/Insert", "Mutation/DefaultRow", "Mutation/InsertConflict", "Mutation/ReturnedColumn", "TableSource", "ColumnReference", "Rows/ValuesQuery", "Select"],
+  "scope": "Bind the supplied and returned positions of an ordinary INSERT to one absolute target. RETURNING observes the directly inserted new row.",
+  "structure": [
+    "An absolute table and its immutable local slot layout.",
+    "An ordered list of supplied column references and an independent input role.",
+    "An optional ordered list of result names and referenced slots of the same table.",
+    "A closed conflict policy."
+  ],
+  "admission": [
+    "Every supplied slot must be local to the target and distinct. A VALUES or SELECT input supplies one operand per ordered write slot. A default-only input supplies no write slots regardless of returned columns.",
+    "Analysis resolves supplied names and allocates implicit writable fields in declaration order. Generated fields are excluded from writes and can be returned.",
+    "Analysis resolves unqualified named fields and the unqualified wildcard. The ordered returned fields refer to existing target slots. The output width is at most 2000."
+  ],
+  "observations": [
+    "Assigned values, defaults, INTEGER affinity, generated values and duplicate policy.",
+    "The exact names and typed row bag from RETURNING, including repeated fields and duplicate rows. A return row is produced for every directly inserted row before AFTER triggers change any of its fields.",
+    "The separate AFTER trigger state, affected row count, rollback, parameter slots and registered names.",
+    "A return slot can read a column omitted from the write input. Default-only inputs can return every target column with an empty write list."
+  ],
+  "sql": "Render the absolute target and the supplied columns from their ordered slots. Emit the input first. Append unqualified quoted returned columns and labels after the input.",
+  "finite": {
+    "schemas": ["main", "temp"],
+    "policies": ["inherit", "abort", "ignore"],
+    "inputs": ["defaults", "values", "select"],
+    "layouts": ["absent", "computed", "all", "repeated"],
+    "identity": "Recover the 72 tuples from the constructed operands and layout."
+  },
+  "exploration": {
+    "seeds": [3259, 14177, 28753],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 160,
+    "allowedExclusions": [],
+    "structure": "Vary the input role, row count and operand trees, implicit/default-only or explicitly ordered write slots, filter and bindings, and returned widths, slots and labels."
+  },
+  "negative": ["Supplied slot outside the target", "Nonlocal supplied reference", "Repeated supplied slot", "Absent return slot", "Excess returned width", "Qualified alias", "Aggregate result expression"],
+  "faults": ["Omit RETURNING", "Use the wrong returned slot", "Alter the result label", "Use the wrong supplied-column order"],
+  "open": ["Other conflict policies, qualified and general result expressions, virtual targets, WITH, UPSERT and additional source roles."],
+  "trust": ["Independent source, write and observer rules for the named fixture", "Pinned SQLite and checked typed transport", "External table identity and an AFTER trigger that changes stored rows"],
+  "sources": ["https://sqlite.org/lang_insert.html", "https://sqlite.org/lang_returning.html"]
+}
