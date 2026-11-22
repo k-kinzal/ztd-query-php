@@ -1,0 +1,35 @@
+{
+  "revision": "SemanticsIR/server-local-projection-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "Every pinned projection release. Derived projections apply to all releases. Ordinary single-use WITH is available in PostgreSQL and the pinned MySQL releases from 8.0 onward.",
+  "scope": "One projection through a single independent nonvolatile SELECT used as a derived table or ordinary single-use CTE. The outer result contains direct local slot reads. The inner projection owns its original external bindings and ordered values.",
+  "open": ["LATERAL, correlated subqueries, nested local scopes, multiple CTEs, recursive CTEs, materialization options, additional outer clauses and local bindings in joined sources"],
+  "additionalPublicRoots": ["Rows/LocalProjection"],
+  "constructors": {
+    "LocalProjection": {
+      "type": "Rows/LocalProjection",
+      "role": "An ordered projection over one independently scoped input",
+      "fields": ["definition", "columns"],
+      "invariants": ["Definition is an already checked independent SELECT without a row bound or ordering", "The nonempty result list has at most 1024 columns", "Every result slot belongs to the definition's output"],
+      "meaning": "Project the named ordered slots over each row of the definition. Preserve typed values, NULLs, repeated input rows and repeated selected slots. The selected positions are independent of spelling or physical table names.",
+      "sql": "Assign deterministic unique inner labels by ordinal and emit a derived-table SELECT. Emit the outer labels explicitly. The one-use independent CTE has the same row source under this profile.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "LocalResultColumn": {
+      "type": "Rows/LocalResultColumn",
+      "role": "One result name and ordinal into the scoped definition",
+      "fields": ["slot", "name"],
+      "invariants": ["Slot is nonnegative and its local parent requires membership"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Resolve the proven derived-table relation or the exact referenced CTE against the bound facts. Map each resolved output slot by identity and discard analyzed names that do not contribute to the outer result.",
+  "observations": ["Ordered output names and native type tags", "Typed multiset of result rows with duplicate and NULL preservation", "Reference to the correct local slot even through aliases, reorderings and physical name collisions"],
+  "finite": {"layouts": [[0], [1], [0, 1], [1, 0], [1, 1]], "definitions": ["literal", "ordinary table", "independent table", "empty table"], "completeness": "Require the exact Cartesian product of definition and output slot layout from independently observed runtime values."},
+  "exploration": {"seeds": [2089, 4243, 11719], "casesPerSeed": 24, "timeoutSecondsPerRelease": 175, "allowedExclusions": []},
+  "negative": ["Empty outer result", "Negative slot", "Slot outside the definition", "Definition with local ordering or bounds", "Non-column expression in the outer projection"],
+  "faults": ["Read the wrong local slot after reordering", "Collapse a duplicate row", "Change the definition selected by a one-use binding"],
+  "trust": ["Fixed reference interpretation and native name profiles", "Independent evaluation of the existing signed projection rules and explicit slot mapping", "The registered definition forms have no volatile effects"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html", "https://dev.mysql.com/doc/refman/8.4/en/with.html", "https://www.postgresql.org/docs/17/queries-with.html", "https://www.postgresql.org/docs/17/sql-select.html"]
+}
