@@ -1,0 +1,78 @@
+{
+  "revision": "SemanticsIR/sqlite-named-checks-1",
+  "approval": "pending-human-review",
+  "dialects": ["Sqlite"],
+  "profile": "SQLite 3.47.2, UTF-8, check constraints enabled and the fixed builtin expression registry.",
+  "scope": "Explicitly named column and table CHECK constraints over the owning declared columns and admitted SQLite scalar operations.",
+  "constructors": {
+    "Schema/Predicate/CheckConstraint": {
+      "role": "One explicitly named row condition attached to a declared column or to its whole table.",
+      "structure": "A checked identifier containing the decoded failure label, an optional owning column slot and a scalar condition with ordered operands and resolved declaration slots.",
+      "conditions": "The condition is one of the closed SQLite scalar types with no live or latent parameter. References have source ordinal zero. The owning CREATE TABLE checks reference width, the optional column slot, increasing column placement and overall expression bounds. The label follows the Identifier UTF-8, NUL and byte bounds.",
+      "meaning": "Test the checked scalar with SQLite numeric truth conversion on each relevant write. Numeric zero fails, NULL passes, and other numeric values pass. The ordinary failure algorithm is ABORT. The statement conflict override can skip or retain progress. The first failing applicable condition supplies its decoded label. Inline placement controls whether a constraint is removed with a column.",
+      "externalInterpretation": "Use the same declaration slots and collations, builtin expression profile, storage affinity, input rows, write conflict policy and transaction state.",
+      "sql": "Emit the decoded label as a quoted identifier and the structured condition with quoted names of the referenced declaration slots. Preserve column or table placement and check order within and across columns. SQLite ignores the algorithm written on table CHECK.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Schema/CreateTable", "Schema/TableColumn", "Identifier", "ColumnReference"],
+  "rules": [
+    "A parsed CONSTRAINT label is local to a column or one comma-separated table-constraint run. The most recent label supplies each following CHECK in that run. Decoded labels may be empty or repeated.",
+    "A condition may refer to any declared column, including another column's declaration, whether qualified in the analyzed expression or unqualified. The constraint owner is independent of operand reference slots.",
+    "The relative order of CHECK conditions preserves the first failure label. Column NOT NULL and checked uniqueness are independent conditions that share the table's native write ordering.",
+    "Use native column placement for the lifecycle of a constraint. The label on an explicitly named constraint survives ALTER TABLE RENAME COLUMN."
+  ],
+  "observations": [
+    "Compare column names, declared types, nullability and positions, the error class and exact decoded label, write success, row multiplicity, ordered typed values and native change counts.",
+    "Execute checks with NULL, zero, nonzero, colliding and noncolliding values. Measure ordinary ABORT, statement IGNORE and FAIL in an explicit transaction after a prior write.",
+    "Observe ALTER TABLE RENAME COLUMN and ALTER TABLE DROP COLUMN effects with distinguishable inline and table constraints.",
+    "Evaluate original and emitted SQL independently for analyzed inputs."
+  ],
+  "finite": {
+    "schemas": ["main", "temp"],
+    "strict": [false, true],
+    "ownership": ["column", "table"],
+    "labels": ["limit", "a\"b"],
+    "conditions": ["first-positive", "second-nonzero", "difference-positive", "nullable-and"],
+    "identity": "Observe all 64 schema, strictness, ownership, label and condition combinations from public construction and an independent identity product."
+  },
+  "exploration": {
+    "seeds": [47807, 59281, 61717],
+    "casesPerSeed": 32,
+    "timeoutSeconds": 260,
+    "allowedExclusions": [],
+    "structure": "Vary declaration width, named sequence length, ownership and reference slots, quote and empty label values, literal bounds, operator direction and nesting. Retain failed inputs in the execution journal."
+  },
+  "negative": [
+    "An out-of-scope direct column reference",
+    "An out-of-scope direct owning column",
+    "A direct inline constraint after a table constraint",
+    "A direct nested parameter in a check",
+    "An analyzed named condition with an unknown column",
+    "An analyzed named condition with a subquery",
+    "An analyzed named condition with a live parameter",
+    "An analyzed constraint run with no explicit name for the check"
+  ],
+  "faults": [
+    "Drop an applicable condition",
+    "Use a different declared slot",
+    "Use a distinct error label",
+    "Reverse two applicable checks in the same placement",
+    "Move an inline condition to table placement"
+  ],
+  "open": [
+    "Implicit error labels and their recomputation during column rename, hidden rowid references, parse-time discarded operands, user-defined functions and collations, generated columns, foreign keys and other SQLite profiles."
+  ],
+  "trust": [
+    "Pinned SQLite constraint name, binding and write ordering source",
+    "Independent expression and native write transition observation",
+    "Checked PHP scalar layout, closed constructor and source linkage"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_createtable.html#check_constraints",
+    "https://sqlite.org/lang_conflict.html",
+    "https://sqlite.org/lang_altertable.html",
+    "https://sqlite.org/src/file/src/build.c?ci=version-3.47.2",
+    "https://sqlite.org/src/file/src/insert.c?ci=version-3.47.2"
+  ]
+}
