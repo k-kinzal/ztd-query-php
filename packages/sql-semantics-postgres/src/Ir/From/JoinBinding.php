@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedCo
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Relation;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join as ParsedJoin;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind as ParsedKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
 
@@ -81,19 +82,18 @@ final class JoinBinding
      */
     public function source(): Join
     {
+        $kind = match ($this->join->kind) {
+            ParsedKind::Cross => JoinKind::Cross,
+            ParsedKind::Inner => JoinKind::Inner,
+            ParsedKind::Left => JoinKind::Left,
+            ParsedKind::Right => JoinKind::Right,
+            ParsedKind::Full => JoinKind::Full,
+        };
         $on = (new PredicateLowering())->lower($this->join->condition instanceof JoinOn ? $this->join->condition->condition : null, $this, $this->catalogFirst);
         $left = $this->left->source();
         $right = $this->right->source();
         Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
 
-        return new Join($this->kind(), $left, $right, $on);
-    }
-
-    /**
-     * Fixes the effective operator in this dialect.
-     */
-    private function kind(): JoinKind
-    {
-        return JoinKind::from($this->join->kind->value);
+        return new Join($kind, $left, $right, $on);
     }
 }

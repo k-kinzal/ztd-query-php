@@ -77,29 +77,22 @@ final class JoinBinding
 
     /**
      * Closes ON over this subtree before exporting its table occurrences.
+     * @throws InvalidConstruction when the join has no matching IR operator
      */
     public function source(): Join
     {
-        $on = (new PredicateLowering())->lower($this->join->on, $this);
-        $left = $this->left->source();
-        $right = $this->right->source();
-        Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
-
-        return new Join($this->kind(), $left, $right, $on);
-    }
-
-    /**
-     * Fixes the effective operator in this dialect.
-     * @throws InvalidConstruction when the join has no matching IR operator
-     */
-    private function kind(): JoinKind
-    {
-        return match ($this->join->operator) {
+        $kind = match ($this->join->operator) {
             JoinOperator::Join, JoinOperator::Cross, JoinOperator::Inner => $this->join->on === null ? JoinKind::Cross : JoinKind::Inner,
             JoinOperator::Left, JoinOperator::LeftOuter => JoinKind::Left,
             JoinOperator::Right, JoinOperator::RightOuter => JoinKind::Right,
             JoinOperator::StraightJoin, JoinOperator::Natural, JoinOperator::NaturalLeft, JoinOperator::NaturalRight,
             JoinOperator::NaturalInner, JoinOperator::NaturalLeftOuter, JoinOperator::NaturalRightOuter => throw new InvalidConstruction('The join operator has no complete MySQL representation.'),
         };
+        $on = (new PredicateLowering())->lower($this->join->on, $this);
+        $left = $this->left->source();
+        $right = $this->right->source();
+        Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
+
+        return new Join($kind, $left, $right, $on);
     }
 }
