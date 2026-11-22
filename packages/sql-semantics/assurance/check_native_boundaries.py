@@ -98,8 +98,12 @@ def faults(engine):
     if engine == "postgres":
         shared.append(Fault("allow-non-target-return-slot", "Mutation/ReturnedColumn::__construct",
                             "$reference->occurrence === 0,", "true,"))
-        shared.append(Fault("allow-absent-pg-return-slot", "Mutation/Delete::__construct",
+        shared.append(Fault("allow-absent-pg-return-slot", "Mutation/ReturningLayout::check",
                             "isset($target->columns[$field->reference->slot]),", "true,"))
+        shared.append(Fault("skip-delete-return-layout", "Mutation/Delete::__construct",
+                            "(new ReturningLayout())->check($target, $checked);", ""))
+        shared.append(Fault("skip-update-return-layout", "Mutation/Update::__construct",
+                            "(new ReturningLayout())->check($target, $checked);", ""))
         shared.append(Fault("allow-excessive-int4-case-arms", "Expression/IntegerCase::__construct",
                             "count($arms) <= 32,", "true,"))
         shared.append(Fault("ignore-case-condition-scope", "SelectBounds::check",
@@ -182,7 +186,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v15.json", "postgres-delete-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v20.json", "value-primitives.json")},
+                       "native-boundaries-v16.json", "postgres-mutation-returning-boundaries-v1.json", "postgres-int4-boundaries-v1.json", "native-insert-query-boundaries-v3.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v1.json", "sqlite-insert-slots-boundaries-v1.json", "sqlite-scalar-boundaries-v9.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v1.json", "sqlite-mutation-returning-boundaries-v1.json", "value_storage.php", "value-storage-v21.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

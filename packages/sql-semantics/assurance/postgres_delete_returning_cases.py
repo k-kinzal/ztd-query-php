@@ -5,6 +5,7 @@ from random import Random
 
 from postgres_int4_cases import EXCEPTION
 from server_delete_cases import case as deletion, expected as effect, literal, observation as deletion_observation
+from server_returning_model import fields_from, ordered_returning, project_returned
 
 CONDITIONS = (None, ["boolean", False], ["comparison", "<", ["slot", 0], literal(0)], ["null-test", False, ["slot", 1]])
 POLICIES = (False, True)
@@ -12,7 +13,7 @@ POLICIES = (False, True)
 
 def project(tag, fields, where=None, only=False, columns=("id", "delta"), table="target"):
     return {**deletion("postgres", tag, where, only, columns, table),
-            "returning": [[["slot", position], label] for position, label in fields]}
+            "returning": fields_from(fields)}
 
 
 def finite(tag, specification):
@@ -83,22 +84,10 @@ def requests(_engine, tag, specification):
         yield f"negative/{index}", item, None, {"exception": exception, "message": message}
 
 
-def row_order(rows):
-    return sorted(rows, key=lambda row: tuple((value is not None, value) for value in row))
-
-
 def observation(value):
-    actual = deletion_observation(value)
-    if "rows" in actual:
-        actual = {**actual, "rows": row_order(actual["rows"])}
-    return actual
+    return ordered_returning(deletion_observation(value))
 
 
 def expected(item):
     result = effect(item)
-    layout = item["returning"]
-    names = item["target"]["columns"]
-    positions = [("id", "delta").index(names[operand[1]]) for operand, _ in layout]
-    removed = [event[1:] for event in result["after"]["events"]]
-    return {**result, "columns": len(layout), "fields": [[label, "int4"] for _, label in layout],
-            "rows": row_order([[row[position] for position in positions] for row in removed])}
+    return project_returned(item, result, (event[1:] for event in result["after"]["events"]))

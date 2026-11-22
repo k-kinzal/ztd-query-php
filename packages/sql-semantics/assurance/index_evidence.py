@@ -138,7 +138,8 @@ class Evidence:
                         "bundle-projection-admission-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
             single_engine = {"postgres_int4": "postgres", "postgres_int4_case": "postgres",
-                             "postgres_delete_returning": "postgres", "mysql_signed_quotient": "mysql"}.get(domain)
+                             "postgres_delete_returning": "postgres", "postgres_update_returning": "postgres",
+                             "mysql_signed_quotient": "mysql"}.get(domain)
             if single_engine:
                 registered = {single_engine: registered[single_engine]}
             unavailable = {}

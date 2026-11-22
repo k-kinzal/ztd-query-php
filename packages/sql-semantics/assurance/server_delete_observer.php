@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/server_connection.php';
 require __DIR__ . '/server_predicate_scope.php';
+require __DIR__ . '/server_returning_observation.php';
 
 $engine = $argv[1];
 [$pdo, $environment] = connectFixture($engine);
@@ -48,16 +49,12 @@ function admitDelete(string $sql, string $schema, string $engine): bool
     $quote = '["' . chr(96) . ']?';
     $name = static fn (string $value): string => $quote . $value . $quote;
     $table = '(?:' . $name($schema) . '\\.)?' . $name('ir_delete_(?:target|child|control)');
-    $reference = '(?:' . $name('(?:ir_delete_(?:target|child|control)|r)') . '\\.)?' . $name('(?:id|delta)');
+    $qualifier = $name('(?:ir_delete_(?:target|child|control)|r)');
+    $reference = '(?:' . $qualifier . '\\.)?' . $name('(?:id|delta)');
     $integer = '-?[0-9]{1,10}';
     $operand = '(?:' . $integer . '|CAST\\(' . $integer . ' AS pg_catalog\\.int4\\)|' . $reference . ')';
     $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
-    $returning = '';
-    if ($engine === 'postgres') {
-        $alias = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\\x00]|"")+")';
-        $field = '(?:' . $reference . '(?: AS ' . $alias . ')?|(?:' . $name('(?:ir_delete_(?:target|child|control)|r)') . '\\.)?\\*)';
-        $returning = '(?: RETURNING ' . $field . '(?:, ' . $field . ')*)?';
-    }
+    $returning = $engine === 'postgres' ? fixtureReturningClause($reference, $qualifier) : '';
     return preg_match('/\\ADELETE FROM (?:ONLY )?' . $table . '(?: AS r)?(?: WHERE (?&truth))?' . $returning . '\\z'
         . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
 }
@@ -87,15 +84,7 @@ function deleteEffect(PDO $pdo, string $engine, string $schema, string $sql): ar
     try {
         $statement = $pdo->prepare($sql);
         $statement->execute();
-        $effect = ['status' => 'deleted', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount()];
-        if ($effect['columns'] > 0) {
-            $effect['fields'] = [];
-            for ($index = 0; $index < $effect['columns']; ++$index) {
-                $meta = $statement->getColumnMeta($index);
-                $effect['fields'][] = [$meta['name'], $meta['native_type']];
-            }
-            $effect['rows'] = $statement->fetchAll(PDO::FETCH_NUM);
-        }
+        $effect = ['status' => 'deleted', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount(), ...observeReturning($statement)];
         $statement->closeCursor();
         $effect['after'] = physicalRows($pdo, $engine, $schema);
     } catch (PDOException $error) {

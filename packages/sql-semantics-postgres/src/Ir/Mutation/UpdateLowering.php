@@ -31,7 +31,7 @@ final class UpdateLowering
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The UPDATE requires the native language profile.');
-        Check::input($statement->with === null && $statement->from === null && $statement->returning === []
+        Check::input($statement->with === null && $statement->from === null
             && !$statement->where instanceof CurrentOf, 'A complete UPDATE requires one ordinary target.');
         $binding = new SourceBinding($operation, $statement->target);
         $path = $operation->context->searchPath;
@@ -46,9 +46,10 @@ final class UpdateLowering
             Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral, 'An UPDATE assignee requires a signed literal, NULL or a row reference.');
             $assignments[] = new UpdateAssignment($slot, $value);
         }
+        $returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);
         $target = $binding->source();
         Check::input($target !== null, 'An UPDATE requires a resolved target.');
 
-        return new Update($target, $assignments, $where, $profile->grammar);
+        return new Update($target, $assignments, $where, $profile->grammar, $returning);
     }
 }

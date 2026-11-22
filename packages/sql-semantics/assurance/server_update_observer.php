@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/server_connection.php';
 require __DIR__ . '/server_predicate_scope.php';
+require __DIR__ . '/server_returning_observation.php';
 
 $engine = $argv[1];
 [$pdo, $environment] = connectFixture($engine);
@@ -18,6 +19,9 @@ function updateFixture(PDO $pdo, string $engine, string $schema): void
     $base = $schema . '.ir_update_';
     $engineClause = $engine === 'mysql' ? ' ENGINE=InnoDB' : '';
     $layout = ' (id INTEGER, delta INTEGER)' . $engineClause;
+    foreach (['child', 'target', 'control', 'events'] as $name) {
+        $pdo->exec('DROP TABLE IF EXISTS ' . $base . $name);
+    }
     $pdo->exec('CREATE TABLE ' . $base . 'target' . $layout);
     $pdo->exec('CREATE TABLE ' . $base . 'control' . $layout);
     $pdo->exec('CREATE TABLE ' . $base . 'child' . ($engine === 'postgres' ? ' () INHERITS (' . $base . 'target)' : $layout));
@@ -38,20 +42,22 @@ function updateFixture(PDO $pdo, string $engine, string $schema): void
     }
 }
 
-function admitUpdate(string $sql, string $schema): bool
+function admitUpdate(string $sql, string $schema, string $engine): bool
 {
     $quote = '["' . chr(96) . ']?';
     $name = static fn (string $part): string => $quote . $part . $quote;
     $table = $name($schema) . '\\.' . $name('ir_update_(?:target|child|control)');
     $alias = $name('(?:r|__ztd_source)');
-    $column = '(?:' . $alias . '\\.)?' . $name('(?:id|delta)');
+    $qualifier = $name('(?:r|__ztd_source|ir_update_(?:target|child|control))');
+    $column = '(?:' . $qualifier . '\\.)?' . $name('(?:id|delta)');
     $integer = '-?[0-9]{1,10}';
     $operand = '(?:' . $column . '|NULL|' . $integer . '|CAST\\(' . $integer . ' AS pg_catalog\\.int4\\))';
     $operation = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
     $assignment = $column . '\\h*=\\h*' . $operand;
+    $returning = $engine === 'postgres' ? fixtureReturningClause($column, $qualifier) : '';
 
     return preg_match('/\\AUPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET '
-        . $assignment . '(?:\\h*,\\h*' . $assignment . ')*(?: WHERE (?&truth))?\\z'
+        . $assignment . '(?:\\h*,\\h*' . $assignment . ')*(?: WHERE (?&truth))?' . $returning . '\\z'
         . fixturePredicateDefinition($operand, $operation) . '/iD', $sql) === 1;
 }
 
@@ -75,14 +81,14 @@ function updatedRows(PDO $pdo, string $engine, string $schema): array
 
 function updateEffect(PDO $pdo, string $engine, string $schema, string $sql): array
 {
-    if (!admitUpdate($sql, $schema)) {
+    if (!admitUpdate($sql, $schema, $engine)) {
         return ['status' => 'outside-observer-scope'];
     }
     $pdo->beginTransaction();
     try {
         $statement = $pdo->prepare($sql);
         $statement->execute();
-        $effect = ['status' => 'updated', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount()];
+        $effect = ['status' => 'updated', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount(), ...observeReturning($statement)];
         $statement->closeCursor();
         $effect['after'] = updatedRows($pdo, $engine, $schema);
     } catch (PDOException $error) {

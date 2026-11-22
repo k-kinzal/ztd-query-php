@@ -398,7 +398,8 @@ function constructUpdate(string $platform, array $input): SemanticsIR
         $sets[] = new $assignment(constructOperand($namespace, $slot), constructOperand($namespace, $value));
     }
 
-    return new $statement($target, $sets, constructPredicate($namespace, $input['where']), $release::from($input['release']));
+    return new $statement($target, $sets, constructPredicate($namespace, $input['where']), $release::from($input['release']),
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : []));
 }
 
 function observeUpdate(string $namespace, object $value, string $dialect): array
@@ -411,6 +412,7 @@ function observeUpdate(string $namespace, object $value, string $dialect): array
     return [
         'status' => 'constructed', 'profile' => $value->profileId(), 'target' => observeSource($value->target, $dialect, $namespace),
         'assignments' => $sets, 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
+        ...($dialect === 'postgres' ? ['returning' => observeReturnedColumns($namespace, $value->returning)] : []),
     ];
 }
 
@@ -464,6 +466,23 @@ function observeInsert(string $namespace, object $value, string $dialect): array
     ];
 }
 
+function constructReturnedColumns(string $namespace, array $fields): array
+{
+    $field = $namespace . 'Mutation\\ReturnedColumn';
+    $identifier = $namespace . 'Identifier';
+    $returning = [];
+    foreach ($fields as [$reference, $label]) {
+        $returning[] = new $field(constructOperand($namespace, $reference), new $identifier($label));
+    }
+
+    return $returning;
+}
+
+function observeReturnedColumns(string $namespace, array $fields): array
+{
+    return array_map(static fn ($field): array => [observeOperand($namespace, $field->reference), $field->name->value], $fields);
+}
+
 function constructDelete(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -471,17 +490,8 @@ function constructDelete(string $platform, array $input): SemanticsIR
     $delete = $namespace . 'Mutation\\Delete';
     $where = constructPredicate($namespace, $input['where']);
 
-    $returning = [];
-    if ($input['dialect'] === 'postgres') {
-        $field = $namespace . 'Mutation\\ReturnedColumn';
-        $identifier = $namespace . 'Identifier';
-        foreach ($input['returning'] ?? [] as [$reference, $label]) {
-            $returning[] = new $field(constructOperand($namespace, $reference), new $identifier($label));
-        }
-    }
-
     return new $delete(constructSource($platform, $input['target'], $input['dialect']), $where, $release::from($input['release']),
-        ...($input['dialect'] === 'postgres' ? [$returning] : []));
+        ...($input['dialect'] === 'postgres' ? [constructReturnedColumns($namespace, $input['returning'] ?? [])] : []));
 }
 
 function observePredicate(string $namespace, ?object $condition): ?array
@@ -502,9 +512,7 @@ function observeDelete(string $namespace, object $value, string $dialect): array
     return [
         'status' => 'constructed', 'profile' => $value->profileId(),
         'target' => observeSource($value->target, $dialect, $namespace), 'where' => observePredicate($namespace, $value->where), 'sql' => $value->toString(),
-        ...($dialect === 'postgres' ? ['returning' => array_map(static fn ($field): array => [
-            observeOperand($namespace, $field->reference), $field->name->value,
-        ], $value->returning)] : []),
+        ...($dialect === 'postgres' ? ['returning' => observeReturnedColumns($namespace, $value->returning)] : []),
     ];
 }
 

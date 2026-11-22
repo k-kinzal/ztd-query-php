@@ -23,9 +23,10 @@ function nativeBoundaryContract(string $dialect): array
         ],
         'mysql', 'postgres' => [
             ...($dialect === 'postgres' ? [
+                ['postgres-mutation-returning-boundaries-v1.json', '5701aa81aa9721b8ea6765b60de902624738bbc3b77431be99a65e14b64df15d'],
                 ['postgres-int4-boundaries-v1.json', '8cc5d1b6d573531fad943fac9b9dfc58181530bcbbff4ef9c66dc57733a39815'],
             ] : []),
-            ['native-boundaries-v15.json', 'ad4cfd6a169e109a4f7d4c8119e10dd236756d595b1ae3fef07b775f4c940c8b'],
+            ['native-boundaries-v16.json', '5ccabf64b93ec659c44f95f33ec69dc1c43dc17673d1df5dcca12d7e5ad8fb3f'],
             ['native-insert-query-boundaries-v3.json', '60ebb905f691b9fd60b7d3df7e46895e0742d074e883a7431025c0f35137a129'],
         ],
     };
@@ -77,6 +78,10 @@ function checkNativeBoundaries(
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
             foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Predicate\\PredicateLowering',
+                'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
+                'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
+                'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',
+                'Statement\\Expression\\ColumnReference as ParsedReturnColumn',
                 'Statement\\Expression\\Cast', 'Statement\\Literal\\NullLiteral as ParsedNull', 'Statement\\Expression\\BinaryOperation as ParsedComparison',
                 'Statement\\Expression\\Operator\\BooleanOperation as ParsedLogical', 'Statement\\Expression\\Operator\\BooleanOperator',
                 'Statement\\Expression\\Operator\\Negation as ParsedNot', 'Statement\\Expression\\Predicate\\NullTest as ParsedNullTest',

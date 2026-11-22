@@ -16,6 +16,6 @@ echo $ir->toString();
 
 The checked complete domain covers signed integer projections, including searched CASE expressions whose result resolves to int4. Built-in integer operators are emitted with their pg_catalog identity. The profile includes the schema search path.
 
-An ordinary DELETE can return named int4 fields from the deleted target rows. The complete value records each returned position, including repeated fields or labels, and preserves the target's `ONLY` policy.
+Ordinary DELETE and UPDATE statements can return named int4 fields from the affected target rows. DELETE returns the deleted row. UPDATE assignments read the old row and RETURNING reads the new row. A complete value records repeated fields or labels by position and preserves the target's `ONLY` policy.
 
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

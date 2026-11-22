@@ -314,8 +314,8 @@ if ($dialect !== 'sqlite') {
         $properties['Mutation\\Delete']['returning'] = ['array'];
         $properties['Mutation\\ReturnedColumn'] = ['reference' => ['ColumnReference'], 'name' => ['Identifier']];
         $methods['Mutation\\ReturnedColumn'] = ['__construct'];
-        array_push($internal, 'Mutation\\ReturningLowering', 'Mutation\\ReturningSql');
-        $pureCollaborators[] = 'Mutation\\ReturningSql';
+        array_push($internal, 'Mutation\\ReturningLayout', 'Mutation\\ReturningLowering', 'Mutation\\ReturningSql');
+        array_push($pureCollaborators, 'Mutation\\ReturningLayout', 'Mutation\\ReturningSql');
     }
     $properties['Predicate\\IntegerComparison'] = [
         'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
@@ -355,6 +355,9 @@ if ($dialect !== 'sqlite') {
         'target' => ['ColumnReference'], 'value' => ['ColumnReference', 'IntegerLiteral', 'NullLiteral'],
     ];
     $methods['Mutation\\Update'] = $methods['Select'];
+    if ($dialect === 'postgres') {
+        $properties['Mutation\\Update']['returning'] = ['array'];
+    }
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
     $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
@@ -555,9 +558,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v20.json';
+    $storagePath = __DIR__ . '/value-storage-v21.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '8e8b9f648860f9274b1133e8b3747f9f38fa0f34d2306c23d2d0bfa86d4ab117',
+        hash_file('sha256', $storagePath) === '89730a0b88eaa168ea603bbba5492230459845cdc1fe2f48a65e0147a1c3be7e',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

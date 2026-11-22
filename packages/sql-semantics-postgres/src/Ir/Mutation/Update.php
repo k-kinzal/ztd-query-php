@@ -37,15 +37,22 @@ final class Update implements SemanticsIR
     public readonly array $assignments;
 
     /**
+     * @var list<ReturnedColumn> The names and slots read from the updated row
+     */
+    public readonly array $returning;
+
+    /**
      * Closes every read and write over the resolved target row.
      *
      * @param list<UpdateAssignment> $assignments
+     * @param list<ReturnedColumn> $returning Output positions in order
      */
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
         public readonly BooleanLiteral|IntegerComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
+        array $returning = [],
     ) {
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);
         Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
@@ -59,6 +66,9 @@ final class Update implements SemanticsIR
             $written[$slot] = true;
         }
         (new OccurrenceScope())->predicate($where, [$target]);
+        $checked = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');
+        (new ReturningLayout())->check($target, $checked);
+        $this->returning = $checked;
     }
 
     /**
@@ -70,7 +80,7 @@ final class Update implements SemanticsIR
     }
 
     /**
-     * Writes the ordered assignments and the optional filter.
+     * Writes the assignments, optional filter and output layout.
      */
     public function toString(): string
     {
@@ -85,6 +95,6 @@ final class Update implements SemanticsIR
             $statement .= ' WHERE ' . $sql->predicate($this->where, $this->target);
         }
 
-        return $statement;
+        return $statement . (new ReturningSql())->clause($this->target, $this->returning);
     }
 }

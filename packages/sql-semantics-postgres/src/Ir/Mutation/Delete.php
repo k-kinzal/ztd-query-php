@@ -47,11 +47,8 @@ final class Delete implements SemanticsIR
         array $returning = [],
     ) {
         (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
-        Check::input(count($returning) <= 1024, 'A DELETE can return at most 1024 fields.');
         $checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');
-        foreach ($checked as $field) {
-            Check::input(isset($target->columns[$field->reference->slot]), 'A DELETE returned slot must belong to its target.');
-        }
+        (new ReturningLayout())->check($target, $checked);
         $this->returning = $checked;
     }
 
