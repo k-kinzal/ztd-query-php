@@ -223,7 +223,9 @@ def all_unions(query):
 
 def expected(item, null_only_tags):
     labels, types, bag = evaluate(item, item["dialect"])
-    profile = null_only_tags.get(item["release"], null_only_tags["default"])
-    tag = profile["unionsAll" if all_unions(item) else "other"]
+    tag = None
+    if "null-only" in types:
+        profile = null_only_tags[item["release"]]
+        tag = profile["unionsAll" if all_unions(item) else "other"]
     return observation({"status": "rows", "fields": [[label, tag if kind == "null-only" else kind] for label, kind in zip(labels, types)],
                         "rows": [json.loads(row) for row in bag.elements()]})

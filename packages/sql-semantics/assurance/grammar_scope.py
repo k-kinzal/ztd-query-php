@@ -122,7 +122,7 @@ def inventory(root):
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):
-                    related[alternative] = ("server-compound-v1.json",)
+                    related[alternative] = ("server-compound-v2.json",)
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

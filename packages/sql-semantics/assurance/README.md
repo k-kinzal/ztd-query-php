@@ -148,7 +148,7 @@ Run `run_server_drop_table.py` with the same native fixture options. Replay the 
 
 ## Native compound queries
 
-The [native compound contract](server-compound-v1.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.
+The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.
 
 Run `run_server_compound.py` with the same native fixture options. Replay all releases with `combine_server_compound_evidence.py` and the per-release `index.json` paths.
 
