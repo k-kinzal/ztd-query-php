@@ -70,7 +70,7 @@ def finite_id(dialect, response, _):
             FILTERS.index(response["where"]), bool(source["left"].get("only")))
 
 
-def finite_ids(dialect, specification):
+def finite_ids(dialect, specification, _tag):
     policy_count = len(specification["finite"]["onlyPolicies"][dialect])
     variants = specification["finite"]["identities"][dialect] // (9 * policy_count)
     return {(table, variant, filter_id, bool(policy))

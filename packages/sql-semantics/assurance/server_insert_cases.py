@@ -39,7 +39,7 @@ def finite_id(_, response, _item):
     return LAYOUTS.index(columns), len(rows), variant
 
 
-def finite_ids(_, specification):
+def finite_ids(_, specification, _tag):
     space = specification["finite"]
     return set(itertools.product(range(len(space["targetLayouts"])), space["rowCounts"], range(len(space["valueVectors"]))))
 

@@ -44,7 +44,7 @@ def check_fault_witness(item, witness):
     require(witness["observed"]["status"] in {"dropped", "42S02", "42P01", "2BP01"}, "server-drop-table-fault-native")
 
 
-def required_forms(engine):
+def required_forms(engine, _tag):
     common = {"width/1", "width/2", "width/3", "width/4", "if-exists/False", "if-exists/True", "dependent/False",
               "dependent/True", "target/a", "target/b", "target/control", "target/missing"}
     return common | ({"cascade/False", "cascade/True"} if engine == "postgres" else set())

@@ -45,7 +45,7 @@ def check_fault_witness(item, witness):
     require(witness["observed"]["status"] == "observed", "server-transaction-fault-native")
 
 
-def required_forms(engine):
+def required_forms(engine, _tag):
     return {"command/" + command for command in COMMANDS} | {"label/ordinary", "label/delimiter", "label/space",
            "checkpoint/one", "checkpoint/two", "checkpoint/reused", "begin/active", "begin/inactive"}
 

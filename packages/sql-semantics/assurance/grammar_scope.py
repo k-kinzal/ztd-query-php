@@ -80,6 +80,7 @@ def inventory(root):
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("delete_stmt", [])}
+            compound = ("union_list", "union_clause", "query_expression_body")
             drop = ("drop_table_stmt", "drop")
             transaction = ("begin", "start", "commit", "rollback", "savepoint", "release", "opt_chain", "opt_release")
             update = ("update", "update_stmt", "update_list", "update_elem")
@@ -88,6 +89,7 @@ def inventory(root):
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
             related = {alternative: ("server-delete-v1.json",) for alternative in rules.get("DeleteStmt", [])}
+            compound = ("simple_select", "set_quantifier")
             drop = ("DropStmt", "object_type_any_name")
             transaction = ("TransactionStmt", "TransactionStmtLegacy", "opt_transaction_chain")
             update = ("UpdateStmt", "set_clause_list", "set_clause")
@@ -95,7 +97,7 @@ def inventory(root):
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
             families = ("joined_table", "join_type", "join_qual", "where_clause")
         else:
-            families = selection = insert = update = transaction = drop = ()
+            families = selection = insert = update = transaction = drop = compound = ()
         for rule in families:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
@@ -117,6 +119,10 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 if any(related_token in alternative for related_token in ("table_or_tables", "object_type_any_name", ": TABLE")):
                     related[alternative] = ("server-drop-table-v1.json",)
+        for rule in compound:
+            for alternative in rules.get(rule, []):
+                if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):
+                    related[alternative] = ("server-compound-v1.json",)
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if not all(alternative in signatures and all(contract in CONTRACTS for contract in contracts)
                    for alternative, contracts in related.items()):

@@ -60,6 +60,7 @@ Call `analyze()` on the MySQL or PostgreSQL `Semantics` object configured for th
 - Top-level UPDATE preserves the ordered assignment list and optional filter over one resolved base table. Assignment operands are signed integer literals, SQL NULL, or a read from that row. MySQL reads the current row as assignments proceed. PostgreSQL reads the old row and supports ONLY.
 - Plain BEGIN, COMMIT, ROLLBACK, SAVEPOINT, RELEASE and ROLLBACK TO describe a connection-local transition. A named command stores the decoded checkpoint identifier. MySQL explicitly completes with NO CHAIN and NO RELEASE. The analyzed MySQL statement uses the `completion_type=0` profile for omitted options.
 - DROP TABLE keeps the ordered, absolute identities of persistent table targets and the missing-table policy. PostgreSQL also retains CASCADE or RESTRICT. MySQL uses its release-specific effect and implicit commit rules.
+- A compound query combines two checked SELECT arms. UNION, INTERSECT and EXCEPT preserve their tree grouping and row multiplicity policy. The leftmost arm supplies output names. MySQL 5.6 and 5.7 use a left-associated UNION tree. Arm ordering, bounds and WITH remain open.
 - Parameters, additional relation and predicate forms, grouping, expression ordering, other row bounds, further DML, further DDL and advanced transaction effects remain open in the native domains. Use the [scope and evidence guide](../assurance/README.md) for the implementation and engine coverage.
 
 ## Construction and evidence

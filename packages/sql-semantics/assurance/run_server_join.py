@@ -72,7 +72,7 @@ def probe(item, response, db, domain):
     return actual
 
 
-def required_forms(engine):
+def required_forms(engine, _tag):
     kinds = ("CROSS", "INNER", "LEFT", "RIGHT") + (("FULL",) if engine == "postgres" else ())
     return {"width/binary", "width/nested", "nested/left", "nested/right", "filter/absent", "filter/present",
             "projection/first", "projection/later", *("kind/" + kind for kind in kinds)}
@@ -118,6 +118,12 @@ def request_batches(cases, maximum):
             pending = []
     if pending:
         yield pending
+
+
+def negative_count(specification, engine, tag):
+    specific = specification.get("negativeByRelease", {})
+    return (len(specification["negative"]) + len(specific.get(tag, specific.get("default", ())))
+            + (len(specification.get("additionalPostgreSqlNegatives", ())) if engine == "postgres" else 0))
 
 
 def execute(args, specification, tag, worker, db, domain=None):
@@ -166,15 +172,12 @@ def execute(args, specification, tag, worker, db, domain=None):
                         seen[domain.finite_id(args.engine, response, item)] += 1
                     elif key.startswith("seed/"):
                         domain.sample_forms(forms, response, args.engine, item)
-            require(set(seen) == domain.finite_ids(args.engine, specification) and set(seen.values()) == {1},
+            require(set(seen) == domain.finite_ids(args.engine, specification, tag) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
-            require(domain.required_forms(args.engine) <= forms.keys(), f"server-{label}-exploration-incomplete",
-                    sorted(domain.required_forms(args.engine) - forms.keys()))
+            require(domain.required_forms(args.engine, tag) <= forms.keys(), f"server-{label}-exploration-incomplete",
+                    sorted(domain.required_forms(args.engine, tag) - forms.keys()))
             execution = ledger.verify()
-            registered = len(specification["negative"])
-            if args.engine == "postgres":
-                registered += len(specification.get("additionalPostgreSqlNegatives", ()))
-            require(execution["rejected"] == registered, f"server-{label}-rejections-incomplete")
+            require(execution["rejected"] == negative_count(specification, args.engine, tag), f"server-{label}-rejections-incomplete")
             return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution, "transport": transport}
         except Exception as error:
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"

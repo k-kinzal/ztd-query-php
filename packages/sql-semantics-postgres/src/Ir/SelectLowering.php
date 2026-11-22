@@ -25,11 +25,11 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null): Select
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
-        $statement = $operation->statement;
+        $statement = $operand ?? $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');
         Check::input(
             $statement->groupBy === [] && $statement->having === null
@@ -44,7 +44,7 @@ final class SelectLowering
         $catalogFirst = $operators === 'pg_catalog';
         $binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);
         $where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);
-        $fields = $operation->facts->output?->fields();
+        $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->targets as $index => $column) {

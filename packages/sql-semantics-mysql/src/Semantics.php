@@ -16,6 +16,8 @@ use SqlSemantics\Platform\MySql\Ir\Mutation\Insert;
 use SqlSemantics\Platform\MySql\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\MySql\Ir\Mutation\Update;
 use SqlSemantics\Platform\MySql\Ir\Mutation\UpdateLowering;
+use SqlSemantics\Platform\MySql\Ir\Rows\Compound;
+use SqlSemantics\Platform\MySql\Ir\Rows\CompoundLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Select;
@@ -36,6 +38,8 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropTable as ParsedDrop;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete as ParsedDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows as ParsedInsert;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update as ParsedUpdate;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery as ParsedParenthesized;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation as ParsedCompound;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin as ParsedBegin;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit as ParsedCommit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint as ParsedReleaseSavepoint;
@@ -118,12 +122,13 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Delete|DropTable|Insert|Select|Transaction|Update
+    public function analyze(string $sql, ?Context $context = null): Compound|Delete|DropTable|Insert|Select|Transaction|Update
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
         $statement = $operation->statement;
         return match (true) {
+            $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop => (new DropTableLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
@@ -138,7 +143,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Delete|DropTable|Insert|Select|Transaction|Update>
+     * @return list<Compound|Delete|DropTable|Insert|Select|Transaction|Update>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

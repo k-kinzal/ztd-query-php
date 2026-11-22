@@ -154,6 +154,48 @@ function constructPredicate(string $namespace, ?array $test): ?object
     };
 }
 
+function constructSetQuery(string $platform, array $input): SemanticsIR
+{
+    if (!isset($input['compound'])) {
+        return constructSelect($platform, $input);
+    }
+    $namespace = $platform . 'Ir\\Rows\\';
+    $type = $namespace . 'Compound';
+    $operator = $namespace . 'CompoundOperator';
+    $tree = $input['compound'];
+
+    return new $type(
+        constructSetQuery($platform, $tree['left']),
+        $operator::from($tree['operator']),
+        $tree['all'],
+        constructSetQuery($platform, $tree['right']),
+    );
+}
+
+function observeSetQuery(string $namespace, object $value, string $dialect): array
+{
+    if ($value::class === $namespace . 'Rows\\Compound') {
+        return ['compound' => [
+            'left' => observeSetQuery($namespace, $value->left, $dialect),
+            'right' => observeSetQuery($namespace, $value->right, $dialect),
+            'operator' => $value->operator->value,
+            'all' => $value->all,
+        ]];
+    }
+    if ($value::class !== $namespace . 'Select') {
+        throw new RuntimeException('Unknown result query role.');
+    }
+    $source = $value->source;
+    return [
+        'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
+        'source' => $source === null ? null : observeSource($source, $dialect, $namespace),
+        'where' => observePredicate($namespace, $value->where),
+        'distinct' => $value->distinct,
+        'orderBy' => array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
+        'limit' => $value->limit === null ? null : [$value->limit->count, $value->limit->offset],
+    ];
+}
+
 function constructDropTable(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -286,6 +328,7 @@ function observeStatement(array $input): array
     try {
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
+            isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
@@ -321,17 +364,10 @@ function observeStatement(array $input): array
     if ($value::class === $namespace . 'Mutation\\Delete') {
         return observeDelete($namespace, $value, $input['dialect']);
     }
-    $source = $value->source;
-
     return [
         'status' => 'constructed',
         'profile' => $value->profileId(),
-        'columns' => array_map(static fn ($column): array => [observeOperand($namespace, $column->expression), $column->name->value], $value->columns),
-        'source' => $source === null ? null : observeSource($source, $input['dialect'], $namespace),
-        'where' => observePredicate($namespace, $value->where),
-        'distinct' => $value->distinct,
-        'orderBy' => array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
-        'limit' => $value->limit === null ? null : [$value->limit->count, $value->limit->offset],
+        ...observeSetQuery($namespace, $value, $input['dialect']),
         'sql' => $value->toString(),
     ];
 }

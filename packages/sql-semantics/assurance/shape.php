@@ -165,7 +165,7 @@ if ($dialect === 'sqlite') {
     ];
 }
 if ($dialect !== 'sqlite') {
-    array_push($roots, 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\DropTable', 'Transaction\\Transaction');
+    array_push($roots, 'Rows\\Compound', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\DropTable', 'Transaction\\Transaction');
     $properties['ColumnReference']['occurrence'] = ['int'];
     $conditions = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'null'];
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
@@ -217,6 +217,19 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
+    $properties['Rows\\Compound'] = [
+        'left' => ['Rows\\Compound', 'Select'], 'operator' => ['Rows\\CompoundOperator'],
+        'all' => ['bool'], 'right' => ['Rows\\Compound', 'Select'],
+    ];
+    $methods['Rows\\Compound'] = $methods['Select'];
+    $properties['Rows\\CompoundOperator'] = $methods['Rows\\CompoundOperator'] = [];
+    $properties['Rows\\ResultType'] = $methods['Rows\\ResultType'] = [];
+    $enumCases['Rows\\CompoundOperator'] = ['Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
+    $enumCases['Rows\\ResultType'] = $dialect === 'mysql'
+        ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
+        : ['Integer' => 'int32', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
+    array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');
+    $pureCollaborators[] = 'Rows\\CompoundShape';
     $properties['Schema\\DropTable'] = [
         'targets' => ['array'], 'ifExists' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
     ];
@@ -309,6 +322,7 @@ try {
     $bind = '$this->binder->resolve($sql, $declarations)';
     $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
     $insert = $dialect === 'mysql' ? 'Dml\\Insert\\InsertRows' : 'Manipulation\\InsertRows';
+    $compound = $dialect === 'mysql' ? 'Query\\Set\\SetOperation' : 'Query\\SetOperation';
     $drop = $dialect === 'mysql' ? 'Alter\\DropTable' : 'Object\\Drop';
     $transactionNamespace = $platform . ($dialect === 'mysql' ? '\\Statement\\Server\\Transaction\\' : '\\Statement\\Utility\\Transaction\\');
     $transactionTypes = $dialect === 'mysql'
@@ -316,6 +330,8 @@ try {
         : ['Begin', 'Commit', 'Rollback', 'SavepointCommand'];
     $transactions = implode(', ', array_map(static fn ($type) => '$statement instanceof \\' . $transactionNamespace . $type, $transactionTypes));
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
+        . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $insert . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'

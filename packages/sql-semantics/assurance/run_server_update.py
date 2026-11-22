@@ -42,7 +42,7 @@ def check_fault_witness(item, witness):
     require(witness["observed"]["status"] == "updated", "server-update-fault-native")
 
 
-def required_forms(engine):
+def required_forms(engine, _tag):
     width = {"assignments/single", "assignments/multiple", "value/integer", "value/slot", "value/null", "where/absent",
              "where/present", "target/target", "target/control", "target/child", "reads/previously-written"}
     return width | ({"inherit/True", "inherit/False"} if engine == "postgres" else {"writes/repeated"})

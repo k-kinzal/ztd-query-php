@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression as ParsedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 
 /**
  * Resolves the supported SELECT and constructs its complete value.
@@ -27,12 +28,12 @@ final class SelectLowering
      * Converts the checked operation into a complete value.
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null): Select
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
         Check::input($profile->lexical->equals(new LexicalSettings()), 'This projection profile requires the default lexical settings.');
-        $statement = $operation->statement;
+        $statement = $operand ?? $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');
         Check::input(
             $statement->groupBy === null && $statement->having === null
@@ -43,9 +44,9 @@ final class SelectLowering
             'Complete MySQL IR currently supports projections with positional result selection.',
         );
         $expressions = new ExpressionLowering();
-        $binding = JoinBinding::bind($operation, $statement->from);
+        $binding = JoinBinding::bind($operation, $statement->from instanceof Dual ? null : $statement->from);
         $where = (new PredicateLowering())->lower($statement->where, $binding);
-        $fields = $operation->facts->output?->fields();
+        $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
         foreach ($statement->items as $index => $column) {

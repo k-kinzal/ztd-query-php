@@ -25,11 +25,17 @@ def faults(engine):
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
         Fault("allow-repeated-drop-targets", "Schema/DropTable::__construct", "!isset($seen[$key]),", "true,"),
         Fault("allow-invalid-savepoint-role", "Transaction/Transaction::__construct", "$named === ($name !== null),", "true,"),
+        Fault("accept-mismatched-compound-width", "Rows/Compound::__construct",
+              "CompoundShape::width($left) === CompoundShape::width($right),", "true,"),
+        Fault("accept-excessive-compound-size", "Rows/Compound::__construct",
+              "CompoundShape::arms($left) + CompoundShape::arms($right) <= 64,", "true,"),
     ]
     if engine == "postgres":
         shared.append(Fault("accept-same-side-full-join", "From/Join::__construct",
                             "!== ($on->right->occurrence < $leftWidth)", "=== ($on->right->occurrence < $leftWidth)"))
         shared.append(Fault("allow-repeated-pg-update-targets", "Mutation/Update::__construct", "!isset($written[$slot]),", "true,"))
+        shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
+                            "$right === ResultType::Unknown || $left === $right,", "true,"))
     return shared
 
 
@@ -86,7 +92,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v2.json", "value_storage.php", "value-storage-v7.json", "value-primitives.json")},
+                       "native-boundaries-v3.json", "value_storage.php", "value-storage-v7.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

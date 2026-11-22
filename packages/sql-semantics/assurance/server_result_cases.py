@@ -50,7 +50,7 @@ def finite_id(engine, response, _):
             orders(engine).index(response["orderBy"]), bounds(engine).index(response["limit"]))
 
 
-def finite_ids(engine, specification):
+def finite_ids(engine, specification, _tag):
     finite = specification["finite"]
     return set(itertools.product(range(len(finite["projections"])), range(len(finite["quantifiers"])),
                                  range(len(finite["orders"][engine])), range(len(finite["bounds"][engine]))))

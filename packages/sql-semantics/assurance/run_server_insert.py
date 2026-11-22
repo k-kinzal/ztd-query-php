@@ -40,7 +40,7 @@ def check_fault_witness(item, witness):
     require(witness["observed"]["status"] == "inserted", "server-insert-fault-native")
 
 
-def required_forms(_):
+def required_forms(_engine, _tag):
     return {"width/one", "width/wide", "rows/one", "rows/multiple", "rows/repeated",
             "cell/null", "cell/min", "cell/max", "defaults/omitted", "defaults/all-specified"}
 

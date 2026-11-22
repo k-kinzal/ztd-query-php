@@ -11,7 +11,7 @@ from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from run_server import check_profile, check_transport, same
 import run_server_join
-from run_server_join import request_batches, tools, version_tag
+from run_server_join import negative_count, request_batches, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -55,8 +55,9 @@ def replay(path, report, specification, domain=run_server_join):
             elif key.startswith("seed/"):
                 domain.sample_forms(forms, response, engine, item)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
-    require(set(seen) == domain.finite_ids(engine, specification) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
-    require(domain.required_forms(engine) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")
+    require(set(seen) == domain.finite_ids(engine, specification, tag) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
+    require(domain.required_forms(engine, tag) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")
+    require(execution["rejected"] == negative_count(specification, engine, tag), f"server-{label}-replay-negative-count")
     require(canonical(sorted(seen)) == canonical(report["finiteIds"]) and forms == report["coverage"]
             and execution == report["execution"], f"server-{label}-replay-summary-mismatch", str(path))
     return dict(execution)

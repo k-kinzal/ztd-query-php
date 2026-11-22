@@ -45,7 +45,7 @@ def check_fault_witness(item, witness):
     require(witness["observed"]["status"] == "rows", "server-result-fault-native")
 
 
-def required_forms(_):
+def required_forms(_engine, _tag):
     return {"rows/repeated", "rows/distinct", "null/first", "null/last", "order/single", "order/multiple",
             "limit/tie-cut", "source/joined", "source/table", "projection/repeated-label"}
 

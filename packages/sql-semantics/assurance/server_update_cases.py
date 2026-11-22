@@ -34,7 +34,7 @@ def finite_id(_, response, _item):
             target.get("only", False))
 
 
-def finite_ids(engine, specification):
+def finite_ids(engine, specification, _tag):
     finite = specification["finite"]
     return set(itertools.product(range(len(finite["layouts"])), range(len(finite["assignmentForms"])),
                                  range(len(finite["filters"])), (policy == "ONLY" for policy in finite["policies"][engine])))

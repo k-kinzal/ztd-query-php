@@ -42,7 +42,7 @@ def finite_id(engine, response, item):
     return labels(engine).index(checkpoints[0]), ENDS.index(response["command"]), program
 
 
-def finite_ids(_, specification):
+def finite_ids(_, specification, _tag):
     finite = specification["finite"]
     identities = set(product(range(len(finite["labels"])), range(len(finite["ends"])), range(len(finite["programs"]))))
     if len(identities) != finite["identitiesPerRelease"]:

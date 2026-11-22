@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -31,6 +32,9 @@ final class SelectSql
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {
             $sql .= ' FROM ' . $this->from($source);
+        } elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)
+            && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {
+            $sql .= ' FROM (SELECT 1) AS `__ztd_unit`';
         }
         if ($select->where !== null) {
             $sql .= ' WHERE ' . $this->predicate($select->where, $source);

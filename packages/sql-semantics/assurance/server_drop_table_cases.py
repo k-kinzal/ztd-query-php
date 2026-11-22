@@ -26,7 +26,7 @@ def finite_id(_, response, item):
     return SEQUENCES.index(sequence), value["ifExists"], value.get("cascade", False), item["dependent"]
 
 
-def finite_ids(engine, specification):
+def finite_ids(engine, specification, _tag):
     finite = specification["finite"]
     return set(product(range(len(finite["targetSequences"])), (False, True),
                        (policy == "cascade" for policy in finite["dependencyPolicies"][engine]), (False, True)))
