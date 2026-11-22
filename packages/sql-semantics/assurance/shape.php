@@ -337,8 +337,14 @@ if ($dialect === 'sqlite') {
     $methods['Schema\\Generation\\ColumnGeneration'] = ['__construct'];
     $methods['Schema\\Generation\\Storage'] = $properties['Schema\\Generation\\Storage'] = [];
     $enumCases['Schema\\Generation\\Storage'] = ['Virtual' => 'VIRTUAL', 'Stored' => 'STORED'];
-    array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\DefaultLowering', 'Schema\\DeclaredDatatypeLowering',
-        'Schema\\Generation\\GeneratedLowering', 'Schema\\Generation\\GeneratedGraph');
+    array_push(
+        $internal,
+        'Schema\\CreateColumnLowering',
+        'Schema\\DefaultLowering',
+        'Schema\\DeclaredDatatypeLowering',
+        'Schema\\Generation\\GeneratedLowering',
+        'Schema\\Generation\\GeneratedGraph'
+    );
     $pureCollaborators[] = 'Schema\\Generation\\GeneratedGraph';
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Mutation\\Insert';
@@ -721,8 +727,10 @@ try {
     }
     if ($dialect === 'sqlite') {
         $renameBoundary = __DIR__ . '/sqlite-rename-boundaries-v1.json';
-        requireShape(hash_file('sha256', $renameBoundary) === '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f',
-            'SQLite rename boundary contract differs from its fixed revision');
+        requireShape(
+            hash_file('sha256', $renameBoundary) === '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f',
+            'SQLite rename boundary contract differs from its fixed revision'
+        );
         $renameSources = json_decode(file_get_contents($renameBoundary), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
         foreach ($renameSources as $path => $expected) {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $path;
@@ -815,9 +823,11 @@ try {
                 && $map->name->toString() === 'NON_COLUMN_KEYWORDS' && $map->value instanceof Expr\Array_, 'SQLite CHECK token registry differs');
             $observedKeys = [];
             foreach ($map->value->items as $item) {
-                requireShape($item->key instanceof String_ && !$item->unpack && !$item->byRef
+                requireShape(
+                    $item->key instanceof String_ && !$item->unpack && !$item->byRef
                     && $item->value instanceof Expr\ConstFetch && $item->value->name->toLowerString() === 'true',
-                    'Invalid SQLite CHECK token registry entry');
+                    'Invalid SQLite CHECK token registry entry'
+                );
                 $observedKeys[] = $item->key->value;
             }
             requireShape($observedKeys === array_map('strtolower', $required), 'SQLite CHECK token meanings differ');

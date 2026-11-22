@@ -47,8 +47,8 @@ function observeTypedProjection(PDO $pdo, array $request): array
     try {
         $pdo->exec('PREPARE ir_typed_projection AS ' . $request['sql']);
         $types = $pdo->query(
-            "SELECT param::oid::text FROM pg_catalog.pg_prepared_statements AS prepared, "
-            . "unnest(prepared.parameter_types) WITH ORDINALITY AS t (param, slot) "
+            'SELECT param::oid::text FROM pg_catalog.pg_prepared_statements AS prepared, '
+            . 'unnest(prepared.parameter_types) WITH ORDINALITY AS t (param, slot) '
             . "WHERE prepared.name = 'ir_typed_projection' ORDER BY slot"
         )->fetchAll(PDO::FETCH_COLUMN);
         $statement = $pdo->query('EXECUTE ir_typed_projection (' . $args . ')');

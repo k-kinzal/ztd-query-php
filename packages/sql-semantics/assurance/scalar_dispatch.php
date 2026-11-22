@@ -9,10 +9,12 @@ use PhpParser\Node\Stmt;
 
 function checkedDispatchType(Expr $condition, string $variable, string $prefix, string $method): string
 {
-    requireShape($condition instanceof Expr\Instanceof_
+    requireShape(
+        $condition instanceof Expr\Instanceof_
         && $condition->expr instanceof Expr\Variable && $condition->expr->name === $variable
         && $condition->class instanceof Name\FullyQualified && str_starts_with($condition->class->toString(), $prefix),
-        "Unexpected typed condition in scalar dispatch $method");
+        "Unexpected typed condition in scalar dispatch $method"
+    );
 
     return substr($condition->class->toString(), strlen($prefix));
 }
@@ -30,9 +32,11 @@ function checkedScalarDispatch(Stmt\ClassLike $class, string $name, string $pref
     requireShape($tail instanceof Stmt\Return_ && $tail->expr !== null, "Missing terminal scalar dispatch $name");
     $handled = [];
     foreach ($body as $branch) {
-        requireShape($branch instanceof Stmt\If_ && $branch->else === null && $branch->elseifs === []
+        requireShape(
+            $branch instanceof Stmt\If_ && $branch->else === null && $branch->elseifs === []
             && ($branch->stmts[array_key_last($branch->stmts)] ?? null) instanceof Stmt\Return_,
-            "Unexpected early return form in scalar dispatch $name");
+            "Unexpected early return form in scalar dispatch $name"
+        );
         $handled[] = checkedDispatchType($branch->cond, $variable, $prefix, $name);
     }
     $forwarded = [];

@@ -64,19 +64,19 @@ use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\DeclaredDatatypeName;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\ColumnGeneration;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Generation\Storage as GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\KeyTerm;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Key\UniqueKey;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\CheckConstraint;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ComparisonSpelling;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Predicate\ImplicitCheckLabel;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreatedColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\Query\CreateTableAs;
-use SqlSemantics\Platform\Sqlite\Ir\Schema\NotNullConflict;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\TableColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -482,7 +482,9 @@ function directCreateTable(array $input): CreateTable
         array_map(directTableKey(...), $keys),
         array_map(
             static fn (array $check): CheckConstraint => new CheckConstraint(
-                directCheckLabel($check['label']), operand($check['condition']), $check['column'],
+                directCheckLabel($check['label']),
+                operand($check['condition']),
+                $check['column'],
             ),
             $input['checks'] ?? [],
         ),
@@ -495,8 +497,14 @@ function directCheckLabel(string|array $source): Identifier|ImplicitCheckLabel
         return new Identifier($source);
     }
 
-    return new ImplicitCheckLabel(new Identifier($source['name']), ComparisonSpelling::from($source['glyph']),
-        $source['quoted'], $source['before'], $source['after'], $source['zeroes']);
+    return new ImplicitCheckLabel(
+        new Identifier($source['name']),
+        ComparisonSpelling::from($source['glyph']),
+        $source['quoted'],
+        $source['before'],
+        $source['after'],
+        $source['zeroes']
+    );
 }
 
 function observeCheckLabel(Identifier|ImplicitCheckLabel $label): string|array

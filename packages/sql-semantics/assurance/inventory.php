@@ -114,7 +114,7 @@ foreach (['sql-semantics', 'sql-semantics-mysql', 'sql-semantics-postgres', 'sql
                 'properties' => $properties,
                 'traits' => array_map($printer->prettyPrint(...), array_map(
                     static fn ($use) => [$use],
-                    $finder->findInstanceOf($type->stmts, PhpParser\Node\Stmt\TraitUse::class),
+                    $finder->findInstanceOf($type->stmts, Node\Stmt\TraitUse::class),
                 )),
                 'public_and_magic_signatures' => $methods,
                 'public_return_roles' => (object) $publicReturns,
