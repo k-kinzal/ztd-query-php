@@ -98,7 +98,12 @@ if ($dialect === 'sqlite') {
     $properties['Mutation\\UpdateAssignment'] = ['targetSlot' => ['int'], 'value' => $operands];
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $properties['Rows\\ValueRow'] = ['values' => ['array']];
-    $properties['Rows\\LocalSource'] = ['columns' => ['array'], 'query' => ['Rows\\ValuesQuery']];
+    $properties['Rows\\LocalSource'] = ['columns' => ['array'], 'query' => ['Rows\\RecursiveDefinition', 'Rows\\ValuesQuery']];
+    $properties['Rows\\RecursiveColumn'] = ['expression' => $operands];
+    $properties['Rows\\RecursiveDefinition'] = ['anchor' => ['Rows\\ValuesQuery'], 'step' => ['array'], 'unionAll' => ['bool'], 'where' => $nullablePredicates];
+    $methods['Rows\\RecursiveColumn'] = ['__construct'];
+    $methods['Rows\\RecursiveDefinition'] = ['__construct', 'scopedExpressions'];
+    $internal[] = 'Rows\\RecursiveLowering';
     $properties['Rows\\ValuesQuery'] = ['rows' => ['array']];
     $methods['Rows\\ValueRow'] = ['__construct', 'toString'];
     $methods['Rows\\LocalSource'] = ['__construct'];
@@ -261,9 +266,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v2.json';
+    $storagePath = __DIR__ . '/value-storage-v3.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '191e4ce81eefa077ff4a586dafc41dfe08841249643d82e71bbc164233f4d222',
+        hash_file('sha256', $storagePath) === '1bde7a53b453c3bd9d263e6a25cd9b544cfe6ed536d33c12354fd628dd7d5e96',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

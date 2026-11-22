@@ -38,6 +38,8 @@ def typed(value):
 
 
 class Database:
+    policy_digest = OBSERVER_CONTRACT
+
     def __init__(self, library, filename=b":memory:"):
         self.library = library
         self.lib = c.CDLL(str(library))

@@ -38,7 +38,7 @@ final class SelectLowering
             $statement->groupBy === [] && $statement->having === null && $statement->windows === [],
             'Complete SQLite IR currently supports projections without grouping or windows.',
         );
-        $binding = new SourceBinding($operation, $statement->from, $local);
+        $binding = new SourceBinding($operation, $statement->from, $local?->columns);
         $expressions = new ExpressionLowering();
         $fields = $arm === null ? $operation->facts->output?->fields() : $operation->facts->query($arm)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
@@ -56,7 +56,7 @@ final class SelectLowering
 
         return new Select(
             $results,
-            $binding->source(),
+            $local ?? $binding->source(),
             $joins,
             $where,
             $clauses->ordering($statement->orderBy),

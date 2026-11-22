@@ -171,6 +171,21 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_lo
 
 The evaluator supplies the definition's independently evaluated rows as the local input to the projection. The observed dimensions include width, height, typed multiplicity, result names, order, binding labels and read-only execution. The direct construction probes vary the operand graphs and exercise filtering, duplicate elimination and bounds. Analyzed statements run with a same-named physical table holding deliberately different rows. The mutations reverse the definition's column order and alter the first native parameter label.
 
+## SQLite recursive common tables
+
+The [recursive source contract](sqlite-recursive-source-v1.json) covers one named local definition with an independent anchor and one self-fed SELECT arm. The step scope represents a single dequeued row, and the consuming SELECT reads the resulting local table. The reference evaluator implements queue admission and UNION duplicate elimination, including equality of NULL cells. It compares storage classes, output names, row multiplicity, declared ordering, read-only effects and parameter slots against SQLite 3.47.2.
+
+```sh
+recursive_evidence=$(mktemp -d)/sqlite-recursive-source-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_recursive_source.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$recursive_evidence"
+```
+
+The recursive observer extends authorization for this domain only. Its progress callback stops an observation after the fixed virtual-machine budget. The runner confirms that the ordinary observer rejects recursive statements, the recursive observer interrupts an unbounded fixture, and a subsequent observation succeeds. Interrupted evaluations fail the comparison. The collector reruns these controls and replays the raw request ledger.
+
 ## SQLite INSERT effects
 
 Run the [INSERT effect contract](sqlite-insert-v1.json) with the same engine:

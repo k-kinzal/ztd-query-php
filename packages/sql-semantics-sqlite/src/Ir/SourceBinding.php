@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
-use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
@@ -43,13 +42,14 @@ final class SourceBinding
 
     /**
      * Resolves the relation occurrences before allocating column slots.
+     * @param non-empty-list<Identifier>|null $localColumns The slots of a verified local input
      */
     public function __construct(
         private readonly BoundStatement $operation,
         private readonly ?Relation $source,
-        private readonly ?LocalSource $local = null,
+        private readonly ?array $localColumns = null,
     ) {
-        $this->tables = $local === null ? (new SourceDeclarations())->bind($operation, $source) : [];
+        $this->tables = $localColumns === null ? (new SourceDeclarations())->bind($operation, $source) : [];
     }
 
     /**
@@ -61,11 +61,11 @@ final class SourceBinding
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn && $resolution->depth === 0, 'The column must resolve to the projection source.');
-        if ($this->local !== null) {
+        if ($this->localColumns !== null) {
             $name = $resolution->slot->name;
             Check::input($resolution->relation === $this->source && $name !== null, 'The column must resolve to the local input occurrence.');
             $key = (new Identifier($name->value))->key();
-            foreach ($this->local->columns as $index => $column) {
+            foreach ($this->localColumns as $index => $column) {
                 if ($column->key() === $key) {
                     return new ColumnReference($index);
                 }
@@ -116,13 +116,10 @@ final class SourceBinding
     }
 
     /**
-     * Exports the local definition or the external identity and consumed column names.
+     * Exports the external identity and consumed column names.
      */
-    public function source(int $index = 0): TableSource|LocalSource|null
+    public function source(int $index = 0): ?TableSource
     {
-        if ($index === 0 && $this->local !== null) {
-            return $this->local;
-        }
         $table = $this->tables[$index][1] ?? null;
 
         return $table === null ? null : new TableSource(

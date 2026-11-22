@@ -32,6 +32,8 @@ use SqlSemantics\Platform\Sqlite\Ir\Rows\Compound;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundOperator;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\CompoundStep;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Schema\CreateTable;
@@ -113,7 +115,7 @@ function direct(array $input): Select
 {
     $from = $input['source'] === null ? null : source($input['source']);
     if (isset($input['local'])) {
-        $from = new LocalSource(directValues($input['local']), array_map(
+        $from = new LocalSource(directDefinition($input['local']), array_map(
             static fn (string $name): Identifier => new Identifier($name),
             $input['local']['names'],
         ));
@@ -130,6 +132,21 @@ function direct(array $input): Select
     ), $input['joins'] ?? []);
     $orderBy = array_map(static fn (array $term): Order => new Order(...$term), $input['orderBy'] ?? []);
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, directLimit($input));
+}
+
+function directDefinition(array $input): ValuesQuery|RecursiveDefinition
+{
+    $anchor = directValues($input);
+    if (!isset($input['step'])) {
+        return $anchor;
+    }
+
+    return new RecursiveDefinition($anchor, array_map(
+        static fn (array $expression): RecursiveColumn|Identifier => $expression[0] === 'identifier'
+            ? new Identifier($expression[1])
+            : new RecursiveColumn(operand($expression)),
+        $input['step'],
+    ), isset($input['where']) ? operand($input['where']) : null, $input['unionAll']);
 }
 
 function directLimit(array $input): ?Limit
@@ -403,13 +420,27 @@ function observeLimit(?Limit $limit): ?array
     ];
 }
 
+function observeLocal(LocalSource $source): array
+{
+    $query = $source->query;
+    $names = array_map(static fn (Identifier $name): string => $name->value, $source->columns);
+    if ($query instanceof ValuesQuery) {
+        return ['names' => $names, 'rows' => valueRows($query)];
+    }
+
+    return [
+        'names' => $names,
+        'rows' => valueRows($query->anchor),
+        'step' => array_map(static fn (RecursiveColumn $column): array => observeOperand($column->expression), $query->step),
+        'where' => $query->where === null ? null : observeOperand($query->where),
+        'unionAll' => $query->unionAll,
+    ];
+}
+
 function observeSelect(Select $value): array
 {
     $source = $value->source;
-    $local = $source instanceof LocalSource ? [
-        'names' => array_map(static fn (Identifier $name): string => $name->value, $source->columns),
-        'rows' => valueRows($source->query),
-    ] : null;
+    $local = $source instanceof LocalSource ? observeLocal($source) : null;
 
     return [
         'status' => 'constructed',

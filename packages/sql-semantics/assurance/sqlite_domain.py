@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
-from sqlite_engine import OBSERVER_CONTRACT, Database
+from sqlite_engine import Database
 
 FAULT_STARTUP_SECONDS = 180
 FAULT_EXECUTION_SECONDS = 45
@@ -72,7 +72,7 @@ def complete_observations(ledger, settings):
     return dict(ledger.counts)
 
 
-def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
+def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults, database_factory=Database):
     parser = argparse.ArgumentParser(description=f"Collect SQLite {label} evidence")
     parser.add_argument("--candidate", required=True, type=Path)
     parser.add_argument("--tool-autoload", required=True, type=Path)
@@ -90,7 +90,7 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
     specification = json.loads(contract.read_text())
     commit, distribution = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", distribution)
-    db = Database(args.sqlite_library)
+    db = database_factory(args.sqlite_library)
     require(db.version == "3.47.2", "engine-version-mismatch", db.version)
     if schema_sql:
         db.execute(schema_sql)
@@ -111,7 +111,7 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
         "status": f"provisional-sqlite-{label.lower()}-domain", "candidate": commit, "contract": sha256,
         "candidateIdentityContract": IDENTITY_CONTRACT,
         "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,
-        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": OBSERVER_CONTRACT},
+        "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest, "observerPolicy": db.policy_digest},
         "tools": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in (".php", ".py", ".json")},
         "shape": scope, "checks": checks, "faults": faults,
         "faultBudgets": {"startupSeconds": FAULT_STARTUP_SECONDS, "executionSeconds": FAULT_EXECUTION_SECONDS},

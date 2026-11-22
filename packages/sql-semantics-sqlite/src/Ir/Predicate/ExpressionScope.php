@@ -13,24 +13,23 @@ use SqlSemantics\Platform\Sqlite\Ir\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
-use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
-use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
  * Checks all expanded expression occurrences against their visible table slots.
  *
  * @visibility SqlSemantics\Platform\Sqlite
+ * @phpstan-type ScopedExpression array{Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral, int, int}
  */
 final class ExpressionScope
 {
     /**
      * Traverses the closed operand graph and applies the expression and SQL size budgets.
      *
-     * @param list<TableSource|LocalSource|null> $tables The table occurrences
-     * @param list<array{Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral, int, int}> $pending The expressions with height and scope width
+     * @param list<int> $widths The number of slots per occurrence
+     * @param list<ScopedExpression> $pending The expressions with height and scope width
      */
-    public function check(array $tables, array $pending): void
+    public function check(array $widths, array $pending): void
     {
         $nodes = 0;
         $payloadBytes = 0;
@@ -39,7 +38,7 @@ final class ExpressionScope
             Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
             match (true) {
                 $expression instanceof ColumnReference => Check::input(
-                    $expression->source < $visibility && isset($tables[$expression->source]->columns[$expression->slot]),
+                    $expression->source < $visibility && $expression->slot < ($widths[$expression->source] ?? 0),
                     'Column slot must belong to the statement source at a visible occurrence.',
                 ),
                 $expression instanceof Parameter => $payloadBytes += strlen($expression->label),

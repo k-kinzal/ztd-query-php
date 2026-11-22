@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
@@ -33,14 +34,7 @@ final class SelectSql
     public function render(Select $select): string
     {
         $source = $select->source;
-        $sql = '';
-        if ($source instanceof LocalSource) {
-            $names = [];
-            foreach ($source->columns as $name) {
-                $names[] = $name->quoted();
-            }
-            $sql = 'WITH ' . self::CTE_NAME . ' (' . implode(', ', $names) . ') AS (' . $source->query->toString() . ') ';
-        }
+        $sql = $source instanceof LocalSource ? $this->localPrefix($source) : '';
         $items = [];
         foreach ($select->columns as $column) {
             $items[] = $this->expression($column->expression, $source, $select->joins) . ' AS ' . $column->name->quoted();
@@ -59,6 +53,35 @@ final class SelectSql
             $sql .= ' WHERE ' . $this->expression($select->where, $source, $select->joins);
         }
         return $sql . $this->ordering($select->orderBy) . ($select->limit === null ? '' : ' ' . $this->limit($select->limit));
+    }
+
+    /**
+     * Emits the closed definition and its generated local name.
+     */
+    public function localPrefix(LocalSource $source): string
+    {
+        $names = [];
+        foreach ($source->columns as $name) {
+            $names[] = $name->quoted();
+        }
+        $with = 'WITH ';
+        if ($source->query instanceof RecursiveDefinition) {
+            $definition = $source->query;
+            $with = 'WITH RECURSIVE ';
+            $operands = [];
+            foreach ($definition->step as $column) {
+                $operands[] = $this->expression($column->expression, $source);
+            }
+            $query = $definition->anchor->toString() . ($definition->unionAll ? ' UNION ALL SELECT ' : ' UNION SELECT ')
+                . implode(', ', $operands) . ' FROM ' . $this->source($source, 0);
+            if ($definition->where !== null) {
+                $query .= ' WHERE ' . $this->expression($definition->where, $source);
+            }
+        } else {
+            $query = $source->query->toString();
+        }
+
+        return $with . self::CTE_NAME . ' (' . implode(', ', $names) . ') AS (' . $query . ') ';
     }
 
     /**

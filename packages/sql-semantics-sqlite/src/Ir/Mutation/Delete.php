@@ -40,7 +40,7 @@ final class Delete implements SemanticsIR
         public readonly TableSource $target,
         public readonly Arithmetic|BlobLiteral|ColumnReference|Comparison|HexIntegerLiteral|IntegerLiteral|Logical|NullLiteral|Parameter|RealLiteral|TextLiteral|null $where = null,
     ) {
-        (new ExpressionScope())->check([$target], $where === null ? [] : [[$where, 0, 1]]);
+        (new ExpressionScope())->check([count($target->columns)], $where === null ? [] : [[$where, 0, 1]]);
     }
 
     /**

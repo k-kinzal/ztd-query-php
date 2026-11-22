@@ -23,6 +23,7 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",
     "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",
     "sqlite-scalars-v1.json": "a8e832b1a01761446f8e21df232ead7e90a9c239fd09ce1f3ea477904e8cb52f",
     "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
@@ -138,7 +139,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, one ordinary local VALUES source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

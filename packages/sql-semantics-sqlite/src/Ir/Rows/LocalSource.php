@@ -30,10 +30,11 @@ final class LocalSource
      *
      * @param list<Identifier> $columns
      */
-    public function __construct(public readonly ValuesQuery $query, array $columns)
+    public function __construct(public readonly ValuesQuery|RecursiveDefinition $query, array $columns)
     {
         $names = Check::listOf($columns, Identifier::class, 'A local source needs an ordered list of column names.', 1);
-        Check::input(count($names) === count($query->rows[0]->values), 'Local source names must match the VALUES width.');
+        $anchor = $query instanceof RecursiveDefinition ? $query->anchor : $query;
+        Check::input(count($names) === count($anchor->rows[0]->values), 'Local source names must match the VALUES width.');
         $seen = [];
         foreach ($names as $name) {
             $key = $name->key();

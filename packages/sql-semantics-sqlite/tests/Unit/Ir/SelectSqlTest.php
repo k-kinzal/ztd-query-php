@@ -13,6 +13,9 @@ use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
@@ -25,6 +28,13 @@ final class SelectSqlTest extends TestCase
     {
         $select = new Select([new ResultColumn(new IntegerLiteral('2'), new Identifier('"'))]);
         self::assertSame('SELECT 2 AS """"', (new SelectSql())->render($select));
+    }
+
+    public function testLocalPrefixDeclaresTheSlotNamesBeforeTheAnchor(): void
+    {
+        $source = new LocalSource(new ValuesQuery([new ValueRow([new IntegerLiteral('2')])]), [new Identifier('n')]);
+
+        self::assertSame('WITH "__ztd_cte" ("n") AS (VALUES (2)) ', (new SelectSql())->localPrefix($source));
     }
 
     public function testOrderingRetainsPositionDirectionAndNullPlacement(): void

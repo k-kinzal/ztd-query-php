@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
+use SqlSemantics\Platform\Sqlite\Ir\Rows\RecursiveDefinition;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
 /**
@@ -48,9 +49,11 @@ final class SelectBounds
             Check::input($order->position <= count($results), 'An output order position must belong to the projection.');
         }
 
-        $tables = [$source];
+        $widths = [$source === null ? 0 : count($source->columns)];
         $pending = [];
-        if ($source instanceof LocalSource) {
+        if ($source instanceof LocalSource && $source->query instanceof RecursiveDefinition) {
+            $pending = $source->query->scopedExpressions();
+        } elseif ($source instanceof LocalSource) {
             foreach ($source->query->rows as $row) {
                 foreach ($row->values as $value) {
                     $pending[] = [$value, 0, 0];
@@ -58,20 +61,20 @@ final class SelectBounds
             }
         }
         foreach ($joins as $join) {
-            $tables[] = $join->source;
+            $widths[] = count($join->source->columns);
             if ($join->on !== null) {
-                $pending[] = [$join->on, 0, count($tables)];
+                $pending[] = [$join->on, 0, count($widths)];
             }
         }
         foreach ($results as $result) {
-            $pending[] = [$result->expression, 0, count($tables)];
+            $pending[] = [$result->expression, 0, count($widths)];
         }
         foreach ([$where, $limit?->count, $limit?->offset] as $operand) {
             if ($operand !== null) {
-                $pending[] = [$operand, 0, count($tables)];
+                $pending[] = [$operand, 0, count($widths)];
             }
         }
 
-        (new ExpressionScope())->check($tables, $pending);
+        (new ExpressionScope())->check($widths, $pending);
     }
 }

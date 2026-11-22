@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
@@ -25,11 +26,12 @@ final class LocalSourceLowering
      */
     public function lower(BoundStatement $operation, WithQuery $statement): LocalSource
     {
-        Check::input(!$statement->with->recursive && count($statement->with->tables) === 1, 'Complete SQLite IR currently supports one nonrecursive local source.');
+        Check::input(count($statement->with->tables) === 1, 'A complete local source requires one definition.');
         $definition = $statement->with->tables[0];
         Check::input(
-            $definition->query instanceof ValuesClause && $definition->columns !== [] && $definition->materialization === null,
-            'The local source requires named VALUES without a materialization hint.',
+            ($definition->query instanceof ValuesClause || $definition->query instanceof Compound)
+                && $definition->columns !== [] && $definition->materialization === null,
+            'The local source requires an explicit column list and a supported definition without a materialization hint.',
         );
         $body = $statement->body;
         Check::input($body instanceof ParsedSelect && $body->from instanceof TableInput && $body->from->index === null, 'A local source requires one SELECT table input.');
@@ -40,6 +42,10 @@ final class LocalSourceLowering
             $columns[] = new Identifier($column->name->value);
         }
 
-        return new LocalSource((new ValuesLowering())->lower($operation, $definition->query), $columns);
+        $query = $definition->query instanceof Compound
+            ? (new RecursiveLowering())->lower($operation, $definition, $definition->query, $columns)
+            : (new ValuesLowering())->lower($operation, $definition->query);
+
+        return new LocalSource($query, $columns);
     }
 }

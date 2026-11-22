@@ -59,7 +59,7 @@ final class Update implements SemanticsIR
             Check::input(isset($target->columns[$assignment->targetSlot]), 'An assignment slot must belong to the UPDATE target.');
             $pending[] = [$assignment->value, 0, 1];
         }
-        (new ExpressionScope())->check([$target], $pending);
+        (new ExpressionScope())->check([count($target->columns)], $pending);
         $this->assignments = $checked;
     }
 
