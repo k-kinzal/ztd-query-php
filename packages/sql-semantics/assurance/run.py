@@ -371,30 +371,22 @@ def run(args, db, contract, output, worker_factory=Worker):
             key, original = current if current is not None else ("run", None)
             classification = error.signal if isinstance(error, Failure) else "unexpected-error"
             ledger.record(key, "failed", classification=classification, error=str(error))
-            write_json(output.parent / "counterexample.json", {
+            from counterexample_reduction import record
+
+            record(output.parent / "counterexample.json", {
                 "id": key, "original": original, "classification": classification, "failure": str(error),
-                "shrunk": shrink(worker, db, original) if classification == "meaning-mismatch" and original else None,
-            })
+                "detail": error.detail if isinstance(error, Failure) else None,
+            }, classification, projection_reductions, lambda item: positive(worker, db, item))
             raise
 
 
-def shrink(worker, db, original):
-    """Return only a smaller direct case that still produces an observation mismatch."""
+def projection_reductions(original):
+    """Offer simpler direct operand trees under the same source declaration."""
     for expression, name in original["columns"]:
         for subexpression in walk(expression):
             item = case(original["source"], [subexpression], labels=[name])
             item["bindings"] = {slot: value for slot, value in original["bindings"].items() if slot in slots(item["columns"])}
-            if item == original:
-                continue
-            try:
-                positive(worker, db, item)
-            except Failure as error:
-                if error.signal == "meaning-mismatch":
-                    return item
-            except Exception:
-                continue
-    return None
-
+            yield item
 
 
 def write_summary(path, index):

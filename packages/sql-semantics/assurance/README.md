@@ -87,6 +87,8 @@ For example, `--diagnostic sqlite-not-null-conflict-v2.json` runs one named cont
 
 ### Reproduce the native release matrix
 
+The initial and relational SQLite schedules retain the full input and measured failure before trying a smaller request. Their [reduction contract](counterexample-reduction-v1.json) bounds probes and requires the smaller direct case to reproduce its failure twice through the same construction and comparison. Reproduced witnesses and failed reductions have separate digest-linked records.
+
 To run the complete native release matrix locally, keep the trusted archive's workflow file next to its `packages/` directory. Install PDO MySQL and PDO PostgreSQL for the observer. The launcher starts a disposable pinned database per release, binds the server to loopback and runs the candidate through the isolated PHP worker. It records per-domain exit outcomes and retains the raw runs for independent replay.
 
 ```sh
@@ -95,6 +97,8 @@ python3 "$verifier/run_native_matrix.py" --candidate "$candidate" --candidate-sh
 python3 "$verifier/collect_native_replays.py" --layout release --candidate "$candidate_sha" \
   --candidate-root "$candidate" --evidence-root "$evidence"
 ```
+
+The container launch, image check, local endpoint discovery and server readiness share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch.
 
 Use `--profile postgres-16.6` to diagnose a single release in a fresh evidence directory. The bundle lists every omitted profile. The local launcher and the manual workflow produce provisional evidence for the same native replay checks.
 

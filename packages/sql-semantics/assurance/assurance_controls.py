@@ -542,6 +542,54 @@ def assurance_revision_control(args):
             "digestMismatch": tampered.signal, "expected": expected, "observed": measured["observedPotentialReductions"]}
 
 
+def reduction_controls(args):
+    from counterexample_reduction import record
+
+    original = {"columns": [[["integer", "1"], "a"], [["integer", "2"], "b"]]}
+    smaller = {"columns": [original["columns"][0]]}
+    signal = "meaning-mismatch"
+
+    def test_proposals(_):
+        yield smaller
+
+    def failed_generator(_):
+        raise RuntimeError("The controlled proposal generator failed.")
+
+    controls = (
+        ("confirm-smaller-counterexample", "reproduced", test_proposals),
+        ("reject-unconstructed-counterexample", "no-confirmed-smaller-input", test_proposals),
+        ("reject-flaky-counterexample", "no-confirmed-smaller-input", test_proposals),
+        ("preserve-counterexample-on-reducer-failure", "reducer-failure", failed_generator),
+    )
+    observed = []
+    for name, expectation, proposals in controls:
+        folder = args.out / name
+        folder.mkdir()
+        path = folder / "counterexample.json"
+        visits = 0
+
+        def probe(item):
+            nonlocal visits
+            require(path.is_file(), "missing-original-during-reduction")
+            if item == smaller:
+                visits += 1
+                if name == "reject-unconstructed-counterexample":
+                    raise Failure("positive-construction-failed", "Missing premise.")
+                if name == "reject-flaky-counterexample" and visits == 2:
+                    return
+            raise Failure(signal, {"expected": [1], "measured": [0]})
+
+        record(path, {"original": original, "failure": "Known observation difference."}, signal, proposals, probe)
+        reduction = path.with_suffix(".reduction.json")
+        result = json.loads(reduction.read_text())
+        require(json.loads(path.read_text())["original"] == original and result["originalDigest"] == digest(path)
+                and result["status"] == expectation and result["shrunk"] == (smaller if expectation == "reproduced" else None),
+                "reduction-control-mismatch", result)
+        observed.append({"case": name, "control": "passed", "original": digest(path), "reduction": digest(reduction),
+                         "expected": expectation, "observed": result["status"]})
+    return observed
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("root", "candidate", "tool-autoload", "sqlite-library", "out"):
@@ -555,7 +603,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
-              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution))
+              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution) + reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

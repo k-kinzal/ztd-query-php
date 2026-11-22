@@ -123,25 +123,10 @@ def checked_counts(events):
     return dict(events.counts)
 
 
-def shrink(worker, db, item, signal):
-    if item is None or "sql" in item:
-        return None
-    alternatives = [
-        dict(item, where=None),
-        dict(item, orderBy=[]),
-        dict(item, columns=item["columns"][:1], orderBy=[]),
-    ]
-    for smaller in alternatives:
-        if smaller == item:
-            continue
-        try:
-            inspect_direct(worker, db, smaller)
-        except Failure as failure:
-            if failure.signal == signal:
-                return smaller
-        except Exception:
-            pass
-    return None
+def relational_reductions(item):
+    yield dict(item, where=None)
+    yield dict(item, orderBy=[])
+    yield dict(item, columns=item["columns"][:1], orderBy=[])
 
 
 def execute(args, specification, db, path, worker_factory=Worker):
@@ -182,10 +167,12 @@ def execute(args, specification, db, path, worker_factory=Worker):
             counts = checked_counts(ledger)
         except Exception as error:
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"
-            write_json(path.with_suffix(".counterexample.json"), {
+            from counterexample_reduction import record
+
+            record(path.with_suffix(".counterexample.json"), {
                 "original": current, "signal": signal, "failure": str(error),
-                "shrunk": shrink(worker, db, current, signal) if signal in ("meaning-mismatch", "relational-order-mismatch") else None,
-            })
+                "detail": error.detail if isinstance(error, Failure) else None,
+            }, signal, relational_reductions, lambda item: inspect_direct(worker, db, item))
             raise
         return {"execution": counts, "finiteIds": sorted(observed), "coverage": dict(coverage), "php": worker.environment}
 
