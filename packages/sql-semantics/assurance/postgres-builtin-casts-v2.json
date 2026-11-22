@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/postgres-builtin-casts-2",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profile": "PostgreSQL 16.6 and 17.2 with native output metadata, signed int4 input slots, and the registered pg_catalog search-path profile.",
+  "scope": "Explicit conversions between the built-in int4 and bool types, including identity and NULL propagation, in checked SELECT projections.",
+  "constructors": {
+    "Expression/CastDestination": {
+      "role": "The fixed pg_catalog target of a scalar conversion.",
+      "structure": "One of int4 and bool, each with its catalog identity fixed.",
+      "conditions": "The closed target choices have no modifiers, array dimensions, domains, or set-returning roles.",
+      "meaning": "The target resolves the cast and the result type statically. No application schema or search path can change its identity.",
+      "externalInterpretation": "Evaluate against the built-in catalog for the specified native engine release.",
+      "sql": "Emit the canonical pg_catalog-qualified type name.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    },
+    "Expression/BuiltinCast": {
+      "role": "An explicit checked conversion from one admitted scalar to a catalog type.",
+      "structure": "One target and one int4 literal, bool literal, NULL, resolved int4 reference or nested cast.",
+      "conditions": "The result projection owns the reference scope and enforces the existing expression depth and expanded occurrence bounds. Analyzed operands must resolve to an admitted source type and role. Other target types, operand types and source roles are outside this domain.",
+      "meaning": "NULL remains NULL with the target type. Int4 to bool tests for nonzero. Bool to int4 returns one for true and zero for false. A same-type conversion preserves its operand value. Nested casts apply in structural order.",
+      "externalInterpretation": "Use the same relation, column, occurrence, row values, profile and built-in cast functions. All admitted reference slots supply int4.",
+      "sql": "Render CAST with the explicit child and a catalog-qualified target. The owning result keeps its resolved name and position.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06", "Q01", "Q02", "Q03", "Q04", "Q05"]
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "ColumnReference", "Rows/Compound"],
+  "predecessorCheck": {
+    "change": "Rows/CompoundShape is an internal checked collaborator of Rows/Compound. Record its type branch as a boundary template instead of declaring it a public constructor. Retain the previous native schedules and observations."
+  },
+  "observations": [
+    "Compare result names, positions, PostgreSQL types, values and NULL independently of the emitted SQL.",
+    "Preserve multiplicity in the unordered projection or use the observable DISTINCT result when requested.",
+    "Observe different values per input slot and inheritance scope. Compare direct and native interpretations of the original SQL for analyzed inputs.",
+    "The existing set-operation type composition uses the target type even for NULL."
+  ],
+  "finite": {
+    "sources": ["unit", "only", "inherited"],
+    "targets": ["int4", "bool"],
+    "literalOperands": [-2147483648, -1, 0, 1, 2147483647, false, true, null],
+    "referenceSlots": [0, 1],
+    "distinct": [false, true],
+    "identity": "Check all 96 source, target, literal and DISTINCT combinations plus all 16 table-source, target, reference slot and DISTINCT combinations per release. Reconstruct the witness from constructed values."
+  },
+  "exploration": {
+    "seeds": [37511, 40507, 58241],
+    "casesPerSeed": 48,
+    "timeoutSecondsPerRelease": 160,
+    "allowedExclusions": [],
+    "structure": "Generate casts of varying depth whose targets alternate or repeat. Vary result widths, names, operand roles and visibility of nullable and distinct source slots, SELECT DISTINCT and inheritance."
+  },
+  "negative": [
+    "A direct column reference outside its owning scope",
+    "A nested cast tree beyond the shared projection envelope",
+    "An unanalyzed role with a different target builtin, such as int8",
+    "A static cast of a wide input directly to bool",
+    "A cast of a textual value whose input conversion is outside this domain"
+  ],
+  "faults": ["Change the target type", "Replace the operand with NULL", "Swap distinct reference slots", "Lose the inner conversion of a nested cast"],
+  "open": ["Other scalar operand and target types and placements, including functions and operator coercion, domains, arrays, assignment and cast-based predicate or arithmetic composition."],
+  "trust": ["Pinned native catalog and conversion sources", "Independent integer and Boolean conversion rules with PostgreSQL type and name observation", "Exact PHP constructor, source-boundary, emission and type-dispatch checks"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-expressions.html#SQL-SYNTAX-TYPE-CASTS",
+    "https://www.postgresql.org/docs/17/datatype-boolean.html",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_16_6/src/include/catalog/pg_cast.dat",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/include/catalog/pg_cast.dat",
+    "https://raw.githubusercontent.com/postgres/postgres/REL_17_2/src/backend/utils/adt/int.c"
+  ]
+}
