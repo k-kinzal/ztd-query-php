@@ -192,7 +192,7 @@ def check_faults(args, db):
     target = "sql-semantics-sqlite/src/Ir/Aggregation/GroupedSql.php"
     bag = source("bag")
     return check_render_faults(args, db, [
-        RenderFault("wrong-count-slot", target, "$renderer->expression($value->argument, $source)", "$renderer->expression(new ColumnReference(0), $source)",
+        RenderFault("wrong-count-slot", target, "$renderer->expression($value->argument, $query->source)", "$renderer->expression(new ColumnReference(0), $query->source)",
                     case(bag, [], [[count(slot(1), "NOCASE"), "n"]]), "meaning-mismatch"),
         RenderFault("wrong-group-collation", target, "$key->collation->value", "'BINARY'",
                     case(bag, [[slot(0), "NOCASE"]], [[count(), "n"]]), "meaning-mismatch"),

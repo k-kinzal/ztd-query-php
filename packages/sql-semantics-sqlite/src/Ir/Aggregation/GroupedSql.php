@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\Sqlite\Ir\Aggregation;
 
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
 use SqlSemantics\Platform\Sqlite\Ir\SelectSql;
-use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 
 /**
  * Emits the closed SQLite grouped-query roles.
@@ -23,7 +22,17 @@ final class GroupedSql
         $renderer = new SelectSql();
         $items = [];
         foreach ($query->columns as $field) {
-            $items[] = $this->field($field->value, $query->source, $renderer) . ' AS ' . $field->name->quoted();
+            $value = $field->value;
+            if ($value instanceof ColumnReference) {
+                $result = $renderer->expression($value, $query->source);
+            } else {
+                $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
+                if ($value->distinctCollation !== null) {
+                    $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;
+                }
+                $result = 'count(' . $argument . ')';
+            }
+            $items[] = $result . ' AS ' . $field->name->quoted();
         }
         $sql = 'SELECT ' . implode(', ', $items);
         if ($query->source !== null) {
@@ -38,21 +47,5 @@ final class GroupedSql
         }
 
         return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));
-    }
-
-    private function field(ColumnReference|Count $value, ?TableSource $source, SelectSql $renderer): string
-    {
-        if ($value instanceof ColumnReference) {
-            return $renderer->expression($value, $source);
-        }
-        if ($value->argument === null) {
-            return 'count(*)';
-        }
-        $argument = $renderer->expression($value->argument, $source);
-        if ($value->distinctCollation !== null) {
-            $argument = 'DISTINCT ' . $argument . ' COLLATE ' . $value->distinctCollation->value;
-        }
-
-        return 'count(' . $argument . ')';
     }
 }

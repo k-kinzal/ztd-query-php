@@ -89,7 +89,7 @@ if ($dialect === 'sqlite') {
     $properties['Aggregation\\GroupKey'] = ['column' => ['ColumnReference'], 'collation' => ['Aggregation\\GroupCollation']];
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Count', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Count'] = $methods['Aggregation\\GroupKey'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
-    array_push($internal, 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
+    array_push($internal, 'Aggregation\\CountBinding', 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
     $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $predicates = $operands;
     $properties['Literal\\BlobLiteral'] = ['hex' => ['string']];
@@ -197,7 +197,7 @@ if ($dialect !== 'sqlite') {
     $properties['Aggregation\\Aggregate'] = ['operator' => ['Aggregation\\AggregateOperator'], 'argument' => ['?ColumnReference'], 'distinct' => ['bool']];
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Aggregate', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Aggregate'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
-    array_push($internal, 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
+    array_push($internal, 'Aggregation\\AggregateBinding', 'Aggregation\\GroupedKeys', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
     $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $properties['ColumnReference']['occurrence'] = ['int'];
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];

@@ -29,7 +29,7 @@ final class GroupedLowering
      */
     public function applies(Select $statement): bool
     {
-        if ($statement->groupBy !== []) {
+        if ($statement->groupBy !== [] && $statement->from instanceof TableInput) {
             return true;
         }
         foreach ($statement->columns as $column) {
@@ -47,7 +47,12 @@ final class GroupedLowering
      */
     public function lower(BoundStatement $operation, Select $statement): GroupedSelect
     {
-        $this->checkClauses($statement);
+        Check::input(
+            ($statement->from === null || $statement->from instanceof TableInput)
+                && $statement->having === null && $statement->windows === [] && $statement->orderBy === []
+                && $statement->limit === null && $statement->quantifier !== SetQuantifier::Distinct,
+            'A grouped projection requires an ordinary unbounded input without result modifiers.',
+        );
         $source = new SourceBinding($operation, $statement->from);
         $binding = new GroupBinding($operation, $source);
         $keys = [];
@@ -67,37 +72,11 @@ final class GroupedLowering
             $name = $fields->at($index)->name;
             Check::input($name !== null, 'A grouped result must have a resolved name.');
             $value = $target->expression instanceof FunctionCall
-                ? $this->count($target->expression, $binding)
+                ? (new CountBinding())->lower($target->expression, $binding)
                 : $source->reference($target->expression);
             $columns[] = new GroupColumn($value, new Identifier($name->value));
         }
 
         return new GroupedSelect($source->source(), $keys, $columns, $where);
-    }
-
-    private function checkClauses(Select $statement): void
-    {
-        Check::input(
-            ($statement->from === null || $statement->from instanceof TableInput)
-                && $statement->having === null && $statement->windows === [] && $statement->orderBy === []
-                && $statement->limit === null && $statement->quantifier !== SetQuantifier::Distinct,
-            'A grouped projection requires an ordinary unbounded input without result modifiers.',
-        );
-    }
-
-    private function count(FunctionCall $call, GroupBinding $binding): Count
-    {
-        Check::input(
-            strtolower($call->name->value) === 'count' && $call->filter === null && $call->over === null && $call->order === []
-                && ($call->star || count($call->arguments) === 1),
-            'A grouped aggregate requires builtin COUNT without a window, filter or ordering.',
-        );
-        if ($call->star) {
-            return new Count();
-        }
-        $distinct = $call->quantifier === SetQuantifier::Distinct;
-        $key = $binding->key($call->arguments[0], $distinct);
-
-        return new Count($key->column, $distinct ? $key->collation : null);
     }
 }

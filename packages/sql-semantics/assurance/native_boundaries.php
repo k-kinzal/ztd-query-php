@@ -12,11 +12,11 @@ use PhpParser\PrettyPrinter\Standard;
 function nativeBoundaryContract(string $dialect): array
 {
     if ($dialect === 'sqlite') {
-        $file = __DIR__ . '/sqlite-grouped-boundaries-v1.json';
-        requireShape(hash_file('sha256', $file) === 'd5798628db61bbf32d8bf067c1753ca70835384d3649a8e26396e9882ad7297f', 'SQLite grouping boundary contract differs from the recorded revision');
+        $file = __DIR__ . '/sqlite-grouped-boundaries-v2.json';
+        requireShape(hash_file('sha256', $file) === '0d054f583a15cc1ccc76a45d79b3cf2420279d8b26f51d112f4ec6bf022285e7', 'SQLite grouping boundary contract differs from the recorded revision');
     } else {
-        $file = __DIR__ . '/native-boundaries-v11.json';
-        requireShape(hash_file('sha256', $file) === 'f86d0da10d98d5f0f15af2faa2fd9730429d9d3612f07a6fe03575618bfaab98', 'Native boundary contract differs from the recorded revision');
+        $file = __DIR__ . '/native-boundaries-v12.json';
+        requireShape(hash_file('sha256', $file) === '2c59c1aa6f5f8d109a3c70c9d14dfe022ddcd1211824a5500439b7795b9eff7c', 'Native boundary contract differs from the recorded revision');
     }
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];

@@ -134,7 +134,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v11.json", "sqlite-grouped-boundaries-v1.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
+                       "native-boundaries-v12.json", "sqlite-grouped-boundaries-v2.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

@@ -43,7 +43,7 @@ final class GroupBinding
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::invariant($resolution instanceof ResolvedColumn, 'The bound grouping slot is a resolved column.');
         $default = $compareText ? $resolution->declaration()?->collation : null;
-        $collation = GroupCollation::tryFrom(strtoupper(($explicit ?? $default)?->value ?? 'BINARY'));
+        $collation = GroupCollation::tryFrom(strtoupper(($explicit ?? $default)->value ?? 'BINARY'));
         Check::input($collation !== null, 'A grouped text comparison requires a resolved builtin collation.');
 
         return new GroupKey($reference, $collation);
