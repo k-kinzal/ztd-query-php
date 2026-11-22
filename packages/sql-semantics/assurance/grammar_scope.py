@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 
+from grammar_contexts import statement_contexts
 from scope import CONTRACTS, TOOL
 
 BASELINE = "df59b1f5e920748a19a5bca3df5e93dfa38bdbafcad6617a464c5b533624a898"
@@ -111,6 +112,7 @@ def inventory(root):
         rules = parse(root, path, record)
         related = RELATED_SQLITE_DOMAINS if path == SQLITE else {}
         if "sql-semantics-mysql/resources/" in path:
+            entry = "simple_statement" if "simple_statement" in rules else "statement"
             related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("delete_stmt", [])}
             related.update({alternative: ("mysql-signed-quotient-v1.json",) for alternative in (
                 "bit_expr: bit_expr % bit_expr", "bit_expr: bit_expr DIV_SYM bit_expr", "bit_expr: bit_expr MOD_SYM bit_expr",
@@ -126,6 +128,7 @@ def inventory(root):
             selection = ("order_clause", "opt_order_clause", "limit_clause", "opt_limit_clause", "select_options", "select_option")
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif "sql-semantics-postgres/resources/" in path:
+            entry = "stmt"
             related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v1.json") for alternative in rules.get("DeleteStmt", [])}
             related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v1.json", "postgres-update-returning-v2.json",
                                                                   "postgres-insert-returning-v1.json")
@@ -149,6 +152,7 @@ def inventory(root):
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
             families = ("joined_table", "join_type", "join_qual", "where_clause")
         else:
+            entry = "cmd"
             families = selection = insert = update = transaction = drop = compound = create = parameters = local = ()
         for rule in families:
             for alternative in rules.get(rule, []):
@@ -256,10 +260,12 @@ def inventory(root):
             "totalAlternatives": count,
             "rules": rules,
             "relatedDomains": {alternative: list(contracts) for alternative, contracts in related.items()},
+            "statementContexts": statement_contexts(rules, related, entry),
         }
     return {
         "requirementsDigest": BASELINE, "artifacts": artifacts,
         "totalAlternatives": sum(record["totalAlternatives"] for record in artifacts.values()),
+        "alternativesWithRelatedDomain": sum(record["statementContexts"]["alternativesWithRelatedDomain"] for record in artifacts.values()),
         "emptyAlternatives": sum(record["emptyAlternatives"] for record in artifacts.values()),
         "classification": "Each rule and alternative requires semantic classification. Related domain records exercise part of the named production family.",
     }

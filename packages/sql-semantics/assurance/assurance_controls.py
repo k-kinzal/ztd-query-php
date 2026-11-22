@@ -11,6 +11,7 @@ from pathlib import Path
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
+from index_evidence import replay_grammar
 from replay_sqlite_evidence import replay
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
@@ -309,6 +310,23 @@ def text_controls(db):
              "observed": observed, "mismatches": signals}]
 
 
+def grammar_control(args):
+    root = args.root / "semantics-ir-evidence"
+    source = root / "grammar-scope.json"
+    summary = json.loads((root / "index.json").read_text())["grammarScope"]
+    record = replay_grammar(source, args.candidate, summary)
+    path = sorted(record["artifacts"])[0]
+    deleted_group = record["artifacts"][path]["statementContexts"]["groups"].pop()
+    folder = args.out / "omitted-required-grammar-context"
+    folder.mkdir()
+    target = folder / source.name
+    write_json(target, record)
+    expected = "bundle-grammar-inventory-mismatch"
+    failure = observe_rejection(lambda: replay_grammar(target, args.candidate, summary), expected)
+    return {"case": folder.name, "control": "passed", "grammar": path, "removed": deleted_group,
+            "original": digest(source), "mutated": digest(target), "expected": expected, "signal": failure.signal}
+
+
 def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
     before = folder / "previous" / "packages/sql-semantics/assurance"
@@ -357,7 +375,7 @@ def main():
     commit, distribution = candidate_distribution(args.candidate)
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
-              + [declaration_control(args), assurance_revision_control(args)])
+              + [declaration_control(args), assurance_revision_control(args), grammar_control(args)])
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})

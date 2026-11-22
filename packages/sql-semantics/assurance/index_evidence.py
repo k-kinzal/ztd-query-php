@@ -6,6 +6,7 @@ from pathlib import Path
 
 from compare_assurance_revisions import review
 from constructor_trace import check_scope, trace
+from grammar_scope import inventory as grammar_inventory
 from native_schedule import NATIVE, reports as native_reports
 from scope import CONTRACTS
 from run import candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
@@ -228,6 +229,13 @@ def replay_staged(evidence, artifact, manifest):
     return artifact
 
 
+def replay_grammar(path, candidate, summary):
+    expected = grammar_inventory(candidate)
+    require(json.loads(path.read_text()) == expected, "bundle-grammar-inventory-mismatch", str(path))
+    require(summary["totalAlternatives"] == expected["totalAlternatives"], "bundle-grammar-total-mismatch")
+    return expected
+
+
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--candidate", required=True, type=Path)
@@ -251,7 +259,8 @@ def main():
             and base["contract"] == CONTRACTS["contract-v1.json"], "bundle-initial-domain-mismatch", original)
     require(base["toolDigests"] == {name: sha for name, sha in evidence.tools.items() if not name.endswith(".md")},
             "bundle-initial-tools-mismatch", original)
-    _, grammar = evidence.checked(f"{BASE}/grammar-scope.json", base["grammarScope"]["sha256"])
+    grammar_file, grammar = evidence.checked(f"{BASE}/grammar-scope.json", base["grammarScope"]["sha256"])
+    grammar_record = replay_grammar(grammar_file, checkout, base["grammarScope"])
     inventory_file, inventory = evidence.checked(f"{BASE}/inventory.json", base["inventoryArtifacts"]["inventory.json"])
     scope_file, scope = evidence.checked(f"{BASE}/scope.json", base["inventoryArtifacts"]["scope.json"])
     roles = json.loads(scope_file.read_text())
@@ -309,6 +318,7 @@ def main():
         "Acceptance is incomplete. The registered evidence has a bounded language scope. Human review and repository protection require independent confirmation.",
         "", f"- {len(report['publicRoots'])} published roots and {len(report['constructors'])} registered constructors in the measured inventory.",
         f"- {base['grammarScope']['totalAlternatives']} grammar alternatives in the fixed syntax inventory.",
+        f"- {grammar_record['alternativesWithRelatedDomain']} alternatives linked to one or more bounded domain records.",
         f"- {len(sqlite['domains']) if sqlite else 0} replayed SQLite domains.",
         f"- {sum(not record['missing'] for record in native.values())} native domains with every required release replayed.",
         f"- {len(evidence.missing)} missing evidence records or release entries.",
