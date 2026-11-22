@@ -9,9 +9,9 @@ namespace SqlSemantics\Platform\MySql\Ir\Rows;
  *
  * @visibility public
  * @example Reading the semantic kind
- *     \SqlSemantics\Platform\MySql\Ir\Rows\ResultType::Integer->value // => 'int32'
+ *     \SqlSemantics\Platform\MySql\Ir\Rows\ResultKind::Integer->value // => 'int32'
  */
-enum ResultType: string
+enum ResultKind: string
 {
     case Integer = 'int32';
     case WideInteger = 'int64';

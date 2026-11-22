@@ -151,9 +151,6 @@
       "mysql": [
         "if (CompoundShape::legacy($left)) {",
         "    Check::input($operator === CompoundOperator::Union && $right instanceof Select, 'MySQL 5.x compounds require a left-associated UNION.');",
-        "}",
-        "for ($index = 0; $index < CompoundShape::width($left); ++$index) {",
-        "    CompoundShape::merge(CompoundShape::type($left, $index), CompoundShape::type($right, $index));",
         "}"
       ],
       "postgres": [
@@ -165,17 +162,17 @@
     "Rows/CompoundShape::merge": {
       "common": [],
       "mysql": [
-        "if ($left === ResultType::WideInteger || $right === ResultType::WideInteger) {",
-        "    return ResultType::WideInteger;",
+        "if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {",
+        "    return ResultKind::WideInteger;",
         "}",
         "",
-        "return $left === ResultType::Integer || $right === ResultType::Integer ? ResultType::Integer : ResultType::NullOnly;"
+        "return $left === ResultKind::Integer || $right === ResultKind::Integer ? ResultKind::Integer : ResultKind::NullOnly;"
       ],
       "postgres": [
-        "if ($left === ResultType::Unknown) {",
-        "    return $right === ResultType::Unknown ? ResultType::Text : $right;",
+        "if ($left === ResultKind::Unknown) {",
+        "    return $right === ResultKind::Unknown ? ResultKind::Text : $right;",
         "}",
-        "Check::input($right === ResultType::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');",
+        "Check::input($right === ResultKind::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');",
         "",
         "return $left;"
       ]

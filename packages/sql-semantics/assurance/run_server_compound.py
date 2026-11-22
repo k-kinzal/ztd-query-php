@@ -12,7 +12,7 @@ from server_delete_cases import literal
 from sqlite_domain import RenderFault
 
 LABEL = "compound"
-CONTRACT = "a1e55008dd4ed80da0e674aa471717bde564a365d6e3ab4b086bc6f77ad51e90"
+CONTRACT = "09adc37fc1869ddb48d4a7615ad0ab6b2923a5b35b672f7e79a4c7019cc37ae6"
 
 
 def specifications():

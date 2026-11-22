@@ -21,8 +21,8 @@
       "role": "The selected native set operation",
       "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
     },
-    "ResultType": {
-      "type": "Rows/ResultType",
+    "ResultKind": {
+      "type": "Rows/ResultKind",
       "role": "A native output type or a leaf whose bare NULL participates in type determination",
       "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
     }

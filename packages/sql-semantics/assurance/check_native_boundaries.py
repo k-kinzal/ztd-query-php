@@ -35,7 +35,7 @@ def faults(engine):
                             "!== ($on->right->occurrence < $leftWidth)", "=== ($on->right->occurrence < $leftWidth)"))
         shared.append(Fault("allow-repeated-pg-update-targets", "Mutation/Update::__construct", "!isset($written[$slot]),", "true,"))
         shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
-                            "$right === ResultType::Unknown || $left === $right,", "true,"))
+                            "$right === ResultKind::Unknown || $left === $right,", "true,"))
     return shared
 
 

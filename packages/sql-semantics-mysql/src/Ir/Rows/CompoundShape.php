@@ -52,7 +52,7 @@ final class CompoundShape
     /**
      * Derives the native type for a checked output position.
      */
-    public static function type(Select|Compound $query, int $position): ResultType
+    public static function type(Select|Compound $query, int $position): ResultKind
     {
         if ($query instanceof Compound) {
             return self::merge(self::type($query->left, $position), self::type($query->right, $position));
@@ -60,22 +60,22 @@ final class CompoundShape
         $column = $query->columns[$position]->expression;
 
         return match (true) {
-            $column instanceof NullLiteral => ResultType::Unknown,
-            $column instanceof ColumnReference => ResultType::Integer,
-            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral => ResultType::WideInteger,
+            $column instanceof NullLiteral => ResultKind::Unknown,
+            $column instanceof ColumnReference => ResultKind::Integer,
+            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral => ResultKind::WideInteger,
         };
     }
 
     /**
      * Combines the supported native type roles at a set node.
      */
-    public static function merge(ResultType $left, ResultType $right): ResultType
+    public static function merge(ResultKind $left, ResultKind $right): ResultKind
     {
-        if ($left === ResultType::WideInteger || $right === ResultType::WideInteger) {
-            return ResultType::WideInteger;
+        if ($left === ResultKind::WideInteger || $right === ResultKind::WideInteger) {
+            return ResultKind::WideInteger;
         }
 
-        return $left === ResultType::Integer || $right === ResultType::Integer ? ResultType::Integer : ResultType::NullOnly;
+        return $left === ResultKind::Integer || $right === ResultKind::Integer ? ResultKind::Integer : ResultKind::NullOnly;
     }
 
     /**

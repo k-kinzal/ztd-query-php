@@ -52,7 +52,7 @@ final class CompoundShape
     /**
      * Derives the native type for a checked output position.
      */
-    public static function type(Select|Compound $query, int $position): ResultType
+    public static function type(Select|Compound $query, int $position): ResultKind
     {
         if ($query instanceof Compound) {
             return self::merge(self::type($query->left, $position), self::type($query->right, $position));
@@ -60,21 +60,21 @@ final class CompoundShape
         $column = $query->columns[$position]->expression;
 
         return match (true) {
-            $column instanceof NullLiteral => ResultType::Unknown,
-            $column instanceof BooleanLiteral => ResultType::Boolean,
-            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerLiteral => ResultType::Integer,
+            $column instanceof NullLiteral => ResultKind::Unknown,
+            $column instanceof BooleanLiteral => ResultKind::Boolean,
+            $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerLiteral => ResultKind::Integer,
         };
     }
 
     /**
      * Combines the supported native type roles at a set node.
      */
-    public static function merge(ResultType $left, ResultType $right): ResultType
+    public static function merge(ResultKind $left, ResultKind $right): ResultKind
     {
-        if ($left === ResultType::Unknown) {
-            return $right === ResultType::Unknown ? ResultType::Text : $right;
+        if ($left === ResultKind::Unknown) {
+            return $right === ResultKind::Unknown ? ResultKind::Text : $right;
         }
-        Check::input($right === ResultType::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');
+        Check::input($right === ResultKind::Unknown || $left === $right, 'PostgreSQL compound output types are incompatible.');
 
         return $left;
     }

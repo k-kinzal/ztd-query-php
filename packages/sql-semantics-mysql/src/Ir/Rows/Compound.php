@@ -41,9 +41,6 @@ final class Compound implements SemanticsIR
         if (CompoundShape::legacy($left)) {
             Check::input($operator === CompoundOperator::Union && $right instanceof Select, 'MySQL 5.x compounds require a left-associated UNION.');
         }
-        for ($index = 0; $index < CompoundShape::width($left); ++$index) {
-            CompoundShape::merge(CompoundShape::type($left, $index), CompoundShape::type($right, $index));
-        }
     }
 
     /**

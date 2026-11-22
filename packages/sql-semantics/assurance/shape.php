@@ -223,9 +223,9 @@ if ($dialect !== 'sqlite') {
     ];
     $methods['Rows\\Compound'] = $methods['Select'];
     $properties['Rows\\CompoundOperator'] = $methods['Rows\\CompoundOperator'] = [];
-    $properties['Rows\\ResultType'] = $methods['Rows\\ResultType'] = [];
+    $properties['Rows\\ResultKind'] = $methods['Rows\\ResultKind'] = [];
     $enumCases['Rows\\CompoundOperator'] = ['Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
-    $enumCases['Rows\\ResultType'] = $dialect === 'mysql'
+    $enumCases['Rows\\ResultKind'] = $dialect === 'mysql'
         ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
         : ['Integer' => 'int32', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
     array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Compound;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\CompoundOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\CompoundShape;
-use SqlSemantics\Platform\PostgreSql\Ir\Rows\ResultType;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\ResultKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 
 #[CoversClass(CompoundShape::class)]
@@ -50,7 +50,7 @@ final class CompoundShapeTest extends TestCase
         $row = new Select([new ResultColumn(new IntegerLiteral('1'), new Identifier('a'))]);
         $value = new Compound($row, CompoundOperator::Union, true, $row);
 
-        self::assertSame(ResultType::Integer, CompoundShape::type($value, 0));
+        self::assertSame(ResultKind::Integer, CompoundShape::type($value, 0));
     }
 
     public function testSqlDescribesTheClosedPair(): void
@@ -63,14 +63,14 @@ final class CompoundShapeTest extends TestCase
 
     public function testMergeUsesTheKnownIntegerRole(): void
     {
-        self::assertSame(ResultType::Integer, CompoundShape::merge(ResultType::Unknown, ResultType::Integer));
+        self::assertSame(ResultKind::Integer, CompoundShape::merge(ResultKind::Unknown, ResultKind::Integer));
     }
     public function testTypeResolvesTwoBareNullArms(): void
     {
         $row = new Select([new ResultColumn(new NullLiteral(), new Identifier('a'))]);
         $value = new Compound($row, CompoundOperator::Union, true, $row);
 
-        self::assertSame(ResultType::Text, CompoundShape::type($value, 0));
+        self::assertSame(ResultKind::Text, CompoundShape::type($value, 0));
     }
 
 }

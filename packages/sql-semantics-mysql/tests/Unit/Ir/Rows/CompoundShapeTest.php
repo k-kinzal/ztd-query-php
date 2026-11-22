@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Rows\Compound;
 use SqlSemantics\Platform\MySql\Ir\Rows\CompoundOperator;
 use SqlSemantics\Platform\MySql\Ir\Rows\CompoundShape;
-use SqlSemantics\Platform\MySql\Ir\Rows\ResultType;
+use SqlSemantics\Platform\MySql\Ir\Rows\ResultKind;
 use SqlSemantics\Platform\MySql\Ir\Select;
 
 #[CoversClass(CompoundShape::class)]
@@ -50,7 +50,7 @@ final class CompoundShapeTest extends TestCase
         $row = new Select([new ResultColumn(new IntegerLiteral('1'), new Identifier('a'))]);
         $value = new Compound($row, CompoundOperator::Union, true, $row);
 
-        self::assertSame(ResultType::WideInteger, CompoundShape::type($value, 0));
+        self::assertSame(ResultKind::WideInteger, CompoundShape::type($value, 0));
     }
 
     public function testSqlDescribesTheClosedPair(): void
@@ -71,14 +71,14 @@ final class CompoundShapeTest extends TestCase
 
     public function testMergeUsesTheKnownIntegerRole(): void
     {
-        self::assertSame(ResultType::Integer, CompoundShape::merge(ResultType::Unknown, ResultType::Integer));
+        self::assertSame(ResultKind::Integer, CompoundShape::merge(ResultKind::Unknown, ResultKind::Integer));
     }
     public function testTypeResolvesTwoBareNullArms(): void
     {
         $row = new Select([new ResultColumn(new NullLiteral(), new Identifier('a'))]);
         $value = new Compound($row, CompoundOperator::Union, true, $row);
 
-        self::assertSame(ResultType::NullOnly, CompoundShape::type($value, 0));
+        self::assertSame(ResultKind::NullOnly, CompoundShape::type($value, 0));
     }
 
 }
