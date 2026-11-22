@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Collation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
@@ -89,5 +90,15 @@ final class ColumnDefinitionTest extends TestCase
         $operation = (new Inspection())->diagnose('CREATE TABLE t (a "big int", b [x] INT, c \'text\')');
 
         self::assertSame('CREATE TABLE t (a "big int", b [x] INT, c \'text\')', $operation->toString());
+    }
+
+    public function testCollationReturnsTheLastDeclaredConstraint(): void
+    {
+        $column = new ColumnDefinition(new Name('key'), constraints: [
+            new Collation(new Name('NOCASE')),
+            new Collation(new Name('RTRIM')),
+        ]);
+
+        self::assertSame('RTRIM', $column->collation()?->value);
     }
 }

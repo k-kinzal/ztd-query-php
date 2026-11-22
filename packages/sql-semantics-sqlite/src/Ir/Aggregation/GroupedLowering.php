@@ -1,0 +1,103 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Ir\Aggregation;
+
+use SqlSemantics\Platform\Sqlite\Ir\From\QueryClauses;
+use SqlSemantics\Platform\Sqlite\Ir\Identifier;
+use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
+use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
+use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
+
+/**
+ * Resolves an ordinary SQLite grouped projection through its bound declarations.
+ *
+ * @visibility SqlSemantics\Platform\Sqlite
+ */
+final class GroupedLowering
+{
+    /**
+     * Recognizes the ordinary grouped query or the builtin COUNT result.
+     */
+    public function applies(Select $statement): bool
+    {
+        if ($statement->groupBy !== []) {
+            return true;
+        }
+        foreach ($statement->columns as $column) {
+            if ($column instanceof ResultColumn && $column->expression instanceof FunctionCall
+                && strtolower($column->expression->name->value) === 'count') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Binds the selected field, group keys and constant admission filter.
+     */
+    public function lower(BoundStatement $operation, Select $statement): GroupedSelect
+    {
+        $this->checkClauses($statement);
+        $source = new SourceBinding($operation, $statement->from);
+        $binding = new GroupBinding($operation, $source);
+        $keys = [];
+        foreach ($statement->groupBy as $expression) {
+            $keys[] = $binding->key($expression);
+        }
+        $where = (new QueryClauses())->predicate($statement->where, $source);
+        Check::input(
+            $where === null || $where instanceof IntegerLiteral || $where instanceof NullLiteral,
+            'A grouped query requires an integer or NULL constant filter.'
+        );
+        $fields = $operation->facts->query($statement)->fields();
+        Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');
+        $columns = [];
+        foreach ($statement->columns as $index => $target) {
+            Check::input($target instanceof ResultColumn, 'A grouped projection requires explicit result fields.');
+            $name = $fields->at($index)->name;
+            Check::input($name !== null, 'A grouped result must have a resolved name.');
+            $value = $target->expression instanceof FunctionCall
+                ? $this->count($target->expression, $binding)
+                : $source->reference($target->expression);
+            $columns[] = new GroupColumn($value, new Identifier($name->value));
+        }
+
+        return new GroupedSelect($source->source(), $keys, $columns, $where);
+    }
+
+    private function checkClauses(Select $statement): void
+    {
+        Check::input(
+            ($statement->from === null || $statement->from instanceof TableInput)
+                && $statement->having === null && $statement->windows === [] && $statement->orderBy === []
+                && $statement->limit === null && $statement->quantifier !== SetQuantifier::Distinct,
+            'A grouped projection requires an ordinary unbounded input without result modifiers.',
+        );
+    }
+
+    private function count(FunctionCall $call, GroupBinding $binding): Count
+    {
+        Check::input(
+            strtolower($call->name->value) === 'count' && $call->filter === null && $call->over === null && $call->order === []
+                && ($call->star || count($call->arguments) === 1),
+            'A grouped aggregate requires builtin COUNT without a window, filter or ordering.',
+        );
+        if ($call->star) {
+            return new Count();
+        }
+        $distinct = $call->quantifier === SetQuantifier::Distinct;
+        $key = $binding->key($call->arguments[0], $distinct);
+
+        return new Count($key->column, $distinct ? $key->collation : null);
+    }
+}

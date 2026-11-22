@@ -78,6 +78,19 @@ $pureCollaborators = ['SelectBounds', 'SelectSql'];
 $roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
+    $roots[] = 'Aggregation\\GroupedSelect';
+    $properties['Aggregation\\GroupedSelect'] = [
+        'source' => ['?TableSource'], 'keys' => ['array'], 'columns' => ['array'], 'where' => ['IntegerLiteral', 'NullLiteral', 'null'],
+    ];
+    $methods['Aggregation\\GroupedSelect'] = $methods['Select'];
+    $properties['Aggregation\\GroupCollation'] = $methods['Aggregation\\GroupCollation'] = [];
+    $enumCases['Aggregation\\GroupCollation'] = ['Binary' => 'BINARY', 'NoCase' => 'NOCASE', 'RightTrim' => 'RTRIM'];
+    $properties['Aggregation\\Count'] = ['argument' => ['?ColumnReference'], 'distinctCollation' => ['?Aggregation\\GroupCollation']];
+    $properties['Aggregation\\GroupKey'] = ['column' => ['ColumnReference'], 'collation' => ['Aggregation\\GroupCollation']];
+    $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Count', 'ColumnReference'], 'name' => ['Identifier']];
+    $methods['Aggregation\\Count'] = $methods['Aggregation\\GroupKey'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
+    array_push($internal, 'Aggregation\\GroupBinding', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
+    $pureCollaborators[] = 'Aggregation\\GroupedSql';
     $predicates = $operands;
     $properties['Literal\\BlobLiteral'] = ['hex' => ['string']];
     $properties['Literal\\HexIntegerLiteral'] = ['digits' => ['string'], 'negated' => ['bool']];
@@ -413,6 +426,7 @@ try {
         . 'default => (new \\' . $prefix . 'SelectLowering())->lower($operation), };';
     if ($dialect === 'sqlite') {
         $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && (new \\' . $prefix . 'Aggregation\\GroupedLowering())->applies($statement) => (new \\' . $prefix . 'Aggregation\\GroupedLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Compound => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
@@ -448,9 +462,9 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v11.json';
+    $storagePath = __DIR__ . '/value-storage-v12.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '5ab3b7e26a9890b5337d678201bb619f5bb9ad83d11cb3975a5e3f4cffc82e88',
+        hash_file('sha256', $storagePath) === '6ffac2a00ac2294dd07dafff4235342d74ba77ed1a4e2ac223f8aefe0e196a6c',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -458,7 +472,7 @@ try {
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
-    $boundaries = $dialect === 'sqlite' ? [] : nativeBoundaryContract($dialect);
+    $boundaries = nativeBoundaryContract($dialect);
     $checkedBoundaries = [];
     foreach ($files as $entry) {
         if (!$entry->isFile() || $entry->getExtension() !== 'php') {

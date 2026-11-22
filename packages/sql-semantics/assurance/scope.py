@@ -8,6 +8,7 @@ from pathlib import Path
 TOOL = Path(__file__).resolve().parent
 
 ROOTS = {
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\MySql\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Aggregation\\GroupedSelect",
     "SqlSemantics\\Platform\\MySql\\Ir\\Mutation\\Delete",
@@ -43,6 +44,8 @@ ROOTS = {
 
 
 CONTRACTS = {
+    "sqlite-grouped-v1.json": "90a1896d96c78417849566ad67df13c66d0fbda82067b50cff0bdbb70e878ed1",
+
     "server-grouped-v2.json": "9bbd02f35dced65558725061c0b5b796d5856e60791190ef931b58ff999a927b",
 
     "server-derived-join-v1.json": "131a8055798d3395508fc269cfd895c123ac896a9f17168eedcd2b124453df1d",
@@ -76,7 +79,7 @@ CONTRACTS = {
     "sqlite-create-table-v1.json": "8e08714c71d4a067cfeaa0ae18d60c3715ae468941461f1bd1b90908a9f09e76",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "5568464d5d7c39bf25f08f72f9ac9c35ee777ad064d1d87bb7e6f8ad438f7063"
+PUBLICATION = "42ebb4cf40c861b0e43a6bacccfe2c89b11c59840beb509d707dd7ff3e965284"
 
 
 SQLITE_LITERAL_TYPES = {
@@ -86,7 +89,7 @@ SQLITE_LITERAL_TYPES = {
 
 def constructor_scope(by_class):
     definitions = {}
-    publication = (TOOL / "publication-v13.json").read_bytes()
+    publication = (TOOL / "publication-v14.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     publication = json.loads(publication)
@@ -111,7 +114,7 @@ def constructor_scope(by_class):
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
     for platform, dialect in zip(prefixes, publication["dialects"]):
         additions = roots_by_dialect[dialect]
-        if dialect != "Sqlite" and sorted(additions) != sorted(publication["single"]["additionalDialectResults"].get(dialect, [])):
+        if sorted(additions) != sorted(publication["single"]["additionalDialectResults"].get(dialect, [])):
             raise ValueError(f"Publication contract does not match the recorded roots for {dialect}")
         roles = [publication["single"]["result"], *additions]
         routes[platform + "\\" + publication["single"]["method"]] = sorted(platform + "\\" + role for role in roles)
@@ -179,7 +182,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, and transaction control",
+        "evidenceDomain": "dialect-owned signed-integer projections with typed parameters, binary joins with external and independent derived sources, grouped signed aggregates, filters, row selection, typed compounds, one-use local projections, single-target DELETE, literal INSERT, ordered UPDATE, persistent table creation and removal and basic transactions (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE, CREATE TABLE and DROP TABLE, ordinary local VALUES, one recursive self source, builtin grouped counts, and transaction control",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

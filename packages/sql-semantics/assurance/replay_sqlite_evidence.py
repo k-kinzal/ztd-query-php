@@ -10,6 +10,7 @@ import run_sqlite_compound as compound
 import run_sqlite_create_table as create
 import run_sqlite_delete as delete
 import run_sqlite_drop_table as drop
+import run_sqlite_grouped as grouped
 import run_sqlite_insert as insert
 import run_sqlite_local_source as local
 import run_sqlite_recursive_source as recursive
@@ -37,6 +38,7 @@ DOMAINS = {
     "sqlite-create-table-v1.json": (create, create.FIXTURE),
     "sqlite-scalars-v1.json": (scalars, scalars.FIXTURE),
     "sqlite-compound-v1.json": (compound, compound.FIXTURE),
+    grouped.CONTRACT_NAME: (grouped, grouped.FIXTURE),
     "sqlite-transaction-v1.json": (transaction, transaction.FIXTURE),
 }
 
@@ -52,7 +54,8 @@ def replay(directory, contract_name, index, library):
         return transcript
 
     module, fixture = (None, SCHEMA) if initial else DOMAINS[contract_name]
-    database = recursive.RecursiveDatabase(library) if module is recursive else Database(library)
+    factory = {recursive: recursive.RecursiveDatabase, grouped: grouped.GroupedDatabase}.get(module, Database)
+    database = factory(library)
     try:
         require(database.version == "3.47.2" and database.source == index["engine"]["source"]
                 and database.digest == index["engine"]["libraryDigest"], "evidence-replay-engine-mismatch", contract_name)

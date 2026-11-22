@@ -40,7 +40,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v13.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
+The [publication contract](publication-v14.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness.
 
 ## Read the evidence
 
@@ -274,6 +274,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_lo
 ```
 
 The evaluator supplies the definition's independently evaluated rows as the local input to the projection. The observed dimensions include width, height, typed multiplicity, result names, order, binding labels and read-only execution. The direct construction probes vary the operand graphs and exercise filtering, duplicate elimination and bounds. Analyzed statements run with a same-named physical table holding deliberately different rows. The mutations reverse the definition's column order and alter the first native parameter label.
+
+## SQLite grouped counts
+
+The [SQLite grouping record](sqlite-grouped-v1.json) fixes builtin text collations, grouping and COUNT argument alternatives. The independent observer compares exact storage classes, result names and one representative row per group. The case generator includes equal numeric values with different storage classes, repeated rows, NULLs, mixed storage classes, trailing spaces and text containing NUL. The [grouped observer policy](sqlite-grouped-observer-v1.json) limits native statements to reads and builtin COUNT.
+
+Run `run_sqlite_grouped.py` with the same SQLite fixture options as the other domains. The SQLite collector replays the transcript under the same restricted observer and verifies the exact finite identities.
 
 ## SQLite recursive common tables
 

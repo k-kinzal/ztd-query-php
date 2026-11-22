@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\Count;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupCollation;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupColumn;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupedSelect;
+use SqlSemantics\Platform\Sqlite\Ir\Aggregation\GroupKey;
 use SqlSemantics\Platform\Sqlite\Ir\Arithmetic;
 use SqlSemantics\Platform\Sqlite\Ir\ArithmeticOperator;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
@@ -207,7 +212,7 @@ function observeCompound(Compound $query): array
     ];
 }
 
-function analyzed(array $input): Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
+function analyzed(array $input): Select|GroupedSelect|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable|Transaction
 {
     $semantics = new Semantics();
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
@@ -330,11 +335,55 @@ function directTransaction(array $input): Transaction
     return new Transaction(TransactionCommand::from($input['command']), $name === null ? null : new SavepointName($name));
 }
 
+function directGrouped(array $input): GroupedSelect
+{
+    $keys = [];
+    foreach ($input['keys'] as [$column, $collation]) {
+        $keys[] = new GroupKey(operand($column), GroupCollation::from($collation));
+    }
+    $columns = [];
+    foreach ($input['columns'] as [$field, $name]) {
+        $value = $field[0] === 'count'
+            ? new Count($field[1] === null ? null : operand($field[1]), $field[2] === null ? null : GroupCollation::from($field[2]))
+            : operand($field);
+        $columns[] = new GroupColumn($value, new Identifier($name));
+    }
+
+    return new GroupedSelect(
+        $input['source'] === null ? null : source($input['source']),
+        $keys,
+        $columns,
+        $input['where'] === null ? null : operand($input['where']),
+    );
+}
+
+function observeGrouped(GroupedSelect $query): array
+{
+    $columns = [];
+    foreach ($query->columns as $field) {
+        $value = $field->value;
+        $columns[] = [
+            $value instanceof Count
+                ? ['count', $value->argument === null ? null : observeOperand($value->argument), $value->distinctCollation?->value]
+                : observeOperand($value),
+            $field->name->value,
+        ];
+    }
+
+    return [
+        'status' => 'constructed', 'operation' => 'grouped', 'profile' => $query->profileId(), 'sql' => $query->toString(),
+        'source' => $query->source === null ? null : observeSource($query->source),
+        'keys' => array_map(static fn (GroupKey $key): array => [observeOperand($key->column), $key->collation->value], $query->keys),
+        'columns' => $columns, 'where' => $query->where === null ? null : observeOperand($query->where),
+    ];
+}
+
 function runCase(array $input): array
 {
     try {
         $value = match (true) {
             isset($input['sql']) => analyzed($input),
+            ($input['operation'] ?? null) === 'grouped' => directGrouped($input),
             ($input['operation'] ?? null) === 'compound' => directCompound($input),
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
@@ -351,6 +400,9 @@ function runCase(array $input): array
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     }
 
+    if ($value instanceof GroupedSelect) {
+        return observeGrouped($value);
+    }
     if ($value instanceof Compound) {
         return observeCompound($value);
     }

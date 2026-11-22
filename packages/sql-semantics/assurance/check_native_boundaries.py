@@ -16,6 +16,14 @@ class Fault(NamedTuple):
 
 
 def faults(engine):
+    if engine == "sqlite":
+        return [
+            Fault("allow-distinct-count-star", "Aggregation/Count::__construct", "$argument !== null || $distinctCollation === null,", "true,"),
+            Fault("allow-group-key-other-occurrence", "Aggregation/GroupKey::__construct", "$column->source === 0,", "true,"),
+            Fault("ignore-absent-count-slot", "Aggregation/GroupedSelect::__construct",
+                  "$value->argument === null || isset($source->columns[$value->argument->slot]),", "true,"),
+            Fault("ignore-resolved-collation", "Aggregation/GroupBinding::key", "$explicit ?? $default", "$default"),
+        ]
     shared = [
         Fault("allow-argumentless-sum", "Aggregation/Aggregate::__construct",
               "$operator === AggregateOperator::Count && !$distinct", "!$distinct"),
@@ -116,7 +124,7 @@ def main():
     identity, manifest = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", manifest)
     results = {}
-    for engine in ("mysql", "postgres"):
+    for engine in ("mysql", "postgres", "sqlite"):
         healthy = shape(args, dialect=engine)
         cases = faults(engine)
         require({fault.role for fault in cases} <= set(healthy["checkedBoundaries"]), "native-boundary-audit-incomplete", engine)
@@ -126,7 +134,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "native-boundaries-v11.json", "value_storage.php", "value-storage-v11.json", "value-primitives.json")},
+                       "native-boundaries-v11.json", "sqlite-grouped-boundaries-v1.json", "value_storage.php", "value-storage-v12.json", "value-primitives.json")},
         "results": results,
     })
     print(args.out)

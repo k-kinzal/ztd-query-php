@@ -11,8 +11,13 @@ use PhpParser\PrettyPrinter\Standard;
 
 function nativeBoundaryContract(string $dialect): array
 {
-    $file = __DIR__ . '/native-boundaries-v11.json';
-    requireShape(hash_file('sha256', $file) === 'f86d0da10d98d5f0f15af2faa2fd9730429d9d3612f07a6fe03575618bfaab98', 'Native boundary contract differs from the recorded revision');
+    if ($dialect === 'sqlite') {
+        $file = __DIR__ . '/sqlite-grouped-boundaries-v1.json';
+        requireShape(hash_file('sha256', $file) === 'd5798628db61bbf32d8bf067c1753ca70835384d3649a8e26396e9882ad7297f', 'SQLite grouping boundary contract differs from the recorded revision');
+    } else {
+        $file = __DIR__ . '/native-boundaries-v11.json';
+        requireShape(hash_file('sha256', $file) === 'f86d0da10d98d5f0f15af2faa2fd9730429d9d3612f07a6fe03575618bfaab98', 'Native boundary contract differs from the recorded revision');
+    }
 
     $rules = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR)['rules'];
 
@@ -34,7 +39,7 @@ function checkNativeBoundaries(
         'Ir\\Mutation\\InsertRow', 'Ir\\Mutation\\UpdateAssignment', 'Ir\\Predicate\\IntegerComparison', 'Ir\\Predicate\\IntegerOperator',
         'Ir\\Predicate\\LogicalOperator', 'Ir\\Predicate\\LogicalPredicate', 'Ir\\Predicate\\NullTest', 'Ir\\SelectSql',
         'Model\\Contract\\GrammarRelease', 'Statement\\Query\\ParenthesizedQuery', 'Statement\\Relation\\DerivedTable',
-        'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering'] as $name) {
+        'Model\\Statement\\Reference\\Column\\ResolvedColumn', 'Ir\\SelectLowering', 'Statement\\Expression\\Collate', 'Statement\\Expression\\Grouped'] as $name) {
         $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
     }
     $imports .= 'use ' . $platform . '\\Statement\\Query\\Select as ParsedSelect;' . "\n";

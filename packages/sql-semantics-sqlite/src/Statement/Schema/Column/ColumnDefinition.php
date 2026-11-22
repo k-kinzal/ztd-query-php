@@ -96,6 +96,21 @@ final class ColumnDefinition implements Node
     }
 
     /**
+     * Answers the declared default collation, taking the last COLLATE constraint.
+     */
+    public function collation(): ?Name
+    {
+        $name = null;
+        foreach ($this->constraints as $constraint) {
+            if ($constraint instanceof Collation) {
+                $name = $constraint->name;
+            }
+        }
+
+        return $name;
+    }
+
+    /**
      * Derives the type arguments and the operands of the constraints inside the table definition, and reports a default SQLite rejects.
      */
     public function deriveColumn(Derivation $derivation, ConstraintScope $scope): void
