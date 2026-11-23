@@ -1,0 +1,14 @@
+{
+  "revision": "SemanticsIR/mysql-session-create-default-metadata-1",
+  "approval": "pending-human-review",
+  "extends": "mysql-session-create-table-v1.json",
+  "observed": {
+    "releases": ["mysql-5.6.51", "mysql-8.4.7"],
+    "archiveSha256": "5353fd58fb4016c3b04a591613f7de0e62fd50410793a951b81d97256b0f0df2",
+    "cases": ["seed/1117/4", "seed/1117/20"],
+    "fact": "SHOW FULL COLUMNS displays the registered supplementary default as a replacement question mark on permanent tables and on the MySQL 5.6 temporary table. On MySQL 8.4 the temporary metadata displays the original UTF-8 bytes as uppercase hexadecimal. A native insert reads the original Unicode value from both table namespaces."
+  },
+  "rule": "Compare the exact raw Default metadata in all phases. Expect the native uppercase 0xF09090B7 display for the registered supplementary literal on a modern temporary table and the exact question mark display on the legacy temporary and persistent cases. Compare actual default insertion bytes independently in both namespaces.",
+  "preserves": "All scheduled cases, finite coordinates and seeds, and both the raw metadata and typed inserted values. Any different raw display or default value fails its own comparison.",
+  "control": "Keep the raw Default metadata unchanged while replacing the inserted supplementary value. Reject the resulting observation."
+}
