@@ -11,7 +11,7 @@ function fixtureReturningClause(string $column, string $qualifier): string
     $label = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\x00]|"")+")';
     $field = '(?:' . $column . '(?: AS ' . $label . ')?|(?:' . $qualifier . '\\.)?\\*)';
 
-    return '(?: RETURNING ' . $field . '(?:, ' . $field . ')*)?';
+    return '(?: RETURNING ' . $field . '(?:,\\h*' . $field . ')*)?';
 }
 
 /**

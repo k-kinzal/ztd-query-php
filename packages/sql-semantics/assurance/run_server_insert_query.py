@@ -143,10 +143,11 @@ def faults(engine, tag):
                     case(engine, tag, ["id"], {**first, "where": compare(">", slot(1), literal(5))}), "meaning-mismatch"),
     ]
     if engine == "postgres":
-        typed = leaf(engine, tag, [[["null"], "p0"]])
+        typed = leaf(engine, tag, [[["builtin-cast", "int4", ["null"]], "p0"]])
         typed["distinct"] = True
         result.append(RenderFault("erase-assigned-int4-null", renderer,
-                                  "? 'CAST(NULL AS pg_catalog.' . $assignment->written[$slot]->kind->value . ')'", "? 'NULL'",
+                                  "$expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')'",
+                                  "$expression instanceof BuiltinCast => $this->expression($expression->operand, $source, $offset, $qualify)",
                                   case(engine, tag, ["id"], typed), "server-insert-query-null-type"))
     return result
 
