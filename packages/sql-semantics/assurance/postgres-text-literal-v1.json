@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/postgres-text-literal-1",
+  "extends": ["server-projection-v1.json", "server-compound-v2.json"],
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6/utf8/standard-conforming-strings/native", "pg-17.2/utf8/standard-conforming-strings/native"],
+  "requiredScope": "The fixed grammar and construction obligations remain in force.",
+  "constructors": {
+    "Expression/TextLiteral": {
+      "role": "A resolved PostgreSQL pg_catalog.text constant.",
+      "structure": "One immutable PHP string storing decoded UTF-8 bytes.",
+      "conditions": "Accept all well-formed UTF-8 byte sequences without U+0000. The owning SELECT supplies the type of an otherwise unknown simple output literal. An explicit cast is admitted when its scalar target is exactly built-in text and the operand is a string constant.",
+      "meaning": "The text value is the original sequence of decoded bytes, including empty strings, whitespace, backslashes and quotes. Compose it with the registered projection and same-type compound roles.",
+      "sql": "Quote with doubled single quotes under the fixed standard string setting and cast the value explicitly to pg_catalog.text."
+    }
+  },
+  "externalInterpretation": "Both sides use the same UTF-8 PostgreSQL profile and external input rows. The native result type is text.",
+  "observations": [
+    "Exact UTF-8 values, including combining and supplementary code points, leading and trailing whitespace, empty strings and line endings",
+    "Text metadata and exact, ordered result labels",
+    "Rows from ordinary sources retain duplicates and have the same constant value per row",
+    "Compatible explicitly typed text compound arms retain text metadata"
+  ],
+  "finite": {
+    "values": ["", "plain", "a'b", "\\", "\\'", "a\u0001z", "line\nnext", "CR\rLF\n", "\t x ", "値", "𐐷é", "$body$"],
+    "projection": ["literal", "literal-and-int", "repeated"],
+    "source": ["none", "declared"],
+    "identities": 72,
+    "completeness": "Recover all dimensions from the actual published graph. Require each finite identity once on both releases."
+  },
+  "exploration": {
+    "seeds": [7829, 21611, 42331],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 230,
+    "allowedExclusions": [],
+    "requiredForms": "Vary Unicode scalar values, quote placement, controls, labels, operand count and presence of duplicate input rows."
+  },
+  "analysis": [
+    "A standalone unaliased string is resolved to text and retains the native default result name.",
+    "A plain quoted string decodes two adjacent apostrophes.",
+    "A bare standard string retains a literal backslash.",
+    "A backslash-escape string preserves decoded newline and tab.",
+    "A dollar-quoted character value preserves quotes, newlines and backslash.",
+    "A Unicode escape string yields the expected supplementary characters.",
+    "A continued standard string adds its second segment without a separator.",
+    "The exact built-in text cast resolves a quote-bearing string.",
+    "An annotated text literal is replayed across distinct source rows and duplicates.",
+    "Two explicitly typed text operands of a UNION ALL retain native text metadata."
+  ],
+  "negative": [
+    "An offered direct byte sequence contains U+0000.",
+    "An offered direct byte sequence contains invalid UTF-8.",
+    "An explicitly typed text set operand cannot unify with a native integer field."
+  ],
+  "faults": [
+    "Return the empty string in place of a nonempty text value.",
+    "Remove a backslash from the decoded value.",
+    "Emit varchar instead of text."
+  ],
+  "evidence": {
+    "P01": "Check exact typed fields and decoded values from complete statements.",
+    "P02": "Check validity of the byte sequence and the resolved consumer roles.",
+    "P03": "Retain only the decoded value in the literal.",
+    "P04": "Compose projection and same-type set operands with the checked text role.",
+    "P05": "Connect the readonly type and its construction and storage checks to installed code.",
+    "P06": "Compare typed results of original and emitted SQL on both releases.",
+    "Q01": "Require typed boundary rejections for invalid bytes and type disagreement.",
+    "Q02": "Require all finite identities, seeds and supported spellings.",
+    "Q03": "Compare composite projection and compatible typed set behavior.",
+    "Q04": "Use independent byte comparisons and exact result metadata.",
+    "Q05": "Record and replay exact PHP source, controller and runtime identities."
+  },
+  "open": [
+    "Context-dependent implicit conversion of untyped literals in compound operands, mutation assignments, comparisons and other typed operands remains a distinct obligation.",
+    "Additional character types, typed NULL, nonstandard string settings and non-UTF-8 profiles require separate evidence."
+  ],
+  "trust": ["UTF-8 validation by PHP", "Immutable text role and explicit native text type", "Pinned PostgreSQL lexical and SELECT output conversion rules"],
+  "sources": [
+    "https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS",
+    "https://www.postgresql.org/docs/17/typeconv-select.html"
+  ]
+}
