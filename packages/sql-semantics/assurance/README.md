@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v25.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v26.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -260,6 +260,8 @@ The [VARCHAR extrema domain](mysql-varchar-extrema-v2.json) checks native `MIN` 
 The [VARCHAR inheritance domain](mysql-varchar-inheritance-v2.json) checks a resolved table default and explicit column overrides. It compares the derived physical slot with direct construction and checks native character-set, collation, width and nullability metadata before comparing the results. Run `run_server_mysql_varchar_inheritance.py` and replay with `combine_server_mysql_varchar_inheritance_evidence.py`.
 
 The [explicit MySQL collation domain](mysql-explicit-text-collation-v1.json) compares the native result columns and observes their collation and coercibility by position, including duplicate labels and projections filtered to an empty result. Run `run_server_mysql_explicit_text_collation.py` and replay with `combine_server_mysql_explicit_text_collation_evidence.py`.
+
+The [derived VARCHAR domain](mysql-derived-varchar-v1.json) checks both occurrence and output ordinal after propagating the physical field's native metadata. Its independent join model consumes all permitted child DISTINCT representatives and compares typed rows, NULL extension and native text equality. Run `run_server_mysql_derived_varchar.py` and replay with `combine_server_mysql_derived_varchar_evidence.py`.
 
 ## Native local projections
 

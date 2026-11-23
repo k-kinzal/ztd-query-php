@@ -226,6 +226,13 @@ def inventory(root):
             for alternative in rules.get("simple_expr", ()):
                 if alternative == "simple_expr: simple_expr COLLATE_SYM ident_or_text":
                     related[alternative] = (*related.get(alternative, ()), "mysql-explicit-text-collation-v1.json")
+            derived_varchar = (
+                *(alternative for alternative in rules.get("table_factor", ())
+                  if "select_derived" in alternative or alternative == "table_factor: derived_table"),
+                "derived_table: table_subquery opt_table_alias opt_derived_column_list",
+            )
+            for alternative in derived_varchar:
+                related[alternative] = (*related.get(alternative, ()), "mysql-derived-varchar-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

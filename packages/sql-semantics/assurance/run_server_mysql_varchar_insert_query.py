@@ -19,7 +19,7 @@ from run_server_mysql_varchar_slots import COLLATION, DIAGNOSTICS, SCHEMA, field
 from server_compound_cases import leaf
 from server_delete_cases import literal
 from server_join_cases import join, slot
-from server_truth_model import admits
+from server_truth_model import admits, pad_space_distinct_rows
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-insert-query"
@@ -261,11 +261,7 @@ def allowed_input_rows(item):
                   if admits(model["where"], lambda term: value(structural_term(term, model["source"]), row))]
     if not distinct:
         return [projection]
-    classes = {}
-    for row in projection:
-        key = tuple(cell.rstrip(" ") if type(cell) is str else cell for cell in row)
-        classes.setdefault(key, set()).add(row)
-    return product(*(sorted(rows, key=canonical) for rows in classes.values()))
+    return pad_space_distinct_rows(projection)
 
 
 def bag(rows):

@@ -1,6 +1,9 @@
 """Independent three-valued interpretation of checked native predicates."""
 
+from itertools import product
 import operator
+
+from evidence_transcript import canonical
 
 COMPARISONS = {
     "=": operator.eq, "<>": operator.ne, "<": operator.lt, "<=": operator.le,
@@ -80,3 +83,13 @@ def predicate_value(condition, operand):
 
 def admits(condition, operand):
     return condition is None or predicate_value(condition, operand) is True
+
+
+def pad_space_distinct_rows(projected):
+    """Enumerate the stored whole-row representatives of each PAD SPACE class."""
+    classes = {}
+    for values in projected:
+        row = tuple(values)
+        key = tuple(value.rstrip(" ") if type(value) is str else value for value in row)
+        classes.setdefault(key, set()).add(row)
+    return product(*(sorted(rows, key=canonical) for rows in classes.values()))

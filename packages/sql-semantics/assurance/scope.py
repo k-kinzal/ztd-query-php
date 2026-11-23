@@ -40,6 +40,7 @@ CONTRACTS = {
     "mysql-varchar-count-v1.json": "7c91770c3f26ffec66b122258fc64ef09231f59044a32d7c09ca7fe89ae8838b",
     "mysql-varchar-extrema-v1.json": "bb884261227a9eceaadd18e1a464aa5b64def2ae3f32ed0a013a2dee7e212a96",
     "mysql-varchar-extrema-v2.json": "a594302b5388ea5a82a95db7d02c382e674baf61ef5f70b532420a8ab621512e",
+    "mysql-derived-varchar-v1.json": "e03ccc6eaff57ef5fb6b6cbd6a5e79b00676a4f1737182c33d714532e852fc25",
     "mysql-varchar-inheritance-v2.json": "5bd0a3474cd47e20ec070aca435175f97941a2a40c96bb40d69612687f93d28d",
     "mysql-explicit-text-collation-v1.json": "2d68bc937da34126ae9d7ec99613c713f4ce7831657af06834d539d758a22a07",
     "postgres-int4-operators-v2.json": "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa",
@@ -139,7 +140,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "dcc301328298380a3425b7593c31b8946208164ce3ef512e047bef69e3d4d9f5"
+PUBLICATION = "3beb9a07bc77e2fdc019df5ed729da98d78f23c43e135f60cfa1720b8fe833f1"
 
 
 def declared_constructors(dialects):
@@ -169,7 +170,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v25.json").read_bytes()
+    publication = (TOOL / "publication-v26.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)

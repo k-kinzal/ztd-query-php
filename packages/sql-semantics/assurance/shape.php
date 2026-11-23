@@ -525,10 +525,7 @@ if ($dialect !== 'sqlite') {
         'right' => ['From\\DerivedSource', 'From\\Join', 'TableSource'], 'on' => $conditions,
     ];
     $properties['From\\DerivedSource'] = ['definition' => ['Select']];
-    $methods['From\\DerivedSource'] = ['__construct'];
-    if ($dialect === 'postgres') {
-        $methods['From\\DerivedSource'][] = 'columnKind';
-    }
+    $methods['From\\DerivedSource'] = ['__construct', $dialect === 'postgres' ? 'columnKind' : 'columnType'];
     $methods['From\\Join'] = ['__construct', 'inputs'];
     $properties['From\\JoinKind'] = $methods['From\\JoinKind'] = [];
     $enumCases['From\\JoinKind'] = ['Cross' => 'CROSS', 'Inner' => 'INNER', 'Left' => 'LEFT', 'Right' => 'RIGHT'];

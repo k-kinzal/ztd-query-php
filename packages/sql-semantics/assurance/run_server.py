@@ -27,9 +27,13 @@ def projection_publication():
     contract = TOOL / "server-projection-publication-v1.json"
     require(digest(contract) == PUBLICATION_AMENDMENT, "server-publication-amendment-mismatch")
     amended = json.loads(contract.read_text())
+    baseline = TOOL / "publication-v25.json"
+    require(digest(baseline) == amended["publicationContract"], "server-publication-baseline-mismatch")
+    original = json.loads(baseline.read_text())
     publication = publication_definition()
-    require(amended["publicationContract"] == PUBLICATION and publication["single"]["method"] == "Semantics::analyze"
-            and "ir" in publication["forbidden"], "server-publication-route-mismatch")
+    require(publication["single"]["method"] == original["single"]["method"] == "Semantics::analyze"
+            and all(publication[key] == original[key] for key in ("analyzerInterface", "interfaceResult", "surface", "forbidden")),
+            "server-publication-route-mismatch")
     return {"amendment": PUBLICATION_AMENDMENT, "contract": PUBLICATION}
 
 
