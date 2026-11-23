@@ -798,7 +798,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $details['generatedColumns'][] = [$slot, $rule->mode->value, $rule->expression->slot];
             }
         }
-        if ($role === 'Schema\\View\\CreateView') {
+        if ($platform === 'Sqlite' && $role === 'Schema\\View\\CreateView') {
             $shadow = $semantics->context(['CREATE TABLE main.accounts (id INTEGER)', 'CREATE TEMP TABLE accounts (id TEXT)'], true);
             $view = $semantics->analyze($sql, $shadow);
             if ($view::class !== $namespace . 'Ir\\Schema\\View\\CreateView' || $view->query::class !== $namespace . 'Ir\\Select'
