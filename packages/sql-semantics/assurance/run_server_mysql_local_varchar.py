@@ -21,7 +21,7 @@ from server_truth_model import pad_space_distinct_rows
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-local-varchar"
-CONTRACT = "3fa99fa56fce69b09f9096ef99407ce960e24fbfcdf5e2e6b7d7a99e4268f161"
+CONTRACT = "c856de0d9e4d1ec62f3fe93b32164154a5fa192b6eab2e3b095683ad7cf1e8d9"
 OBSERVER = "mysql_cast_observer.php"
 SOURCES = {"populated": PRIMARY, "empty": EMPTY}
 METADATA = {"slot": [3, 63], "text-slot": [253, 46]}
@@ -29,7 +29,7 @@ HEADING_ORDER = [2, 0, 1]
 
 
 def specifications():
-    path, profile = TOOL / "mysql-local-varchar-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-local-varchar-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-local-varchar-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -44,6 +44,10 @@ def prepare(_engine, db):
     settings = [] if legacy_ else ["SET SESSION optimizer_switch = 'derived_merge=on'"]
     fixture = db.request({"fixture": [*settings, *(f"DROP TABLE IF EXISTS {SCHEMA}.{name}" for name in ROWS),
                                      *DECLARATIONS, f"INSERT INTO {SCHEMA}.{PRIMARY} VALUES {data}"]})
+    calibration_sql = f"SELECT {', '.join(HEADING)} FROM {SCHEMA}.{PRIMARY}"
+    converted = observation(db.request(observer_request(None, calibration_sql)))
+    conversion = db.request({"fixture": ["SET SESSION character_set_results = NULL"]})
+    measurement_profile = db.request({"sql": "SELECT @@character_set_client, @@character_set_connection, @@character_set_results"})
     read = {name: observation(db.request(observer_request(None, f"SELECT {', '.join(HEADING)} FROM {SCHEMA}.{name}"))) for name in ROWS}
     collations = db.request({"sql": "SELECT COLLATION_NAME, ID FROM information_schema.COLLATIONS "
                                     f"WHERE COLLATION_NAME IN ('binary', '{COLLATION}') ORDER BY ID"})
@@ -52,14 +56,20 @@ def prepare(_engine, db):
                                 f"WHERE TABLE_SCHEMA='{SCHEMA}' AND TABLE_NAME IN ('{PRIMARY}', '{EMPTY}') "
                                 "ORDER BY TABLE_NAME, ORDINAL_POSITION"})
     optimizer = None if legacy_ else db.request({"sql": "SELECT @@SESSION.optimizer_switch AS setting"})
-    return {"fixture": fixture, "values": read, "collations": collations["rows"], "layout": layout["rows"], "optimizer": optimizer}
+    return {"fixture": fixture, "values": read, "collations": collations["rows"], "layout": layout["rows"], "optimizer": optimizer,
+            "converted": {"sql": calibration_sql, "observed": converted}, "conversion": conversion, "measurementProfile": measurement_profile}
 
 
 def check_preparation(engine, environment, actual):
     require(engine == "mysql", "mysql-local-varchar-engine", engine)
     same({"status": "fixture"}, actual["fixture"])
+    same({"status": "fixture"}, actual["conversion"])
+    same([["utf8mb4", "utf8mb4", None]], actual["measurementProfile"]["rows"])
     same([[COLLATION, 46], ["binary", 63]], actual["collations"])
     fields = [[name, *METADATA["slot" if kind == "int" else "text-slot"]] for name, kind in zip(HEADING, TYPES)]
+    conversion_id = 45 if environment["database"][0].startswith(("5.6.", "5.7.")) else 255
+    converted_fields = [[name, wire_type, conversion_id if collation == 46 else collation] for name, wire_type, collation in fields]
+    same(observation({"status": "rows", "fields": converted_fields, "rows": ROWS[PRIMARY]}), actual["converted"]["observed"])
     for name, data in ROWS.items():
         same(observation({"status": "rows", "fields": fields, "rows": data}), actual["values"][name])
     layout = [[table_name, field, "int", None, None] if kind == "int" else [table_name, field, "varchar", kind[1], COLLATION]

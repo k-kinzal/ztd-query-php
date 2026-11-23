@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import time
 
+from mysql_physical_text_admission import negative as mysql_text_negative
 from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, Failure, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from postgres_physical_text_admission import negative as postgres_text_negative
 from scope import PUBLICATION, publication_definition
@@ -176,10 +177,8 @@ def negatives(dialect):
     grouped = analyzed(dialect, rejection["sql"].format(table=table))
     exception = f"SqlSemantics\\Platform\\{namespace}\\Model\\Diagnostic\\{rejection['exception']}"
     field = analyzed(dialect, f"SELECT poison FROM {table}")
-    boundary = {"message": "signed 32-bit integer type", "exception": None}
-    if dialect == "postgres":
-        kind, boundary = postgres_text_negative("projection")
-        field["declarations"][0] = f"CREATE TABLE {table} (id INT, delta INT, poison {kind})"
+    kind, boundary = mysql_text_negative() if dialect == "mysql" else postgres_text_negative("projection")
+    field["declarations"][0] = f"CREATE TABLE {table} (id INT, delta INT, poison {kind})"
     invalid = [(item, message, None) for item, message in [
         (case(dialect, None, []), "nonempty list"),
         (case(dialect, None, [["slot", 0]]), "belong to the SELECT source"),

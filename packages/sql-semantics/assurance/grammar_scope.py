@@ -391,7 +391,7 @@ def inventory(root):
                 if alternative in local_signatures or rule == "common_table_expr":
                     related[alternative] = (*related.get(alternative, ()), "server-local-projection-v4.json")
                     if mysql:
-                        related[alternative] = (*related[alternative], "mysql-local-varchar-v1.json")
+                        related[alternative] = (*related[alternative], "mysql-local-varchar-v2.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()

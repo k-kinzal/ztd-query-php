@@ -263,7 +263,7 @@ The [explicit MySQL collation domain](mysql-explicit-text-collation-v1.json) com
 
 The [derived VARCHAR domain](mysql-derived-varchar-v1.json) checks both occurrence and output ordinal after propagating the physical field's native metadata. Its independent join model consumes all permitted child DISTINCT representatives and compares typed rows, NULL extension and native text equality. Run `run_server_mysql_derived_varchar.py` and replay with `combine_server_mysql_derived_varchar_evidence.py`.
 
-The [local VARCHAR domain](mysql-local-varchar-v1.json) follows a resolved position through reorderings and repeated labels in up to sixteen local projections. It compares the wire type and collation identifier even when the query has no rows. Run `run_server_mysql_local_varchar.py` and replay with `combine_server_mysql_local_varchar_evidence.py`.
+The [local VARCHAR domain](mysql-local-varchar-v2.json) follows a resolved position through reorderings and repeated labels in up to sixteen local projections. It compares the wire type and collation identifier even when the query has no rows. Run `run_server_mysql_local_varchar.py` and replay with `combine_server_mysql_local_varchar_evidence.py`.
 
 ## Native local projections
 
