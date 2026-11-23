@@ -251,7 +251,7 @@ The [VARCHAR assignment domain](mysql-varchar-assignment-v4.json) checks ordered
 
 The [VARCHAR VALUES domain](mysql-varchar-insert-v2.json) compares the exact typed rows and ordered trigger events of ordinary INSERT. It observes single-row required-NULL errors, multiple-row substitution, and transactional rollback on the registered duplicate keys. Run `run_server_mysql_varchar_insert.py` and replay with `combine_server_mysql_varchar_insert_evidence.py`.
 
-The [VARCHAR query INSERT domain](mysql-varchar-insert-query-v1.json) checks each destination against its source position and independently evaluates the source bag, DISTINCT representatives and native write effects. Its fixture captures exact typed rows, source and control state, trigger effects, diagnostic classes and rollback. Run `run_server_mysql_varchar_insert_query.py` and replay with `combine_server_mysql_varchar_insert_query_evidence.py`.
+The [VARCHAR query INSERT domain](mysql-varchar-insert-query-v2.json) checks each destination against its source position and independently evaluates the source bag, DISTINCT representatives and native write effects. Its fixture captures exact typed rows, source and control state, trigger effects, diagnostic classes and rollback. Run `run_server_mysql_varchar_insert_query.py` and replay with `combine_server_mysql_varchar_insert_query_evidence.py`.
 
 The [VARCHAR COUNT domain](mysql-varchar-count-v1.json) checks nullable and duplicate text fields, global zeros, keyed grouping, required legacy group ordering and exact output metadata. Its oracle independently partitions rows and counts exact non-NULL values or PAD SPACE equivalence classes. Run `run_server_mysql_varchar_count.py` and replay with `combine_server_mysql_varchar_count_evidence.py`.
 

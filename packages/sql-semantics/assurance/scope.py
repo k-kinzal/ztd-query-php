@@ -36,6 +36,7 @@ CONTRACTS = {
     "mysql-varchar-assignment-v4.json": "7bfd83feaa665f4619e27618f7402f43cd54c333714f37cc27bba2f4919276e2",
     "mysql-varchar-insert-v2.json": "2fd2869e86715f893955c800e4d63d60f45dd6b9b2ac42df3ab2f95cdbbddbc2",
     "mysql-varchar-insert-query-v1.json": "b7f8bffd15a3a52717baeb3491e613541f71028618dae241f19ac5ba1a8fb9b5",
+    "mysql-varchar-insert-query-v2.json": "3051f65adb18ad41c371f732ede4c66f1e6cee50246e9a6455c68b9bedda2b75",
     "mysql-varchar-count-v1.json": "7c91770c3f26ffec66b122258fc64ef09231f59044a32d7c09ca7fe89ae8838b",
     "mysql-varchar-extrema-v1.json": "bb884261227a9eceaadd18e1a464aa5b64def2ae3f32ed0a013a2dee7e212a96",
     "mysql-varchar-extrema-v2.json": "a594302b5388ea5a82a95db7d02c382e674baf61ef5f70b532420a8ab621512e",

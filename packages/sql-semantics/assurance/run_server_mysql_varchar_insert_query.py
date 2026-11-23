@@ -23,7 +23,7 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-insert-query"
-CONTRACT = "b7f8bffd15a3a52717baeb3491e613541f71028618dae241f19ac5ba1a8fb9b5"
+CONTRACT = "3051f65adb18ad41c371f732ede4c66f1e6cee50246e9a6455c68b9bedda2b75"
 TARGET = "ir_varchar_query_target"
 SCAN = "ir_varchar_query_scan"
 EMPTY = "ir_varchar_query_empty"
@@ -55,7 +55,7 @@ def definition(name):
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-insert-query-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-insert-query-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-insert-query-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -84,7 +84,11 @@ def prepare(_engine, db):
               prefix + f"label AS p0 FROM {relation(TARGET)}", prefix + "'a' AS p0; DELETE FROM " + relation(TARGET)]
     recorded = {sql: db.request(observer_request(None, sql)) for sql in denied}
     native = prefix + f"NULL AS p0 FROM {relation(EMPTY)}"
-    return {"fixture": fixture, "guard": recorded, "query": {"sql": native, "observed": db.request(observer_request(None, native))}}
+    batch = f" AS p0 FROM {relation(SCAN)} WHERE bucket = 7"
+    anchors = {"literal": prefix + "'a  ' AS p0", "field": prefix + "label" + batch,
+               "explicit-field": prefix + "(label COLLATE utf8mb4_bin)" + batch}
+    return {"fixture": fixture, "guard": recorded, "query": {"sql": native, "observed": db.request(observer_request(None, native))},
+            "copyCalibration": {name: {"sql": sql, "observed": db.request(observer_request(None, sql))} for name, sql in anchors.items()}}
 
 
 def check_preparation(engine, _environment, recorded):
@@ -96,6 +100,10 @@ def check_preparation(engine, _environment, recorded):
     initial = normalized_state(INITIAL)
     same({"status": "mutation", "count": 0, "columns": 0, "before": initial, "after": initial, "restored": initial,
           "warningCount": 0, "diagnostics": []}, normalized_effect(recorded["query"]["observed"]))
+    for name, count, severity in (("literal", 1, "Note"), ("field", 3, "Warning"), ("explicit-field", 3, "Note")):
+        observation = normalized_effect(recorded["copyCalibration"][name]["observed"])
+        same(["mutation", count, 1, [[severity, 1265, "required_value"]]],
+             [observation["status"], observation["count"], observation["warningCount"], observation["diagnostics"]])
 
 
 def table(name):
@@ -282,19 +290,21 @@ def expected(item):
     initial = normalized_state(INITIAL)
     outcomes = {}
     heading = item["target"]["columns"]
+    _, columns, _, distinct = graph(item)
+    copies = [term[0] == "text-slot" or (distinct and term[0] == "collated-text" and term[2][0] == "text-slot") for term, _ in columns]
     for source in allowed_input_rows(item):
         written, diagnostics = [], []
         null_warned = False
         for values in source:
             row = dict(zip(HEADING, DEFAULTS))
-            for destination, value in zip(heading, values):
+            for destination, value, direct_copy in zip(heading, values, copies):
                 if destination in WIDTH:
                     if destination == "required_value" and value is None:
                         value = ""
                         if not null_warned or item["release"] == "mysql-5.6.51":
                             diagnostics.append(["Warning", 1048, destination])
                         null_warned = True
-                    value, severity = truncated(value, WIDTH[destination], fast_copy=True)
+                    value, severity = truncated(value, WIDTH[destination], fast_copy=direct_copy)
                     if severity:
                         diagnostics.append([severity, 1265, destination])
                 row[destination] = value
