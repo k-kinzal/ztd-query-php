@@ -110,7 +110,8 @@ def negatives(dialect, tag):
     yield case(dialect, tag, ["comparison", "=", ["slot", 2], literal(0)]), "must belong to its target"
     yield case(dialect, tag, ["comparison", "=", literal(0), ["slot", 2]]), "must belong to its target"
     yield case(dialect, tag, ["logic", "NOT", ["null-test", False, ["slot", 0, 1]], None]), "must belong to its target"
-    yield {"dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}", "declarations": []}, "resolved, complete base table"
+    missing_source = "resolved, complete local relation declaration" if dialect == "postgres" else "resolved, complete base table"
+    yield {"dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}", "declarations": []}, missing_source
     kind, boundary = postgres_text_negative("delete") if dialect == "postgres" else mysql_text_negative()
     yield {
         "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation} WHERE id = 1",

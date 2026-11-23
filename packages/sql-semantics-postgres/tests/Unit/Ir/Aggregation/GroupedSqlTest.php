@@ -14,12 +14,21 @@ use SqlSemantics\Platform\PostgreSql\Ir\Aggregation\GroupedSelect;
 use SqlSemantics\Platform\PostgreSql\Ir\Aggregation\GroupedSql;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 
 #[CoversClass(GroupedSql::class)]
 #[Small]
 final class GroupedSqlTest extends TestCase
 {
+    public function testOperandRendersTheNativeAggregate(): void
+    {
+        $source = new TableSource(new Identifier('public'), new Identifier('events'), [new Identifier('id')]);
+        $count = new Aggregate(AggregateOperator::Count, new ColumnReference(0), true);
+
+        self::assertSame('pg_catalog.count(DISTINCT "__ztd_source"."id")', (new GroupedSql())->operand($count, $source, new SelectSql()));
+    }
+
     public function testRenderReadsTheExplicitGroupAndAggregateSlots(): void
     {
         $id = new ColumnReference(0);

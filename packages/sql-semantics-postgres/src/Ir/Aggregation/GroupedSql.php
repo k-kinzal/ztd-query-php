@@ -52,7 +52,7 @@ final class GroupedSql
     /**
      * Emits an operand from a group result or predicate.
      */
-    private function operand(Aggregate|ColumnReference|IntegerLiteral|WideIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
+    public function operand(Aggregate|ColumnReference|IntegerLiteral|WideIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
     {
         if (!$value instanceof Aggregate) {
             return $renderer->expression($value, $source);

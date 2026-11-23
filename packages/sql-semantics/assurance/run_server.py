@@ -186,7 +186,8 @@ def negatives(dialect):
         (case(dialect, None, [["integer", "2147483648"]]), "32-bit range"),
         (case(dialect, None, [["integer", "-2147483649"]]), "32-bit range"),
         (case(dialect, None, [["integer", "1"]], ["n\0ame"]), "no NUL" if dialect == "mysql" else "without NUL"),
-        (analyzed(dialect, f"SELECT id FROM {table}", schemas=False), "resolved, complete base table"),
+        (analyzed(dialect, f"SELECT id FROM {table}", schemas=False),
+         "resolved, complete base table" if dialect == "mysql" else "resolved, complete local relation declaration"),
     ]]
     invalid.extend([(field, boundary["message"], boundary["exception"]), (grouped, rejection["message"], exception)])
     if dialect == "mysql":

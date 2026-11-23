@@ -58,7 +58,7 @@ final class HavingLowering
     /**
      * Binds signed input fields, aggregate arguments and numeric literals.
      */
-    private function operand(Scalar $operand, SourceBinding $binding, AggregateBinding $aggregate): Aggregate|ColumnReference|IntegerLiteral|WideIntegerLiteral
+    public function operand(Scalar $operand, SourceBinding $binding, AggregateBinding $aggregate): Aggregate|ColumnReference|IntegerLiteral|WideIntegerLiteral
     {
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
