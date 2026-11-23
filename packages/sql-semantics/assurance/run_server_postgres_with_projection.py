@@ -180,6 +180,7 @@ def requests(_, tag, contract):
             yield f"seed/{seed}/{index}", item, item, None
     sample = binding_case(tag)
     sql = "WITH a AS (SELECT CAST($1 AS integer) AS a), b AS MATERIALIZED (SELECT CAST($1 AS integer) AS b) SELECT b AS bound FROM b"
+    yield "binding/direct-shared-position", sample, sample, None
     yield "binding/shared-position", request(tag, sql), sample, None
     for index, (item, reason) in enumerate(negatives(tag)):
         yield f"negative/{index}", item, None, reason
