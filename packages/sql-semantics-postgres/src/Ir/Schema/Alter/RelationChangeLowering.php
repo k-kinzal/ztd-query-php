@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
+namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter;
 
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameColumn;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameLowering;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropRelationLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;

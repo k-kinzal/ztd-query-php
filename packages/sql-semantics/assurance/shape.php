@@ -768,7 +768,7 @@ if ($dialect !== 'sqlite') {
         $renameTable = 'Schema\\Alter\\RenameTable';
         $renameColumn = 'Schema\\Alter\\RenameColumn';
         array_push($roots, $renameTable, $renameColumn);
-        array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\RenameTargetLowering', 'Schema\\RelationChangeLowering');
+        array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\RenameTargetLowering', 'Schema\\Alter\\RelationChangeLowering');
         $properties[$renameTable] = ['target' => ['Schema\\TableName'], 'destination' => ['Identifier'], 'ifExists' => ['bool'],
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$renameColumn] = [...$properties[$renameTable], 'column' => ['Identifier'], 'only' => ['bool']];
@@ -969,7 +969,7 @@ try {
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename'
-                . ' => (new \\' . $prefix . 'Schema\\RelationChangeLowering())->lower($operation, $statement),'
+                . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),')
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
@@ -1204,7 +1204,7 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable'],
                     'Unexpected PostgreSQL rename publication');
             }
-            if ($short === 'Schema\\RelationChangeLowering') {
+            if ($short === 'Schema\\Alter\\RelationChangeLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null

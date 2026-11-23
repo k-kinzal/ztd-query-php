@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Schema;
+namespace Tests\Unit\Ir\Schema\Alter;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RelationChangeLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\RelationChangeLowering;
 use SqlSemantics\Platform\PostgreSql\Semantics;
 
 #[CoversClass(RelationChangeLowering::class)]

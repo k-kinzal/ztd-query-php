@@ -101,7 +101,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-create-view-boundaries-v1.json', '8417042c43c0ae5fb380cc4e0bd2a3367e965f2d76b60195d044a4ff2b1346c0'],
             ['postgres-materialized-view-boundaries-v2.json', '070d2a0b7d4d7fdd34c25aba6978c0b4b4908d51a0d101c68d53762cfab14de5'],
             ['postgres-create-table-as-boundaries-v1.json', '67906cdd1b60402f1d0145906b5a033ee0ae2a899b3777d80d5eed1db0235976'],
-            ['postgres-table-rename-boundaries-v1.json', '0b6de83234e2985cad58d05ced2a248e155ae6167eea3385aa266f48107bcf5d'],
+            ['postgres-table-rename-boundaries-v2.json', 'eb034cda577a7724f5e5b27f72736ca73038dea327c2cb395d7181aee37a3f68'],
         ],
         'sqlite' => [],
     };
@@ -222,7 +222,7 @@ function checkNativeBoundaries(
                 'Statement\\Table\\CreateTableAs as ParsedCreateTableAs', 'Ir\\Schema\\DefinitionQueryLowering',
                 'Ir\\Schema\\Query\\CreateTableAsLowering', 'Ir\\Schema\\TableName',
                 'Statement\\Object\\Reference\\RelationTarget', 'Statement\\Object\\RenamedPart',
-                'Statement\\Object\\Drop as ParsedDrop', 'Statement\\Object\\Rename as ParsedRename', 'Ir\\Schema\\Alter\\RenameLowering',
+                'Statement\\Object\\Drop as ParsedDrop', 'Statement\\Object\\Rename as ParsedRename', 'Ir\\Schema\\Alter\\RenameLowering', 'Ir\\Schema\\DropRelationLowering',
                 'Ir\\Schema\\CreateTableLowering', 'Ir\\Schema\\View\\CreateViewLowering', 'Ir\\Schema\\View\\CreateMaterializedViewLowering',
                 'Statement\\Option\\Toggle', 'Statement\\Option\\KeywordWord', 'Statement\\Option\\Word', 'Statement\\Table\\View\\CheckOption',
                 'Statement\\Type\\Designation\\NamedDesignation', 'Statement\\Type\\TypeName',
