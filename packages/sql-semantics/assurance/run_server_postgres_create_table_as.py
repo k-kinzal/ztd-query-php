@@ -85,7 +85,7 @@ def analyzed(tag):
 def negatives(tag):
     normal = creation(tag, query("base"))
     yield {**normal, "createTableAs": {**normal["createTableAs"], "target": ["pg_temp_12", NAME]}}, \
-        "A persistent PostgreSQL relation requires an absolute non-temporary schema."
+        "A persistent PostgreSQL relation requires an absolute schema."
     yield creation(tag, query("base"), ["only"]), "The new table heading must match its query within 1600 columns."
     yield creation(tag, query("values"), ["same", "same"]), "CREATE TABLE AS cannot repeat a column name."
     parameter = scan(None, [[["parameter", 1], "bound"]], source=False)
