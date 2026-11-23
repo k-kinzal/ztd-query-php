@@ -1,0 +1,51 @@
+{
+  "revision": "SemanticsIR/postgres-grouped-result-order-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL grouped output with builtin signed input grouping and aggregate roles. Sorting uses the ordered final fields of the grouped projection.",
+  "extends": ["server-grouped-v3.json", "server-result-v2.json", "postgres-output-order-names-v1.json"],
+  "constructors": {},
+  "existingRoles": ["Aggregation/GroupedSelect", "Aggregation/GroupColumn", "Aggregation/Aggregate", "Ordering/Order", "Ordering/Limit"],
+  "structure": "The grouped query owns its ordered grouping keys, aggregate or plain output columns, optional filter, result sort positions, and an optional row bound. A sort position may identify either a grouped field or an aggregate.",
+  "conditions": "Validate the closed input layout, group membership, output arity and exact one-based key correspondence. Grouped ORDER BY in this domain accepts projected ordinals or simple names bound to the owning result layout. A native output name has precedence over the input name. Reject ambiguous names and unsupported sort expression forms.",
+  "meaning": "Apply input selection and grouping, compute the typed aggregate and plain output values, then sort in key precedence and apply LIMIT and OFFSET. NULL placement is explicit. Equal key bands preserve their bag multiplicity, and any tied selection must come from the band's observed values.",
+  "sql": "Emit the checked GROUP BY followed by ORDER BY on exact result ordinals, explicit direction and NULL placement, then LIMIT or OFFSET. Preserve labels, aggregate argument positions, DISTINCT within an aggregate, and row-bound order.",
+  "observations": ["Ordered native result metadata, aggregate output type and exact values", "Tie-band order and selected multiplicity including possible ties across a row bound", "Effective direction, NULL placement, output slot and bounds", "Original statements with explicit result labels, shadowed names, grouping and global aggregation"],
+  "finite": {
+    "source": ["table", "empty"],
+    "aggregate": ["count", "sum", "min", "max"],
+    "key": ["grouping field", "aggregate field"],
+    "direction": ["ascending", "descending"],
+    "nulls": ["first", "last"],
+    "bound": ["unbounded", "limited", "skip", "zero"],
+    "identities": 256,
+    "completeness": "Independently recover the input identity, aggregate operation, emitted key role, direction, effective NULL policy and bound coordinates from each constructed value. Check every fixed input without a generated filter."
+  },
+  "analysis": ["Sort an aggregate by its output name", "Choose a grouped expression or ordinal before bounds", "A result alias shadows the input field of the same name", "A source DISTINCT aggregate is evaluated before the result bound", "A global group over empty inputs returns the typed aggregate before OFFSET", "A quoted aggregate alias retains its exact output name", "Equivalent projected aggregate names choose one result position", "Group keys and aggregate arguments remain separately resolved"],
+  "exploration": {
+    "seeds": [1823, 11923, 43397],
+    "casesPerSeed": 28,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary input table, global and keyed groups, aggregate operation, argument and duplicate policy, source predicate, result layout, sort key order, NULL policy and row bounds."
+  },
+  "negative": ["Direct sort key outside the grouped output width", "Direct hidden input operand at a grouped order boundary", "Parsed ambiguous aggregate output name", "Parsed missing output position", "Parsed unsupported explicit sort operator", "Parsed unprojected grouped source reference"],
+  "faults": ["Render a different result position", "Discard a later group sort key", "Ignore explicit NULL placement", "Drop OFFSET after grouping", "Skip grouped output-position ownership"],
+  "evidence": {
+    "P01": "The value identifies the ordered grouped result field and its active native operator policy.",
+    "P02": "The owning grouped boundary checks every exact position and immutable ordered key.",
+    "P03": "Group keys, output references, order and bounds retain no original statement or analysis context.",
+    "P04": "The aggregate relation yields typed output slots which the sort and bound compose over.",
+    "P05": "Detached lists and final checked key and bound values maintain the input and output scope.",
+    "P06": "Native SQL preserves group results, type metadata, guaranteed order and bounded tie relations.",
+    "Q01": "Reject unsupported placement and ordinal ownership at the correct construction and analysis boundaries.",
+    "Q02": "Exhaust fixed direct conditions and compare covered result spelling with original analysis.",
+    "Q03": "Compare the independently calculated grouped relation with actual native sorting and row bounds.",
+    "Q04": "Compare exact typed grouped outputs and permitted tie-band selections on both pinned PostgreSQL builds.",
+    "Q05": "Link analyzed output facts, grouped constructor checks and the shared ordering renderer to the loaded package."
+  },
+  "open": ["Expressions and hidden grouped fields in ORDER BY", "HAVING, grouping sets and user-defined aggregate operators", "FETCH WITH TIES, dynamic bounds and additional scalar grouping domains"],
+  "trust": ["Native signed aggregate types and grouping semantics", "Independent relation, groups and tie-band evaluator", "Exact native engine and loaded constructor profile"],
+  "sources": ["https://www.postgresql.org/docs/17/sql-select.html", "https://www.postgresql.org/docs/17/queries-order.html"]
+}
