@@ -805,7 +805,7 @@ if ($dialect !== 'sqlite') {
         $tableRename = 'Schema\\Alter\\TableRename';
         $tableName = 'Schema\\TableName';
         $roots[] = $renameTable;
-        $internal[] = 'Schema\\Alter\\TableRenameLowering';
+        array_push($internal, 'Schema\\Alter\\TableRenameLowering', 'Schema\\Alter\\RelationChangeLowering');
         $properties[$renameTable] = ['moves' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$tableRename] = ['from' => [$tableName], 'to' => [$tableName], 'origin' => [$tableName]];
         $methods[$renameTable] = ['__construct', 'profileId', 'toString'];
@@ -945,7 +945,6 @@ try {
     $kind = $dialect === 'mysql' ? 'Dml' : 'Manipulation';
     $insert = $dialect === 'mysql' ? 'Dml\\Insert\\InsertRows' : 'Manipulation\\InsertRows';
     $compound = $dialect === 'mysql' ? 'Query\\Set\\SetOperation' : 'Query\\SetOperation';
-    $drop = $dialect === 'mysql' ? 'Alter\\DropTable' : 'Object\\Drop';
     $transactionNamespace = $platform . ($dialect === 'mysql' ? '\\Statement\\Server\\Transaction\\' : '\\Statement\\Utility\\Transaction\\');
     $transactionTypes = $dialect === 'mysql'
         ? ['Begin', 'Commit', 'Rollback', 'StartTransaction', 'Savepoint', 'ReleaseSavepoint', 'RollbackToSavepoint']
@@ -976,13 +975,12 @@ try {
                 . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
-        . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable => (new \\'
-            . $prefix . 'Schema\\Alter\\TableRenameLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
-            : '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),')
-        . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
+            : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
+                . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
+                . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
         . ' => (new \\' . $prefix . 'Mutation\\InsertLowering())->lowerQuery($operation, $statement),'
@@ -1217,7 +1215,15 @@ try {
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable'],
                     'Unexpected PostgreSQL rename publication');
             }
-            if ($short === 'Schema\\Alter\\RelationChangeLowering') {
+            if ($dialect === 'mysql' && $short === 'Schema\\Alter\\RelationChangeLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\View\\DropView',
+                    ], 'Unexpected MySQL relation change publication');
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {
                 $members = $class->getMethods();
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null

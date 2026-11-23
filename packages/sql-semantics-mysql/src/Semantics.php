@@ -27,15 +27,13 @@ use SqlSemantics\Platform\MySql\Ir\Rows\Recursive\RecursiveSeriesLowering;
 use SqlSemantics\Platform\MySql\Ir\Rows\RecursiveSeries;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithLowering;
 use SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RelationChangeLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
-use SqlSemantics\Platform\MySql\Ir\Schema\Alter\TableRenameLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateRelationLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
-use SqlSemantics\Platform\MySql\Ir\Schema\DropTableLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
-use SqlSemantics\Platform\MySql\Ir\Schema\View\DropViewLowering;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\Transaction\Transaction;
@@ -160,9 +158,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateView => (new CreateRelationLowering())->lower($operation, $statement),
-            $statement instanceof ParsedRenameTable => (new TableRenameLowering())->lower($operation, $statement),
-            $statement instanceof ParsedDrop => (new DropTableLowering())->lower($operation, $statement),
-            $statement instanceof ParsedDropView => (new DropViewLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDrop, $statement instanceof ParsedDropView, $statement instanceof ParsedRenameTable => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),

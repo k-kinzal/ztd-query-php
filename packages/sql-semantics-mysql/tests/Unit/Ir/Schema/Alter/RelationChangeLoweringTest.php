@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Ir\Schema\Alter;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RelationChangeLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
+use SqlSemantics\Platform\MySql\Semantics;
+
+#[CoversClass(RelationChangeLowering::class)]
+#[Medium]
+final class RelationChangeLoweringTest extends TestCase
+{
+    public function testLowerKeepsTheThreeDistinctOperationRoles(): void
+    {
+        $semantics = new Semantics();
+        $declarations = $semantics->context(['CREATE TABLE app.report (id integer)', 'CREATE VIEW app.report_view AS SELECT 6 AS id']);
+
+        self::assertInstanceOf(DropTable::class, $semantics->analyze('DROP TABLE app.report', $declarations));
+        self::assertInstanceOf(DropView::class, $semantics->analyze('DROP VIEW app.report_view', $declarations));
+        self::assertInstanceOf(RenameTable::class, $semantics->analyze('RENAME TABLE app.report TO app.archived', $declarations));
+    }
+}
