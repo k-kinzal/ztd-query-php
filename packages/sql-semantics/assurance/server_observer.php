@@ -53,9 +53,7 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $result['literals'] = mysqlLiteralObservations($pdo, $input['sql']);
         }
         if (($input['observePostgresCollation'] ?? false) === true) {
-            $collation = $pdo->query('SELECT pg_catalog.pg_collation_for("value") FROM (' . $input['sql'] . ') AS "__ztd_collation" LIMIT 1');
-            $result['collation'] = $collation->fetchColumn();
-            $collation->closeCursor();
+            $result['collations'] = postgresResultCollations($pdo, $input['sql'], count($fields));
         }
         if ($warnings) {
             $result['warningCount'] = warningCount($pdo);
@@ -68,6 +66,30 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $pdo->exec('ROLLBACK');
         $readOnly = false;
     }
+    return $result;
+}
+
+function postgresResultCollations(PDO $pdo, string $sql, int $width): array
+{
+    $aliases = [];
+    $observations = [];
+    for ($index = 0; $index < $width; ++$index) {
+        $alias = '"__ztd_column_' . $index . '"';
+        $aliases[] = $alias;
+        $observations[] = 'pg_catalog.pg_collation_for(' . $alias . ')';
+    }
+    // The generated aliases identify positions even with repeated labels. A null
+    // extended row exposes the result's collation even when the query is empty.
+    $statement = $pdo->query(
+        'SELECT ' . implode(', ', $observations) . ' FROM (VALUES (1)) AS "__ztd_left" '
+        . 'LEFT JOIN (' . $sql . ') AS "__ztd_target"(' . implode(', ', $aliases) . ') ON TRUE LIMIT 1'
+    );
+    $result = $statement->fetch(PDO::FETCH_NUM);
+    $statement->closeCursor();
+    if (!is_array($result)) {
+        throw new RuntimeException('Expected a PostgreSQL collation observation for each result position.');
+    }
+
     return $result;
 }
 

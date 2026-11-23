@@ -13,7 +13,7 @@ from server_compound_cases import case as compound, leaf, without_profiles
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-collated-text"
-CONTRACT = "e51053c8961c2e8c037f7491edf5469ac16b938f9a976d0edf7605a2dde57058"
+CONTRACT = "52db155a439071c10ada64947f7c34b66514ef6745d6056a135b58717c6585eb"
 DIAGNOSTICS = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\"
 TABLE = "ir_collated_text"
 HEADING = ("label", "id", "alternate")
@@ -30,9 +30,12 @@ PROFILE_PROBE = (
 
 
 def specifications():
-    spec, profile = TOOL / "postgres-collated-text-v1.json", TOOL / "server-projection-v1.json"
+    spec, profile = TOOL / "postgres-collated-text-v2.json", TOOL / "server-projection-v1.json"
     require(digest(spec) == CONTRACT and digest(profile) == PROJECTION, "postgres-collated-text-contract-mismatch")
-    return json.loads(spec.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
+    specification = json.loads(spec.read_text())
+    previous = specification["previous"]
+    require(digest(TOOL / previous["path"]) == previous["sha256"], "postgres-collated-text-previous-contract-mismatch")
+    return specification, {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
 
 def prepare(_, db):
@@ -139,6 +142,10 @@ def seeded(tag, seed, count):
         yield select(tag, fields, scope, keys, bool(rng.getrandbits(1)))
 
 
+def duplicate_labels(tag):
+    return select(tag, [collated(field(), "same_label"), collated(text("A"), "same_label")], table())
+
+
 def requests(_, tag, specification):
     b = specification["finite"]
     for index, (origin, direction, nulls, distinct) in enumerate(product(b["sources"], b["directions"], b["nulls"], b["distinct"])):
@@ -152,6 +159,8 @@ def requests(_, tag, specification):
     last = select(tag, [collated(["null"], "right")])
     pair = compound("postgres", tag, first, "UNION", True, last)
     yield "compound/0", pair, pair, None
+    empty = {**duplicate_labels(tag), "limit": [0, 0]}
+    yield "observation/empty", empty, empty, None
     for seed in specification["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, seed, specification["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{index}", item, item, None
@@ -187,7 +196,11 @@ def expected(item):
         missing = [row for row in results if row[index] is None]
         present = sorted((row for row in results if row[index] is not None), key=lambda row: row[index].encode(), reverse=descending)
         results = missing + present if nulls_first else present + missing
-    return {"status": "rows", "fields": [[name, "text"] for _, name in item["columns"]], "rows": results, "collation": '"C"'}
+    if item["limit"] is not None:
+        count, offset = item["limit"]
+        results = results[offset:offset + count if count is not None else None]
+    return {"status": "rows", "fields": [[name, "text"] for _, name in item["columns"]], "rows": results,
+            "collations": ['"C"'] * len(item["columns"])}
 
 
 def check_value(item, actual):
@@ -235,13 +248,19 @@ def controls():
     wanted = expected(item)
     check_observation(item, wanted, "known byte order")
     changed = {**wanted, "rows": list(reversed(wanted["rows"]))}
-    try:
-        check_observation(item, changed, "reverse the observed order")
-    except Failure as failure:
-        require(failure.signal == "meaning-mismatch", "postgres-collated-text-wrong-control", failure.detail)
-    else:
-        raise Failure("postgres-collated-text-comparator-accepted")
-    return {"input": item, "expected": wanted, "mismatch": changed}
+    labels = duplicate_labels("pg-17.2")
+    labeled = expected(labels)
+    different_collation = {**labeled, "collations": ['"C"', '"default"']}
+    for graph, mismatch in ((item, changed), (labels, different_collation)):
+        try:
+            check_observation(graph, mismatch, "change exactly one prescribed observation")
+        except Failure as failure:
+            require(failure.signal == "meaning-mismatch", "postgres-collated-text-wrong-control", failure.detail)
+        else:
+            raise Failure("postgres-collated-text-comparator-accepted")
+    return {"order": {"input": item, "expected": wanted, "mismatch": changed},
+            "laterCollation": {"input": labels, "expected": labeled, "mismatch": different_collation}}
+
 
 
 def faults(_, tag):
@@ -258,6 +277,10 @@ def faults(_, tag):
                     field_order, "meaning-mismatch"),
         RenderFault("discard-collated-distinct", sql, "$select->distinct ? 'SELECT DISTINCT ' : 'SELECT '", "'SELECT '",
                     finite(tag, "field", "desc", "last", True), "meaning-mismatch"),
+        RenderFault("discard-only-second-collation", sql, ": $this->expression($expression, $source);",
+                    ": $this->expression($slot === 1 && $expression instanceof CollatedText "
+                    "? $expression->operand : $expression, $source);",
+                    duplicate_labels(tag), "meaning-mismatch"),
     ]
 
 

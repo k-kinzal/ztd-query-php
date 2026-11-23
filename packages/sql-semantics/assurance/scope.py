@@ -77,7 +77,7 @@ CONTRACTS = {
     "postgres-text-null-tests-v1.json": "44beded1705fbf79c15ebfb252cce16faf6f9d38a771787b64b5956dd615955f",
     "postgres-text-conversion-v1.json": "bf714d2c501421e925cf630bfedaf0279080bcd2d3bb7fb0537adb4375fc79e4",
     "postgres-text-literal-v1.json": "3eacae517d170d2a433eba45a7fafe5860ef6503a251a0f5cbde69a358da8e48",
-    "postgres-collated-text-v1.json": "e51053c8961c2e8c037f7491edf5469ac16b938f9a976d0edf7605a2dde57058",
+    "postgres-collated-text-v2.json": "52db155a439071c10ada64947f7c34b66514ef6745d6056a135b58717c6585eb",
     "postgres-from-list-v2.json": "b6d00deef43c26922855c4386a15544fb09caced9b6ac619b2fb1b85dce1527a",
     "postgres-merged-join-v2.json": "6a42d825607c6acff928cd80fac716da6d5e3a5d1654a36ef47c145ec16c387f",
     "postgres-full-merged-join-v1.json": "faf12fc5cf9304be68cc1395a344a157fb5dc20a5f5fe04c18517058455f17ec",

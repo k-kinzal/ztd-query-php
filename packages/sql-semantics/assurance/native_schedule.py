@@ -8,7 +8,7 @@ NATIVE = {
     "postgres_full_merged_join": "postgres-full-merged-join-v1.json",
     "postgres_from_list": "postgres-from-list-v2.json",
     "postgres_text_literal": "postgres-text-literal-v1.json",
-    "postgres_collated_text": "postgres-collated-text-v1.json",
+    "postgres_collated_text": "postgres-collated-text-v2.json",
     "postgres_text_conversion": "postgres-text-conversion-v1.json",
     "postgres_text_insert_query": "postgres-text-insert-query-v2.json",
     "postgres_text_insert": "postgres-text-insert-v2.json",

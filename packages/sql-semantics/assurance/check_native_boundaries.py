@@ -268,8 +268,9 @@ def faults(engine):
                   "CastDestination::WideInteger => ResultKind::WideInteger", "CastDestination::WideInteger => ResultKind::Integer"),
         ])
         shared.append(Fault("skip-cast-child-scope", "SelectBounds::check",
-                            "$expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],",
-                            "$expression instanceof BuiltinCast => null,"))
+                            "$expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
+                            "$expression instanceof BuiltinCast => null, "
+                            "$expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],"))
         shared.append(Fault("replace-builtin-bool-cast-target", "Expression/BuiltinCastLowering::lower",
                             "Builtin::Bool => CastDestination::Boolean,", "Builtin::Bool => CastDestination::Integer,"))
         shared.append(Fault("lose-compound-cast-type", "Rows/CompoundShape::type",
