@@ -54,8 +54,9 @@ final class InsertQuery implements SemanticsIR
             $value = $column->expression;
             if ($target->written[$position]->kind === ColumnKind::Text) {
                 Check::input(
-                    $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral,
-                    'A query INSERT text target requires native text or NULL.',
+                    $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral
+                        || $value instanceof ColumnReference || $value instanceof IntegerLiteral,
+                    'A query INSERT text target requires text, a checked int4 leaf or NULL.',
                 );
                 continue;
             }

@@ -228,7 +228,7 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json")
             for alternative in rules.get("insert_rest", ()):
                 if "SelectStmt" in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v2.json")
             for rule in ("values_clause", "insert_column_list", "insert_column_item"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v1.json")

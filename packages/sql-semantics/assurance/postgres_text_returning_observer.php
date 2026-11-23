@@ -99,7 +99,9 @@ function observeTextMutation(PDO $pdo, string $sql, bool $observeInput): array
     return $result;
 }
 
-echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotTextRows($pdo), 'input' => snapshotInputRows($pdo)], JSON_THROW_ON_ERROR) . "\n";
+$castOverrides = $pdo->query("SELECT count(*) FROM pg_catalog.pg_cast WHERE castsource = 'pg_catalog.int4'::pg_catalog.regtype AND casttarget = 'pg_catalog.text'::pg_catalog.regtype")->fetchColumn();
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotTextRows($pdo), 'input' => snapshotInputRows($pdo),
+    'int4TextCastOverrides' => (int) $castOverrides], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $requests = array_is_list($input) ? $input : [$input];

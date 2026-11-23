@@ -1,6 +1,6 @@
 """Compare PostgreSQL text-bearing source projections and positional INSERT effects."""
 
-from itertools import product
+from itertools import chain, product
 import json
 import random
 import sys
@@ -19,7 +19,7 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-text-insert-query"
-CONTRACT = "95dff9db7b441cad7eaecdccf968657cb4a7b8b580b2cce179f9e4d76253209a"
+CONTRACT = "c96925357b9e8be0e1cac7a3a4143e660ddb0c996ee770bd08d9e7b96ef8b2ad"
 INPUT = "ir_text_inputs"
 HEADING = ("note", "id", "label")
 KINDS = ("text", "int4", "text")
@@ -30,7 +30,7 @@ ALIASES = {"id": "number", "label": "v", "note": "memo"}
 
 
 def specifications():
-    path, profile = TOOL / "postgres-text-insert-query-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-text-insert-query-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-text-insert-query-contract-mismatch")
     return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
@@ -51,6 +51,7 @@ def prepare(engine, db):
 def check_preparation(engine, environment, prepared):
     check_mutation_preparation(engine, environment, prepared["mutation"])
     same(sorted_rows(ROWS), sorted_rows(environment["input"]))
+    require(environment["int4TextCastOverrides"] == 0, "postgres-text-insert-query-cast-profile", environment)
     require(len(prepared["guard"]) == 2 and all(result["observed"] == {"status": "outside-observer-scope"}
             for result in prepared["guard"]), "postgres-text-insert-query-observer-scope", prepared["guard"])
 
@@ -86,9 +87,26 @@ def finite(tag, origin, layout, mode, duplicates):
     return write_query(tag, columns, projection, table, where, duplicates == "distinct")
 
 
+def signed_finite(tag, origin, layout, mode, duplicates):
+    table = source() if origin == "signed-table" else None
+    atoms = {"id": read("id") if table else int4(8), "label": read("id") if table else int4(int(mode))}
+    where = None
+    if table:
+        where = {"value": None, "nullable": ["null-test", False, read("label")], "no-row": ["boolean", False]}[mode]
+    targets = LAYOUTS[layout]
+    projection = [[atoms[column], ALIASES[column]] for column in targets]
+    return write_query(tag, targets, projection, table, where, duplicates == "distinct")
+
+
+def signed_points(bounds):
+    for origin in bounds["additionalSources"]:
+        modes = bounds["mode"] if origin == "signed-table" else [str(value) for value in bounds["signedLiterals"]]
+        yield from product((origin,), bounds["layout"], modes, bounds["duplicates"])
+
+
 def finite_ids(_, spec, _tag):
     b = spec["finite"]
-    points = set(product(b["source"], b["layout"], b["mode"], b["duplicates"]))
+    points = set(product(b["source"], b["layout"], b["mode"], b["duplicates"])) | set(signed_points(b))
     require(len(points) == b["identities"], "postgres-text-insert-query-finite-size", points)
     return points
 
@@ -133,7 +151,14 @@ def finite_id(_, response, _item):
     name = {value: key for key, value in LAYOUTS.items()}[written]
     mode = "no-row" if where == ("boolean", False) else (
         "nullable" if where is not None or any(term[0] == "null" for term, _ in columns) else "value")
-    return ("constant" if origin is None else "table"), name, mode, ("distinct" if distinct else "all")
+    text_input = columns[written.index("label")][0]
+    if text_input[0] == "integer":
+        origin_kind, mode = "signed-constant", text_input[1]
+    elif text_input[0] == "slot":
+        origin_kind = "signed-table"
+    else:
+        origin_kind = "constant" if origin is None else "table"
+    return origin_kind, name, mode, ("distinct" if distinct else "all")
 
 
 def analyzed(tag):
@@ -147,6 +172,10 @@ def analyzed(tag):
            finite(tag, "constant", "int-text", "nullable", "distinct"))
     yield (f"INSERT INTO {target} (label) SELECT s.label AS v FROM {input_} AS s WHERE s.label IS NOT NULL {tail}",
            write_query(tag, ("label",), [[read("label"), "v"]], source(), ["null-test", True, read("label")]))
+    yield (f"INSERT INTO {target} (label) SELECT -2147483648 AS v {tail}",
+           signed_finite(tag, "signed-constant", "text", "-2147483648", "all"))
+    yield (f"INSERT INTO {target} (label) SELECT DISTINCT id AS v FROM {input_} {tail}",
+           signed_finite(tag, "signed-table", "text", "value", "distinct"))
 
 
 def analysis_sql(tag, sql):
@@ -156,7 +185,7 @@ def analysis_sql(tag, sql):
 
 
 def negatives(tag):
-    yield write_query(tag, ("label",), [[int4(2), "v"]]), "A query INSERT text target requires native text or NULL."
+    yield write_query(tag, ("label",), [[["parameter", 1], "v"]]), "A query INSERT text target requires text, a checked int4 leaf or NULL."
     yield write_query(tag, ("id",), [[["text", "value"], "v"]]), "Each query INSERT field requires a signed value or NULL."
     yield write_query(tag, ("id", "label"), [[int4(3), "v"]]), "Each row of the INSERT query must match the target width."
     bad = finite(tag, "constant", "text", "value", "all")
@@ -166,7 +195,8 @@ def negatives(tag):
 
 def exploratory(tag, seed, count):
     rng = random.Random(seed)
-    for _ in range(count):
+    conversions = random.Random(seed + 1)
+    for index in range(count):
         targets = rng.choice(tuple(LAYOUTS.values()))
         from_ = source() if rng.getrandbits(1) else None
         choices = (["text", ""], ["text", "multi\n値"], ["null"])
@@ -176,6 +206,8 @@ def exploratory(tag, seed, count):
                 value = rng.choice((int4(-9), read("id"))) if from_ else int4(rng.randrange(-9, 10))
             else:
                 value = rng.choice((*choices, read("note"), read("label"))) if from_ else rng.choice(choices)
+                if index % 6 == 0:
+                    value = read("id") if from_ else int4(conversions.randrange(-2147483648, 2147483648))
             projection.append([value, rng.choice(("value", 'field " q', "same"))])
         where = rng.choice((None, ["boolean", False], ["null-test", True, read("note")])) if from_ else (
             rng.choice((None, ["boolean", False])))
@@ -185,10 +217,14 @@ def exploratory(tag, seed, count):
 
 def requests(_, tag, spec):
     b = spec["finite"]
-    for index, point in enumerate(product(b["source"], b["layout"], b["mode"], b["duplicates"])):
-        item = finite(tag, *point)
+    base = product(b["source"], b["layout"], b["mode"], b["duplicates"])
+    for index, point in enumerate(chain(base, signed_points(b))):
+        make = signed_finite if point[0] in b["additionalSources"] else finite
+        item = make(tag, *point)
         yield f"finite/{index}", item, item, None
-    for index, (sql, item) in enumerate(analyzed(tag)):
+    analyzed_inputs = tuple(analyzed(tag))
+    require(len(analyzed_inputs) == len(spec["analysis"]), "postgres-text-insert-query-analysis-incomplete")
+    for index, (sql, item) in enumerate(analyzed_inputs):
         yield f"analyze/{index}", analysis_sql(tag, sql), item, None
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(exploratory(tag, seed, spec["exploration"]["casesPerSeed"])):
@@ -212,8 +248,9 @@ def expected(item):
                  if admits(query["where"], lambda expression: value(expression, row))]
     if query["distinct"]:
         projected = list(dict.fromkeys(tuple(row) for row in projected))
-    cells = [[None if value_ is None else ["text", value_] if isinstance(value_, str) else str(value_) for value_ in row]
-             for row in projected]
+    targets = [address(term, item["target"]) for term in item["written"]]
+    cells = [[None if value_ is None else str(value_) if target == "id" else ["text", str(value_)]
+              for target, value_ in zip(targets, row)] for row in projected]
     values = expected_values({**item, "rows": cells})
     return observation({**values, "inputBefore": ROWS, "inputAfter": ROWS, "inputRestored": ROWS})
 
@@ -243,13 +280,18 @@ def sample_forms(forms, reply, *_):
     forms[f"written/{','.join(written)}"] += 1
     for term, _ in columns:
         forms[f"operand/{term[0]}"] += 1
+    if "label" in written:
+        term = columns[written.index("label")][0]
+        if term[0] in ("integer", "slot"):
+            forms[f"assignment/int4-to-text/{term[0]}"] += 1
     forms[f"inserted/{bool(expected(reply)['count'])}"] += 1
 
 
 def required_forms(*_):
     return {"origin/True", "origin/False", "where/True", "where/False", "distinct/True", "distinct/False",
             "written/id,label", "written/label,id", "written/label", "operand/text-slot", "operand/text",
-            "operand/integer", "operand/null", "inserted/True", "inserted/False"}
+            "operand/integer", "operand/null", "inserted/True", "inserted/False",
+            "assignment/int4-to-text/integer", "assignment/int4-to-text/slot"}
 
 
 def controls():
@@ -276,6 +318,10 @@ def faults(_, tag):
                     "'SELECT '", finite(tag, "table", "text-int", "value", "distinct"), "meaning-mismatch"),
         RenderFault("discard-insert-query-filter", path, "if ($select->where !== null)", "if (false)",
                     finite(tag, "table", "text", "no-row", "all"), "meaning-mismatch"),
+        RenderFault("discard-signed-value-assigned-to-text", path,
+                    r"$expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+                    r"$expression instanceof IntegerLiteral => 'CAST(0 AS pg_catalog.int4)',",
+                    signed_finite(tag, "signed-constant", "text", "-17", "all"), "meaning-mismatch"),
     ]
 
 
