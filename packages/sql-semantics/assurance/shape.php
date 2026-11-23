@@ -1076,7 +1076,7 @@ try {
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
-                    || ($dialect === 'postgres' && in_array($short, ['Ordering\\Order', 'Ordering\\ResultSql', 'Select', 'SelectBounds'], true)
+                    || ($dialect === 'postgres' && in_array($short, ['Ordering\\Order', 'Ordering\\ResultSql', 'Select'], true)
                         && $call->name->toString() === 'is_int')
                     || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),

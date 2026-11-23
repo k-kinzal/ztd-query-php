@@ -395,7 +395,7 @@ def faults(_, tag):
                     "", arithmetic_item, "meaning-mismatch"),
         RenderFault("invert-source-null-placement", printer, "$key->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST'",
                     "$key->nullsFirst ? ' NULLS LAST' : ' NULLS FIRST'", joined, "meaning-mismatch"),
-        RenderFault("skip-owned-source-key-validation", ir + "SelectBounds.php", "$expressions[] = $key->target;",
+        RenderFault("skip-owned-source-key-validation", ir + "Select.php", "$expressions[] = $key->target;",
                     "", {"boundary": boundary}, "postgres-source-order-invalid-published", invalid),
         RenderFault("use-result-alias-inside-sort-expression", ir + "Ordering/ResultLowering.php",
                     "        return $expression;", "        return $expression instanceof Arithmetic ? 1 : $expression;",

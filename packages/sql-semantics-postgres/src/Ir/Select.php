@@ -61,6 +61,7 @@ final class Select implements SemanticsIR
         public readonly ?Limit $limit = null,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
+        Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         if ($source instanceof Join) {
             foreach ($source->inputs() as $input) {
                 Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');
@@ -68,14 +69,19 @@ final class Select implements SemanticsIR
         }
         $keys = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of sort keys.');
         Check::input(count($keys) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');
+        $expressions = [];
+        foreach ($results as $result) {
+            $expressions[] = $result->expression;
+        }
         foreach ($keys as $key) {
             if (is_int($key->target)) {
                 Check::input($key->target <= count($results), 'An output order position must belong to the projection.');
             } else {
                 Check::input(!$distinct, 'A DISTINCT SELECT must order by projected positions.');
+                $expressions[] = $key->target;
             }
         }
-        (new SelectBounds())->check($results, $source, $where, $keys);
+        (new SelectBounds())->check($expressions, $source, $where);
         $this->columns = $results;
         $this->orderBy = $keys;
     }

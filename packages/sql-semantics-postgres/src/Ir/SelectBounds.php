@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
-use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
@@ -36,31 +35,19 @@ final class SelectBounds
     /**
      * Checks every expression occurrence, including repeated uses of a shared value.
      *
-     * @param non-empty-list<ResultColumn> $results The result expressions
+     * @param non-empty-list<Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference> $expressions The owned projection and ordering expressions
      * @param TableSource|Join|null $source The source whose slots may be used
-     * @param list<Order> $keys The ordering expressions in the same input scope
      */
     public function check(
-        array $results,
+        array $expressions,
         TableSource|Join|null $source,
         BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
-        array $keys = [],
     ): void {
-        Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
         $scope = new OccurrenceScope();
         $scope->predicate($where, $inputs);
         $nodes = 0;
         $positions = [];
-        $expressions = [];
-        foreach ($results as $result) {
-            $expressions[] = $result->expression;
-        }
-        foreach ($keys as $key) {
-            if (!is_int($key->target)) {
-                $expressions[] = $key->target;
-            }
-        }
         foreach ($expressions as $root) {
             $pending = [[$root, 0]];
             while ($pending !== []) {
