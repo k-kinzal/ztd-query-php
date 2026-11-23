@@ -283,12 +283,14 @@ def storage_controls(args):
     results = []
     for dialect in ("sqlite", "mysql", "postgres"):
         shape(args, dialect=dialect)
+        expected_list_failure = ("Native boundary differs in TableSource::__construct" if dialect == "sqlite"
+                                 else r"List was not assigned from one checked local in TableSource::columns")
         for name, replacement in (
             ("store-unchecked-list", "$this->columns = $columns;"),
             ("rewrite-checked-list", "[$names] = [$columns];\n        $this->columns = $names;"),
         ):
             results.append(source_shape_mutation(args, dialect, "TableSource.php", name, "$this->columns = $names;",
-                                            replacement, "List was not assigned from one checked local"))
+                                            replacement, expected_list_failure))
         name = "Ordering/Order.php"
         location = args.candidate / f"packages/sql-semantics-{dialect}/src/Ir" / name
         assignments = [line for line in location.read_text().splitlines(keepends=True) if line.startswith("        $this->nullsFirst = ")]
