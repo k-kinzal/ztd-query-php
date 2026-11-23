@@ -1,0 +1,33 @@
+{
+  "revision": "SemanticsIR/mysql-derived-varchar-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native utf8mb4, empty SQL mode, lower_case_table_names=0, using the existing derived-source optimizer profiles.",
+  "extends": ["server-derived-join-v2.json", "mysql-varchar-slots-v2.json", "mysql-varchar-comparison-v1.json"],
+  "constructors": {
+    "DerivedSource": {
+      "type": "From/DerivedSource",
+      "role": "An independently defined input occurrence with ordered native signed INT and VARCHAR output roles.",
+      "structure": "Hold one checked independent SELECT definition. Derive each exported slot type from its exact child expression and, for a native VARCHAR field, from the checked definition's physical field type. Preserve length, stock collation and declared storage nullability in that derivation.",
+      "conditions": "Allow the checked signed literal and signed field roles and reads of native VARCHAR fields. Keep the established independent, unbounded and unordered definition requirements. Each consumer must use the result type selected by the exact outer occurrence and output ordinal. An out-of-range ordinal has no type.",
+      "meaning": "Evaluate the child before using its output in the join. Preserve typed NULL extension, multiplicities, and DISTINCT under the stock PAD SPACE collation. A tied DISTINCT class permits one available whole row as its representative.",
+      "sql": "Render the child with a generated alias for each output ordinal and read that alias through the exact outer occurrence. Bind names during analysis. Synthetic names cannot affect the external projection labels."
+    }
+  },
+  "existingRoles": ["Select", "TableSource", "From/Join", "From/Varchar", "From/TextColumnReference", "Predicate/Text/TextComparison", "Predicate/NullTest"],
+  "externalInterpretation": "The native read fixtures have two independently resolved absolute relations with distinguishable numeric and UTF-8 field values, repeated rows, missing matches, and NULL. All physical text roles keep the same stock utf8mb4_bin definition. The probe checks declared and native field types against the same table metadata.",
+  "observations": ["Names and type tags by result position, including repeated labels", "Bytes and bag multiplicity of the selected rows, including case, NULL extension, empty strings, PAD SPACE ties and embedded NUL", "Exact binding of the left and right derived occurrences and their mixed native export slots", "Impact of inner filters, DISTINCT and native text equality on the independent join"],
+  "finite": {"joins": ["cross", "inner", "left", "right"], "derivedSides": ["left", "right"], "orders": ["text-first", "integer-first"], "filters": ["unfiltered", "only-nonnull"], "identities": 32, "completeness": "Recover the join kind, exact derived side, definition output order and filter from every constructed graph."},
+  "exploration": {"seeds": [5669, 15881, 53069], "casesPerSeed": 20, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Count single and dual derived leaves, both field orders, repeated aliases, child DISTINCT and filters, missing matches, outer NULL tests and a case-sensitive PAD SPACE join."},
+  "analysis": ["Qualified and unqualified reads consume the same derived VARCHAR ordinal", "Outer left join observes NULL extension even after a child field filter", "User text equality joins the derived field to another native field", "Two independent derived occurrences export identically named fields"],
+  "negative": ["Signed read of a derived VARCHAR position", "VARCHAR read of a signed derived position", "Out-of-range VARCHAR ordinal in an outer predicate", "Signed comparison with a derived VARCHAR operand", "Computed text projection in the restricted physical-field export role"],
+  "faults": ["Read the other derived occurrence", "Read the adjacent derived ordinal", "Ignore the child non-NULL filter", "Change the native text equality comparison"],
+  "evidence": {
+    "P01": "Resolve exact definition, outer occurrence and result type by ordinal.", "P02": "Verify native output and operand roles with checked position ownership.", "P03": "Derive native metadata from the retained semantic definition.", "P04": "Compose independent derived definitions with outer joins, conditions and projections.", "P05": "Keep both owning definitions and reference arrays in the closed checked graph.", "P06": "Compare the original and rendered queries against independently evaluated rows and native positional tags.",
+    "Q01": "Assert closed ordinal and native type checks with exact negative boundaries.", "Q02": "Exhaust the finite product and exercise structural alternatives independently.", "Q03": "Check direct and analyzed construction against the same independently projected source layout.", "Q04": "Compare exact rows with the finite whole-row representative and join model.", "Q05": "Pin the actual distribution, source audit, verifier and native release observations."
+  },
+  "open": ["Computed derived text, other collations, correlated and lateral inputs, nested join definitions and text in local and recursive CTE roots"],
+  "trust": ["Native SQL join and collation rules", "Independent bounded materialization and bag join model", "Fixed analysis and runtime profiles"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html", "https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html"]
+}
