@@ -443,6 +443,14 @@ def inventory(root):
                 for alternative in rules.get(rule, []):
                     if alternative in values_signatures:
                         related[alternative] = (*related.get(alternative, ()), "postgres-values-v3.json")
+        if postgres:
+            for rule in ("common_table_expr", "with_clause", "table_ref", "simple_select"):
+                for alternative in rules.get(rule, []):
+                    if rule == "common_table_expr" or alternative in {
+                        "with_clause: WITH cte_list", "with_clause: WITH_LA cte_list",
+                        "table_ref: select_with_parens opt_alias_clause", "simple_select: values_clause",
+                    }:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-local-values-v2.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

@@ -550,6 +550,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
                 array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
         }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\With\\WithProjection') {
+            $table = $semantics->analyze('WITH q AS MATERIALIZED (VALUES (5,TRUE), (NULL,FALSE)) SELECT column2 AS flag,column1 AS id FROM q');
+            $body = $table->definitions[0]->body;
+            if ($body::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery'
+                || $table->body::class !== $namespace . 'Ir\\Rows\\With\\WithRead') {
+                throw new RuntimeException('An installed VALUES relation lost its local body and positional reads.');
+            }
+            $details['withValues'] = [count($body->rows), $body->columnKind(0)->value, $body->columnKind(1)->value,
+                $table->body->definition, array_column($table->body->columns, 'slot'), $table->toString()];
+        }
         if ($platform === 'PostgreSql' && $role === 'Rows\\Values\\ValuesQuery') {
             $details['valuesHeading'] = [$result->columnKind(0)->value, $result->columnKind(1)->value, count($result->rows)];
         }

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -15,6 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedCo
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 
 /**
@@ -40,12 +44,17 @@ final class LocalProjectionLowering
         $definition = $local->resolve($body);
         $source = match (true) {
             $definition instanceof QueryExpression => (new WithLowering())->lower($operation, $definition),
+            $definition instanceof ValuesList => (new ValuesLowering())->lower($operation, $definition),
             $definition->from instanceof DerivedTable => $this->lower($operation, $definition, $remaining - 1),
             default => (new SelectLowering())->lower($operation, $definition),
         };
         $inputs = $operation->facts->relation($body->from)->shape->slots;
         $fields = $operation->facts->query($body)->fields();
-        $width = $source instanceof WithProjection ? $source->width() : count($source->columns);
+        $width = match (true) {
+            $source instanceof ValuesQuery => count($source->rows[0]->cells),
+            $source instanceof WithProjection => $source->width(),
+            $source instanceof LocalProjection, $source instanceof Select => count($source->columns),
+        };
         Check::input($fields !== null && count($inputs) === $width, 'The local definition must resolve all output positions.');
         $results = [];
         foreach ($body->targets as $position => $item) {

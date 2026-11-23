@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
@@ -31,6 +33,7 @@ final class LocalProjectionSql
         $source = $projection->definition;
         $input = match (true) {
             $source instanceof Select => $renderer->render($source, true),
+            $source instanceof ValuesQuery => (new ValuesSql())->local($source),
             $source instanceof WithProjection => (new WithSql())->render($source, true),
             $source instanceof LocalProjection => $this->render($source, true),
         };

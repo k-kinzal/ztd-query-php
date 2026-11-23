@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Rows\With;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterSignature;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -35,7 +36,7 @@ final class WithProjection implements SemanticsIR
      */
     public function __construct(
         array $definitions,
-        public readonly Select|LocalProjection|WithRead $body,
+        public readonly Select|LocalProjection|ValuesQuery|WithRead $body,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
     ) {
         $checked = Check::listOf($definitions, WithDefinition::class, 'WITH needs a nonempty ordered definition list.', 1);
@@ -62,7 +63,7 @@ final class WithProjection implements SemanticsIR
      */
     public function width(): int
     {
-        return count($this->body->columns);
+        return $this->body instanceof ValuesQuery ? count($this->body->rows[0]->cells) : count($this->body->columns);
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows\With;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
@@ -25,7 +26,7 @@ final class WithDefinition
      * Fixes the admitted body and materialization policy.
      */
     public function __construct(
-        public readonly Select|LocalProjection|WithProjection|WithRead $body,
+        public readonly Select|LocalProjection|ValuesQuery|WithProjection|WithRead $body,
         public readonly WithMaterialization $materialization = WithMaterialization::Default,
     ) {
     }

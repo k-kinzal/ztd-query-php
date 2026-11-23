@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v64.json"
-CONTRACT = "740773bcc437c25366e8ab49d770ee761decc7643e2f704e5720a5926e81ec28"
+CONTRACT_NAME = "release-layout-v65.json"
+CONTRACT = "77fbe744dcbbd195abf3509105dd1f4300ff845a518ba098d92a07c0048a586e"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,13 @@ def verify_probe(raw, catalog):
                 [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
                 for release in ("mysql-5.6.51", "mysql-5.7.44")
             ], "installed-mysql-with-availability-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\With\\WithProjection"):
+            local_values = ('WITH "__ztd_cte_0" AS MATERIALIZED (SELECT "__ztd_c0", "__ztd_c1" FROM '
+                            '(VALUES (CAST(5 AS pg_catalog.int4), TRUE), (NULL, FALSE)) AS "__ztd_values" '
+                            '("__ztd_c0", "__ztd_c1")) SELECT "__ztd_cte_0"."__ztd_c1" AS "flag", '
+                            '"__ztd_cte_0"."__ztd_c0" AS "id" FROM "__ztd_cte_0"')
+            require(item.get("withValues") == [2, "int4", "bool", 0, [1, 0], local_values],
+                    "installed-postgres-local-values-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\Values\\ValuesQuery"):
             require(item.get("valuesHeading") == ["bool", "int8", 2] and item["sql"] ==
                     "VALUES (FALSE, NULL), (TRUE, CAST(4000000000 AS pg_catalog.int8))",

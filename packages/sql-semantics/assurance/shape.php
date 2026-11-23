@@ -670,6 +670,12 @@ if ($dialect !== 'sqlite') {
         $properties[$withRead] = ['definition' => ['int'], 'columns' => ['array']];
         $properties[$withDefinition] = ['body' => ['Rows\\LocalProjection', $with, $withRead, 'Select']];
         if ($dialect === 'postgres') {
+            $localValues = 'Rows\\Values\\ValuesQuery';
+            $properties['Rows\\LocalProjection']['definition'] = ['Rows\\LocalProjection', $localValues, $with, 'Select'];
+            $properties[$with]['body'] = ['Rows\\LocalProjection', $localValues, $withRead, 'Select'];
+            $properties[$withDefinition]['body'] = ['Rows\\LocalProjection', $localValues, $with, $withRead, 'Select'];
+            $internal[] = 'Rows\\Values\\ValuesSql';
+            $pureCollaborators[] = 'Rows\\Values\\ValuesSql';
             $properties[$withDefinition]['materialization'] = [$withMaterialization];
             $properties[$withMaterialization] = $methods[$withMaterialization] = [];
             $enumCases[$withMaterialization] = ['Default' => '', 'Materialized' => 'MATERIALIZED', 'NotMaterialized' => 'NOT MATERIALIZED'];

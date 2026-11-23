@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Rows\With;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjectionSql;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 
@@ -34,11 +36,12 @@ final class WithSql
     /**
      * Dispatches each closed member to its matching query renderer.
      */
-    public function query(Select|LocalProjection|WithProjection|WithRead $query, bool $localNames): string
+    public function query(Select|LocalProjection|ValuesQuery|WithProjection|WithRead $query, bool $localNames): string
     {
         return match (true) {
             $query instanceof Select => (new SelectSql())->render($query, $localNames),
             $query instanceof LocalProjection => (new LocalProjectionSql())->render($query, $localNames),
+            $query instanceof ValuesQuery => $localNames ? (new ValuesSql())->local($query) : $query->toString(),
             $query instanceof WithProjection => $this->render($query, $localNames),
             $query instanceof WithRead => $this->read($query, $localNames),
         };

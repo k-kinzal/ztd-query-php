@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -34,7 +35,7 @@ final class LocalProjection implements SemanticsIR
      *
      * @param list<LocalResultColumn> $columns The outer result positions
      */
-    public function __construct(public readonly Select|WithProjection|self $definition, array $columns)
+    public function __construct(public readonly Select|ValuesQuery|WithProjection|self $definition, array $columns)
     {
         Check::input(!$definition instanceof Select || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');
         $layers = 1;
@@ -44,7 +45,11 @@ final class LocalProjection implements SemanticsIR
         $checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);
         Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');
         foreach ($checked as $column) {
-            $exists = $definition instanceof WithProjection ? $column->slot < $definition->width() : isset($definition->columns[$column->slot]);
+            $exists = match (true) {
+                $definition instanceof ValuesQuery => isset($definition->rows[0]->cells[$column->slot]),
+                $definition instanceof WithProjection => $column->slot < $definition->width(),
+                $definition instanceof Select, $definition instanceof self => isset($definition->columns[$column->slot]),
+            };
             Check::input($exists, 'The local slot must belong to the definition.');
         }
         $this->columns = $checked;

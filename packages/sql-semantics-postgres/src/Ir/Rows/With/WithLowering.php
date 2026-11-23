@@ -9,6 +9,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalDefinition;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjectionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalResultColumn;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -21,6 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
@@ -52,7 +55,7 @@ final class WithLowering
             $positions[spl_object_id($table)] = $index;
         }
         $body = $this->query($operation, $statement->body, $positions);
-        Check::input(!$body instanceof WithProjection, 'The ordinary WITH body requires a SELECT in its own scope.');
+        Check::input(!$body instanceof WithProjection, 'The ordinary WITH body requires a projected query or constant table in its own scope.');
 
         return new WithProjection($definitions, $body, $operation->context->profile->grammar);
     }
@@ -61,7 +64,7 @@ final class WithLowering
      * Lowers a member in the supplied scope or starts an independent nested scope.
      * @param array<int, int> $positions Definition positions by exact analysis identity
      */
-    public function query(BoundStatement $operation, Query|Statement $query, array $positions): Select|LocalProjection|WithProjection|WithRead
+    public function query(BoundStatement $operation, Query|Statement $query, array $positions): Select|LocalProjection|ValuesQuery|WithProjection|WithRead
     {
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
@@ -69,7 +72,10 @@ final class WithLowering
         if ($query instanceof QueryExpression && $query->with !== null) {
             return $this->lower($operation, $query);
         }
-        Check::input($query instanceof ParsedSelect, 'A WITH member requires a checked SELECT projection.');
+        if ($query instanceof ValuesList) {
+            return (new ValuesLowering())->lower($operation, $query);
+        }
+        Check::input($query instanceof ParsedSelect, 'A WITH member requires a checked SELECT projection or constant table.');
         $source = $query->from;
         if ($source instanceof TableInput) {
             $fact = $operation->facts->relation($source);

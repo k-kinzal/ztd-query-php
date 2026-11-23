@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Compound;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithRead;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
@@ -40,7 +41,7 @@ final class ParameterSignature
 
     /**
      * Confirms a common input type for every position in the owning query.
-     * @param list<Select|Compound|LocalProjection|WithProjection> $pending Independent query members
+     * @param list<Select|Compound|LocalProjection|ValuesQuery|WithProjection> $pending Independent query members
      */
     public static function checkQueries(array $pending): void
     {
@@ -65,6 +66,9 @@ final class ParameterSignature
                         $pending[] = $definition->body;
                     }
                 }
+                continue;
+            }
+            if ($query instanceof ValuesQuery) {
                 continue;
             }
             foreach ($query->columns as $column) {

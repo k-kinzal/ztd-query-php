@@ -340,10 +340,11 @@ function constructLocalProjection(string $platform, array $input): SemanticsIR
     foreach ($local['columns'] as [$slot, $label]) {
         $columns[] = new $column($slot, new $name($label));
     }
-    $definition = $local['definition'];
+    $definition = $local['definition'] + array_intersect_key($input, ['dialect' => true, 'release' => true]);
     $source = match (true) {
         isset($definition['local']) => constructLocalProjection($platform, $definition),
         isset($definition['with']) => constructWith($platform, $definition),
+        isset($definition['postgresValues']) => constructPostgresValues($platform, $definition),
         default => constructSelect($platform, $definition),
     };
 
@@ -379,6 +380,7 @@ function constructWithMember(string $platform, array $input, string $dialect, st
     return match (true) {
         isset($input['with']) => constructWith($platform, $effective),
         isset($input['local']) => constructLocalProjection($platform, $effective),
+        isset($input['postgresValues']) => constructPostgresValues($platform, $effective),
         default => constructSelect($platform, $effective),
     };
 }
@@ -439,6 +441,9 @@ function mysqlSetKinds(SqlSemantics\Platform\MySql\Ir\Rows\Compound $value): arr
 
 function observeSetQuery(string $namespace, object $value, string $dialect): array
 {
+    if ($value::class === $namespace . 'Rows\\Values\\ValuesQuery') {
+        return postgresValuesGraph($namespace, $value);
+    }
     if ($value::class === $namespace . 'Rows\\With\\WithRead') {
         return ['read' => [$value->definition, array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns)]];
     }
@@ -618,7 +623,7 @@ function constructPostgresValues(string $platform, array $input): SemanticsIR
     );
 }
 
-function observePostgresValues(string $namespace, object $value): array
+function postgresValuesGraph(string $namespace, object $value): array
 {
     $rows = [];
     foreach ($value->rows as $row) {
@@ -629,8 +634,7 @@ function observePostgresValues(string $namespace, object $value): array
         $kinds[] = $value->columnKind($position)->value;
     }
 
-    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'postgresValues' => $rows, 'columnKinds' => $kinds];
+    return ['postgresValues' => $rows, 'columnKinds' => $kinds];
 }
 
 function constructDropTable(string $platform, array $input): SemanticsIR
@@ -952,9 +956,6 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
-    }
-    if ($value::class === $namespace . 'Rows\\Values\\ValuesQuery') {
-        return observePostgresValues($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $observed = [

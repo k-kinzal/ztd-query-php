@@ -9,10 +9,11 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 
 /**
- * Identifies the independent SELECT introduced by a local binding.
+ * Identifies the independent query introduced by a local binding.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
@@ -23,7 +24,7 @@ final class LocalDefinition
      *
      * @throws InvalidConstruction When the local source is outside the independent domain
      */
-    public function resolve(ParsedSelect $body): ParsedSelect|QueryExpression
+    public function resolve(ParsedSelect $body): ParsedSelect|QueryExpression|ValuesList
     {
         $source = $body->from;
         Check::input($source instanceof DerivedTable, 'A local projection needs a derived source.');
@@ -32,7 +33,7 @@ final class LocalDefinition
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
         }
-        Check::input($query instanceof ParsedSelect || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');
+        Check::input($query instanceof ParsedSelect || $query instanceof ValuesList || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent projection or constant table.');
 
         return $query;
     }
