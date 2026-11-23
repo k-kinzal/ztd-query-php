@@ -138,9 +138,9 @@ final class FromScope
             if (in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
                 continue;
             }
-            foreach ($relation->shape->slots as $position => $slot) {
+            foreach (array_keys($relation->shape->slots) as $position) {
                 if (!in_array($position, $relation->hidden, true)) {
-                    $slots[] = $slot;
+                    $slots[] = $relation->starSlot($position);
                 }
             }
             array_push($missing, ...$relation->shape->missing);

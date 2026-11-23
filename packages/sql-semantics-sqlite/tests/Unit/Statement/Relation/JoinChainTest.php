@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Known;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
@@ -64,7 +65,7 @@ final class JoinChainTest extends TestCase
         self::assertSame($u->declarations()[0]->columns[0], $query->field(3)->column());
     }
 
-    public function testDeriveRelationCoalescesTheMergedColumnOfARightOrFullJoin(): void
+    public function testDeriveRelationDistinguishesTheRightAndFullMergedColumns(): void
     {
         $semantics = new Inspection();
         $t = $semantics->diagnose('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
@@ -73,11 +74,12 @@ final class JoinChainTest extends TestCase
         $full = $semantics->diagnose('SELECT * FROM t FULL OUTER JOIN u USING (a)', [$t, $u]);
 
         self::assertSame(['id', 'a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $right->fields()->items ?? []));
-        self::assertInstanceOf(Choice::class, $right->field('a')->type);
+        self::assertInstanceOf(Known::class, $right->field('a')->type);
+        self::assertSame(Nullability::NotNull, $right->field('a')->nullability);
         self::assertSame(Nullability::Nullable, $right->field('id')->nullability);
         self::assertSame(Nullability::Nullable, $right->field('b')->nullability);
         self::assertSame(Nullability::Nullable, $right->field('c')->nullability);
-        self::assertSame($t->declarations()[0]->columns[1], $right->field('a')->column());
+        self::assertSame($u->declarations()[0]->columns[0], $right->field('a')->column());
         self::assertInstanceOf(Choice::class, $full->field('a')->type);
         self::assertSame(Nullability::Nullable, $full->field('c')->nullability);
     }

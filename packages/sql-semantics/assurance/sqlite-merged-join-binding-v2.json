@@ -5,9 +5,10 @@
   "artifacts": {
     "src/Rules/Resolution/FromScope.php": {
       "methods": [
-        "enter"
+        "enter",
+        "star"
       ],
-      "sha256": "f27fe412602adf12cc35000028be8feac5b1ab4e7a44fe5a3840016a04351e81"
+      "sha256": "093946881ccd66d88d7c3dfeadd51e7e6d9599b6021673dee48e7d67f278ab1e"
     },
     "src/Rules/Resolution/Joining.php": {
       "methods": [
@@ -30,13 +31,14 @@
       "methods": [
         "expand"
       ],
-      "sha256": "ae335eef39a95d824c9e1939f5bdcc2c2fd2726fd19313687391d9f4f563d8f2"
+      "sha256": "da73c834d3c38da5e1890790bb34aae0e7fd02dac4fbd5156c2f23c61da01d1e"
     },
     "src/Model/Resolution/VisibleRelation.php": {
       "methods": [
-        "resolved"
+        "resolved",
+        "starSlot"
       ],
-      "sha256": "411251b994c7b9ee63e0833a099bf068d6696ffb79cee595c654bb79168e1d13"
+      "sha256": "926e807a3a63b6f881e376984b1cc5f4d86fde355d5fefa10a441c80e58b205e"
     }
   },
   "extends": "sqlite-merged-join-binding-v1.json"

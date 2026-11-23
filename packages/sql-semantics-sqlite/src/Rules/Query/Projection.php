@@ -91,11 +91,10 @@ final class Projection
      */
     public function expand(array $items, VisibleRelation $relation, bool $merged): array
     {
-        foreach ($relation->shape->slots as $position => $slot) {
+        foreach (array_keys($relation->shape->slots) as $position) {
             if (!$merged || !in_array($position, $relation->hidden, true)) {
-                $resolved = $relation->resolved($position, true);
-                $value = $resolved->slot;
-                $items[] = new Field(count($items), new OutputSlot($slot->name, $value->type, $value->nullability, null, $value, $slot->unnamed), null, $resolved);
+                $slot = $relation->starSlot($position);
+                $items[] = new Field(count($items), new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, $relation->resolved($position, true));
             }
         }
         if (!$relation->shape->complete()) {

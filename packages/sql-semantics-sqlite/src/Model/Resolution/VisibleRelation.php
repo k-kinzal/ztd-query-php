@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 
 /**
@@ -51,5 +52,17 @@ final class VisibleRelation
 
         return $value === null ? new ResolvedColumn($this->relation, $this->shape->slots[$position], $depth)
             : new ResolvedColumn($value->relation, $value->slot, $depth);
+    }
+
+    /**
+     * Projects the occurrence heading with the value facts for a wildcard position.
+     */
+    public function starSlot(int $position): OutputSlot
+    {
+        $heading = $this->shape->slots[$position];
+        $value = $this->representatives[$position]->slot ?? null;
+
+        return $value === null ? $heading
+            : new OutputSlot($heading->name, $value->type, $value->nullability, null, $value, $heading->unnamed);
     }
 }
