@@ -32,11 +32,11 @@
   "finite": {
     "keys": ["one", "two", "none"],
     "orientation": ["left-first", "right-first"],
-    "projection": ["merged", "physical"],
+    "projection": ["merged", "physical-reversed"],
     "secondary": ["populated", "empty"],
     "inheritance": ["include", "only"],
     "identities": 48,
-    "completeness": "Compare exact native metadata and typed row bags for every actual product identity, requiring each once."
+    "completeness": "Compare exact native metadata and typed row bags for every actual product identity, requiring each once. The physical projection puts the second occurrence first so it stays distinguishable even for a disjoint join."
   },
   "exploration": {
     "seeds": [431, 9967, 23321],

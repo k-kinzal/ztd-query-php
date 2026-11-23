@@ -172,7 +172,13 @@ final class Joining
         $kept = $kind === JoinKind::Right ? $right : $left;
         $nullability = $kind === JoinKind::Full ? (new Unification())->nullability([$left->nullability, $right->nullability]) : $kept->nullability;
 
-        return new OutputSlot($kept->name, $type, $nullability, null, $kept);
+        return new OutputSlot(
+            $kept->name,
+            $type,
+            $nullability,
+            origin: $kept,
+            coalescedWith: $kind === JoinKind::Full ? $right : null,
+        );
     }
 
     /**

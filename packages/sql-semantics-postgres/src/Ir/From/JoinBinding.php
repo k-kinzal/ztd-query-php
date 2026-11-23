@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\From;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -123,6 +125,7 @@ final class JoinBinding
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
+        Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');
         $wholeJoin = self::ungroup($resolution->relation) === $this->join;
         $expanded = null;
         foreach ($this->inputs as $occurrence => $binding) {
@@ -146,6 +149,27 @@ final class JoinBinding
         Check::input($expanded !== null, 'A column must resolve within this join scope.');
 
         return $expanded;
+    }
+
+    /**
+     * Projects an ordinary slot or the ordered two-source value of a FULL key.
+     */
+    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase
+    {
+        $slot = $resolution->slot;
+        if ($slot->coalescedWith === null) {
+            return $this->resolved($resolution);
+        }
+        Check::input(
+            $resolution->depth === 0 && self::ungroup($resolution->relation) === $this->join
+                && $this->join->kind === ParsedKind::Full && $slot->origin !== null,
+            'A coalesced field must belong to its FULL join.',
+        );
+        $left = $this->resolved(new ResolvedColumn($resolution->relation, $slot->origin));
+        $right = $this->resolved(new ResolvedColumn($resolution->relation, $slot->coalescedWith));
+        Check::input($left->occurrence === 0 && $right->occurrence === 1, 'A merged field reads its two binary input positions.');
+
+        return new IntegerCase([new IntegerCaseArm(new NullTest($left, true), $left)], $right);
     }
 
     /**
@@ -177,9 +201,8 @@ final class JoinBinding
             return (new PredicateLowering())->lower($condition instanceof JoinOn ? $condition->condition : null, $this, $this->catalogFirst);
         }
         Check::input(
-            $this->left instanceof SourceBinding && $this->right instanceof SourceBinding
-                && $this->join->kind !== ParsedKind::Full && $this->catalogFirst,
-            'A merged join requires two ordinary table inputs, an INNER, LEFT or RIGHT join, and pg_catalog operator resolution.',
+            $this->left instanceof SourceBinding && $this->right instanceof SourceBinding && $this->catalogFirst,
+            'A merged join requires two ordinary table inputs and pg_catalog operator resolution.',
         );
 
         return (new MergedJoinLowering())->predicate($this->join, $this->left, $this->right);

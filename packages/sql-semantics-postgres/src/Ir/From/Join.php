@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
@@ -46,12 +47,23 @@ final class Join
         (new OccurrenceScope())->predicate($on, $inputs);
         if ($kind === JoinKind::Full) {
             $leftWidth = $left instanceof self ? count($left->inputs()) : 1;
-            Check::input(
-                $on instanceof IntegerComparison && $on->operator === IntegerOperator::Equal
-                    && $on->left instanceof ColumnReference && $on->right instanceof ColumnReference
-                    && ($on->left->occurrence < $leftWidth) !== ($on->right->occurrence < $leftWidth),
-                'A PostgreSQL FULL join requires integer equality between opposite inputs.',
-            );
+            $conditions = [$on];
+            while ($conditions !== []) {
+                $condition = array_pop($conditions);
+                if ($condition instanceof LogicalPredicate && $condition->operator === LogicalOperator::And) {
+                    Check::invariant($condition->right !== null, 'A conjunction has two terms.');
+                    $conditions[] = $condition->right;
+                    $conditions[] = $condition->left;
+                    continue;
+                }
+                Check::input(
+                    ($condition === $on && $condition instanceof BooleanLiteral && $condition->value)
+                        || ($condition instanceof IntegerComparison && $condition->operator === IntegerOperator::Equal
+                            && $condition->left instanceof ColumnReference && $condition->right instanceof ColumnReference
+                            && ($condition->left->occurrence < $leftWidth) !== ($condition->right->occurrence < $leftWidth)),
+                    'A PostgreSQL FULL join requires integer equality between opposite inputs or a true condition.',
+                );
+            }
         }
     }
 

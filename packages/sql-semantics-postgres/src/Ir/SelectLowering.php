@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
@@ -56,10 +57,11 @@ final class SelectLowering
             Check::input($name !== null, 'The result must have a resolved name.');
             $label = new Identifier($name->value);
             $expression = $field->expression;
-            if ($expression === null) {
-                $resolution = $field->resolution;
+            $resolution = $field->resolution;
+            if ($expression === null || ($binding instanceof JoinBinding && $expression instanceof ParsedColumn && $resolution instanceof ResolvedColumn)) {
                 Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
-                $results[] = new ResultColumn($binding->resolved($resolution), $label);
+                $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);
+                $results[] = new ResultColumn($value, $label);
                 continue;
             }
             $parameter = $parameters->lower($expression, $operation->context, $inputTypes);

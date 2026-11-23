@@ -37,6 +37,7 @@ final class OutputSlot
      * @param Column|null $column The declared column when the position is that column itself
      * @param OutputSlot|null $origin The input slot this position re-exposes, for example through a join
      * @param list<MissingInput> $unnamed The inputs whose absence leaves the name of an unnamed position undecided; empty when it has no name at all
+     * @param OutputSlot|null $coalescedWith The second physical input of a merged FULL join position
      */
     public function __construct(
         public readonly ?Name $name,
@@ -45,7 +46,9 @@ final class OutputSlot
         public readonly ?Column $column = null,
         public readonly ?OutputSlot $origin = null,
         array $unnamed = [],
+        public readonly ?OutputSlot $coalescedWith = null,
     ) {
+        Check::input($coalescedWith === null || ($origin !== null && $column === null), 'A coalesced position must name both input slots.');
         $this->unnamed = Check::listOf($unnamed, MissingInput::class, 'An unnamed position names the inputs its name depends on.');
         Check::input($this->unnamed === [] || $name === null, 'Only a position without a name depends on inputs for its name.');
     }

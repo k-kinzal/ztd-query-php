@@ -14,6 +14,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 
 #[CoversClass(Join::class)]
@@ -39,6 +41,18 @@ final class JoinTest extends TestCase
         $this->expectExceptionMessage('Only CROSS has no join predicate.');
 
         new Join(JoinKind::Cross, $table, $table, new BooleanLiteral(true));
+    }
+
+    public function testFullAcceptsAnOrderedConjunctionOfCrossSideEqualities(): void
+    {
+        $table = new TableSource(new Identifier('public'), new Identifier('t'), [new Identifier('id'), new Identifier('lane')]);
+        $id = new IntegerComparison(IntegerOperator::Equal, new ColumnReference(0), new ColumnReference(0, 1));
+        $lane = new IntegerComparison(IntegerOperator::Equal, new ColumnReference(1, 1), new ColumnReference(1));
+        $condition = new LogicalPredicate(LogicalOperator::And, $id, $lane);
+
+        $value = new Join(JoinKind::Full, $table, $table, $condition);
+
+        self::assertSame($condition, $value->on);
     }
 
     public function testFullRejectsEqualityWithinOneSide(): void

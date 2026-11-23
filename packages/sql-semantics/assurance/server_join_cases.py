@@ -196,6 +196,12 @@ def value(expression, row, dialect):
     role = expression[0]
     if role == "slot":
         return row[expression[2] if len(expression) == 3 else 0][expression[1]]
+    if role == "int4-case":
+        _, arms, otherwise = expression
+        for condition, result in arms:
+            if truth(condition, row, dialect):
+                return value(result, row, dialect)
+        return None if otherwise is None else value(otherwise, row, dialect)
     if role != "operation":
         return evaluate(expression, None, dialect)
     _, symbol, left, right = expression
@@ -258,6 +264,10 @@ def named_binary_graph(item):
     origins = source["left"], source["right"]
 
     def address(term):
+        if term[0] == "int4-case":
+            _, arms, otherwise = term
+            return term[0], tuple((predicate(condition), address(value)) for condition, value in arms), (
+                None if otherwise is None else address(otherwise))
         if term[0] != "slot":
             return tuple(term)
         occurrence = term[2] if len(term) == 3 else 0
@@ -270,6 +280,8 @@ def named_binary_graph(item):
             return term[0], term[1], address(term[2]), address(term[3])
         if term[0] == "logic":
             return term[0], term[1], predicate(term[2]), predicate(term[3])
+        if term[0] == "null-test":
+            return term[0], term[1], address(term[2])
         return tuple(term)
 
     return (source["kind"], tuple((entry["schema"], entry["table"], entry.get("only", False)) for entry in origins),

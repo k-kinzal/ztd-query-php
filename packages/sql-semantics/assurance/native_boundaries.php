@@ -44,6 +44,15 @@ function nativeBoundaryContract(string $dialect): array
         $rules += $additional;
     }
 
+    if ($dialect === 'postgres') {
+        $path = __DIR__ . '/postgres-full-merge-boundaries-v1.json';
+        requireShape(hash_file('sha256', $path) === '99637913a193379b9e03f20b4454f151a50e0e80bb48465f832b4d23e24f0bb3', 'PostgreSQL FULL merge boundary contract differs from its recorded revision');
+        $amendment = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        [$name, $digest] = [$amendment['base']['path'], $amendment['base']['sha256']];
+        requireShape(in_array([$name, $digest], $records, true), 'PostgreSQL FULL merge boundary base is not active');
+        $rules = array_replace($rules, $amendment['rules']);
+    }
+
     return array_filter($rules, static fn (array $rule): bool => !isset($rule['dialects']) || in_array($dialect, $rule['dialects'], true));
 }
 

@@ -14,7 +14,7 @@ from server_join_cases import join, named_binary_graph as graph, slot
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-merged-join"
-CONTRACT = "62e625bd1076c419c2453f93b81ccba74041cab9a83e4d6d2b02ce3203d61378"
+CONTRACT = "6a42d825607c6acff928cd80fac716da6d5e3a5d1654a36ef47c145ec16c387f"
 KINDS = ("INNER", "LEFT", "RIGHT")
 MASKS = {"id": ("id",), "lane": ("lane",), "both": ("id", "lane")}
 SOURCES = LEFT, RIGHT, EMPTY, WIDE, CHILD = (
@@ -37,7 +37,7 @@ DIAGNOSTICS = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\"
 
 
 def specifications():
-    path, profile = TOOL / "postgres-merged-join-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-merged-join-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-merged-contract-mismatch")
     return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
@@ -134,7 +134,7 @@ def negatives(tag):
         (f"SELECT 1 FROM {left} JOIN {right} USING(absent)", "SemanticException", "absent"),
         (f"SELECT 1 FROM {left} JOIN {wide} USING(id)", "InvalidConstruction", "signed 32-bit integer type"),
         (f"SELECT 1 FROM {left} JOIN {right} USING(id,id)", "SemanticException", "id"),
-        (f"SELECT 1 FROM {left} FULL JOIN {right} USING(id)", "InvalidConstruction", "an INNER, LEFT or RIGHT join"),
+        (f"SELECT 1 FROM {left} FULL JOIN {right} USING(id) WHERE id=1", "InvalidConstruction", "not a physical int4 operand"),
     ):
         yield analysis_request(tag, sql), {"exception": DIAGNOSTICS + exception, "message": message}
 

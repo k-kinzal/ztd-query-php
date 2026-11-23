@@ -1,0 +1,165 @@
+{
+  "revision": "SemanticsIR/postgres-full-merge-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "The checked FULL condition and exact projections of both physical merge origins.",
+  "rules": {
+    "From/Join::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$inputs = $this->inputs();",
+        "Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');",
+        "Check::input(($kind === JoinKind::Cross) === ($on === null), 'Only CROSS has no join predicate.');",
+        "(new OccurrenceScope())->predicate($on, $inputs);",
+        "if ($kind === JoinKind::Full) {",
+        "    $leftWidth = $left instanceof self ? count($left->inputs()) : 1;",
+        "    $conditions = [$on];",
+        "    while ($conditions !== []) {",
+        "        $condition = array_pop($conditions);",
+        "        if ($condition instanceof LogicalPredicate && $condition->operator === LogicalOperator::And) {",
+        "            Check::invariant($condition->right !== null, 'A conjunction has two terms.');",
+        "            $conditions[] = $condition->right;",
+        "            $conditions[] = $condition->left;",
+        "            continue;",
+        "        }",
+        "        Check::input(",
+        "            ($condition === $on && $condition instanceof BooleanLiteral && $condition->value)",
+        "                || ($condition instanceof IntegerComparison && $condition->operator === IntegerOperator::Equal",
+        "                    && $condition->left instanceof ColumnReference && $condition->right instanceof ColumnReference",
+        "                    && ($condition->left->occurrence < $leftWidth) !== ($condition->right->occurrence < $leftWidth)),",
+        "            'A PostgreSQL FULL join requires integer equality between opposite inputs or a true condition.',",
+        "        );",
+        "    }",
+        "}"
+      ]
+    },
+    "From/JoinBinding::resolved": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');",
+        "Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');",
+        "$wholeJoin = self::ungroup($resolution->relation) === $this->join;",
+        "$expanded = null;",
+        "foreach ($this->inputs as $occurrence => $binding) {",
+        "    $relation = $binding->relation();",
+        "    if ($relation === $resolution->relation) {",
+        "        return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);",
+        "    }",
+        "    if (!$wholeJoin || $relation === null) {",
+        "        continue;",
+        "    }",
+        "    $slots = $this->operation->facts->relation($relation)->shape->slots;",
+        "    for ($slot = $resolution->slot; $slot !== null; $slot = $slot->origin) {",
+        "        if (in_array($slot, $slots, true)) {",
+        "            Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');",
+        "            $bound = $binding->resolved(new ResolvedColumn($relation, $slot));",
+        "            $expanded = new ColumnReference($bound->slot, $occurrence);",
+        "            break;",
+        "        }",
+        "    }",
+        "}",
+        "Check::input($expanded !== null, 'A column must resolve within this join scope.');",
+        "",
+        "return $expanded;"
+      ]
+    },
+    "From/JoinBinding::predicate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$condition = $this->join->condition;",
+        "if (!$this->join->natural && !$condition instanceof JoinUsing) {",
+        "    return (new PredicateLowering())->lower($condition instanceof JoinOn ? $condition->condition : null, $this, $this->catalogFirst);",
+        "}",
+        "Check::input(",
+        "    $this->left instanceof SourceBinding && $this->right instanceof SourceBinding && $this->catalogFirst,",
+        "    'A merged join requires two ordinary table inputs and pg_catalog operator resolution.',",
+        ");",
+        "",
+        "return (new MergedJoinLowering())->predicate($this->join, $this->left, $this->right);"
+      ]
+    },
+    "From/JoinBinding::projected": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$slot = $resolution->slot;",
+        "if ($slot->coalescedWith === null) {",
+        "    return $this->resolved($resolution);",
+        "}",
+        "Check::input(",
+        "    $resolution->depth === 0 && self::ungroup($resolution->relation) === $this->join",
+        "        && $this->join->kind === ParsedKind::Full && $slot->origin !== null,",
+        "    'A coalesced field must belong to its FULL join.',",
+        ");",
+        "$left = $this->resolved(new ResolvedColumn($resolution->relation, $slot->origin));",
+        "$right = $this->resolved(new ResolvedColumn($resolution->relation, $slot->coalescedWith));",
+        "Check::input($left->occurrence === 0 && $right->occurrence === 1, 'A merged field reads its two binary input positions.');",
+        "",
+        "return new IntegerCase([new IntegerCaseArm(new NullTest($left, true), $left)], $right);"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$statement = $operand ?? $operation->statement;",
+        "Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');",
+        "Check::input(",
+        "    $statement->groupBy === [] && $statement->having === null",
+        "        && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'Complete PostgreSQL IR currently supports projections with positional result selection.',",
+        ");",
+        "Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');",
+        "$expressions = new ExpressionLowering();",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = new Identifier($name->value);",
+        "    $expression = $field->expression;",
+        "    $resolution = $field->resolution;",
+        "    if ($expression === null || ($binding instanceof JoinBinding && $expression instanceof ParsedColumn && $resolution instanceof ResolvedColumn)) {",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');",
+        "        $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);",
+        "        $results[] = new ResultColumn($value, $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $operation->context, $inputTypes);",
+        "    $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst), $label);",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "$result = new ResultLowering();",
+        "$order = [];",
+        "foreach ($statement->options->order ?? [] as $key) {",
+        "    $order[] = $result->order($key);",
+        "}",
+        "",
+        "return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));"
+      ]
+    }
+  }
+}

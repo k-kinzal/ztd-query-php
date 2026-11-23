@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
@@ -131,6 +132,27 @@ final class JoinBindingTest extends TestCase
     public function testUngroupPreservesAnAbsentSource(): void
     {
         self::assertNull(JoinBinding::ungroup(null));
+    }
+
+    public function testProjectedKeepsBothOriginsOfTheFullJoinKey(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id INTEGER)');
+        $query = $inspection->inspect('SELECT * FROM app.t a FULL JOIN app.t b USING (id)', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $operation = $query->binding();
+        $fields = $operation->facts->query($query->statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(0)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $binding = JoinBinding::bind($operation, $query->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $value = $binding->projected($resolution);
+
+        self::assertInstanceOf(IntegerCase::class, $value);
+        self::assertEquals(new ColumnReference(0, 0), $value->arms[0]->result);
+        self::assertEquals(new ColumnReference(0, 1), $value->otherwise);
     }
 
     public function testResolvedFindsTheQualifiedWildcardOccurrence(): void
