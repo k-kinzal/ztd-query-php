@@ -537,6 +537,9 @@ if ($dialect !== 'sqlite') {
         $properties['Mutation\\Insert']['returning'] = $properties['Mutation\\InsertQuery']['returning'] = ['array'];
         $properties['Mutation\\Insert\\Destination'] = ['relation' => ['TableSource'], 'written' => ['array']];
         $methods['Mutation\\Insert\\Destination'] = ['__construct', 'toString'];
+    if ($dialect === 'postgres') {
+        $methods['Mutation\\Insert\\Destination'] = ['__construct', 'columnKind', 'toString'];
+    }
     }
     $methods['Mutation\\InsertQuery'] = $methods['Select'];
     $internal[] = 'Mutation\\InsertTargetBinding';

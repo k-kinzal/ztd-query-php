@@ -25,4 +25,15 @@ final class DestinationTest extends TestCase
         self::assertSame('"public"."t" ("b", "a")', $destination->toString());
         self::assertSame($relation, $destination->relation);
     }
+
+    public function testColumnKindUsesWritePositionInsteadOfPhysicalSlot(): void
+    {
+        $relation = new TableSource(new Identifier('public'), new Identifier('t'), [
+            new Identifier('id'), new Identifier('label'),
+        ], false, [ColumnKind::Int4, ColumnKind::Text]);
+        $destination = new Destination($relation, [new WriteSlot(1, ColumnKind::Text)]);
+
+        self::assertSame(ColumnKind::Text, $destination->columnKind(0));
+        self::assertNull($destination->columnKind(1));
+    }
 }

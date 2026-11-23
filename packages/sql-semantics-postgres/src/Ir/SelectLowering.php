@@ -67,26 +67,15 @@ final class SelectLowering
                 continue;
             }
             $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
-            $resolvesBareText = $this->resolvesText($operand, $assignment, count($results));
+            $resolvesBareText = $operand === null || $assignment?->columnKind(count($results)) === ColumnKind::Text;
             $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $resolvesBareText), $label);
         }
 
         Check::input($results !== [], 'A complete projection requires at least one resolved output field.');
 
         $result = new ResultLowering();
-        $order = [];
-        foreach ($statement->options->order ?? [] as $key) {
-            $order[] = $result->order($key);
-        }
+        $order = $result->orders($statement->options->order ?? []);
 
         return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));
-    }
-
-    /**
-     * Resolves a bare string where the output context fixes native text.
-     */
-    private function resolvesText(?ParsedSelect $operand, ?Destination $assignment, int $position): bool
-    {
-        return $operand === null || ($assignment?->written[$position]->kind ?? null) === ColumnKind::Text;
     }
 }

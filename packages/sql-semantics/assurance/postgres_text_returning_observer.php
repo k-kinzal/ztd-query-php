@@ -45,7 +45,8 @@ function admittedTextMutation(string $sql): bool
     $scalar = '(?:' . $int4 . '|' . $column . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
     $assignment = $name('(?:id|label|note)') . ' = ' . $scalar;
     $update = 'UPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET ' . $assignment . '(?:, ' . $assignment . ')*' . $where;
-    $cell = '(?:' . $int4 . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
+    $typedNull = 'CAST\\(NULL AS pg_catalog\\.(?:int4|text)\\)';
+    $cell = '(?:' . $int4 . '|NULL|' . $typedNull . '|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
     $row = '\\(' . $cell . '(?:, ' . $cell . ')*\\)';
     $values = 'VALUES ' . $row . '(?:, ' . $row . ')*';
     $input = $name('public') . '\\.' . $name('ir_text_inputs');

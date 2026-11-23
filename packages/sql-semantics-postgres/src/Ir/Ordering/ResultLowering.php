@@ -39,6 +39,16 @@ final class ResultLowering
     }
 
     /**
+     * Resolves all checked order keys in precedence order.
+     * @param list<SortItem> $keys
+     * @return list<Order>
+     */
+    public function orders(array $keys): array
+    {
+        return array_map($this->order(...), $keys);
+    }
+
+    /**
      * Assigns the effective count and offset by their meaning in the parsed clause.
      */
     public function limit(?RowLimit $clause): ?Limit

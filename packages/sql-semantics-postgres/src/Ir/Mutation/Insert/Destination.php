@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -44,6 +45,14 @@ final class Destination
             $seen[$column->slot] = true;
         }
         $this->written = $checked;
+    }
+
+    /**
+     * Answers the native kind at a position in the written layout.
+     */
+    public function columnKind(int $position): ?ColumnKind
+    {
+        return $this->written[$position]->kind ?? null;
     }
 
     /**

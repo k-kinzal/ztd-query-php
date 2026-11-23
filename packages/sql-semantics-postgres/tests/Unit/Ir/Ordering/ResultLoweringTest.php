@@ -30,6 +30,16 @@ final class ResultLoweringTest extends TestCase
         self::assertTrue($ordered->descending);
     }
 
+    public function testOrdersKeepsTheInputPrecedence(): void
+    {
+        $second = new SortItem(new OutputPosition(new Constant(new IntegerConstant('2')), OrderingClause::OrderBy));
+        $first = new SortItem(new OutputPosition(new Constant(new IntegerConstant('1')), OrderingClause::OrderBy));
+        $orders = (new ResultLowering())->orders([$second, $first]);
+
+        self::assertSame(2, $orders[0]->position);
+        self::assertSame(1, $orders[1]->position);
+    }
+
     public function testLimitKeepsTheDifferentOperandRoles(): void
     {
         $limit = (new ResultLowering())->limit(new RowLimit(new LimitCount(new Constant(new IntegerConstant('2'))), new Offset(new Constant(new IntegerConstant('3')))));
