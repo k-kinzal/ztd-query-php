@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
@@ -21,6 +22,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
@@ -128,4 +131,13 @@ final class SelectSqlTest extends TestCase
         self::assertSame('"__ztd_c3"', (new SelectSql())->localColumn(3));
     }
 
+
+    public function testTextComparisonRenderPinsTheExactOperatorAndCollation(): void
+    {
+        $test = new TextComparison(TextOperator::Less, new NullLiteral(), new TextLiteral('Z'), TextCollation::C);
+        self::assertSame(
+            "((CAST(NULL AS pg_catalog.text) COLLATE pg_catalog.\"C\") OPERATOR(pg_catalog.<) CAST('Z' AS pg_catalog.text))",
+            (new SelectSql())->textComparison($test, null, 0, true)
+        );
+    }
 }

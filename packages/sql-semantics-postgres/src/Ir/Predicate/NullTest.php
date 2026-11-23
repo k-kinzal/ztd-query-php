@@ -27,7 +27,7 @@ final class NullTest
      * Stores the tested scalar and whether to invert the result.
      */
     public function __construct(
-        public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|TruthTest|self $operand,
+        public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|TextComparison|TruthTest|self $operand,
         public readonly bool $negated = false,
     ) {
     }

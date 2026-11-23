@@ -139,6 +139,10 @@ def condition(term, layout):
         return term[0], term[1], condition(term[2], layout)
     if term[0] == "comparison":
         return term[0], term[1], condition(term[2], layout), condition(term[3], layout)
+    if term[0] == "text-comparison":
+        return term[0], term[1], term[2], condition(term[3], layout), condition(term[4], layout)
+    if term[0] == "logic":
+        return term[0], term[1], condition(term[2], layout), condition(term[3], layout)
     require(term[0] in ("boolean", "integer", "text", "null"), "postgres-text-returning-unknown-predicate", term)
     return tuple(term)
 

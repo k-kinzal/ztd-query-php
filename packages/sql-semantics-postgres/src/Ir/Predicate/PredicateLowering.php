@@ -37,7 +37,7 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null
     {
         return $condition === null ? null : $this->lowerValue($condition, $binding, $catalogFirst);
     }
@@ -45,7 +45,7 @@ final class PredicateLowering
     /**
      * Resolves a checked predicate or truth constant.
      */
-    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -65,6 +65,10 @@ final class PredicateLowering
             return $this->nullTest($condition, $binding, $catalogFirst);
         }
         if ($condition instanceof ParsedComparison) {
+            $text = (new TextComparisonLowering())->lower($condition, $binding, $catalogFirst);
+            if ($text !== null) {
+                return $text;
+            }
             $expression = new ExpressionLowering();
             $qualifiers = array_column($condition->operator->qualifiers, 'value');
             $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];

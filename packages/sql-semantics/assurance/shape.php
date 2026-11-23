@@ -83,13 +83,19 @@ if ($dialect === 'postgres') {
         'operand' => ['Expression\\TextLiteral', 'From\\TextColumnReference', 'NullLiteral']];
     $methods['Expression\\CollatedText'] = ['__construct'];
     $properties['Expression\\TextCollation'] = $methods['Expression\\TextCollation'] = [];
+    $textComparison = 'Predicate\\TextComparison';
+    $textOperands = ['Expression\\TextLiteral', 'From\\TextColumnReference', 'NullLiteral'];
+    $properties[$textComparison] = ['operator' => ['Predicate\\TextOperator'], 'left' => $textOperands,
+        'right' => $textOperands, 'collation' => ['Expression\\TextCollation']];
+    $methods[$textComparison] = ['__construct'];
+    $properties['Predicate\\TextOperator'] = $methods['Predicate\\TextOperator'] = [];
     $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
     $methods['From\\TextColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
     $methods['TableSource'][] = 'columnKind';
     array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral',
-        'Expression\\CollatedText', 'From\\TextColumnReference');
+        'Expression\\CollatedText', 'From\\TextColumnReference', $textComparison);
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -109,7 +115,7 @@ if ($dialect === 'postgres') {
     $distinctness = 'Predicate\\IntegerDistinctness';
     $properties[$distinctness] = ['left' => $rangeLeaves, 'right' => $rangeLeaves, 'negated' => ['bool']];
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
-    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest);
+    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest, $textComparison);
     sort($properties[$caseArm]['condition']);
     array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest');
     $properties['Arithmetic']['left'][] = $integerCase;
@@ -141,6 +147,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
     $internal[] = 'Expression\\BuiltinCastLowering';
     $internal[] = 'Expression\\CollatedTextLowering';
+    $internal[] = 'Predicate\\TextComparisonLowering';
     $internal[] = 'Predicate\\IntegerRangeLowering';
     $internal[] = 'Predicate\\IntegerAtomLowering';
     $internal[] = 'Predicate\\IntegerDistinctnessLowering';
@@ -178,6 +185,7 @@ if ($dialect === 'postgres') {
     $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['Expression\\TextCollation'] = ['C' => 'C'];
+    $enumCases['Predicate\\TextOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
 if ($dialect === 'sqlite') {
@@ -464,7 +472,7 @@ if ($dialect !== 'sqlite') {
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $truthValues[] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        array_push($truthValues, 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
+        array_push($truthValues, 'Predicate\\IntegerDistinctness', 'Predicate\\TextComparison', 'Predicate\\TruthTest');
     }
     sort($truthValues);
     if ($dialect === 'postgres') {
@@ -529,7 +537,7 @@ if ($dialect !== 'sqlite') {
     ];
     $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'From\\TextColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'From\\TextColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\TextComparison', 'Predicate\\TruthTest');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

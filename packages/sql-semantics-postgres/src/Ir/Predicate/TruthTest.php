@@ -25,7 +25,7 @@ final class TruthTest
      */
     public function __construct(
         public readonly TruthOperator $operator,
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|self $operand,
+        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|self $operand,
     ) {
     }
 }

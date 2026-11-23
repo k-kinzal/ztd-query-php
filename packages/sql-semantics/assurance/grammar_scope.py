@@ -252,6 +252,9 @@ def inventory(root):
             for alternative in rules.get("a_expr", ()):
                 if " COLLATE " in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-collated-text-v2.json")
+                operator = alternative.removeprefix("a_expr: a_expr ").removesuffix(" a_expr")
+                if operator in ("<", ">", "=", "LESS_EQUALS", "GREATER_EQUALS", "NOT_EQUALS", "qual_Op"):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-comparison-v1.json")
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

@@ -20,6 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -69,7 +70,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -84,6 +85,7 @@ final class SelectSql
             $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',
             $expression instanceof TextLiteral => $expression->toString(),
             $expression instanceof CollatedText => $this->collated($expression, $source, $offset, $qualify),
+            $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
@@ -99,6 +101,18 @@ final class SelectSql
             : $this->expression($expression->operand, $source, $offset, $qualify);
 
         return '(' . $operand . ' COLLATE pg_catalog."' . $expression->collation->value . '")';
+    }
+
+    /**
+     * Emits both typed text values under the selected native collation.
+     */
+    public function textComparison(TextComparison $comparison, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $left = $this->collated(new CollatedText($comparison->left, $comparison->collation), $source, $offset, $qualify);
+        $right = $this->expression($comparison->right, $source, $offset, $qualify);
+        $operator = 'OPERATOR(pg_catalog.' . $comparison->operator->value . ')';
+
+        return '(' . $left . ' ' . $operator . ' ' . $right . ')';
     }
 
     /**
@@ -205,7 +219,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);
