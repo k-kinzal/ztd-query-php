@@ -47,7 +47,11 @@
       "visible",
       "qualified"
     ],
-    "completeness": "Visit exactly once the 48 distinct combinations of kind, key layout, input orientation and projection. Derive identity and membership from the published graph, independently of generator order."
+    "completeness": "Visit exactly once the 48 distinct combinations of kind, key layout, input orientation and projection. Derive identity and membership from the published graph, independently of generator order.",
+    "projectionIdentities": {
+      "visible": "Native star shape.",
+      "qualified": "Both independent headings followed by a repeated qualified right slot, making these two variants distinct even when no field is merged."
+    }
   },
   "exploration": {
     "seeds": [
@@ -61,7 +65,8 @@
     "structure": "Vary operation, reference orientation, predicate depth up to three comparisons, order and repetition of keys, source affinities, projection order and width, repeated projection slots and unusual output labels."
   },
   "analysis": [
-    "The two exact previous rejection fixtures are now admitted.",
+    "The exact previously rejected JOIN USING (key) is admitted.",
+    "The exact previously rejected NATURAL LEFT JOIN is admitted.",
     "NATURAL inner wildcard preserves left names and right survivor order.",
     "NATURAL LEFT with both qualified stars retains complete separate headings.",
     "NATURAL LEFT with explicit merged and qualified fields retains distinct values and types.",
