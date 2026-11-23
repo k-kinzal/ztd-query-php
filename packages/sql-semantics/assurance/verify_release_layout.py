@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v68.json"
-CONTRACT = "64fcb2a6a33bd76f724d38c83f8de1169055319ea751a86232a1ba586527c144"
+CONTRACT_NAME = "release-layout-v69.json"
+CONTRACT = "5d07c9ca17af72402da447a002126b2d231bc131d269e3970eabc52ac0e6b434"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -265,6 +265,11 @@ def verify_probe(raw, catalog):
             require(item.get("postgresCreateView") == ["public", "ready_rows", ["n"], True, None, False, "LOCAL",
                                                      "public", "accounts", 0] and item["sql"] == expected_sql,
                     "installed-postgres-create-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Query\\CreateTableAs"):
+            require(item.get("postgresCreateTableAs") == ["public", "copy_probe", ["n"], "int4", True, False, False]
+                    and item["sql"] == ('CREATE UNLOGGED TABLE "public"."copy_probe" ("n")'
+                                        ' USING heap AS VALUES (CAST(6 AS pg_catalog.int4)) WITH NO DATA'),
+                    "installed-postgres-create-table-as-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\CreateMaterializedView"):
             require(item.get("postgresMaterializedView") == ["public", "materialized_probe", ["n"], "int4", False, False]
                     and item["sql"] == ('CREATE MATERIALIZED VIEW "public"."materialized_probe" ("n")'

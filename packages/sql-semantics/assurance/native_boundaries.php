@@ -99,7 +99,8 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-local-values-boundaries-v1.json', '1b506e898a949b621e5f1978d0e2ffeea419acdbb256421811a5291fb088a6a5'],
             ['postgres-values-compound-boundaries-v1.json', 'fcce910d78706d890cf699858c1dfebbc67398a71fe17102a9a3b31a55c63560'],
             ['postgres-create-view-boundaries-v1.json', '8417042c43c0ae5fb380cc4e0bd2a3367e965f2d76b60195d044a4ff2b1346c0'],
-            ['postgres-materialized-view-boundaries-v1.json', '9f16bf6abc877858e2bc511fe467c8995a038a3642693819781c18fc74933317'],
+            ['postgres-materialized-view-boundaries-v2.json', '070d2a0b7d4d7fdd34c25aba6978c0b4b4908d51a0d101c68d53762cfab14de5'],
+            ['postgres-create-table-as-boundaries-v1.json', '960760cdf5528b40fb42f20db35aaf013ffc065f40e61cef3f4479fb6b9ba7c1'],
         ],
         'sqlite' => [],
     };
@@ -217,6 +218,8 @@ function checkNativeBoundaries(
                 'Statement\\Name\\ObjectKind', 'Statement\\Name\\DottedName', 'Statement\\Option\\DropBehavior',
                 'Ir\\Schema\\View\\DropViewLowering', 'Statement\\Query\\ValuesList',
                 'Statement\\Table\\CreateTable as ParsedCreateTable', 'Statement\\Table\\View\\CreateView as ParsedCreateView', 'Statement\\Table\\View\\CreateMaterializedView as ParsedCreateMaterializedView',
+                'Statement\\Table\\CreateTableAs as ParsedCreateTableAs', 'Ir\\Schema\\DefinitionQueryLowering',
+                'Ir\\Schema\\Query\\CreateTableAsLowering', 'Ir\\Schema\\TableName',
                 'Ir\\Schema\\CreateTableLowering', 'Ir\\Schema\\View\\CreateViewLowering', 'Ir\\Schema\\View\\CreateMaterializedViewLowering',
                 'Statement\\Option\\Toggle', 'Statement\\Option\\KeywordWord', 'Statement\\Option\\Word', 'Statement\\Table\\View\\CheckOption',
                 'Statement\\Type\\Designation\\NamedDesignation', 'Statement\\Type\\TypeName',

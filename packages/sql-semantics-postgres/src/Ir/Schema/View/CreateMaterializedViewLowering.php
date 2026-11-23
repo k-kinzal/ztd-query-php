@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\View;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\DefinitionQueryLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -31,7 +32,7 @@ final class CreateMaterializedViewLowering
         );
         $schema = ($statement->name->schema ?? $context->declarationSchema)->value;
         $name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));
-        [$query, $columns] = (new ViewQueryLowering())->lower($operation, $statement->query, $statement->columns);
+        [$query, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);
 
         return new CreateMaterializedView($name, $query, $columns, $statement->ifNotExists, $statement->withData ?? true);
     }

@@ -729,6 +729,35 @@ function observePostgresMaterialization(string $namespace, object $value): array
     ];
 }
 
+function constructPostgresCreateAs(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $table = $namespace . 'Schema\\TableName';
+    $statement = $namespace . 'Schema\\Query\\CreateTableAs';
+    $name = $namespace . 'Identifier';
+    $definition = $input['createTableAs'];
+    [$schema, $relation] = $definition['target'];
+
+    return new $statement(
+        new $table(new $name($schema), new $name($relation)),
+        constructSetQuery($platform, $definition['query'] + ['dialect' => 'postgres', 'release' => $input['release']]),
+        array_map(static fn (string $value): object => new $name($value), $definition['columns']),
+        $definition['unlogged'], $definition['ifNotExists'], $definition['withData'],
+    );
+}
+
+function observePostgresCreateAs(string $namespace, object $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'createTableAs' => [
+            'target' => [$value->target->schema->value, $value->target->table->value],
+            'query' => observeSetQuery($namespace, $value->query, 'postgres'),
+            'columns' => array_column($value->columns, 'value'), 'unlogged' => $value->unlogged,
+            'ifNotExists' => $value->ifNotExists, 'withData' => $value->withData,
+        ],
+    ];
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -985,6 +1014,7 @@ function observeStatement(array $input): array
             isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
+            isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -1061,6 +1091,9 @@ function observeStatement(array $input): array
     if ($value::class === $namespace . 'Schema\\View\\CreateMaterializedView'
         || $value::class === $namespace . 'Schema\\View\\RefreshMaterializedView') {
         return observePostgresMaterialization($namespace, $value);
+    }
+    if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Query\\CreateTableAs') {
+        return observePostgresCreateAs($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

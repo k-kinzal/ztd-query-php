@@ -24,7 +24,10 @@ final class TableName
      */
     public function __construct(public readonly Identifier $schema, public readonly Identifier $table)
     {
-        Check::input($schema->value !== 'pg_temp', 'A persistent PostgreSQL relation requires an absolute schema.');
+        Check::input(
+            $schema->value !== 'pg_temp' && preg_match('/\Apg_(?:toast_)?temp_[0-9]+\z/D', $schema->value) === 0,
+            'A persistent PostgreSQL relation requires an absolute non-temporary schema.',
+        );
     }
 
     /**

@@ -760,8 +760,16 @@ if ($dialect !== 'sqlite') {
         $refreshMaterialized = 'Schema\\View\\RefreshMaterializedView';
         array_push($roots, $createMaterialized, $refreshMaterialized);
         array_push($internal, 'Schema\\PersistentDeclarationLowering', 'Schema\\View\\CreateMaterializedViewLowering',
-            'Schema\\View\\RefreshMaterializedViewLowering', 'Schema\\View\\ViewHeading', 'Schema\\View\\ViewQueryLowering');
+            'Schema\\View\\RefreshMaterializedViewLowering', 'Schema\\View\\ViewHeading', 'Schema\\DefinitionQueryLowering');
         $pureCollaborators[] = 'Schema\\View\\ViewHeading';
+        $createAs = 'Schema\\Query\\CreateTableAs';
+        $createAsBounds = 'Schema\\Query\\CreateAsBounds';
+        $roots[] = $createAs;
+        array_push($internal, $createAsBounds, 'Schema\\Query\\CreateTableAsLowering');
+        $pureCollaborators[] = $createAsBounds;
+        $properties[$createAs] = ['target' => ['Schema\\TableName'], 'query' => [$valuesQuery, 'Select'],
+            'columns' => ['array'], 'unlogged' => ['bool'], 'ifNotExists' => ['bool'], 'withData' => ['bool']];
+        $methods[$createAs] = ['__construct', 'profileId', 'toString'];
         $properties[$createMaterialized] = ['name' => [$viewName], 'query' => [$valuesQuery, 'Select'],
             'columns' => ['array'], 'ifNotExists' => ['bool'], 'withData' => ['bool']];
         $properties[$refreshMaterialized] = ['name' => [$viewName], 'withData' => ['bool'],
@@ -946,7 +954,8 @@ try {
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
-                . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateMaterializedView => (new \\'
+                . '\\Statement\\Table\\CreateTableAs, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform
+                . '\\Statement\\Table\\View\\CreateMaterializedView => (new \\'
                 . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
@@ -1056,9 +1065,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v42.json';
+    $storagePath = __DIR__ . '/value-storage-v43.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'e22a41631d4ccf677d76f1b5c789b7f12b335928ddc79ae21dab933d6944fdf9',
+        hash_file('sha256', $storagePath) === '8605946292438313e66040edf8bc6c35652f26a0dacc9cb1e384b46c40c0b631',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1175,7 +1184,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\CreateTable', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
+                        'Schema\\CreateTable', 'Schema\\Query\\CreateTableAs', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
                     ], 'Unexpected PostgreSQL persistent declaration publication');
             }
             if ($short === 'Schema\\CreateRelationLowering') {

@@ -463,6 +463,11 @@ def inventory(root):
                 for alternative in rules.get(rule, []):
                     if alternative not in {"OptNoLog: UNLOGGED", "opt_concurrently: CONCURRENTLY"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-materialized-view-v1.json")
+        if postgres:
+            for rule in ("CreateAsStmt", "create_as_target", "OptTemp", "opt_with_data"):
+                for alternative in rules.get(rule, []):
+                    if rule != "OptTemp" or alternative in {"OptTemp:", "OptTemp: UNLOGGED"}:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-table-as-v1.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

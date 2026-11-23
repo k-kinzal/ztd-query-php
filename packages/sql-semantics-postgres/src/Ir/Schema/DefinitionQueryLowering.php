@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\View;
+namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesLowering;
@@ -19,11 +19,11 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
 
 /**
- * Lowers a persistent view's independent defining query and its ordered catalog names.
+ * Lowers a persistent relation's independent defining query and its ordered catalog names.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
-final class ViewQueryLowering
+final class DefinitionQueryLowering
 {
     /**
      * Supplies the complete query and effective catalog heading.
@@ -39,14 +39,14 @@ final class ViewQueryLowering
         $body = match (true) {
             $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),
             $query instanceof ValuesList => (new ValuesLowering())->lower($operation, $query),
-            default => throw new InvalidConstruction('A persistent view needs a checked SELECT or standalone VALUES definition.'),
+            default => throw new InvalidConstruction('A persistent relation needs a checked SELECT or standalone VALUES definition.'),
         };
         $fields = $operation->facts->query($query)->fields();
-        Check::input($fields !== null && count($aliases) <= count($fields), 'The view needs a complete resolved heading.');
+        Check::input($fields !== null && count($aliases) <= count($fields), 'The relation needs a complete resolved heading.');
         $columns = [];
         foreach ($fields as $position => $field) {
             $column = $aliases[$position] ?? $field->name;
-            Check::input($column !== null, 'Each view field needs a resolved catalog name.');
+            Check::input($column !== null, 'Each field needs a resolved catalog name.');
             $columns[] = new Identifier($column->value);
         }
 

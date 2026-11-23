@@ -183,10 +183,12 @@ def definition_rows(action):
         return ([[label, *field[1:]] for label, field in zip(heading, values_result["fields"])], values_result["rows"])
     if body["source"] is None:
         return [[label, *TYPES["integer"]] for label in heading], [[int(term[1]) for term, _ in body["columns"]]]
-    slots = [term[1] for term, _ in body["columns"]]
+    input_fields = body["source"]["columns"]
+    slots = [HEADING.index(input_fields[term[1]]) for term, _ in body["columns"]]
     rows = phase_rows(12)
     if body["where"] is not None:
-        require(body["where"] == ["comparison", ">", ["slot", 0], ["integer", "0"]], "postgres-materialized-oracle-filter")
+        require(body["where"] == ["comparison", ">", ["slot", input_fields.index("id")], ["integer", "0"]],
+                "postgres-materialized-oracle-filter")
         rows = [row for row in rows if row[0] is not None and row[0] > 0]
     return [[name, *BASE_FIELDS[slot][1:]] for name, slot in zip(heading, slots)], [[row[slot] for slot in slots] for row in rows]
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema\View;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\DefinitionQueryLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -34,7 +35,7 @@ final class CreateViewLowering
         $schema = ($statement->name->schema ?? $context->declarationSchema)->value;
         $name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));
         [$barrier, $invoker, $check] = (new ViewOptionsLowering())->lower($statement);
-        [$body, $columns] = (new ViewQueryLowering())->lower($operation, $statement->query, $statement->columns);
+        [$body, $columns] = (new DefinitionQueryLowering())->lower($operation, $statement->query, $statement->columns);
 
         return new CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);
     }

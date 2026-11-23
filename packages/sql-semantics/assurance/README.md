@@ -42,7 +42,7 @@ The verifier applies the pinned split workflow's Composer transformation and use
 
 ## Publication contract
 
-The [publication contract](publication-v34.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
+The [publication contract](publication-v35.json) fixes the complete runtime surface. The dialect façade binds input SQL, verifies semantic diagnostics and publishes through the registered value constructors. The catalog builder accepts relation definitions. Grammar fixture rendering runs in the test harness. Public return declarations are inspected for generic routes, including nullable arrays, iterators, and missing return types. The staged Composer probes check each registered enum case by direct access, enumeration, selection and native restoration, and compare the ordered cases against the independent source inventory.
 
 ## Read the evidence
 
@@ -274,6 +274,8 @@ The [PostgreSQL standalone VALUES contract](postgres-values-v3.json) fixes recta
 The [PostgreSQL persistent view contract](postgres-create-view-v2.json) compares schema-qualified view creation and replacement with native catalog metadata, live reads after a base update, security option presence, checked writes and rollback. Run `run_server_postgres_create_view.py` and `combine_server_postgres_create_view_evidence.py` on both pinned releases.
 
 The [PostgreSQL materialized view contract](postgres-materialized-view-v1.json) compares persistent heap creation and ordinary refresh with native catalog headings, population flags, persisted rows across base updates, exact unreadable states and rollback. A cross-schema decoy distinguishes resolved targets. Run `run_server_postgres_materialized_view.py` and `combine_server_postgres_materialized_view_evidence.py` on both pinned releases.
+
+The [PostgreSQL create-table-as contract](postgres-create-table-as-v1.json) compares native logged and unlogged table creation from a resolved query. It checks the copied heading, nullability, writable empty tables, source changes, exact collision effects and transaction rollback. Run `run_server_postgres_create_table_as.py` and `combine_server_postgres_create_table_as_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.
 

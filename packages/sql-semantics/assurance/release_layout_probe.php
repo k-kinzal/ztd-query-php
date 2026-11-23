@@ -537,6 +537,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
         $queries['Schema\\View\\CreateMaterializedView'] = 'CREATE MATERIALIZED VIEW materialized_probe (n) AS VALUES (6) WITH NO DATA';
+        $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
         $queries['Schema\\View\\RefreshMaterializedView'] = 'REFRESH MATERIALIZED VIEW snapshot WITH NO DATA';
         $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
@@ -587,6 +588,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 array_column($result->columns, 'value'), $result->replace, $result->securityBarrier,
                 $result->securityInvoker, $result->checkOption->value,
                 $input->source->schema->value, $input->source->table->value, $input->columns[0]->expression->slot];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Query\\CreateTableAs') {
+            if ($result->query::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
+                throw new RuntimeException('The installed table declaration lost its native defining query.');
+            }
+            $details['postgresCreateTableAs'] = [$result->target->schema->value, $result->target->table->value,
+                array_column($result->columns, 'value'), $result->query->columnKind(0)->value,
+                $result->unlogged, $result->ifNotExists, $result->withData];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\CreateMaterializedView') {
             if ($result->query::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
