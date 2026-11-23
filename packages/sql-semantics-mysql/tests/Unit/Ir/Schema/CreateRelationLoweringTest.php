@@ -18,7 +18,7 @@ use SqlSemantics\Testing\MySql\Inspection;
 #[Medium]
 final class CreateRelationLoweringTest extends TestCase
 {
-    public function testEachDeclarationUsesItsOwnBoundary(): void
+    public function testLowerUsesTheBoundaryOfEachDeclaration(): void
     {
         $inspection = new Inspection();
         $table = $inspection->inspect('CREATE TABLE app.events (id INT)');
