@@ -1,0 +1,15 @@
+{
+  "revision": "SemanticsIR/mysql-unit-source-observer-1",
+  "approval": "pending-human-review",
+  "previousFailure": {
+    "candidate": "8feb180084f00759f790984f5631b6a3995a4bea",
+    "releases": ["mysql-5.6.51", "mysql-5.7.44"],
+    "domains": ["insert_query", "mysql_varchar_insert_query"],
+    "signal": "outside-observer-scope",
+    "cause": "The restricted observers recognized the previous derived singleton source and rejected the emitted unqualified MySQL DUAL singleton before native evaluation."
+  },
+  "admission": "Allow the exact unqualified DUAL singleton source in the MySQL INSERT SELECT observers. Retain the existing bounded projections, predicates, destinations and fixture source identities.",
+  "observations": "Retain the existing exact results, typed table effects, diagnostics, transaction state and rollback. Run the same seeds, finite identities, required forms, comparisons and negative cases.",
+  "affected": ["server_insert_query_observer.php", "mysql_varchar_insert_query.php"],
+  "replay": ["run_server_insert_query.py", "run_server_mysql_varchar_insert_query.py"]
+}

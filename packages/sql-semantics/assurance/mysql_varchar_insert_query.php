@@ -24,7 +24,7 @@ PATTERN;
     $operand = '(?:NULL|-?[0-9]{1,10}|' . $textAtom . '|\\(' . $textAtom . ' COLLATE utf8mb4_bin\\))';
     $field = $operand . ' AS ' . $name('(?:p[0-3]|value)');
     $physical = $schema . $name('ir_varchar_query_(?:scan|empty)') . '(?: AS ' . $alias . ')?';
-    $unit = '\\(SELECT 1\\) AS ' . $name('__ztd_unit');
+    $unit = '(?:DUAL|\\(SELECT 1\\) AS ' . $name('__ztd_unit') . ')';
     $source = '(?: FROM (?:' . $physical . '|' . $unit . '))?';
     $query = 'SELECT (?:DISTINCT )?' . $field . '(?:,\\h*' . $field . '){0,3}' . $source . '(?: WHERE (?&truth))?';
 

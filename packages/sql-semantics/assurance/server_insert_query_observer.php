@@ -30,7 +30,8 @@ function admitInsertQuery(string $sql, string $schema): bool
     $definition = '(?(DEFINE)(?<value>(?:' . $value . '|\\((?&value) ' . $arithmetic . ' (?&value)\\))))';
     $as = ' AS ' . $name('(?:p[0-9]+|left_field|right_field)');
     $field = '(?&value)' . $as;
-    $from = '(?: FROM (?:(?:ONLY )?' . $scan . '(?: AS ' . $alias . ')?|\\(SELECT 1\\) AS ' . $name('__ztd_unit') . '))?';
+    $unit = '\\(SELECT 1\\) AS ' . $name('__ztd_unit') . ($schema === 'public' ? '' : '|DUAL');
+    $from = '(?: FROM (?:(?:ONLY )?' . $scan . '(?: AS ' . $alias . ')?|' . $unit . '))?';
     $operator = '(?:<|>|=|<=|>=|<>|OPERATOR\\(pg_catalog\\.(?:<|>|=|<=|>=|<>)\\))';
     $filter = '(?:(?&value) ' . $operator . ' (?&value))';
     $where = '(?: WHERE (?:TRUE|FALSE|NULL|' . $filter . '|\\(' . $filter . '\\)))?';
