@@ -6,7 +6,7 @@ NATIVE = {
     "postgres_int4": "postgres-int4-operators-v2.json",
     "postgres_merged_join": "postgres-merged-join-v2.json",
     "postgres_full_merged_join": "postgres-full-merged-join-v1.json",
-    "postgres_from_list": "postgres-from-list-v1.json",
+    "postgres_from_list": "postgres-from-list-v2.json",
     "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
     "postgres_builtin_casts": "postgres-builtin-casts-v3.json",
     "postgres_typed_parameters": "postgres-typed-parameters-v1.json",

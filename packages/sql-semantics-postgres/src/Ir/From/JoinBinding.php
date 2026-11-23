@@ -48,6 +48,11 @@ final class JoinBinding
     private readonly array $inputs;
 
     /**
+     * @var non-empty-list<ParsedJoin> Joined occurrences owned by this subtree
+     */
+    private readonly array $joined;
+
+    /**
      * Binds both operands before any slot is exported.
      */
     public function __construct(private readonly BoundStatement $operation, private readonly ParsedJoin $join, private readonly bool $catalogFirst)
@@ -58,6 +63,11 @@ final class JoinBinding
         $right = $this->right instanceof self ? $this->right->inputs : [$this->right];
         $this->inputs = array_merge($left, $right);
         Check::input(count($this->inputs) <= 61, 'A joined source can have at most 61 input occurrences.');
+        $this->joined = [
+            $join,
+            ...($this->left instanceof self ? $this->left->joined : []),
+            ...($this->right instanceof self ? $this->right->joined : []),
+        ];
     }
 
     /**
@@ -73,11 +83,15 @@ final class JoinBinding
         $items = $source->items;
         Check::input(count($items) <= 61, 'A FROM list can have at most 61 input occurrences.');
         foreach ($items as $item) {
-            Check::input($item instanceof TableInput, 'A FROM list in this source domain requires ordinary table inputs.');
+            $group = self::ungroup($item);
+            Check::input(
+                $group instanceof TableInput || $group instanceof ParsedJoin,
+                'A FROM list in this source domain requires ordinary table inputs or checked explicit joins.',
+            );
         }
         $input = $items[0];
         foreach (array_slice($items, 1) as $item) {
-            $input = new ParsedJoin($input, ParsedKind::Cross, $item);
+            $input = new ParsedJoin($input, ParsedKind::Cross, $item instanceof ParsedJoin ? new ParenthesizedJoin($item) : $item);
         }
         Check::invariant($input instanceof ParsedJoin, 'A FROM list contains at least two inputs.');
 
@@ -126,7 +140,7 @@ final class JoinBinding
     {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');
-        $wholeJoin = self::ungroup($resolution->relation) === $this->join;
+        $wholeJoin = in_array(self::ungroup($resolution->relation), $this->joined, true);
         $expanded = null;
         foreach ($this->inputs as $occurrence => $binding) {
             $relation = $binding->relation();

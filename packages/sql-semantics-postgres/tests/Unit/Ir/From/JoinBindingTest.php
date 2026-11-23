@@ -66,6 +66,23 @@ final class JoinBindingTest extends TestCase
         self::assertFalse($source->right->only);
     }
 
+    public function testResolvedKeepsNestedJoinHeadingOriginInsideAProduct(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (id INTEGER)');
+        $query = $inspection->inspect('SELECT * FROM public.t a, public.t b LEFT JOIN public.t c ON b.id=c.id', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $operation = $query->binding();
+        $fields = $operation->facts->query($query->statement)->fields();
+        self::assertNotNull($fields);
+        $field = $fields->at(2)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $field);
+        $binding = JoinBinding::bind($operation, $query->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        self::assertSame(2, $binding->resolved($field)->occurrence);
+    }
+
     public function testBindKeepsAnAbsentSource(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1');
