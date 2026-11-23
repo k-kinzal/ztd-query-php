@@ -21,14 +21,13 @@ def merged_fields(sources, keys):
 def layout(keys, orientation, projection):
     sources = INPUTS if orientation == "original" else INPUTS[::-1]
     keys = LAYOUTS[keys]
-    match projection:
-        case "visible":
-            fields = merged_fields(sources, keys)
-        case "qualified":
-            fields = [*field_names(sources, keys, True), (0, HEADINGS[sources[0]][0], "original")]
-        case "representative":
-            fields = [(1, name, "representative") for name in ("key", "lane")]
-    return case("RIGHT", sources, keys, fields)
+    fields = {
+        "visible": merged_fields(sources, keys),
+        "qualified": [*field_names(sources, keys, True), (0, HEADINGS[sources[0]][0], "original")],
+        "representative": [(1, name, "representative") for name in ("key", "lane")],
+    }
+    return case("RIGHT", sources, keys, fields[projection])
+
 
 
 def with_filter(query, name, text):
