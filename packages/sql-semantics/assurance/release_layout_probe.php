@@ -52,10 +52,20 @@ function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): 
     $projection = $semantics->analyze('SELECT label COLLATE utf8mb4_bin AS v, s.label AS v FROM app.native_source s', $context);
     $grouped = $semantics->analyze('SELECT MIN(label) AS low, MAX(DISTINCT s.label) AS high FROM app.native_source s', $context);
     $write = $semantics->analyze('INSERT INTO app.native_target (label, id) SELECT DISTINCT s.label COLLATE utf8mb4_bin AS v, s.id AS n FROM app.native_source s', $context);
+    $joined = $semantics->analyze('SELECT q.message AS message, q.id AS local_id FROM app.native_source p LEFT JOIN '
+        . '(SELECT label AS message, id FROM app.native_source) q ON p.id = q.id', $context);
+    $composed = $semantics->analyze('SELECT q.label AS item, q.id AS item FROM (SELECT id, label FROM app.native_source) q', $context);
     if (!$projection instanceof SqlSemantics\Platform\MySql\Ir\Select
         || !$grouped instanceof SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect
-        || !$write instanceof SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery) {
+        || !$write instanceof SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery
+        || !$composed instanceof SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection
+        || !$joined instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$joined->source instanceof SqlSemantics\Platform\MySql\Ir\From\Join) {
         throw new RuntimeException('The installed analyzer lost a checked MySQL VARCHAR root.');
+    }
+    $derived = $joined->source->inputs()[1];
+    if (!$derived instanceof SqlSemantics\Platform\MySql\Ir\From\DerivedSource) {
+        throw new RuntimeException('The installed analyzer lost the derived MySQL occurrence.');
     }
     $explicit = $projection->columns[0]->expression;
     $implicit = $projection->columns[1]->expression;
@@ -65,6 +75,8 @@ function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): 
     $inherited = $projection->source->columnTypes[0];
     $first = $write->query->columns[0]->expression;
     $second = $write->query->columns[1]->expression;
+    $local = $joined->columns[0]->expression;
+    $native = $derived->columnType(0);
     return [
         'projection' => [$explicit::class, $explicit->operand::class, $explicit->operand->slot, $implicit::class, $implicit->slot,
             $inherited->collation->value, $inherited->length, $projection->toString()],
@@ -73,6 +85,11 @@ function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): 
         'write' => [array_map(static fn ($column) => $column->value, $write->target->columns),
             $destination->length, $destination->collation->value, $destination->nullable, $write->target->columnTypes[1]->value,
             $write->query->distinct, $first::class, $first->operand->slot, $second::class, $second->slot, $write->toString()],
+        'derived' => [$local::class, $local->occurrence, $local->slot, $native->collation->value, $native->length,
+            $native === $derived->definition->source->columnTypes[0], $derived->columnType(1)->value,
+            $derived->columnType(2), $joined->toString()],
+        'local' => [array_map(static fn ($column) => [$column->slot, $column->name->value], $composed->columns),
+            $composed->definition->columns[1]->expression::class, $composed->toString()],
     ];
 }
 

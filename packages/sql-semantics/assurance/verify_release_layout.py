@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v36.json"
-CONTRACT = "1ec7857975dffd054144240d9a68aadbf086b965d727b7fff9e83bc1a72f0896"
+CONTRACT_NAME = "release-layout-v37.json"
+CONTRACT = "cca8c9603ba2bf1291262edc78e4243213063542a4c0398f3e5ac1725a003875"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -24,12 +24,21 @@ def mysql_varchar_publication():
     source = " FROM `app`.`native_source` AS `__ztd_source`"
     label, signed = "`__ztd_source`.`label`", "`__ztd_source`.`id`"
     text = f"({label} COLLATE utf8mb4_bin) AS `v`"
+    joined_alias = "`__ztd_source_1`"
+    local_text, local_signed = f"{joined_alias}.`__ztd_c0`", f"{joined_alias}.`__ztd_c1`"
+    definition = f"SELECT {label} AS `__ztd_c0`, {signed} AS `__ztd_c1`{source}"
+    joined = (f"SELECT {local_text} AS `message`, {local_signed} AS `local_id` FROM (`app`.`native_source` AS `__ztd_source` "
+              f"LEFT JOIN ({definition}) AS {joined_alias} ON ({signed} = {local_signed}))")
+    local = ("SELECT `__ztd_local`.`__ztd_c1` AS `item`, `__ztd_local`.`__ztd_c0` AS `item` "
+             f"FROM (SELECT {signed} AS `__ztd_c0`, {label} AS `__ztd_c1`{source}) AS `__ztd_local`")
     return {
         "projection": [collated, text_slot, 0, text_slot, 0, "utf8mb4_bin", 8, f"SELECT {text}, {label} AS `v`{source}"],
         "group": ["min", text_slot, 0, False, "max", text_slot, 0, True,
                   f"SELECT min({label}) AS `low`, max(DISTINCT {label}) AS `high`{source}"],
         "write": [["label", "id"], 2, "utf8mb4_bin", False, "int", True, collated, 0, ir + "ColumnReference", 1,
                   f"INSERT INTO `app`.`native_target` (`label`, `id`) SELECT DISTINCT {text}, {signed} AS `n`{source}"],
+        "derived": [text_slot, 1, 0, "utf8mb4_bin", 8, True, "int", None, joined],
+        "local": [[[1, "item"], [0, "item"]], text_slot, local],
     }
 
 
