@@ -11,6 +11,7 @@ require __DIR__ . '/mysql_varchar_effect.php';
 require __DIR__ . '/mysql_varchar_write.php';
 require __DIR__ . '/mysql_varchar_assignment.php';
 require __DIR__ . '/mysql_varchar_insert.php';
+require __DIR__ . '/mysql_varchar_insert_query.php';
 [$pdo, $environment] = connectFixture($engine);
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
@@ -50,6 +51,14 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         }
 
         return mysqlVarcharInsert($pdo, $input['sql']);
+    }
+    if (($input['observeMysqlVarcharInsertQuery'] ?? false) === true) {
+        if ($readOnly) {
+            $pdo->exec('ROLLBACK');
+            $readOnly = false;
+        }
+
+        return mysqlVarcharInsertQuery($pdo, $input['sql']);
     }
     if (!$readOnly) {
         $pdo->exec('START TRANSACTION READ ONLY');

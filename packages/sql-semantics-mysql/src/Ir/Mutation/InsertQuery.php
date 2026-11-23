@@ -6,9 +6,12 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
-use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -30,13 +33,10 @@ final class InsertQuery implements SemanticsIR
     use Snapshot;
 
     /**
-     * Establishes the positional correspondence and checks the signed input roles.
+     * Matches the native type of each supplied value to its target position.
      */
     public function __construct(public readonly TableSource $target, public readonly Select $query)
     {
-        foreach ($target->columnTypes as $type) {
-            Check::input($type === ColumnKind::SignedInt, 'An INSERT target slot requires the signed INT type.');
-        }
         $width = count($target->columns);
         Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');
         Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');
@@ -44,8 +44,15 @@ final class InsertQuery implements SemanticsIR
             !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,
             'The INSERT query must be independent, unbounded and unordered.'
         );
-        foreach ($query->columns as $column) {
+        foreach ($query->columns as $position => $column) {
             $value = $column->expression;
+            if ($target->columnTypes[$position] instanceof Varchar) {
+                Check::input(
+                    $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof CollatedText || $value instanceof NullLiteral,
+                    'A query INSERT VARCHAR field requires a native text value or NULL.',
+                );
+                continue;
+            }
             Check::input(
                 $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerLiteral || $value instanceof NullLiteral,
                 'Each query INSERT field requires a signed value or NULL.',

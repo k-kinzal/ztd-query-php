@@ -24,6 +24,8 @@ An ordinary single-table UPDATE can assign a resolved VARCHAR field, a plain tex
 
 An ordinary INSERT VALUES can write text, signed integer and NULL literals to an explicit list of resolved native destinations. Each row follows the destination order. With empty SQL mode, NULL in a required VARCHAR causes a single-row INSERT to fail. A multi-row INSERT stores the implicit empty value and emits a warning.
 
+An ordinary `INSERT ... SELECT` can write native VARCHAR fields, text literals, and NULL alongside signed values from a checked SELECT. The field order determines the destination of each expression. `DISTINCT` applies before the target’s storage conversion. Under empty SQL mode this form substitutes the implicit empty string for NULL assigned to a required VARCHAR and warns, including when the SELECT produces one row.
+
 COUNT can read a native VARCHAR field in a global or signed-key grouped query. COUNT skips NULL and COUNT DISTINCT counts the field’s case-sensitive PAD SPACE equivalence classes.
 
 MIN and MAX over a native VARCHAR field use its PAD SPACE ordering. They return the original bytes of an extremal value, including trailing spaces, or NULL when no non-NULL value enters the aggregate. Equal extremal values can have different stored bytes.
