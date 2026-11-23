@@ -17,8 +17,8 @@ use SqlSemantics\SemanticsIR;
  * @visibility public
  * @example Retaining the descendant policy
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $context = $semantics->context(['CREATE TABLE reports (id integer)']);
- *     $semantics->analyze('ALTER TABLE ONLY reports RENAME COLUMN id TO report_id', $context)->only // => true
+ *     $declarations = $semantics->context(['CREATE TABLE reports (id integer)']);
+ *     $semantics->analyze('ALTER TABLE ONLY reports RENAME COLUMN id TO report_id', $declarations)->only // => true
  */
 final class RenameColumn implements SemanticsIR
 {

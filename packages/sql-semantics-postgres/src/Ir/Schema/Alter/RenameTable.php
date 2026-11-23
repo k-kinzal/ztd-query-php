@@ -17,8 +17,8 @@ use SqlSemantics\SemanticsIR;
  * @visibility public
  * @example Renaming a persistent table
  *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
- *     $context = $semantics->context(['CREATE TABLE reports (id integer)']);
- *     $semantics->analyze('ALTER TABLE reports RENAME TO archived', $context)->toString() // => 'ALTER TABLE "public"."reports" RENAME TO "archived"'
+ *     $declarations = $semantics->context(['CREATE TABLE reports (id integer)']);
+ *     $semantics->analyze('ALTER TABLE reports RENAME TO archived', $declarations)->toString() // => 'ALTER TABLE "public"."reports" RENAME TO "archived"'
  */
 final class RenameTable implements SemanticsIR
 {
