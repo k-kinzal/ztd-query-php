@@ -102,7 +102,7 @@
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$clauses</span> = <span class="tok-kw">new</span> <span class="tok-id">QueryClauses</span>();</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$where</span> = <span class="tok-var">$clauses</span>-&gt;<span class="tok-id">predicate</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$binding</span>);</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$joins</span> = <span class="tok-var">$clauses</span>-&gt;<span class="tok-id">joins</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">from</span>, <span class="tok-var">$binding</span>);</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$joins</span> = <span class="tok-var">$clauses</span>-&gt;<span class="tok-id">joins</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">from</span>, <span class="tok-var">$binding</span>, <span class="tok-var">$operation</span>);</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a></span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Select</span>(</span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-var">$results</span>,</span>
