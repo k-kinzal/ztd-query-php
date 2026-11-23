@@ -1,0 +1,53 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-fields-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "UTF-8, standard_conforming_strings on, pg_catalog first and stock Boolean operators and ordering.",
+  "extends": ["postgres-typed-columns-v2.json", "postgres-boolean-tests-v1.json", "postgres-create-boolean-v2.json"],
+  "constructors": {
+    "BooleanColumnReference": {
+      "type": "From/BooleanColumnReference",
+      "role": "One typed read of a native Boolean member of an owning table occurrence.",
+      "structure": "The zero-based occurrence and slot identifying the exact Boolean field.",
+      "conditions": "Coordinates are nonnegative. The owner must bind an existing bool slot of that occurrence.",
+      "meaning": "Read true, false or NULL from this field, including when the selected join side supplies a NULL extension.",
+      "sql": "Emit the controlled occurrence alias and the resolved field name for the ordered slot."
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "TableSource", "From/ColumnKind", "From/Join", "From/DerivedSource", "Predicate/NullTest", "Predicate/TruthTest", "Predicate/LogicalPredicate", "BooleanLiteral", "NullLiteral"],
+  "structure": "A checked SELECT result or Boolean predicate reads a native bool position in an ordinary physical or independent derived relation. A predicate can use the field directly or compose it with NULL and truth tests. Scope and result ordering follow the owning query.",
+  "conditions": "Close every scoped Boolean read over its typed occurrence. Unqualified and qualified readings of the same declared field share the same target coordinates. Reject missing or incorrectly typed Boolean slots before publishing a complete value.",
+  "meaning": "A Boolean read produces the stored truth value or NULL. A filter keeps TRUE only. Truth and NULL tests follow PostgreSQL's three-valued semantics and return Boolean results. DISTINCT uses native Boolean equality including NULL duplicate handling. ORDER BY uses PostgreSQL's Boolean ordering and explicit NULL positions.",
+  "sql": "Emit qualified field reads, preserve the operand and scope of each predicate, and emit exact projected field names and ordering positions.",
+  "observations": ["Ordered field labels, exact native bool type, resolved occurrence and slot", "TRUE, FALSE and NULL, predicate effects, and outer join null extension", "Multiplicity and DISTINCT, ordered result tuples, and the empty result descriptor"],
+  "finite": {
+    "sources": ["physical", "inner", "left"],
+    "fields": ["enabled", "fallback"],
+    "filters": ["absent", "direct", "is-null", "is-true", "is-false", "is-unknown"],
+    "extent": ["unordered", "ordered"],
+    "distinct": [false, true],
+    "identities": 144,
+    "completeness": "Recover the exact native field, occurrence, source role, predicate, result order and multiplicity policy from the constructed graph and consume each distinct combination in both releases."
+  },
+  "analysis": ["Unqualified and qualified names select the same bool field", "A bare Boolean filter", "A Boolean NULL test", "A joined bool field and NULL extension", "A derived input preserves bool and numeric roles", "Empty result metadata", "Boolean and signed output order with DISTINCT"],
+  "exploration": {"seeds": [3967, 17191, 47527], "casesPerSeed": 24, "timeoutSecondsPerRelease": 240, "allowedExclusions": [], "requiredForms": "Vary both physical fields, occurrence roles, nesting of supported truth tests and logical operators, projected labels and duplication, nullable rows, filter and order."},
+  "negative": ["Negative field slot", "Negative occurrence", "Missing field slot", "Missing occurrence", "Signed slot used as bool", "Bool slot used as signed", "Bool slot used as text"],
+  "faults": ["Read the wrong visible Boolean slot", "Erase right-side NULL extension", "Replace the Boolean result by a signed integer", "Erase a Boolean filter", "Change a truth test"],
+  "evidence": {
+    "P01": "Bind the exact occurrence, ordinal and native Boolean role.",
+    "P02": "Require scope and exact field kind on every public construction path.",
+    "P03": "Retain immutable resolved positions and operations.",
+    "P04": "Build projection, predicate, order and effect from resolved operands.",
+    "P05": "Use closed immutable references and owned scope lists.",
+    "P06": "Emit native field reads that preserve Boolean type, nullability effects and exact observation.",
+    "Q01": "Reject invalid positions and mismatched typed references at the owning scope.",
+    "Q02": "Exhaust the registered direct combinations and observe successful analyzed forms.",
+    "Q03": "Observe sorted and filtered Boolean data in plain and joined queries.",
+    "Q04": "Compare type, values, order and multiplicity against native SQL and a separate evaluator.",
+    "Q05": "Link loaded public roots, checked PHP shapes, distribution and recorded native evidence."
+  },
+  "open": ["Other Boolean comparison and conversion operators", "Typed Boolean storage in write destinations", "Additional derived and local Boolean query roles"],
+  "trust": ["Pinned native Boolean data and declared type binding", "Checked occurrence and NULL extension rules", "Independent relational and Boolean evaluator", "Native server type metadata and source linkage"],
+  "sources": ["https://www.postgresql.org/docs/17/datatype-boolean.html", "https://www.postgresql.org/docs/17/functions-comparison.html"]
+}
