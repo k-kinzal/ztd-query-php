@@ -1,0 +1,139 @@
+{
+  "revision": "SemanticsIR/postgres-truncate-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "mode": "Native persistent PostgreSQL base tables, exact qualified names, transactional rows and sequences, ordinary inheritance and foreign-key dependencies.",
+  "extends": [
+    "server-drop-table-v2.json",
+    "postgres-table-rename-v2.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Truncate/TruncateTable"
+  ],
+  "constructors": {
+    "TruncateTarget": {
+      "type": "Schema/Truncate/TruncateTarget",
+      "role": "One resolved persistent table in its written position, with its descendant mode.",
+      "structure": "A checked absolute TableName and an ONLY flag.",
+      "conditions": "The name is a persistent base-table identity under the external catalog. The wrapper retains the occurrence even when another occurrence names the same table.",
+      "meaning": "Request truncation of the exact table with or without descendants when that table is first processed.",
+      "sql": "Emit the optional ONLY flag followed by the quoted absolute table name."
+    },
+    "TruncateTable": {
+      "type": "Schema/Truncate/TruncateTable",
+      "role": "A native ordered table-clearing operation with its effect policies.",
+      "structure": "A nonempty owned ordered list of TruncateTarget values, native release, explicit sequence policy, and explicit foreign-key dependency policy.",
+      "conditions": "Construction checks the list and every target role. Analysis requires all tables to resolve to an ordinary persistent base table. Repeated targets and conflicting descendant spellings retain their exact occurrence order.",
+      "meaning": "Process the named tables, their selected descendants and any cascaded references. The first occurrence of a physical table determines its inclusion and descent. Preserve the native trigger order, optional resets of owned sequences, and transactional effects.",
+      "sql": "Emit the full ordered list, RESTART IDENTITY or CONTINUE IDENTITY, and CASCADE or RESTRICT."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier"
+  ],
+  "structure": "Ordered checked targets plus explicit operation policies. Preserve first occurrence behavior for duplicate and inherited targets.",
+  "conditions": "Admit every native occurrence shape within the persistent base-table profile. Reject unresolved names, session-local targets and unsupported relation kinds before publication.",
+  "meaning": "Clear the native row sets, derive dependent tables from the same externally interpreted referential graph, and either reset or retain owned sequence state. The database retains metadata and rolls back the whole operation when the surrounding transaction rolls back.",
+  "sql": "Use a native TRUNCATE TABLE with precise identity, order and effect flags.",
+  "observations": [
+    "Exact row bags, ordered field metadata and table identities before and after the operation",
+    "A retained same-named decoy and an independent sequence",
+    "Sequence last_value and is_called for every affected owned sequence before and after rollback",
+    "Exact dependency failure, descendant effects and transitive cascade",
+    "Ordered BEFORE and AFTER TRUNCATE events and absence of DELETE events"
+  ],
+  "finite": {
+    "fixture": [
+      "plain",
+      "dependent"
+    ],
+    "targets": [
+      "main",
+      "independent-first",
+      "with-dependents",
+      "dependents-first",
+      "duplicate-only-first",
+      "duplicate-all-first"
+    ],
+    "restart": [
+      false,
+      true
+    ],
+    "cascade": [
+      false,
+      true
+    ],
+    "identities": 48,
+    "completeness": "Recover target order, descendant flags, sequence policy and dependency policy from loaded values and compare the actual fixture before the native run."
+  },
+  "analysis": [
+    "Unqualified resolved table with defaults",
+    "Explicit qualified ONLY and RESTART IDENTITY",
+    "Trailing star includes descendants",
+    "Full explicit target list under RESTRICT",
+    "Dependent objects under CASCADE",
+    "Repeated ONLY-first target",
+    "Repeated ordinary-first target",
+    "Cross-schema decoy chosen explicitly"
+  ],
+  "negative": [
+    "Empty target list",
+    "String where a checked table target is required",
+    "Known required table is absent",
+    "A known view supplied as a table",
+    "A session-temporary schema used as an absolute persistent target",
+    "An incomplete catalog cannot resolve the source"
+  ],
+  "exploration": {
+    "seeds": [
+      421,
+      2179,
+      5483
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary repeated and nested target scope, order, fixture, sequence and dependency flags, explicitly chosen decoy and native missing or restrictive failure."
+  },
+  "faults": [
+    "Redirect the resolved schema",
+    "Erase ONLY from a target",
+    "Erase sequence restart",
+    "Replace CASCADE with RESTRICT",
+    "Reorder the explicit list",
+    "Admit an empty target list"
+  ],
+  "evidence": {
+    "P01": "Fix absolute table identity, every occurrence order and explicit effect flags.",
+    "P02": "Use checked owned roles and reject unresolved or wrong relation kinds.",
+    "P03": "Retain only names and semantic policy, with external graphs supplied by the native catalog.",
+    "P04": "Compose native truncation and sequence effects from the ordered targets and externally interpreted graph.",
+    "P05": "Freeze owned arrays, flags, nested final names and the grammar release.",
+    "P06": "Emit a native statement preserving typed effects, callbacks, failures and restoration.",
+    "Q01": "Verify checked native PHP shape and independent inadmissible inputs.",
+    "Q02": "Require all fixed finite identities and both authored and direct positives.",
+    "Q03": "Evaluate expansion, dependency ordering, row effects and sequence ownership independently.",
+    "Q04": "Compare exact native step events, data, state and rollback.",
+    "Q05": "Link the same roles in both installed package arrangements to the exact source and replay evidence."
+  },
+  "open": [
+    "Foreign tables, session-local relations, partition-specific locking and external privileges",
+    "Transactional concurrency and session currval behavior after a rollback are outside the finite observations"
+  ],
+  "trust": [
+    "Truthful schema and persistent table identities",
+    "PostgreSQL native grammar, inheritance and referential catalogs",
+    "Exact fixed PHP and independent native observer"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-truncate.html",
+    "https://www.postgresql.org/docs/17/sql-truncate.html"
+  ]
+}
