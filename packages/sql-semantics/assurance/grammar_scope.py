@@ -457,7 +457,7 @@ def inventory(root):
             for rule in ("ViewStmt", "opt_check_option", "opt_reloptions"):
                 for alternative in rules.get(rule, []):
                     if "RECURSIVE" not in alternative:
-                        related[alternative] = (*related.get(alternative, ()), "postgres-create-view-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-view-v2.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

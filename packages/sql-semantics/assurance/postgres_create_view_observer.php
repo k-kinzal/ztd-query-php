@@ -116,6 +116,11 @@ function observeDeclaration(PDO $pdo, array $request): array
     resetViewDeclaration($pdo, $request['existing']);
     $before = viewDeclarationState($pdo);
     $pdo->beginTransaction();
+    $pdo->exec('SET LOCAL search_path = public');
+    $scope = $pdo->query(
+        "SELECT json_build_array(current_schema()::text, current_setting('search_path'), current_schemas(true)::text[])",
+    )->fetchColumn();
+    $creationScope = json_decode($scope, true, 512, JSON_THROW_ON_ERROR);
     $pdo->exec('INSERT INTO public.ir_cv_marker VALUES (7)');
     $result = attemptDeclarationAction($pdo, $request['sql'], 'created');
     $created = viewDeclarationState($pdo);
@@ -132,7 +137,7 @@ function observeDeclaration(PDO $pdo, array $request): array
         ? $before['oids']['public'] === $created['oids']['public'] : null;
 
     return [
-        'status' => 'view-declaration', 'result' => $result, 'write' => $write, 'active' => $active, 'sameIdentity' => $identity,
+        'status' => 'view-declaration', 'creationScope' => $creationScope, 'result' => $result, 'write' => $write, 'active' => $active, 'sameIdentity' => $identity,
         'before' => $before['state'], 'created' => $created['state'], 'afterUpdate' => $afterUpdate['state'],
         'restored' => $restored['state'],
     ];

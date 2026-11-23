@@ -271,7 +271,7 @@ The [PostgreSQL VALUES set contract](postgres-values-compound-v1.json) checks na
 
 The [PostgreSQL standalone VALUES contract](postgres-values-v3.json) fixes rectangular row and cell roles, native whole-column type resolution, duplicate and NULL rows and the built-in output names and type IDs. Its direct width probes exercise the last supported result field. Run `run_server_postgres_values.py` and `combine_server_postgres_values_evidence.py` on both pinned releases.
 
-The [PostgreSQL persistent view contract](postgres-create-view-v1.json) compares schema-qualified view creation and replacement with native catalog metadata, live reads after a base update, security option presence, checked writes and rollback. Run `run_server_postgres_create_view.py` and `combine_server_postgres_create_view_evidence.py` on both pinned releases.
+The [PostgreSQL persistent view contract](postgres-create-view-v2.json) compares schema-qualified view creation and replacement with native catalog metadata, live reads after a base update, security option presence, checked writes and rollback. Run `run_server_postgres_create_view.py` and `combine_server_postgres_create_view_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.
 

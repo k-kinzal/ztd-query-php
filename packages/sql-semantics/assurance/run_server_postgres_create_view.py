@@ -17,8 +17,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "postgres-create-view"
 OBSERVER = "postgres_create_view_observer.php"
-CONTRACT_NAME = "postgres-create-view-v1.json"
-CONTRACT = "5ff53d464aec278b0d155dd95aa14b94633d975671ad11eb478140221ceacea3"
+CONTRACT_NAME = "postgres-create-view-v2.json"
+CONTRACT = "4433c5665a8860047588ef378b3dcfeecb0bc0b908bdfa8dcabca410da37024d"
 COMPLETE_SEEDS = True
 AXES = ("policy", "fixture", "body", "securityBarrier", "securityInvoker")
 BOOL = {"omitted": None, "enabled": True, "disabled": False}
@@ -225,7 +225,8 @@ def prediction(item):
     updated = snapshot(item["existing"], changed, active=True)
     if executed:
         updated["views"][SCHEMA] = body_result(definition, changed)
-    return {"status": "view-declaration", "result": result, "write": write, "active": True,
+    return {"status": "view-declaration", "creationScope": ["public", "public", ["pg_catalog", "public"]],
+            "result": result, "write": write, "active": True,
             "sameIdentity": True if item["existing"] else None, "before": initial, "created": after,
             "afterUpdate": updated, "restored": initial}
 

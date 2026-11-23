@@ -38,7 +38,7 @@ NATIVE = {
     "postgres_signed_range_widths": "postgres-signed-range-widths-v1.json",
     "postgres_with_projection": "postgres-with-projection-v1.json",
     "postgres_drop_view": "postgres-drop-view-v1.json",
-    "postgres_create_view": "postgres-create-view-v1.json",
+    "postgres_create_view": "postgres-create-view-v2.json",
     "postgres_values": "postgres-values-v3.json",
     "postgres_local_values": "postgres-local-values-v2.json",
     "postgres_values_compound": "postgres-values-compound-v1.json",
