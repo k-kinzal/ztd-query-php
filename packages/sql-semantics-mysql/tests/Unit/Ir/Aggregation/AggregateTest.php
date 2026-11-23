@@ -43,8 +43,17 @@ final class AggregateTest extends TestCase
 
     public function testSumCannotAcceptANativeVarcharArgument(): void
     {
-        $this->expectExceptionMessage('A VARCHAR aggregate argument requires COUNT.');
+        $this->expectExceptionMessage('SUM requires a signed INT argument.');
 
         new Aggregate(AggregateOperator::Sum, new TextColumnReference(1));
+    }
+
+    public function testMinPreservesTheNativeVarcharPosition(): void
+    {
+        $reference = new TextColumnReference(3);
+        $value = new Aggregate(AggregateOperator::Min, $reference);
+
+        self::assertSame($reference, $value->argument);
+        self::assertSame(AggregateOperator::Min, $value->operator);
     }
 }

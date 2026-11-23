@@ -131,7 +131,7 @@ def negative(tag):
     yield grouped(tag, PRIMARY, [], [[aggregate("count", field(1)), "n"]]), scope
     yield grouped(tag, PRIMARY, [], [[aggregate("count", slot(0)), "n"]]), "The aggregate slot must belong to the group input."
     yield grouped(tag, PRIMARY, [], [[aggregate("count", field(0, 1)), "n"]]), "The aggregate argument must read its single input occurrence."
-    yield query(tag, f"SELECT SUM(label) AS n FROM {target}", DECLARATIONS), "A VARCHAR aggregate argument requires COUNT."
+    yield query(tag, f"SELECT SUM(label) AS n FROM {target}", DECLARATIONS), "SUM requires a signed INT argument."
     yield (query(tag, f"SELECT COUNT(label) AS n FROM {target}", [ddl(PRIMARY).replace(COLLATION, "utf8mb4_general_ci")]),
            "The text slot requires an explicit utf8mb4_bin collation.")
 

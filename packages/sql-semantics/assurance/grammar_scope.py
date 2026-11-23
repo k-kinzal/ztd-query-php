@@ -206,6 +206,9 @@ def inventory(root):
             )
             for alternative in grouped_count:
                 related[alternative] = (*related.get(alternative, ()), "mysql-varchar-count-v1.json")
+            for alternative in rules.get("sum_expr", ()):
+                if alternative.startswith(("sum_expr: MIN_SYM (", "sum_expr: MAX_SYM (")):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-varchar-extrema-v1.json")
             for rule in ("default_charset", "default_collation", "create_table_option"):
                 for alternative in rules.get(rule, ()):
                     if alternative != rule + ":" and (

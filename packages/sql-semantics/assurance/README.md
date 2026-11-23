@@ -253,6 +253,8 @@ The [VARCHAR VALUES domain](mysql-varchar-insert-v2.json) compares the exact typ
 
 The [VARCHAR COUNT domain](mysql-varchar-count-v1.json) checks nullable and duplicate text fields, global zeros, keyed grouping, required legacy group ordering and exact output metadata. Its oracle independently partitions rows and counts exact non-NULL values or PAD SPACE equivalence classes. Run `run_server_mysql_varchar_count.py` and replay with `combine_server_mysql_varchar_count_evidence.py`.
 
+The [VARCHAR extrema domain](mysql-varchar-extrema-v1.json) checks native `MIN` and `MAX` by position, including NULL, duplicate labels, empty inputs, result collation and legacy grouping order. The independent model compares exact stored representatives of the extreme PAD SPACE class and preserves row multiplicity. Run `run_server_mysql_varchar_extrema.py` and replay with `combine_server_mysql_varchar_extrema_evidence.py`.
+
 The [VARCHAR inheritance domain](mysql-varchar-inheritance-v2.json) checks a resolved table default and explicit column overrides. It compares the derived physical slot with direct construction and checks native character-set, collation, width and nullability metadata before comparing the results. Run `run_server_mysql_varchar_inheritance.py` and replay with `combine_server_mysql_varchar_inheritance_evidence.py`.
 
 The [explicit MySQL collation domain](mysql-explicit-text-collation-v1.json) compares the native result columns and observes their collation and coercibility by position, including duplicate labels and projections filtered to an empty result. Run `run_server_mysql_explicit_text_collation.py` and replay with `combine_server_mysql_explicit_text_collation_evidence.py`.

@@ -33,6 +33,6 @@ final class Aggregate
             'Only a nondistinct COUNT can omit the aggregate argument.'
         );
         Check::input($argument === null || $argument->occurrence === 0, 'The aggregate argument must read its single input occurrence.');
-        Check::input(!$argument instanceof TextColumnReference || $operator === AggregateOperator::Count, 'A VARCHAR aggregate argument requires COUNT.');
+        Check::input(!$argument instanceof TextColumnReference || $operator !== AggregateOperator::Sum, 'SUM requires a signed INT argument.');
     }
 }

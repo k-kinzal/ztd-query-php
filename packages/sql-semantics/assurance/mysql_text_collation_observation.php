@@ -12,8 +12,8 @@ function mysqlTextCollationObservations(PDO $pdo, string $sql): array
     foreach ($expressions as $expression) {
         $columns[] = "CHARSET(($expression)), COLLATION(($expression)), COERCIBILITY(($expression))";
     }
-    // This probe measures expression metadata. The original evaluation observes
-    // the rows under the original WHERE independently, including an empty result.
+    // The original evaluation observes the rows under all original clauses.
+    // This companion probe also sees static metadata for empty keyed groups.
     $cursor = $pdo->query('SELECT ' . implode(', ', $columns) . $source . ' LIMIT 1');
     $values = $cursor->fetch(PDO::FETCH_NUM);
     $cursor->closeCursor();
@@ -52,7 +52,7 @@ PATTERN;
             continue;
         }
         $kind = strtoupper($value);
-        if (in_array($kind, ['WHERE', 'ORDER', 'LIMIT'], true)) {
+        if (in_array($kind, ['WHERE', 'GROUP', 'HAVING', 'ORDER', 'LIMIT'], true)) {
             $end = $offset;
             break;
         }
