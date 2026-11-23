@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Aggregation\Aggregate;
 use SqlSemantics\Platform\MySql\Ir\Aggregation\AggregateOperator;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 
 #[CoversClass(Aggregate::class)]
 #[Small]
@@ -29,5 +30,21 @@ final class AggregateTest extends TestCase
         $this->expectExceptionMessage('Only a nondistinct COUNT can omit the aggregate argument.');
 
         new Aggregate(AggregateOperator::Count, distinct: true);
+    }
+
+    public function testCountAcceptsAnExactVarcharArgument(): void
+    {
+        $reference = new TextColumnReference(1);
+        $aggregate = new Aggregate(AggregateOperator::Count, $reference, true);
+
+        self::assertSame($reference, $aggregate->argument);
+        self::assertTrue($aggregate->distinct);
+    }
+
+    public function testSumCannotAcceptANativeVarcharArgument(): void
+    {
+        $this->expectExceptionMessage('A VARCHAR aggregate argument requires COUNT.');
+
+        new Aggregate(AggregateOperator::Sum, new TextColumnReference(1));
     }
 }

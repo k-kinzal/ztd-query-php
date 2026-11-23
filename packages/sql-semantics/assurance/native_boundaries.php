@@ -54,6 +54,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-varchar-comparison-boundaries-v1.json', '8d997095c80064880f6c6e3ef6e8c43c90ea4490a909eeb5ef64ce545963b149'],
             ['mysql-varchar-assignment-boundaries-v1.json', '17bf1801f1d93fc7a69ae05645249e9d4483c0cfc0b62240cb3aa278e586714a'],
             ['mysql-varchar-insert-boundaries-v1.json', 'cb98b50df5693008bd453adbf33981fc46f465162deede996663ad8f25a4bf2d'],
+            ['mysql-varchar-count-boundaries-v1.json', 'dd89e17397c9f9e6abe9f73b9a4710b1bc91eb09561c035ac973d860552a45bc'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],

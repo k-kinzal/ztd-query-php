@@ -1,0 +1,101 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-count-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Resolve the typed COUNT input, verify its ownership and preserve its exact DISTINCT and predicate placement.",
+  "rules": {
+    "Aggregation/Aggregate::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $argument !== null || ($operator === AggregateOperator::Count && !$distinct),",
+        "    'Only a nondistinct COUNT can omit the aggregate argument.'",
+        ");",
+        "Check::input($argument === null || $argument->occurrence === 0, 'The aggregate argument must read its single input occurrence.');",
+        "Check::input(!$argument instanceof TextColumnReference || $operator === AggregateOperator::Count, 'A VARCHAR aggregate argument requires COUNT.');"
+      ]
+    },
+    "Aggregation/AggregateBinding::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$operator = AggregateOperator::tryFrom(strtolower($expression->function->value));",
+        "Check::input(",
+        "    $operator !== null && $expression->over === null && count($expression->arguments) <= 1,",
+        "    'The grouped aggregate requires one supported builtin without a window.'",
+        ");",
+        "$argument = $expression->arguments[0] ?? null;",
+        "return new Aggregate($operator, $argument === null ? null : $binding->field($argument), $expression->distinct);"
+      ]
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "$scope = new OccurrenceScope();",
+        "foreach ($results as $result) {",
+        "    $value = $result->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "        $name = $result->name->value;",
+        "        Check::input(",
+        "            $name === ltrim($name, \" \\t\\r\\n\\v\\f\") || $source->columns[$value->slot]->value === $name,",
+        "            'An intrinsic MySQL grouped name must equal its physical input field.'",
+        "        );",
+        "    } elseif ($value->argument instanceof TextColumnReference) {",
+        "        $scope->textColumn($value->argument, [$source]);",
+        "    } else {",
+        "        Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "$scope->predicate($where, [$source]);",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $value = $column->value;",
+        "    if ($value instanceof ColumnReference) {",
+        "        $result = $renderer->expression($value, $query->source);",
+        "    } else {",
+        "        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);",
+        "        $result = $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';",
+        "    }",
+        "    $name = $column->name->value;",
+        "    $items[] = $result . ($name === ltrim($name, \" \\t\\r\\n\\v\\f\") ? ' AS ' . $column->name->quoted() : '');",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "return $sql . ($keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys));"
+      ]
+    }
+  }
+}

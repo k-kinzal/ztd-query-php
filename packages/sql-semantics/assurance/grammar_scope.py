@@ -198,6 +198,14 @@ def inventory(root):
             for rule in ("insert", "insert_stmt", "insert_values", "insert_from_constructor", "values_list", "insert_column"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-insert-v2.json")
+            grouped_count = (
+                *(alternative for alternative in rules.get("sum_expr", ()) if alternative.startswith("sum_expr: COUNT_SYM (")),
+                *(alternative for alternative in [*rules.get("group_clause", ()), *rules.get("opt_group_clause", ())]
+                  if " GROUP_SYM BY group_list " in alternative),
+                *rules.get("group_list", ()),
+            )
+            for alternative in grouped_count:
+                related[alternative] = (*related.get(alternative, ()), "mysql-varchar-count-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

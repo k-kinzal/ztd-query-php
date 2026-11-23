@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -24,7 +25,7 @@ final class Aggregate
      */
     public function __construct(
         public readonly AggregateOperator $operator,
-        public readonly ?ColumnReference $argument = null,
+        public readonly ColumnReference|TextColumnReference|null $argument = null,
         public readonly bool $distinct = false,
     ) {
         Check::input(
@@ -32,5 +33,6 @@ final class Aggregate
             'Only a nondistinct COUNT can omit the aggregate argument.'
         );
         Check::input($argument === null || $argument->occurrence === 0, 'The aggregate argument must read its single input occurrence.');
+        Check::input(!$argument instanceof TextColumnReference || $operator === AggregateOperator::Count, 'A VARCHAR aggregate argument requires COUNT.');
     }
 }

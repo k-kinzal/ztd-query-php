@@ -27,6 +27,6 @@ final class AggregateBinding
         );
         $argument = $expression->arguments[0] ?? null;
 
-        return new Aggregate($operator, $argument === null ? null : $binding->reference($argument), $expression->distinct);
+        return new Aggregate($operator, $argument === null ? null : $binding->field($argument), $expression->distinct);
     }
 }

@@ -483,6 +483,9 @@ if ($dialect !== 'sqlite') {
     $properties['Aggregation\\AggregateOperator'] = $methods['Aggregation\\AggregateOperator'] = [];
     $enumCases['Aggregation\\AggregateOperator'] = ['Count' => 'count', 'Sum' => 'sum', 'Min' => 'min', 'Max' => 'max'];
     $properties['Aggregation\\Aggregate'] = ['operator' => ['Aggregation\\AggregateOperator'], 'argument' => ['?ColumnReference'], 'distinct' => ['bool']];
+    if ($dialect === 'mysql') {
+        $properties['Aggregation\\Aggregate']['argument'] = ['ColumnReference', 'From\\TextColumnReference', 'null'];
+    }
     $properties['Aggregation\\GroupColumn'] = ['value' => ['Aggregation\\Aggregate', 'ColumnReference'], 'name' => ['Identifier']];
     $methods['Aggregation\\Aggregate'] = $methods['Aggregation\\GroupColumn'] = ['__construct'];
     array_push($internal, 'Aggregation\\AggregateBinding', 'Aggregation\\GroupedKeys', 'Aggregation\\GroupedLowering', 'Aggregation\\GroupedSql');
