@@ -214,7 +214,8 @@ def graph(item):
 def check_value(item, reply):
     require(reply["status"] == "constructed" and reply["profile"].startswith(item["release"] + "/"),
             "postgres-external-source-rejected", reply)
-    require(graph(reply) == graph(item), "postgres-external-source-graph", {"expected": item, "observed": reply})
+    require(graph(reply) == graph(item), "postgres-external-source-graph",
+            {"expected": item, "observed": reply, "sql": reply["sql"]})
 
 
 def external(relation):
@@ -303,7 +304,7 @@ def boundary(item, reply):
     if rejects(reply, item["boundary"]):
         return
     require(reply["status"] == "constructed", "postgres-external-source-mutant-response", reply)
-    raise Failure("postgres-external-source-published-write", {"expected": item["boundary"], "observed": reply})
+    raise Failure("postgres-external-source-published-write", {"expected": item["boundary"], "observed": reply, "sql": reply["sql"]})
 
 
 def fault_probe(item, reply, db):
