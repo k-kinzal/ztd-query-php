@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/mysql-grouped-having-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native MySQL, lower_case_table_names=0, empty sql_mode, utf8mb4 connection and resolved signed INT group keys.",
+  "extends": ["server-grouped-v3.json", "mysql-varchar-count-v1.json", "mysql-varchar-extrema-v2.json"],
+  "constructors": {
+    "GroupedComparison": {
+      "type": "Aggregation/GroupedComparison",
+      "role": "An ordered native numeric comparison evaluated over the owning group.",
+      "structure": "A six-way integer comparison operator and two ordered operands. Operands are group keys, native aggregates with numeric results or signed integer literals.",
+      "conditions": "The group owns referenced signed keys and exact argument positions. A COUNT can read checked VARCHAR while MIN or MAX of VARCHAR cannot enter this numeric comparison. Each aggregate is subject to its own arity and duplicate rules.",
+      "meaning": "Compare group values after grouping, preserving native integer and exact decimal results. Either NULL operand supplies an unknown comparison.",
+      "sql": "Render the exact operator, builtin aggregation, argument DISTINCT and fully resolved operand positions. Emit the comparison in HAVING."
+    }
+  },
+  "existingRoles": ["Aggregation/GroupedSelect", "Aggregation/Aggregate", "Aggregation/GroupColumn", "From/TextColumnReference", "ColumnReference", "IntegerLiteral", "Predicate/IntegerOperator", "BooleanLiteral", "NullLiteral"],
+  "structure": "An optional group predicate separate from the input row predicate. Preserve the resolved reference itself for an admitted grouped query alias or a grouping key that shares its name.",
+  "conditions": "Require the admitted global or keyed SELECT shape, the signed operand roles, exact argument scope and resolution of all aliases. An alias points to its checked projected value. A plain field is an actual grouping key. Reject floating or textual comparison inputs, unowned fields, and unsupported operators at the owning boundary.",
+  "meaning": "Apply WHERE before grouping, evaluate HAVING per group, and keep exactly the TRUE groups. COUNT over an empty global group is zero. SUM, MIN and MAX over empty inputs are NULL. A group can be rejected without changing another group's output or evaluated fields. Preserve duplicates and exact DECIMAL sums.",
+  "sql": "Emit HAVING after the optional GROUP BY. Render the resolved key or aggregate used by the condition, preserving GROUP BY precedence when a field and output alias share the same name.",
+  "observations": ["Exact grouped labels, positions and native output tags, including DECIMAL sums as exact values", "Difference between WHERE at input and HAVING at output, with global empty and NULL control groups", "Aggregate multiplicity, DISTINCT and NULL arguments, and separately resolved projected aliases and same-named grouping fields", "Exact ordered comparison and rejection of unscoped fields and textual extremum operands"],
+  "finite": {
+    "source": ["accounts", "empty"],
+    "aggregate": ["count", "sum", "min", "max"],
+    "operator": ["=", "<>", "<", "<=", ">", ">="],
+    "layout": ["aggregate-literal", "literal-aggregate", "key-aggregate", "aggregate-key"],
+    "identities": 192,
+    "completeness": "Recover all four finite axes from the constructed value on each pinned release."
+  },
+  "analysis": ["A hidden COUNT in keyed HAVING", "Separate WHERE and HAVING filters", "A projected aggregate alias", "Grouping field shadows a same-named aggregate output alias", "An explicit qualified grouping reference", "A global empty COUNT", "A global NULL comparison", "A Boolean constant HAVING", "A DISTINCT VARCHAR COUNT threshold", "A large signed literal beside a decimal SUM"],
+  "exploration": {
+    "seeds": [1901, 12049, 43613],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary keyed and global groups, dedicated row filters, both operand orders, empty sources, aggregate operators, distinctness, signed boundaries and numeric use of VARCHAR COUNT."
+  },
+  "negative": ["Plain non-key field", "Key uses another occurrence", "Aggregate argument slot outside the input", "Textual MIN or MAX operand", "Analyzed unbound group value", "Unsupported arithmetic in a group operand", "Unsupported null-safe comparison"],
+  "faults": ["Omit HAVING", "Swap the compared operands", "Erase DISTINCT from a group predicate aggregate", "Bypass the resolved grouped key condition", "Use a result alias in place of a same-named group field"],
+  "evidence": {
+    "P01": "Preserve the resolved key or aggregate, exact operator and operand order.",
+    "P02": "Check grouped fields and all aggregate arguments against a single owned input.",
+    "P03": "Retain only the complete checked numeric predicate and projection structure.",
+    "P04": "Compose the group predicate with row selection, grouping, aggregation and result projection.",
+    "P05": "Use closed immutable operand roles and detached ordered input and result lists.",
+    "P06": "Emit the predicate at its checked evaluation stage and preserve observed labels and exact native values.",
+    "Q01": "Run the invalid grouped key, operand, argument and operator cases through their boundaries.",
+    "Q02": "Run all finite direct identities and independently authored analysis cases on every pin.",
+    "Q03": "Compare the grouped bag and exact decimal semantics to an independent evaluator.",
+    "Q04": "Observe actual native SQL type tags, values, qualified resolution and group-filtering effects.",
+    "Q05": "Connect grouped value construction, lowering and exact rendering to the split package PHP."
+  },
+  "open": ["Grouped ordering and bounds, rollup, grouping modifiers, window clauses and non-grouped HAVING", "HAVING trees, numeric conversion of text operands, correlated group values and floating aggregates"],
+  "trust": ["Documented MySQL grouping and result name resolution under the pinned profile", "Native DECIMAL and integer comparison semantics", "Exact distributed PHP and the independent ledger and row model"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/select.html", "https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html"]
+}
