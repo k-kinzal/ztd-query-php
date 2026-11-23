@@ -509,6 +509,11 @@ def inventory(root):
                         related[alternative] = (*related[alternative], "mysql-local-varchar-v2.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
         if mysql:
+            for rule in ("rename", "table_to_table", "table_to_table_list"):
+                for alternative in rules.get(rule, []):
+                    if rule != "rename" or "table_to_table_list" in alternative:
+                        related[alternative] = (*related.get(alternative, ()), "mysql-ordered-table-rename-v2.json")
+        if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",
                 "field_def: type opt_column_attribute_list",

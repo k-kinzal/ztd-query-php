@@ -259,7 +259,10 @@ function constructSelect(string $platform, array $input): SemanticsIR
 function analyzeStatement(string $platform, array $input): SemanticsIR
 {
     $class = $platform . 'Semantics';
-    $semantics = new $class($input['release']);
+    $searchPath = $platform . 'Model\\Contract\\SearchPath';
+    $semantics = isset($input['currentDatabase'])
+        ? new $class($input['release'], searchPath: new $searchPath($input['currentDatabase']))
+        : new $class($input['release']);
     return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null, $input['complete'] ?? true));
 }
 
@@ -758,6 +761,40 @@ function observePostgresCreateAs(string $namespace, object $value): array
     ];
 }
 
+function constructMysqlRename(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $identifier = $namespace . 'Identifier';
+    $name = $namespace . 'Schema\\TableName';
+    $member = $namespace . 'Schema\\Alter\\TableRename';
+    $statement = $namespace . 'Schema\\Alter\\RenameTable';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $moves = [];
+    foreach ($input['tableRename'] as $move) {
+        $roles = [];
+        foreach (['from', 'to', 'origin'] as $role) {
+            [$schema, $table] = $move[$role];
+            $roles[] = new $name(new $identifier($schema), new $identifier($table));
+        }
+        $moves[] = new $member(...$roles);
+    }
+    return new $statement($moves, $release::from($input['release']));
+}
+
+function observeMysqlRename(object $value): array
+{
+    $moves = [];
+    foreach ($value->moves as $move) {
+        $coordinates = [];
+        foreach (['from', 'to', 'origin'] as $role) {
+            $name = $move->{$role};
+            $coordinates[$role] = [$name->schema->value, $name->table->value];
+        }
+        $moves[] = $coordinates;
+    }
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(), 'tableRename' => $moves];
+}
+
 function constructPostgresRename(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1047,6 +1084,7 @@ function observeStatement(array $input): array
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
             isset($input['rename']) => constructPostgresRename($platform, $input),
+            isset($input['tableRename']) => constructMysqlRename($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -1129,6 +1167,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'postgres' && in_array($value::class, [$namespace . 'Schema\\Alter\\RenameTable', $namespace . 'Schema\\Alter\\RenameColumn'], true)) {
         return observePostgresRename($namespace, $value);
+    }
+    if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Alter\\RenameTable') {
+        return observeMysqlRename($value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

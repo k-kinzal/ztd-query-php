@@ -193,7 +193,7 @@ final class TableDeclaration
             }
         }
 
-        return $this->split($definition->name, [...$all, ...$selected], $derivation->context->profile, $complete);
+        return $this->split($definition->name, [...$all, ...$selected], $derivation->context->profile, $complete, $definition->temporary());
     }
 
     /**
@@ -201,7 +201,7 @@ final class TableDeclaration
      *
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete): Table
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, bool $temporary = false): Table
     {
         $visible = [];
         $implicit = [];
@@ -214,7 +214,7 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete);
+        return new Table($name, $profile, $visible, $implicit, $complete, temporary: $temporary);
     }
 
     /**
@@ -243,10 +243,10 @@ final class TableDeclaration
     /**
      * Builds the declaration of CREATE TABLE ... LIKE from the declaration of the source table, when it is declared.
      */
-    public function like(QualifiedName $name, ?Table $source, LanguageProfile $profile): Table
+    public function like(QualifiedName $name, ?Table $source, LanguageProfile $profile, bool $temporary = false): Table
     {
         if ($source === null) {
-            return new Table($name, $profile, [], [], false);
+            return new Table($name, $profile, [], [], false, temporary: $temporary);
         }
         $columns = [];
         foreach ($source->columns as $column) {
@@ -257,7 +257,7 @@ final class TableDeclaration
             $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated, $hidden->column->collation));
         }
 
-        return new Table($name, $profile, $columns, $implicit, $source->complete);
+        return new Table($name, $profile, $columns, $implicit, $source->complete, temporary: $temporary);
     }
 
     /**

@@ -58,7 +58,12 @@ final class CreateTableLike implements Statement
     {
         $fact = $derivation->target($this, (new TableTargets())->existing($derivation, $this->source));
         (new RelationKinds())->require($derivation, $this->source, $fact->table, RelationKind::BaseTable);
-        $derivation->declare((new TableDeclaration())->like($this->name, $fact->table instanceof DeclaredTable ? $fact->table->table : null, $derivation->context->profile));
+        $derivation->declare((new TableDeclaration())->like(
+            $this->name,
+            $fact->table instanceof DeclaredTable ? $fact->table->table : null,
+            $derivation->context->profile,
+            $this->temporaryWords > 0,
+        ));
     }
 
     /**

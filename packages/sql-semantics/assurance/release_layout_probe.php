@@ -528,6 +528,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'MySql') {
         $queries['Schema\\View\\CreateView'] = 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW app.answer (value) AS SELECT 42 AS original';
         $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
+        $queries['Schema\\Alter\\RenameTable'] = 'RENAME TABLE app.accounts TO app.staged, app.staged TO app.archived';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -936,6 +937,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];
+        }
+        if ($platform === 'MySql' && $role === 'Schema\\Alter\\RenameTable') {
+            $details['mysqlRenameMoves'] = [];
+            foreach ($result->moves as $move) {
+                if ($move::class !== $namespace . 'Ir\\Schema\\Alter\\TableRename') {
+                    throw new RuntimeException('The installed rename lost its checked move role.');
+                }
+                $details['mysqlRenameMoves'][] = array_map(static fn ($name): array => [$name->schema->value, $name->table->value],
+                    [$move->from, $move->to, $move->origin]);
+            }
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameTable') {
             $details['postgresRenameTable'] = [$result->target->schema->value, $result->target->table->value,

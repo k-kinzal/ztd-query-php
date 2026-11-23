@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v70.json"
-CONTRACT = "15badb97fdfd5cdca42fed0f75bc381cb068e45881bf07cd64f557cd0611fb43"
+CONTRACT_NAME = "release-layout-v71.json"
+CONTRACT = "aeb3e816005de6029358ee76e5fe9b2067f58420ee5e727060466dbad29c9181"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -506,6 +506,12 @@ def verify_probe(raw, catalog):
             ], "installed-merged-join-definition-mismatch", item)
         if item["role"] == "Schema\\DropView":
             require(item.get("dropView") == ["main", "removable", True], "installed-view-removal-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Alter\\RenameTable"):
+            origin = ["app", "accounts"]
+            staged = ["app", "staged"]
+            require(item.get("mysqlRenameMoves") == [[origin, staged, origin], [staged, ["app", "archived"], origin]]
+                    and item["sql"] == "RENAME TABLE `app`.`accounts` TO `app`.`staged`, `app`.`staged` TO `app`.`archived`",
+                    "installed-mysql-ordered-rename-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Alter\\RenameTable"):
             require(item.get("postgresRenameTable") == ["public", "accounts", "archived", False]
                     and item["sql"] == 'ALTER TABLE "public"."accounts" RENAME TO "archived"',
