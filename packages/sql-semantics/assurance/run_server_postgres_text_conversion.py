@@ -125,13 +125,14 @@ def finite_id(_engine, reply, item):
         return "literal", next(name for name, value in ATOMS.items() if value == operand), len(columns)
     positions = [term[1] for term, _ in columns]
     layout = {(1,): "single", (1, 1): "repeated", (2, 1): "reversed"}[tuple(positions)]
-    return "parameter", item["bindings"][0], layout
+    return "parameter", json.dumps(item["bindings"][0], ensure_ascii=False), layout
 
 
 def finite_ids(_engine, spec, _tag):
     b = spec["finite"]
     ids = {("literal", value, width) for value in b["literalInputs"] for width in b["literalWidths"]}
-    ids.update(("parameter", value, layout) for value in b["parameterInputs"] for layout in b["parameterLayouts"])
+    ids.update(("parameter", json.dumps(value, ensure_ascii=False), layout)
+               for value in b["parameterInputs"] for layout in b["parameterLayouts"])
     require(len(ids) == b["identities"], "wrong-postgres-text-conversion-domain")
     return ids
 
