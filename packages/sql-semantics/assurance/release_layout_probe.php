@@ -93,6 +93,34 @@ function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): 
     ];
 }
 
+function observeMysqlVarcharDeclaration(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $query = "CREATE TABLE IF NOT EXISTS app.varchar_decl (n SMALLINT NOT NULL DEFAULT -7, label VARCHAR(1) DEFAULT 'é  ')"
+        . ' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin';
+    $analyzed = $semantics->analyze($query);
+    $space = SqlSemantics\Platform\MySql\Ir\From\TextCollation::Utf8mb4Bin;
+    $name = new SqlSemantics\Platform\MySql\Ir\Identifier('label');
+    $storage = new SqlSemantics\Platform\MySql\Ir\Schema\CharacterStorage(1, $space);
+    $value = new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral('é  ');
+    $column = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn($name, $storage, true, $value);
+    $n = new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('n'),
+        SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Small, false, new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('-7')
+    );
+    $location = new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+        new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('varchar_decl')
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($location, [$n, $column], true, defaultCollation: $space);
+    $type = $analyzed->columns[1]->storage;
+
+    return [
+        $analyzed::class, $analyzed->target->schema->value, $analyzed->target->table->value, $analyzed->ifNotExists,
+        $analyzed->defaultCollation->value, $analyzed->columns[0]->storage->value, $type::class, $type->length,
+        $type->collation->value, $analyzed->columns[1]->nullable, $analyzed->columns[1]->default->value,
+        $analyzed->toString(), $direct->toString(), $direct->profileId(),
+    ];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -185,6 +213,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
+            $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
+        }
         if ($platform === 'MySql' && $role === 'Select') {
             $value = $result->columns[0]->expression;
             if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'

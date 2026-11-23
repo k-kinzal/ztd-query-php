@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v37.json"
-CONTRACT = "cca8c9603ba2bf1291262edc78e4243213063542a4c0398f3e5ac1725a003875"
+CONTRACT_NAME = "release-layout-v38.json"
+CONTRACT = "29ce923e86ffeb0d9e14d943a4fa8f9011f284a7202f937b668950f865bafa96"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -269,6 +269,16 @@ def verify_probe(raw, catalog):
                     "installed-typed-insert-query-mismatch", item)
             require(item.get("nullableKinds") == [["text", None]] * 3,
                     "installed-nullable-column-kind-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\CreateTable"):
+            namespace = "SqlSemantics\\Platform\\MySql\\Ir\\Schema\\"
+            declaration = ("CREATE TABLE IF NOT EXISTS `app`.`varchar_decl` (`n` SMALLINT NOT NULL DEFAULT -7, "
+                           "`label` VARCHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT 'é  ') "
+                           "ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin")
+            require(item.get("mysqlVarcharDeclaration") == [
+                namespace + "CreateTable", "app", "varchar_decl", True, "utf8mb4_bin", "SMALLINT",
+                namespace + "CharacterStorage", 1, "utf8mb4_bin", True, "é  ", declaration, declaration,
+                "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb",
+            ], "installed-mysql-varchar-declaration-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],
