@@ -14,11 +14,11 @@ from server_result_cases import case, expected, finite_id, finite_ids, match, or
 from sqlite_domain import RenderFault
 
 LABEL = "result"
-CONTRACT = "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c"
+CONTRACT = "9c2b6f1012a17b4d12adc032c2a7ab89d7e66a5ee64d6648d30b1feb13fb06d6"
 
 
 def specifications():
-    path, projection = TOOL / "server-result-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-result-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION
             and digest(TOOL / "server-join-v2.json") == JOIN, "server-result-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]

@@ -6,7 +6,7 @@ from collections import Counter
 
 from evidence_transcript import canonical
 from run import require
-from server_cases import NAMES, SCHEMAS
+from server_cases import NAMES, SCHEMAS, evaluate
 from server_join_cases import (
     case as projection, declarations, expected as projected, is_join, join, slot, table,
 )
@@ -99,22 +99,30 @@ def analyzed(engine, tag):
     for sql, sorting, window in examples:
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": declarations(engine)}, case(
             engine, tag, source, columns, True, sorting, window)
+    if engine == "postgres":
+        sorting = [order(["operation", "+", ["integer", "1"], ["integer", "2"]], False, False)]
+        yield {"dialect": engine, "release": tag, "sql": "SELECT 1 AS answer ORDER BY 1+2", "declarations": []}, case(
+            engine, tag, None, [[["integer", "1"], "answer"]], False, sorting, None)
 
 
 def negatives(engine, tag):
     healthy = case(engine, tag, None, [[["integer", "1"], "answer"]], False, [], None)
     yield {**healthy, "orderBy": [[0, False, True]]}, "order position must be positive"
     yield {**healthy, "orderBy": [[2, False, True]]}, "order position must belong"
-    yield {"dialect": engine, "release": tag, "declarations": [], "sql": "SELECT 1 AS answer ORDER BY 1+2"}, "requires a supported output position"
+    if engine == "postgres":
+        yield {"dialect": engine, "release": tag, "declarations": [], "sql": "SELECT 1 AS answer ORDER BY 1 USING >"}, "requires a supported default sort operator"
+    else:
+        yield {"dialect": engine, "release": tag, "declarations": [], "sql": "SELECT 1 AS answer ORDER BY 1+2"}, "requires a supported output position"
     yield {**healthy, "limit": [-1, 0]}, "row count must be between"
     yield {**healthy, "limit": [2, 2147483648]}, "row offset must be between"
-    yield {**healthy, "orderBy": [None]}, "owned list of output keys"
+    list_error = "owned list of sort keys" if engine == "postgres" else "owned list of output keys"
+    yield {**healthy, "orderBy": [None]}, list_error
 
 
 def key(row, sorting):
     values = []
     for position, descending, nulls_first in sorting:
-        value = row[position - 1]
+        value = row[position - 1] if type(position) is int else evaluate(position, (), "postgres")
         if value is None:
             values.append((0 if nulls_first else 1, 0))
         else:

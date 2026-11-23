@@ -60,7 +60,7 @@ NATIVE = {
     "mysql_from_list": "mysql-from-list-v1.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v2.json",
-    "result": "server-result-v1.json",
+    "result": "server-result-v2.json",
     "insert": "server-insert-v1.json",
     "update": "server-update-v2.json",
     "transaction": "server-transaction-v1.json",

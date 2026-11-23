@@ -1,0 +1,181 @@
+{
+  "revision": "SemanticsIR/server-result-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "The native releases and settings in server-projection-v1.json and the source and predicate roles in server-join-v1.json.",
+  "scope": "The native closed projection with optional DISTINCT, positional ordering and nonnegative integer row bounds. Includes an optional standalone OFFSET in PostgreSQL.",
+  "open": [
+    "Name-based and expression ordering, PostgreSQL USING and DISTINCT ON, grouping and aggregate roles",
+    "Other row-bound types, parameterized bounds, FETCH syntax and WITH TIES",
+    "Native row bounds above 2147483647"
+  ],
+  "constructors": {
+    "Select": {
+      "fields": [
+        "columns",
+        "source",
+        "release",
+        "where",
+        "distinct",
+        "orderBy",
+        "limit"
+      ],
+      "invariants": [
+        "An owned list of at most 1024 order keys",
+        "Every order key refers to a position in the closed projection",
+        "The row-bound role follows the dialect's composition rule"
+      ],
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "Order": {
+      "type": "Ordering/Order",
+      "role": "A one-based position in the ordered output with a direction. PostgreSQL also fixes the effective NULL placement.",
+      "invariants": [
+        "The position is positive",
+        "The owning SELECT validates the upper bound",
+        "MySQL fixes NULL placement from the direction and PostgreSQL records it explicitly"
+      ],
+      "sql": "Emit the output ordinal and ASC or DESC. In PostgreSQL emit the explicit NULLS FIRST or NULLS LAST choice.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "Limit": {
+      "type": "Ordering/Limit",
+      "role": "Effective initial skip and upper count of returned rows",
+      "invariants": [
+        "Each effective operand is an integer in 0 through 2147483647",
+        "MySQL requires a count. PostgreSQL admits an unbounded count when the offset is positive."
+      ],
+      "sql": "Emit LIMIT count and append OFFSET offset when positive. PostgreSQL may emit OFFSET on its own.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Resolve native ORDER BY ordinal markers in the output scope. Preserve explicit directions and PostgreSQL NULL placement or derive the documented native defaults. Accept plain DISTINCT, literal LIMIT and OFFSET forms including the MySQL comma form, and PostgreSQL LIMIT ALL by carrying the effective bound.",
+  "meaning": "Apply the joined source and WHERE, project the ordered columns, then collapse duplicate rows when DISTINCT is set. Native scalar rows preserve NULL and their fixed column types. Positional keys order the rows lexicographically with the effective direction and NULL treatment of each key. Apply the offset and upper count to that sequence.",
+  "observations": [
+    "Keep column names, positions and exact native type names",
+    "Without DISTINCT preserve every duplicate up to the observation implied by bounds",
+    "Keep relative order of distinct key bands",
+    "Within a tie compare the selected multiplicity and require every returned occurrence to belong to that band's bag",
+    "Without sorting treat all rows as one tie band and apply the same bounds observation"
+  ],
+  "finite": {
+    "quantifiers": [
+      "ALL",
+      "DISTINCT"
+    ],
+    "projections": [
+      "key and payload",
+      "payload and key",
+      "duplicated key followed by payload"
+    ],
+    "orders": {
+      "mysql": [
+        "unordered",
+        "first ascending",
+        "first descending",
+        "first descending then second ascending"
+      ],
+      "postgres": [
+        "unordered",
+        "first ascending nulls last",
+        "first descending nulls first",
+        "first descending nulls first then second ascending nulls last",
+        "first ascending nulls first",
+        "first descending nulls last"
+      ]
+    },
+    "bounds": {
+      "mysql": [
+        "omitted",
+        "zero",
+        "count only",
+        "skip inside a tie",
+        "skip beyond a tie",
+        "largest registered count"
+      ],
+      "postgres": [
+        "omitted",
+        "zero",
+        "count only",
+        "skip inside a tie",
+        "skip beyond a tie",
+        "largest registered count",
+        "offset only"
+      ]
+    },
+    "identities": {
+      "mysql": 144,
+      "postgres": 252
+    },
+    "completeness": "Read order, bounds, quantifier and projection from the actual value. Require every member of the separately enumerated product exactly once."
+  },
+  "exploration": {
+    "seeds": [
+      943,
+      5843,
+      23668
+    ],
+    "casesPerSeed": 36,
+    "timeoutSecondsPerRelease": 170,
+    "allowedExclusions": [],
+    "requiredForms": [
+      "Repeated and distinct rows",
+      "NULL order outcomes",
+      "One and more than one sort key",
+      "Bounds inside a non-singleton tie",
+      "Joined and unjoined sources",
+      "Repeated output labels"
+    ]
+  },
+  "negative": [
+    "Nonpositive order position",
+    "Order position beyond projection width",
+    "A MySQL sort expression outside the closed output roles or a PostgreSQL explicit USING sort operator",
+    "A negative row count at direct construction",
+    "An offset above the registered bound",
+    "Non-order value in an order list"
+  ],
+  "faults": [
+    "Emit ALL in place of DISTINCT",
+    "Reverse an effective order direction",
+    "Swap row count and offset"
+  ],
+  "revisionNotes": "Retain all fixed positional identities, the seed budget and required native releases. Reclassify the previous PostgreSQL ORDER BY 1+2 rejection as a positive with an independent typed expression observation. Keep an anchored PostgreSQL rejection for explicit USING.",
+  "evidence": "Record raw engine row order and native metadata for direct and analyzed cases. Verify typed bags within independently computed bands and test over-selection, duplicate loss, reversed bands, ignored NULL placement and bounds with known counterexamples.",
+  "trust": [
+    "Closed runtime constructors, shape audit and emitter",
+    "The native integer and Boolean semantics under the earlier profile",
+    "An independent band-membership observation and pinned PDO database observer"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/select.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/working-with-null.html",
+    "https://www.postgresql.org/docs/17/sql-select.html",
+    "https://www.postgresql.org/docs/17/queries-order.html"
+  ],
+  "extends": "server-result-v1.json"
+}
