@@ -78,10 +78,11 @@ def combine(candidate, checkout, paths, output):
         same(ordered(ROWS), ordered(raw["observerEnvironment"]["initial"]))
         same({probe: "outside-observer-scope" for probe in observer_probes(raw["engine"])}, raw["observerControls"])
         results = replay(ledger, raw, specification)
-        check_faults(path.parent, raw, manifest, checkout, run_server_delete)
+        dispatch = check_faults(path.parent, raw, manifest, checkout, run_server_delete)
         counts.update(results)
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
-                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results}
+                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "faultDispatch": dispatch,
+                          "execution": results}
     verify_candidate(checkout, candidate, manifest)
     missing = sorted(required - releases.keys())
     status = "incomplete" if missing else "provisional-native-delete-matrix"

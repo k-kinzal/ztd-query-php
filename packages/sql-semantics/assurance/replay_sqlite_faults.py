@@ -6,6 +6,7 @@ import re
 from types import SimpleNamespace
 
 from evidence_transcript import canonical
+from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run import Failure, TOOL, digest, require
 from sqlite_relational_mutations import RESTORATION, RESTORATION_GUARD, fixtures as relational_fixtures
 
@@ -89,6 +90,7 @@ def observed_fault(database, case, request, healthy, altered, probe, signal):
 
 
 def replay_registered(args, db, fixtures, probe, _script="worker.php"):
+    dispatch = verify_fault_dispatch(args.directory, fixtures, _script, args.records)
     received = {record["case"]: record for record in args.records}
     declared = {fault.name: fault for fault in fixtures}
     require(len(received) == len(args.records) and len(declared) == len(fixtures) and received.keys() == declared.keys(),
@@ -110,7 +112,7 @@ def replay_registered(args, db, fixtures, probe, _script="worker.php"):
         detail = observed_fault(db, case, fault.item, record.get("healthyResponse"), record.get("mutantResponse"), probe, fault.signal)
         require(canonical(detail) == canonical(record["detail"]), "sqlite-fault-replay-detail", case)
         witness = {**verified, "receipt": digest(receipt), "signal": fault.signal, "status": "native-replayed"}
-        evidence[case] = {**witness, "artifacts": links(folder, args.directory, fault.path, witness)}
+        evidence[case] = {**witness, "artifacts": {**links(folder, args.directory, fault.path, witness), dispatch["path"]: dispatch["sha256"]}}
     return evidence
 
 

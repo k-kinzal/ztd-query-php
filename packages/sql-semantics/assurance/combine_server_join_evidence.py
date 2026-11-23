@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
+from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
 from run_server_join import negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
@@ -79,6 +80,7 @@ def replay(path, report, specification, domain=run_server_join):
 def check_faults(path, report, distribution, checkout, domain):
     label = domain.LABEL
     definitions = {fault.name: fault for fault in domain.faults(report["engine"], version_tag(report["engine"], report["release"]))}
+    dispatch = verify_fault_dispatch(path, definitions.values(), "server_worker.php", report["faults"])
     records = {entry["case"]: entry for entry in report["faults"]}
     require(len(records) == len(report["faults"]) and records.keys() == definitions.keys(), f"server-{label}-fault-set", str(path))
     for name, rule in definitions.items():
@@ -111,6 +113,7 @@ def check_faults(path, report, distribution, checkout, domain):
             require(failure.signal == rule.signal, f"server-{label}-wrong-fault-signal", name)
         else:
             raise Failure(f"server-{label}-replayed-fault-not-detected", name)
+    return dispatch
 
 
 def combine(candidate, checkout, paths, output, domain):
@@ -137,10 +140,11 @@ def combine(candidate, checkout, paths, output, domain):
         same(domain.controls(), raw["comparatorControls"])
         domain.check_preparation(raw["engine"], raw["observerEnvironment"], raw["observerPreparation"])
         results = replay(ledger, raw, specification, domain)
-        check_faults(path.parent, raw, manifest, checkout, domain)
+        dispatch = check_faults(path.parent, raw, manifest, checkout, domain)
         counts.update(results)
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
-                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results,
+                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "faultDispatch": dispatch,
+                          "execution": results,
                           **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {})}
     verify_candidate(checkout, candidate, manifest)
     missing = sorted(required - releases.keys())

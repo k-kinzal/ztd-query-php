@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
+from renderer_fault_dispatch import FAILURE_NAME, PLAN_NAME, plan as dispatch_plan, receipt as dispatch_receipt
 from sqlite_engine import Database
 
 FAULT_STARTUP_SECONDS = 180
@@ -25,45 +26,70 @@ class RenderFault(NamedTuple):
 
 
 def check_render_faults(args, db, fixtures, probe, script="worker.php"):
+    fixtures = tuple(fixtures)
+    schedule = dispatch_plan(fixtures, script)
+    path = args.out / PLAN_NAME
+    write_json(path, schedule)
+    checksum = digest(path)
+    attempts = tuple(zip(fixtures, schedule["faults"]))
+    entry, phase = None, "healthy-startup"
     healthy = {}
-    with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
-        for fault in fixtures:
-            response = worker.request(fault.item if fault.request is None else fault.request)
-            probe(fault.item, response, db)
-            healthy[fault.name] = response
     results = []
-    for fault in fixtures:
-        original_path = args.candidate / "packages" / fault.path
-        original = original_path.read_text()
-        require(original.count(fault.before) == 1, "render-fault-anchor", fault.name)
-        mutant = original.replace(fault.before, fault.replacement)
-        overlay = args.out / "faults" / fault.name
-        mutation = overlay / fault.path
-        mutation.parent.mkdir(parents=True)
-        mutation.write_text(mutant)
-        require(digest(mutation) != digest(original_path), "render-fault-not-applied", fault.name)
-        (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
-            original.splitlines(keepends=True), mutant.splitlines(keepends=True),
-            f"a/{fault.path}", f"b/{fault.path}",
-        )))
-        with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
-            response = worker.request(fault.item if fault.request is None else fault.request)
-            try:
+    try:
+        with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+            for fault, entry in attempts:
+                phase = "healthy-request"
+                response = worker.request(entry["request"])
+                phase = "healthy-probe"
                 probe(fault.item, response, db)
-            except Failure as failure:
-                result = {
-                    "case": fault.name, "file": fault.path, "source": digest(original_path), "mutation": digest(mutation),
-                    "input": fault.item, "control": "passed", "expected": fault.signal,
-                    "observed": failure.signal, "detail": failure.detail,
-                    "healthyResponse": healthy[fault.name], "mutantResponse": response,
-                }
-                if fault.request is not None:
-                    result["request"] = fault.request
-                write_json(overlay / "result.json", result)
-                require(failure.signal == fault.signal, "wrong-render-fault-signal", result)
-                results.append(result)
-            else:
-                raise Failure("undetected-render-fault", fault.name)
+                healthy[fault.name] = response
+        for fault, entry in attempts:
+            phase = "inject"
+            original_path = args.candidate / "packages" / fault.path
+            original = original_path.read_text()
+            require(original.count(fault.before) == 1, "render-fault-anchor", fault.name)
+            mutant = original.replace(fault.before, fault.replacement)
+            overlay = args.out / "faults" / fault.name
+            mutation = overlay / fault.path
+            mutation.parent.mkdir(parents=True)
+            mutation.write_text(mutant)
+            require(digest(mutation) != digest(original_path), "render-fault-not-applied", fault.name)
+            (overlay / "injected.diff").write_text("".join(difflib.unified_diff(
+                original.splitlines(keepends=True), mutant.splitlines(keepends=True),
+                f"a/{fault.path}", f"b/{fault.path}",
+            )))
+            phase = "mutant-startup"
+            with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
+                phase = "mutant-request"
+                response = worker.request(entry["request"])
+                phase = "mutant-probe"
+                try:
+                    probe(fault.item, response, db)
+                except Failure as failure:
+                    result = {
+                        "case": fault.name, "file": fault.path, "source": digest(original_path), "mutation": digest(mutation),
+                        "input": fault.item, "control": "passed", "expected": fault.signal,
+                        "observed": failure.signal, "detail": failure.detail,
+                        "healthyResponse": healthy[fault.name], "mutantResponse": response,
+                        "dispatch": dispatch_receipt(checksum, entry),
+                    }
+                    if fault.request is not None:
+                        result["request"] = fault.request
+                    write_json(overlay / "result.json", result)
+                    require(failure.signal == fault.signal, "wrong-render-fault-signal", result)
+                    results.append(result)
+                else:
+                    raise Failure("undetected-render-fault", fault.name)
+    except Exception as error:
+        write_json(args.out / FAILURE_NAME, {
+            "phase": phase,
+            "fault": entry,
+            "planSha256": checksum,
+            "exception": type(error).__name__,
+            "signal": error.signal if isinstance(error, Failure) else "unexpected-error",
+            "message": str(error),
+        })
+        raise
     return results
 
 

@@ -18,7 +18,9 @@ from run_native_matrix import RELEASE_ROW, release_fixtures, release_jobs
 from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
 from run_sqlite_mutation_conflicts import FIXTURE as CONFLICT_FIXTURE, check_faults as conflict_faults
+from renderer_fault_dispatch import FAILURE_NAME as DISPATCH_FAILURE, PLAN_NAME as DISPATCH_PLAN
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
+from sqlite_domain import RenderFault, check_render_faults
 from scope import CONTRACTS, public_scope
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
@@ -442,9 +444,13 @@ def fault_replay_controls(args, distribution):
         ("omit-healthy-report", "sqlite-fault-witness-missing"),
         ("replace-mutant-response", "sqlite-fault-replay-accepted-mutant"),
         ("change-fault-patch", "sqlite-fault-patch-mismatch"),
+        ("omit-renderer-fault-dispatch", "renderer-fault-dispatch-plan-missing"),
+        ("replace-renderer-fault-request", "renderer-fault-dispatch-plan-mismatch"),
+        ("replace-renderer-fault-plan-digest", "renderer-fault-dispatch-receipt-mismatch"),
     ):
         folder = args.out / label
         shutil.copytree(origin / "faults", folder / "faults")
+        shutil.copyfile(origin / DISPATCH_PLAN, folder / DISPATCH_PLAN)
         records = copy.deepcopy(originals)
         changed = next(record for record in records if record["case"] == case)
         result = folder / "faults" / case / "result.json"
@@ -452,19 +458,61 @@ def fault_replay_controls(args, distribution):
             target = result.with_name("injected.diff")
             baseline = digest(target)
             target.write_text(target.read_text() + "\n")
+        elif label in {"omit-renderer-fault-dispatch", "replace-renderer-fault-request"}:
+            target = folder / DISPATCH_PLAN
+            baseline = digest(target)
+            shutil.copyfile(target, folder / "original-dispatch.json")
+            if label == "omit-renderer-fault-dispatch":
+                target.unlink()
+            else:
+                plan = json.loads(target.read_text())
+                entry = next(item for item in plan["faults"] if item["case"] == case)
+                entry["request"] = {"invalidConstructionRequest": True}
+                write_json(target, plan)
         else:
             target = result
             baseline = digest(target)
             if label == "omit-healthy-report":
                 del changed["healthyResponse"]
+            elif label == "replace-renderer-fault-plan-digest":
+                changed["dispatch"]["planSha256"] = "0" * 64
             else:
                 changed["mutantResponse"] = changed["healthyResponse"]
             write_json(result, changed)
         write_json(folder / "fault-records.json", records)
         failure = observe_rejection(lambda: run(folder, records), expected)
         results.append({"case": label, "control": "passed", "fault": case, "expected": expected, "signal": failure.signal,
-                        "path": target.relative_to(folder).as_posix(), "source": baseline, "mutated": digest(target)})
+                        "path": target.relative_to(folder).as_posix(), "source": baseline, "mutated": digest(target) if target.is_file() else None})
     return results
+
+
+def renderer_fault_transport_control(args):
+    label = "preserve-malformed-renderer-fault-dispatch"
+    folder = args.out / label
+    folder.mkdir()
+    case = RenderFault(label, "sql-semantics-sqlite/src/Ir/Select.php", "unused", "unused-change",
+                       {"independent": "known fixture"}, "meaning-mismatch", {"invalidConstructionRequest": True})
+    run = SimpleNamespace(candidate=args.candidate, local=False, out=folder, tool_autoload=args.tool_autoload)
+
+    def unexpected_probe(_input, response, _database):
+        raise Failure("renderer-fault-transport-unexpected-valid-response", response)
+
+    try:
+        check_render_faults(run, None, [case], unexpected_probe, "renderer_fault_transport_control.php")
+    except json.JSONDecodeError:
+        pass
+    else:
+        raise Failure("renderer-fault-transport-control-missed")
+    plan = folder / DISPATCH_PLAN
+    failure = folder / DISPATCH_FAILURE
+    observed = json.loads(failure.read_text())
+    require(observed["phase"] == "healthy-request" and observed["exception"] == "JSONDecodeError"
+            and observed["fault"]["case"] == label and observed["fault"]["request"] == case.request
+            and observed["planSha256"] == digest(plan) and not (folder / "faults").exists(),
+            "renderer-fault-transport-control-witness", observed)
+    return {"case": label, "expected": "healthy-request", "signal": observed["phase"],
+            "plan": {"path": plan.name, "sha256": digest(plan)},
+            "failure": {"path": failure.name, "sha256": digest(failure)}}
 
 
 def sqlite_preflight_control(args, distribution):
@@ -714,7 +762,8 @@ def main():
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
               + native_workflow_controls(args)
-              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution) + reduction_controls(args) + native_reduction_controls(args))
+              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution)
+              + [renderer_fault_transport_control(args)] + reduction_controls(args) + native_reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})
