@@ -95,6 +95,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-signed-range-widths-boundaries-v1.json', '28cd3860fb2bfbd1a7dea1897cd986b3db57b57376958dee3dc78256afa6782e'],
             ['postgres-with-projection-boundaries-v1.json', '6ecaa67c79a9468d8b723852a9da02e6fdfdab12de28d543aab8afea892e67e7'],
             ['postgres-drop-view-boundaries-v1.json', 'f06ff5f3c0110cedeca81290477aed0bf45f2f11c30e146de95420b2c6b1ea74'],
+            ['postgres-values-boundaries-v1.json', '34c456ad0d952eedfee6cd7b7181f2b0e482b8d08e6ed877d69b7f9c3e4122b9'],
         ],
         'sqlite' => [],
     };
@@ -210,6 +211,7 @@ function checkNativeBoundaries(
                 'Statement\\Relation\\RelationList', 'Statement\\Relation\\ParenthesizedJoin', 'Statement\\Relation\\TableInput', 'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\Insert\\WriteSlot', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Statement\\Name\\ObjectKind', 'Statement\\Name\\DottedName', 'Statement\\Option\\DropBehavior',
+                'Ir\\Schema\\View\\DropViewLowering', 'Statement\\Query\\ValuesList',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',
                 'Statement\\Expression\\ColumnReference as ParsedReturnColumn',

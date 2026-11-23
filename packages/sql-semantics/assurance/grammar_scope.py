@@ -433,6 +433,16 @@ def inventory(root):
                 for alternative in rules.get(rule, []):
                     if alternative in view_removal:
                         related[alternative] = (*related.get(alternative, ()), "postgres-drop-view-v1.json")
+        if postgres:
+            values_signatures = {
+                "simple_select: values_clause",
+                "values_clause: VALUES ( expr_list )",
+                "values_clause: values_clause , ( expr_list )",
+            }
+            for rule in ("simple_select", "values_clause"):
+                for alternative in rules.get(rule, []):
+                    if alternative in values_signatures:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-values-v3.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

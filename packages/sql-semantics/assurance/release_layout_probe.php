@@ -535,6 +535,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
+        $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
     foreach ($queries as $role => $sql) {
@@ -548,6 +549,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
                 array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\Values\\ValuesQuery') {
+            $details['valuesHeading'] = [$result->columnKind(0)->value, $result->columnKind(1)->value, count($result->rows)];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
             $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);

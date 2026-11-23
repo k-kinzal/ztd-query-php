@@ -1,0 +1,198 @@
+{
+  "revision": "SemanticsIR/postgres-values-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Link closed row and cell roles, rectangularity, whole-column common kinds, native output, and exact publication dispatch to loaded PHP.",
+  "rules": {
+    "Rows/Values/ValuesCell::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(!$value instanceof BuiltinCast || $value->operand instanceof NullLiteral, 'A VALUES cast cell must cast literal NULL.');"
+      ]
+    },
+    "Rows/Values/ValuesCell::kind": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$value = $this->value;",
+        "",
+        "return match (true) {",
+        "    $value instanceof BooleanLiteral => ColumnKind::Boolean,",
+        "    $value instanceof BuiltinCast => match ($value->target) {",
+        "        CastDestination::Boolean => ColumnKind::Boolean,",
+        "        CastDestination::Integer => ColumnKind::Int4,",
+        "        CastDestination::WideInteger => ColumnKind::Int8,",
+        "        CastDestination::Text => ColumnKind::Text,",
+        "    },",
+        "    $value instanceof IntegerLiteral => ColumnKind::Int4,",
+        "    $value instanceof NullLiteral => null,",
+        "    $value instanceof TextLiteral => ColumnKind::Text,",
+        "    $value instanceof WideIntegerLiteral => ColumnKind::Int8,",
+        "};"
+      ]
+    },
+    "Rows/Values/ValuesCell::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return (new SelectSql())->expression($this->value, null);"
+      ]
+    },
+    "Rows/Values/ValuesRow::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = Check::listOf($cells, ValuesCell::class, 'VALUES requires a nonempty ordered list of cells.', 1);",
+        "Check::input(count($checked) <= 1664, 'A PostgreSQL VALUES result can have at most 1664 columns.');",
+        "$this->cells = $checked;"
+      ]
+    },
+    "Rows/Values/ValuesRow::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$sql = [];",
+        "foreach ($this->cells as $cell) {",
+        "    $sql[] = $cell->toString();",
+        "}",
+        "",
+        "return '(' . implode(', ', $sql) . ')';"
+      ]
+    },
+    "Rows/Values/ValuesQuery::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$checked = Check::listOf($rows, ValuesRow::class, 'VALUES needs a nonempty list of rows.', 1);",
+        "$width = count($checked[0]->cells);",
+        "foreach ($checked as $row) {",
+        "    Check::input(count($row->cells) === $width, 'VALUES rows must have equal widths.');",
+        "}",
+        "$types = new ColumnUnification();",
+        "for ($column = 0; $column < $width; ++$column) {",
+        "    $types->of($checked, $column);",
+        "}",
+        "$this->rows = $checked;"
+      ]
+    },
+    "Rows/Values/ValuesQuery::columnKind": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(isset($this->rows[0]->cells[$column]), 'VALUES has no such output column.');",
+        "",
+        "return (new ColumnUnification())->of($this->rows, $column);"
+      ]
+    },
+    "Rows/Values/ValuesQuery::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Rows/Values/ValuesQuery::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$sql = [];",
+        "foreach ($this->rows as $row) {",
+        "    $sql[] = $row->toString();",
+        "}",
+        "",
+        "return 'VALUES ' . implode(', ', $sql);"
+      ]
+    },
+    "Rows/Values/ColumnUnification::of": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$candidate = null;",
+        "foreach ($rows as $row) {",
+        "    $kind = $row->cells[$column]->kind();",
+        "    if ($candidate === null) {",
+        "        $candidate = $kind;",
+        "    } elseif ($kind === ColumnKind::Int8 && $candidate === ColumnKind::Int4) {",
+        "        $candidate = ColumnKind::Int8;",
+        "    } else {",
+        "        Check::input(",
+        "            $kind === null || $kind === $candidate || ($kind === ColumnKind::Int4 && $candidate === ColumnKind::Int8),",
+        "            'VALUES column types are incompatible.'",
+        "        );",
+        "    }",
+        "}",
+        "",
+        "return $candidate ?? ColumnKind::Text;"
+      ]
+    },
+    "Rows/Values/ValuesLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'VALUES requires the native parameter profile.');",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'VALUES needs a resolved native result heading.');",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = new SourceBinding($operation, null);",
+        "$lower = new ExpressionLowering();",
+        "$rows = [];",
+        "foreach ($statement->rows as $row) {",
+        "    $cells = [];",
+        "    foreach ($row->values as $position => $expression) {",
+        "        $type = $fields->at($position)->type;",
+        "        Check::input($type instanceof Known, 'Each VALUES column requires a known native type.');",
+        "        $text = $type->descriptor === Builtin::Text;",
+        "        $value = $lower->lower($expression, $binding, $catalogFirst, $text);",
+        "        Check::input(",
+        "            $value instanceof BooleanLiteral || $value instanceof BuiltinCast || $value instanceof IntegerLiteral",
+        "            || $value instanceof NullLiteral || $value instanceof TextLiteral || $value instanceof WideIntegerLiteral,",
+        "            'A standalone VALUES cell needs a supported literal or a typed NULL.',",
+        "        );",
+        "        $cells[] = new ValuesCell($value);",
+        "    }",
+        "    $rows[] = new ValuesRow($cells);",
+        "}",
+        "$values = new \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery($rows, $profile->grammar);",
+        "foreach ($fields as $position => $field) {",
+        "    Check::input(",
+        "        $field->type instanceof Known && $field->type->descriptor instanceof Builtin",
+        "            && $field->type->descriptor->value === $values->columnKind($position)->value,",
+        "        'The resolved VALUES column type is outside the checked domain.',",
+        "    );",
+        "}",
+        "",
+        "return $values;"
+      ]
+    },
+    "Schema/DropRelationLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match ($statement->kind) {",
+        "    ObjectKind::Table => (new DropTableLowering())->lower($operation, $statement),",
+        "    ObjectKind::View, ObjectKind::MaterializedView => (new DropViewLowering())->lower($operation, $statement),",
+        "    default => throw new InvalidConstruction('The complete DROP requires a supported persistent relation kind.'),",
+        "};"
+      ]
+    }
+  }
+}

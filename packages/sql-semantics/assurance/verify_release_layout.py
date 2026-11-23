@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v63.json"
-CONTRACT = "1a28b8e11d209b836b4e6467657d6417a42d5afe3ae5905e66c324f01b90b9dd"
+CONTRACT_NAME = "release-layout-v64.json"
+CONTRACT = "740773bcc437c25366e8ab49d770ee761decc7643e2f704e5720a5926e81ec28"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,10 @@ def verify_probe(raw, catalog):
                 [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
                 for release in ("mysql-5.6.51", "mysql-5.7.44")
             ], "installed-mysql-with-availability-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\Values\\ValuesQuery"):
+            require(item.get("valuesHeading") == ["bool", "int8", 2] and item["sql"] ==
+                    "VALUES (FALSE, NULL), (TRUE, CAST(4000000000 AS pg_catalog.int8))",
+                    "installed-postgres-values-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["MATERIALIZED VIEW", "public", "snapshot", False, True, "VIEW",
                                              'DROP VIEW IF EXISTS "public"."removable" RESTRICT']

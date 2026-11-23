@@ -602,6 +602,37 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     );
 }
 
+function constructPostgresValues(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $values = $namespace . 'Rows\\Values\\';
+    $statement = $values . 'ValuesQuery';
+    $row = $values . 'ValuesRow';
+    $cell = $values . 'ValuesCell';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+
+    return new $statement(
+        array_map(static fn (array $cells): object => new $row(array_map(
+            static fn (array $operand): object => new $cell(constructOperand($namespace, $operand)), $cells)), $input['postgresValues']),
+        $release::from($input['release']),
+    );
+}
+
+function observePostgresValues(string $namespace, object $value): array
+{
+    $rows = [];
+    foreach ($value->rows as $row) {
+        $rows[] = array_map(static fn ($cell): array => observeOperand($namespace, $cell->value), $row->cells);
+    }
+    $kinds = [];
+    foreach (array_keys($value->rows[0]->cells) as $position) {
+        $kinds[] = $value->columnKind($position)->value;
+    }
+
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'postgresValues' => $rows, 'columnKinds' => $kinds];
+}
+
 function constructDropTable(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -893,6 +924,7 @@ function observeStatement(array $input): array
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
+            isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
@@ -920,6 +952,9 @@ function observeStatement(array $input): array
                 'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
             ],
         ];
+    }
+    if ($value::class === $namespace . 'Rows\\Values\\ValuesQuery') {
+        return observePostgresValues($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
         $observed = [

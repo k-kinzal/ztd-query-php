@@ -727,6 +727,18 @@ if ($dialect !== 'sqlite') {
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
         $viewRemoval = 'Schema\\View\\DropView';
         $viewName = 'Schema\\View\\ViewName';
+        $valuesQuery = 'Rows\\Values\\ValuesQuery';
+        $valuesRow = 'Rows\\Values\\ValuesRow';
+        $valuesCell = 'Rows\\Values\\ValuesCell';
+        $roots[] = $valuesQuery;
+        array_push($internal, 'Rows\\Values\\ValuesLowering', 'Rows\\Values\\ColumnUnification', 'Schema\\DropRelationLowering');
+        $pureCollaborators[] = 'Rows\\Values\\ColumnUnification';
+        $properties[$valuesQuery] = ['rows' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$valuesRow] = ['cells' => ['array']];
+        $properties[$valuesCell] = ['value' => ['BooleanLiteral', 'Expression\\BuiltinCast', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral']];
+        $methods[$valuesQuery] = ['__construct', 'columnKind', 'profileId', 'toString'];
+        $methods[$valuesRow] = ['__construct', 'toString'];
+        $methods[$valuesCell] = ['__construct', 'kind', 'toString'];
         $viewKind = 'Schema\\View\\ViewRemovalKind';
         $roots[] = $viewRemoval;
         $internal[] = 'Schema\\View\\DropViewLowering';
@@ -892,15 +904,15 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
         . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && (new \\' . $prefix . 'Aggregation\\GroupedLowering())->applies($statement) => (new \\' . $prefix . 'Aggregation\\GroupedLowering())->lower($operation, $statement),'
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesList => (new \\' . $prefix
+            . 'Rows\\Values\\ValuesLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . ($dialect === 'mysql'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
-        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop'
-            . ' && in_array($statement->kind, [\\' . $platform . '\\Statement\\Name\\ObjectKind::View, \\' . $platform
-            . '\\Statement\\Name\\ObjectKind::MaterializedView], true) => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
-        . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
+        . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\'
+        . ($dialect === 'mysql' ? 'DropTableLowering' : 'DropRelationLowering') . '())->lower($operation, $statement),'
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
@@ -1005,9 +1017,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v39.json';
+    $storagePath = __DIR__ . '/value-storage-v40.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '5fee3285ee37dd9193d970e9fcb0c10b2ce932283a3716fdafc1e0f8b62d8665',
+        hash_file('sha256', $storagePath) === '287946f88db21c2aa264bf9e93bb2f519013cfa4d8648fa27f5531d95415a8f6',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1095,6 +1107,7 @@ try {
                 'Aggregation\\GroupedLowering' => 'Aggregation\\GroupedSelect',
                 'SelectLowering' => 'Select',
                 'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
+                'Rows\\Values\\ValuesLowering' => 'Rows\\Values\\ValuesQuery',
                 'Rows\\With\\WithLowering' => 'Rows\\With\\WithProjection',
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
@@ -1109,6 +1122,13 @@ try {
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($dialect === 'postgres' && $short === 'Schema\\DropRelationLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\View\\DropView'],
+                    'Unexpected PostgreSQL relation removal publication');
+            }
             if ($short === 'Schema\\CreateRelationLowering') {
                 $members = $class->getMethods();
                 $body = 'return $statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable'
@@ -1136,7 +1156,7 @@ try {
                     'Unexpected MySQL declaration default lowering shape'
                 );
             }
-            if ($short === 'Schema\\DropRelationLowering') {
+            if ($dialect === 'sqlite' && $short === 'Schema\\DropRelationLowering') {
                 $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
                 requireShape(
                     count($methodsByName) === 1 && $methodsByName[0]->name->toString() === 'lower'
