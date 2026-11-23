@@ -41,6 +41,7 @@ import run_sqlite_relational as relational
 import run_sqlite_merged_join as merged_join
 import run_sqlite_merged_right_join as merged_right
 import run_sqlite_merged_full_join as merged_full
+import run_sqlite_merged_prefix_join as merged_prefix
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
@@ -80,6 +81,7 @@ DOMAINS = {
     merged_join.CONTRACT_NAME: (merged_join, merged_join.FIXTURE),
     merged_right.CONTRACT_NAME: (merged_right, merged_right.FIXTURE),
     merged_full.CONTRACT_NAME: (merged_full, merged_full.FIXTURE),
+    merged_prefix.CONTRACT_NAME: (merged_prefix, merged_prefix.FIXTURE),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),
     "sqlite-values-v1.json": (values, ""),

@@ -1,0 +1,221 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-join-3",
+  "extends": "sqlite-merged-join-v2.json",
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "requiredScope": "All previously required families, releases and modes remain in scope.",
+  "boundary": [
+    "Resolve USING names by SQLite ASCII-insensitive identifier comparison. A name absent from either heading is invalid.",
+    "NATURAL derives its keys from the intersection of the two headings and rejects an additional ON or USING condition.",
+    "The same immutable concrete root and roles are available through direct construction. No symbolic merge or name lookup is stored in a published value.",
+    "A SELECT owns checks for occurrence ranges, slots, predicate size and result layout. Lowering verifies the shape before constructing it."
+  ],
+  "externalInterpretation": "Both observations interpret the same absolute relations, heading order, affinities, collations and rows. The declarations are transient analysis input.",
+  "sql": "Emit normal INNER, LEFT or CROSS JOIN with scoped ON equalities and explicit ordered projection names. Preserve the direction of each comparison. Every result field is bound to one exact column or closed expression.",
+  "observations": [
+    "Ordered result names and slots, typed result row multiset, duplicates and NULL extension, parameter registration and absence of writes.",
+    "Independent expected pairs distinguish NOCASE on the left from BINARY on the left. TEXT lane '02' and NUMERIC lane 2 meet on equality while their projected values have different types.",
+    "Duplicated source rows, unmatched rows, NULL keys, no common names, reversed source order, reversed key order and repeated USING names must be observable."
+  ],
+  "finite": {
+    "kinds": [
+      "INNER",
+      "CROSS",
+      "LEFT"
+    ],
+    "keyLayouts": [
+      "none",
+      "key",
+      "lane",
+      "both"
+    ],
+    "orientation": [
+      "original",
+      "swapped"
+    ],
+    "projections": [
+      "visible",
+      "qualified"
+    ],
+    "completeness": "Visit exactly once the 48 distinct combinations of kind, key layout, input orientation and projection. Derive identity and membership from the published graph, independently of generator order.",
+    "projectionIdentities": {
+      "visible": "Native star shape.",
+      "qualified": "Both independent headings followed by a repeated qualified right slot, making these two variants distinct even when no field is merged."
+    }
+  },
+  "exploration": {
+    "seeds": [
+      9587,
+      28111,
+      55987
+    ],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary operation, reference orientation, predicate depth up to three comparisons, order and repetition of keys, source affinities, projection order and width, repeated projection slots and unusual output labels."
+  },
+  "analysis": [
+    "The exact previously rejected JOIN USING (key) is admitted.",
+    "The exact previously rejected NATURAL LEFT JOIN is admitted.",
+    "NATURAL inner wildcard preserves left names and right survivor order.",
+    "NATURAL LEFT with both qualified stars retains complete separate headings.",
+    "NATURAL LEFT with explicit merged and qualified fields retains distinct values and types.",
+    "NATURAL LEFT with reversed inputs uses BINARY collation precedence.",
+    "NATURAL CROSS with disjoint headings has no predicate.",
+    "USING with mixed-case repeated key resolves one pair and retains both unmerged lanes.",
+    "USING of two names after a comma retains the written predicate order.",
+    "CROSS JOIN with a two-key USING clause keeps the CROSS kind."
+  ],
+  "negative": [
+    "A direct join comparison references a column outside the right occurrence.",
+    "A direct join comparison references a nonexistent occurrence.",
+    "USING lists a name absent from the input headings.",
+    "NATURAL also supplies ON.",
+    "NATURAL also supplies USING.",
+    "A merged prefix mixes right-preserving and earlier inputs.",
+    "An operand refers to a local definition instead of a complete base-table heading."
+  ],
+  "faults": [
+    "Reverse the two operands of an equality to change collation precedence.",
+    "Remove the second conjunct from a two-key predicate.",
+    "Emit INNER instead of LEFT to discard unmatched input rows.",
+    "Drop the final projected field to change result shape."
+  ],
+  "evidence": {
+    "P01": "Inspect occurrence identities, normalized keys and result fields in both direct and analyzed graphs.",
+    "P02": "Exercise typed predicate scope and analysis rejections alongside direct constructive admission.",
+    "P03": "Use complete external addresses and slots with no analysis state retained.",
+    "P04": "Compute matches from equality, conjunction, join kind and projection independently.",
+    "P05": "Reuse the checked immutable Select, Join, scalar and identifier roles and installed-layout evidence.",
+    "P06": "Compare original syntax and rendered SQL against independent row pairs on the pinned SQLite fixture.",
+    "Q01": "Run layout and scope rules, and observe typed refusals before publication.",
+    "Q02": "Require all finite tuples, every scheduled positive analysis case and the exact exploration budget.",
+    "Q03": "Validate both occurrence operands, ordered comparisons, projection shape and native affinity assumptions.",
+    "Q04": "Use a separate fixture interpreter and real SQLite, with known observable faults and comparator controls.",
+    "Q05": "Replay actual published graphs and each applied renderer mutation against the exact candidate digest."
+  },
+  "open": [
+    "RIGHT, FULL and ordinary left-associated merged prefixes have separate domains. A merged prefix with any right-preserving step remains open.",
+    "Merged joins over local definitions, derived or grouped inputs, external views and virtual table hidden columns require separate domains."
+  ],
+  "trust": [
+    "SQLite equality, affinity, collation and join rules",
+    "The independently specified finite heading and row fixture",
+    "The selected renderer, graph reader, outer runner and exact distribution connection"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_select.html#the_from_clause",
+    "https://sqlite.org/datatype3.html#type_conversions_prior_to_comparison",
+    "https://sqlite.org/datatype3.html#collation"
+  ],
+  "constructors": {
+    "Select": {
+      "role": "Root of a projection over one resolved binary join.",
+      "structure": "Ordered columns, left input, one explicit join, and the existing checked SELECT clauses.",
+      "conditions": "One complete ordinary base table per side for this analyzed form. The root checks ordered projections, slots and expansion bounds.",
+      "meaning": "Consume one binary INNER (including plain JOIN and comma), CROSS, or LEFT join of ordinary base-table occurrences with complete, nonambiguous column declarations. Keep the existing checked projection, clause scope and size limits.",
+      "sql": "Use explicit result labels and render the supplied join in SELECT scope.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "From/Join": {
+      "role": "Extension of a SELECT source by the right input.",
+      "structure": "Recorded INNER, CROSS or LEFT operation, right occurrence, and an optional explicit predicate.",
+      "conditions": "The owning SELECT verifies the presence and scope of both occurrences. The analyzed form admits only a binary merge.",
+      "meaning": "Hold the actual join kind, right occurrence and explicit optional equality conjunction. CROSS retains its native join-order constraint. A NATURAL join of disjoint heading sets has no predicate.",
+      "sql": "Emit the recorded join keyword and the optional ON expression.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/Comparison": {
+      "role": "Compare a pair of resolved join slots in native operand order.",
+      "structure": "Equal operator with a bound left slot and a bound right slot.",
+      "conditions": "Each operand belongs to the selected input. Both refer to one declared column under the key spelling.",
+      "meaning": "A key names one declared slot on each side. Compare the left occurrence against the right occurrence with ordinary equality, preserving left-operand collation precedence and native affinity conversion. Two NULLs do not match.",
+      "sql": "Emit the scoped left slot, equality and the scoped right slot, in that order.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "Predicate/Logical": {
+      "role": "Combine checked join equality predicates.",
+      "structure": "AND with an existing conjunction or equality on the left, and the next equality on the right.",
+      "conditions": "Both children belong to the predicate scope and count against SELECT expansion limits.",
+      "meaning": "Combine multiple key equalities with AND in USING list order or right heading order for NATURAL. Repeated names in USING repeat the same condition and suppress one physical right field.",
+      "sql": "Parenthesize the conjunction and preserve the written order of its children.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    },
+    "ColumnReference": {
+      "role": "Address a visible result field or a key in the correct input occurrence.",
+      "structure": "Local occurrence index with a column slot index.",
+      "conditions": "The SELECT checks its range and visibility. The binder handles merged and qualified lookup before publication.",
+      "meaning": "An unqualified merged key denotes the left occurrence's exact slot. Explicitly qualified keys and each qualified wildcard retain their own slots. An unqualified wildcard emits all left fields followed by the right fields other than the merged keys, in declaration order.",
+      "sql": "Qualify the column with the generated alias of its exact occurrence.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "Q01",
+        "Q02",
+        "Q03",
+        "Q04",
+        "Q05"
+      ]
+    }
+  },
+  "admissionChange": {
+    "positive": "SELECT merge_left.key FROM merge_left FULL JOIN merge_right USING (key)",
+    "replacement": "The same explicit FULL operator over a local input preserves the unsupported heading witness."
+  },
+  "prefixAdmissionChange": {
+    "positive": "SELECT merge_left.key FROM merge_left JOIN merge_free JOIN merge_right USING (key)",
+    "replacement": "The same prefix with a RIGHT merged step remains refused and retains the unsupported placement witness."
+  }
+}

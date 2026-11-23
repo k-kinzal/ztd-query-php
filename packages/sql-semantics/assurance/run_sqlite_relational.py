@@ -93,8 +93,8 @@ def negative_cases():
     yield case(source=LEFT, joins=[["LEFT", RIGHT, ["column", 0, 2]], ["INNER", LEFT, None]], columns=col), "visible occurrence"
     yield case(source=LEFT, columns=col, orders=[[2, False, True]]), "order position must belong to the projection"
     yield case(source=EMPTY, joins=[["CROSS", EMPTY, None]] * 64, columns=col), "at most 64 inputs"
-    yield {"sql": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 RIGHT JOIN ir_right USING (key)", "declarations": DECLARATIONS}, "two ordinary inputs"
-    yield {"sql": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 NATURAL FULL JOIN ir_right", "declarations": DECLARATIONS}, "two ordinary inputs"
+    yield {"sql": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 RIGHT JOIN ir_right USING (key)", "declarations": DECLARATIONS}, "merged prefix requires"
+    yield {"sql": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 NATURAL FULL JOIN ir_right", "declarations": DECLARATIONS}, "merged prefix requires"
     yield {"sql": "SELECT key FROM ir_left ORDER BY key", "declarations": DECLARATIONS}, "projection by ordinal"
     yield {"sql": "SELECT a.key FROM ir_left a LEFT JOIN ir_right b ON c.key = b.key LEFT JOIN ir_left c ON 1",
            "declarations": DECLARATIONS}, "visible occurrence"

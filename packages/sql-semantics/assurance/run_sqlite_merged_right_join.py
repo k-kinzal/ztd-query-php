@@ -83,7 +83,7 @@ def negatives():
     invalid["joins"][0][2][-1] = ["column", 40, 1]
     yield invalid, "rejected", "visible occurrence"
     clauses = (
-        ("merge_left JOIN merge_free JOIN merge_right RIGHT JOIN ir_empty USING (key)", "rejected", "two ordinary inputs"),
+        ("merge_left JOIN merge_free JOIN merge_right RIGHT JOIN ir_empty USING (key)", "rejected", "merged prefix requires"),
         ("merge_left NATURAL RIGHT JOIN local", "rejected", "requires complete base-table headings"),
         ("merge_left RIGHT JOIN merge_right USING (absent)", "analysis-rejected", "absent"),
     )

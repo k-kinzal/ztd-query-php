@@ -99,4 +99,24 @@ final class SourceDeclarations
 
         return $columns;
     }
+
+    /**
+     * Collects the first declared member for each name in the left join prefix.
+     * @return array<array-key, array{int, Column}>
+     */
+    public function prefixHeading(BoundStatement $operation, JoinChain $chain, int $position): array
+    {
+        $terms = [$chain->first];
+        foreach (array_slice($chain->steps, 0, $position) as $step) {
+            $terms[] = $step->relation;
+        }
+        $fields = [];
+        foreach ($terms as $occurrence => $term) {
+            foreach ($this->mergeHeading($operation, $term) as $name => $column) {
+                $fields[$name] ??= [$occurrence, $column];
+            }
+        }
+
+        return $fields;
+    }
 }

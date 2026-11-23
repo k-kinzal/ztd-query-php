@@ -66,10 +66,10 @@ final class QueryClauses
             return [];
         }
         $predicates = [];
-        foreach ($source->steps as $step) {
+        foreach ($source->steps as $position => $step) {
             $predicates[] = match (true) {
                 $step->operator->natural(), $step->constraint instanceof JoinUsing
-                    => (new JoinKeyLowering())->predicate($source, $step, $binding, $operation),
+                    => (new JoinKeyLowering())->predicate($source, $step, $binding, $operation, $position),
                 $step->constraint instanceof JoinOn => $this->predicate($step->constraint->condition, $binding),
                 $step->constraint === null => null,
             };

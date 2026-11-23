@@ -114,7 +114,7 @@ def negatives():
     wrong_output["columns"][0][0][1][-1] = ["column", 0, 2]
     yield wrong_output, "rejected", "visible occurrence"
     yield {"sql": "SELECT merge_left.Key FROM merge_left JOIN merge_free FULL JOIN merge_right USING(key)",
-           "declarations": DECLARATIONS}, "rejected", "two ordinary inputs"
+           "declarations": DECLARATIONS}, "rejected", "merged prefix requires"
     yield {"sql": "SELECT * FROM merge_left FULL JOIN merge_right USING(absent)",
            "declarations": DECLARATIONS}, "analysis-rejected", "absent"
 

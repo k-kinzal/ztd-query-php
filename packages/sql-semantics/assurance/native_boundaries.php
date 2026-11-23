@@ -15,7 +15,7 @@ function nativeBoundaryContract(string $dialect): array
         'sqlite' => [
             ['sqlite-rename-boundaries-v1.json', '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
-            ['sqlite-query-scope-boundaries-v8.json', '05112b91f47b9c273f580c955a8ef7b091137c5b2790e4a1547dda2625e5e594'],
+            ['sqlite-query-scope-boundaries-v9.json', 'bda4f3f5e8f81d04f57629a4f47e81cb2ba2f8a5b2761ffaceb7e42692f68006'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
             ['sqlite-wildcard-boundaries-v4.json', '299d27d56b6190fbb5bc9e1c89704579155cdb1bf083b0bae5aa230577911c00'],
             ['sqlite-insert-slots-boundaries-v5.json', '55d984c88686949361c74660945cc67450c02a86b6a69c53aec6f079f46f87c0'],
@@ -104,7 +104,7 @@ function checkNativeBoundaries(
             'Statement\\Expression\\Cast as ParsedCast', 'Statement\\Expression\\Literal\\TextLiteral as ParsedText',
             'Statement\\Expression\\Literal\\BlobLiteral as ParsedBlob', 'Statement\\Expression\\Literal\\NullLiteral as ParsedNull',
             'Statement\\Expression\\BindParameter', 'Statement\\Expression\\ParameterPrefix',
-            'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinChain', 'Statement\\Relation\\JoinUsing',
+            'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinChain', 'Statement\\Relation\\JoinUsing', 'Statement\\Relation\\JoinStep',
             'Statement\\Relation\\JoinKeyword', 'Ir\\From\\JoinKeyLowering', 'Model\\Statement\\Declaration\\Column', 'Model\\Statement\\Identifier\\Name', 'Statement\\Query\\SetQuantifier', 'Statement\\Query\\With\\WithQuery',
             'Statement\\Query\\Compound', 'Model\\Statement\\Reference\\Table\\CommonTable',
             'Statement\\Relation\\TableInput', 'Model\\Statement\\Declaration\\Table',
