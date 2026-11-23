@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/postgres-int8-fields-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Pinned UTF-8 PostgreSQL under the builtin signed types and cast profile.",
+  "extends": ["postgres-typed-columns-v2.json", "postgres-boolean-fields-v1.json", "postgres-builtin-casts-v4.json", "postgres-boolean-write-inputs-v1.json"],
+  "constructors": {
+    "WideIntegerColumnReference": {
+      "type": "From/WideIntegerColumnReference",
+      "role": "A read of a native int8 member by its resolved occurrence and field position.",
+      "structure": "Two nonnegative integer coordinates identifying an occurrence and an int8 slot owned by that occurrence.",
+      "conditions": "The parent checks that the slot is visible and has the native int8 kind. An incompatible source cannot occupy the same role.",
+      "meaning": "Read an exact signed 64-bit integer or SQL NULL, including NULL extension and exported derived values.",
+      "sql": "Emit the owned physical or generated local column and occurrence alias."
+    }
+  },
+  "existingRoles": ["From/ColumnKind", "ColumnReference", "From/BooleanColumnReference", "From/TextColumnReference", "From/DerivedSource", "From/Join", "TableSource", "Select", "ResultColumn", "Expression/BuiltinCast", "Predicate/NullTest"],
+  "structure": "Native int8 fields retain their own slot kind in physical input and independent derived headings. Projection, grouping parentheses, presence tests and resolved builtin casts compose over the field. Explicit Boolean-to-int4 and text-to-text conversions use their own native field roles.",
+  "conditions": "Validate every reference over the actual visible kind. Resolve the same target across grouped and ungrouped forms without retaining the source spelling. A builtin cast only accepts a checked source and target edge. The native bigint to int4 narrowing keeps its possible data-dependent overflow.",
+  "meaning": "Observe exact signed field values, NULL and DISTINCT. An identity cast keeps int8, a signed narrowing cast preserves values in int4 or raises SQLSTATE 22003 on a row outside its range. A presence test yields a Boolean. Group parentheses around one field leave its resolved coordinates and result name intact.",
+  "sql": "Render exact qualified field names, typed casts, aliases and preserved positional result order.",
+  "observations": ["Native field kind and exact occurrence in a closed physical or derived heading", "Ordered field names, OIDs and values including both signed extremes, NULL and duplicates", "Effects of join NULL extension and native overflow", "Exact ordered rows when ORDER BY fixes the order"],
+  "finite": {
+    "source": ["physical", "inner", "left", "derived"],
+    "field": ["low", "high"],
+    "operand": ["read", "presence", "identity-cast", "narrow-cast"],
+    "distinct": [false, true],
+    "identities": 64,
+    "completeness": "Recover the source composition, field, reference role, typed consumer and DISTINCT policy from the published graph and require all fixed identities."
+  },
+  "analysis": ["The same int8 field read with grouped, qualified and bare names", "A grouped native Boolean field", "A grouped native text field", "Resolved int8 star expansion", "A left join with NULL extension", "An independent derived int8 heading", "A narrowing cast succeeds on qualifying in-range rows", "A narrowing cast observes native SQLSTATE 22003", "A native Boolean field cast to int4", "A native text field cast to text"],
+  "exploration": {
+    "seeds": [1439, 18773, 39317],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary occurrence roles, typed reads, grouping, aliases, nullable fields, native cast targets, empty metadata, joins, duplicates, ordered output and narrowing errors."
+  },
+  "negative": ["Negative int8 slot", "Negative occurrence", "Missing int8 slot", "Missing occurrence", "Int4 slot used as int8", "Int8 slot used as int4", "Int8 slot used as text", "Int8 cast to Boolean"],
+  "faults": ["Read the other int8 field", "Narrow an int8 projection without a cast", "Lose NULL extension", "Render native Boolean conversion with the wrong target", "Erase the native narrowing conversion"],
+  "evidence": {
+    "P01": "Retain the exact native type, operation, occurrence and slot.",
+    "P02": "Reject an absent or incompatible typed position at the owning scope before rendering.",
+    "P03": "Keep only the resolved reference, native kind and semantic operation.",
+    "P04": "Preserve field meaning through local composition, join, casts and presence tests.",
+    "P05": "Publish final readonly field values in owned lists.",
+    "P06": "Render the native type and preserve exact observations including runtime overflow.",
+    "Q01": "Verify incompatible source roles and unsupported cast edges at their checked boundaries.",
+    "Q02": "Consume each defined case and all required analyzed pathways on both releases.",
+    "Q03": "Compose the published exact kind with derived, joined and typed scalar operations.",
+    "Q04": "Compare native values, type metadata and errors with an independent model.",
+    "Q05": "Connect the checked shape, loaded types and rendered results to the installed dialect implementation."
+  },
+  "open": ["Native int8 arithmetic and comparisons in predicates", "Native int8 write destinations and mutation output fields", "Additional independent result compositions and column types", "Resolved ORDER BY name matching"],
+  "trust": ["Pinned native types and casts", "Stock PostgreSQL integer conversion", "Independent fixture row and join evaluation", "Observed native type metadata and exact installed bytes"],
+  "sources": ["https://www.postgresql.org/docs/17/datatype-numeric.html", "https://www.postgresql.org/docs/17/typeconv-overview.html", "https://www.postgresql.org/docs/17/queries-table-expressions.html"]
+}
