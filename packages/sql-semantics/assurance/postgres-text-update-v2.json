@@ -1,0 +1,119 @@
+{
+  "revision": "SemanticsIR/postgres-text-update-2",
+  "approval": "pending-human-review",
+  "extends": [
+    "server-update-v2.json",
+    "postgres-text-returning-v2.json",
+    "postgres-text-update-v1.json",
+    "postgres-text-insert-query-v2.json"
+  ],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Mutation/UpdateAssignment": {
+      "role": "A scalar write of a native int4 or text field of one ordinary target.",
+      "structure": "A resolved write coordinate and a checked literal, resolved old-row reference or explicit NULL. Each reference addresses occurrence zero.",
+      "conditions": "A native int4 target admits the signed literal and physical read roles. A text target admits those two roles plus native text. Both target kinds admit NULL. The complete UPDATE checks physical types and scope ownership.",
+      "meaning": "All right-hand operands read the old row. A signed operand assigned to text uses the stock int4-to-text conversion, even when another assignment updates that operand source. RETURNING sees the new typed values.",
+      "sql": "Emit named SET targets and exact scoped old-field reads in the declared order. Render text literals with fixed native UTF-8 text semantics."
+    }
+  },
+  "externalInterpretation": "Use the same ordinary table with nullable native text fields and explicitly writable native int4 and text positions. Preserve exact UTF-8 bytes and inspect the physical row state before and after each command. Use the stock PostgreSQL int4-to-text assignment conversion, verified by the absence of an overriding pg_cast entry.",
+  "observations": [
+    "A text literal, including empty, quoted, multiline and Unicode strings, round-trips as the same native value.",
+    "A simultaneous swap of two fields reads both old values.",
+    "An explicit NULL is distinct from empty text and is visible through RETURNING.",
+    "Preserve mixed returned types, exact result labels, duplicate rows and affected count.",
+    "An int4 value assigned to text yields the exact signed decimal string. SQL NULL remains NULL."
+  ],
+  "finite": {
+    "form": [
+      "literal",
+      "read",
+      "null",
+      "swap",
+      "int4:-2147483648",
+      "int4:-27",
+      "int4:0",
+      "int4:38",
+      "int4:2147483647",
+      "int4-read"
+    ],
+    "target": [
+      "label",
+      "note"
+    ],
+    "filter": [
+      "all",
+      "nonnull"
+    ],
+    "identities": 40,
+    "completeness": "Recover the assignment form, exact signed literal, first write position and checked filter from the published value. Preserve the original 16 identities."
+  },
+  "exploration": {
+    "seeds": [
+      5519,
+      33647,
+      72629
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary the text operands and order, read/write overlaps, nullable rows, mixed signed/text assignments and returned slots. Include quote, backslash, whitespace, empty and multibyte cases. Observe int4-to-text assignments alongside the original typed text paths."
+  },
+  "analysis": [
+    "Assign a decoded bare string to a statically known text slot.",
+    "Copy a qualified old text field to another text field.",
+    "Swap two native text fields in one update and return their new values.",
+    "Write explicit NULL and a signed integer in one command.",
+    "Assign an explicitly typed multiline or multibyte text literal.",
+    "Assign the minimum int4 literal to a text field.",
+    "Write old int4 to text while changing the same row’s signed source field."
+  ],
+  "negative": [
+    "A signed read role points at a text slot while assigning to text.",
+    "Pass a text operand as an int4 assignment value.",
+    "Use a resolved write role that disagrees with the kind of the physical slot.",
+    "Use a resolved old text read that disagrees with the kind of the physical slot.",
+    "Use a read coordinate from another occurrence.",
+    "Repeat a write position."
+  ],
+  "faults": [
+    "Discard one operand in a simultaneous swap.",
+    "Render the other text field instead of the original source field.",
+    "Change an empty text literal to SQL NULL.",
+    "Read the wrong signed value when assigning an int4 literal to a text field."
+  ],
+  "evidence": {
+    "P01": "Record the exact target type, occurrence, ordinal and old-row operand of each assignment.",
+    "P02": "Enforce an admitted assignment pair and close every target and source reference.",
+    "P03": "Hold only immutable field references, scalar values, row-selection predicates and ordered assignments.",
+    "P04": "Compose each assignment over the old row and the ordered result layout over the new row.",
+    "P05": "Preserve detached ordered lists and final readonly fields.",
+    "P06": "Compare native result metadata and physical effects after applying the exact composed SQL.",
+    "Q01": "Reject disallowed assignment directions and invalid source or destination roles.",
+    "Q02": "Check all direct finite identities and supported parsed inputs.",
+    "Q03": "Independently evaluate effects and preserve the old/new row distinction.",
+    "Q04": "Run both exact releases and detect the known read-role, swap and NULL differences.",
+    "Q05": "Bind all observations and fault patches to the measured distribution."
+  },
+  "open": [
+    "Computed text write expressions, text INSERT writes, custom coercions and other target types retain their own obligations."
+  ],
+  "trust": [
+    "Matching external writable relation declaration",
+    "Checked PostgreSQL statement and text roles",
+    "Independent table-effect observer and rollback"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/typeconv-query.html",
+    "https://www.postgresql.org/docs/17/sql-createcast.html"
+  ],
+  "changeFromV1": "Keep all budgets and prior observations. Add 24 signed literal or old-row read identities and replace the valid assignment rejection by a wrong physical source type rejection."
+}
