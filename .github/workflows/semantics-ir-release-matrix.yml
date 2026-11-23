@@ -492,6 +492,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-table-rename-evidence"
+      - name: Compare PostgreSQL ordered truncation effects
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_truncate.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-postgres-truncate-evidence"
       - name: Compare PostgreSQL native VALUES matrices
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -1803,6 +1818,12 @@ jobs:
         with:
           name: native-postgres-table-rename-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-table-rename-evidence/
+      - name: Preserve PostgreSQL truncation observations and any failure
+        if: ${{ always() && matrix.engine == 'postgres' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-postgres-truncate-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-postgres-truncate-evidence/
       - name: Preserve PostgreSQL native VALUES observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

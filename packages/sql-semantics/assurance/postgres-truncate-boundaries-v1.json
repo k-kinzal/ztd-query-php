@@ -1,0 +1,95 @@
+{
+  "revision": "SemanticsIR/postgres-truncate-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the owned ordered occurrence list, absolute binding and explicit sequence and dependency policies to the loaded PHP.",
+  "rules": {
+    "Schema/Truncate/TruncateTarget::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": []
+    },
+    "Schema/Truncate/TruncateTarget::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return ($this->only ? 'ONLY ' : '') . $this->table->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$this->targets = Check::listOf($targets, TruncateTarget::class, 'TRUNCATE requires a nonempty list of checked table targets.', 1);"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$targets = [];",
+        "foreach ($this->targets as $target) {",
+        "    $targets[] = $target->toString();",
+        "}",
+        "",
+        "return 'TRUNCATE TABLE ' . implode(', ', $targets)",
+        "    . ($this->restartIdentity ? ' RESTART IDENTITY' : ' CONTINUE IDENTITY')",
+        "    . ($this->cascade ? ' CASCADE' : ' RESTRICT');"
+      ]
+    },
+    "Schema/Truncate/TruncateLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input(",
+        "    $profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive,",
+        "    'TRUNCATE requires the native naming profile.'",
+        ");",
+        "$targets = [];",
+        "foreach ($statement->tables as $reference) {",
+        "    $resolution = $operation->facts->relation($reference)->table;",
+        "    Check::input(",
+        "        $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable",
+        "        && $reference->name->catalog === null && $resolution->table->name->catalog === null,",
+        "        'TRUNCATE requires a resolved persistent base table.'",
+        "    );",
+        "    $name = $resolution->table->name;",
+        "    $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "    $targets[] = new TruncateTarget(new TableName(new Identifier($schema), new Identifier($name->name->value)), $reference->only);",
+        "}",
+        "",
+        "return new TruncateTable($targets, $statement->restartIdentity ?? false, $statement->behavior === DropBehavior::Cascade, $profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedRename => (new RenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

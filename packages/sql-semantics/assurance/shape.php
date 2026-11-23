@@ -765,6 +765,15 @@ if ($dialect !== 'sqlite') {
         $createAs = 'Schema\\Query\\CreateTableAs';
         $createAsBounds = 'Schema\\Query\\CreateAsBounds';
         $roots[] = $createAs;
+        $truncate = 'Schema\\Truncate\\TruncateTable';
+        $truncateTarget = 'Schema\\Truncate\\TruncateTarget';
+        $roots[] = $truncate;
+        $internal[] = 'Schema\\Truncate\\TruncateLowering';
+        $properties[$truncate] = ['targets' => ['array'], 'restartIdentity' => ['bool'], 'cascade' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$truncateTarget] = ['table' => ['Schema\\TableName'], 'only' => ['bool']];
+        $methods[$truncate] = ['__construct', 'profileId', 'toString'];
+        $methods[$truncateTarget] = ['__construct', 'toString'];
         $renameTable = 'Schema\\Alter\\RenameTable';
         $renameColumn = 'Schema\\Alter\\RenameColumn';
         array_push($roots, $renameTable, $renameColumn);
@@ -976,7 +985,8 @@ try {
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'postgres'
-            ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename'
+            ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename, $statement instanceof \\'
+                . $platform . '\\Statement\\Table\\TruncateTable'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
@@ -1085,9 +1095,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v44.json';
+    $storagePath = __DIR__ . '/value-storage-v45.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '3c4173dfabc77855bada2aa548df375e1baf52e9484a2d467dcd96e15b4587ff',
+        hash_file('sha256', $storagePath) === 'd31ab78cc49c398c8dc7edf77ebf9e8fb1060da5130b72038546040281043c48',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1188,6 +1198,7 @@ try {
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Alter\\TableRenameLowering' => 'Schema\\Alter\\RenameTable',
+                'Schema\\Truncate\\TruncateLowering' => 'Schema\\Truncate\\TruncateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\View\\CreateViewLowering' => 'Schema\\View\\CreateView',
                 'Schema\\View\\CreateMaterializedViewLowering' => 'Schema\\View\\CreateMaterializedView',
@@ -1228,7 +1239,8 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\View\\DropView',
+                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable',
+                        'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\PersistentDeclarationLowering') {

@@ -826,6 +826,37 @@ function observePostgresRename(string $namespace, object $value): array
     ];
 }
 
+function constructPostgresTruncate(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $identifier = $namespace . 'Identifier';
+    $table = $namespace . 'Schema\\TableName';
+    $leaf = $namespace . 'Schema\\Truncate\\TruncateTarget';
+    $statement = $namespace . 'Schema\\Truncate\\TruncateTable';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $truncate = $input['truncateTable'];
+    $targets = [];
+    foreach ($truncate['targets'] as $target) {
+        if (!is_array($target)) {
+            $targets[] = $target;
+            continue;
+        }
+        [$schema, $name, $only] = $target;
+        $targets[] = new $leaf(new $table(new $identifier($schema), new $identifier($name)), $only);
+    }
+    return new $statement($targets, $truncate['restart'], $truncate['cascade'], $release::from($input['release']));
+}
+
+function observePostgresTruncate(object $value): array
+{
+    $targets = [];
+    foreach ($value->targets as $target) {
+        $targets[] = [$target->table->schema->value, $target->table->table->value, $target->only];
+    }
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'truncateTable' => ['targets' => $targets, 'restart' => $value->restartIdentity, 'cascade' => $value->cascade]];
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1085,6 +1116,7 @@ function observeStatement(array $input): array
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
             isset($input['rename']) => constructPostgresRename($platform, $input),
             isset($input['tableRename']) => constructMysqlRename($platform, $input),
+            isset($input['truncateTable']) => constructPostgresTruncate($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -1170,6 +1202,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Alter\\RenameTable') {
         return observeMysqlRename($value);
+    }
+    if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Truncate\\TruncateTable') {
+        return observePostgresTruncate($value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

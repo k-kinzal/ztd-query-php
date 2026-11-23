@@ -103,6 +103,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-materialized-view-boundaries-v2.json', '070d2a0b7d4d7fdd34c25aba6978c0b4b4908d51a0d101c68d53762cfab14de5'],
             ['postgres-create-table-as-boundaries-v1.json', '67906cdd1b60402f1d0145906b5a033ee0ae2a899b3777d80d5eed1db0235976'],
             ['postgres-table-rename-boundaries-v2.json', 'eb034cda577a7724f5e5b27f72736ca73038dea327c2cb395d7181aee37a3f68'],
+            ['postgres-truncate-boundaries-v1.json', '99ebd669e0945794333bfe3ac886eefee1a2a272817e5b48cdd80f8f316d80a8'],
         ],
         'sqlite' => [],
     };
@@ -224,6 +225,7 @@ function checkNativeBoundaries(
                 'Ir\\Schema\\Query\\CreateTableAsLowering', 'Ir\\Schema\\TableName',
                 'Statement\\Object\\Reference\\RelationTarget', 'Statement\\Object\\RenamedPart',
                 'Statement\\Object\\Drop as ParsedDrop', 'Statement\\Object\\Rename as ParsedRename', 'Ir\\Schema\\Alter\\RenameLowering', 'Ir\\Schema\\DropRelationLowering',
+                'Statement\\Table\\TruncateTable as ParsedTruncateTable', 'Ir\\Schema\\Truncate\\TruncateLowering',
                 'Ir\\Schema\\CreateTableLowering', 'Ir\\Schema\\View\\CreateViewLowering', 'Ir\\Schema\\View\\CreateMaterializedViewLowering',
                 'Statement\\Option\\Toggle', 'Statement\\Option\\KeywordWord', 'Statement\\Option\\Word', 'Statement\\Table\\View\\CheckOption',
                 'Statement\\Type\\Designation\\NamedDesignation', 'Statement\\Type\\TypeName',

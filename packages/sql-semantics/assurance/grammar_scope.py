@@ -472,6 +472,10 @@ def inventory(root):
             for alternative in rules.get("RenameStmt", []):
                 if alternative.startswith("RenameStmt: ALTER TABLE ") and "CONSTRAINT" not in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-table-rename-v2.json")
+        if postgres:
+            for rule in ("TruncateStmt", "opt_restart_seqs", "relation_expr_list"):
+                for alternative in rules.get(rule, []):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-truncate-v1.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

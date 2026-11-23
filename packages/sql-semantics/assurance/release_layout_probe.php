@@ -541,6 +541,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
         $queries['Schema\\Alter\\RenameTable'] = 'ALTER TABLE ONLY accounts RENAME TO archived';
         $queries['Schema\\Alter\\RenameColumn'] = 'ALTER TABLE IF EXISTS ONLY accounts RENAME id TO "new Id"';
+        $queries['Schema\\Truncate\\TruncateTable'] = 'TRUNCATE TABLE ONLY accounts, accounts RESTART IDENTITY CASCADE';
         $queries['Schema\\View\\RefreshMaterializedView'] = 'REFRESH MATERIALIZED VIEW snapshot WITH NO DATA';
         $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
@@ -946,6 +947,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 }
                 $details['mysqlRenameMoves'][] = array_map(static fn ($name): array => [$name->schema->value, $name->table->value],
                     [$move->from, $move->to, $move->origin]);
+            }
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Truncate\\TruncateTable') {
+            $details['postgresTruncate'] = [$result->restartIdentity, $result->cascade, []];
+            foreach ($result->targets as $target) {
+                if ($target::class !== $namespace . 'Ir\\Schema\\Truncate\\TruncateTarget') {
+                    throw new RuntimeException('The installed truncation lost its checked target role.');
+                }
+                $details['postgresTruncate'][2][] = [$target->table->schema->value, $target->table->table->value, $target->only];
             }
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameTable') {
