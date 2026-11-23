@@ -11,19 +11,29 @@ function mysqlVarcharWrite(PDO $pdo, string $sql, Closure $snapshot): array
     $pdo->beginTransaction();
     try {
         $result = executeMySqlVarcharWrite($pdo, $sql);
-        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-        try {
-            $result['diagnostics'] = $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
-            $result['warningCount'] = (int) $pdo->query('SHOW COUNT(*) WARNINGS')->fetchColumn();
-        } finally {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        }
+        $result += mysqlFixtureDiagnostics($pdo);
         $result['after'] = $snapshot($pdo);
     } finally {
         $pdo->rollBack();
     }
 
     return [...$result, 'before' => $before, 'restored' => $snapshot($pdo)];
+}
+
+/**
+ * Collects the last statement's conditions without preparing a new statement.
+ */
+function mysqlFixtureDiagnostics(PDO $pdo): array
+{
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    try {
+        return [
+            'diagnostics' => $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM),
+            'warningCount' => (int) $pdo->query('SHOW COUNT(*) WARNINGS')->fetchColumn(),
+        ];
+    } finally {
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    }
 }
 
 function executeMySqlVarcharWrite(PDO $pdo, string $sql): array

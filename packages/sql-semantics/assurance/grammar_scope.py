@@ -393,6 +393,21 @@ def inventory(root):
                     if mysql:
                         related[alternative] = (*related[alternative], "mysql-local-varchar-v2.json")
         signatures = {alternative for alternatives in rules.values() for alternative in alternatives}
+        if mysql:
+            declarations = {
+                "field_spec: field_ident type opt_attribute",
+                "field_def: type opt_column_attribute_list",
+                "type: varchar field_length opt_binary",
+                "type: varchar field_length opt_charset_with_opt_binary",
+                "varchar: VARCHAR",
+                "varchar: VARCHAR_SYM",
+                "create_table_option: default_charset",
+                "create_table_option: default_collation",
+                *(role + ": " + form for role, default in (("attribute", "DEFAULT"), ("column_attribute", "DEFAULT_SYM"))
+                  for form in ("NULL_SYM", "not NULL_SYM", "COLLATE_SYM collation_name", default + " now_or_signed_literal")),
+            }
+            for alternative in sorted(signatures & declarations):
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-varchar-v1.json")
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):

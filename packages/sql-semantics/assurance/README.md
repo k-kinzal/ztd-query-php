@@ -223,6 +223,8 @@ The [native CREATE TABLE contract](server-create-table-v1.json) covers ordinary 
 
 Run `run_server_create_table.py` with the same native fixture options. Replay all releases with `combine_server_create_table_evidence.py` and the per-release `index.json` paths.
 
+The [MySQL VARCHAR declaration contract](mysql-create-varchar-v1.json) also observes declared and inherited collation, character capacity, row format, and diagnostics from creating the table and inserting a default row. It compares information-schema bytes and stored bytes separately, including supplementary characters and truncated ASCII padding. Run `run_server_mysql_create_varchar.py` with the MySQL fixture options and replay the nine release indexes with `combine_server_mysql_create_varchar_evidence.py`. The storage observation uses the fixture's pinned InnoDB settings and records its page size and strict mode.
+
 ## Native compound queries
 
 The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.

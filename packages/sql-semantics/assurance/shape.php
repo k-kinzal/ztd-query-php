@@ -665,6 +665,14 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+    } else {
+        $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
+        $properties['Schema\\CharacterStorage'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
+        $methods['Schema\\CharacterStorage'] = ['__construct', 'toString'];
+        $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
+        $properties['Schema\\TableColumn']['default'] = ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'null'];
+        $methods['Schema\\TableColumn'] = ['__construct', 'storageBytes', 'toString'];
+        $internal[] = 'Schema\\CreateColumnStorageLowering';
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
@@ -983,6 +991,14 @@ try {
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Schema\\CreateColumnStorageLowering') {
+                $methodsByName = $class->getMethods();
+                requireShape(
+                    count($methodsByName) === 1 && $methodsByName[0]->isPublic() && $methodsByName[0]->name->toString() === 'lower'
+                    && types($methodsByName[0]->returnType, $prefix, $short) === ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'],
+                    'Unexpected MySQL declaration storage lowering shape'
+                );
+            }
             if ($short === 'Schema\\DropRelationLowering') {
                 $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
                 requireShape(
@@ -1028,6 +1044,7 @@ try {
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
+                    || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
                 "Unexpected function in $short",

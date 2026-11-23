@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
+use SqlSemantics\Platform\MySql\Ir\From\TextCollation;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -39,15 +40,24 @@ final class CreateTable implements SemanticsIR
         array $columns,
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
+        public readonly ?TextCollation $defaultCollation = null,
     ) {
         $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);
         Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');
         $seen = [];
+        $bytes = 0;
+        $nullBits = 0;
+        $packed = false;
         foreach ($checked as $column) {
             $key = $column->name->key();
             Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');
             $seen[$key] = true;
+            $bytes += $column->storageBytes();
+            $nullBits += (int) $column->nullable;
+            $packed = $packed || $column->storage instanceof CharacterStorage;
         }
+        $bitmap = intdiv($nullBits + ($packed ? 0 : 1) + 7, 8);
+        Check::input($bytes + $bitmap <= 65535, 'The declared logical record cannot exceed 65535 bytes.');
         $this->columns = $checked;
     }
 
@@ -70,6 +80,7 @@ final class CreateTable implements SemanticsIR
         }
 
         return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()
-            . ' (' . implode(', ', $columns) . ') ENGINE=InnoDB';
+            . ' (' . implode(', ', $columns) . ') ENGINE=InnoDB'
+            . ($this->defaultCollation === null ? '' : ' DEFAULT CHARACTER SET utf8mb4 COLLATE ' . $this->defaultCollation->value);
     }
 }

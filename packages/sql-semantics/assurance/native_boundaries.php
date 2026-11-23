@@ -59,6 +59,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-varchar-extrema-boundaries-v1.json', 'c2c47d6e7d9a220b5ffc43c3e9c9b13bbcea824736c17d10e729eedc46754cf0'],
             ['mysql-explicit-text-collation-boundaries-v1.json', '6bfb85c25b4dbd401b4ede0577d7fcd8031bbb07c835064552a1525e7d772a6d'],
             ['mysql-derived-varchar-boundaries-v1.json', 'bed891c263a93d0c62cbcfec908fa171a593d6a55fec81020856a2d94b9b97d7'],
+            ['mysql-create-varchar-boundaries-v1.json', 'cca62d6472498414b159b7934303e1250ddcda6103dc2a4f25460dee572b741d'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -204,6 +205,10 @@ function checkNativeBoundaries(
                 'Ir\\Mutation\\InsertCell', 'Ir\\Mutation\\Insert', 'Ir\\Mutation\\InsertTargetBinding',
                 'Model\\Statement\\Type\\Nullability', 'Model\\Contract\\ParameterStyle', 'Model\\Contract\\LexicalSettings',
                 'Statement\\Type\\Integral', 'Statement\\Type\\Kind\\IntegralKind',
+                'Statement\\Table\\Column\\CollateAttribute', 'Statement\\Table\\Column\\DefaultLiteral', 'Statement\\Table\\Column\\KeywordAttribute',
+                'Statement\\Table\\Column\\Kind\\ColumnKeyword', 'Statement\\Table\\Column\\OrdinaryColumn', 'Statement\\Table\\Column\\ColumnDefinition',
+                'Statement\\Table\\Option\\EngineOption', 'Statement\\Table\\Option\\CharsetOption', 'Statement\\Table\\Option\\CollationOption',
+                'Rules\\TableDefinition\\TableDeclaration', 'Rules\\SessionDatabase',
                 'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
                 'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',

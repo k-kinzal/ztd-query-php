@@ -464,11 +464,16 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     $column = $namespace . 'Schema\\TableColumn';
     $storage = $namespace . 'Schema\\IntegerStorage';
     $characters = $namespace . 'Schema\\CharacterStorage';
+    $collation = $namespace . 'From\\TextCollation';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $create = $input['create'];
     $columns = [];
     foreach ($create['columns'] as [$columnName, $kind, $nullable, $default]) {
-        $type = $kind === 'pg_catalog.text' && $input['dialect'] === 'postgres' ? $characters::from($kind) : $storage::from($kind);
+        $type = match (true) {
+            $kind === 'pg_catalog.text' && $input['dialect'] === 'postgres' => $characters::from($kind),
+            $input['dialect'] === 'mysql' && is_array($kind) && $kind[0] === 'varchar' => new $characters($kind[1], $collation::from($kind[2])),
+            default => $storage::from($kind),
+        };
         $columns[] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
     }
 
@@ -477,6 +482,7 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
         $columns,
         $create['ifNotExists'],
         $release::from($input['release']),
+        ...($input['dialect'] === 'mysql' && isset($create['tableCollation']) ? [$collation::from($create['tableCollation'])] : []),
     );
 }
 
@@ -703,7 +709,8 @@ function observeDelete(string $namespace, object $value, string $dialect): array
 
 function observeStatement(array $input): array
 {
-    $platform = 'SqlSemantics\\Platform\\' . match ($input['dialect']) {
+    $dialect = $input['dialect'];
+    $platform = 'SqlSemantics\\Platform\\' . match ($dialect) {
         'mysql' => 'MySql\\',
         'postgres' => 'PostgreSql\\',
     };
@@ -749,9 +756,15 @@ function observeStatement(array $input): array
             'ifNotExists' => $value->ifNotExists,
             'columns' => [],
         ];
+        if ($dialect === 'mysql' && $value->defaultCollation !== null) {
+            $observed['tableCollation'] = $value->defaultCollation->value;
+        }
         foreach ($value->columns as $column) {
+            $storage = $column->storage;
+            $kind = $dialect === 'mysql' && $storage::class === $namespace . 'Schema\\CharacterStorage'
+                ? ['varchar', $storage->length, $storage->collation->value] : $storage->value;
             $observed['columns'][] = [
-                $column->name->value, $column->storage->value, $column->nullable,
+                $column->name->value, $kind, $column->nullable,
                 $column->default === null ? null : observeOperand($namespace, $column->default),
             ];
         }
