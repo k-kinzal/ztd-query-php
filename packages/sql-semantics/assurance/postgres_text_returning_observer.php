@@ -14,17 +14,26 @@ $pdo->exec('DROP TABLE IF EXISTS public.ir_text_changes');
 $pdo->exec("CREATE TABLE public.ir_text_changes (id INTEGER, label pg_catalog.text DEFAULT 'added α', note pg_catalog.text DEFAULT 'new memo')");
 $pdo->exec("INSERT INTO public.ir_text_changes VALUES (1, 'old 値', 'first'), (1, 'old 値', 'first'), "
     . "(2, NULL, 'second'), (3, '', NULL), (NULL, 'unkeyed', 'other')");
+$pdo->exec('DROP TABLE IF EXISTS public.ir_text_inputs');
+$pdo->exec('CREATE TABLE public.ir_text_inputs (note pg_catalog.text, id INTEGER, label pg_catalog.text)');
+$pdo->exec("INSERT INTO public.ir_text_inputs VALUES ('other', 7, 'copied α'), ('other', 7, 'copied α'), "
+    . "('memo', 8, NULL), ('blank', 9, ''), (NULL, 10, '東京')");
 
 function snapshotTextRows(PDO $pdo): array
 {
     return $pdo->query('SELECT id, label, note FROM public.ir_text_changes')->fetchAll(PDO::FETCH_NUM);
 }
 
+function snapshotInputRows(PDO $pdo): array
+{
+    return $pdo->query('SELECT note, id, label FROM public.ir_text_inputs')->fetchAll(PDO::FETCH_NUM);
+}
+
 function admittedTextMutation(string $sql): bool
 {
     $name = static fn (string $part): string => '(?:' . $part . '|"' . $part . '")';
     $table = $name('public') . '\\.' . $name('ir_text_changes');
-    $alias = $name('(?:__ztd_source|r|ir_text_changes)');
+    $alias = $name('(?:__ztd_source|r|s|ir_text_changes|ir_text_inputs)');
     $column = '(?:' . $alias . '\\.)?' . $name('(?:id|label|note)');
     $number = '-?[0-9]{1,5}';
     $int4 = '(?:' . $number . '|CAST\\(' . $number . ' AS pg_catalog\\.int4\\))';
@@ -39,7 +48,11 @@ function admittedTextMutation(string $sql): bool
     $cell = '(?:' . $int4 . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
     $row = '\\(' . $cell . '(?:, ' . $cell . ')*\\)';
     $values = 'VALUES ' . $row . '(?:, ' . $row . ')*';
-    $select = 'SELECT ' . $int4 . '(?: AS ' . $name('v') . ')?(?: WHERE FALSE)?';
+    $input = $name('public') . '\\.' . $name('ir_text_inputs');
+    $label = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\\x00]|"")+")';
+    $output = '(?:' . $cell . '|' . $column . ')(?: AS ' . $label . ')?';
+    $select = 'SELECT (?:DISTINCT )?' . $output . '(?:, ' . $output . ')*'
+        . '(?: FROM (?:ONLY )?' . $input . '(?: AS ' . $alias . ')?)?' . $where;
     $written = $name('(?:id|label|note)');
     $insert = 'INSERT INTO ' . $table . ' \\(' . $written . '(?:, ' . $written . ')*\\) (?:' . $values . '|' . $select . ')';
     $returning = fixtureReturningClause($column, $alias);
@@ -48,12 +61,13 @@ function admittedTextMutation(string $sql): bool
         . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
 }
 
-function observeTextMutation(PDO $pdo, string $sql): array
+function observeTextMutation(PDO $pdo, string $sql, bool $observeInput): array
 {
     if (!admittedTextMutation($sql)) {
         return ['status' => 'outside-observer-scope'];
     }
     $before = snapshotTextRows($pdo);
+    $input = $observeInput ? snapshotInputRows($pdo) : [];
     $pdo->beginTransaction();
     try {
         $statement = $pdo->prepare($sql);
@@ -66,6 +80,9 @@ function observeTextMutation(PDO $pdo, string $sql): array
         ];
         $statement->closeCursor();
         $result['after'] = snapshotTextRows($pdo);
+        if ($observeInput) {
+            $result['inputAfter'] = snapshotInputRows($pdo);
+        }
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
     } finally {
@@ -73,14 +90,18 @@ function observeTextMutation(PDO $pdo, string $sql): array
     }
     $result['before'] = $before;
     $result['restored'] = snapshotTextRows($pdo);
+    if ($observeInput) {
+        $result['inputBefore'] = $input;
+        $result['inputRestored'] = snapshotInputRows($pdo);
+    }
 
     return $result;
 }
 
-echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotTextRows($pdo)], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotTextRows($pdo), 'input' => snapshotInputRows($pdo)], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $requests = array_is_list($input) ? $input : [$input];
-    $results = array_map(static fn (array $entry): array => observeTextMutation($pdo, $entry['sql']), $requests);
+    $results = array_map(static fn (array $entry): array => observeTextMutation($pdo, $entry['sql'], $entry['observeInput'] ?? false), $requests);
     echo json_encode(array_is_list($input) ? $results : $results[0], JSON_THROW_ON_ERROR) . "\n";
 }

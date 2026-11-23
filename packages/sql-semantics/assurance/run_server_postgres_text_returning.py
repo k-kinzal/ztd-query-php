@@ -40,7 +40,7 @@ def sorted_rows(rows):
 
 
 def observation(reply):
-    return {key: sorted_rows(value) if key in {"rows", "before", "after", "restored"} else value
+    return {key: sorted_rows(value) if key in {"rows", "before", "after", "restored", "inputBefore", "inputAfter", "inputRestored"} else value
             for key, value in reply.items()}
 
 

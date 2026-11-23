@@ -1,0 +1,163 @@
+{
+  "revision": "SemanticsIR/postgres-text-insert-query-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-insert-query-boundaries-v4.json",
+    "sha256": "67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373"
+  },
+  "scope": "Validate every projected value against the ordered destination kinds and type NULL while emitting the owned write.",
+  "rules": {
+    "Mutation/InsertQuery::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$width = count($target->written);",
+        "Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');",
+        "Check::input(",
+        "    !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,",
+        "    'The INSERT query must be independent, unbounded and unordered.'",
+        ");",
+        "foreach ($query->columns as $position => $column) {",
+        "    $value = $column->expression;",
+        "    if ($target->written[$position]->kind === ColumnKind::Text) {",
+        "        Check::input(",
+        "            $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral,",
+        "            'A query INSERT text target requires native text or NULL.',",
+        "        );",
+        "        continue;",
+        "    }",
+        "    Check::input(",
+        "        $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerCase || $value instanceof IntegerLiteral || $value instanceof NullLiteral,",
+        "        'Each query INSERT field requires a signed value or NULL.',",
+        "    );",
+        "}",
+        "$checked = Check::listOf($returning, ReturnedColumn::class, 'A query INSERT needs checked RETURNING fields.');",
+        "(new ReturningLayout())->check($target->relation, $checked);",
+        "$this->returning = $checked;"
+      ]
+    },
+    "Mutation/InsertQuery::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'INSERT INTO ' . $this->target->toString() . ' ' . (new SelectSql())->render($this->query, assignment: $this->target)",
+        "    . (new ReturningSql())->clause($this->target->relation, $this->returning);"
+      ]
+    },
+    "Mutation/InsertLowering::lowerQuery": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source = $statement->source;",
+        "Check::input($source instanceof ParsedSelect, 'The INSERT query requires a simple SELECT.');",
+        "Check::input(",
+        "    $statement->with === null && $statement->overriding === null && $statement->conflict === null,",
+        "    'A query INSERT requires an ordinary write without conflict modifiers.'",
+        ");",
+        "[$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);",
+        "$query = (new SelectLowering())->lower($operation, $source, assignment: $target);",
+        "if ($query->distinct) {",
+        "    foreach ($query->columns as $position => $column) {",
+        "        Check::input(",
+        "            !$column->expression instanceof NullLiteral || ($target->written[$position]->kind ?? null) === ColumnKind::Text,",
+        "            'A DISTINCT insert projection cannot assign an untyped NULL to an integer column.'",
+        "        );",
+        "    }",
+        "}",
+        "",
+        "return new InsertQuery($target, $query, $returning);"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$statement = $operand ?? $operation->statement;",
+        "Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');",
+        "Check::input(",
+        "    $statement->groupBy === [] && $statement->having === null",
+        "        && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'Complete PostgreSQL IR currently supports projections with positional result selection.',",
+        ");",
+        "Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');",
+        "$expressions = new ExpressionLowering();",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = new Identifier($name->value);",
+        "    $expression = $field->expression;",
+        "    $resolution = $field->resolution;",
+        "    if ($expression === null || $expression instanceof ParsedColumn) {",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);",
+        "        $results[] = new ResultColumn($value, $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $operation->context, $inputTypes);",
+        "    $resolvesBareText = $this->resolvesText($operand, $assignment, count($results));",
+        "    $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $resolvesBareText), $label);",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "$result = new ResultLowering();",
+        "$order = [];",
+        "foreach ($statement->options->order ?? [] as $key) {",
+        "    $order[] = $result->order($key);",
+        "}",
+        "",
+        "return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));"
+      ]
+    },
+    "SelectLowering::resolvesText": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $operand === null || ($assignment?->written[$position]->kind ?? null) === ColumnKind::Text;"
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();",
+        "    $expression = $column->expression;",
+        "    $value = $assignment !== null && $expression instanceof NullLiteral",
+        "        ? 'CAST(NULL AS pg_catalog.' . $assignment->written[$slot]->kind->value . ')'",
+        "        : $this->expression($expression, $source);",
+        "    $items[] = $value . ' AS ' . $name;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $this->from($source);",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $this->predicate($select->where, $source);",
+        "}",
+        "",
+        "return $sql . (new ResultSql())->render($select);"
+      ]
+    }
+  }
+}

@@ -251,6 +251,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $textInsert->rows[0]->values[0]->value->value,
                 $textInsert->rows[0]->values[1]->value->decimal,
             ];
+            $selectInsert = $semantics->analyze(
+                'INSERT INTO public.text_updates (label, id) SELECT DISTINCT NULL AS label, 4 AS id RETURNING label',
+                $writeContext,
+            );
+            $details['typedInsertQuery'] = [
+                array_map(static fn ($slot): string => $slot->kind->value, $selectInsert->target->written),
+                $selectInsert->query->distinct,
+                str_contains($selectInsert->toString(), 'SELECT DISTINCT CAST(NULL AS pg_catalog.text) AS "label"'),
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

@@ -7,8 +7,10 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -37,7 +39,7 @@ final class InsertQuery implements SemanticsIR
     public readonly array $returning;
 
     /**
-     * Establishes the positional correspondence and checks the signed input roles.
+     * Checks the native kind and positional correspondence of every produced cell.
      * @param list<ReturnedColumn> $returning
      */
     public function __construct(public readonly Destination $target, public readonly Select $query, array $returning = [])
@@ -49,8 +51,14 @@ final class InsertQuery implements SemanticsIR
             'The INSERT query must be independent, unbounded and unordered.'
         );
         foreach ($query->columns as $position => $column) {
-            Check::input($target->written[$position]->kind === ColumnKind::Int4, 'A query INSERT requires a signed integer target.');
             $value = $column->expression;
+            if ($target->written[$position]->kind === ColumnKind::Text) {
+                Check::input(
+                    $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral,
+                    'A query INSERT text target requires native text or NULL.',
+                );
+                continue;
+            }
             Check::input(
                 $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerCase || $value instanceof IntegerLiteral || $value instanceof NullLiteral,
                 'Each query INSERT field requires a signed value or NULL.',
@@ -74,7 +82,7 @@ final class InsertQuery implements SemanticsIR
      */
     public function toString(): string
     {
-        return 'INSERT INTO ' . $this->target->toString() . ' ' . (new SelectSql())->render($this->query, integerAssignment: true)
+        return 'INSERT INTO ' . $this->target->toString() . ' ' . (new SelectSql())->render($this->query, assignment: $this->target)
             . (new ReturningSql())->clause($this->target->relation, $this->returning);
     }
 }

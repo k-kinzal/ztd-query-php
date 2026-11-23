@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -33,15 +34,15 @@ final class SelectSql
     /**
      * Renders the result columns in order, then the optional source and filter.
      */
-    public function render(Select $select, bool $localNames = false, bool $integerAssignment = false): string
+    public function render(Select $select, bool $localNames = false, ?Destination $assignment = null): string
     {
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
             $name = $localNames ? $this->localColumn($slot) : $column->name->quoted();
             $expression = $column->expression;
-            $value = $integerAssignment && $expression instanceof NullLiteral
-                ? 'CAST(NULL AS pg_catalog.int4)'
+            $value = $assignment !== null && $expression instanceof NullLiteral
+                ? 'CAST(NULL AS pg_catalog.' . $assignment->written[$slot]->kind->value . ')'
                 : $this->expression($expression, $source);
             $items[] = $value . ' AS ' . $name;
         }

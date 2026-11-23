@@ -6,7 +6,9 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
@@ -29,7 +31,7 @@ final class SelectLowering
      * @param array<int, CastDestination> $inputTypes Native input types inferred in statement order
      * @throws InvalidConstruction When the operation cannot be represented in this domain
      */
-    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null, array &$inputTypes = []): Select
+    public function lower(BoundStatement $operation, ?ParsedSelect $operand = null, array &$inputTypes = [], ?Destination $assignment = null): Select
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
@@ -65,7 +67,8 @@ final class SelectLowering
                 continue;
             }
             $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
-            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $operand === null), $label);
+            $resolvesBareText = $this->resolvesText($operand, $assignment, count($results));
+            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $resolvesBareText), $label);
         }
 
         Check::input($results !== [], 'A complete projection requires at least one resolved output field.');
@@ -77,5 +80,13 @@ final class SelectLowering
         }
 
         return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));
+    }
+
+    /**
+     * Resolves a bare string where the output context fixes native text.
+     */
+    private function resolvesText(?ParsedSelect $operand, ?Destination $assignment, int $position): bool
+    {
+        return $operand === null || ($assignment?->written[$position]->kind ?? null) === ColumnKind::Text;
     }
 }

@@ -71,17 +71,16 @@ final class InsertLowering
             $statement->with === null && $statement->overriding === null && $statement->conflict === null,
             'A query INSERT requires an ordinary write without conflict modifiers.'
         );
-        $query = (new SelectLowering())->lower($operation, $source);
+        [$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);
+        $query = (new SelectLowering())->lower($operation, $source, assignment: $target);
         if ($query->distinct) {
-            foreach ($query->columns as $column) {
+            foreach ($query->columns as $position => $column) {
                 Check::input(
-                    !$column->expression instanceof NullLiteral,
+                    !$column->expression instanceof NullLiteral || ($target->written[$position]->kind ?? null) === ColumnKind::Text,
                     'A DISTINCT insert projection cannot assign an untyped NULL to an integer column.'
                 );
             }
         }
-
-        [$target, $returning] = (new InsertTargetBinding())->lower($operation, $statement);
 
         return new InsertQuery($target, $query, $returning);
     }
