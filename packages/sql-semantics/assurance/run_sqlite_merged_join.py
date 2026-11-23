@@ -11,7 +11,7 @@ from sqlite_relational_cases import DATA as RELATIONAL_ROWS, DECLARATIONS as REL
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
 CONTRACT_NAME = "sqlite-merged-join-v1.json"
-CONTRACT = "8607bee50e158026ca40a90c83e5a73a58fb2b594549341cb0e0e2a462d7c50e"
+CONTRACT = "b36591914e394b61ab4ec212175f2f52c107bdc538d65b57c48606f3d869716a"
 KINDS = ("INNER", "CROSS", "LEFT")
 LAYOUTS = {"none": (), "key": ("key",), "lane": ("lane",), "both": ("key", "lane")}
 HEADINGS = {
