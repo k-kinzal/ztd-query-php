@@ -110,6 +110,21 @@ final class SourceBindingTest extends TestCase
         self::assertSame(ColumnKind::Text, $binding->source()?->columnKind(0));
     }
 
+    public function testWriteReferenceAllocatesTheNativeTextTarget(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (label pg_catalog.text)');
+        $operation = $inspection->inspect('SELECT label FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+
+        $target = $binding->writeReference('label');
+
+        self::assertInstanceOf(TextColumnReference::class, $target);
+        self::assertSame(0, $target->slot);
+        self::assertSame(0, $target->occurrence);
+    }
+
     public function testSlotForKeepsTheIdentityOfADeclaredColumn(): void
     {
         $inspection = new Inspection();

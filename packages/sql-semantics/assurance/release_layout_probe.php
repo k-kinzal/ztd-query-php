@@ -229,6 +229,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 ],
                 $returning->returning,
             );
+            $writeContext = $semantics->context(['CREATE TABLE public.text_updates (id integer, label text, note text)']);
+            $written = $semantics->analyze(
+                'UPDATE public.text_updates SET label = note, note = label RETURNING label, note',
+                $writeContext,
+            );
+            $details['typedUpdate'] = array_map(
+                static fn ($assignment): array => [
+                    substr($assignment->target::class, strlen($namespace . 'Ir\\')),
+                    $assignment->target->slot,
+                    $assignment->value->slot,
+                ],
+                $written->assignments,
+            );
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

@@ -137,7 +137,7 @@ def condition(term, layout):
         return term[0], term[1], condition(term[2], layout)
     if term[0] == "comparison":
         return term[0], term[1], condition(term[2], layout), condition(term[3], layout)
-    require(term[0] in ("boolean", "integer"), "postgres-text-returning-unknown-predicate", term)
+    require(term[0] in ("boolean", "integer", "text", "null"), "postgres-text-returning-unknown-predicate", term)
     return tuple(term)
 
 
@@ -239,6 +239,10 @@ def expected(item):
     def evaluate(term, row):
         if term[0] == "integer":
             return int(term[1])
+        if term[0] == "text":
+            return term[1]
+        if term[0] == "null":
+            return None
         return row[HEADING.index(address(term, layout))]
 
     if form == "insert":

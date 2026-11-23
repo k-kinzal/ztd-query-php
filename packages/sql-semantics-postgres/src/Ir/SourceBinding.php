@@ -184,17 +184,30 @@ final class SourceBinding
     }
 
     /**
-     * Resolves a name to a writable explicit member with the signed integer role.
+     * Resolves a declared writable member in the admitted native roles.
      */
-    public function writableColumn(string $name): Column
+    public function writableColumn(string $name, bool $allowText = false): Column
     {
         Check::input($this->table !== null, 'A write requires a resolved base table.');
         $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
         $column = $matches[0];
-        Check::input(!$column->generated && !$column->identity && $column->type === Builtin::Int4, 'A write column must be a writable signed 32-bit integer.');
+        Check::input(
+            !$column->generated && !$column->identity && ($column->type === Builtin::Int4 || ($allowText && $column->type === Builtin::Text)),
+            'A write column must be a writable signed 32-bit integer or an admitted text field.',
+        );
 
         return $column;
+    }
+
+    /**
+     * Allocates the native role of a checked UPDATE destination.
+     */
+    public function writeReference(string $name): ColumnReference|TextColumnReference
+    {
+        $column = $this->writableColumn($name, true);
+
+        return $column->type === Builtin::Text ? new TextColumnReference($this->allocate($column)) : $this->slotFor($column);
     }
 
     /**

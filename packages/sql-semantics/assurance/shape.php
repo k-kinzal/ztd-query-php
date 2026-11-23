@@ -555,6 +555,9 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     if ($dialect === 'postgres') {
         $properties['Mutation\\Update']['returning'] = ['array'];
+        $properties['Mutation\\UpdateAssignment']['target'][] = 'From\\TextColumnReference';
+        array_push($properties['Mutation\\UpdateAssignment']['value'], 'Expression\\TextLiteral', 'From\\TextColumnReference');
+        sort($properties['Mutation\\UpdateAssignment']['value']);
     }
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';

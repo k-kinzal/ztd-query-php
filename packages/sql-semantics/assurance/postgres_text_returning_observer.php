@@ -32,7 +32,10 @@ function admittedTextMutation(string $sql): bool
     $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
     $where = '(?: WHERE (?&truth))?';
     $delete = 'DELETE FROM (?:ONLY )?' . $table . '(?: AS ' . $alias . ')?' . $where;
-    $update = 'UPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET ' . $name('id') . ' = ' . $int4 . $where;
+    $text = "'(?:[^'\\x00]|'')*'";
+    $scalar = '(?:' . $int4 . '|' . $column . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
+    $assignment = $name('(?:id|label|note)') . ' = ' . $scalar;
+    $update = 'UPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET ' . $assignment . '(?:, ' . $assignment . ')*' . $where;
     $values = 'VALUES \\(' . $int4 . '\\)(?:, \\(' . $int4 . '\\))*';
     $select = 'SELECT ' . $int4 . '(?: AS ' . $name('v') . ')?(?: WHERE FALSE)?';
     $insert = 'INSERT INTO ' . $table . ' \\(' . $name('id') . '\\) (?:' . $values . '|' . $select . ')';

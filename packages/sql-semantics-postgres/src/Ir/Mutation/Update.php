@@ -6,8 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
-use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -61,15 +61,18 @@ final class Update implements SemanticsIR
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);
         Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
         $written = [];
+        $scope = new OccurrenceScope();
         foreach ($this->assignments as $assignment) {
             $slot = $assignment->target->slot;
-            Check::input($target->columnKind($slot) === ColumnKind::Int4, 'An UPDATE write slot must belong to the target.');
+            $scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');
             $value = $assignment->value;
-            Check::input(!$value instanceof ColumnReference || $target->columnKind($value->slot) === ColumnKind::Int4, 'An UPDATE read slot must belong to the target.');
+            if ($value instanceof ColumnReference || $value instanceof TextColumnReference) {
+                $scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');
+            }
             Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');
             $written[$slot] = true;
         }
-        (new OccurrenceScope())->predicate($where, [$target]);
+        $scope->predicate($where, [$target]);
         $checked = Check::listOf($returning, ReturnedColumn::class, 'An UPDATE needs checked RETURNING fields.');
         (new ReturningLayout())->check($target, $checked);
         $this->returning = $checked;
