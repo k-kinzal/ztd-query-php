@@ -302,8 +302,13 @@ def inventory(root):
                 if " '=' a_expr" in alternative or " = a_expr" in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json", "postgres-boolean-writes-v1.json", "postgres-boolean-write-inputs-v1.json")
             for alternative in rules.get("table_ref", ()):
+                if "relation_expr opt_alias_clause" in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-external-source-kinds-v1.json")
                 if "select_with_parens" in alternative and "LATERAL" not in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json", "postgres-boolean-fields-v1.json", "postgres-int8-fields-v1.json")
+            for alternative in rules.get("relation_expr", ()):
+                if "qualified_name" in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-external-source-kinds-v1.json")
             for rule in ("ColumnDef", "GenericType"):
                 for alternative in rules.get(rule, ()):
                     linked = related.get(alternative, ())

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -35,6 +36,7 @@ final class Destination
      */
     public function __construct(public readonly TableSource $relation, array $written)
     {
+        Check::input($relation->kind === ExternalRelationKind::BaseTable, 'An INSERT target must be a base table.');
         Check::input(count($written) >= 1 && count($written) <= 1024, 'An INSERT needs between one and 1024 target columns.');
         Check::input(!$relation->only, 'An INSERT target has no ONLY policy.');
         $checked = Check::listOf($written, WriteSlot::class, 'An INSERT needs checked target slots.', 1);

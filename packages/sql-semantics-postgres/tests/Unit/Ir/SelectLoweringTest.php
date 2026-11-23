@@ -35,7 +35,7 @@ final class SelectLoweringTest extends TestCase
 
     public function testLowerRefusesAnUnresolvedSource(): void
     {
-        $this->expectExceptionMessage('resolved, complete base table');
+        $this->expectExceptionMessage('resolved, complete local relation declaration');
 
         (new SelectLowering())->lower((new Inspection())->inspect('SELECT id FROM public.accounts')->binding());
     }

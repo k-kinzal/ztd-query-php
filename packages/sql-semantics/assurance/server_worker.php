@@ -183,6 +183,7 @@ function constructSource(string $platform, array $source, string $dialect): obje
     $types = $dialect === 'postgres' ? [
         $source['only'],
         array_map($namespace . 'From\\ColumnKind::from', $source['columnKinds'] ?? []),
+        ($namespace . 'From\\ExternalRelationKind')::from($source['relationKind'] ?? 'table'),
     ] : [array_map(constructMySqlColumnType(...), $source['columnTypes'] ?? [])];
 
     return new $table(
@@ -282,6 +283,9 @@ function observeSource(object $source, string $dialect, string $namespace): arra
     ];
     if ($dialect === 'postgres') {
         $columns['only'] = $source->only;
+        if ($source->kind->value !== 'table') {
+            $columns['relationKind'] = $source->kind->value;
+        }
         $kinds = array_column($source->columnKinds, 'value');
         if ($kinds !== [] && $kinds !== array_fill(0, count($columns['columns']), 'int4')) {
             $columns['columnKinds'] = $kinds;

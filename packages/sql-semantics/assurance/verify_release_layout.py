@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v53.json"
-CONTRACT = "8af1e1554f49d0f4df23d506eef276867d2be01d8100e3581d1ce561d46783b5"
+CONTRACT_NAME = "release-layout-v54.json"
+CONTRACT = "9d1848773320be7580be75b288d5eaa4308f02e5e7abf12094363b53ac00bd85"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -298,6 +298,12 @@ def verify_probe(raw, catalog):
                 'SELECT "__ztd_source"."id" AS "owner", pg_catalog.count(*) AS "n" FROM "public"."group_bounds" AS "__ztd_source" '
                 'GROUP BY "__ztd_source"."id" ORDER BY 2 DESC NULLS LAST, 1 ASC NULLS LAST LIMIT 2 OFFSET 1',
             ], "installed-postgres-group-ordered-result-mismatch", item)
+            require(item.get("externalSourceKinds") == [
+                "view", "materialized-view", True, "int8",
+                'SELECT "__ztd_source"."id" AS "id" FROM "public"."active_rows" AS "__ztd_source"',
+                'SELECT "__ztd_source"."id" AS "id" FROM ONLY "public"."saved_rows" AS "__ztd_source"',
+                "A DELETE target must be a base table.",
+            ], "installed-postgres-external-source-kinds-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '

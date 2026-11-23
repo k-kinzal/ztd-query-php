@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -51,6 +52,7 @@ final class Delete implements SemanticsIR
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         array $returning = [],
     ) {
+        Check::input($target->kind === ExternalRelationKind::BaseTable, 'A DELETE target must be a base table.');
         (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
         $checked = Check::listOf($returning, ReturnedColumn::class, 'A DELETE needs checked RETURNING fields.');
         (new ReturningLayout())->check($target, $checked);

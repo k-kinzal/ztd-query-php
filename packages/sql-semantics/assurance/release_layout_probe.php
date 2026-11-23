@@ -280,6 +280,25 @@ function observePostgresGroupedBounds(SqlSemantics\Platform\PostgreSql\Semantics
         [$group->limit->count, $group->limit->offset], $group->toString()];
 }
 
+function observePostgresExternalSourceKinds(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE VIEW public.active_rows AS SELECT 1::bigint AS id',
+        'CREATE MATERIALIZED VIEW public.saved_rows AS SELECT 2::bigint AS id',
+    ]);
+    $view = $semantics->analyze('SELECT v.id FROM public.active_rows v', $context);
+    $stored = $semantics->analyze('SELECT id FROM ONLY public.saved_rows', $context);
+    $rejection = null;
+    try {
+        new SqlSemantics\Platform\PostgreSql\Ir\Mutation\Delete($view->source);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejection = $error->getMessage();
+    }
+
+    return [$view->source->kind->value, $stored->source->kind->value, $stored->source->only,
+        $stored->source->columnKind(0)->value, $view->toString(), $stored->toString(), $rejection];
+}
+
 function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -507,6 +526,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['sourceOrder'] = observePostgresSourceOrder($semantics);
             $details['signedComparison'] = observePostgresSignedComparison($semantics);
             $details['groupedBounds'] = observePostgresGroupedBounds($semantics);
+            $details['externalSourceKinds'] = observePostgresExternalSourceKinds($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

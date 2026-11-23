@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
@@ -61,6 +62,7 @@ final class Update implements SemanticsIR
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
         array $returning = [],
     ) {
+        Check::input($target->kind === ExternalRelationKind::BaseTable, 'An UPDATE target must be a base table.');
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);
         Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
         $written = [];

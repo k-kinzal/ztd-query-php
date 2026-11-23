@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -31,6 +32,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
  */
 final class SourceBinding
 {
+    private readonly ?ExternalRelationKind $kind;
+
     /**
      * @var list<Identifier> Names of the consumed columns
      */
@@ -50,10 +53,13 @@ final class SourceBinding
 
     /**
      * Resolves the source from the analysis before any slots can be allocated.
+     *
+     * @throws InvalidConstruction When the resolved relation kind has no admitted source role
      */
     public function __construct(private readonly BoundStatement $operation, private readonly ?Relation $source)
     {
         $resolution = null;
+        $kind = null;
         if ($source !== null) {
             Check::input(($source instanceof TableInput && $source->sample === null) || $source instanceof TargetTable, 'The projection source must be an ordinary table input.');
             Check::input(
@@ -64,11 +70,19 @@ final class SourceBinding
             $resolution = $operation->facts->relation($source)->table;
             Check::input(
                 $resolution instanceof DeclaredTable && $resolution->table->complete
-                    && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->name->catalog === null,
-                'The projection requires a resolved, complete base table declaration.',
+                    && $resolution->table->name->catalog === null,
+                'The source requires a resolved, complete local relation declaration.',
             );
+            $kind = match ($resolution->table->kind) {
+                RelationKind::BaseTable => ExternalRelationKind::BaseTable,
+                RelationKind::View => ExternalRelationKind::View,
+                RelationKind::MaterializedView => ExternalRelationKind::MaterializedView,
+                RelationKind::ForeignTable, RelationKind::Sequence => throw new InvalidConstruction('The source requires an admitted external relation kind.'),
+            };
+            Check::input(!$source instanceof TargetTable || $kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');
         }
         $this->table = $resolution?->table;
+        $this->kind = $kind;
     }
 
     /**
@@ -179,7 +193,7 @@ final class SourceBinding
      */
     public function source(): ?TableSource
     {
-        if ($this->table === null || (!$this->source instanceof TableInput && !$this->source instanceof TargetTable)) {
+        if ($this->table === null || $this->kind === null || (!$this->source instanceof TableInput && !$this->source instanceof TargetTable)) {
             return null;
         }
 
@@ -189,6 +203,7 @@ final class SourceBinding
             $this->names,
             $this->source->table->only,
             $this->kinds,
+            $this->kind,
         );
     }
 

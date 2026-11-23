@@ -97,6 +97,8 @@ if ($dialect === 'postgres') {
     $methods['From\\WideIntegerColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
+    $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];
+    $properties['From\\ExternalRelationKind'] = $methods['From\\ExternalRelationKind'] = [];
     $methods['TableSource'][] = 'columnKind';
     array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral',
         'Expression\\CollatedText', 'From\\BooleanColumnReference', 'From\\TextColumnReference', 'From\\WideIntegerColumnReference', $textComparison);
@@ -209,6 +211,7 @@ if ($dialect === 'mysql') {
 }
 if ($dialect === 'postgres') {
     $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text', 'Boolean' => 'bool', 'Int8' => 'int8'];
+    $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'View' => 'view', 'MaterializedView' => 'materialized-view'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['Expression\\TextCollation'] = ['C' => 'C'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];

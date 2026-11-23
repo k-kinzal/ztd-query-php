@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
@@ -12,7 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  * A schema-qualified external source and the named column slots it supplies.
  *
  * The slots identify inputs. Evaluation supplies the corresponding table
- * and columns, with their PostgreSQL row values.
+ * or view and its columns, with their PostgreSQL row values.
  *
  * @visibility public
  * @example Identifying a column of an external table
@@ -34,7 +35,7 @@ final class TableSource
     public readonly array $columnKinds;
 
     /**
-     * Establishes a fixed external table identity and an ordered list of unique column slots.
+     * Establishes a fixed external relation identity and an ordered list of unique column slots.
      *
      * @param list<Identifier> $columns The names at those slots
      * @param list<ColumnKind> $columnKinds The resolved kinds, defaulting to int4 for a signed source
@@ -45,6 +46,7 @@ final class TableSource
         array $columns,
         public readonly bool $only = false,
         array $columnKinds = [],
+        public readonly ExternalRelationKind $kind = ExternalRelationKind::BaseTable,
     ) {
         $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
         $seen = [];
