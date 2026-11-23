@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 
 from compare_assurance_revisions import review
+from check_native_workflow import audit as audit_workflow
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
@@ -200,17 +201,22 @@ class Evidence:
                 and report["launcherDigest"] == self.tools["run_native_matrix.py"],
                 "bundle-native-launch-identity", origin)
         self.checked(path.parent / "distribution.json", self.distribution)
+        route_archive = report["workflowRouteAudit"]
+        require(route_archive["path"] == "workflow-routes.json", "bundle-native-workflow-route-path", origin)
+        routes, _ = self.checked(path.parent / route_archive["path"], route_archive["sha256"])
+        contract = json.loads(series.read_text())
+        all_jobs = {profile: list(release_jobs(profile, contract)) for profile in fixtures}
+        require(json.loads(routes.read_text()) == audit_workflow(workflow, all_jobs), "bundle-native-workflow-route-audit", origin)
         omitted = sorted(profiles.keys() - report["releases"].keys())
         require(not report["releases"].keys() - profiles.keys() and report["omittedProfiles"] == omitted,
                 "bundle-native-launch-profile-set", origin)
-        contract = json.loads(series.read_text())
         failed = []
         for key, record in sorted(report["releases"].items()):
             profile = profiles[key]
             require(record["file"] == f"{key}/index.json", "bundle-native-launch-location", key)
             source, _ = self.checked(path.parent / record["file"], record["sha256"])
             result = json.loads(source.read_text())
-            planned = [(domain, runner) for domain, runner, _ in release_jobs(profile, contract)]
+            planned = [(domain, runner) for domain, runner, _ in all_jobs[profile]]
             executed = [(entry["domain"], entry["runner"]) for entry in result["executions"]]
             require(result["fixture"] == fixtures[profile] and result["planned"] == [domain for domain, _ in planned]
                     and executed == planned[:len(executed)]

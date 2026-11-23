@@ -9,16 +9,17 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+from check_native_workflow import CONTRACT_NAME as WORKFLOW_CONTRACT, WORKFLOW, audit as audit_workflow, steps as workflow_steps
 from compare_assurance_revisions import review
 from constructor_trace import DECLARATIONS, check_scope, declaration_contract
 from evidence_transcript import events, load_replay_contract
 from index_evidence import replay_grammar, verify_sqlite_preflight
-from run_native_matrix import RELEASE_ROW, release_fixtures
+from run_native_matrix import RELEASE_ROW, release_fixtures, release_jobs
 from replay_sqlite_evidence import replay
 from replay_sqlite_faults import replay_registered
 from run_sqlite_mutation_conflicts import FIXTURE as CONFLICT_FIXTURE, check_faults as conflict_faults
 from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, compare, digest, manifest, require, shape, write_json
-from scope import public_scope
+from scope import CONTRACTS, public_scope
 from sqlite_engine import OBSERVER_CONTRACT, Database, ObserverAuthorizationError, observer_policy
 
 
@@ -508,6 +509,56 @@ def native_schedule_control(args):
             "signal": fault.signal, "omitted": fault.detail}
 
 
+def native_workflow_controls(args):
+    workflow = TOOL.parents[2] / WORKFLOW
+    contract = json.loads((TOOL / WORKFLOW_CONTRACT).read_text())
+    fixtures = release_fixtures(workflow, TOOL / "server-projection-v1.json")
+    recursive = TOOL / "server-recursive-series-v2.json"
+    require(digest(recursive) == CONTRACTS[recursive.name], "native-workflow-control-recursive-profile-digest")
+    definition = json.loads(recursive.read_text())
+    plan = {profile: list(release_jobs(profile, definition)) for profile in fixtures}
+    original = workflow.read_text()
+    verified = audit_workflow(workflow, plan)
+    steps = workflow_steps(original)
+    launch = next(step for step in steps if "/run_server_postgres_int4.py " in step)
+    upload = next(step for step in steps if "/semantics-ir-postgres-int4-evidence/" in step)
+    mutations = {
+        "duplicate-native-comparison": (launch, launch + launch),
+        "missing-native-comparison": (launch, ""),
+        "narrowed-native-release-condition": (launch, launch.replace("matrix.engine == 'postgres'",
+            "matrix.engine == 'postgres' && matrix.release != '16.6'")),
+        "mismatched-native-upload-path": (upload, upload.replace("/semantics-ir-postgres-int4-evidence/",
+            "/unrelated-evidence/")),
+        "candidate-native-verifier-path": (launch, launch.replace("python3 trusted/", "python3 candidate/")),
+    }
+    require(mutations.keys() == {rule["id"] for rule in contract["faults"]}, "native-workflow-control-contract-coverage")
+    healthy = args.out / "native-workflow-healthy.json"
+    write_json(healthy, verified)
+    results = []
+    for rule in contract["faults"]:
+        identifier = rule["id"]
+        before, after = mutations[identifier]
+        require(original.count(before) == 1 and before != after, "native-workflow-control-not-applied", identifier)
+        modified = original.replace(before, after)
+        folder = args.out / identifier
+        folder.mkdir()
+        target = folder / workflow.name
+        target.write_text(modified)
+        rejection = observe_rejection(lambda: audit_workflow(target, plan), rule["expected"])
+        difference = folder / "injected.diff"
+        difference.write_text("".join(difflib.unified_diff(
+            original.splitlines(keepends=True), modified.splitlines(keepends=True),
+            "trusted/" + WORKFLOW, "mutated/" + WORKFLOW,
+        )))
+        results.append({
+            "case": identifier, "control": "passed", "original": digest(workflow), "mutated": digest(target),
+            "expected": rule["expected"], "signal": rejection.signal, "detail": rejection.detail,
+            "healthy": {"path": healthy.name, "sha256": digest(healthy)}, "checker": verified["checker"],
+            "difference": {"path": difference.relative_to(args.out).as_posix(), "sha256": digest(difference)},
+        })
+    return results
+
+
 
 def assurance_revision_control(args):
     folder = args.out / "reduced-assurance-revision"
@@ -662,6 +713,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
+              + native_workflow_controls(args)
               + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution) + reduction_controls(args) + native_reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,

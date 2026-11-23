@@ -15,6 +15,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
+from check_native_workflow import audit as audit_workflow
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, check_profile
@@ -280,6 +281,8 @@ def main():
     series = json.loads(recursive.read_text())
     require(set(SINGLE_ENGINE) <= NATIVE.keys() and set(SINGLE_ENGINE.values()) <= PORTS.keys(), "native-launch-invalid-domain-registry")
     profiles = {f"{engine}-{release}": (engine, release) for engine, release in fixtures}
+    all_jobs = {profile: list(release_jobs(profile, series)) for profile in fixtures}
+    workflow_routes = audit_workflow(workflow, all_jobs)
     selected = set(profiles) if not args.profile else set(args.profile)
     require(selected <= profiles.keys() and (not args.profile or len(selected) == len(args.profile)),
             "native-launch-unregistered-profile", sorted(selected - profiles.keys()))
@@ -290,7 +293,9 @@ def main():
     logs.mkdir(exist_ok=False)
     manifest = logs / "distribution.json"
     write_json(manifest, distribution)
-    plan = {key: list(release_jobs(profiles[key], series)) for key in sorted(selected)}
+    routes = logs / "workflow-routes.json"
+    write_json(routes, workflow_routes)
+    plan = {key: all_jobs[profiles[key]] for key in sorted(selected)}
     anchors = logs / "renderer-fault-sources.json"
     anchor_report = renderer_fault_sources(args.candidate, profiles, plan)
     write_json(anchors, {"candidate": sha, **anchor_report})
@@ -312,6 +317,7 @@ def main():
         "distribution": digest(manifest),
         "status": "incomplete" if failed or anchor_report["invalid"] else "observed-subset" if selected != profiles.keys() else "observed-matrix",
         "workflowDigest": digest(workflow),
+        "workflowRouteAudit": {"path": routes.name, "sha256": digest(routes)},
         "recursiveContractDigest": digest(recursive),
         "launcherDigest": digest(Path(__file__)),
         "rendererFaultSources": {"path": anchors.name, "digest": digest(anchors), "status": anchor_report["status"]},
