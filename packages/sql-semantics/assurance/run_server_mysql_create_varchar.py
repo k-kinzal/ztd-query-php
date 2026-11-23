@@ -180,7 +180,7 @@ def requests(_, tag, spec):
 
 
 def observer_request(item, sql):
-    return {"sql": sql, "occupied": item["occupied"], "observeVarcharDeclaration": True}
+    return {"sql": sql, "occupied": item["occupied"], "observeNativeDeclaration": True}
 
 
 def varchar_value(length, default):
@@ -193,7 +193,7 @@ def varchar_value(length, default):
 
 def create_values(fields):
     columns, stored, declaration_diagnostics, insertion_diagnostics = [], [], [], []
-    signed = {"SMALLINT": "smallint", "INTEGER": "int", "BIGINT": "bigint"}
+    signed = {"TINYINT": "tinyint", "SMALLINT": "smallint", "MEDIUMINT": "mediumint", "INTEGER": "int", "BIGINT": "bigint"}
     for index, (name, storage, nullable, default) in enumerate(fields, 1):
         if isinstance(storage, list):
             _, length, collation = storage

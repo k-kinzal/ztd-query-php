@@ -408,6 +408,13 @@ def inventory(root):
             }
             for alternative in sorted(signatures & declarations):
                 related[alternative] = (*related.get(alternative, ()), "mysql-create-varchar-v1.json")
+            signed_storage = {
+                "type: int_type opt_field_length field_options",
+                "int_type: INT_SYM",
+                *("int_type: " + kind + suffix for kind in ("TINYINT", "SMALLINT", "MEDIUMINT", "BIGINT") for suffix in ("", "_SYM")),
+            }
+            for alternative in sorted(signatures & signed_storage):
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-signed-v1.json")
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):

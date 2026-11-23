@@ -8,6 +8,7 @@ from typing import NamedTuple, Optional
 
 from checked_scalar_dispatch import certificate as dispatch_certificate
 from checked_value_graph import DIALECTS, certificate
+from mysql_signed_storage_certificate import certificate as signed_storage_certificate
 from scope import declared_constructors
 from run import TOOL, Failure, candidate_distribution, digest, require, shape, verify_candidate, write_json
 
@@ -231,7 +232,7 @@ def faults(engine):
         Fault("accept-excessive-compound-size", "Rows/Compound::__construct",
               "CompoundShape::arms($left) + CompoundShape::arms($right) <= 64,", "true,"),
         Fault("accept-out-of-range-smallint-default", "Schema/TableColumn::__construct",
-              "$integer >= -32768 && $integer <= 32767,", "true,"),
+              "$storage->accepts($default)," if engine == "mysql" else "$integer >= -32768 && $integer <= 32767,", "true,"),
         Fault("accept-excessive-table-width", "Schema/CreateTable::__construct", "count($checked) <= 128,", "true,"),
         Fault("allow-zero-parameter-position", "Binding/Parameter::__construct", "$position >= 1 && $position <= 1024,", "$position >= 0 && $position <= 1024,"),
         Fault("allow-missing-local-slot", "Rows/LocalProjection::__construct", "isset($definition->columns[$column->slot]),", "true,"),
@@ -406,8 +407,12 @@ def faults(engine):
                   "$default->value) === 1,", "$default->value) !== false,"),
             Fault("allow-excessive-mysql-logical-record", "Schema/CreateTable::__construct",
                   "$bytes + $bitmap <= 65535", "true"),
+            Fault("widen-mysql-tiny-default-range", "Schema/IntegerStorage::accepts",
+                  "self::Tiny => $negative ? '128' : '127',", "self::Tiny => $negative ? '128' : '128',"),
+            Fault("miscount-mysql-medium-storage-bytes", "Schema/IntegerStorage::bytes",
+                  "self::Medium => 3,", "self::Medium => 2,"),
             Fault("lose-effective-mysql-table-collation", "Schema/CreateTableLowering::lower",
-                  "$lowering->lower($operation, $column, $tableCollation)", "$lowering->lower($operation, $column)"),
+                  "$lowering->lower($column, $tableCollation)", "$lowering->lower($column)"),
             Fault("confuse-mysql-compound-text-and-integer", "Rows/CompoundShape::type",
                   "$column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,",
                   "$column instanceof TextLiteral => ResultKind::WideInteger, $column instanceof TextColumnReference => ResultKind::Text,"),
@@ -596,15 +601,18 @@ def main():
     write_json(path, {**envelope, "certificate": values})
     dispatch = args.out / "scalar-dispatch.json"
     write_json(dispatch, {**envelope, "certificate": dispatch_certificate(outcomes, values)})
+    signed = args.out / "mysql-signed-storage.json"
+    write_json(signed, {**envelope, "certificate": signed_storage_certificate(manifest, outcomes["mysql"])})
     verify_candidate(args.candidate, identity, manifest)
     write_json(args.out / "index.json", {
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "mysql-text-literal-boundaries-v1.json", "mysql-text-literal-binding-v1.json", "mysql-varchar-slot-boundaries-v1.json", "mysql-varchar-presence-boundaries-v1.json", "mysql-varchar-label-boundaries-v1.json", "mysql-varchar-comparison-boundaries-v1.json", "mysql-varchar-assignment-boundaries-v1.json", "mysql-varchar-insert-boundaries-v1.json", "mysql-varchar-insert-query-boundaries-v1.json", "mysql-varchar-count-boundaries-v1.json", "mysql-varchar-extrema-boundaries-v1.json", "mysql-explicit-text-collation-boundaries-v1.json", "mysql-derived-varchar-boundaries-v1.json", "mysql-create-varchar-boundaries-v1.json", "mysql-varchar-binding-v3.json", "postgres-join-binding-v3.json", "postgres-create-text-boundaries-v1.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v2.json", "postgres-text-insert-boundaries-v2.json", "postgres-text-insert-query-boundaries-v3.json", "postgres-collated-text-boundaries-v1.json", "postgres-text-comparison-boundaries-v1.json", "postgres-text-comparison-boundaries-v2.json", "postgres-select-bindings-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v4.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v31.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "mysql-text-literal-boundaries-v1.json", "mysql-text-literal-binding-v1.json", "mysql-varchar-slot-boundaries-v1.json", "mysql-varchar-presence-boundaries-v1.json", "mysql-varchar-label-boundaries-v1.json", "mysql-varchar-comparison-boundaries-v1.json", "mysql-varchar-assignment-boundaries-v1.json", "mysql-varchar-insert-boundaries-v1.json", "mysql-varchar-insert-query-boundaries-v1.json", "mysql-varchar-count-boundaries-v1.json", "mysql-varchar-extrema-boundaries-v1.json", "mysql-explicit-text-collation-boundaries-v1.json", "mysql-derived-varchar-boundaries-v1.json", "mysql-create-varchar-boundaries-v1.json", "mysql-create-signed-boundaries-v1.json", "mysql_signed_storage_certificate.py", "mysql-create-signed-v1.json", "mysql-varchar-binding-v3.json", "postgres-join-binding-v3.json", "postgres-create-text-boundaries-v1.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v2.json", "postgres-text-insert-boundaries-v2.json", "postgres-text-insert-query-boundaries-v3.json", "postgres-collated-text-boundaries-v1.json", "postgres-text-comparison-boundaries-v1.json", "postgres-text-comparison-boundaries-v2.json", "postgres-select-bindings-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v4.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v31.json", "value-primitives.json")},
         "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},
+        "mysqlSignedStorage": {"path": signed.name, "sha256": digest(signed)},
     })
     print(args.out)
 

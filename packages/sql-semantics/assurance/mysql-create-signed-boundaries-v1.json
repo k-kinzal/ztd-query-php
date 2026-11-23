@@ -1,0 +1,219 @@
+{
+  "revision": "SemanticsIR/mysql-create-signed-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Enforce exact native signed ranges and storage widths without numeric coercion. Fix the literal-only binding and checked column effects while preserving the VARCHAR role.",
+  "rules": {
+    "Schema/IntegerStorage::bytes": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($this) {",
+        "    self::Tiny => 1,",
+        "    self::Small => 2,",
+        "    self::Medium => 3,",
+        "    self::Standard => 4,",
+        "    self::Wide => 8,",
+        "};"
+      ]
+    },
+    "Schema/IntegerStorage::accepts": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$negative = $literal->decimal[0] === '-';",
+        "$limit = match ($this) {",
+        "    self::Tiny => $negative ? '128' : '127',",
+        "    self::Small => $negative ? '32768' : '32767',",
+        "    self::Medium => $negative ? '8388608' : '8388607',",
+        "    self::Standard => $negative ? '2147483648' : '2147483647',",
+        "    self::Wide => $negative ? '9223372036854775808' : '9223372036854775807',",
+        "};",
+        "$magnitude = ltrim($literal->decimal, '-');",
+        "$digits = strlen($magnitude);",
+        "",
+        "return $digits < strlen($limit) || ($digits === strlen($limit) && strcmp($magnitude, $limit) <= 0);"
+      ]
+    },
+    "Schema/TableColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(preg_match('/\\A[\\x01-\\x7f]{1,64}(?<! )\\z/D', $name->value) === 1, 'This MySQL declaration requires an ASCII column name of 1 to 64 characters without a trailing space.');",
+        "Check::input($nullable || !$default instanceof NullLiteral, 'A MySQL NOT NULL column cannot declare a NULL default.');",
+        "if ($default instanceof IntegerLiteral || $default instanceof RangeIntegerLiteral) {",
+        "    Check::input($storage instanceof IntegerStorage, 'A signed default requires native integer storage.');",
+        "    Check::input($storage->accepts($default), 'The ' . $storage->value . ' default is outside the signed storage range.');",
+        "}",
+        "if ($default instanceof TextLiteral) {",
+        "    Check::input($storage instanceof CharacterStorage, 'A text default requires native VARCHAR storage.');",
+        "    Check::input(",
+        "        preg_match('/\\A.{0,' . $storage->length . '}[\\x09-\\x0D\\x20]*\\z/sDu', $default->value) === 1,",
+        "        'A VARCHAR default cannot discard significant characters.',",
+        "    );",
+        "}"
+      ]
+    },
+    "Schema/TableColumn::storageBytes": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($this->storage instanceof CharacterStorage) {",
+        "    $bytes = $this->storage->length * 4;",
+        "",
+        "    return $bytes + ($bytes > 255 ? 2 : 1);",
+        "}",
+        "",
+        "return $this->storage->bytes();"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$storage = $this->storage instanceof IntegerStorage ? $this->storage->value : $this->storage->toString();",
+        "$definition = $this->name->quoted() . ' ' . $storage . ($this->nullable ? ' NULL' : ' NOT NULL');",
+        "",
+        "return $definition . match (true) {",
+        "    $this->default instanceof IntegerLiteral, $this->default instanceof RangeIntegerLiteral => ' DEFAULT ' . $this->default->decimal,",
+        "    $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),",
+        "    $this->default instanceof NullLiteral => ' DEFAULT NULL',",
+        "    $this->default === null => '',",
+        "};"
+      ]
+    },
+    "Schema/LiteralDefaultLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($operand instanceof ParsedNull) {",
+        "    return new NullLiteral();",
+        "}",
+        "$text = (new TextLiteralLowering())->lower($operand);",
+        "if ($text !== null) {",
+        "    return $text;",
+        "}",
+        "$token = (new IntegerTokenLowering())->lower($operand);",
+        "Check::input($token !== null, 'The column requires a signed, text or NULL literal default.');",
+        "[$decimal, $zeroes, $negativeZero] = $token;",
+        "$signed = new RangeIntegerLiteral($decimal, $zeroes, $negativeZero);",
+        "",
+        "return IntegerStorage::Standard->accepts($signed) ? new IntegerLiteral($decimal, $zeroes, $negativeZero) : $signed;"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$specification = $column->specification;",
+        "Check::input(",
+        "    $column->name->table === null && $specification instanceof OrdinaryColumn && $specification->references === null,",
+        "    'CREATE TABLE requires ordinary unqualified column definitions.'",
+        ");",
+        "$kind = (new CreateColumnStorageLowering())->lower($column, $tableCollation);",
+        "$nullable = null;",
+        "$default = null;",
+        "foreach ($specification->attributes as $attribute) {",
+        "    if ($attribute instanceof CollateAttribute && $kind instanceof CharacterStorage) {",
+        "        continue;",
+        "    }",
+        "    if ($attribute instanceof DefaultLiteral && $default === null) {",
+        "        $default = (new LiteralDefaultLowering())->lower($attribute->value);",
+        "    } elseif ($attribute instanceof KeywordAttribute && $nullable === null) {",
+        "        $nullable = match ($attribute->keyword) {",
+        "            ColumnKeyword::Null => true,",
+        "            ColumnKeyword::NotNull => false,",
+        "            ColumnKeyword::NotSecondary, ColumnKeyword::AutoIncrement, ColumnKeyword::SerialDefaultValue,",
+        "            ColumnKeyword::PrimaryKey, ColumnKeyword::Unique, ColumnKeyword::Visible,",
+        "            ColumnKeyword::Invisible => throw new InvalidConstruction('The column attribute is outside the native declaration domain.'),",
+        "        };",
+        "    } else {",
+        "        throw new InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->column->value), $kind, $nullable ?? true, $default);"
+      ]
+    },
+    "Schema/CreateColumnStorageLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$type = $column->specification->dataType();",
+        "if ($type instanceof Character) {",
+        "    $declared = (new TableDeclaration())->column($column, tableCollation: $tableCollation);",
+        "    $varchar = (new VarcharLowering())->lower($declared);",
+        "",
+        "    return new CharacterStorage($varchar->length, $varchar->collation);",
+        "}",
+        "Check::input($type instanceof Integral && $type->width === null && $type->modifiers === [], 'The column requires a signed integer storage role.');",
+        "",
+        "return match ($type->kind) {",
+        "    IntegralKind::TinyInt => IntegerStorage::Tiny,",
+        "    IntegralKind::SmallInt => IntegerStorage::Small,",
+        "    IntegralKind::MediumInt => IntegerStorage::Medium,",
+        "    IntegralKind::Int => IntegerStorage::Standard,",
+        "    IntegralKind::BigInt => IntegerStorage::Wide,",
+        "};"
+      ]
+    },
+    "Schema/CreateTableLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input(",
+        "    $profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings()),",
+        "    'CREATE TABLE requires the default native profile.'",
+        ");",
+        "Check::input(",
+        "    !$statement->temporary() && $statement->query === null && $statement->partitioning === null && !$statement->enclosed,",
+        "    'CREATE TABLE requires a persistent ordinary table with explicit columns.'",
+        ");",
+        "$engine = null;",
+        "$textOptions = false;",
+        "foreach ($statement->options as $option) {",
+        "    if ($option instanceof EngineOption) {",
+        "        Check::input($engine === null && strcasecmp($option->engine->value, 'InnoDB') === 0, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $engine = $option;",
+        "    } else {",
+        "        Check::input($option instanceof CharsetOption || $option instanceof CollationOption, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $textOptions = true;",
+        "    }",
+        "}",
+        "$tableCollation = (new TableDeclaration())->tableCollation($statement, $profile->grammar);",
+        "Check::input(!$textOptions || $tableCollation !== null, 'CREATE TABLE needs the exact stock utf8mb4_bin table collation.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE TABLE requires a named declaration schema.');",
+        "$name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "$columns = [];",
+        "$lowering = new CreateColumnLowering();",
+        "foreach ($statement->elements as $column) {",
+        "    Check::input($column instanceof ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');",
+        "    $columns[] = $lowering->lower($column, $tableCollation);",
+        "}",
+        "",
+        "return new CreateTable(",
+        "    $name,",
+        "    $columns,",
+        "    $statement->ifNotExists,",
+        "    $profile->grammar,",
+        "    $tableCollation === null ? null : TextCollation::Utf8mb4Bin",
+        ");"
+      ]
+    }
+  }
+}

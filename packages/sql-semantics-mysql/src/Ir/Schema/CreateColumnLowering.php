@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
-use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
-use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
-use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
-use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
-use SqlSemantics\Platform\MySql\Ir\NullLiteral;
-use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
-use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
@@ -34,7 +27,7 @@ final class CreateColumnLowering
      *
      * @throws InvalidConstruction When the definition has unsupported attributes or values
      */
-    public function lower(BoundStatement $operation, ColumnDefinition $column, ?Name $tableCollation = null): TableColumn
+    public function lower(ColumnDefinition $column, ?Name $tableCollation = null): TableColumn
     {
         $specification = $column->specification;
         Check::input(
@@ -49,9 +42,7 @@ final class CreateColumnLowering
                 continue;
             }
             if ($attribute instanceof DefaultLiteral && $default === null) {
-                $default = (new TextLiteralLowering())->lower($attribute->value)
-                    ?? (new ExpressionLowering())->lower($attribute->value, new SourceBinding($operation, null));
-                Check::input($default instanceof IntegerLiteral || $default instanceof TextLiteral || $default instanceof NullLiteral, 'The column requires a signed, text or NULL literal default.');
+                $default = (new LiteralDefaultLowering())->lower($attribute->value);
             } elseif ($attribute instanceof KeywordAttribute && $nullable === null) {
                 $nullable = match ($attribute->keyword) {
                     ColumnKeyword::Null => true,

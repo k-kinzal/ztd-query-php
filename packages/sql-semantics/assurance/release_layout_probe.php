@@ -121,6 +121,22 @@ function observeMysqlVarcharDeclaration(SqlSemantics\Platform\MySql\Semantics $s
     ];
 }
 
+function observeMysqlSignedDeclaration(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE app.signed_decl (a TINYINT DEFAULT -128, b MEDIUMINT DEFAULT 8388607, '
+        . 'c BIGINT NOT NULL DEFAULT 9223372036854775807, d BIGINT DEFAULT -9223372036854775808)');
+    $rejected = null;
+    try {
+        $semantics->analyze('CREATE TABLE app.signed_decl (a TINYINT DEFAULT 128)');
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejected = $error->getMessage();
+    }
+
+    return [array_map(static fn ($field): array => [
+        $field->storage->value, $field->storage->bytes(), $field->nullable, $field->default::class, $field->default->decimal,
+    ], $value->columns), $value->toString(), $rejected];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -215,6 +231,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $details = [];
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
+            $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
         }
         if ($platform === 'MySql' && $role === 'Select') {
             $value = $result->columns[0]->expression;

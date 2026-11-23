@@ -26,7 +26,7 @@ final class CreateColumnLoweringTest extends TestCase
         $parsed = $query->statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $parsed);
 
-        $value = (new CreateColumnLowering())->lower($query->binding(), $parsed);
+        $value = (new CreateColumnLowering())->lower($parsed);
         self::assertSame(IntegerStorage::Small, $value->storage);
     }
 
@@ -37,7 +37,7 @@ final class CreateColumnLoweringTest extends TestCase
         $column = $query->statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
 
-        $storage = (new CreateColumnLowering())->lower($query->binding(), $column, new Name('utf8mb4_bin'))->storage;
+        $storage = (new CreateColumnLowering())->lower($column, new Name('utf8mb4_bin'))->storage;
 
         self::assertInstanceOf(CharacterStorage::class, $storage);
         self::assertSame(2, $storage->length);

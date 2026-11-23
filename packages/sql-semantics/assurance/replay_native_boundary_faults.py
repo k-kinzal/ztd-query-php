@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from check_native_boundaries import ENGINES, FAULT_REPLAY, fault_plan, faults
+from mysql_signed_storage_certificate import certificate as signed_storage_certificate
 from replay_sqlite_faults import checked_file, exact_patch, links, verify_artifacts
 from run import Failure, candidate_distribution, digest, require, verify_distribution, write_json
 
@@ -65,6 +66,13 @@ def replay(checkout, directory, index, distribution):
     require(json.loads(record.read_text()) == {"candidate": index["candidate"], "contract": FAULT_REPLAY, "faults": planned},
             "native-fault-replay-plan-mismatch")
     require(index["results"].keys() == planned.keys(), "native-fault-replay-dialect-set")
+    signed = index["mysqlSignedStorage"]
+    require(signed["path"] == "mysql-signed-storage.json", "mysql-signed-certificate-path")
+    proof = checked_file(directory, directory / signed["path"])
+    require(digest(proof) == signed["sha256"] and json.loads(proof.read_text()) == {
+        "candidate": index["candidate"], "distribution": index["distribution"],
+        "certificate": signed_storage_certificate(distribution, index["results"]["mysql"]["healthy"]),
+    }, "mysql-signed-certificate-mismatch")
     results = {}
     for engine in ENGINES:
         shape = index["results"][engine]
@@ -85,7 +93,8 @@ def replay(checkout, directory, index, distribution):
                                      "artifacts": links(folder, directory, relative, {**files, "receipt": digest(path)})}
         results[engine] = witnesses
     return {"status": "provisional-native-fault-replay", "candidate": index["candidate"], "contract": FAULT_REPLAY,
-            "plan": descriptor, "dialects": results, "controls": comparator_controls(checkout, planned["sqlite"], index["results"]["sqlite"]["faults"])}
+            "plan": descriptor, "dialects": results, "mysqlSignedStorage": signed,
+            "controls": comparator_controls(checkout, planned["sqlite"], index["results"]["sqlite"]["faults"])}
 
 
 def main():

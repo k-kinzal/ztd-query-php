@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v38.json"
-CONTRACT = "29ce923e86ffeb0d9e14d943a4fa8f9011f284a7202f937b668950f865bafa96"
+CONTRACT_NAME = "release-layout-v39.json"
+CONTRACT = "b8411172f9b869b54d2ccaa921bd33ad72a860bee8d5d4e7bd8aab023825735f"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -279,6 +279,15 @@ def verify_probe(raw, catalog):
                 namespace + "CharacterStorage", 1, "utf8mb4_bin", True, "é  ", declaration, declaration,
                 "mysql-9.1.0/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/innodb",
             ], "installed-mysql-varchar-declaration-mismatch", item)
+            ir = "SqlSemantics\\Platform\\MySql\\Ir\\"
+            narrow, wide = ir + "IntegerLiteral", ir + "Predicate\\RangeIntegerLiteral"
+            require(item.get("mysqlSignedDeclaration") == [
+                [["TINYINT", 1, True, narrow, "-128"], ["MEDIUMINT", 3, True, narrow, "8388607"],
+                 ["BIGINT", 8, False, wide, "9223372036854775807"], ["BIGINT", 8, True, wide, "-9223372036854775808"]],
+                "CREATE TABLE `app`.`signed_decl` (`a` TINYINT NULL DEFAULT -128, `b` MEDIUMINT NULL DEFAULT 8388607, "
+                "`c` BIGINT NOT NULL DEFAULT 9223372036854775807, `d` BIGINT NULL DEFAULT -9223372036854775808) ENGINE=InnoDB",
+                "The TINYINT default is outside the signed storage range.",
+            ], "installed-mysql-signed-declaration-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],

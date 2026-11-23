@@ -670,9 +670,11 @@ if ($dialect !== 'sqlite') {
         $properties['Schema\\CharacterStorage'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
         $methods['Schema\\CharacterStorage'] = ['__construct', 'toString'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
-        $properties['Schema\\TableColumn']['default'] = ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'null'];
+        $properties['Schema\\TableColumn']['default'] = ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Predicate\\RangeIntegerLiteral', 'null'];
         $methods['Schema\\TableColumn'] = ['__construct', 'storageBytes', 'toString'];
-        $internal[] = 'Schema\\CreateColumnStorageLowering';
+        $methods['Schema\\IntegerStorage'] = ['bytes', 'accepts'];
+        $enumCases['Schema\\IntegerStorage'] = ['Tiny' => 'TINYINT', 'Small' => 'SMALLINT', 'Medium' => 'MEDIUMINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
+        array_push($internal, 'Schema\\CreateColumnStorageLowering', 'Schema\\LiteralDefaultLowering');
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
@@ -999,6 +1001,14 @@ try {
                     'Unexpected MySQL declaration storage lowering shape'
                 );
             }
+            if ($dialect === 'mysql' && $short === 'Schema\\LiteralDefaultLowering') {
+                $methodsByName = $class->getMethods();
+                requireShape(
+                    count($methodsByName) === 1 && $methodsByName[0]->isPublic() && $methodsByName[0]->name->toString() === 'lower'
+                    && types($methodsByName[0]->returnType, $prefix, $short) === ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Predicate\\RangeIntegerLiteral'],
+                    'Unexpected MySQL declaration default lowering shape'
+                );
+            }
             if ($short === 'Schema\\DropRelationLowering') {
                 $methodsByName = array_values(array_filter($class->getMethods(), static fn ($method) => $method->isPublic()));
                 requireShape(
@@ -1100,6 +1110,9 @@ try {
             requireShape($class instanceof Enum_ && $class->scalarType?->toString() === 'string', 'Arithmetic operators must be a string enum');
             $operators = [];
             foreach ($class->stmts as $case) {
+                if ($dialect === 'mysql' && $short === 'Schema\\IntegerStorage' && $case instanceof Stmt\ClassMethod) {
+                    continue;
+                }
                 requireShape($case instanceof Stmt\EnumCase && $case->expr instanceof String_, 'An arithmetic operator must be a literal case');
                 $operators[$case->name->toString()] = $case->expr->value;
             }

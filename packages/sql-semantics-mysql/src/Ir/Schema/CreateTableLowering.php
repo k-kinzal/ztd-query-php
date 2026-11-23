@@ -63,7 +63,7 @@ final class CreateTableLowering
         $lowering = new CreateColumnLowering();
         foreach ($statement->elements as $column) {
             Check::input($column instanceof ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');
-            $columns[] = $lowering->lower($operation, $column, $tableCollation);
+            $columns[] = $lowering->lower($column, $tableCollation);
         }
 
         return new CreateTable(

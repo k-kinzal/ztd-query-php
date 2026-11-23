@@ -38,10 +38,11 @@ final class CreateColumnStorageLowering
         Check::input($type instanceof Integral && $type->width === null && $type->modifiers === [], 'The column requires a signed integer storage role.');
 
         return match ($type->kind) {
+            IntegralKind::TinyInt => IntegerStorage::Tiny,
             IntegralKind::SmallInt => IntegerStorage::Small,
+            IntegralKind::MediumInt => IntegerStorage::Medium,
             IntegralKind::Int => IntegerStorage::Standard,
             IntegralKind::BigInt => IntegerStorage::Wide,
-            IntegralKind::TinyInt, IntegralKind::MediumInt => throw new InvalidConstruction('The column requires a supported signed integer storage role.'),
         };
     }
 }

@@ -34,6 +34,8 @@ An independent derived input in a join can export native VARCHAR fields alongsid
 
 An ordinary InnoDB `CREATE TABLE` can declare `VARCHAR(n)` with the checked `utf8mb4_bin` collation, including inheritance from an explicit table default. `Schema\CharacterStorage` carries the declared capacity in characters. Each column keeps its own nullability and optional text or NULL default. Excess ASCII whitespace in a default remains in the emitted SQL so the server can report its truncation. Defaults that discard significant characters are rejected during construction.
 
+Use `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INTEGER` or `BIGINT` for an ordinary signed declaration. The model checks the exact signed range of a literal default, including both BIGINT endpoints, and retains its decimal value.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.

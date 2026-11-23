@@ -60,6 +60,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-explicit-text-collation-boundaries-v1.json', '6bfb85c25b4dbd401b4ede0577d7fcd8031bbb07c835064552a1525e7d772a6d'],
             ['mysql-derived-varchar-boundaries-v1.json', 'bed891c263a93d0c62cbcfec908fa171a593d6a55fec81020856a2d94b9b97d7'],
             ['mysql-create-varchar-boundaries-v1.json', 'cca62d6472498414b159b7934303e1250ddcda6103dc2a4f25460dee572b741d'],
+            ['mysql-create-signed-boundaries-v1.json', 'daff522af411c8dac52a3d7d14c477483842c67b572683ea3b7e2bc5274693cf'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],

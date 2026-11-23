@@ -44,8 +44,8 @@ LIMITS = {
     "P04": "Checked composition rules and independently observed operand structure",
     "P05": "Readonly storage, checked owned lists and restricted snapshot paths",
     "P06": "Closed emission rules and independently compared native observations",
-    "Q01": "Checked constructor shapes and independent negative cases",
-    "Q02": "Replayed positive requests and observed finite identities",
+    "Q01": "Checked constructor shapes, signed decimal interval derivation and independent negative cases",
+    "Q02": "Replayed positive requests, observed finite identities and signed decimal interval derivation",
     "Q03": "Checked composition, scoped references and recorded nested operands",
     "Q04": "Native type, value and effect comparisons in the named domains",
     "Q05": "Exact candidate distribution metadata and staged Composer installation checks",
@@ -494,11 +494,13 @@ def main():
         report["assuranceChanges"] = evidence.checked(revision)[1]
     else:
         report["assuranceChanges"] = None
-    report["valueClosure"] = report["scalarDispatch"] = report["nativeBoundaryFaultReplay"] = None
+    report["valueClosure"] = report["scalarDispatch"] = report["nativeBoundaryFaultReplay"] = report["mysqlSignedStorage"] = None
     if guards:
         audit = output / "native-boundary-fault-replay.json"
         write_json(audit, replay_native_faults(checkout, guards[0].parent, guards[2], manifest))
         report["nativeBoundaryFaultReplay"] = evidence.checked(audit)[1]
+        signed = guards[2]["mysqlSignedStorage"]
+        report["mysqlSignedStorage"] = evidence.checked(guards[0].parent / signed["path"], signed["sha256"])[1]
         sources = {dialect: result["healthy"] for dialect, result in guards[2]["results"].items()}
         graph = certificate(manifest, roles["registeredConstructors"], sources)
         reference = guards[2]["valueClosure"]
@@ -538,6 +540,7 @@ def main():
         lines.append("The [checked value graph](value-closure.json) records the static closure of retained fields under the listed PHP and source-audit premises.")
         lines.append("The native constructor audit also links each checked scalar dispatch to the field types of its listed callers.")
         lines.append("The [native boundary fault replay](native-boundary-fault-replay.json) links all required source patches and raw rejections.")
+        lines.append("The native constructor audit also contains a symbolic derivation for every ordinary MySQL signed storage interval under its listed premises.")
     if previous is not None:
         lines.append("The [assurance change report](assurance-changes.json) records differences against the previous selected verifier.")
     (output / "summary.md").write_text("\n".join(lines) + "\n")

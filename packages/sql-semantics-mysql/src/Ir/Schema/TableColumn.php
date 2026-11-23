@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -30,14 +31,13 @@ final class TableColumn
         public readonly Identifier $name,
         public readonly IntegerStorage|CharacterStorage $storage,
         public readonly bool $nullable = true,
-        public readonly IntegerLiteral|TextLiteral|NullLiteral|null $default = null,
+        public readonly IntegerLiteral|RangeIntegerLiteral|TextLiteral|NullLiteral|null $default = null,
     ) {
         Check::input(preg_match('/\A[\x01-\x7f]{1,64}(?<! )\z/D', $name->value) === 1, 'This MySQL declaration requires an ASCII column name of 1 to 64 characters without a trailing space.');
         Check::input($nullable || !$default instanceof NullLiteral, 'A MySQL NOT NULL column cannot declare a NULL default.');
-        Check::input(!$default instanceof IntegerLiteral || $storage instanceof IntegerStorage, 'A signed default requires native integer storage.');
-        if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {
-            $integer = (int) $default->decimal;
-            Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');
+        if ($default instanceof IntegerLiteral || $default instanceof RangeIntegerLiteral) {
+            Check::input($storage instanceof IntegerStorage, 'A signed default requires native integer storage.');
+            Check::input($storage->accepts($default), 'The ' . $storage->value . ' default is outside the signed storage range.');
         }
         if ($default instanceof TextLiteral) {
             Check::input($storage instanceof CharacterStorage, 'A text default requires native VARCHAR storage.');
@@ -59,11 +59,7 @@ final class TableColumn
             return $bytes + ($bytes > 255 ? 2 : 1);
         }
 
-        return match ($this->storage) {
-            IntegerStorage::Small => 2,
-            IntegerStorage::Standard => 4,
-            IntegerStorage::Wide => 8,
-        };
+        return $this->storage->bytes();
     }
 
     /**
@@ -75,7 +71,7 @@ final class TableColumn
         $definition = $this->name->quoted() . ' ' . $storage . ($this->nullable ? ' NULL' : ' NOT NULL');
 
         return $definition . match (true) {
-            $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,
+            $this->default instanceof IntegerLiteral, $this->default instanceof RangeIntegerLiteral => ' DEFAULT ' . $this->default->decimal,
             $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),
             $this->default instanceof NullLiteral => ' DEFAULT NULL',
             $this->default === null => '',
