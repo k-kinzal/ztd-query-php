@@ -69,7 +69,13 @@ function viewRemoval(PDO $pdo, array $request): array
     } catch (PDOException $error) {
         $status = ['db-error', $error->errorInfo[0], $error->errorInfo[1]];
     }
-    $diagnostics = $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
+    // Preparing SHOW WARNINGS can overwrite the failure or note it is meant to read.
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+    try {
+        $diagnostics = $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
+    } finally {
+        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    }
     // Refresh cached transaction flags after the diagnostic was captured.
     $pdo->query('SELECT 1')->fetchColumn();
     $active = $pdo->inTransaction();
