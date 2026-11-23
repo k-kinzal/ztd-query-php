@@ -20,6 +20,8 @@ CONTRACT_NAME = "mysql-session-create-table-v1.json"
 CONTRACT = "d128967df8d5696561122f4064c976acc904293f4a301f5b8b432f3d4cdce79a"
 METADATA_NAME = "mysql-session-create-default-metadata-v1.json"
 METADATA = "65115e93163daa4b82ad6da66983e499b4a9a3d8a75de6063cd0aa3da8de906f"
+RESET_NAME = "mysql-session-create-fixture-reset-v1.json"
+RESET = "aea2a0bf89099ac8ee449ac0d2c80bf5948e934995bc1e3d510346d6ea68ed4f"
 COMPLETE_SEEDS = True
 SCHEMAS = {"primary": "ir_fixture", "decoy": "ir_screate_decoy"}
 NAME, TEMP = "ir_screate_data", "temporary-table"
@@ -35,6 +37,7 @@ def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-session-create-contract-mismatch")
     require(digest(TOOL / METADATA_NAME) == METADATA, "mysql-session-create-metadata-contract-mismatch")
+    require(digest(TOOL / RESET_NAME) == RESET, "mysql-session-create-fixture-reset-contract-mismatch")
     return json.loads(path.read_text()), profiles()[1]
 
 
