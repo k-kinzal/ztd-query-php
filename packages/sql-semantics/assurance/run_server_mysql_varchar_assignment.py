@@ -18,20 +18,20 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-assignment"
-CONTRACT = "a4cb1fa045f49d1faa61830b455eebc63297354118366e3674567d00794bb9e6"
+CONTRACT = "fb535bf794464e5ffc7a7af031a26e291c26dc61b082e232fd48e0e81a31e4d2"
 NAME = "ir_varchar_assignment"
 TARGET = f"{SCHEMA}.{NAME}"
 EVENTS = f"{SCHEMA}.{NAME}_events"
-HEADING = ("row_key", "source_value", "nullable_value", "required_value", "empty_value", "id")
-CAPACITY = {"source_value": 16, "nullable_value": 2, "required_value": 2, "empty_value": 0}
+HEADING = ("row_key", "source_value", "nullable_value", "required_value", "empty_value", "id", "wide_source")
+CAPACITY = {"source_value": 16, "nullable_value": 2, "required_value": 2, "empty_value": 0, "wide_source": 64}
 DESTINATIONS = ("nullable_value", "required_value", "empty_value")
 CONTENTS = (
-    (1, "a ", "a", "A", "", 10),
-    (2, "é𐐷z", "a ", "é𐐷", "", 20),
-    (3, None, "", "", None, 30),
-    (4, "a   ", "𐐷", "A", "", 40),
-    (5, "quote's", None, "é", "", 50),
-    (6, "a\x00b", "b", "b", "", None),
+    (1, "a ", "a", "A", "", 10, "a   "),
+    (2, "é𐐷z", "a ", "é𐐷", "", 20, "é𐐷z"),
+    (3, None, "", "", None, 30, "   "),
+    (4, "a   ", "𐐷", "A", "", 40, None),
+    (5, "quote's", None, "é", "", 50, "z " * 30 + "z  "),
+    (6, "a\x00b", "b", "b", "", None, ""),
 )
 TYPES = {name: ["varchar", width, COLLATION, *([False] if name == "required_value" else [])]
          for name, width in CAPACITY.items()}
@@ -46,7 +46,7 @@ DECLARATION = f"CREATE TABLE {TARGET} ({DEFINITION}) ENGINE=InnoDB"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-assignment-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-assignment-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-assignment-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -106,7 +106,7 @@ def assignment(destination, operand):
 
 
 def value_for(role):
-    return {"field": select_slot("source_value"), "fitting": text("a"), "wide": text("é𐐷z"), "padding": text("a  "), "null": ["null"]}[role]
+    return {"field": select_slot("source_value"), "wide-field": select_slot("wide_source"), "fitting": text("a"), "wide": text("é𐐷z"), "padding": text("a  "), "null": ["null"]}[role]
 
 
 def filtered(role):
@@ -170,7 +170,7 @@ def finite_id(_, observed, _item):
     table, predicate, ((destination, operand),) = graph(observed)
     require(table == (SCHEMA, NAME) and predicate in (None, ("null-test", True, ("text-slot", "source_value"))),
             "mysql-varchar-assignment-finite-predicate", observed)
-    roles = {("text-slot", "source_value"): "field", ("text", "a"): "fitting", ("text", "é𐐷z"): "wide",
+    roles = {("text-slot", "source_value"): "field", ("text-slot", "wide_source"): "wide-field", ("text", "a"): "fitting", ("text", "é𐐷z"): "wide",
              ("text", "a  "): "padding", ("null",): "null"}
     return destination, roles[operand], "all" if predicate is None else "source-available"
 
@@ -267,10 +267,13 @@ def expected(item):
                     diagnostics.append(["Warning", 1048, dest])
                     value = ""
                 if dest in CAPACITY and value is not None and len(value) > CAPACITY[dest]:
-                    diagnostics.append(["Warning", 1265, dest])
-                    value = value[:CAPACITY[dest]]
+                    width = CAPACITY[dest]
+                    fast_copy = expr[0] == "text-slot" and (CAPACITY[address(expr, target)] <= 63) == (width <= 63)
+                    has_nonspace = any(char != " " for char in value[width:])
+                    diagnostics.append(["Warning" if fast_copy or has_nonspace else "Note", 1265, dest])
+                    value = value[:width]
                 current[HEADING.index(dest)] = value
-            events.append([current[0], *original[2:], *current[2:]])
+            events.append([current[0], *original[2:6], *current[2:6]])
             changed += int(tuple(current) != original)
         after.append(current)
     return {"status": "mutation", "count": changed, "columns": 0, "before": baseline, "restored": baseline,
@@ -315,6 +318,7 @@ def sample_forms(forms, reply, *_):
         writes.add(name)
         if term[0] == "text-slot":
             forms["read/same" if name == term[1] else "read/other"] += 1
+            forms["read/two-byte-prefix" if CAPACITY[term[1]] > 63 else "read/one-byte-prefix"] += 1
         if term[0] == "text":
             if any(ord(char) > 0xFFFF for char in term[1]):
                 forms["text/supplementary"] += 1
@@ -328,7 +332,7 @@ def required_forms(*_):
     return ({*(f"width/{size}" for size in range(1, 6)), *(f"target/{name}" for name in (*DESTINATIONS, "id", "repeated")),
              "filter/all", "filter/null-test", "filter/text-comparison", "filter/logic",
              "value/text-slot", "value/text", "value/null", "value/integer", "value/slot",
-             "read/same", "read/other", "text/supplementary", "text/nul", "text/padding"})
+             "read/same", "read/other", "read/two-byte-prefix", "read/one-byte-prefix", "text/supplementary", "text/nul", "text/padding"})
 
 
 def controls():

@@ -32,7 +32,7 @@ CONTRACTS = {
     "mysql-varchar-presence-v1.json": "c95df7be6ac93b7b423036791a4b967515d549f48002a342d67bcab4165c1e66",
     "mysql-varchar-effects-v1.json": "7d166c495706eaa796ae11f08233c6c23e026caa1bfd723813e94100294729a2",
     "mysql-varchar-comparison-v1.json": "5170d65217583fbe3194f02d4186445facbfab35320d302230a132599db3b9e9",
-    "mysql-varchar-assignment-v1.json": "a4cb1fa045f49d1faa61830b455eebc63297354118366e3674567d00794bb9e6",
+    "mysql-varchar-assignment-v2.json": "fb535bf794464e5ffc7a7af031a26e291c26dc61b082e232fd48e0e81a31e4d2",
     "postgres-int4-operators-v2.json": "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa",
     "sqlite-truth-v2.json": "f32372203fcd2896fd116d876d7d74271f4994821c8b8a237f66006a7299685e",
     "sqlite-unary-v1.json": "c79d1248b2e3e55c4cb4d2b94109811f8393fe824055ef02f92fbe0ab6abb9d6",

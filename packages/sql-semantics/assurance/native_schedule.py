@@ -35,7 +35,7 @@ NATIVE = {
     "mysql_varchar_presence": "mysql-varchar-presence-v1.json",
     "mysql_varchar_effects": "mysql-varchar-effects-v1.json",
     "mysql_varchar_comparison": "mysql-varchar-comparison-v1.json",
-    "mysql_varchar_assignment": "mysql-varchar-assignment-v1.json",
+    "mysql_varchar_assignment": "mysql-varchar-assignment-v2.json",
     "mysql_signed_casts": "mysql-signed-casts-v2.json",
     "mysql_unsigned_casts": "mysql-unsigned-casts-v3.json",
     "mysql_merged_join": "mysql-merged-join-v3.json",

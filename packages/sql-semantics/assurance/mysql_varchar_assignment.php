@@ -15,7 +15,7 @@ function mysqlVarcharAssignmentAdmitted(string $sql): bool
     $alias = $name('(?:__ztd_source|r)');
     $qualifier = '(?:' . $name('(?:__ztd_source|r|ir_varchar_assignment)') . '\\.)?';
     $destination = $qualifier . $name('(?:nullable_value|required_value|empty_value|id)');
-    $column = $qualifier . $name('(?:source_value|nullable_value|required_value|empty_value|row_key|id)');
+    $column = $qualifier . $name('(?:source_value|wide_source|nullable_value|required_value|empty_value|row_key|id)');
     $text = <<<'PATTERN'
 '(?:\\[\s\S]|''|[^'\\])*'
 PATTERN;
@@ -64,7 +64,7 @@ function mysqlVarcharAssignment(PDO $pdo, string $sql): array
 function mysqlVarcharAssignmentSnapshot(PDO $pdo): array
 {
     return [
-        'rows' => $pdo->query('SELECT row_key, source_value, nullable_value, required_value, empty_value, id FROM ir_fixture.ir_varchar_assignment ORDER BY row_key')->fetchAll(PDO::FETCH_NUM),
+        'rows' => $pdo->query('SELECT row_key, source_value, nullable_value, required_value, empty_value, id, wide_source FROM ir_fixture.ir_varchar_assignment ORDER BY row_key')->fetchAll(PDO::FETCH_NUM),
         'events' => $pdo->query('SELECT row_key, old_nullable, old_required, old_empty, old_id, new_nullable, new_required, new_empty, new_id FROM ir_fixture.ir_varchar_assignment_events ORDER BY row_key')->fetchAll(PDO::FETCH_NUM),
     ];
 }
