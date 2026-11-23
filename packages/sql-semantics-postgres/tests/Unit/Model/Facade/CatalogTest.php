@@ -31,22 +31,23 @@ final class CatalogTest extends TestCase
 
     public function testBuildResolvesTypesAtTheDeclarationPosition(): void
     {
-        $semantics = new Semantics();
+        $platform = Platform::shared();
+        $profile = (new Semantics())->profile();
+        $catalog = new Catalog($profile, null, $platform->parser($profile));
         $declarations = [
             'CREATE TABLE public.before_shadow (label text)',
             'CREATE TEMP TABLE text (part INTEGER)',
             'CREATE TABLE public.after_shadow (label text)',
             'CREATE TABLE public.qualified (label pg_catalog.text)',
         ];
-        $context = $semantics->context($declarations);
-        $byName = [];
-        foreach ($context->tables as $table) {
-            $byName[$table->name->name->value] = $table;
-        }
+        $context = $catalog->build($declarations, true);
 
-        self::assertSame(Builtin::Text, $byName['before_shadow']->columns[0]->type);
-        self::assertInstanceOf(NamedOnPath::class, $byName['after_shadow']->columns[0]->type);
-        self::assertSame(Builtin::Text, $byName['qualified']->columns[0]->type);
+        self::assertSame('before_shadow', $context->tables[0]->name->name->value);
+        self::assertSame(Builtin::Text, $context->tables[0]->columns[0]->type);
+        self::assertSame('after_shadow', $context->tables[2]->name->name->value);
+        self::assertInstanceOf(NamedOnPath::class, $context->tables[2]->columns[0]->type);
+        self::assertSame('qualified', $context->tables[3]->name->name->value);
+        self::assertSame(Builtin::Text, $context->tables[3]->columns[0]->type);
     }
 
     public function testBuildDoesNotResolveAnUnqualifiedTypeInAnOpenContext(): void
