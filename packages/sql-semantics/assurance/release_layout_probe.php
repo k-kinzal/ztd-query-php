@@ -43,6 +43,31 @@ function observeEnum(string $name): array
     throw new RuntimeException('An installed enum accepts an unknown backing value.');
 }
 
+function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.external_input (id INT, label VARCHAR(8) COLLATE utf8mb4_bin)',
+        'CREATE ALGORITHM=TEMPTABLE VIEW app.external_rows (key_value, label_value) AS SELECT id, label FROM app.external_input',
+    ]);
+    $view = $semantics->analyze('SELECT v.key_value, label_value FROM app.external_rows AS v', $context);
+    if (!$view instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$view->source instanceof SqlSemantics\Platform\MySql\Ir\TableSource
+        || !$view->source->columnTypes[1] instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar) {
+        throw new RuntimeException('The installed MySQL view input lost its native source or field roles.');
+    }
+    $rejection = null;
+    try {
+        new SqlSemantics\Platform\MySql\Ir\Mutation\Delete($view->source);
+    } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+        $rejection = $error->getMessage();
+    }
+    $text = $view->source->columnTypes[1];
+
+    return [$view->source->kind->value, $view->source->schema->value, $view->source->table->value,
+        array_column($view->source->columns, 'value'), $text->length, $text->collation->value, $text->nullable,
+        $view->toString(), $rejection];
+}
+
 function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -510,6 +535,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlTextLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString(),
                 $legacyRelease->textCollation(), $text->release->textCollation()];
             $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
+            $details['mysqlExternalViews'] = observeMysqlExternalViews($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';

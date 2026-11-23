@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v57.json"
-CONTRACT = "59fec7308c43e511d3770cd9b7eb5a6dd9623924f8691689d99e12a308a68ad2"
+CONTRACT_NAME = "release-layout-v58.json"
+CONTRACT = "94c7a6b50be4e1e6d4d4e0e89c3b0187708aa10845caae3739b43745e32f2e43"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -240,6 +240,12 @@ def verify_probe(raw, catalog):
                     "installed-mysql-text-literal-mismatch", item)
             require(json.dumps(item.get("mysqlVarcharPublication"), sort_keys=True) == json.dumps(mysql_varchar_publication(), sort_keys=True),
                     "installed-mysql-varchar-publication-mismatch", item)
+            require(item.get("mysqlExternalViews") == [
+                "view", "app", "external_rows", ["key_value", "label_value"], 8, "utf8mb4_bin", True,
+                'SELECT `__ztd_source`.`key_value` AS `key_value`, `__ztd_source`.`label_value` AS `label_value` '
+                'FROM `app`.`external_rows` AS `__ztd_source`',
+                "A DELETE target must be a base table.",
+            ], "installed-mysql-external-view-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Mutation\\Delete"):
             require(item.get("booleanReturning") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True,

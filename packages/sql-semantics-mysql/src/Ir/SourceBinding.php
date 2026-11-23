@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\From\VarcharLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
@@ -32,6 +34,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
  */
 final class SourceBinding
 {
+    private readonly ExternalRelationKind $kind;
+
     /**
      * @var list<Identifier> Names of the consumed columns
      */
@@ -51,10 +55,12 @@ final class SourceBinding
 
     /**
      * Resolves the source from the analysis before any slots can be allocated.
+     * @throws InvalidConstruction When the relation has no admitted native read role
      */
     public function __construct(private readonly BoundStatement $operation, private readonly ?Relation $source)
     {
         $resolution = null;
+        $kind = ExternalRelationKind::BaseTable;
         if ($source !== null) {
             Check::input((($source instanceof TableReference && $source->indexHints === [] && $source->sample === null) || $source instanceof WriteTarget) && $source->partitions === [], 'The projection source must be an ordinary table input.');
             Check::input(
@@ -65,11 +71,18 @@ final class SourceBinding
             $resolution = $operation->facts->relation($source)->table;
             Check::input(
                 $resolution instanceof DeclaredTable && $resolution->table->complete
-                    && $resolution->table->kind === RelationKind::BaseTable && $resolution->table->name->catalog === null,
-                'The projection requires a resolved, complete base table declaration.',
+                    && $resolution->table->name->catalog === null,
+                'The source requires a resolved, complete local relation declaration.',
             );
+            $kind = match ($resolution->table->kind) {
+                RelationKind::BaseTable => ExternalRelationKind::BaseTable,
+                RelationKind::View => ExternalRelationKind::View,
+                RelationKind::MaterializedView, RelationKind::ForeignTable, RelationKind::Sequence => throw new InvalidConstruction('The source requires an admitted external relation kind.'),
+            };
+            Check::input(!$source instanceof WriteTarget || $kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');
         }
         $this->table = $resolution?->table;
+        $this->kind = $kind;
         Check::input(
             $this->table === null || $this->table->name->schema !== null || $operation->context->declarationSchema->value !== SessionDatabase::UNNAMED,
             'The table must resolve to a named MySQL database.',
@@ -166,7 +179,7 @@ final class SourceBinding
      */
     public function mergedHeading(): array
     {
-        Check::input($this->table !== null && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');
+        Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');
         $heading = [];
         foreach ($this->table->columns as $column) {
             $name = $column->name->value;
@@ -196,6 +209,7 @@ final class SourceBinding
             new Identifier($this->table->name->name->value),
             $this->names,
             $this->columnTypes,
+            $this->kind,
         );
     }
 
@@ -207,7 +221,7 @@ final class SourceBinding
     public function writeTarget(array $names): TableSource
     {
         $target = $this->source();
-        Check::input($target !== null, 'An INSERT requires a resolved write target.');
+        Check::input($target !== null && $target->kind === ExternalRelationKind::BaseTable, 'An INSERT requires a resolved write target.');
         $columns = [];
         $types = [];
         foreach ($names as $name) {
@@ -248,7 +262,7 @@ final class SourceBinding
      */
     public function writeDeclaration(string $name): Column
     {
-        Check::input($this->table !== null, 'A write requires a resolved base table.');
+        Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');
         $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
         return $matches[0];

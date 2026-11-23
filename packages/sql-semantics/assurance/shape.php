@@ -142,6 +142,8 @@ if ($dialect === 'mysql') {
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
     $properties['TableSource']['columnTypes'] = ['array'];
+    $properties['TableSource']['kind'] = ['From\\ExternalRelationKind'];
+    $properties['From\\ExternalRelationKind'] = $methods['From\\ExternalRelationKind'] = [];
     $textOperator = 'Predicate\\Text\\TextOperator';
     $textComparison = 'Predicate\\Text\\TextComparison';
     $collatedText = 'Expression\\CollatedText';
@@ -206,6 +208,7 @@ if ($dialect === 'mysql') {
     $internal[] = 'Expression\\IntegralCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
     $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int'];
+    $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'View' => 'view'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -934,7 +937,7 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v3.json', '53fe339cbb4fa0e61e745a77ece8f4ac00caa405a57938011745a8f9257cea04', 'MySQL VARCHAR binding'],
+            ['mysql-varchar-binding-v4.json', '315f082f88a2369b46c87200788aca6d7ec60e006e2772812ad076031537db2f', 'MySQL VARCHAR binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };

@@ -62,6 +62,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-create-varchar-boundaries-v1.json', 'cca62d6472498414b159b7934303e1250ddcda6103dc2a4f25460dee572b741d'],
             ['mysql-create-signed-boundaries-v1.json', 'daff522af411c8dac52a3d7d14c477483842c67b572683ea3b7e2bc5274693cf'],
             ['mysql-create-primary-boundaries-v2.json', '1657633bf073bbb6ff22462e5d1fc29e23de126d074eec5f3d6e56c506e384a3'],
+            ['mysql-external-views-boundaries-v1.json', '06bbf4a62a3665c9bcbf35b073ca31d5e8d0d0017476112b168793f9a525aaf7'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -228,6 +229,8 @@ function checkNativeBoundaries(
                 'Statement\\Table\\Column\\Kind\\ColumnKeyword', 'Statement\\Table\\Column\\OrdinaryColumn', 'Statement\\Table\\Column\\ColumnDefinition',
                 'Statement\\Table\\Option\\EngineOption', 'Statement\\Table\\Option\\CharsetOption', 'Statement\\Table\\Option\\CollationOption',
                 'Rules\\TableDefinition\\TableDeclaration', 'Rules\\SessionDatabase',
+                'Ir\\From\\ExternalRelationKind', 'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
+                'Model\\Statement\\Identifier\\Comparison', 'Statement\\Dml\\WriteTarget', 'Statement\\Relation\\TableReference',
                 'Statement\\Query\\Direction', 'Statement\\Table\\Key\\ColumnPart', 'Statement\\Table\\Key\\IndexDefinition',
                 'Statement\\Table\\Key\\IndexKind', 'Rules\\TableDefinition\\ColumnFlags',
                 'Ir\\Schema\\Key\\PrimaryKey', 'Ir\\Schema\\Key\\PrimaryKeyColumn', 'Ir\\Schema\\Key\\CreatePrimaryKeyLowering', 'Ir\\Schema\\Key\\PrimaryColumnPolicy',

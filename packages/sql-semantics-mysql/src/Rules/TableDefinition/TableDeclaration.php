@@ -229,7 +229,7 @@ final class TableDeclaration
         $complete = $output->shape->complete() && (!$listed || count($names) === count($fields));
         $columns = [];
         foreach ($fields as $position => $field) {
-            $column = $this->fieldColumn($field, $names[$position] ?? null);
+            $column = $this->fieldColumn($field, $names[$position] ?? null, $field->column()?->collation);
             if ($column === null) {
                 $complete = false;
                 break;
@@ -289,9 +289,11 @@ final class TableDeclaration
     /**
      * Answers the column an output field makes under a name, or null when its name or type is not determined.
      */
-    public function fieldColumn(Field $field, ?Name $name): ?Column
+    public function fieldColumn(Field $field, ?Name $name, ?Name $collation = null): ?Column
     {
-        return $name === null || !$field->type instanceof Known ? null : new Column($name, $field->type->descriptor, $field->nullability);
+        return $name === null || !$field->type instanceof Known
+            ? null
+            : new Column($name, $field->type->descriptor, $field->nullability, collation: $collation);
     }
 
     /**

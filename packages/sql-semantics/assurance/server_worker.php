@@ -186,7 +186,10 @@ function constructSource(string $platform, array $source, string $dialect): obje
         $source['only'],
         array_map($namespace . 'From\\ColumnKind::from', $source['columnKinds'] ?? []),
         ($namespace . 'From\\ExternalRelationKind')::from($source['relationKind'] ?? 'table'),
-    ] : [array_map(constructMySqlColumnType(...), $source['columnTypes'] ?? [])];
+    ] : [
+        array_map(constructMySqlColumnType(...), $source['columnTypes'] ?? []),
+        ($namespace . 'From\\ExternalRelationKind')::from($source['relationKind'] ?? 'table'),
+    ];
 
     return new $table(
         new $identifier($source['schema']),
@@ -283,11 +286,11 @@ function observeSource(object $source, string $dialect, string $namespace): arra
         'table' => $source->table->value,
         'columns' => array_map(static fn ($name): string => $name->value, $source->columns),
     ];
+    if ($source->kind->value !== 'table') {
+        $columns['relationKind'] = $source->kind->value;
+    }
     if ($dialect === 'postgres') {
         $columns['only'] = $source->only;
-        if ($source->kind->value !== 'table') {
-            $columns['relationKind'] = $source->kind->value;
-        }
         $kinds = array_column($source->columnKinds, 'value');
         if ($kinds !== [] && $kinds !== array_fill(0, count($columns['columns']), 'int4')) {
             $columns['columnKinds'] = $kinds;

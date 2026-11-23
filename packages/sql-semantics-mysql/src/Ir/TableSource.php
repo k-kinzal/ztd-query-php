@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -13,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A schema-qualified external source and the named column slots it supplies.
  *
  * The slots identify inputs. Evaluation supplies the corresponding table
- * and columns, with their MySQL row values.
+ * or view and its columns, with their MySQL row values.
  *
  * @visibility public
  * @example Identifying a column of an external table
@@ -35,13 +36,18 @@ final class TableSource
     public readonly array $columnTypes;
 
     /**
-     * Establishes a fixed external table identity and an ordered list of unique column slots.
+     * Establishes a fixed external identity and an ordered list of unique column slots.
      *
      * @param list<Identifier> $columns The names at those slots
      * @param array<array-key, mixed> $columnTypes The types in slot order, or empty for signed INT slots
      */
-    public function __construct(public readonly Identifier $schema, public readonly Identifier $table, array $columns, array $columnTypes = [])
-    {
+    public function __construct(
+        public readonly Identifier $schema,
+        public readonly Identifier $table,
+        array $columns,
+        array $columnTypes = [],
+        public readonly ExternalRelationKind $kind = ExternalRelationKind::BaseTable,
+    ) {
         $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
         foreach ([$schema, $table] as $object) {
             Check::input(strpbrk($object->value, '/\\.') === false, 'A database or table name excludes path and dot separators.');

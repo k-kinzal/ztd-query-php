@@ -173,6 +173,11 @@ def inventory(root):
             )})
             related.update({alternative: ("mysql-signed-range-v3.json",) for alternative in rules["predicate"]
                             if " BETWEEN_SYM " in alternative})
+            for rule in ("table_factor", "single_table"):
+                for alternative in rules.get(rule, ()):
+                    if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",
+                                       "table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition"):
+                        related[alternative] = (*related.get(alternative, ()), "mysql-external-views-v1.json")
             for rule in ("varchar", "simple_ident", "simple_ident_q", "table_wild", "opt_charset_with_opt_binary"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-slots-v2.json")
