@@ -18,7 +18,7 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-assignment"
-CONTRACT = "fb535bf794464e5ffc7a7af031a26e291c26dc61b082e232fd48e0e81a31e4d2"
+CONTRACT = "7bcaa7ea829e8bd2c83d481a3b9a2eedab98328eefbf7ca6d4e3e1ac3592e51f"
 NAME = "ir_varchar_assignment"
 TARGET = f"{SCHEMA}.{NAME}"
 EVENTS = f"{SCHEMA}.{NAME}_events"
@@ -46,7 +46,7 @@ DECLARATION = f"CREATE TABLE {TARGET} ({DEFINITION}) ENGINE=InnoDB"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-assignment-v2.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-assignment-v3.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-assignment-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -71,6 +71,7 @@ def prepare(_engine, db):
                        for age, field_ in product(("old", "new"), ("nullable", "required", "empty", "id")))
     logged = ", ".join(f"{age}.{name}" for age, name in product(("OLD", "NEW"), (*DESTINATIONS, "id")))
     response = db.request({"fixture": [
+        "SET SESSION sql_notes = 1, max_error_count = 64, lc_messages = 'en_US'",
         f"DROP TABLE IF EXISTS {EVENTS}", f"DROP TABLE IF EXISTS {TARGET}", DECLARATION,
         f"INSERT INTO {TARGET} ({names}) VALUES {data}",
         f"CREATE TABLE {EVENTS} (row_key INT, {events}) ENGINE=InnoDB",
@@ -84,12 +85,14 @@ def prepare(_engine, db):
     storage = db.request({"sql": "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES "
                                   f"WHERE TABLE_SCHEMA = '{SCHEMA}' AND TABLE_NAME IN ('{NAME}', '{NAME}_events') "
                                   "ORDER BY TABLE_NAME"})
-    return {"fixture": response, "outside": outside, "rows": before, "storage": storage}
+    settings = db.request({"sql": "SELECT @@sql_notes, @@max_error_count, @@lc_messages"})
+    return {"fixture": response, "outside": outside, "rows": before, "storage": storage, "diagnosticSettings": settings["rows"]}
 
 
 def check_preparation(engine, _environment, observed):
     require(engine == "mysql", "mysql-varchar-assignment-engine", engine)
     same({"status": "fixture"}, observed["fixture"])
+    same([[1, 64, "en_US"]], observed["diagnosticSettings"])
     same([{"status": "outside-observer-scope"}] * 3, observed["outside"])
     same([[NAME, "InnoDB"], [NAME + "_events", "InnoDB"]], observed["storage"]["rows"])
     same([list(row) for row in CONTENTS], observed["rows"]["rows"])
@@ -106,7 +109,11 @@ def assignment(destination, operand):
 
 
 def value_for(role):
-    return {"field": select_slot("source_value"), "wide-field": select_slot("wide_source"), "fitting": text("a"), "wide": text("é𐐷z"), "padding": text("a  "), "null": ["null"]}[role]
+    return {
+        "field": select_slot("source_value"), "wide-field": select_slot("wide_source"), "fitting": text("a"),
+        "wide": text("é𐐷z"), "padding": text("a  "), "ascii-whitespace": text("\t\n"),
+        "unicode-whitespace": text("\u00a0\u00a0\u00a0"), "null": ["null"],
+    }[role]
 
 
 def filtered(role):
@@ -171,7 +178,8 @@ def finite_id(_, observed, _item):
     require(table == (SCHEMA, NAME) and predicate in (None, ("null-test", True, ("text-slot", "source_value"))),
             "mysql-varchar-assignment-finite-predicate", observed)
     roles = {("text-slot", "source_value"): "field", ("text-slot", "wide_source"): "wide-field", ("text", "a"): "fitting", ("text", "é𐐷z"): "wide",
-             ("text", "a  "): "padding", ("null",): "null"}
+             ("text", "a  "): "padding", ("text", "\t\n"): "ascii-whitespace",
+             ("text", "\u00a0\u00a0\u00a0"): "unicode-whitespace", ("null",): "null"}
     return destination, roles[operand], "all" if predicate is None else "source-available"
 
 
@@ -269,7 +277,7 @@ def expected(item):
                 if dest in CAPACITY and value is not None and len(value) > CAPACITY[dest]:
                     width = CAPACITY[dest]
                     fast_copy = expr[0] == "text-slot" and (CAPACITY[address(expr, target)] <= 63) == (width <= 63)
-                    has_nonspace = any(char != " " for char in value[width:])
+                    has_nonspace = any(char not in " \t\n\v\f\r" for char in value[width:])
                     diagnostics.append(["Warning" if fast_copy or has_nonspace else "Note", 1265, dest])
                     value = value[:width]
                 current[HEADING.index(dest)] = value
