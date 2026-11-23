@@ -15,6 +15,6 @@ final class ColumnKindTest extends TestCase
 {
     public function testIdentifiesTheNativeTypes(): void
     {
-        self::assertSame(['int4', 'text'], array_column(ColumnKind::cases(), 'value'));
+        self::assertSame(['int4', 'text', 'bool'], array_column(ColumnKind::cases(), 'value'));
     }
 }

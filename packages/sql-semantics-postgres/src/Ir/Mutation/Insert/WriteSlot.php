@@ -27,5 +27,6 @@ final class WriteSlot
     {
         Check::input($slot >= 0, 'An INSERT write slot must be nonnegative.');
         Check::input($occurrence === 0, 'An INSERT write slot must belong to the target.');
+        Check::input($kind !== ColumnKind::Boolean, 'The INSERT write slot requires signed integer or text storage.');
     }
 }

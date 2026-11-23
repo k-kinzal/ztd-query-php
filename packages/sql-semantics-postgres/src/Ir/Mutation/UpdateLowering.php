@@ -65,7 +65,10 @@ final class UpdateLowering
             $operand = $operand->operand;
         }
         if ($text && $operand instanceof ParsedColumn) {
-            return $binding->field($operand);
+            $field = $binding->field($operand);
+            Check::input($field instanceof ColumnReference || $field instanceof TextColumnReference, 'An UPDATE assignment requires a signed or text input field.');
+
+            return $field;
         }
         $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $text);
         Check::input(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Limit;
@@ -54,7 +55,7 @@ final class Select implements SemanticsIR
         array $columns,
         public readonly TableSource|Join|null $source = null,
         public readonly GrammarRelease $release = GrammarRelease::PostgreSql172,
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
         public readonly bool $distinct = false,
         array $orderBy = [],
         public readonly ?Limit $limit = null,

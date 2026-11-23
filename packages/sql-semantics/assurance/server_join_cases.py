@@ -194,7 +194,7 @@ def negatives(dialect, tag):
 
 def value(expression, row, dialect):
     role = expression[0]
-    if role in ("slot", "text-slot"):
+    if role in ("slot", "text-slot", "bool-slot"):
         return row[expression[2] if len(expression) == 3 else 0][expression[1]]
     if role == "int4-case":
         _, arms, otherwise = expression

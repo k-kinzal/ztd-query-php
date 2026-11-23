@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
@@ -70,10 +71,10 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
-            $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
+            $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
@@ -118,7 +119,7 @@ final class SelectSql
     /**
      * Emits the exact assigned field in the physical or derived input occurrence.
      */
-    public function column(ColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function column(ColumnReference|TextColumnReference|BooleanColumnReference $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         $inputs = $source instanceof Join ? $source->inputs() : [$source];
         $input = $inputs[$expression->occurrence] ?? null;
@@ -219,7 +220,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TruthTest $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);

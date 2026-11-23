@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
@@ -39,7 +40,7 @@ final class SelectBounds
     public function check(
         array $results,
         TableSource|Join|null $source,
-        BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
@@ -67,7 +68,7 @@ final class SelectBounds
                     continue;
                 }
                 match (true) {
-                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $scope->column($expression, $inputs),
+                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference => $scope->column($expression, $inputs),
                     $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),

@@ -24,7 +24,7 @@ def predicate_value(condition, operand):
         return condition[1]
     if role == "null":
         return None
-    if role in ("slot", "text-slot", "integer"):
+    if role in ("slot", "text-slot", "bool-slot", "integer"):
         return operand(condition)
     if role == "comparison":
         _, symbol, left, right = condition

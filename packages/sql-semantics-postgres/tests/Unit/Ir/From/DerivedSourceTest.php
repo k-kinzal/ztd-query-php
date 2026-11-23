@@ -44,7 +44,7 @@ final class DerivedSourceTest extends TestCase
 
     public function testRejectsAnUnsupportedField(): void
     {
-        $this->expectExceptionMessage('A derived join field requires a signed literal or a signed column, or a native text column.');
+        $this->expectExceptionMessage('A derived join field requires a signed literal, a signed column, a text column or a Boolean column.');
         new DerivedSource(new Select([new ResultColumn(new NullLiteral(), new Identifier('answer'))]));
     }
 }

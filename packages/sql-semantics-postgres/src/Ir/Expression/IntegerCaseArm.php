@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Expression;
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -34,7 +35,7 @@ final class IntegerCaseArm
      * Holds the checked condition and its corresponding scalar value.
      */
     public function __construct(
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest $condition,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest $condition,
         public readonly Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $result,
     ) {
     }

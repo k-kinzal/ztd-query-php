@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -28,7 +29,7 @@ final class NullTest
      * Stores the tested scalar and whether to invert the result.
      */
     public function __construct(
-        public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|TextComparison|TruthTest|self $operand,
+        public readonly BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|TextComparison|TruthTest|self $operand,
         public readonly bool $negated = false,
     ) {
     }

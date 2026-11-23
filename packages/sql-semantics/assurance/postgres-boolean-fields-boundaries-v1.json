@@ -1,0 +1,450 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-fields-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check exact Boolean occurrence allocation, parent scope, structural dispatch and mutation role boundaries.",
+  "rules": {
+    "From/BooleanColumnReference::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($slot >= 0, 'A column slot must be nonnegative.');",
+        "Check::input($occurrence >= 0, 'A table occurrence must be nonnegative.');"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference || $operand instanceof TextColumnReference || $operand instanceof BooleanColumnReference) {",
+        "    $this->column($operand, $inputs, $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ]
+    },
+    "From/OccurrenceScope::column": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$input = $inputs[$column->occurrence] ?? null;",
+        "if ($column instanceof BooleanColumnReference) {",
+        "    Check::input(",
+        "        $input?->columnKind($column->slot) === ColumnKind::Boolean,",
+        "        $invalidSlot ?? 'A Boolean slot must belong to the SELECT source with its native kind.'",
+        "    );",
+        "",
+        "    return;",
+        "}",
+        "if ($column instanceof TextColumnReference) {",
+        "    Check::input(",
+        "        $input?->columnKind($column->slot) === ColumnKind::Text,",
+        "        $invalidSlot ?? 'A text slot must belong to the SELECT source with its native kind.'",
+        "    );",
+        "",
+        "    return;",
+        "}",
+        "Check::input($this->hasSlot($input, $column->slot), $invalidSlot ?? 'Column slot must belong to the SELECT source.');"
+      ]
+    },
+    "From/DerivedSource::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');",
+        "Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');",
+        "foreach (array_keys($definition->columns) as $slot) {",
+        "    $this->columnKind($slot);",
+        "}"
+      ]
+    },
+    "From/DerivedSource::columnKind": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$column = $this->definition->columns[$slot] ?? null;",
+        "if ($column === null) {",
+        "    return null;",
+        "}",
+        "",
+        "$expression = $column->expression;",
+        "Check::input(",
+        "    $expression instanceof IntegerLiteral || $expression instanceof ColumnReference",
+        "        || $expression instanceof TextColumnReference || $expression instanceof BooleanColumnReference,",
+        "    'A derived join field requires a signed literal, a signed column, a text column or a Boolean column.'",
+        ");",
+        "",
+        "return match (true) {",
+        "    $expression instanceof TextColumnReference => ColumnKind::Text,",
+        "    $expression instanceof BooleanColumnReference => ColumnKind::Boolean,",
+        "    $expression instanceof ColumnReference, $expression instanceof IntegerLiteral => ColumnKind::Int4,",
+        "};"
+      ]
+    },
+    "From/DerivedBinding::resolved": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $resolution->depth === 0 && $resolution->relation === $this->input,",
+        "    'A derived reference must belong to its join input.'",
+        ");",
+        "$slots = $this->operation->facts->relation($this->input)->shape->slots;",
+        "$position = array_search($resolution->slot, $slots, true);",
+        "Check::input($position !== false && isset($this->value->definition->columns[$position]), 'A derived reference must resolve to a defined field.');",
+        "",
+        "$kind = $this->value->columnKind($position);",
+        "Check::input($kind !== null, 'A derived reference must resolve to a defined field.');",
+        "",
+        "return match ($kind) {",
+        "    ColumnKind::Text => new TextColumnReference($position),",
+        "    ColumnKind::Boolean => new BooleanColumnReference($position),",
+        "    ColumnKind::Int4 => new ColumnReference($position),",
+        "};"
+      ]
+    },
+    "From/JoinBinding::resolved": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');",
+        "Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');",
+        "$wholeJoin = in_array(self::ungroup($resolution->relation), $this->joined, true);",
+        "$expanded = null;",
+        "foreach ($this->inputs as $occurrence => $binding) {",
+        "    $relation = $binding->relation();",
+        "    if ($relation === $resolution->relation) {",
+        "        $expanded = [$binding->resolved($resolution), $occurrence];",
+        "        break;",
+        "    }",
+        "    if (!$wholeJoin || $relation === null) {",
+        "        continue;",
+        "    }",
+        "    $slots = $this->operation->facts->relation($relation)->shape->slots;",
+        "    for ($slot = $resolution->slot; $slot !== null; $slot = $slot->origin) {",
+        "        if (in_array($slot, $slots, true)) {",
+        "            Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');",
+        "            $bound = $binding->resolved(new ResolvedColumn($relation, $slot));",
+        "            $expanded = [$bound, $occurrence];",
+        "            break;",
+        "        }",
+        "    }",
+        "}",
+        "Check::input($expanded !== null, 'A column must resolve within this join scope.');",
+        "",
+        "[$field, $occurrence] = $expanded;",
+        "",
+        "return match (true) {",
+        "    $field instanceof TextColumnReference => new TextColumnReference($field->slot, $occurrence),",
+        "    $field instanceof BooleanColumnReference => new BooleanColumnReference($field->slot, $occurrence),",
+        "    $field instanceof ColumnReference => new ColumnReference($field->slot, $occurrence),",
+        "};"
+      ]
+    },
+    "From/JoinBinding::projected": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$slot = $resolution->slot;",
+        "if ($slot->coalescedWith === null) {",
+        "    return $this->resolved($resolution);",
+        "}",
+        "Check::input(",
+        "    $resolution->depth === 0 && self::ungroup($resolution->relation) === $this->join",
+        "        && $this->join->kind === ParsedKind::Full && $slot->origin !== null,",
+        "    'A coalesced field must belong to its FULL join.',",
+        ");",
+        "$left = $this->resolved(new ResolvedColumn($resolution->relation, $slot->origin));",
+        "$right = $this->resolved(new ResolvedColumn($resolution->relation, $slot->coalescedWith));",
+        "Check::input(",
+        "    $left instanceof ColumnReference && $right instanceof ColumnReference && $left->occurrence === 0 && $right->occurrence === 1,",
+        "    'A merged field reads its two binary int4 input positions.',",
+        ");",
+        "",
+        "return new IntegerCase([new IntegerCaseArm(new NullTest($left, true), $left)], $right);"
+      ]
+    },
+    "Mutation/Insert/WriteSlot::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($slot >= 0, 'An INSERT write slot must be nonnegative.');",
+        "Check::input($occurrence === 0, 'An INSERT write slot must belong to the target.');",
+        "Check::input($kind !== ColumnKind::Boolean, 'The INSERT write slot requires signed integer or text storage.');"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$returning = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');",
+        "    $resolution = $field->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $reference = $binding->resolved($resolution);",
+        "    Check::input($reference instanceof IrColumnReference || $reference instanceof TextColumnReference, 'RETURNING requires a signed or text field.');",
+        "    $returning[] = new ReturnedColumn($reference, new Identifier($field->name->value));",
+        "}",
+        "Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');",
+        "",
+        "return $returning;"
+      ]
+    },
+    "Mutation/UpdateLowering::value": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($text && $operand instanceof ParsedColumn) {",
+        "    $field = $binding->field($operand);",
+        "    Check::input($field instanceof ColumnReference || $field instanceof TextColumnReference, 'An UPDATE assignment requires a signed or text input field.');",
+        "",
+        "    return $field;",
+        "}",
+        "$value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $text);",
+        "Check::input(",
+        "    $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral || $value instanceof TextLiteral,",
+        "    'An UPDATE assignee requires a checked native literal, NULL or a row reference.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "Predicate/PredicateLowering::leaf": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($condition instanceof ParsedColumn) {",
+        "    $field = $binding->field($condition);",
+        "    Check::input($field instanceof BooleanColumnReference, 'A filter needs a Boolean or signed integer comparison.');",
+        "",
+        "    return $field;",
+        "}",
+        "$value = (new ExpressionLowering())->lower($condition, $binding, $catalogFirst);",
+        "Check::input(",
+        "    $value instanceof BooleanLiteral || $value instanceof NullLiteral || $value instanceof IntegerRange || $value instanceof IntegerDistinctness || $value instanceof TruthTest,",
+        "    'A filter needs a Boolean or signed integer comparison.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof BuiltinCast, $column instanceof Parameter => match ($column instanceof BuiltinCast ? $column->target : $column->input) {",
+        "        CastDestination::Integer => ResultKind::Integer,",
+        "        CastDestination::WideInteger => ResultKind::WideInteger,",
+        "        CastDestination::Boolean => ResultKind::Boolean,",
+        "        CastDestination::Text => ResultKind::Text,",
+        "    },",
+        "    $column instanceof WideIntegerLiteral => ResultKind::WideInteger,",
+        "    $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,",
+        "    $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,",
+        "};"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$positions = [];",
+        "foreach ($results as $result) {",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        if ($expression instanceof IntegerCase) {",
+        "            foreach ($expression->arms as $arm) {",
+        "                $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);",
+        "                $pending[] = [$arm->result, $height + 1];",
+        "            }",
+        "            if ($expression->otherwise !== null) {",
+        "                $pending[] = [$expression->otherwise, $height + 1];",
+        "            }",
+        "            continue;",
+        "        }",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference => $scope->column($expression, $inputs),",
+        "            $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof WideIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');"
+      ]
+    },
+    "SelectSql::column": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$inputs = $source instanceof Join ? $source->inputs() : [$source];",
+        "$input = $inputs[$expression->occurrence] ?? null;",
+        "if ($input instanceof DerivedSource) {",
+        "    Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');",
+        "    $name = $this->localColumn($expression->slot);",
+        "} else {",
+        "    Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');",
+        "    $name = $input->columns[$expression->slot]->quoted();",
+        "}",
+        "",
+        "return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',",
+        "    $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+        "    $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',",
+        "    $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof CollatedText => $this->collated($expression, $source, $offset, $qualify),",
+        "    $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::predicate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($condition instanceof IntegerComparison) {",
+        "    $left = $this->expression($condition->left, $source, $offset, $qualify);",
+        "    $right = $this->expression($condition->right, $source, $offset, $qualify);",
+        "    $operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';",
+        "",
+        "    return '(' . $left . ' ' . $operator . ' ' . $right . ')';",
+        "}",
+        "",
+        "if ($condition instanceof LogicalPredicate) {",
+        "    $left = $this->predicate($condition->left, $source, $offset, $qualify);",
+        "    if ($condition->right === null) {",
+        "        return '(NOT ' . $left . ')';",
+        "    }",
+        "",
+        "    return '(' . $left . ' ' . $condition->operator->value . ' ' . $this->predicate($condition->right, $source, $offset, $qualify) . ')';",
+        "}",
+        "if ($condition instanceof NullTest) {",
+        "    $operand = $this->predicate($condition->operand, $source, $offset, $qualify);",
+        "",
+        "    return '(' . $operand . ($condition->negated ? ' IS NOT NULL)' : ' IS NULL)');",
+        "}",
+        "",
+        "return $this->expression($condition, $source, $offset, $qualify);"
+      ]
+    },
+    "SourceBinding::resolved": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $resolution->relation === $this->source && $resolution->depth === 0,",
+        "    'The column must resolve to the projection source.'",
+        ");",
+        "$column = $resolution->declaration();",
+        "Check::input($column !== null, 'The column must be an explicit member of the projection source.');",
+        "",
+        "return match ($column->type) {",
+        "    Builtin::Bool => new BooleanColumnReference($this->allocate($column)),",
+        "    Builtin::Text => new TextColumnReference($this->allocate($column)),",
+        "    default => $this->slotFor($column),",
+        "};"
+      ]
+    },
+    "SourceBinding::allocate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');",
+        "$kind = match ($column->type) {",
+        "    Builtin::Int4 => ColumnKind::Int4,",
+        "    Builtin::Text => ColumnKind::Text,",
+        "    Builtin::Bool => ColumnKind::Boolean,",
+        "    default => throw new InvalidConstruction('The declared column has no checked native slot kind.'),",
+        "};",
+        "$key = spl_object_id($column);",
+        "if (!isset($this->slots[$key])) {",
+        "    $name = new Identifier($column->name->value);",
+        "    $this->slots[$key] = count($this->names);",
+        "    $this->names[] = $name;",
+        "    $this->kinds[] = $kind;",
+        "}",
+        "",
+        "return $this->slots[$key];"
+      ]
+    }
+  }
+}

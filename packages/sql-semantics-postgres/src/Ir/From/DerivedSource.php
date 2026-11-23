@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * An independent derived table of ordered signed integer and native text fields.
+ * An independent derived table of ordered signed integer, native text and Boolean fields.
  *
  * @visibility public
  * @example Constructing a signed input without an external relation
@@ -29,12 +29,8 @@ final class DerivedSource
     {
         Check::input(!$definition->source instanceof Join, 'A derived join input must be independent of any joined input.');
         Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');
-        foreach ($definition->columns as $column) {
-            Check::input(
-                $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference
-                    || $column->expression instanceof TextColumnReference,
-                'A derived join field requires a signed literal or a signed column, or a native text column.'
-            );
+        foreach (array_keys($definition->columns) as $slot) {
+            $this->columnKind($slot);
         }
     }
 
@@ -48,6 +44,17 @@ final class DerivedSource
             return null;
         }
 
-        return $column->expression instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4;
+        $expression = $column->expression;
+        Check::input(
+            $expression instanceof IntegerLiteral || $expression instanceof ColumnReference
+                || $expression instanceof TextColumnReference || $expression instanceof BooleanColumnReference,
+            'A derived join field requires a signed literal, a signed column, a text column or a Boolean column.'
+        );
+
+        return match (true) {
+            $expression instanceof TextColumnReference => ColumnKind::Text,
+            $expression instanceof BooleanColumnReference => ColumnKind::Boolean,
+            $expression instanceof ColumnReference, $expression instanceof IntegerLiteral => ColumnKind::Int4,
+        };
     }
 }

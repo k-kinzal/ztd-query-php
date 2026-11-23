@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v43.json"
-CONTRACT = "b827938b24b7f2a89a0a07bfb00a6db821d6102652fc49334aa67b5a50a28726"
+CONTRACT_NAME = "release-layout-v44.json"
+CONTRACT = "6c91b85cb098f1a7ece24844c1ca68f6bd02bdb2cbd757b9d306bd60ab37c696"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -241,6 +241,12 @@ def verify_probe(raw, catalog):
             require(json.dumps(item.get("mysqlVarcharPublication"), sort_keys=True) == json.dumps(mysql_varchar_publication(), sort_keys=True),
                     "installed-mysql-varchar-publication-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
+            require(item.get("booleanFields") == [
+                "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True, True,
+                "IS UNKNOWN", ["bool", "int4"],
+                'SELECT "__ztd_source"."enabled" AS "first", "__ztd_source"."enabled" AS "second", "__ztd_source"."id" AS "id" '
+                'FROM "public"."flags" AS "__ztd_source" WHERE ("__ztd_source"."enabled" IS UNKNOWN)',
+            ], "installed-postgres-boolean-fields-mismatch", item)
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
             require(item.get("wideCast") == ["int4", "int8", "2147483648", "-9223372036854775808"],
                     "installed-bigint-role-mismatch", item)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -83,7 +84,7 @@ final class SourceBinding
     /**
      * Binds a scalar field to its exact occurrence and native column role.
      */
-    public function field(Scalar $expression): ColumnReference|TextColumnReference
+    public function field(Scalar $expression): ColumnReference|TextColumnReference|BooleanColumnReference
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
@@ -94,7 +95,7 @@ final class SourceBinding
     /**
      * Allocates the occurrence slot of an already resolved projection field.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference|BooleanColumnReference
     {
         Check::input(
             $resolution->relation === $this->source && $resolution->depth === 0,
@@ -103,7 +104,11 @@ final class SourceBinding
         $column = $resolution->declaration();
         Check::input($column !== null, 'The column must be an explicit member of the projection source.');
 
-        return $column->type === Builtin::Text ? new TextColumnReference($this->allocate($column)) : $this->slotFor($column);
+        return match ($column->type) {
+            Builtin::Bool => new BooleanColumnReference($this->allocate($column)),
+            Builtin::Text => new TextColumnReference($this->allocate($column)),
+            default => $this->slotFor($column),
+        };
     }
 
     /**
@@ -126,6 +131,7 @@ final class SourceBinding
         $kind = match ($column->type) {
             Builtin::Int4 => ColumnKind::Int4,
             Builtin::Text => ColumnKind::Text,
+            Builtin::Bool => ColumnKind::Boolean,
             default => throw new InvalidConstruction('The declared column has no checked native slot kind.'),
         };
         $key = spl_object_id($column);

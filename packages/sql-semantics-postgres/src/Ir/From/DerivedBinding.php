@@ -51,7 +51,7 @@ final class DerivedBinding
     /**
      * Resolves the ordinal in the derived definition without allocating a table-catalog slot.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference|BooleanColumnReference
     {
         Check::input(
             $resolution->depth === 0 && $resolution->relation === $this->input,
@@ -61,9 +61,14 @@ final class DerivedBinding
         $position = array_search($resolution->slot, $slots, true);
         Check::input($position !== false && isset($this->value->definition->columns[$position]), 'A derived reference must resolve to a defined field.');
 
-        return $this->value->columnKind($position) === ColumnKind::Text
-            ? new TextColumnReference($position)
-            : new ColumnReference($position);
+        $kind = $this->value->columnKind($position);
+        Check::input($kind !== null, 'A derived reference must resolve to a defined field.');
+
+        return match ($kind) {
+            ColumnKind::Text => new TextColumnReference($position),
+            ColumnKind::Boolean => new BooleanColumnReference($position),
+            ColumnKind::Int4 => new ColumnReference($position),
+        };
     }
 
     /**

@@ -79,7 +79,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $fields = [];
         for ($index = 0; $index < $statement->columnCount(); ++$index) {
             $meta = $statement->getColumnMeta($index);
-            $fields[] = [$meta['name'], $meta['native_type']];
+            $fields[] = ($input['observePostgresTypeIds'] ?? false) === true
+                ? [$meta['name'], $meta['native_type'], $meta['pgsql:oid']]
+                : [$meta['name'], $meta['native_type']];
         }
         $rows = $statement->fetchAll(PDO::FETCH_NUM);
         $statement->closeCursor();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -27,8 +28,8 @@ final class LogicalPredicate
      */
     public function __construct(
         public readonly LogicalOperator $operator,
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self $left,
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self|null $right = null,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self $left,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|NullLiteral|NullTest|TextComparison|TruthTest|self|null $right = null,
     ) {
         Check::input(($operator === LogicalOperator::Not) === ($right === null), 'Only logical NOT has one operand.');
     }

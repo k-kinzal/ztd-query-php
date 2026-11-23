@@ -91,11 +91,13 @@ if ($dialect === 'postgres') {
     $properties['Predicate\\Text\\TextOperator'] = $methods['Predicate\\Text\\TextOperator'] = [];
     $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
     $methods['From\\TextColumnReference'] = ['__construct'];
+    $properties['From\\BooleanColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $methods['From\\BooleanColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
     $methods['TableSource'][] = 'columnKind';
     array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral',
-        'Expression\\CollatedText', 'From\\TextColumnReference', $textComparison);
+        'Expression\\CollatedText', 'From\\BooleanColumnReference', 'From\\TextColumnReference', $textComparison);
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -115,7 +117,7 @@ if ($dialect === 'postgres') {
     $distinctness = 'Predicate\\IntegerDistinctness';
     $properties[$distinctness] = ['left' => $rangeLeaves, 'right' => $rangeLeaves, 'negated' => ['bool']];
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
-    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest, $textComparison);
+    array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest, $textComparison, 'From\\BooleanColumnReference');
     sort($properties[$caseArm]['condition']);
     array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest');
     $properties['Arithmetic']['left'][] = $integerCase;
@@ -204,7 +206,7 @@ if ($dialect === 'mysql') {
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }
 if ($dialect === 'postgres') {
-    $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
+    $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text', 'Boolean' => 'bool'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['Expression\\TextCollation'] = ['C' => 'C'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -497,7 +499,7 @@ if ($dialect !== 'sqlite') {
     $truthValues = ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'];
     $truthValues[] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
-        array_push($truthValues, 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($truthValues, 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
         $truthValues[] = 'Predicate\\Text\\TextComparison';
     }
@@ -561,7 +563,7 @@ if ($dialect !== 'sqlite') {
     ];
     array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerRange', 'From\\TextColumnReference');
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
         $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\Text\\TextComparison';
     }
@@ -1064,6 +1066,7 @@ try {
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
+                    || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
                 "Unexpected function in $short",
             );

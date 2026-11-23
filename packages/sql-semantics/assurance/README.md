@@ -233,6 +233,8 @@ The [PostgreSQL signed default contract](postgres-create-signed-defaults-v1.json
 
 The [PostgreSQL Boolean declaration contract](postgres-create-boolean-v2.json) checks typed default rows, nullability and the complete specified input grid of unambiguous tokens, ASCII case, padding and builtin cast syntax. The runner measures malformed Boolean inputs against the native parser and recovers each valid test identity from the recorded SQL. Run `run_server_postgres_create_boolean.py` and `combine_server_postgres_create_boolean_evidence.py` for both pinned releases.
 
+The [PostgreSQL Boolean field contract](postgres-boolean-fields-v1.json) checks typed native reads, qualified and unqualified bindings, NULL extension, filters, DISTINCT and positional ordering. Its observer compares exact type identifiers even for empty results. Run `run_server_postgres_boolean_fields.py` and `combine_server_postgres_boolean_fields_evidence.py` for both pinned releases.
+
 ## Native compound queries
 
 The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.

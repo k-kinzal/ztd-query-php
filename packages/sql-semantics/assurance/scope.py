@@ -80,6 +80,7 @@ CONTRACTS = {
     "server-create-table-v2.json": "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c",
     "postgres-create-text-v1.json": "ce5f9834e38a4156fab8dde45dae1f0e2f2edc9f2f581fce03fdff0a3895fbc8",
     "postgres-create-signed-defaults-v1.json": "ab925fa9e5bd654cb8b6e9b20b4dcff3eeac415322e0398ec6dfd4087b8236a6",
+    "postgres-boolean-fields-v1.json": "be21037b2177f59687c4a02f8ef81142aa67bbc92263d2f5f6dc8e4a705b09c1",
     "postgres-create-boolean-v2.json": "5afd7c6f36188d8dad72f4ede3628804b8b0ca96f30d376d334d74f70aeab95d",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
     "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",

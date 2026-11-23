@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -26,7 +27,7 @@ final class TruthTest
      */
     public function __construct(
         public readonly TruthOperator $operator,
-        public readonly BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|self $operand,
+        public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|self $operand,
     ) {
     }
 }

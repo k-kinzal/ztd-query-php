@@ -37,6 +37,7 @@ function constructOperand(string $namespace, array $data): object
         'null' => 'NullLiteral',
         'slot' => 'ColumnReference',
         'text-slot' => 'From\\TextColumnReference',
+        'bool-slot' => 'From\\BooleanColumnReference',
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
         'builtin-cast' => 'Expression\\BuiltinCast',
@@ -67,7 +68,7 @@ function constructOperand(string $namespace, array $data): object
         ),
         'boolean' => new $type($data[1]),
         'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
-        'slot', 'text-slot' => new $type($data[1], $data[2] ?? 0),
+        'slot', 'text-slot', 'bool-slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
             $operator::from($data[1]),
@@ -130,6 +131,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
         $namespace . 'From\\TextColumnReference' => ['text-slot', $value->slot, $value->occurrence],
+        $namespace . 'From\\BooleanColumnReference' => ['bool-slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Expression\\SignedCast' => ['signed-cast', observeOperand($namespace, $value->operand)],
@@ -303,7 +305,7 @@ function constructPredicate(string $namespace, ?array $test): ?object
             constructPredicate($namespace, $test[3] ?? null),
         ),
         'null-test' => new $nullTest(constructPredicate($namespace, $test[2]), $test[1]),
-        'boolean', 'null', 'slot', 'text-slot', 'integer', 'text-comparison', 'int4-range', 'signed-range', 'int4-distinctness', 'truth-test' => constructOperand($namespace, $test),
+        'boolean', 'null', 'slot', 'text-slot', 'bool-slot', 'integer', 'text-comparison', 'int4-range', 'signed-range', 'int4-distinctness', 'truth-test' => constructOperand($namespace, $test),
     };
 }
 
@@ -700,7 +702,7 @@ function observePredicate(string $namespace, ?object $condition): ?array
         $namespace . 'Predicate\\IntegerComparison' => ['comparison', $condition->operator->value, observeOperand($namespace, $condition->left), observeOperand($namespace, $condition->right)],
         $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
         $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
-        $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'From\\TextColumnReference', $namespace . 'IntegerLiteral',
+        $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'From\\TextColumnReference', $namespace . 'From\\BooleanColumnReference', $namespace . 'IntegerLiteral',
         $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness', $namespace . 'Predicate\\Text\\TextComparison', $namespace . 'Predicate\\TruthTest' => observeOperand($namespace, $condition),
     };
 }

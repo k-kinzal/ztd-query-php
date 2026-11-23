@@ -31,7 +31,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs
      */
     public function predicate(
-        BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $condition,
+        BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $condition,
         array $inputs,
         string $invalidSlot = 'A predicate slot must belong to a visible input occurrence.',
     ): void {
@@ -46,14 +46,14 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest $operand,
+        BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
         int $count,
     ): int {
         Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');
-        if ($operand instanceof ColumnReference || $operand instanceof TextColumnReference) {
+        if ($operand instanceof ColumnReference || $operand instanceof TextColumnReference || $operand instanceof BooleanColumnReference) {
             $this->column($operand, $inputs, $invalidSlot);
         }
         $children = match (true) {
@@ -61,7 +61,7 @@ final class OccurrenceScope
             $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],
-            $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],
+            $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],
         };
         foreach ($children as $child) {
             $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);
@@ -74,9 +74,17 @@ final class OccurrenceScope
      * Checks a column role against the owning occurrence layout.
      * @param list<TableSource|DerivedSource> $inputs
      */
-    public function column(ColumnReference|TextColumnReference $column, array $inputs, ?string $invalidSlot = null): void
+    public function column(ColumnReference|TextColumnReference|BooleanColumnReference $column, array $inputs, ?string $invalidSlot = null): void
     {
         $input = $inputs[$column->occurrence] ?? null;
+        if ($column instanceof BooleanColumnReference) {
+            Check::input(
+                $input?->columnKind($column->slot) === ColumnKind::Boolean,
+                $invalidSlot ?? 'A Boolean slot must belong to the SELECT source with its native kind.'
+            );
+
+            return;
+        }
         if ($column instanceof TextColumnReference) {
             Check::input(
                 $input?->columnKind($column->slot) === ColumnKind::Text,

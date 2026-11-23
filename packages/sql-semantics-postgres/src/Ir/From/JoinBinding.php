@@ -137,7 +137,7 @@ final class JoinBinding
     /**
      * Binds a scalar field to its exact occurrence and native column role.
      */
-    public function field(Scalar $scalar): ColumnReference|TextColumnReference
+    public function field(Scalar $scalar): ColumnReference|TextColumnReference|BooleanColumnReference
     {
         $resolution = $this->operation->facts->scalar($scalar)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
@@ -148,7 +148,7 @@ final class JoinBinding
     /**
      * Allocates a checked field in the join occurrence containing its resolved input.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference|BooleanColumnReference
     {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');
@@ -177,15 +177,17 @@ final class JoinBinding
 
         [$field, $occurrence] = $expanded;
 
-        return $field instanceof TextColumnReference
-            ? new TextColumnReference($field->slot, $occurrence)
-            : new ColumnReference($field->slot, $occurrence);
+        return match (true) {
+            $field instanceof TextColumnReference => new TextColumnReference($field->slot, $occurrence),
+            $field instanceof BooleanColumnReference => new BooleanColumnReference($field->slot, $occurrence),
+            $field instanceof ColumnReference => new ColumnReference($field->slot, $occurrence),
+        };
     }
 
     /**
      * Projects an ordinary slot or the ordered two-source value of a FULL key.
      */
-    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase|TextColumnReference
+    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase|TextColumnReference|BooleanColumnReference
     {
         $slot = $resolution->slot;
         if ($slot->coalescedWith === null) {
@@ -228,7 +230,7 @@ final class JoinBinding
     /**
      * Resolves the explicit condition or normalizes the checked merged keys.
      */
-    public function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null
+    public function predicate(): BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null
     {
         $condition = $this->join->condition;
         if (!$this->join->natural && !$condition instanceof JoinUsing) {

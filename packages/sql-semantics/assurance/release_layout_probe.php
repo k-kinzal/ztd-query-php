@@ -173,6 +173,19 @@ function observePostgresBooleanDefault(SqlSemantics\Platform\PostgreSql\Semantic
     ], $value->columns), $value->toString()];
 }
 
+function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled pg_catalog.bool)']);
+    $value = $semantics->analyze('SELECT enabled AS first, f.enabled AS second, id FROM public.flags f WHERE f.enabled IS UNKNOWN', $context);
+    $read = $value->columns[0]->expression;
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference(0);
+    $other = $value->columns[1]->expression;
+    $predicate = $value->where;
+
+    return [$read::class, $read == $direct, $other == $read, $predicate->operand == $read, $predicate->operator->value,
+        [$value->source->columnKind(0)?->value, $value->source->columnKind(1)?->value], $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -345,6 +358,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $field = $column->expression;
                 $columns[] = [substr($field::class, strlen($namespace . 'Ir\\')), $field->slot, $field->occurrence, $column->name->value];
             }
+            $details['booleanFields'] = observePostgresBooleanFields($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,
