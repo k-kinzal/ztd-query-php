@@ -1,0 +1,84 @@
+{
+  "revision": "SemanticsIR/postgres-with-projection-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL ordinary WITH over checked SELECT scopes with UTF-8 and standard-conforming strings.",
+  "extends": ["server-local-projection-v4.json", "postgres-typed-parameters-v2.json", "postgres-external-source-kinds-v1.json"],
+  "additionalPublicRoots": ["Rows/With/WithProjection"],
+  "constructors": {
+    "WithProjection": {
+      "type": "Rows/With/WithProjection",
+      "role": "A complete ordinary WITH query with ordered definitions and an enclosing projection.",
+      "structure": "A nonempty ordered definition list, the body, and the native release. Definitions and the body either own an independent query or refer to an available local definition.",
+      "conditions": "All internal reads target a definition visible at that position and select existing output slots. All independent queries share the language profile and one ordered native input signature.",
+      "meaning": "Introduce the definitions in order and evaluate the body in that lexical environment. Each read selects its columns from its exact source relation with the declared policy.",
+      "sql": "Emit fresh internal relation and heading names by position, the native materialization keywords and the checked SELECT for each definition and for the result."
+    },
+    "WithDefinition": {
+      "type": "Rows/With/WithDefinition",
+      "role": "An ordinary local relation definition with its checked body and explicit native materialization policy.",
+      "structure": "An independent SELECT or a read of an earlier local relation, or an independently scoped nested WITH query, paired with a closed policy.",
+      "conditions": "Check references to earlier definitions at the owning WITH boundary. An independent body supplies a nonempty ordered heading.",
+      "meaning": "Provide a typed relation resolving to this declaration ordinal, with the policy that controls native CTE planning.",
+      "sql": "Emit the body inside its named WITH definition and apply its declared policy."
+    },
+    "WithRead": {
+      "type": "Rows/With/WithRead",
+      "role": "An ordered projection of explicitly resolved local columns.",
+      "structure": "A nonnegative definition ordinal and an owned nonempty ordered list of checked output labels and source slots.",
+      "conditions": "The enclosing WITH validates the referenced definition and every source slot against its ordered heading before publication.",
+      "meaning": "Read that exact local relation and project those slots in sequence, preserving duplicates and NULL.",
+      "sql": "Emit fully specified internal relation and slot aliases and the chosen output names."
+    },
+    "WithMaterialization": {
+      "type": "Rows/With/WithMaterialization",
+      "role": "A closed ordinary PostgreSQL common-table materialization policy.",
+      "structure": "Default, MATERIALIZED or NOT MATERIALIZED.",
+      "conditions": "The single associated definition stores one of the three policies.",
+      "meaning": "Allow native choice, force the materialized boundary or allow native inlining under the admissible SELECT profile.",
+      "sql": "Omit the default keyword or emit the selected native keyword before the definition."
+    }
+  },
+  "existingRoles": ["Rows/LocalResultColumn", "Rows/LocalProjection", "Select", "ResultColumn", "Binding/Parameter", "Identifier"],
+  "structure": "An ordinary WITH retains a lexical definition sequence including unused definitions. Each dependent projection addresses exact declaration and output coordinates. Nested independent WITH values own distinct lexical environments.",
+  "conditions": "Accept unbounded nonrecursive SELECT definitions and bodies within the closed query roles, including simple exact local projections. Bind a read only to earlier definitions in its own scope. Check each native position and type across all constituent SELECTs before publication.",
+  "meaning": "A definition contributes its native row bag with its ordered typed heading. A read composes positional selection over that bag. Absolute external references avoid capture by similarly named local declarations. Existing supported native parameter positions agree across independent scopes.",
+  "sql": "Render explicit WITH definitions and lexical reads. Use generated internal aliases for relation and field coordinates, preserve the user-observable final heading and reproduce independent native SELECT clauses.",
+  "observations": ["Names, field order, native types, duplicate and NULL rows", "Exact definition position, slot, scope and materialization policy in loaded values", "Independent or nested scopes and absolute external references despite aliasing or lexical shadowing", "Shared parameter input signature wherever admitted through constituent SELECTs"],
+  "finite": {
+    "definitions": [2, 3, 4],
+    "policies": ["default", "materialized", "not-materialized"],
+    "input": ["populated", "empty"],
+    "layout": ["reorder", "repeat"],
+    "resultSelection": ["first", "last"],
+    "identities": 72,
+    "completeness": "Recover every axis from the actual checked declaration sequence, input, column and body references. Consume all 72 distinct direct combinations in each pinned engine."
+  },
+  "analysis": ["Ordinary single CTE with explicit column aliases", "Two dependent CTEs and reversed selected fields", "Default and explicit materialization policies", "Explicit NOT MATERIALIZED with duplicate rows", "Unreferenced checked definition", "A local name shadows an external table name", "Native qualified external table remains separately bound", "An independently nested ordinary WITH definition", "Unqualified and qualified references to a local column share a slot", "A top-level body that reads an external relation"],
+  "exploration": {
+    "seeds": [1889, 12043, 43613],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary declaration count, predecessor edges, external and literal inputs, local output positions, repeated labels, nested scopes, independent result bodies and all three policies."
+  },
+  "negative": ["Missing definition list", "Self-reference in an ordinary definition", "Reference to a later definition", "Missing local projection slot", "Cross-profile independent definition", "Conflicting typed parameter positions across definitions", "Unbound local source during analysis"],
+  "faults": ["Redirect a read to an earlier wrong definition", "Read a wrong column position", "Erase a materialization keyword", "Omit lexical visibility validation", "Ignore a parameter type conflict across definitions"],
+  "evidence": {
+    "P01": "Keep exact binding and slot coordinates, native profile and the materialization policy.",
+    "P02": "Check every local read, shared signature and profile at the closed owning boundary.",
+    "P03": "Retain only the typed query definitions, references, policies and result layout.",
+    "P04": "Compute a declaration or final result from the explicitly selected preceding relation.",
+    "P05": "Use immutable closed definitions and detached ordered lists.",
+    "P06": "Emit lexical bindings in order with unambiguous names and reproduce each declared SELECT scope.",
+    "Q01": "Reject the declared invalid visibility, heading, release and signature cases.",
+    "Q02": "Run all finite direct constructions and the independently written analyzed examples.",
+    "Q03": "Resolve the selected rows from the independent ordered-definition evaluator.",
+    "Q04": "Compare typed result observations and check the emitted materialization clause.",
+    "Q05": "Link the public constructor, source inventories, closed bodies and emitted SQL to both installed package layouts."
+  },
+  "open": ["Local input joins and predicates, VALUES, compound and grouped bodies, outer ordering and bounds", "Lateral and correlated references and a nested scope referencing an outer CTE", "Mutating CTEs, recursive search and cycle and other recursive definitions"],
+  "trust": ["Documented ordinary PostgreSQL CTE visibility and materialization rules", "Stable qualified fixture identities and independent row evaluator", "Typed PHP value and runtime package identity"],
+  "sources": ["https://www.postgresql.org/docs/16/queries-with.html", "https://www.postgresql.org/docs/17/queries-with.html", "https://www.postgresql.org/docs/17/sql-select.html"]
+}
