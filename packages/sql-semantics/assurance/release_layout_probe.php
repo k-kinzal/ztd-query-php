@@ -255,6 +255,18 @@ function observePostgresInt8Field(SqlSemantics\Platform\PostgreSql\Semantics $se
         $value->source->columnKind($first->slot)?->value, $value->toString()];
 }
 
+function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $value = $semantics->analyze(
+        'SELECT lo AS id, id AS signed FROM public.bounds_read ORDER BY (id) DESC NULLS LAST, signed LIMIT 2 OFFSET 1',
+        $context,
+    );
+
+    return [array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
+        [$value->limit->count, $value->limit->offset], $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -434,6 +446,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             }
             $details['booleanFields'] = observePostgresBooleanFields($semantics);
             $details['int8Field'] = observePostgresInt8Field($semantics);
+            $details['outputOrder'] = observePostgresOutputOrder($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v48.json"
-CONTRACT = "4ecc38dbb9e5893605e18f23b2caf8abe10b368a3affab703a54ebd6d3c05776"
+CONTRACT_NAME = "release-layout-v49.json"
+CONTRACT = "f916f51c01f376416d040ab6529fb1fbc38b7614c48e92eee927f7aa737ca528"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -262,6 +262,11 @@ def verify_probe(raw, catalog):
                 'INSERT INTO "public"."flags" ("enabled") SELECT DISTINCT CAST(TRUE AS pg_catalog.bool) AS "value"',
             ], "installed-postgres-boolean-input-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
+            require(item.get("outputOrder") == [
+                [[1, True, False], [2, False, False]], [2, 1],
+                'SELECT "__ztd_source"."lo" AS "id", "__ztd_source"."id" AS "signed" '
+                'FROM "public"."bounds_read" AS "__ztd_source" ORDER BY 1 DESC NULLS LAST, 2 ASC NULLS LAST LIMIT 2 OFFSET 1',
+            ], "installed-postgres-output-order-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '

@@ -10,13 +10,11 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\Offset;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use SqlSemantics\Testing\PostgreSql\Inspection;
 
 #[CoversClass(ResultLowering::class)]
 #[Small]
@@ -24,7 +22,15 @@ final class ResultLoweringTest extends TestCase
 {
     public function testOrderResolvesTheParsedOutputPosition(): void
     {
-        $ordered = (new ResultLowering())->order(new SortItem(new OutputPosition(new Constant(new IntegerConstant('2')), OrderingClause::OrderBy), SortDirection::Descending));
+        $analyzed = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b ORDER BY 2 DESC');
+        $statement = $analyzed->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertNotNull($statement->options);
+        $operation = $analyzed->binding();
+        $fields = $operation->facts->query($statement)->fields();
+        self::assertNotNull($fields);
+
+        $ordered = (new ResultLowering())->order($statement->options->order[0], $operation, $fields);
 
         self::assertSame(2, $ordered->position);
         self::assertTrue($ordered->descending);
@@ -32,9 +38,12 @@ final class ResultLoweringTest extends TestCase
 
     public function testOrdersKeepsTheInputPrecedence(): void
     {
-        $second = new SortItem(new OutputPosition(new Constant(new IntegerConstant('2')), OrderingClause::OrderBy));
-        $first = new SortItem(new OutputPosition(new Constant(new IntegerConstant('1')), OrderingClause::OrderBy));
-        $orders = (new ResultLowering())->orders([$second, $first]);
+        $analyzed = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b ORDER BY (b), a');
+        $statement = $analyzed->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertNotNull($statement->options);
+
+        $orders = (new ResultLowering())->orders($statement->options->order, $analyzed->binding(), $statement);
 
         self::assertSame(2, $orders[0]->position);
         self::assertSame(1, $orders[1]->position);

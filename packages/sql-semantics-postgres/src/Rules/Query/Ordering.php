@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Resolution\ColumnLookup;
 use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\OpenStar;
@@ -194,6 +195,11 @@ final class Ordering
      */
     public function same(Field $first, Field $second): bool
     {
+        $left = $first->resolution;
+        $right = $second->resolution;
+        if ($left instanceof ResolvedColumn && $right instanceof ResolvedColumn) {
+            return $left->relation === $right->relation && $left->slot === $right->slot && $left->depth === $right->depth;
+        }
         if ($first->expression === null || $second->expression === null) {
             return $first->expression === null && $second->expression === null && $first->slot->origin === $second->slot->origin;
         }

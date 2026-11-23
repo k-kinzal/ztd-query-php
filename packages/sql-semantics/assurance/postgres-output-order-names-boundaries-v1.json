@@ -1,0 +1,125 @@
+{
+  "revision": "SemanticsIR/postgres-output-order-names-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the source-audited native output binding to the exact one-based order and its rendered suffix.",
+  "rules": {
+    "From/ProjectionLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$expressions = new ExpressionLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = new Identifier($name->value);",
+        "    $expression = $field->expression;",
+        "    while ($expression instanceof Grouped) {",
+        "        $expression = $expression->operand;",
+        "    }",
+        "    if ($expression === null || $expression instanceof ParsedColumn) {",
+        "        $resolution = $field->resolution;",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);",
+        "        $results[] = new ResultColumn($value, $label);",
+        "        continue;",
+        "    }",
+        "    $parameter = $parameters->lower($expression, $operation->context, $inputTypes);",
+        "    $kind = $assignment?->columnKind(count($results));",
+        "    $value = $parameter ?? $expressions->result($expression, $binding, $catalogFirst, $kind, $statement->distinct !== null, $simpleOutput);",
+        "    $results[] = new ResultColumn($value, $label);",
+        "}",
+        "",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "",
+        "return $results;"
+      ]
+    },
+    "Ordering/ResultLowering::order": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$resolution = $operation->facts->scalar($key->expression)->resolution;",
+        "Check::input($resolution instanceof AliasTarget && $key->using === null, 'ORDER BY requires a supported output position.');",
+        "$position = $resolution->field->position;",
+        "Check::input(($fields->items[$position] ?? null) === $resolution->field, 'ORDER BY must resolve inside the owning result layout.');",
+        "",
+        "return new Order(",
+        "    $position + 1,",
+        "    $key->direction === SortDirection::Descending,",
+        "    $key->nulls === null ? null : $key->nulls === NullsOrder::First,",
+        ");"
+      ]
+    },
+    "Ordering/ResultLowering::orders": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $operation->facts->query($query)->fields();",
+        "Check::input($fields !== null, 'ORDER BY requires a closed result layout.');",
+        "",
+        "return array_map(fn (SortItem $key): Order => $this->order($key, $operation, $fields), $keys);"
+      ]
+    },
+    "Ordering/ResultSql::render": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$terms = [];",
+        "foreach ($select->orderBy as $key) {",
+        "    $terms[] = $key->position . ($key->descending ? ' DESC' : ' ASC');",
+        "    $terms[count($terms) - 1] .= $key->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST';",
+        "}",
+        "$sql = $terms === [] ? '' : ' ORDER BY ' . implode(', ', $terms);",
+        "if ($select->limit?->count !== null) {",
+        "    $sql .= ' LIMIT ' . $select->limit->count;",
+        "}",
+        "if ($select->limit !== null && $select->limit->offset > 0) {",
+        "    $sql .= ' OFFSET ' . $select->limit->offset;",
+        "}",
+        "",
+        "return $sql;"
+      ]
+    },
+    "SelectLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$statement = $operand ?? $operation->statement;",
+        "Check::input($statement instanceof ParsedSelect, 'Complete PostgreSQL IR currently supports a single projection SELECT.');",
+        "Check::input(",
+        "    $statement->groupBy === [] && $statement->having === null",
+        "        && $statement->windows === [] && ($statement->distinct->on ?? []) === [] && $statement->into === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'Complete PostgreSQL IR currently supports projections with positional result selection.',",
+        ");",
+        "Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');",
+        "$searchPath = $operation->context->searchPath;",
+        "$operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;",
+        "$catalogFirst = $operators === 'pg_catalog';",
+        "$binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);",
+        "$results = (new ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null);",
+        "",
+        "$result = new ResultLowering();",
+        "$order = $result->orders($statement->options->order ?? [], $operation, $statement);",
+        "",
+        "return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));"
+      ]
+    }
+  }
+}

@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Ordering;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Shape\Fields;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 
@@ -25,14 +28,17 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 final class ResultLowering
 {
     /**
-     * Resolves the positional key established by binding and its NULL placement.
+     * Resolves the output key established by the native binding and its NULL placement.
      */
-    public function order(SortItem $key): Order
+    public function order(SortItem $key, BoundStatement $operation, Fields $fields): Order
     {
-        Check::input($key->expression instanceof OutputPosition && $key->using === null, 'ORDER BY requires a supported output position.');
+        $resolution = $operation->facts->scalar($key->expression)->resolution;
+        Check::input($resolution instanceof AliasTarget && $key->using === null, 'ORDER BY requires a supported output position.');
+        $position = $resolution->field->position;
+        Check::input(($fields->items[$position] ?? null) === $resolution->field, 'ORDER BY must resolve inside the owning result layout.');
 
         return new Order(
-            (int) $key->expression->value(),
+            $position + 1,
             $key->direction === SortDirection::Descending,
             $key->nulls === null ? null : $key->nulls === NullsOrder::First,
         );
@@ -43,9 +49,12 @@ final class ResultLowering
      * @param list<SortItem> $keys
      * @return list<Order>
      */
-    public function orders(array $keys): array
+    public function orders(array $keys, BoundStatement $operation, Select $query): array
     {
-        return array_map($this->order(...), $keys);
+        $fields = $operation->facts->query($query)->fields();
+        Check::input($fields !== null, 'ORDER BY requires a closed result layout.');
+
+        return array_map(fn (SortItem $key): Order => $this->order($key, $operation, $fields), $keys);
     }
 
     /**

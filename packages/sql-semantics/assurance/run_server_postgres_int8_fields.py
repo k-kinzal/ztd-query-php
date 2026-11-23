@@ -269,10 +269,12 @@ def type_of(term):
     role = term[0]
     if role == "builtin-cast":
         return term[1]
-    if role == "null-test":
+    if role in ("null-test", "boolean"):
         return "bool"
     if role == "wide-integer":
         return "int8"
+    if role == "integer":
+        return "int4"
     return {value: key for key, value in FIELD.items()}[role]
 
 
@@ -282,6 +284,8 @@ def evaluate(term, row):
         return row[term[2] if len(term) == 3 else 0][term[1]]
     if role in ("integer", "wide-integer"):
         return int(term[1])
+    if role == "boolean":
+        return term[1]
     if role == "null-test":
         return predicate_value(term, lambda child: evaluate(child, row))
     require(role == "builtin-cast", "postgres-int8-fields-oracle-operand", term)

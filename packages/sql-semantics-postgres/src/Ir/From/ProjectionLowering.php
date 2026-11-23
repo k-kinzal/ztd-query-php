@@ -56,7 +56,7 @@ final class ProjectionLowering
                 $expression = $expression->operand;
             }
             if ($expression === null || $expression instanceof ParsedColumn) {
-                $resolution = $expression === null ? $field->resolution : $operation->facts->scalar($expression)->resolution;
+                $resolution = $field->resolution;
                 Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
                 $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);
                 $results[] = new ResultColumn($value, $label);

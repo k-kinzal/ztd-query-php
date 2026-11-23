@@ -81,6 +81,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-boolean-writes-boundaries-v1.json', 'b72bfce51bcb67617dbdb29eca44c831bd80d663bd7327f551b4b4345387c4b2'],
             ['postgres-boolean-write-inputs-boundaries-v1.json', '4d8fcc71a9c381dc6c3f10a9bda953ae8b799395e8b92d93ad713110a06ad683'],
             ['postgres-int8-fields-boundaries-v1.json', 'b3ca90d0760af06e4c1d5f4e23ccae910469a0a67800a5cd97bed38d591e5056'],
+            ['postgres-output-order-names-boundaries-v1.json', '187c056bcc5b57ed10024097f97f397ef449c75149c248b1a46b4a891a97aacf'],
         ],
         'sqlite' => [],
     };
@@ -178,7 +179,7 @@ function checkNativeBoundaries(
             foreach (['Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
-                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\From\\WideIntegerColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ProjectionLowering', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
+                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\From\\WideIntegerColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ProjectionLowering', 'Model\\Statement\\Reference\\Column\\AliasTarget', 'Statement\\Query\\SortItem', 'Statement\\Query\\SortDirection', 'Statement\\Query\\NullsOrder', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
                 'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Ir\\Expression\\TextCollation', 'Statement\\Expression\\Collation',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextComparisonLowering', 'Ir\\Predicate\\Text\\TextOperator',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',

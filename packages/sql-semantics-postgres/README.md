@@ -22,6 +22,8 @@ A native `BOOLEAN` or `pg_catalog.bool` field is a `BooleanColumnReference` in a
 
 A native BIGINT field retains an int8 reference through grouped projections, joined inputs and derived headings. CAST to integer retains PostgreSQL's range check at execution. Casts from Boolean and native text fields retain their respective operand kinds.
 
+A simple ORDER BY name can select a projected label. The IR records the chosen output position, direction and effective NULL placement. When that label also names a physical input column, PostgreSQL selects the output alias.
+
 A projection can apply the builtin byte collation using `COLLATE pg_catalog."C"` on text literals and resolved native text fields. The value retains its exact collation, including for a typed SQL NULL. A positional ORDER BY on that result sorts by UTF-8 bytes with the stated NULL placement. The same explicit collation on either operand of a builtin text comparison selects byte comparison. The result is Boolean and is NULL if either operand is NULL. The comparison can also control WHERE, ordinary JOIN ON, UPDATE or DELETE.
 
 Ordinary DELETE and UPDATE statements can return named int4 and native text fields from the affected target rows. DELETE returns the deleted row. UPDATE assignments read the old row and RETURNING reads the new row. Text assignments accept decoded text, SQL NULL, a resolved native text field or a checked int4 literal or field. A swap reads both fields from the old row. A complete value records repeated fields or labels by position and preserves the target's `ONLY` policy. All four mutation forms can return native Boolean fields from the target row. UPDATE and DELETE can use these fields in checked Boolean filters.
