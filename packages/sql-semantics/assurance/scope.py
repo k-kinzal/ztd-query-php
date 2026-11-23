@@ -71,7 +71,7 @@ CONTRACTS = {
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
     "sqlite-relational-v3.json": "88ef9dfe32d2e15b8f8057bb86cd60b23134caa41311ceb77ead24d258251447",
     "sqlite-merged-join-v1.json": "b36591914e394b61ab4ec212175f2f52c107bdc538d65b57c48606f3d869716a",
-    "sqlite-merged-right-join-v1.json": "4a176218395d247f5f416088598d2589b1c98c231c66146d549f66bcb88a5de4",
+    "sqlite-merged-right-join-v1.json": "125848826b6e8e5d7485fbac9c83a18f14cab6118c3e880e0765faf705ee4477",
     "sqlite-result-v1.json": "8cd76f55067fe32c08d14b648be3a0b886b6e34785db7bb8707f20edc2c37237",
     "sqlite-delete-v1.json": "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b",
     "sqlite-values-v1.json": "2c1f212e5fae261258dc8c0fb450fd663a41fffc965c7988346b6dcfa39c6ad3",

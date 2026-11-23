@@ -19,7 +19,7 @@
       "role": "A visible output position and its resolved value in a RIGHT merge",
       "structure": "Exact result label and a complete scalar expression",
       "conditions": "The binder determines labels before publishing. The result owner checks the scalar against actual input slots.",
-      "meaning": "An unqualified star keeps the left heading position and spelling for a merged key but reads the right value. An explicit unqualified column use reads the right slot and takes its declared spelling absent an alias. A qualified use retains the original occurrence and spelling.",
+      "meaning": "An unqualified star keeps the left heading position and spelling for a merged key but reads the right value. An explicit unqualified column use reads the right slot and takes its declared spelling absent an alias. A qualified use retains the original occurrence and spelling. Under the pinned release, a left qualified star also reads the right representative in each merged position and retains every item of its own heading.",
       "sql": "Render the bound expression and its explicit label. Independent owners may reuse the right slot under distinct result labels."
     },
     "ColumnReference": {
@@ -35,7 +35,8 @@
     "A matched NOCASE pair can hold different values. The RIGHT representative remains the exact right BINARY string and its declared name where native name rules select it.",
     "A matched TEXT and NUMERIC pair can hold different storage classes. The merged output follows the right class. A predicate consuming a merged column inherits the right affinity and collation.",
     "Unmatched right rows, NULL keys, duplicate matches, exact output names and positions, and both separately qualified inputs.",
-    "When NATURAL has no common columns, the unqualified star retains the full ordered headings and no equality is emitted."
+    "When NATURAL has no common columns, the unqualified star retains the full ordered headings and no equality is emitted.",
+    "The qualified left star and a list of explicitly qualified column names differ on a matched pair and on a right-only row. Compare both forms."
   ],
   "finite": {
     "keyLayouts": [
@@ -69,7 +70,7 @@
   "analysis": [
     "Admit the exact former RIGHT USING rejection.",
     "NATURAL RIGHT star retains left heading order and spelling while reading the right merged cells.",
-    "Qualified stars keep both complete ordered headings.",
+    "Qualified stars keep both complete ordered headings. A left qualified star still reads the right representative in a merged position on SQLite 3.47.2.",
     "Case-varied unqualified uses, parenthesized name, and qualified names each take native spelling.",
     "Reversed input orientation changes column comparison and representative value.",
     "A disjoint NATURAL RIGHT join has no ON and no suppressed field.",

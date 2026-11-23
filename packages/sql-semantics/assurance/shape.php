@@ -775,7 +775,7 @@ try {
     $bindings = match ($dialect) {
         'sqlite' => [
             ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
-            ['sqlite-merged-join-binding-v2.json', '3864cd1f1f80b0d3991afcf4acfdeaad37a6c866da5b669cd71eac6ef359d35b', 'Merged join binding'],
+            ['sqlite-merged-join-binding-v2.json', '1e509f726ca9d258d2858877808f9847001d2b5dd8979c3386db29efe6d5eafa', 'Merged join binding'],
         ],
         'postgres' => [
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],

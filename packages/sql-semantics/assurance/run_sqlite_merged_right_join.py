@@ -9,7 +9,7 @@ from sqlite_engine import typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
 CONTRACT_NAME = "sqlite-merged-right-join-v1.json"
-CONTRACT = "4a176218395d247f5f416088598d2589b1c98c231c66146d549f66bcb88a5de4"
+CONTRACT = "125848826b6e8e5d7485fbac9c83a18f14cab6118c3e880e0765faf705ee4477"
 INPUTS = ("merge_left", "merge_right")
 
 
@@ -41,8 +41,10 @@ def analyzed_cases():
     keys = ("lane", "key")
     yield "SELECT * FROM merge_left NATURAL RIGHT JOIN merge_right", case(
         "RIGHT", INPUTS, keys, merged_fields(INPUTS, keys))
+    qualified_star = [(1 if index == 0 and name.lower() in keys else index, name, label)
+                      for index, name, label in field_names(INPUTS, keys, True)]
     yield "SELECT a.*, b.* FROM merge_left a NATURAL RIGHT JOIN merge_right b", case(
-        "RIGHT", INPUTS, keys, field_names(INPUTS, keys, True))
+        "RIGHT", INPUTS, keys, qualified_star)
     yield "SELECT KEY, key, (Key), a.Key,b.key,lane,a.lane,b.lane FROM merge_left a RIGHT JOIN merge_right b USING (Key,lane)", case(
         "RIGHT", INPUTS, keys[::-1], [
             (1, "key", "key"), (1, "key", "key"), (1, "key", "key"), (0, "Key", "Key"),
