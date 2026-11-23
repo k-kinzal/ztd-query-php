@@ -1,0 +1,295 @@
+{
+  "revision": "SemanticsIR/mysql-with-projection-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect exact ordered CTE bindings, scoped projections and the ordinary CTE release gate to loaded PHP.",
+  "rules": {
+    "Rows/LocalDefinition::resolve": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(!$source->lateral, 'The local definition cannot depend on a lateral scope.');",
+        "$query = $source->query;",
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "Check::input($query instanceof ParsedSelect || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');",
+        "",
+        "return $query;"
+      ]
+    },
+    "Rows/LocalDefinition::columns": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$inputs = $operation->facts->relation($source)->shape->slots;",
+        "$fields = $operation->facts->query($query)->fields();",
+        "Check::input($fields !== null, 'The local projection must resolve all output positions.');",
+        "$results = [];",
+        "foreach ($query->items as $position => $item) {",
+        "    Check::input($item instanceof SelectExpression, 'A local projection requires explicit output columns.');",
+        "    $resolution = $operation->facts->scalar($item->expression)->resolution;",
+        "    Check::input(",
+        "        $resolution instanceof ResolvedColumn && $resolution->relation === $source && $resolution->depth === 0,",
+        "        'Each local result must read a resolved local slot.'",
+        "    );",
+        "    $slot = array_search($resolution->slot, $inputs, true);",
+        "    $name = $fields->at($position)->name;",
+        "    Check::input($slot !== false && $name !== null, 'A local result needs a named, resolved slot.');",
+        "    $results[] = new LocalResultColumn($slot, new Identifier(ltrim($name->value, \" \\t\\r\\n\\v\\f\")));",
+        "}",
+        "",
+        "return $results;"
+      ]
+    },
+    "Rows/LocalProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(!$definition instanceof Select || ($definition->orderBy === [] && $definition->limit === null), 'The local definition requires an unbounded projection without ordering.');",
+        "$layers = 1;",
+        "for ($ancestor = $definition; $ancestor instanceof self; $ancestor = $ancestor->definition) {",
+        "    Check::input(++$layers <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "}",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A local projection needs a nonempty ordered result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A local projection can have at most 1024 columns.');",
+        "$width = $definition instanceof WithProjection ? $definition->width() : count($definition->columns);",
+        "foreach ($checked as $column) {",
+        "    Check::input($column->slot < $width, 'The local slot must belong to the definition.');",
+        "    Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/LocalProjectionLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($remaining >= 1 && $remaining <= 16, 'A local projection has at most sixteen definition boundaries.');",
+        "$statement = $query ?? $operation->statement;",
+        "Check::input($statement instanceof ParsedSelect && $statement->from instanceof DerivedTable, 'A local projection requires a query with a local source.');",
+        "$local = new LocalDefinition();",
+        "$local->consumer($statement);",
+        "$definition = $local->resolve($statement->from);",
+        "$source = match (true) {",
+        "    $definition instanceof QueryExpression => (new WithLowering())->lower($operation, $definition),",
+        "    $definition->from instanceof DerivedTable => $this->lower($operation, $definition, $remaining - 1),",
+        "    default => (new SelectLowering())->lower($operation, $definition),",
+        "};",
+        "$width = $source instanceof WithProjection ? $source->width() : count($source->columns);",
+        "Check::input(count($operation->facts->relation($statement->from)->shape->slots) === $width, 'The local definition must resolve all output positions.');",
+        "",
+        "return new LocalProjection($source, $local->columns($operation, $statement, $statement->from));"
+      ]
+    },
+    "Rows/LocalProjectionSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$renderer = new SelectSql();",
+        "$alias = '`__ztd_local`';",
+        "$columns = [];",
+        "foreach ($projection->columns as $position => $column) {",
+        "    $name = $localNames ? $renderer->localColumn($position) : $column->name->quoted();",
+        "    $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;",
+        "}",
+        "$source = $projection->definition;",
+        "$input = match (true) {",
+        "    $source instanceof Select => $renderer->render($source, true),",
+        "    $source instanceof WithProjection => (new WithSql())->render($source, true),",
+        "    $source instanceof LocalProjection => $this->render($source, true),",
+        "};",
+        "",
+        "return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;"
+      ]
+    },
+    "Rows/With/WithDefinition::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Rows/With/WithProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744, 'WITH requires MySQL 8.0 or later.');",
+        "$checked = Check::listOf($definitions, WithDefinition::class, 'WITH needs a nonempty ordered definition list.', 1);",
+        "$scope = new WithScope();",
+        "$headings = [];",
+        "foreach ($checked as $definition) {",
+        "    $headings[] = $scope->width($definition->body, $headings, $this->profileId());",
+        "}",
+        "$scope->width($body, $headings, $this->profileId());",
+        "$this->definitions = $checked;"
+      ]
+    },
+    "Rows/With/WithProjection::width": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return count($this->body->columns);"
+      ]
+    },
+    "Rows/With/WithProjection::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/derived-merge=on';"
+      ]
+    },
+    "Rows/With/WithProjection::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return (new WithSql())->render($this);"
+      ]
+    },
+    "Rows/With/WithRead::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($definition >= 0, 'A WITH definition position must be nonnegative.');",
+        "$checked = Check::listOf($columns, LocalResultColumn::class, 'A local WITH read needs a nonempty ordered result.', 1);",
+        "Check::input(count($checked) <= 1024, 'A local WITH read can have at most 1024 columns.');",
+        "foreach ($checked as $column) {",
+        "    Check::input($column->name->value === ltrim($column->name->value, \" \\t\\r\\n\\v\\f\"), 'A MySQL result name cannot start with SQL whitespace.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Rows/With/WithScope::width": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof WithRead) {",
+        "    $width = $headings[$query->definition] ?? null;",
+        "    Check::input($width !== null, 'A local read must select a visible WITH definition.');",
+        "    foreach ($query->columns as $column) {",
+        "        Check::input($column->slot < $width, 'A local read must select an existing WITH output slot.');",
+        "    }",
+        "} else {",
+        "    Check::input($query->profileId() === $profile, 'Each WITH query must use its owning language profile.');",
+        "    Check::input(!$query instanceof Select || ($query->orderBy === [] && $query->limit === null), 'An ordinary WITH projection needs unbounded unordered SELECT members.');",
+        "}",
+        "",
+        "return $query instanceof WithProjection ? $query->width() : count($query->columns);"
+      ]
+    },
+    "Rows/With/WithSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definitions = [];",
+        "foreach ($query->definitions as $position => $definition) {",
+        "    $definitions[] = $this->name($position) . ' AS (' . $this->query($definition->body, true) . ')';",
+        "}",
+        "",
+        "return 'WITH ' . implode(', ', $definitions) . ' ' . $this->query($query->body, $localNames);"
+      ]
+    },
+    "Rows/With/WithSql::query": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $query instanceof Select => (new SelectSql())->render($query, $localNames),",
+        "    $query instanceof LocalProjection => (new LocalProjectionSql())->render($query, $localNames),",
+        "    $query instanceof WithProjection => $this->render($query, $localNames),",
+        "    $query instanceof WithRead => $this->read($query, $localNames),",
+        "};"
+      ]
+    },
+    "Rows/With/WithSql::read": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$source = $this->name($query->definition);",
+        "$renderer = new SelectSql();",
+        "$columns = [];",
+        "foreach ($query->columns as $position => $column) {",
+        "    $label = $localNames ? $renderer->localColumn($position) : $column->name->quoted();",
+        "    $columns[] = $source . '.' . $renderer->localColumn($column->slot) . ' AS ' . $label;",
+        "}",
+        "",
+        "return 'SELECT ' . implode(', ', $columns) . ' FROM ' . $source;"
+      ]
+    },
+    "Rows/With/WithSql::name": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return '`__ztd_cte_' . $position . '`';"
+      ]
+    },
+    "Rows/With/WithLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$with = $statement->with;",
+        "Check::input($with instanceof With && !$with->recursive && $statement->orderBy === [] && $statement->limit === null, 'WITH requires ordinary definitions and a checked SELECT body.');",
+        "$positions = [];",
+        "$definitions = [];",
+        "foreach ($with->tables as $position => $table) {",
+        "    $definitions[] = new WithDefinition($this->query($operation, $table->query, $positions));",
+        "    $positions[spl_object_id($table)] = $position;",
+        "}",
+        "$body = $this->query($operation, $statement->body, $positions);",
+        "Check::input(!$body instanceof WithProjection, 'An ordinary WITH requires a SELECT body in its own scope.');",
+        "",
+        "return new WithProjection($definitions, $body, $operation->context->profile->grammar);"
+      ]
+    },
+    "Rows/With/WithLowering::query": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "if ($query instanceof QueryExpression && $query->with !== null) {",
+        "    return $this->lower($operation, $query);",
+        "}",
+        "Check::input($query instanceof ParsedSelect, 'Each WITH member requires a checked SELECT projection.');",
+        "$source = $query->from;",
+        "if ($source instanceof TableReference) {",
+        "    $relation = $operation->facts->relation($source)->table;",
+        "    if ($relation instanceof CommonTable) {",
+        "        $position = $positions[spl_object_id($relation->definition)] ?? null;",
+        "        Check::input($position !== null, 'A local CTE reference must resolve to a preceding definition in this WITH.');",
+        "        Check::input($source->partitions === [] && $source->indexHints === [] && $source->sample === null, 'A local WITH read requires an ordinary CTE reference.');",
+        "        $local = new LocalDefinition();",
+        "        $local->consumer($query);",
+        "",
+        "        return new WithRead($position, $local->columns($operation, $query, $source));",
+        "    }",
+        "}",
+        "if ($source instanceof DerivedTable) {",
+        "    return (new LocalProjectionLowering())->lower($operation, $query);",
+        "}",
+        "",
+        "return (new SelectLowering())->lower($operation, $query);"
+      ]
+    }
+  }
+}

@@ -15,7 +15,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
-from native_schedule import NATIVE, SINGLE_ENGINE
+from native_schedule import NATIVE, SINGLE_ENGINE, release_subset
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION, check_profile
 from run_server_delete import version_tag
@@ -52,6 +52,9 @@ def release_jobs(profile, series):
     engine, version = profile
     for domain in NATIVE:
         if engine != SINGLE_ENGINE.get(domain, engine):
+            continue
+        subset = release_subset(domain)
+        if subset is not None and version not in subset:
             continue
         flags = ["--engine", engine, "--release", version]
         if domain == "recursive_series" and version in series["unavailableSyntax"].get(engine, []):

@@ -13,7 +13,7 @@ from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
 from grammar_scope import inventory as grammar_inventory
-from native_schedule import NATIVE, SINGLE_ENGINE, reports as native_reports
+from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from replay_native_boundary_faults import replay as replay_native_faults
@@ -281,6 +281,10 @@ class Evidence:
             single_engine = SINGLE_ENGINE.get(domain)
             if single_engine:
                 registered = {single_engine: registered[single_engine]}
+            subset = release_subset(domain)
+            if subset is not None:
+                require(single_engine is not None and set(subset) <= set(registered[single_engine]), "bundle-invalid-native-release-scope", origin)
+                registered = {single_engine: subset}
             unavailable = {}
             if domain == "recursive_series":
                 series = json.loads((self.tool_root / "server-recursive-series-v2.json").read_text())

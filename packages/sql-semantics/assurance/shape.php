@@ -654,7 +654,7 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Mutation\\UpdateAssignmentLowering';
     }
     $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
-    if ($dialect === 'postgres') {
+    if ($dialect === 'mysql' || $dialect === 'postgres') {
         $with = 'Rows\\With\\WithProjection';
         $withRead = 'Rows\\With\\WithRead';
         $withDefinition = 'Rows\\With\\WithDefinition';
@@ -665,9 +665,12 @@ if ($dialect !== 'sqlite') {
             'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
         ];
         $properties[$withRead] = ['definition' => ['int'], 'columns' => ['array']];
-        $properties[$withDefinition] = ['body' => ['Rows\\LocalProjection', $with, $withRead, 'Select'], 'materialization' => [$withMaterialization]];
-        $properties[$withMaterialization] = $methods[$withMaterialization] = [];
-        $enumCases[$withMaterialization] = ['Default' => '', 'Materialized' => 'MATERIALIZED', 'NotMaterialized' => 'NOT MATERIALIZED'];
+        $properties[$withDefinition] = ['body' => ['Rows\\LocalProjection', $with, $withRead, 'Select']];
+        if ($dialect === 'postgres') {
+            $properties[$withDefinition]['materialization'] = [$withMaterialization];
+            $properties[$withMaterialization] = $methods[$withMaterialization] = [];
+            $enumCases[$withMaterialization] = ['Default' => '', 'Materialized' => 'MATERIALIZED', 'NotMaterialized' => 'NOT MATERIALIZED'];
+        }
         $methods[$with] = ['__construct', 'width', 'profileId', 'toString'];
         $methods[$withRead] = $methods[$withDefinition] = ['__construct'];
         $roots[] = $with;
@@ -842,7 +845,7 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
         . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null'
-        . ($dialect === 'postgres' ? ' => (new \\' . $prefix . 'Rows\\With\\WithLowering())->lower($operation, $statement),' : ',')
+        . ' => (new \\' . $prefix . 'Rows\\With\\WithLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && $statement->from instanceof \\' . $platform
         . '\\Statement\\Relation\\DerivedTable => (new \\' . $prefix . 'Rows\\LocalProjectionLowering())->lower($operation),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
@@ -953,9 +956,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v35.json';
+    $storagePath = __DIR__ . '/value-storage-v36.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '2135a488029843c29c7d86f3c389902a76a9672db0f97922481bab916d2e0dee',
+        hash_file('sha256', $storagePath) === '32a6ceed61eda63d1a558ac1ff7a53655129dfc8de9d0b18bf730a1fda77d2ca',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1087,7 +1090,7 @@ try {
                 ));
                 $expectedMethods = match ($short) {
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
-                    'Rows\\With\\WithLowering' => ['lower', 'query', 'read'],
+                    'Rows\\With\\WithLowering' => $dialect === 'mysql' ? ['lower', 'query'] : ['lower', 'query', 'read'],
                     default => ['lower'],
                 };
                 requireShape($publicMethods === $expectedMethods, "Unexpected lowering entry point in $short");

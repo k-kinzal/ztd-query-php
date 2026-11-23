@@ -9,6 +9,7 @@ from evidence_transcript import canonical
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import main
+from run_server_local_projection import expand_local
 from run_server_mysql_varchar_assignment import fixture_literal
 from run_server_mysql_varchar_count import DECLARATIONS, EMPTY, HEADING, PRIMARY, ROWS, TYPES, ref, table
 from run_server_mysql_varchar_presence import null_test
@@ -203,7 +204,7 @@ def check_value(item, observed):
     require(observed["status"] == "constructed" and observed["profile"].startswith(item["release"] + "/")
             and observed["profile"].endswith("/materialized" if item["release"].startswith("mysql-5.6.") else "/derived-merge=on"),
             "mysql-local-varchar-positive-rejected", observed)
-    same(graph(item), graph(observed))
+    same(graph(item), graph(expand_local(observed)))
 
 
 def expected(item):

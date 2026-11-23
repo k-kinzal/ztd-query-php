@@ -1,5 +1,11 @@
 """The registered native domains and preserved artifact layouts."""
 
+from functools import lru_cache
+import hashlib
+import json
+
+from scope import CONTRACTS, TOOL
+
 
 NATIVE = {
     "projection": "server-projection-v1.json",
@@ -47,6 +53,7 @@ NATIVE = {
     "mysql_text_literal": "mysql-text-literal-v1.json",
     "mysql_varchar_slots": "mysql-varchar-slots-v2.json",
     "mysql_external_views": "mysql-external-views-v1.json",
+    "mysql_with_projection": "mysql-with-projection-v1.json",
     "mysql_varchar_presence": "mysql-varchar-presence-v1.json",
     "mysql_varchar_effects": "mysql-varchar-effects-v1.json",
     "mysql_varchar_comparison": "mysql-varchar-comparison-v1.json",
@@ -137,6 +144,7 @@ SINGLE_ENGINE = {
     "mysql_text_literal": "mysql",
     "mysql_varchar_slots": "mysql",
     "mysql_external_views": "mysql",
+    "mysql_with_projection": "mysql",
     "mysql_varchar_presence": "mysql",
     "mysql_varchar_effects": "mysql",
     "mysql_varchar_comparison": "mysql",
@@ -157,6 +165,17 @@ SINGLE_ENGINE = {
     "mysql_merged_join": "mysql",
     "mysql_from_list": "mysql",
 }
+
+
+@lru_cache(maxsize=None)
+def release_subset(domain):
+    if domain != "mysql_with_projection":
+        return None
+    path = NATIVE[domain]
+    contract = (TOOL / path).read_bytes()
+    if hashlib.sha256(contract).hexdigest() != CONTRACTS[path]:
+        raise ValueError(f"The native release scope for {domain} has changed")
+    return tuple(tag.removeprefix("mysql-") for tag in json.loads(contract)["profiles"])
 
 
 def reports(raw, layout, domain):

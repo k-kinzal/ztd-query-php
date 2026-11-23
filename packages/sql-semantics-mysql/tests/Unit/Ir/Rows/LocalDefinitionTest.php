@@ -22,7 +22,7 @@ final class LocalDefinitionTest extends TestCase
         self::assertInstanceOf(Select::class, $query->statement);
         self::assertInstanceOf(DerivedTable::class, $query->statement->from);
 
-        self::assertSame($query->statement->from->query, (new LocalDefinition())->resolve($query->binding(), $query->statement, $query->statement));
+        self::assertSame($query->statement->from->query, (new LocalDefinition())->resolve($query->statement->from));
     }
 
     public function testConsumerReturnsTheCheckedOuterSelect(): void
@@ -31,6 +31,19 @@ final class LocalDefinitionTest extends TestCase
         self::assertInstanceOf(Select::class, $query->statement);
 
         self::assertSame($query->statement, (new LocalDefinition())->consumer($query->statement));
+    }
+
+    public function testColumnsFollowTheResolvedFieldOrder(): void
+    {
+        $query = (new Inspection())->inspect('SELECT q.b AS result FROM (SELECT 1 AS a, 2 AS b) AS q');
+        self::assertInstanceOf(Select::class, $query->statement);
+        self::assertInstanceOf(DerivedTable::class, $query->statement->from);
+
+        $columns = (new LocalDefinition())->columns($query->binding(), $query->statement, $query->statement->from);
+
+        self::assertCount(1, $columns);
+        self::assertSame(1, $columns[0]->slot);
+        self::assertSame('result', $columns[0]->name->value);
     }
 
     public function testQueryBlockAllowsASeparatePredicate(): void

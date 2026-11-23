@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v58.json"
-CONTRACT = "94c7a6b50be4e1e6d4d4e0e89c3b0187708aa10845caae3739b43745e32f2e43"
+CONTRACT_NAME = "release-layout-v59.json"
+CONTRACT = "a5e134c964ea3449c894542353d9da3a7197fbe8fc10500a37620962e89d2d44"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -233,6 +233,15 @@ def verify_probe(raw, catalog):
                     "installed-coalesce-mismatch", item)
             require(item.get("viewInput") == ["main", "removable", "view", ["id"], 0],
                     "installed-external-view-input-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Rows\\With\\WithProjection"):
+            require(item.get("withCoordinates") == [0, 0, 1, 0, 1] and item["sql"] ==
+                    'WITH `__ztd_cte_0` AS (SELECT 42 AS `__ztd_c0`), '
+                    '`__ztd_cte_1` AS (SELECT `__ztd_cte_0`.`__ztd_c0` AS `__ztd_c0` FROM `__ztd_cte_0`) '
+                    'SELECT `__ztd_cte_1`.`__ztd_c0` AS `n` FROM `__ztd_cte_1`', "installed-mysql-with-coordinates-mismatch", item)
+            require(item.get("withAvailability") == [
+                [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
+                for release in ("mysql-5.6.51", "mysql-5.7.44")
+            ], "installed-mysql-with-availability-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",

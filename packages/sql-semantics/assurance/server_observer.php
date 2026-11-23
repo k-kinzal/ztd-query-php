@@ -77,7 +77,19 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         if ($shadowRange) {
             $pdo->exec('SET LOCAL search_path = public, pg_catalog');
         }
+        $bindings = $input['mysqlWithBindings'] ?? [];
+        if ($bindings !== [] && ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql'
+            || !array_is_list($bindings) || count($bindings) > 16
+            || preg_match('/\AWITH\s/i', $input['sql']) !== 1 || str_contains($input['sql'], ';'))) {
+            return ['status' => 'outside-observer-scope'];
+        }
         $statement = $pdo->prepare($input['sql']);
+        foreach ($bindings as $offset => $binding) {
+            if (!is_int($binding) && $binding !== null) {
+                return ['status' => 'outside-observer-scope'];
+            }
+            $statement->bindValue($offset + 1, $binding, $binding === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        }
         $statement->execute();
         $fields = [];
         for ($index = 0; $index < $statement->columnCount(); ++$index) {
@@ -92,6 +104,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $pdo->exec('SET LOCAL search_path = pg_catalog, public');
         }
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
+        if ($bindings !== []) {
+            $result['bindings'] = $bindings;
+        }
         if (($input['observeMySqlLiterals'] ?? false) === true) {
             $result['literals'] = mysqlLiteralObservations($pdo, $input['sql']);
         }

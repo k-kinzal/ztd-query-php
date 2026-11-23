@@ -63,6 +63,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-create-signed-boundaries-v1.json', 'daff522af411c8dac52a3d7d14c477483842c67b572683ea3b7e2bc5274693cf'],
             ['mysql-create-primary-boundaries-v2.json', '1657633bf073bbb6ff22462e5d1fc29e23de126d074eec5f3d6e56c506e384a3'],
             ['mysql-external-views-boundaries-v1.json', '06bbf4a62a3665c9bcbf35b073ca31d5e8d0d0017476112b168793f9a525aaf7'],
+            ['mysql-with-projection-boundaries-v1.json', '187862930a636233380862b33a0c0c1d069367278cb6ef70e945d0fa0f642396'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -244,7 +245,11 @@ function checkNativeBoundaries(
                 'Statement\\Name\\ColumnUse', 'Statement\\Expression\\Operator\\Unary', 'Statement\\Expression\\Operator\\UnaryOperator',
                 'Statement\\Literal\\NumberForm', 'Statement\\Literal\\NumberLiteral','Statement\\Literal\\SignedLiteral',
                 'Statement\\Expression\\Comparison as ParsedComparison', 'Statement\\Expression\\Logical as ParsedLogical',
-                'Statement\\Expression\\Not as ParsedNot', 'Statement\\Expression\\NullTest as ParsedNullTest'] as $name) {
+                'Statement\\Expression\\Not as ParsedNot', 'Statement\\Expression\\NullTest as ParsedNullTest',
+                'Ir\\Rows\\With\\WithDefinition', 'Ir\\Rows\\With\\WithProjection', 'Ir\\Rows\\With\\WithRead', 'Ir\\Rows\\With\\WithScope',
+                'Ir\\Rows\\With\\WithSql', 'Ir\\Rows\\With\\WithLowering', 'Ir\\Rows\\LocalProjection', 'Ir\\Rows\\LocalDefinition',
+                'Ir\\Rows\\LocalProjectionLowering', 'Ir\\Rows\\LocalProjectionSql', 'Ir\\Rows\\LocalResultColumn', 'Model\\Statement\\Reference\\Table\\CommonTable',
+                'Statement\\Query\\QueryExpression', 'Statement\\Query\\With\\With'] as $name) {
                 $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
             }
         }

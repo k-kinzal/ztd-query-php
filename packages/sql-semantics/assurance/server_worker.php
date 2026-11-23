@@ -360,12 +360,13 @@ function constructWith(string $platform, array $input): SemanticsIR
     $with = $input['with'];
     $definitions = [];
     foreach ($with['definitions'] as [$materialization, $query]) {
-        $definitions[] = new $def(constructWithMember($platform, $query, $input['release']), $policy::from($materialization));
+        $body = constructWithMember($platform, $query, $input['dialect'], $input['release']);
+        $definitions[] = $input['dialect'] === 'mysql' ? new $def($body) : new $def($body, $policy::from($materialization));
     }
-    return new $type($definitions, constructWithMember($platform, $with['body'], $input['release']), $release::from($input['release']));
+    return new $type($definitions, constructWithMember($platform, $with['body'], $input['dialect'], $input['release']), $release::from($input['release']));
 }
 
-function constructWithMember(string $platform, array $input, string $release): object
+function constructWithMember(string $platform, array $input, string $dialect, string $release): object
 {
     if (isset($input['read'])) {
         [$ordinal, $columns] = $input['read'];
@@ -374,7 +375,7 @@ function constructWithMember(string $platform, array $input, string $release): o
         $identifier = $platform . 'Ir\\Identifier';
         return new $type($ordinal, array_map(static fn ($column) => new $result($column[0], new $identifier($column[1])), $columns));
     }
-    $effective = $input + ['dialect' => 'postgres', 'release' => $release];
+    $effective = $input + ['dialect' => $dialect, 'release' => $release];
     return match (true) {
         isset($input['with']) => constructWith($platform, $effective),
         isset($input['local']) => constructLocalProjection($platform, $effective),
@@ -444,7 +445,7 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
     if ($value::class === $namespace . 'Rows\\With\\WithProjection') {
         return ['with' => [
             'definitions' => array_map(static fn ($entry): array => [
-                $entry->materialization->value, observeSetQuery($namespace, $entry->body, $dialect),
+                $dialect === 'mysql' ? '' : $entry->materialization->value, observeSetQuery($namespace, $entry->body, $dialect),
             ], $value->definitions),
             'body' => observeSetQuery($namespace, $value->body, $dialect),
         ]];

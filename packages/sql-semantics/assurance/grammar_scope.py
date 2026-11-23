@@ -173,6 +173,10 @@ def inventory(root):
             )})
             related.update({alternative: ("mysql-signed-range-v3.json",) for alternative in rules["predicate"]
                             if " BETWEEN_SYM " in alternative})
+            for rule in ("with_clause", "with_list", "common_table_expr"):
+                for alternative in rules.get(rule, ()):
+                    if alternative != rule + ":" and "RECURSIVE_SYM" not in alternative:
+                        related[alternative] = (*related.get(alternative, ()), "mysql-with-projection-v1.json")
             for rule in ("table_factor", "single_table"):
                 for alternative in rules.get(rule, ()):
                     if alternative in ("table_factor: single_table", "single_table: table_ident opt_use_partition opt_table_alias opt_key_definition",

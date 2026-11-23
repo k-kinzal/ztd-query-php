@@ -43,6 +43,29 @@ function observeEnum(string $name): array
     throw new RuntimeException('An installed enum accepts an unknown backing value.');
 }
 
+function observeMysqlWithAvailability(string $sql, object $definition, object $body): array
+{
+    $rejections = [];
+    $releases = [SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651,
+        SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5744];
+    foreach ($releases as $release) {
+        $direct = $analysis = null;
+        try {
+            new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $body, $release);
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction $error) {
+            $direct = $error->getMessage();
+        }
+        try {
+            (new SqlSemantics\Platform\MySql\Semantics($release->value))->analyze($sql);
+        } catch (SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException $error) {
+            $analysis = $error::class;
+        }
+        $rejections[] = [$release->value, $direct, $analysis];
+    }
+
+    return $rejections;
+}
+
 function observeMysqlExternalViews(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context([
@@ -486,7 +509,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'MySql') {
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
-    if ($platform === 'PostgreSql') {
+    if ($platform === 'MySql' || $platform === 'PostgreSql') {
         $queries['Rows\\With\\WithProjection'] = 'WITH a AS (SELECT 42 AS n), b AS (SELECT n FROM a) SELECT n FROM b';
     }
     if ($platform === 'PostgreSql') {
@@ -498,6 +521,13 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'MySql' && $role === 'Rows\With\WithProjection') {
+            $predecessor = $result->definitions[1]->body;
+            $body = $result->body;
+            $details['withCoordinates'] = [$predecessor->definition, $predecessor->columns[0]->slot,
+                $body->definition, $body->columns[0]->slot, $result->width()];
+            $details['withAvailability'] = observeMysqlWithAvailability($sql, $result->definitions[0], $predecessor);
+        }
         if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
             $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
             $details['booleanWrites'] = observePostgresBooleanWrites($semantics);

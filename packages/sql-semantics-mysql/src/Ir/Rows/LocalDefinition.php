@@ -4,50 +4,39 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
+use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\CommonTable;
+use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
-use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 
 /**
- * Identifies the independent SELECT introduced by a local binding.
+ * Lowers the independent definition and exact result positions of a local read.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class LocalDefinition
 {
     /**
-     * Follows the binding identified by the outer projection's facts.
+     * Checks an independent derived query before lowering.
      *
      * @throws InvalidConstruction When the local source is outside the independent domain
      */
-    public function resolve(BoundStatement $operation, Select $body, Select|QueryExpression $statement): Select|QueryExpression
+    public function resolve(DerivedTable $source): ParsedSelect|QueryExpression
     {
-        $source = $body->from;
-        if ($statement === $body && $source instanceof DerivedTable) {
-            Check::input(!$source->lateral, 'The local definition cannot depend on a lateral scope.');
-            $query = $source->query;
-        } else {
-            Check::input($statement instanceof QueryExpression && $statement->orderBy === [] && $statement->limit === null
-                && $source instanceof TableReference && $source->partitions === [] && $source->indexHints === [] && $source->sample === null, 'The local source requires one ordinary CTE reference.');
-            $with = $statement->with;
-            Check::input($with instanceof With && !$with->recursive && count($with->tables) === 1, 'The local source requires one ordinary CTE definition.');
-            $definition = $with->tables[0];
-            $resolution = $operation->facts->relation($source)->table;
-            Check::input($resolution instanceof CommonTable && $resolution->definition === $definition, 'The local source must resolve to this CTE definition.');
-            $query = $definition->query;
-        }
+        Check::input(!$source->lateral, 'The local definition cannot depend on a lateral scope.');
+        $query = $source->query;
         while ($query instanceof ParenthesizedQuery) {
             $query = $query->query;
         }
-        Check::input($query instanceof Select || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');
+        Check::input($query instanceof ParsedSelect || ($query instanceof QueryExpression && $query->with !== null), 'A local definition requires an independent SELECT.');
 
         return $query;
     }
@@ -57,7 +46,7 @@ final class LocalDefinition
      *
      * @throws InvalidConstruction When the root or an outer clause has no local IR representation
      */
-    public function consumer(Select|QueryExpression $statement): Select
+    public function consumer(ParsedSelect|QueryExpression $statement): ParsedSelect
     {
         $body = $this->queryBlock($statement);
         Check::input($body->where === null, 'The local projection requires an ordinary result without outer clauses.');
@@ -66,12 +55,38 @@ final class LocalDefinition
     }
 
     /**
+     * Resolves result fields to exact positions of this local input.
+     * @return list<LocalResultColumn> Result positions and their observed labels
+     */
+    public function columns(BoundStatement $operation, ParsedSelect $query, DerivedTable|TableReference $source): array
+    {
+        $inputs = $operation->facts->relation($source)->shape->slots;
+        $fields = $operation->facts->query($query)->fields();
+        Check::input($fields !== null, 'The local projection must resolve all output positions.');
+        $results = [];
+        foreach ($query->items as $position => $item) {
+            Check::input($item instanceof SelectExpression, 'A local projection requires explicit output columns.');
+            $resolution = $operation->facts->scalar($item->expression)->resolution;
+            Check::input(
+                $resolution instanceof ResolvedColumn && $resolution->relation === $source && $resolution->depth === 0,
+                'Each local result must read a resolved local slot.'
+            );
+            $slot = array_search($resolution->slot, $inputs, true);
+            $name = $fields->at($position)->name;
+            Check::input($slot !== false && $name !== null, 'A local result needs a named, resolved slot.');
+            $results[] = new LocalResultColumn($slot, new Identifier(ltrim($name->value, " \t\r\n\v\f")));
+        }
+
+        return $results;
+    }
+
+    /**
      * Checks the clauses shared by a local consumer and a recursive step.
      */
-    public function queryBlock(Select|QueryExpression $statement): Select
+    public function queryBlock(ParsedSelect|QueryExpression $statement): ParsedSelect
     {
         $body = $statement instanceof QueryExpression ? $statement->body : $statement;
-        Check::input($body instanceof Select, 'A local projection requires a query with a local source.');
+        Check::input($body instanceof ParsedSelect, 'A local projection requires a query with a local source.');
         Check::input(
             $body->groupBy === null && $body->having === null && $body->windows === []
             && $body->qualify === null && $body->orderBy === [] && $body->limit === null && $body->procedure === null
