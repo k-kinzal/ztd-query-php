@@ -109,7 +109,7 @@ def analyzed(tag):
 
 def negative(tag):
     possess = "A VARCHAR slot must belong to a visible physical input occurrence."
-    yield place(tag, "result", comparison("=", text("a"), text("A"))), "A text comparison needs a native VARCHAR field to select its collation."
+    yield place(tag, "result", comparison("=", text("a"), text("A"))), "A text comparison needs a native VARCHAR field or explicit collation."
     yield place(tag, "result", comparison("=", field(1), text("a"))), possess
     yield place(tag, "on", comparison("=", field(0, 2), field(2, 1))), possess
     origin = f"{SCHEMA}.{PRIMARY}"

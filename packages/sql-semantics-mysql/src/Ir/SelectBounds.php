@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
@@ -63,6 +64,7 @@ final class SelectBounds
                     ),
                     $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),
                     $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],
+                    $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),
                     $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,

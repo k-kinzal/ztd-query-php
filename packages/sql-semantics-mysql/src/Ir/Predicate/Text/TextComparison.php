@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Predicate\Text;
 
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\From\TextCollation;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
@@ -26,17 +27,17 @@ final class TextComparison
     use Snapshot;
 
     /**
-     * Requires a field to fix the collation independently of the literal's default.
+     * Requires a physical or explicitly collated operand to fix the stock collation.
      */
     public function __construct(
         public readonly TextOperator $operator,
-        public readonly TextColumnReference|TextLiteral|NullLiteral $left,
-        public readonly TextColumnReference|TextLiteral|NullLiteral $right,
+        public readonly CollatedText|TextColumnReference|TextLiteral|NullLiteral $left,
+        public readonly CollatedText|TextColumnReference|TextLiteral|NullLiteral $right,
         public readonly TextCollation $collation = TextCollation::Utf8mb4Bin,
     ) {
         Check::input(
-            $left instanceof TextColumnReference || $right instanceof TextColumnReference,
-            'A text comparison needs a native VARCHAR field to select its collation.',
+            $left instanceof TextColumnReference || $left instanceof CollatedText || $right instanceof TextColumnReference || $right instanceof CollatedText,
+            'A text comparison needs a native VARCHAR field or explicit collation.',
         );
     }
 }

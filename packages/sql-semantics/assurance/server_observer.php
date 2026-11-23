@@ -6,6 +6,7 @@ declare(strict_types=1);
 $engine = $argv[1];
 require __DIR__ . '/server_connection.php';
 require __DIR__ . '/mysql_literal_observation.php';
+require __DIR__ . '/mysql_text_collation_observation.php';
 require __DIR__ . '/mysql_varchar_effect.php';
 require __DIR__ . '/mysql_varchar_write.php';
 require __DIR__ . '/mysql_varchar_assignment.php';
@@ -79,6 +80,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
         if (($input['observeMySqlLiterals'] ?? false) === true) {
             $result['literals'] = mysqlLiteralObservations($pdo, $input['sql']);
+        }
+        if (($input['observeMysqlTextCollation'] ?? false) === true) {
+            $result['textMetadata'] = mysqlTextCollationObservations($pdo, $input['sql']);
         }
         if (($input['observePostgresCollation'] ?? false) === true) {
             $result['collations'] = postgresResultCollations($pdo, $input['sql'], count($fields));

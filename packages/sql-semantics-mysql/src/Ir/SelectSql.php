@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
@@ -68,7 +69,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|CollatedText|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -78,6 +79,8 @@ final class SelectSql
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
             $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
+            $expression instanceof CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify)
+                . ' COLLATE ' . $expression->collation->value . ')',
             $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
@@ -86,7 +89,7 @@ final class SelectSql
     }
 
     /**
-     * Emits both text operands; the native field selects the comparison collation.
+     * Emits both text operands under their resolved native comparison collation.
      */
     public function textComparison(TextComparison $comparison, TableSource|Join|null $source, int $offset, bool $qualify): string
     {

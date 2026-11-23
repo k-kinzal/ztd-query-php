@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
@@ -69,6 +70,7 @@ final class CompoundShape
 
         return match (true) {
             $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,
+            $column instanceof CollatedText => ResultKind::Text,
             $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof ColumnReference => ResultKind::Integer,

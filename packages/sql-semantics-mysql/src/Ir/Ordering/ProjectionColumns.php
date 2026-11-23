@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Ordering;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
+use SqlSemantics\Platform\MySql\Ir\Expression\CollatedTextLowering;
 use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
@@ -19,6 +20,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison as ParsedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
@@ -65,13 +67,17 @@ final class ProjectionColumns
                 $results[] = new ResultColumn((new PredicateLowering())->nullTest($operand, $binding), $label);
                 continue;
             }
-            $comparison = $operand instanceof ParsedComparison ? $comparisons->lower($operand, $binding) : null;
+            $typed = match (true) {
+                $operand instanceof ParsedComparison => $comparisons->lower($operand, $binding),
+                $operand instanceof Collated => (new CollatedTextLowering())->lower($operand, $binding),
+                default => null,
+            };
             $parameter = $parameters->lower($expression, $parameterPosition + 1);
             if ($parameter !== null) {
                 ++$parameterPosition;
             }
             $results[] = new ResultColumn(
-                $comparison ?? $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),
+                $typed ?? $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),
                 $label,
             );
         }

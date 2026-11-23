@@ -55,6 +55,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-varchar-assignment-boundaries-v1.json', '17bf1801f1d93fc7a69ae05645249e9d4483c0cfc0b62240cb3aa278e586714a'],
             ['mysql-varchar-insert-boundaries-v1.json', 'cb98b50df5693008bd453adbf33981fc46f465162deede996663ad8f25a4bf2d'],
             ['mysql-varchar-count-boundaries-v1.json', 'dd89e17397c9f9e6abe9f73b9a4710b1bc91eb09561c035ac973d860552a45bc'],
+            ['mysql-explicit-text-collation-boundaries-v1.json', '6bfb85c25b4dbd401b4ede0577d7fcd8031bbb07c835064552a1525e7d772a6d'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -195,6 +196,7 @@ function checkNativeBoundaries(
                 'Ir\\From\\ColumnKind', 'Ir\\From\\Varchar', 'Ir\\From\\TextCollation', 'Ir\\From\\TextColumnReference',
                 'Ir\\From\\VarcharLowering', 'Statement\\Type\\Character', 'Statement\\Type\\Kind\\CharacterKind',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextOperator', 'Ir\\Predicate\\Text\\TextComparisonLowering',
+                'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Statement\\Expression\\Operator\\Collated',
                 'Ir\\Mutation\\TextUpdateAssignment', 'Ir\\Mutation\\UpdateAssignmentLowering', 'Ir\\Mutation\\Update',
                 'Ir\\Mutation\\InsertCell', 'Ir\\Mutation\\Insert', 'Ir\\Mutation\\InsertTargetBinding',
                 'Model\\Statement\\Type\\Nullability', 'Model\\Contract\\ParameterStyle', 'Model\\Contract\\LexicalSettings',

@@ -212,6 +212,9 @@ def inventory(root):
                         rule != "create_table_option" or "default_charset" in alternative or "default_collation" in alternative
                     ):
                         related[alternative] = (*related.get(alternative, ()), "mysql-varchar-inheritance-v2.json")
+            for alternative in rules.get("simple_expr", ()):
+                if alternative == "simple_expr: simple_expr COLLATE_SYM ident_or_text":
+                    related[alternative] = (*related.get(alternative, ()), "mysql-explicit-text-collation-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

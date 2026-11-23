@@ -1,0 +1,235 @@
+{
+  "revision": "SemanticsIR/mysql-explicit-text-collation-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Bind the native literal or physical field, preserve explicit collation selection and walk the operand under the owning scope.",
+  "rules": {
+    "Expression/CollatedText::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Expression/CollatedTextLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$collation = TextCollation::tryFrom(strtolower($expression->collation->value));",
+        "Check::input($collation !== null, 'The explicit MySQL text collation must be utf8mb4_bin.');",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "$value = $operand instanceof ColumnUse ? $binding->field($operand) : (new TextLiteralLowering())->lower($operand);",
+        "Check::input($value instanceof TextColumnReference || $value instanceof TextLiteral, 'An explicit MySQL text collation requires a native VARCHAR field or text literal.');",
+        "return new CollatedText($value, $collation);"
+      ]
+    },
+    "Predicate/Text/TextComparison::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(",
+        "    $left instanceof TextColumnReference || $left instanceof CollatedText || $right instanceof TextColumnReference || $right instanceof CollatedText,",
+        "    'A text comparison needs a native VARCHAR field or explicit collation.',",
+        ");"
+      ]
+    },
+    "Predicate/Text/TextComparisonLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$left = $this->operand($comparison->left, $binding);",
+        "$right = $this->operand($comparison->right, $binding);",
+        "if (!$left instanceof TextColumnReference && !$left instanceof CollatedText && !$right instanceof TextColumnReference && !$right instanceof CollatedText) {",
+        "    return null;",
+        "}",
+        "Check::input(",
+        "    $left !== null && !$left instanceof ColumnReference && $right !== null && !$right instanceof ColumnReference,",
+        "    'A VARCHAR comparison requires two native text operands or NULL.'",
+        ");",
+        "return new TextComparison(TextOperator::from($comparison->operator->value), $left, $right);"
+      ]
+    },
+    "Predicate/Text/TextComparisonLowering::operand": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "return match (true) {",
+        "    $operand instanceof Collated => (new CollatedTextLowering())->lower($operand, $binding),",
+        "    $operand instanceof ColumnUse => $binding->field($operand),",
+        "    $operand instanceof ParsedNull => new NullLiteral(),",
+        "    default => (new TextLiteralLowering())->lower($operand),",
+        "};"
+      ]
+    },
+    "Ordering/ProjectionColumns::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expressions = new ExpressionLowering();",
+        "$casts = new IntegralCastLowering();",
+        "$comparisons = new TextComparisonLowering();",
+        "$strings = new TextLiteralLowering();",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A complete projection requires a resolved output shape.');",
+        "$results = [];",
+        "$parameters = new ParameterLowering();",
+        "$parameterPosition = 0;",
+        "$labels = new ProjectionLabel();",
+        "foreach ($fields as $field) {",
+        "    $name = $field->name;",
+        "    Check::input($name !== null, 'The result must have a resolved name.');",
+        "    $label = $labels->lower($statement, $field, $name->value);",
+        "    $expression = $field->expression;",
+        "    if ($expression === null || $expression instanceof ColumnUse) {",
+        "        $resolution = $field->resolution;",
+        "        Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');",
+        "        $results[] = new ResultColumn($binding->projected($resolution), $label);",
+        "        continue;",
+        "    }",
+        "    $operand = $expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    if ($operand instanceof ParsedNullTest) {",
+        "        $results[] = new ResultColumn((new PredicateLowering())->nullTest($operand, $binding), $label);",
+        "        continue;",
+        "    }",
+        "    $typed = match (true) {",
+        "        $operand instanceof ParsedComparison => $comparisons->lower($operand, $binding),",
+        "        $operand instanceof Collated => (new CollatedTextLowering())->lower($operand, $binding),",
+        "        default => null,",
+        "    };",
+        "    $parameter = $parameters->lower($expression, $parameterPosition + 1);",
+        "    if ($parameter !== null) {",
+        "        ++$parameterPosition;",
+        "    }",
+        "    $results[] = new ResultColumn(",
+        "        $typed ?? $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),",
+        "        $label,",
+        "    );",
+        "}",
+        "Check::input($results !== [], 'A complete projection requires at least one resolved output field.');",
+        "return $results;"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference) {",
+        "    Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);",
+        "}",
+        "if ($operand instanceof TextColumnReference) {",
+        "    $this->textColumn($operand, $inputs);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison, $operand instanceof TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest => [$operand->operand],",
+        "    $operand instanceof CollatedText => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "return $count;"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');",
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$position = 0;",
+        "foreach ($results as $result) {",
+        "    $this->checkLabel($result, $inputs);",
+        "    $pending = [[$result->expression, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {",
+        "            $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'",
+        "                : 'A predicate slot must belong to the SELECT source.';",
+        "            $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference => Check::input(",
+        "                $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),",
+        "                'Column slot must belong to the SELECT source.',",
+        "            ),",
+        "            $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),",
+        "            $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',",
+        "    $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify)",
+        "        . ' COLLATE ' . $expression->collation->value . ')',",
+        "    $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "return match (true) {",
+        "    $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,",
+        "    $column instanceof CollatedText => ResultKind::Text,",
+        "    $column instanceof UnsignedCast => ResultKind::UnsignedInteger,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof ColumnReference => ResultKind::Integer,",
+        "    $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,",
+        "};"
+      ]
+    }
+  }
+}

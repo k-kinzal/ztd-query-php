@@ -137,12 +137,15 @@ if ($dialect === 'mysql') {
     $properties['TableSource']['columnTypes'] = ['array'];
     $textOperator = 'Predicate\\Text\\TextOperator';
     $textComparison = 'Predicate\\Text\\TextComparison';
-    $textOperands = ['From\\TextColumnReference', 'Literal\\TextLiteral', 'NullLiteral'];
+    $collatedText = 'Expression\\CollatedText';
+    $properties[$collatedText] = ['operand' => ['From\\TextColumnReference', 'Literal\\TextLiteral'], 'collation' => ['From\\TextCollation']];
+    $methods[$collatedText] = ['__construct'];
+    $textOperands = [$collatedText, 'From\\TextColumnReference', 'Literal\\TextLiteral', 'NullLiteral'];
     $properties[$textOperator] = $methods[$textOperator] = [];
     $properties[$textComparison] = ['operator' => [$textOperator], 'left' => $textOperands,
         'right' => $textOperands, 'collation' => ['From\\TextCollation']];
     $methods[$textComparison] = ['__construct'];
-    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest', $textComparison);
+    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest', $textComparison, $collatedText);
     $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
@@ -169,7 +172,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
-    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering');
+    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering', 'Expression\\CollatedTextLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
 if ($dialect === 'postgres') {

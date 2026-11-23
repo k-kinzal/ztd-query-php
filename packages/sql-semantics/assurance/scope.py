@@ -36,6 +36,7 @@ CONTRACTS = {
     "mysql-varchar-insert-v2.json": "2fd2869e86715f893955c800e4d63d60f45dd6b9b2ac42df3ab2f95cdbbddbc2",
     "mysql-varchar-count-v1.json": "7c91770c3f26ffec66b122258fc64ef09231f59044a32d7c09ca7fe89ae8838b",
     "mysql-varchar-inheritance-v2.json": "5bd0a3474cd47e20ec070aca435175f97941a2a40c96bb40d69612687f93d28d",
+    "mysql-explicit-text-collation-v1.json": "2d68bc937da34126ae9d7ec99613c713f4ce7831657af06834d539d758a22a07",
     "postgres-int4-operators-v2.json": "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa",
     "sqlite-truth-v2.json": "f32372203fcd2896fd116d876d7d74271f4994821c8b8a237f66006a7299685e",
     "sqlite-unary-v1.json": "c79d1248b2e3e55c4cb4d2b94109811f8393fe824055ef02f92fbe0ab6abb9d6",

@@ -255,6 +255,8 @@ The [VARCHAR COUNT domain](mysql-varchar-count-v1.json) checks nullable and dupl
 
 The [VARCHAR inheritance domain](mysql-varchar-inheritance-v2.json) checks a resolved table default and explicit column overrides. It compares the derived physical slot with direct construction and checks native character-set, collation, width and nullability metadata before comparing the results. Run `run_server_mysql_varchar_inheritance.py` and replay with `combine_server_mysql_varchar_inheritance_evidence.py`.
 
+The [explicit MySQL collation domain](mysql-explicit-text-collation-v1.json) compares the native result columns and observes their collation and coercibility by position, including duplicate labels and projections filtered to an empty result. Run `run_server_mysql_explicit_text_collation.py` and replay with `combine_server_mysql_explicit_text_collation_evidence.py`.
+
 ## Native local projections
 
 The [local projection contract](server-local-projection-v4.json) specifies slot reads from an immediate definition and its composition through nested local scopes. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, an ordinary one-use CTE that shadows a physical table. It verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width. A separate probe bypasses an inner scope that reverses its output positions.
