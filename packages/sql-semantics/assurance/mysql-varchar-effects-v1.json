@@ -1,0 +1,28 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-effects-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-presence-v1.json", "server-update-v2.json", "server-delete-v2.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Apply a checked VARCHAR presence filter to a native single-target UPDATE or DELETE on transactional data. UPDATE assigns an integer or NULL to the separate signed slot.",
+  "constructors": {},
+  "existingRoles": ["Predicate/NullTest", "From/TextColumnReference", "TableSource", "Mutation/UpdateAssignment", "Mutation/Update", "Mutation/Delete"],
+  "structure": "A resolved target, scoped VARCHAR null test and an ordered signed assignment in the update case.",
+  "conditions": "The WHERE predicate's text read belongs to the target occurrence. UPDATE reads and writes a native signed input when assignment uses an existing field. The paired database fixture has the same declared types and collations.",
+  "meaning": "Select only rows where the predicate is true, including correct treatment of empty strings, NULL and nested Boolean conditions. DELETE removes those exact rows. UPDATE processes the selected rows, including trigger calls on no-op updates, and returns the native changed-row count.",
+  "sql": "Emit the exact target and native field names, preserve the signed assignment spelling and render the checked predicate under the statement's alias policy.",
+  "observations": ["Before, after and rolled-back target and control rows, with exact text bytes and multiplicity", "Physically triggered event records for the processed rows", "Affected delete or changed update count and zero output columns"],
+  "finite": {"operations": ["delete", "update"], "operands": ["label", "alternate", "empty_value"], "polarities": ["null", "not-null"], "updateValues": ["changed", "same", "null"], "identities": 24, "completeness": "Enumerate all six delete predicates and eighteen update combinations. Recover the physical operand, test polarity, target and assignment role from the constructed statement."},
+  "exploration": {"seeds": [3613, 6637, 31223], "casesPerSeed": 16, "timeoutSecondsPerRelease": 220, "allowedExclusions": [], "requiredForms": "Vary physical predicate slots, selectivity, nested logic, mutation operation and changed versus unchanged updates."},
+  "analysis": ["Delete through a nullable VARCHAR filter", "Update a signed field through VARCHAR presence", "Preserve old-row identity and native no-op counting through a mixed filter"],
+  "negative": ["Read a signed slot as VARCHAR in DELETE", "Reference an absent occurrence in UPDATE", "Configure a write to a VARCHAR slot through a signed assignment"],
+  "faults": ["Drop the DELETE filter", "Invert the selected presence predicate", "Read the other nullable VARCHAR column", "Process the control relation as the UPDATE target", "Replace a no-op UPDATE with a changed value"],
+  "evidence": {
+    "P01": "Resolve the mutation's target, assignment role and exact VARCHAR predicate slot.", "P02": "Reject wrong target placement and typed assignments before publication.", "P03": "Retain only native semantic values.", "P04": "Apply native VARCHAR presence to the owning write.", "P05": "Reuse the audited closed immutable roles.", "P06": "Verify exact physical and trigger effects plus changed-row count.",
+    "Q01": "Reject the specified wrong scope, type and assignment witnesses.", "Q02": "Exhaust all 24 finite identities and verify seeded constructs.", "Q03": "Verify the scope, assignment and observation per owning form.", "Q04": "Use the independent immutable-row evaluator and actual native transactional effects.", "Q05": "Tie the recorded execution to the exact PHP distribution and protected verifier."
+  },
+  "open": ["VARCHAR assignments and implicit text collations", "Multi-target writes and UPDATE or DELETE with ordering, limits or subqueries"],
+  "trust": ["Stock MySQL transactional triggers and native changed-row counting", "Exact declared fixture and stock collation", "Independent row and event oracle"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/update.html", "https://dev.mysql.com/doc/refman/8.4/en/delete.html", "https://dev.mysql.com/doc/refman/8.4/en/trigger-syntax.html"]
+}
