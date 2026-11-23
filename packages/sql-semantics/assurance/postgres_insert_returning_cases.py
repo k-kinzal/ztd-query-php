@@ -6,7 +6,7 @@ from random import Random
 from postgres_int4_cases import EXCEPTION
 from server_compound_cases import leaf, without_profiles
 from server_insert_cases import DEFAULTS, case as insertion, declarations, expected as literal_effect, observation as insert_observation
-from server_insert_query_cases import DATA, SCAN, expected as query_effect, sql_declarations, table
+from server_insert_query_cases import DATA, SCAN, expected as query_effect, sql_declarations, table, typed_distinct_output
 from server_join_cases import slot
 from server_returning_model import fields_from, ordered_returning, project_returned
 
@@ -26,7 +26,8 @@ def insertion_case(tag, written, outputs, *, rows=None, query=None, layout=COLUM
 
 def select(tag, expressions, source=None, where=None, distinct=False):
     fields = [[expression, f"p{number}"] for number, expression in enumerate(expressions)]
-    return {**leaf("postgres", tag, fields, table("postgres", source), where), "distinct": distinct}
+    query = {**leaf("postgres", tag, fields, table("postgres", source), where), "distinct": distinct}
+    return typed_distinct_output("postgres", query)
 
 
 def finite(tag, contract):
@@ -125,6 +126,9 @@ def negatives(tag):
     yield (analyzed(tag, start + "missing"), "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\SemanticException",
            "Column missing does not exist")
     yield analyzed(tag, start + "id + 1 AS computed"), EXCEPTION, "requires a resolved target column"
+    invalid_query = {**select(tag, [["null"]]), "distinct": True}
+    yield (insertion_case(tag, ["id"], [("stamp", "kept")], query=invalid_query),
+           EXCEPTION, "A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.")
 
 
 def requests(_engine, tag, contract):

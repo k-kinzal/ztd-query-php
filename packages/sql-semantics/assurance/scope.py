@@ -9,7 +9,7 @@ TOOL = Path(__file__).resolve().parent
 
 CONTRACTS = {
     "sqlite-pattern-v1.json": "6385d9428e2767c4e0ac9d53a22b1e4b593af2b7ccd696cbd9f4fe34c5e91d1f",
-    "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
+    "postgres-insert-returning-v2.json": "54420253749f6b350ac14815bab57448fe05d78ff8e1c635978ee05e9489ae2d",
     "postgres-update-returning-v4.json": "19861e0e485e9c024118dce01b45d259e431641ed253dae4e5f856b908985831",
     "postgres-update-returning-v3.json": "62d4f171e52118cb614abba4b257be5b2fc7bb699f3868d5d3ca0b0dbd341fff",
     "postgres-delete-returning-v3.json": "55f8de4b507bf8105763afa05c30d28957c874f16d825ee8e8652cd473bf26a6",

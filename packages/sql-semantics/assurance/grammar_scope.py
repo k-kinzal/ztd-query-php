@@ -265,7 +265,7 @@ def inventory(root):
             related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v3.json") for alternative in rules.get("DeleteStmt", [])}
             related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v3.json", "postgres-update-returning-v4.json",
                                                                   "postgres-boolean-returning-v1.json",
-                                                                  "postgres-insert-returning-v1.json", "postgres-text-returning-v2.json")
+                                                                  "postgres-insert-returning-v2.json", "postgres-text-returning-v2.json")
             related.update({alternative: ("postgres-int4-operators-v2.json",) for alternative in (
                 "a_expr: a_expr / a_expr", "a_expr: a_expr % a_expr", "a_expr: a_expr qual_Op a_expr",
                 "b_expr: b_expr / b_expr", "b_expr: b_expr % b_expr", "b_expr: b_expr qual_Op b_expr",
@@ -351,7 +351,7 @@ def inventory(root):
                     related[alternative] = (*related[alternative], "postgres-output-order-names-v1.json", "postgres-source-order-v1.json")
         for rule in insert:
             for alternative in rules.get(rule, []):
-                related[alternative] = (("server-insert-v1.json", "postgres-insert-returning-v1.json")
+                related[alternative] = (("server-insert-v1.json", "postgres-insert-returning-v2.json")
                                         if rule == "InsertStmt" else ("server-insert-v1.json",))
         for rule in update:
             for alternative in rules.get(rule, []):

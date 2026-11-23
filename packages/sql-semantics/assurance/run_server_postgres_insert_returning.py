@@ -12,12 +12,12 @@ from server_join_cases import slot
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-insert-returning"
-CONTRACT = "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8"
+CONTRACT = "54420253749f6b350ac14815bab57448fe05d78ff8e1c635978ee05e9489ae2d"
 OBSERVER = "server_insert_query_observer.php"
 
 
 def specifications():
-    path, projection = TOOL / "postgres-insert-returning-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "postgres-insert-returning-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "postgres-insert-returning-contract-mismatch")
     record = json.loads(path.read_text())
     require(len(finite_ids("postgres", record, "pg-17.2")) == record["finite"]["identities"], "postgres-insert-returning-domain-size")
