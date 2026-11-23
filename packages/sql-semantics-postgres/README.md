@@ -20,6 +20,8 @@ A resolved ordinary table can supply int4 and native text projection fields. Qua
 
 An external read can resolve to a base table, a view, or a materialized view. The IR records `TableSource::$kind` alongside the schema, name, consumed fields and `ONLY` policy. Include each needed definition in the analysis context in dependency order. Evaluation uses the relation at that identity, so a view reads current data and a materialized view reads its stored rows. The INSERT, UPDATE and DELETE destination constructors require a base table.
 
+Ordinary `WITH` queries keep their ordered SELECT definitions, materialization policies and local reads by definition and output position. A later definition can project the fields of an earlier one. Independent nested `WITH` queries have their own definition sequence. Explicit result labels survive local alias changes. A parameter position shared across definitions must have one native input type.
+
 A native `BOOLEAN` or `pg_catalog.bool` field is a `BooleanColumnReference` in a projection, including when an independent derived input exports that field into a join. The reference identifies its occurrence and column slot. A read can be used directly in WHERE or combined with logical, NULL and truth tests. DISTINCT retains native Boolean equality, and ORDER BY preserves the selected NULL placement.
 
 A native BIGINT field retains an int8 reference through grouped projections, joined inputs and derived headings. CAST to integer retains PostgreSQL's range check at execution. Casts from Boolean and native text fields retain their respective operand kinds.

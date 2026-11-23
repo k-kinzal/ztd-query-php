@@ -88,6 +88,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-external-source-kinds-boundaries-v1.json', 'e9d773c3db468973e5f2ff12b3b199cb4ac89f5dbb8f83a605894216d348a31f'],
             ['postgres-grouped-having-boundaries-v1.json', '0297473b3f47b36fb10ba90e55b5328000a001f9b1d8c0b001e362b272f4d5c3'],
             ['postgres-signed-range-widths-boundaries-v1.json', '28cd3860fb2bfbd1a7dea1897cd986b3db57b57376958dee3dc78256afa6782e'],
+            ['postgres-with-projection-boundaries-v1.json', '6ecaa67c79a9468d8b723852a9da02e6fdfdab12de28d543aab8afea892e67e7'],
         ],
         'sqlite' => [],
     };
@@ -183,6 +184,7 @@ function checkNativeBoundaries(
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
             foreach (['Ir\\From\\ExternalRelationKind', 'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Identifier\\Comparison', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
+                'Ir\\Rows\\With\\WithProjection', 'Ir\\Rows\\With\\WithRead', 'Ir\\Rows\\With\\WithDefinition', 'Ir\\Rows\\With\\WithScope', 'Ir\\Rows\\With\\WithSql', 'Ir\\Rows\\With\\WithLowering', 'Ir\\Rows\\With\\WithMaterialization', 'Ir\\Rows\\LocalProjection', 'Ir\\Rows\\LocalProjectionSql', 'Ir\\Rows\\LocalProjectionLowering', 'Ir\\Rows\\LocalDefinition', 'Ir\\Rows\\LocalResultColumn', 'Statement\\Query\\With\\Materialization', 'Model\\Statement\\Reference\\Table\\CommonTable', 'Statement\\Query\\QueryExpression', 'Statement\\Query\\ExpressionTarget',
                 'Ir\\Aggregation\\GroupedSelect', 'Ir\\Aggregation\\GroupedKeys', 'Ir\\Aggregation\\GroupColumn', 'Ir\\Aggregation\\AggregateBinding', 'Ir\\Aggregation\\Aggregate', 'Ir\\Aggregation\\GroupedComparison', 'Ir\\Aggregation\\HavingLowering', 'Model\\Statement\\Scalar', 'Statement\\Invocation\\FunctionCall as ParsedAggregate', 'Statement\\Query\\ExpressionTarget as Target', 'Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',

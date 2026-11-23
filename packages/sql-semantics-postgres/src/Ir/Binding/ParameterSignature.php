@@ -7,6 +7,9 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Binding;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Compound;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithRead;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -32,13 +35,36 @@ final class ParameterSignature
      */
     public static function check(Select|Compound $left, Select|Compound $right): void
     {
-        $pending = [$right, $left];
+        self::checkQueries([$right, $left]);
+    }
+
+    /**
+     * Confirms a common input type for every position in the owning query.
+     * @param list<Select|Compound|LocalProjection|WithProjection> $pending Independent query members
+     */
+    public static function checkQueries(array $pending): void
+    {
         $types = [];
         while ($pending !== []) {
             $query = array_pop($pending);
             if ($query instanceof Compound) {
                 $pending[] = $query->right;
                 $pending[] = $query->left;
+                continue;
+            }
+            if ($query instanceof LocalProjection) {
+                $pending[] = $query->definition;
+                continue;
+            }
+            if ($query instanceof WithProjection) {
+                if (!$query->body instanceof WithRead) {
+                    $pending[] = $query->body;
+                }
+                foreach ($query->definitions as $definition) {
+                    if (!$definition->body instanceof WithRead) {
+                        $pending[] = $definition->body;
+                    }
+                }
                 continue;
             }
             foreach ($query->columns as $column) {

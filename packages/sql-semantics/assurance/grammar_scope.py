@@ -312,6 +312,10 @@ def inventory(root):
             for alternative in rules.get("having_clause", ()):
                 if "HAVING a_expr" in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-grouped-having-v1.json")
+            for rule in ("with_clause", "cte_list", "common_table_expr", "opt_materialized"):
+                for alternative in rules.get(rule, ()):
+                    if "RECURSIVE" not in alternative:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-with-projection-v1.json")
             for rule in ("ColumnDef", "GenericType"):
                 for alternative in rules.get(rule, ()):
                     linked = related.get(alternative, ())

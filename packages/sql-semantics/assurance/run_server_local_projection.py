@@ -29,7 +29,23 @@ def check_value(item, response):
     if item["dialect"] == "mysql":
         suffix = "/materialized" if item["release"].startswith("mysql-5.6.") else "/derived-merge=on"
         require(response["profile"].endswith(suffix), "server-local-projection-optimizer-profile-mismatch", response)
-    require(canonical(structural_model(item)) == canonical(response["local"]), "server-local-projection-shape-mismatch", response)
+    actual = expand_local(response)
+    require(canonical(structural_model(item)) == canonical(actual["local"]), "server-local-projection-shape-mismatch", response)
+
+
+def expand_local(query):
+    if "with" in query:
+        projection = query["with"]
+        require(len(projection["definitions"]) == 1 and "read" in projection["body"],
+                "server-local-projection-constructor-shape", projection)
+        (policy, definition), = projection["definitions"]
+        source, columns = projection["body"]["read"]
+        require(policy == "" and source == 0, "server-local-projection-constructor-binding", projection)
+        return {"local": {"definition": expand_local(definition), "columns": columns}}
+    if "local" in query:
+        projection = query["local"]
+        return {"local": {**projection, "definition": expand_local(projection["definition"])}}
+    return {key: query[key] for key in ("columns", "source", "where", "distinct", "orderBy", "limit")}
 
 
 def check_observation(item, actual, sql):

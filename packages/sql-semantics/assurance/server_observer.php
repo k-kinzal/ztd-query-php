@@ -64,6 +64,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $pdo->exec('START TRANSACTION READ ONLY');
         $readOnly = true;
     }
+    if (isset($input['withBindings'])) {
+        return measurePostgresWithBindings($pdo, $input, $readOnly);
+    }
     $warnings = ($input['observeWarnings'] ?? false) === true;
     if ($warnings) {
         // MySQL 5.x can retain earlier diagnostics when a constant statement succeeds.
@@ -110,6 +113,45 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $readOnly = false;
     }
     return $result;
+}
+
+function measurePostgresWithBindings(PDO $pdo, array $input, bool &$readOnly): array
+{
+    $bindings = $input['withBindings'];
+    $sql = $input['sql'];
+    if (!array_is_list($bindings) || count($bindings) !== 1 || !is_int($bindings[0])
+        || preg_match('/\AWITH\s/i', $sql) !== 1 || str_contains($sql, ';')) {
+        return ['status' => 'outside-observer-scope'];
+    }
+    $prepared = false;
+    try {
+        $pdo->exec('PREPARE ir_with_read AS ' . $sql);
+        $prepared = true;
+        $types = $pdo->query(
+            'SELECT param::oid::text FROM pg_catalog.pg_prepared_statements AS prepared, '
+            . 'unnest(prepared.parameter_types) WITH ORDINALITY AS t (param, slot) '
+            . "WHERE prepared.name = 'ir_with_read' ORDER BY slot"
+        )->fetchAll(PDO::FETCH_COLUMN);
+        $statement = $pdo->query('EXECUTE ir_with_read (' . $bindings[0] . ')');
+        $fields = [];
+        for ($index = 0; $index < $statement->columnCount(); ++$index) {
+            $meta = $statement->getColumnMeta($index);
+            $fields[] = [$meta['name'], $meta['native_type'], $meta['pgsql:oid']];
+        }
+        $rows = $statement->fetchAll(PDO::FETCH_NUM);
+        $statement->closeCursor();
+
+        return ['status' => 'rows', 'fields' => $fields, 'rows' => $rows, 'inputOids' => $types];
+    } catch (PDOException $error) {
+        $pdo->exec('ROLLBACK');
+        $readOnly = false;
+
+        return ['status' => 'db-error', 'state' => $error->errorInfo[0]];
+    } finally {
+        if ($prepared) {
+            $pdo->exec('DEALLOCATE ir_with_read');
+        }
+    }
 }
 
 function postgresResultCollations(PDO $pdo, string $sql, int $width): array

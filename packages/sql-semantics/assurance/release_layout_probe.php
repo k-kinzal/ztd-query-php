@@ -325,6 +325,16 @@ function observePostgresSignedRangeWidths(SqlSemantics\Platform\PostgreSql\Seman
         $predicate->negated, $query->toString()];
 }
 
+function observePostgresWithProjection(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $query = $semantics->analyze(
+        'WITH a AS (SELECT 42 AS n), b AS MATERIALIZED (SELECT n FROM a) SELECT n AS answer FROM b',
+    );
+
+    return [$query->definitions[1]->materialization->value, $query->definitions[1]->body->definition,
+        $query->body->definition, $query->body->columns[0]->slot, $query->toString()];
+}
+
 function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -452,6 +462,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'PostgreSql') {
+        $queries['Rows\\With\\WithProjection'] = 'WITH a AS (SELECT 42 AS n), b AS (SELECT n FROM a) SELECT n FROM b';
+    }
+    if ($platform === 'PostgreSql') {
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
     foreach ($queries as $role => $sql) {
@@ -555,6 +568,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['externalSourceKinds'] = observePostgresExternalSourceKinds($semantics);
             $details['groupedHaving'] = observePostgresHaving($semantics);
             $details['signedRangeWidths'] = observePostgresSignedRangeWidths($semantics);
+            $details['withProjection'] = observePostgresWithProjection($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

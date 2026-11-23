@@ -33,4 +33,13 @@ final class ParameterSignatureTest extends TestCase
 
         ParameterSignature::check($left, $right);
     }
+
+    public function testCheckQueriesRejectsAConflictOutsideTheFirstMember(): void
+    {
+        $first = new Select([new ResultColumn(new Parameter(1), new Identifier('first'))]);
+        $second = new Select([new ResultColumn(new Parameter(1, CastDestination::Boolean), new Identifier('second'))]);
+        $this->expectExceptionMessage('parameter position must have one input type');
+
+        ParameterSignature::checkQueries([$first, $first, $second]);
+    }
 }

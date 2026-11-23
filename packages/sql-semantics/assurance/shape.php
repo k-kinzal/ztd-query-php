@@ -651,6 +651,26 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Mutation\\UpdateAssignmentLowering';
     }
     $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
+    if ($dialect === 'postgres') {
+        $with = 'Rows\\With\\WithProjection';
+        $withRead = 'Rows\\With\\WithRead';
+        $withDefinition = 'Rows\\With\\WithDefinition';
+        $withMaterialization = 'Rows\\With\\WithMaterialization';
+        $properties['Rows\\LocalProjection']['definition'] = ['Rows\\LocalProjection', $with, 'Select'];
+        $properties[$with] = [
+            'definitions' => ['array'], 'body' => ['Rows\\LocalProjection', $withRead, 'Select'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],
+        ];
+        $properties[$withRead] = ['definition' => ['int'], 'columns' => ['array']];
+        $properties[$withDefinition] = ['body' => ['Rows\\LocalProjection', $with, $withRead, 'Select'], 'materialization' => [$withMaterialization]];
+        $properties[$withMaterialization] = $methods[$withMaterialization] = [];
+        $enumCases[$withMaterialization] = ['Default' => '', 'Materialized' => 'MATERIALIZED', 'NotMaterialized' => 'NOT MATERIALIZED'];
+        $methods[$with] = ['__construct', 'width', 'profileId', 'toString'];
+        $methods[$withRead] = $methods[$withDefinition] = ['__construct'];
+        $roots[] = $with;
+        array_push($internal, 'Rows\\With\\WithScope', 'Rows\\With\\WithSql', 'Rows\\With\\WithLowering');
+        array_push($pureCollaborators, 'Rows\\With\\WithScope', 'Rows\\With\\WithSql');
+    }
     $properties['Rows\\LocalResultColumn'] = ['slot' => ['int'], 'name' => ['Identifier']];
     $methods['Rows\\LocalProjection'] = $methods['Select'];
     $methods['Rows\\LocalResultColumn'] = ['__construct'];
@@ -818,7 +838,8 @@ try {
     $analyze = $resolve . ' $operation = ' . $bind . '; $statement = $operation->statement; return match (true) {'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && ' . $recursiveWith . ' => (new \\'
         . $prefix . 'Rows\\Recursive\\RecursiveSeriesLowering())->lower($operation, $statement),'
-        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null,'
+        . '$statement instanceof \\' . $platform . '\\Statement\\Query\\QueryExpression && $statement->with !== null'
+        . ($dialect === 'postgres' ? ' => (new \\' . $prefix . 'Rows\\With\\WithLowering())->lower($operation, $statement),' : ',')
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && $statement->from instanceof \\' . $platform
         . '\\Statement\\Relation\\DerivedTable => (new \\' . $prefix . 'Rows\\LocalProjectionLowering())->lower($operation),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $compound . ', $statement instanceof \\' . $platform
@@ -929,9 +950,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v34.json';
+    $storagePath = __DIR__ . '/value-storage-v35.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '90ce5b97072f8312b23ed340474cf75a20f83f288aa5ecc085f6f36512a97847',
+        hash_file('sha256', $storagePath) === '2135a488029843c29c7d86f3c389902a76a9672db0f97922481bab916d2e0dee',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1019,6 +1040,7 @@ try {
                 'Aggregation\\GroupedLowering' => 'Aggregation\\GroupedSelect',
                 'SelectLowering' => 'Select',
                 'Rows\\LocalProjectionLowering' => 'Rows\\LocalProjection',
+                'Rows\\With\\WithLowering' => 'Rows\\With\\WithProjection',
                 'Rows\\Recursive\\RecursiveSeriesLowering' => 'Rows\\RecursiveSeries',
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
@@ -1060,7 +1082,12 @@ try {
                     static fn ($method) => $method->name->toString(),
                     array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
                 ));
-                requireShape($publicMethods === ($short === 'Aggregation\\GroupedLowering' ? ['applies', 'lower'] : ['lower']), "Unexpected lowering entry point in $short");
+                $expectedMethods = match ($short) {
+                    'Aggregation\\GroupedLowering' => ['applies', 'lower'],
+                    'Rows\\With\\WithLowering' => ['lower', 'query', 'read'],
+                    default => ['lower'],
+                };
+                requireShape($publicMethods === $expectedMethods, "Unexpected lowering entry point in $short");
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
             }
         }

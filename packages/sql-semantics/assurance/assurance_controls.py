@@ -294,8 +294,10 @@ def storage_controls(args):
         location = args.candidate / f"packages/sql-semantics-{dialect}/src/Ir" / name
         assignments = [line for line in location.read_text().splitlines(keepends=True) if line.startswith("        $this->nullsFirst = ")]
         require(len(assignments) == 1, "uninitialized-field-control-anchor", dialect)
+        initialization_failure = ("Native boundary differs in Ordering/Order::__construct" if dialect == "postgres"
+                                  else "Value field needs one unconditional initialization in Ordering\\Order::nullsFirst")
         results.append(source_shape_mutation(args, dialect, name, "leave-readonly-field-uninitialized", assignments[0], "",
-                                        "Value field needs one unconditional initialization in Ordering\\Order::nullsFirst"))
+                                            initialization_failure))
     return results
 
 

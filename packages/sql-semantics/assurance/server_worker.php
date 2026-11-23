@@ -338,9 +338,45 @@ function constructLocalProjection(string $platform, array $input): SemanticsIR
         $columns[] = new $column($slot, new $name($label));
     }
     $definition = $local['definition'];
-    $source = isset($definition['local']) ? constructLocalProjection($platform, $definition) : constructSelect($platform, $definition);
+    $source = match (true) {
+        isset($definition['local']) => constructLocalProjection($platform, $definition),
+        isset($definition['with']) => constructWith($platform, $definition),
+        default => constructSelect($platform, $definition),
+    };
 
     return new $statement($source, $columns);
+}
+
+function constructWith(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\Rows\\With\\';
+    $type = $namespace . 'WithProjection';
+    $def = $namespace . 'WithDefinition';
+    $policy = $namespace . 'WithMaterialization';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $with = $input['with'];
+    $definitions = [];
+    foreach ($with['definitions'] as [$materialization, $query]) {
+        $definitions[] = new $def(constructWithMember($platform, $query, $input['release']), $policy::from($materialization));
+    }
+    return new $type($definitions, constructWithMember($platform, $with['body'], $input['release']), $release::from($input['release']));
+}
+
+function constructWithMember(string $platform, array $input, string $release): object
+{
+    if (isset($input['read'])) {
+        [$ordinal, $columns] = $input['read'];
+        $type = $platform . 'Ir\\Rows\\With\\WithRead';
+        $result = $platform . 'Ir\\Rows\\LocalResultColumn';
+        $identifier = $platform . 'Ir\\Identifier';
+        return new $type($ordinal, array_map(static fn ($column) => new $result($column[0], new $identifier($column[1])), $columns));
+    }
+    $effective = $input + ['dialect' => 'postgres', 'release' => $release];
+    return match (true) {
+        isset($input['with']) => constructWith($platform, $effective),
+        isset($input['local']) => constructLocalProjection($platform, $effective),
+        default => constructSelect($platform, $effective),
+    };
 }
 
 function constructRecursiveSeries(string $platform, array $input): SemanticsIR
@@ -399,6 +435,17 @@ function mysqlSetKinds(SqlSemantics\Platform\MySql\Ir\Rows\Compound $value): arr
 
 function observeSetQuery(string $namespace, object $value, string $dialect): array
 {
+    if ($value::class === $namespace . 'Rows\\With\\WithRead') {
+        return ['read' => [$value->definition, array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns)]];
+    }
+    if ($value::class === $namespace . 'Rows\\With\\WithProjection') {
+        return ['with' => [
+            'definitions' => array_map(static fn ($entry): array => [
+                $entry->materialization->value, observeSetQuery($namespace, $entry->body, $dialect),
+            ], $value->definitions),
+            'body' => observeSetQuery($namespace, $value->body, $dialect),
+        ]];
+    }
     if ($value::class === $namespace . 'Rows\\Compound') {
         return ['compound' => [
             'left' => observeSetQuery($namespace, $value->left, $dialect),
@@ -795,6 +842,7 @@ function observeStatement(array $input): array
         $value = match (true) {
             isset($input['sql']) => analyzeStatement($platform, $input),
             isset($input['grouped']) => constructGrouped($platform, $input),
+            isset($input['with']) => constructWith($platform, $input),
             isset($input['local']) => constructLocalProjection($platform, $input),
             isset($input['series']) => constructRecursiveSeries($platform, $input),
             isset($input['compound']) => constructSetQuery($platform, $input),

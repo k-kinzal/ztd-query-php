@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithSql;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 
@@ -27,7 +29,11 @@ final class LocalProjectionSql
             $columns[] = $alias . '.' . $renderer->localColumn($column->slot) . ' AS ' . $name;
         }
         $source = $projection->definition;
-        $input = $source instanceof Select ? $renderer->render($source, true) : $this->render($source, true);
+        $input = match (true) {
+            $source instanceof Select => $renderer->render($source, true),
+            $source instanceof WithProjection => (new WithSql())->render($source, true),
+            $source instanceof LocalProjection => $this->render($source, true),
+        };
 
         return 'SELECT ' . implode(', ', $columns) . ' FROM (' . $input . ') AS ' . $alias;
     }

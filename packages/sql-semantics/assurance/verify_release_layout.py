@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v56.json"
-CONTRACT = "a41b3b834717e22e35396046b7727bd2a54075e26da09785a38ed0883367531f"
+CONTRACT_NAME = "release-layout-v57.json"
+CONTRACT = "59fec7308c43e511d3770cd9b7eb5a6dd9623924f8691689d99e12a308a68ad2"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -318,6 +318,12 @@ def verify_probe(raw, catalog):
                 '("__ztd_source"."amount" IS NULL AND CAST(NULL AS pg_catalog.int8) IS NULL)) AS "exact_null" '
                 'FROM "public"."range_fields" AS "__ztd_source"',
             ], "installed-postgres-signed-range-widths-mismatch", item)
+            require(item.get("withProjection") == [
+                "MATERIALIZED", 0, 1, 0,
+                'WITH "__ztd_cte_0" AS (SELECT CAST(42 AS pg_catalog.int4) AS "__ztd_c0"), '
+                '"__ztd_cte_1" AS MATERIALIZED (SELECT "__ztd_cte_0"."__ztd_c0" AS "__ztd_c0" FROM "__ztd_cte_0") '
+                'SELECT "__ztd_cte_1"."__ztd_c0" AS "answer" FROM "__ztd_cte_1"',
+            ], "installed-postgres-with-projection-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '
