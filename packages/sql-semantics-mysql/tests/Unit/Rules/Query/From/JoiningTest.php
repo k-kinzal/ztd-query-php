@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Testing\MySql\InspectedStatement;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(Joining::class)]
@@ -56,7 +57,7 @@ final class JoiningTest extends TestCase
         $using = $mysql->diagnose("SELECT * $from JOIN app.second_input b USING (lane, id)", $declarations);
         $rightMerge = $mysql->diagnose("SELECT * $from NATURAL RIGHT JOIN app.second_input b", $declarations);
         $ordinary = $mysql->diagnose("SELECT * $from RIGHT JOIN app.second_input b ON a.id = b.id", $declarations);
-        $names = static fn ($query): array => array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []);
+        $names = static fn (InspectedStatement $query): array => array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []);
 
         self::assertSame(['id', 'lane', 'first_val', 'last_val'], $names($using));
         self::assertSame(['lane', 'id', 'last_val', 'first_val'], $names($rightMerge));
