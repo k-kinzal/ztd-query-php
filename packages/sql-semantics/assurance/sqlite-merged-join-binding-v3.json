@@ -1,0 +1,68 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-join-binding-3",
+  "approval": "pending-human-review",
+  "scope": "Pin the binder that determines right and full merge values and names while preserving qualified slots.",
+  "artifacts": {
+    "src/Rules/Resolution/FromScope.php": {
+      "methods": [
+        "enter",
+        "star"
+      ],
+      "sha256": "093946881ccd66d88d7c3dfeadd51e7e6d9599b6021673dee48e7d67f278ab1e"
+    },
+    "src/Rules/Resolution/Joining.php": {
+      "methods": [
+        "join",
+        "locate",
+        "uniqueNames",
+        "coalesced",
+        "withRepresentative",
+        "extend",
+        "extendsRepresentative"
+      ],
+      "sha256": "97c6f4aa4d3c5da0c2b3624e24d15fc7c22c3ae8d17553e82f7a244afb33305b"
+    },
+    "src/Rules/Resolution/ColumnResolver.php": {
+      "methods": [
+        "find",
+        "match"
+      ],
+      "sha256": "b12db0bd5344f91c88a90dfed12480daa78b76fc8a2e88ed2dd0d17d1a89da30"
+    },
+    "src/Rules/Query/Projection.php": {
+      "methods": [
+        "expand"
+      ],
+      "sha256": "da73c834d3c38da5e1890790bb34aae0e7fd02dac4fbd5156c2f23c61da01d1e"
+    },
+    "src/Model/Resolution/VisibleRelation.php": {
+      "methods": [
+        "resolved",
+        "starSlot"
+      ],
+      "sha256": "d01d239d7cddad69fc6b1cb7645d8c535e2aefa2ee028f2e5f4972979e2e0599"
+    },
+    "src/Model/Statement/Reference/Column/MergedColumns.php": {
+      "methods": [
+        "__construct"
+      ],
+      "sha256": "99006415c62f9751152c23b71bc7ab7eac014cb2f4fb394296fcc894c3504f14"
+    },
+    "src/Model/Statement/Reference/Column/ResolvedColumn.php": {
+      "methods": [
+        "__construct",
+        "declaration"
+      ],
+      "sha256": "41c132fabdfaef9efd8ca2932e0774e3c39b96f8e722437cfac2e4a1ae706319"
+    },
+    "src/Rules/Query/ResultNames.php": {
+      "methods": [
+        "resolved",
+        "output",
+        "declared"
+      ],
+      "sha256": "c540058aa4c7b1c6e71f8c90a91956b879f211f593ba3b004546ff03fb79d19f"
+    }
+  },
+  "extends": "sqlite-merged-join-binding-v2.json"
+}

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Ir\ColumnReference;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSourceLowering;
 use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
@@ -36,7 +37,9 @@ final class SourceBindingTest extends TestCase
         self::assertInstanceOf(ResultColumn::class, $result);
 
         $binding = new SourceBinding($operation->binding(), $select->from);
-        self::assertSame(0, $binding->reference($result->expression)->slot);
+        $value = $binding->reference($result->expression);
+        self::assertInstanceOf(ColumnReference::class, $value);
+        self::assertSame(0, $value->slot);
         self::assertSame('A', $binding->source()?->columns[0]->value);
     }
 
@@ -144,5 +147,22 @@ final class SourceBindingTest extends TestCase
         $slots = new SourceBinding($operation->binding(), null);
 
         self::assertEquals(new ColumnReference(1, 4), $slots->localSlot($resolution, $names, 4));
+    }
+
+    public function testValueResolvesBothOrderedInputsOfAMergedFullField(): void
+    {
+        $sqlite = new Inspection();
+        $left = $sqlite->inspect('CREATE TABLE a (key TEXT)');
+        $right = $sqlite->inspect('CREATE TABLE b (key INT)');
+        $operation = $sqlite->inspect('SELECT * FROM a FULL JOIN b USING (key)', [$left, $right]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $field = $operation->field(0);
+        self::assertInstanceOf(ResolvedColumn::class, $field->resolution);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+        $value = $binding->value($field->resolution);
+
+        self::assertInstanceOf(Coalesce::class, $value);
+        self::assertEquals(new ColumnReference(0, 0), $value->arguments[0]->expression);
+        self::assertEquals(new ColumnReference(0, 1), $value->arguments[1]->expression);
     }
 }

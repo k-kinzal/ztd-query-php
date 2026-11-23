@@ -220,7 +220,7 @@ final class ExpressionLowering
      * Resolves a truth word to its column or integer role.
      * @throws InvalidConstruction When the written name has no checked column binding
      */
-    public function truthWord(TruthWord $expression, SourceBinding $binding): ColumnReference|IntegerLiteral
+    public function truthWord(TruthWord $expression, SourceBinding $binding): Coalesce|ColumnReference|IntegerLiteral
     {
         $truth = $binding->constantTruth($expression);
 

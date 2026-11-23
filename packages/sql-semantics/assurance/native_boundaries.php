@@ -15,9 +15,9 @@ function nativeBoundaryContract(string $dialect): array
         'sqlite' => [
             ['sqlite-rename-boundaries-v1.json', '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
-            ['sqlite-query-scope-boundaries-v7.json', 'a483aa5d20afc3b751a8dfe75c74b4bb61d1c813faddcbdfea0e3f8f5aaf16b9'],
+            ['sqlite-query-scope-boundaries-v8.json', '6a66b6f8c848e33a245fb015c53dcce1440af98364bdbe58850cfd3cde295b11'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
-            ['sqlite-wildcard-boundaries-v3.json', '0d635b2b4453e99d9a3aeca34b230154ac3003dd6d7bc20a71adff40b4dd3d62'],
+            ['sqlite-wildcard-boundaries-v4.json', '299d27d56b6190fbb5bc9e1c89704579155cdb1bf083b0bae5aa230577911c00'],
             ['sqlite-insert-slots-boundaries-v5.json', '55d984c88686949361c74660945cc67450c02a86b6a69c53aec6f079f46f87c0'],
             ['sqlite-numeric-boundaries-v2.json', 'b625f2484ffd6dcd30ba27f24a9930e09061b2a508fa0eedb32ef36ceab6604b'],
             ['sqlite-scalar-boundaries-v16.json', 'ea516f9710372604edb7f0bf280eeba605ac692d4177e433336e0da7d7c8dd1c'],

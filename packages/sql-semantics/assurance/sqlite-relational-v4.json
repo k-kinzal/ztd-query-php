@@ -1,0 +1,178 @@
+{
+  "revision": "SemanticsIR/sqlite-relational-4",
+  "extends": "sqlite-relational-v3.json",
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "requiredScope": "All previously required families, releases, and modes remain in scope.",
+  "constructors": {
+    "ColumnReference": {
+      "role": "Value of an explicit column in one local table occurrence.",
+      "structure": "Zero-based table occurrence index and column slot index.",
+      "boundary": "Both indices are nonnegative. SELECT validates each reference against the visible occurrences and their slots. Indices are independent for two occurrences of the same external table.",
+      "meaning": "Read the named column from the bound row, including NULL extension.",
+      "sql": "Use the occurrence's unique generated alias and quote the exact column name."
+    },
+    "From/Join": {
+      "role": "One step of a left-associated chain of base-table inputs.",
+      "structure": "Kind, right input, optional predicate.",
+      "boundary": "SELECT requires a first input, at most 64 total table occurrences and ON references within the prefix through this input.",
+      "meaning": "Cartesian product, ON filtering, then NULL extension of unmatched rows according to the kind. CROSS also retains the explicit CROSS planner constraint.",
+      "sql": "Emit the join keyword, absolute right input under its generated alias and optional ON."
+    },
+    "From/JoinKind": {
+      "role": "Join operation.",
+      "structure": "Inner, Cross, Left, Right or Full.",
+      "boundary": "A closed enum. Comma and unconstrained JOIN denote the inner variant; CROSS is distinct.",
+      "meaning": "Controls unmatched-row inclusion and which input is NULL extended.",
+      "sql": "Emit INNER JOIN, CROSS JOIN, LEFT JOIN, RIGHT JOIN or FULL JOIN."
+    },
+    "Predicate/Comparison": {
+      "role": "Value of one ordered scalar comparison in ON or WHERE.",
+      "structure": "Comparison kind and two integer, NULL, numbered parameter, column or arithmetic operands.",
+      "boundary": "Child alternatives are closed; SELECT checks both children in the clause scope.",
+      "meaning": "SQLite comparisons with the affinities and collations of the denoted operands. Ordinary comparisons propagate NULL. IS and IS NOT are NULL-safe.",
+      "sql": "Parenthesize the comparison and retain left and right operand roles."
+    },
+    "Predicate/ComparisonOperator": {
+      "role": "One SQLite comparison rule.",
+      "structure": "=, <>, <, <=, >, >=, IS, IS NOT.",
+      "boundary": "A closed enum, with equivalent spellings normalized during analysis.",
+      "meaning": "SQLite scalar comparison, including the two NULL-safe alternatives.",
+      "sql": "Emit the enum's fixed SQL operator."
+    },
+    "Predicate/Logical": {
+      "role": "One ordered three-valued logical operation in ON or WHERE.",
+      "structure": "AND or OR with two closed predicate or scalar operands.",
+      "boundary": "Child alternatives are closed; SELECT checks both children and counts nesting and expanded occurrences.",
+      "meaning": "Apply SQLite numeric truth conversion and its three-valued logic.",
+      "sql": "Parenthesize the operation and preserve both operands."
+    },
+    "Predicate/LogicalOperator": {
+      "role": "One three-valued logical operation.",
+      "structure": "AND or OR.",
+      "boundary": "A closed enum.",
+      "meaning": "SQLite logical AND and OR.",
+      "sql": "Emit the enum's fixed keyword."
+    },
+    "Ordering/Order": {
+      "role": "Ordering by an output position.",
+      "structure": "One-based selected field, direction and effective NULL placement.",
+      "boundary": "Position is positive locally and belongs to the projection at SELECT construction. SELECT bounds the number of terms by 2000.",
+      "meaning": "Order by that output using its collation, direction and NULL placement. Ties are unordered.",
+      "sql": "Emit the ordinal, explicit direction and explicit NULL placement."
+    },
+    "Select": {
+      "role": "Completed SQLite row-producing query.",
+      "structure": "Ordered projection, optional first source, ordered joins, optional filter, ordered result keys.",
+      "boundary": "Existing projection, reference, expansion and parameter budget checks apply to every applicable expression. Join predicates can only see their prefixes. Filters and output expressions use the full local scope.",
+      "meaning": "Read the joined input, filter it by SQLite truth and project the result bag; ordering constrains rows with different keys.",
+      "sql": "Emit clauses in SQLite order; parameters remain in the same lexical clause order."
+    }
+  },
+  "analysis": "Bind base tables through complete, matching declarations. Allow explicit projected supported expressions, simple joins with optional ON, supported WHERE predicates and ordinal ORDER BY. For the binary ordinary inputs described by sqlite-merged-join-v1.json, USING and NATURAL normalize to the same explicit operations. The binary RIGHT merge uses sqlite-merged-right-join-v1.json. The binary FULL merge uses sqlite-merged-full-join-v1.json. Multi-step merged joins remain open. All other boundaries, observations, direct cases, seeds and budgets are retained.",
+  "observations": [
+    "exact ordered result names",
+    "typed values and multiplicities",
+    "monotonicity of non-tied ordering keys",
+    "native labels and slots of numbered parameters",
+    "no writes"
+  ],
+  "assumptions": "The same external base tables, named columns, SQLite column affinities and collations are provided by the evaluator. Independent fixtures have BLOB affinity and BINARY collation so the comparator does not share the implementation's type or name-resolution rules.",
+  "finite": {
+    "joinKinds": [
+      "INNER",
+      "CROSS",
+      "LEFT",
+      "RIGHT",
+      "FULL"
+    ],
+    "joinPredicates": [
+      "unconstrained",
+      "left key equals right key",
+      "left key is right key"
+    ],
+    "filters": [
+      "absent",
+      "NULL",
+      "right value >= 1"
+    ],
+    "orders": [
+      "absent",
+      "first result ascending NULLS LAST",
+      "first result descending NULLS FIRST then second ascending NULLS FIRST"
+    ],
+    "completeness": "Protected runner checks every Cartesian tuple once using the actual returned graph."
+  },
+  "exploration": {
+    "seeds": [
+      167,
+      4549,
+      20219
+    ],
+    "attemptsPerSeed": 64,
+    "maxJoins": 2,
+    "maxPredicateDepth": 3,
+    "maxOrderTerms": 3,
+    "timeoutSeconds": 240,
+    "allowedExclusions": []
+  },
+  "negatives": [
+    "invalid source index",
+    "invalid slot in a valid source",
+    "join without left input",
+    "ON reference to a later input",
+    "out-of-range output ordinal",
+    "unsupported analysis condition"
+  ],
+  "coverage": {
+    "Q01": [
+      "closed shape",
+      "scope negatives"
+    ],
+    "Q02": [
+      "finite direct cases",
+      "seeded structures",
+      "analysis probes"
+    ],
+    "Q03": [
+      "prefix scope",
+      "shape",
+      "comparison and ordering roles"
+    ],
+    "Q04": [
+      "typed row and ordering oracle",
+      "original SQL comparison"
+    ],
+    "Q05": [
+      "independent runner",
+      "fixed semantic contract",
+      "source manifest"
+    ]
+  },
+  "sources": [
+    "https://sqlite.org/lang_select.html",
+    "https://sqlite.org/lang_expr.html#booleanexpr",
+    "https://sqlite.org/datatype3.html#comparisons"
+  ],
+  "admissionChange": {
+    "positives": [
+      "SELECT ir_left.key FROM ir_left JOIN ir_right USING (key)",
+      "SELECT ir_left.key FROM ir_left NATURAL LEFT JOIN ir_right"
+    ],
+    "remainingRejectionWitnesses": [
+      "SELECT ir_left.key FROM ir_left RIGHT JOIN ir_right USING (key)",
+      "SELECT ir_left.key FROM ir_left NATURAL FULL JOIN ir_right"
+    ],
+    "evidence": "The two prior rejects are executed as exact positive cases by the merged-join schedule. This schedule retains both typed rejection obligations for unresolved right-side merge layouts."
+  },
+  "secondAdmissionChange": {
+    "positive": "SELECT ir_left.key FROM ir_left RIGHT JOIN ir_right USING (key)",
+    "replacementRejection": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 RIGHT JOIN ir_right USING (key)",
+    "evidence": "The merged RIGHT schedule executes the exact previous rejection as a positive case. The relational schedule retains the typed rejection at the multi-step merge boundary and the separate FULL witness."
+  },
+  "thirdAdmissionChange": {
+    "positive": "SELECT ir_left.key FROM ir_left NATURAL FULL JOIN ir_right",
+    "replacementRejection": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 NATURAL FULL JOIN ir_right",
+    "evidence": "Execute the exact former refusal positively in the FULL merge suite. The open multi-step layout remains a typed refusal."
+  }
+}

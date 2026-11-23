@@ -117,7 +117,7 @@ final class JoiningTest extends TestCase
         self::assertSame(Nullability::NotNull, $joined[1]->shape->slots[0]->nullability);
     }
 
-    public function testRightRepresentativeKeepsNonAdjacentKeysInTheirExactPositions(): void
+    public function testWithRepresentativeKeepsNonAdjacentKeysInTheirExactPositions(): void
     {
         $left = new TableInput(new QualifiedName(new Name('left_input')));
         $right = new TableInput(new QualifiedName(new Name('right_input')));
@@ -125,8 +125,8 @@ final class JoiningTest extends TestCase
         $visible = new VisibleRelation($left, new RowShape([$slot, $slot, $slot]));
         $value = new ResolvedColumn($right, $slot);
         $joining = new Joining();
-        $visible = $joining->rightRepresentative($visible, 2, $value);
-        $visible = $joining->rightRepresentative($visible, 0, $value);
+        $visible = $joining->withRepresentative($visible, 2, $value);
+        $visible = $joining->withRepresentative($visible, 0, $value);
 
         self::assertSame([2, 0], array_keys($visible->representatives));
         self::assertSame($right, $visible->resolved(2, true)->relation);
@@ -176,23 +176,34 @@ final class JoiningTest extends TestCase
         self::assertSame([$third, $second], (new Joining())->replaced([$first, $second], 0, $third));
     }
 
-    public function testCoalescedWidensOneSlotAndLinksItsOrigin(): void
+    public function testCoalescedKeepsBothInputsAndHasNoPhysicalDeclaration(): void
     {
-        $input = new TableInput(new QualifiedName(new Name('t')));
-        $kept = new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull);
-        $other = new OutputSlot(new Name('b'), new Known(Storage::Text), Nullability::NotNull);
-        $relation = new VisibleRelation($input, new RowShape([$kept, $other]), new Name('x'), $input->name, [1]);
-        $coalesced = (new Joining())->coalesced($relation, 0, new OutputSlot(new Name('a'), new Known(Storage::Text), Nullability::Nullable));
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $leftRef = new ResolvedColumn($left, new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull));
+        $rightRef = new ResolvedColumn($right, new OutputSlot(new Name('A'), new Known(Storage::Text), Nullability::Nullable));
 
-        self::assertSame($input, $coalesced->relation);
-        self::assertSame('x', $coalesced->alias?->value);
-        self::assertSame([1], $coalesced->hidden);
-        self::assertSame('a', $coalesced->shape->slots[0]->name?->value);
-        self::assertInstanceOf(Choice::class, $coalesced->shape->slots[0]->type);
-        self::assertSame([Storage::Integer, Storage::Text], $coalesced->shape->slots[0]->type->alternatives);
-        self::assertSame(Nullability::Nullable, $coalesced->shape->slots[0]->nullability);
-        self::assertSame($kept, $coalesced->shape->slots[0]->origin);
-        self::assertSame($other, $coalesced->shape->slots[1]);
+        $value = (new Joining())->coalesced($leftRef, $rightRef);
+
+        self::assertInstanceOf(Choice::class, $value->slot->type);
+        self::assertSame([Storage::Integer, Storage::Text], $value->slot->type->alternatives);
+        self::assertSame(Nullability::Nullable, $value->slot->nullability);
+        self::assertNull($value->declaration());
+        self::assertSame($leftRef, $value->merge?->left);
+        self::assertSame($rightRef, $value->merge?->right);
+    }
+
+    public function testExtendsRepresentativeRequiresBothCandidatesToBeAbsent(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $slot = new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull);
+        $joining = new Joining();
+        $value = $joining->coalesced(new ResolvedColumn($left, $slot), new ResolvedColumn($right, $slot));
+
+        self::assertFalse($joining->extendsRepresentative($value, [$left]));
+        self::assertFalse($joining->extendsRepresentative($value, [$right]));
+        self::assertTrue($joining->extendsRepresentative($value, [$left, $right]));
     }
 
     public function testLocateFindsTheFirstVisibleSlotByName(): void

@@ -40,6 +40,7 @@ import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
 import run_sqlite_merged_join as merged_join
 import run_sqlite_merged_right_join as merged_right
+import run_sqlite_merged_full_join as merged_full
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
@@ -75,9 +76,10 @@ DOMAINS = {
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
     not_null_conflict.CONTRACT_NAME: (not_null_conflict, not_null_conflict.FIXTURE),
     returning.CONTRACT_NAME: (returning, returning.SCHEMA),
-    "sqlite-relational-v3.json": (relational, relational.SCHEMA),
+    "sqlite-relational-v4.json": (relational, relational.SCHEMA),
     merged_join.CONTRACT_NAME: (merged_join, merged_join.FIXTURE),
     merged_right.CONTRACT_NAME: (merged_right, merged_right.FIXTURE),
+    merged_full.CONTRACT_NAME: (merged_full, merged_full.FIXTURE),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),
     "sqlite-values-v1.json": (values, ""),
@@ -151,7 +153,7 @@ def replay(directory, contract_name, index, library, *, candidate=None, manifest
                create_view_grouped: create_view_grouped.GroupedViewDatabase,
                create_view_compound: create_view_compound.CreateViewDatabase,
                create_view_local: create_view_local.LocalViewDatabase,
-               view_input: view_input.ViewInputDatabase,
+               view_input: view_input.ViewInputDatabase, merged_full: merged_full.FullMergeDatabase,
                joined_local: joined_local.JoinedLocalDatabase, coalesce: coalesce.CoalesceDatabase}.get(module, Database)
     database = factory(library)
     try:

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Ir;
 
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\Coalesce;
+use SqlSemantics\Platform\Sqlite\Ir\Expression\Nulls\CoalesceArgument;
 use SqlSemantics\Platform\Sqlite\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
@@ -64,12 +66,29 @@ final class SourceBinding
      *
      * @throws InvalidConstruction When the expression has no local column binding
      */
-    public function reference(Scalar $expression): ColumnReference
+    public function reference(Scalar $expression): ColumnReference|Coalesce
     {
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
 
-        return $this->resolved($resolution);
+        return $this->value($resolution);
+    }
+
+    /**
+     * Lowers a physical slot or the ordered value of a merged input field.
+     */
+    public function value(ResolvedColumn $resolution): ColumnReference|Coalesce
+    {
+        $merge = $resolution->merge;
+        if ($merge === null) {
+            return $this->resolved($resolution);
+        }
+        Check::input($resolution->depth === 0, 'A merged column must belong to the local query.');
+
+        return new Coalesce([
+            new CoalesceArgument($this->value($merge->left)),
+            new CoalesceArgument($this->value($merge->right)),
+        ]);
     }
 
     /**
@@ -80,7 +99,7 @@ final class SourceBinding
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {
         Check::input(
-            $resolution->depth === 0,
+            $resolution->depth === 0 && $resolution->merge === null,
             'The column must resolve to the projection source.'
         );
         if ($this->localColumns !== null) {

@@ -30,7 +30,7 @@ final class VisibleRelation
      * @param QualifiedName|null $name The relation name that qualifies the occurrence when it has no alias
      * @param list<int> $hidden The slot positions an unqualified name and a star do not see, such as the duplicate of a merged join column
      * @param list<ImplicitSlot> $implicit The slots found by name only
-     * @param array<int, ResolvedColumn> $representatives The right input cells represented by merged positions
+     * @param array<int, ResolvedColumn> $representatives The values represented by merged positions
      */
     public function __construct(
         public readonly Relation $relation,
@@ -51,7 +51,7 @@ final class VisibleRelation
         $value = $merged ? ($this->representatives[$position] ?? null) : null;
 
         return $value === null ? new ResolvedColumn($this->relation, $this->shape->slots[$position], $depth)
-            : new ResolvedColumn($value->relation, $value->slot, $depth);
+            : new ResolvedColumn($value->relation, $value->slot, $depth, $value->merge);
     }
 
     /**

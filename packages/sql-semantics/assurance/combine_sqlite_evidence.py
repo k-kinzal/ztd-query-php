@@ -24,9 +24,10 @@ class Domain(NamedTuple):
 
 DOMAINS = (
     Domain("semantics-ir-evidence", "contract-v1.json", 308, 703, 18, 12),
-    Domain("semantics-ir-sqlite-relational-evidence", "sqlite-relational-v3.json", 135, 335, 10, 5),
-    Domain("semantics-ir-sqlite-merged-join-evidence", "sqlite-merged-join-v1.json", 48, 148, 7, 4),
-    Domain("semantics-ir-sqlite-merged-right-join-evidence", "sqlite-merged-right-join-v1.json", 24, 104, 4, 4),
+    Domain("semantics-ir-sqlite-relational-evidence", "sqlite-relational-v4.json", 135, 335, 10, 5),
+    Domain("semantics-ir-sqlite-merged-join-evidence", "sqlite-merged-join-v2.json", 48, 148, 7, 4),
+    Domain("semantics-ir-sqlite-merged-right-join-evidence", "sqlite-merged-right-join-v2.json", 24, 104, 4, 4),
+    Domain("semantics-ir-sqlite-merged-full-join-evidence", "sqlite-merged-full-join-v1.json", 24, 108, 4, 4),
     Domain("semantics-ir-sqlite-result-evidence", "sqlite-result-v1.json", 108, 264, 3, 3),
     Domain("semantics-ir-sqlite-delete-evidence", "sqlite-delete-v1.json", 36, 161, 4, 3),
     Domain("semantics-ir-sqlite-values-evidence", "sqlite-values-v1.json", 292, 392, 4, 2),

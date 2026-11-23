@@ -11,7 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
 
 /**
- * A name that resolves to exactly one output slot of one relation occurrence.
+ * A name bound to a physical slot or an ordered merge of two resolved values.
  *
  * @visibility SqlSemantics
  */
@@ -23,11 +23,13 @@ final class ResolvedColumn implements Resolution
      * @param Relation $relation The relation occurrence the name was found in
      * @param OutputSlot $slot The output slot of that occurrence
      * @param int $depth How many enclosing queries lie between the use and the occurrence; zero for the same query
+     * @param MergedColumns|null $merge The ordered inputs of a FULL merged value
      */
     public function __construct(
         public readonly Relation $relation,
         public readonly OutputSlot $slot,
         public readonly int $depth = 0,
+        public readonly ?MergedColumns $merge = null,
     ) {
         Check::input($depth >= 0, 'A correlation depth is not negative.');
     }
@@ -37,6 +39,6 @@ final class ResolvedColumn implements Resolution
      */
     public function declaration(): ?Column
     {
-        return $this->slot->declaration();
+        return $this->merge === null ? $this->slot->declaration() : null;
     }
 }

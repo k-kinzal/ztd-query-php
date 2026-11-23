@@ -10,8 +10,8 @@ from sqlite_engine import typed
 from sqlite_relational_cases import DATA as RELATIONAL_ROWS, DECLARATIONS as RELATIONAL_DDL, SCHEMA as RELATIONAL_FIXTURE
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-merged-join-v1.json"
-CONTRACT = "b36591914e394b61ab4ec212175f2f52c107bdc538d65b57c48606f3d869716a"
+CONTRACT_NAME = "sqlite-merged-join-v2.json"
+CONTRACT = "c8e4517c2dcd0b35799c4649bdd676188abe2be5f435fb4a17b2e3bf13ed7426"
 KINDS = ("INNER", "CROSS", "LEFT")
 LAYOUTS = {"none": (), "key": ("key",), "lane": ("lane",), "both": ("key", "lane")}
 HEADINGS = {
@@ -128,10 +128,11 @@ def negatives():
         ("merge_left NATURAL JOIN merge_right ON 1", "analysis-rejected", "NATURAL"),
         ("merge_left NATURAL JOIN merge_right USING (key)", "analysis-rejected", "NATURAL"),
         ("merge_left JOIN merge_free JOIN merge_right USING (key)", "rejected", "two ordinary inputs"),
-        ("merge_left FULL JOIN merge_right USING (key)", "rejected", "FULL merge needs a value from both inputs"),
+        ("merge_left FULL JOIN local USING (key)", "rejected", "requires complete base-table headings"),
     )
     for source, status, reason in sql_cases:
-        yield {"sql": "SELECT merge_left.key FROM " + source, "declarations": DECLARATIONS}, status, reason
+        prefix = "WITH local(key) AS (VALUES(4)) " if source.endswith("JOIN local USING (key)") else ""
+        yield {"sql": prefix + "SELECT merge_left.key FROM " + source, "declarations": DECLARATIONS}, status, reason
 
 
 def structure(query):

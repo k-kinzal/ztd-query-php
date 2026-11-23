@@ -9,8 +9,10 @@ use SqlSemantics\Platform\Sqlite\Model\Resolution\ImplicitSlot;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MergedColumns;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
@@ -70,10 +72,11 @@ final class Joining
             $right = $this->replaced($right, $into[0], new VisibleRelation($hidden->relation, $hidden->shape, $hidden->alias, $hidden->name, [...$hidden->hidden, $into[1]], $hidden->implicit, $hidden->representatives));
             if ($outer) {
                 $kept = $left[$from[0]];
-                $mergedSlot = $step->operator->left()
-                    ? $this->coalesced($kept, $from[1], $hidden->shape->slots[$into[1]])
-                    : $this->rightRepresentative($kept, $from[1], $hidden->resolved($into[1], true));
-                $left = $this->replaced($left, $from[0], $mergedSlot);
+                $value = $hidden->resolved($into[1], true);
+                if ($step->operator->left()) {
+                    $value = $this->coalesced($kept->resolved($from[1], true), $value);
+                }
+                $left = $this->replaced($left, $from[0], $this->withRepresentative($kept, $from[1], $value));
             }
         }
 
@@ -115,25 +118,24 @@ final class Joining
     /**
      * Records what an unqualified name reads without replacing the qualified slot.
      */
-    public function rightRepresentative(VisibleRelation $kept, int $position, ResolvedColumn $right): VisibleRelation
+    public function withRepresentative(VisibleRelation $kept, int $position, ResolvedColumn $value): VisibleRelation
     {
         $representatives = $kept->representatives;
-        $representatives[$position] = $right;
+        $representatives[$position] = $value;
 
         return new VisibleRelation($kept->relation, $kept->shape, $kept->alias, $kept->name, $kept->hidden, $kept->implicit, $representatives);
     }
 
     /**
-     * Answers a relation whose merged column takes the first non-NULL of its own slot and the slot merged into it.
+     * Derives the value and type of the first non-NULL cell of a FULL join.
      */
-    public function coalesced(VisibleRelation $kept, int $position, OutputSlot $other): VisibleRelation
+    public function coalesced(ResolvedColumn $left, ResolvedColumn $right): ResolvedColumn
     {
-        $slots = [];
-        foreach ($kept->shape->slots as $index => $slot) {
-            $slots[] = $index === $position ? new OutputSlot($slot->name, (new Storages())->either([$slot->type, $other->type]), $slot->nullability->propagate($other->nullability), null, $slot, $slot->unnamed) : $slot;
-        }
+        $type = (new Storages())->either([$left->slot->type, $right->slot->type]);
+        $nullable = $left->slot->nullability->propagate($right->slot->nullability);
+        $value = new OutputSlot(null, $type, $nullable);
 
-        return new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit, $kept->representatives);
+        return new ResolvedColumn($left->relation, $value, $left->depth, new MergedColumns($left, $right));
     }
 
     /**
@@ -201,14 +203,26 @@ final class Joining
             $representatives = [];
             foreach ($relation->representatives as $position => $value) {
                 $slot = $value->slot;
-                if (in_array($value->relation, $occurrences, true) && $slot->nullability !== Nullability::Nullable) {
+                if ($this->extendsRepresentative($value, $occurrences) && $slot->nullability !== Nullability::Nullable) {
                     $slot = new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot, $slot->unnamed);
                 }
-                $representatives[$position] = new ResolvedColumn($value->relation, $slot, $value->depth);
+                $representatives[$position] = new ResolvedColumn($value->relation, $slot, $value->depth, $value->merge);
             }
             $extended[] = new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing), $relation->alias, $relation->name, $relation->hidden, $implicit, $representatives);
         }
 
         return $extended;
+    }
+
+    /**
+     * Tells whether every value candidate is absent from this NULL-extended side.
+     * @param list<Relation> $occurrences
+     */
+    public function extendsRepresentative(ResolvedColumn $value, array $occurrences): bool
+    {
+        $merge = $value->merge;
+
+        return $merge === null ? in_array($value->relation, $occurrences, true)
+            : $this->extendsRepresentative($merge->left, $occurrences) && $this->extendsRepresentative($merge->right, $occurrences);
     }
 }

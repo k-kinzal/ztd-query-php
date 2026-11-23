@@ -51,8 +51,8 @@ final class SelectLowering
             $expression = $field->expression;
             if ($expression === null) {
                 $resolution = $field->resolution;
-                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
-                $results[] = new ResultColumn($binding->resolved($resolution), $label);
+                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to a visible input value.');
+                $results[] = new ResultColumn($binding->value($resolution), $label);
                 continue;
             }
             $results[] = new ResultColumn($expressions->lower($expression, $binding), $label);

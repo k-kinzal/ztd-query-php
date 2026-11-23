@@ -8,8 +8,8 @@ from sqlite_domain import RenderFault, check_render_faults, run_domain
 from sqlite_engine import typed
 from sqlite_scalar_schedule import ScalarSchedule, execute_schedule
 
-CONTRACT_NAME = "sqlite-merged-right-join-v1.json"
-CONTRACT = "125848826b6e8e5d7485fbac9c83a18f14cab6118c3e880e0765faf705ee4477"
+CONTRACT_NAME = "sqlite-merged-right-join-v2.json"
+CONTRACT = "1c90e1140ed5d14681bed8162eecaf3c64e89a97256f9bf7c8f2b1b05f7654ae"
 INPUTS = ("merge_left", "merge_right")
 
 
@@ -84,11 +84,12 @@ def negatives():
     yield invalid, "rejected", "visible occurrence"
     clauses = (
         ("merge_left JOIN merge_free JOIN merge_right RIGHT JOIN ir_empty USING (key)", "rejected", "two ordinary inputs"),
-        ("merge_left NATURAL FULL JOIN merge_right", "rejected", "FULL merge needs a value from both inputs"),
+        ("merge_left NATURAL RIGHT JOIN local", "rejected", "requires complete base-table headings"),
         ("merge_left RIGHT JOIN merge_right USING (absent)", "analysis-rejected", "absent"),
     )
     for source, status, reason in clauses:
-        yield {"sql": "SELECT merge_left.Key FROM " + source, "declarations": DECLARATIONS}, status, reason
+        prefix = "WITH local(key) AS (VALUES(4)) " if source.endswith("JOIN local") else ""
+        yield {"sql": prefix + "SELECT merge_left.Key FROM " + source, "declarations": DECLARATIONS}, status, reason
 
 
 def finite_ids(domain):
