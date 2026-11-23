@@ -118,7 +118,7 @@ CONTRACTS = {
     "sqlite-rename-v4.json": "10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861",
     "sqlite-transaction-v1.json": "52ba3cc00a6b7428a85d1ab7d9a55dd04cb9fcbecf0909ccc94a86e40c684afc",
 }
-PUBLICATION = "ce71e146a14096c8098d66309d301b4cc32c3e342cabbea8f207507f605faa89"
+PUBLICATION = "dcc301328298380a3425b7593c31b8946208164ce3ef512e047bef69e3d4d9f5"
 
 
 def declared_constructors(dialects):
@@ -148,7 +148,7 @@ def declared_constructors(dialects):
 
 
 def publication_definition():
-    publication = (TOOL / "publication-v24.json").read_bytes()
+    publication = (TOOL / "publication-v25.json").read_bytes()
     if hashlib.sha256(publication).hexdigest() != PUBLICATION:
         raise ValueError("Publication contract differs from its recorded revision")
     return json.loads(publication)
@@ -183,7 +183,9 @@ def constructor_scope(by_class):
     typed_value_routes = publication["typedValueRoutes"]
     for route, members in typed_value_routes.items():
         owner, _, member = route.partition("::")
-        if owner not in definitions or not member or not members or set(members) - definitions.keys():
+        concrete = set(members) - {"null"}
+        if (owner not in definitions or not member or not concrete or len(members) != len(set(members))
+                or concrete - definitions.keys()):
             raise ValueError(f"Typed publication route has unregistered roles: {route}")
     generic = publication["unconstrainedReturns"]
     generic_types = {kind.lower() for kind in generic["intrinsicKinds"]}

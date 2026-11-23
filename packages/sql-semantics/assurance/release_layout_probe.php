@@ -260,6 +260,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $selectInsert->query->distinct,
                 str_contains($selectInsert->toString(), 'SELECT DISTINCT CAST(NULL AS pg_catalog.text) AS "label"'),
             ];
+            $details['nullableKinds'] = [
+                [$typed->source->columnKind(0)?->value, $typed->source->columnKind(1024)?->value],
+                [$export->columnKind(0)?->value, $export->columnKind(1024)?->value],
+                [$textInsert->target->columnKind(0)?->value, $textInsert->target->columnKind(1024)?->value],
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');
