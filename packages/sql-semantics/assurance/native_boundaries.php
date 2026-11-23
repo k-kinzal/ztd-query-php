@@ -50,6 +50,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-text-literal-boundaries-v1.json', '46a77328b7d16609bd966a6ac2c1086a7d62e708606f0c7774d22d2a756fdb12'],
         ],
         'postgres' => [
+            ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
             ['postgres-query-boundaries-v9.json', '43a22d2bc34a130a0dc8e70842f9b1a04027c28284c2a459dde1c1dc9891cd95'],
             ['postgres-derived-text-boundaries-v1.json', '93ca7467eac18a2c3b8b29b19d6010e524b4dea52bcb48ff8e43e316e1cd30b6'],
             ['postgres-text-returning-boundaries-v1.json', '3cf2b6db5f68514d6ef1f34dfa3bb34746169fad138f7ac478f1214d4ace3565'],
@@ -150,7 +151,9 @@ function checkNativeBoundaries(
         $imports .= 'use ' . $platform . '\\Ir\\SelectBounds;' . "\n";
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
-            foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
+            foreach (['Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
+                'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
+                'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
                 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',
                 'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering',

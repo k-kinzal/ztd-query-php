@@ -41,6 +41,7 @@ NATIVE = {
     "transaction": "server-transaction-v1.json",
     "drop_table": "server-drop-table-v1.json",
     "create_table": "server-create-table-v1.json",
+    "postgres_create_text": "postgres-create-text-v1.json",
     "parameter": "server-parameter-v6.json",
     "compound": "server-compound-v2.json",
     "local_projection": "server-local-projection-v4.json",
@@ -55,6 +56,7 @@ NATIVE = {
 
 SINGLE_ENGINE = {
     "postgres_int4": "postgres",
+    "postgres_create_text": "postgres",
     "postgres_merged_join": "postgres",
     "postgres_full_merged_join": "postgres",
     "postgres_from_list": "postgres",

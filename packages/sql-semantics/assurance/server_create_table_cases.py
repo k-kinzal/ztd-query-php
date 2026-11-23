@@ -94,10 +94,23 @@ def requests(engine, tag, specification):
         yield f"negative/{i}", item, item, signal
 
 
+def default_value(kind, default):
+    if default is None or default == ["null"]:
+        return None
+    if kind == "pg_catalog.text":
+        return default[1] if default[0] == "text" else str(int(default[1]))
+    return int(default[1])
+
+
 def catalog(engine, fields):
-    types = {"SMALLINT": "smallint", "INTEGER": "int" if engine == "mysql" else "integer", "BIGINT": "bigint"}
-    return [[index, name, types[kind], nullable, int(default[1]) if default and default[0] == "integer" else None, bool(default and default[0] == "integer")]
-            for index, (name, kind, nullable, default) in enumerate(fields, 1)]
+    types = {"SMALLINT": "smallint", "INTEGER": "int" if engine == "mysql" else "integer", "BIGINT": "bigint",
+             "pg_catalog.text": "text"}
+    result = []
+    for index, (name, kind, nullable, default) in enumerate(fields, 1):
+        value = default_value(kind, default)
+        column = [index, name, types[kind], nullable, value, value is not None]
+        result.append([*column, "pg_catalog.default"] if kind == "pg_catalog.text" else column)
+    return result
 
 
 def expected(item):
@@ -111,14 +124,14 @@ def expected(item):
     defaults = None
     if not rejected:
         values = []
-        for _, _, nullable, default in fields:
+        for _, storage, nullable, default in fields:
             if not nullable and (default is None or default == ["null"]):
                 if not mysql:
                     defaults = {"status": "23502"}
                     break
                 values.append(0)
             else:
-                values.append(int(default[1]) if default and default[0] == "integer" else None)
+                values.append(default_value(storage, default))
         else:
             defaults = {"status": "inserted", "values": values}
     engine_name = "InnoDB" if mysql else "heap"

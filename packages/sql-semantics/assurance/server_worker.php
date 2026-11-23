@@ -421,11 +421,13 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     $name = $namespace . 'Identifier';
     $column = $namespace . 'Schema\\TableColumn';
     $storage = $namespace . 'Schema\\IntegerStorage';
+    $characters = $namespace . 'Schema\\CharacterStorage';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $create = $input['create'];
     $columns = [];
     foreach ($create['columns'] as [$columnName, $kind, $nullable, $default]) {
-        $columns[] = new $column(new $name($columnName), $storage::from($kind), $nullable, $default === null ? null : constructOperand($namespace, $default));
+        $type = $kind === 'pg_catalog.text' && $input['dialect'] === 'postgres' ? $characters::from($kind) : $storage::from($kind);
+        $columns[] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
     }
 
     return new $statement(

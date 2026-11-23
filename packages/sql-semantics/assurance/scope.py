@@ -57,6 +57,7 @@ CONTRACTS = {
     "server-local-projection-v4.json": "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9",
     "server-parameter-v6.json": "d3c7edac68d8e12993dccdddfaa42195c68defde2f4f778b6491b91856db6ab6",
     "server-create-table-v1.json": "1b9ce10f3903792d68b307e0b92d0bf3008e3ff0af150bfc4b3d8438dde23b4f",
+    "postgres-create-text-v1.json": "ce5f9834e38a4156fab8dde45dae1f0e2f2edc9f2f581fce03fdff0a3895fbc8",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
     "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",
     "server-transaction-v1.json": "c0f7fb70d54ca3321d9104e0a239c62bdf24e48ce65febffb1906faae429dd09",

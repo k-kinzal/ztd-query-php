@@ -21,6 +21,7 @@ if ($mysql) {
     $pdo->exec("SET default_table_access_method = 'heap'");
     $storage = $pdo->query('SHOW default_table_access_method')->fetchColumn();
 }
+$pdo->exec('DROP TABLE IF EXISTS ' . $marker);
 $pdo->exec('CREATE TABLE ' . $marker . ' (value INTEGER)' . ($mysql ? ' ENGINE=InnoDB' : ''));
 $pdo->exec('INSERT INTO ' . $marker . ' VALUES (0)');
 
@@ -29,22 +30,29 @@ function admitCreateTable(string $sql, string $schema, bool $mysql): bool
     $quote = $mysql ? chr(96) : '"';
     $name = static fn (string $part): string => '(?:' . $quote . $part . $quote . '|' . $part . ')';
     $table = $name($schema) . '\.' . $name('ir_create_target');
-    $column = $name('c[0-9]') . ' (?:SMALLINT|INTEGER|INT|BIGINT)(?: NULL| NOT NULL)?(?: DEFAULT (?:NULL|-?[0-9]{1,10}))?';
+    $textType = $mysql ? '' : '|TEXT|(?:pg_catalog\.)?text';
+    $textLiteral = "'(?:[^'\\x00]|'')*'";
+    $textDefault = $mysql ? '' : '|' . $textLiteral . '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)';
+    $column = $name('c[0-9]') . ' (?:SMALLINT|INTEGER|INT|BIGINT' . $textType . ')(?: NULL| NOT NULL)?'
+        . '(?: DEFAULT (?:NULL|-?[0-9]{1,10}' . $textDefault . '))?';
     $engine = $mysql ? '(?: ENGINE=InnoDB)?' : '(?: USING heap)?';
 
     return preg_match('/\ACREATE TABLE (?:IF NOT EXISTS )?' . $table . ' \(' . $column . '(?:, ' . $column . '){0,9}\)' . $engine . '\z/D', $sql) === 1;
 }
 
-function createDefault(string $engine, ?string $value): ?int
+function createDefault(string $engine, ?string $value, string $kind): int|string|null
 {
-    if ($value === null || preg_match('/\ANULL(?:::(?:smallint|integer|bigint))?\z/iD', $value) === 1) {
+    if ($value === null || preg_match('/\ANULL(?:::(?:smallint|integer|bigint|text))?\z/iD', $value) === 1) {
         return null;
+    }
+    if ($kind === 'text' && preg_match("/\A'((?:[^']|'')*)'::text\z/D", $value, $text) === 1) {
+        return str_replace("''", "'", $text[1]);
     }
     if (preg_match("/\A[(]?'?(-?[0-9]{1,10})'?(?:::(?:smallint|integer|bigint))?[)]?\z/D", $value, $number) !== 1) {
         throw new RuntimeException($engine . ' reported an unregistered default shape: ' . $value);
     }
 
-    return (int) $number[1];
+    return $kind === 'text' ? (string) (int) $number[1] : (int) $number[1];
 }
 
 function createdCatalog(PDO $pdo, string $schema, bool $mysql): ?array
@@ -53,8 +61,13 @@ function createdCatalog(PDO $pdo, string $schema, bool $mysql): ?array
         . " FROM information_schema.columns WHERE table_schema = '" . $schema
         . "' AND table_name = 'ir_create_target' ORDER BY ordinal_position");
     $fields = [];
+    $collations = $mysql ? [] : $pdo->query("SELECT a.attname, ns.nspname || '.' || c.collname"
+        . ' FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid'
+        . ' JOIN pg_catalog.pg_namespace ns ON c.collnamespace = ns.oid'
+        . " WHERE a.attrelid = pg_catalog.to_regclass('public.ir_create_target') AND a.attnum > 0")->fetchAll(PDO::FETCH_KEY_PAIR);
     foreach ($statement->fetchAll(PDO::FETCH_NUM) as [$ordinal, $column, $kind, $nullable, $default]) {
-        $fields[] = [$ordinal, $column, $kind, $nullable === 'YES', createDefault($mysql ? 'MySQL' : 'PostgreSQL', $default), $default !== null];
+        $field = [$ordinal, $column, $kind, $nullable === 'YES', createDefault($mysql ? 'MySQL' : 'PostgreSQL', $default, $kind), $default !== null];
+        $fields[] = $kind === 'text' ? [...$field, $collations[$column] ?? null] : $field;
     }
     if ($fields === []) {
         return null;
@@ -120,6 +133,7 @@ function createEffect(PDO $pdo, string $schema, string $target, string $marker, 
 
 echo json_encode([
     'database' => $environment, 'php' => PHP_VERSION, 'storage' => $storage, 'marker' => $pdo->query('SELECT value FROM ' . $marker)->fetchAll(PDO::FETCH_COLUMN),
+    ...($mysql ? [] : ['int4TextCastOverrides' => (int) $pdo->query("SELECT count(*) FROM pg_catalog.pg_cast WHERE castsource = 'pg_catalog.int4'::pg_catalog.regtype AND casttarget = 'pg_catalog.text'::pg_catalog.regtype")->fetchColumn()]),
 ], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $item = json_decode($line, true, 512, JSON_THROW_ON_ERROR);

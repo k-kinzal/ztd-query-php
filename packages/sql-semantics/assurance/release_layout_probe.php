@@ -302,6 +302,11 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['viewInput'] = [$read->source->schema->value, $read->source->table->value, $read->source->kind->value,
                 array_column($read->source->columns, 'value'), $read->columns[0]->expression->slot];
         }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
+            $textTable = $semantics->analyze("CREATE TABLE public.text_decl (label pg_catalog.text NOT NULL DEFAULT 'quote''s')");
+            $column = $textTable->columns[0];
+            $details['postgresTextStorage'] = [$column->storage->value, $column->nullable, $column->default->value, $textTable->toString()];
+        }
         if ($platform === 'Sqlite' && $role === 'Schema\\CreateTable') {
             $details['keyLayout'] = array_map(static fn ($key): array => [
                 $key instanceof SqlSemantics\Platform\Sqlite\Ir\Schema\Key\PrimaryKey ? 'primary' : 'unique',

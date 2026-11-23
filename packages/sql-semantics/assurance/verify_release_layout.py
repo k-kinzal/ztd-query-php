@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v34.json"
-CONTRACT = "151273d135a87b024709732d6c19f9033e56993821cc45979689c86df68662ed"
+CONTRACT_NAME = "release-layout-v35.json"
+CONTRACT = "cfabae64f56349457b46e5fb1cfd985b59c5813b4648da8048693aa68f144179"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,10 @@ def verify_probe(raw, catalog):
                     "installed-typed-insert-query-mismatch", item)
             require(item.get("nullableKinds") == [["text", None]] * 3,
                     "installed-nullable-column-kind-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
+            require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
+                    'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],
+                    "installed-postgres-text-storage-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

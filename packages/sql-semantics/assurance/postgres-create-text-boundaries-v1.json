@@ -1,0 +1,115 @@
+{
+  "revision": "SemanticsIR/postgres-create-text-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Freeze builtin storage and exact default roles at the ordered native table declaration boundary.",
+  "rules": {
+    "Schema/TableColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');",
+        "if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {",
+        "    $integer = (int) $default->decimal;",
+        "    Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');",
+        "}"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$definition = $this->name->quoted() . ' ' . $this->storage->value . ($this->nullable ? ' NULL' : ' NOT NULL');",
+        "",
+        "return $definition . match (true) {",
+        "    $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,",
+        "    $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),",
+        "    $this->default instanceof NullLiteral => ' DEFAULT NULL',",
+        "    $this->default === null => '',",
+        "};"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $column->storage === null && $column->compression === null && $column->options === [],",
+        "    'CREATE TABLE requires an ordinary column definition.'",
+        ");",
+        "$type = $column->type->typeFact($operation->context);",
+        "Check::input($type instanceof Known && !$column->type->setOf, 'The column requires builtin integer or text storage.');",
+        "$kind = match ($type->descriptor) {",
+        "    Builtin::Int2 => IntegerStorage::Small,",
+        "    Builtin::Int4 => IntegerStorage::Standard,",
+        "    Builtin::Int8 => IntegerStorage::Wide,",
+        "    Builtin::Text => CharacterStorage::Text,",
+        "    default => throw new InvalidConstruction('The column requires builtin integer or text storage.'),",
+        "};",
+        "$nullable = null;",
+        "$default = null;",
+        "$literals = new LiteralDefaultLowering();",
+        "foreach ($column->qualifiers as $qualifier) {",
+        "    if ($qualifier instanceof DefaultExpression && $qualifier->name === null && $default === null) {",
+        "        $default = $literals->lower($operation, $qualifier, $kind);",
+        "    } elseif (($qualifier instanceof NotNull || $qualifier instanceof NullAllowed) && $qualifier->name === null && $nullable === null) {",
+        "        $nullable = $qualifier instanceof NullAllowed;",
+        "    } else {",
+        "        throw new InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->value), $kind, $nullable ?? true, $default);"
+      ]
+    },
+    "Schema/CreateTableLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'CREATE TABLE requires the default native profile.');",
+        "$definition = $statement->definition;",
+        "Check::input(",
+        "    $definition instanceof ListedColumns && $definition->parents === [] && $statement->persistence === Persistence::Permanent",
+        "    && $statement->partitioning === null && $statement->options === [] && $statement->onCommit === null && $statement->tablespace === null,",
+        "    'CREATE TABLE requires a persistent ordinary table with explicit columns.'",
+        ");",
+        "Check::input($statement->method === null || $statement->method->value === 'heap', 'CREATE TABLE requires the native heap storage role.');",
+        "Check::input($statement->name->catalog === null, 'CREATE TABLE requires an absolute schema location.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "$columns = [];",
+        "$lowering = new CreateColumnLowering();",
+        "foreach ($definition->elements as $column) {",
+        "    Check::input($column instanceof ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');",
+        "    $columns[] = $lowering->lower($operation, $column);",
+        "}",
+        "",
+        "return new CreateTable($name, $columns, $statement->ifNotExists, $profile->grammar);"
+      ]
+    },
+    "Schema/LiteralDefaultLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$default = (new ExpressionLowering())->lower($clause->value, new SourceBinding($operation, null), $catalogFirst, $kind === CharacterStorage::Text);",
+        "Check::input($default instanceof IntegerLiteral || $default instanceof TextLiteral || $default instanceof NullLiteral, 'The column requires an integer, text or NULL default.');",
+        "",
+        "return $default;"
+      ]
+    }
+  }
+}

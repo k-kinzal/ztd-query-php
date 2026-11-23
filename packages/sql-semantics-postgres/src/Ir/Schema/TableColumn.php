@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -11,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * A named signed integer column in a native table declaration.
+ * A named builtin column in a native table declaration.
  *
  * @visibility public
  * @example Making a signed integer column required
@@ -27,12 +28,13 @@ final class TableColumn
      */
     public function __construct(
         public readonly Identifier $name,
-        public readonly IntegerStorage $storage,
+        public readonly IntegerStorage|CharacterStorage $storage,
         public readonly bool $nullable = true,
-        public readonly IntegerLiteral|NullLiteral|null $default = null,
+        public readonly IntegerLiteral|TextLiteral|NullLiteral|null $default = null,
     ) {
         $systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];
         Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');
+        Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');
         if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {
             $integer = (int) $default->decimal;
             Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');
@@ -48,6 +50,7 @@ final class TableColumn
 
         return $definition . match (true) {
             $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,
+            $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),
             $this->default instanceof NullLiteral => ' DEFAULT NULL',
             $this->default === null => '',
         };

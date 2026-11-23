@@ -611,6 +611,13 @@ if ($dialect !== 'sqlite') {
     $methods['Schema\\TableColumn'] = ['__construct', 'toString'];
     $properties['Schema\\IntegerStorage'] = $methods['Schema\\IntegerStorage'] = [];
     $enumCases['Schema\\IntegerStorage'] = ['Small' => 'SMALLINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
+    if ($dialect === 'postgres') {
+        $properties['Schema\\CharacterStorage'] = $methods['Schema\\CharacterStorage'] = [];
+        $internal[] = 'Schema\\LiteralDefaultLowering';
+        $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
+        $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
+        $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+    }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
         'targets' => ['array'], 'ifExists' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease'],

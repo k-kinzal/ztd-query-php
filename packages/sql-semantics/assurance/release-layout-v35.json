@@ -1,0 +1,80 @@
+{
+  "revision": "SemanticsIR/release-layout-35",
+  "approval": "pending-human-review",
+  "recipe": {
+    "path": ".github/workflows/split.yml",
+    "sha256": "68a692747c399644db1a5ffc7abcc85418b11750cac3c73ff4c9e79c5843df8f"
+  },
+  "profiles": {
+    "main": {
+      "version": "dev-main",
+      "constraint": ""
+    },
+    "tag-example": {
+      "version": "1.0.0",
+      "constraint": "^1.0"
+    }
+  },
+  "packages": "The exact runtime package set and source and resource paths from runtime-package-v1.json.",
+  "acceptance": "Apply the fixed package metadata transform, install offline through Composer, verify exact installed source and resource bytes, verify dependency metadata, and observe every registered root through installed autoload.",
+  "fault": "Append a newline to one installed PHP file after its healthy measurement. Require exact installed-path digest rejection.",
+  "trust": [
+    "Pinned package split recipe and package contract",
+    "Composer invoked without plugins, scripts, network or development dependencies",
+    "Isolated read-only PHP worker",
+    "Staged local package installations and their measured provenance"
+  ],
+  "extends": "release-layout-v32.json",
+  "runtimeRoles": {
+    "inventory": "Every closed concrete role in the pinned constructor contracts, reconciled with the independent PHP inventory in the review bundle.",
+    "interfaces": {
+      "SqlSemantics\\AnalysisContext": "src/AnalysisContext.php",
+      "SqlSemantics\\Analyzer": "src/Analyzer.php",
+      "SqlSemantics\\SemanticsIR": "src/SemanticsIR.php"
+    },
+    "observation": "Load each role through the installed Composer loader. Record and check the exact reflected name, kind, installed source path and in-container source hash. Every concrete role is final. Preserve the publication probes of every root.",
+    "controls": {
+      "omitted-role": "Remove a known role from the measurement and require the coverage check to fail.",
+      "wrong-source": "Replace one measured path by another installed source path and require the path check to fail."
+    }
+  },
+  "enumRoutes": {
+    "observation": "For each registered IR enum, native case constants, cases(), from(), tryFrom() and serialized restoration identify the same declared singleton. Verify unknown backing values through from() and tryFrom(). Check the installed ordered cases against the independently read PHP source and the fixed shape rules.",
+    "fault": "Delete one observed installed enum case while leaving its role, source path and bytes untouched. Require the independent case comparison to reject."
+  },
+  "sqliteCheckPublication": "Analyze a CREATE TABLE with checked keys and an inline named CHECK through the installed SQLite Semantics API. Verify the final operand role, owner slot, label and different referenced slot.",
+  "sqliteRenamePublication": "Exercise both SQLite rename roots through installed analyze(), preserving the absolute table and explicit rewrite mode of a column destination.",
+  "mysqlIntegralCasts": "Preserve separate signed and unsigned operands, and check both new MySQL set-result enum cases through the installed Composer paths.",
+  "sqliteFoldedChecks": "Execute the installed SQLite analyze() path on a named CHECK with a discarded subquery. Require the exact folded decision and ordered marker labels, including distinct zero padding on the repeated slot.",
+  "postgresWideCast": "Analyze a nested bigint to integer conversion and a standalone bigint endpoint. Verify both signed widths and exact decimal payloads through the installed Composer loader.",
+  "postgresTypedParameters": "Analyze distinct int4 and int8 input slots and a second cast of one int8 slot. Verify the slot input types, slot reuse and independent int4 conversion in each installed package.",
+  "sqliteImplicitChecks": "Exercise an unnamed CHECK with a comparison glyph, original whitespace and a zero prefix. Observe the declared column, the exact presentation and the resolved operation through both installed Composer profiles.",
+  "sqliteGeneratedColumns": "Publish an installed SQLite CREATE TABLE with a forward STORED generated reference and an implicit VIRTUAL column. Compare the concrete roles, storage modes and resolved column slots.",
+  "sqliteDropView": "Load the view removal root through the installed SQLite analyzer, check its resolved absolute view and missing-object policy, and render it.",
+  "sqliteJoinedLocalSource": "Publish and render an installed SQLite WITH SELECT that reads the same VALUES definition twice. Verify the shared definition object, two distinct occurrence slots, and a single local definition marker registration.",
+  "sqliteCoalesce": "Publish an installed IFNULL call with an explicit NULL followed by a numbered argument. Verify the two ordered roles and the exact marker after canonical COALESCE rendering.",
+  "localDiagnostic": "A host PHP run may stage the same packages and compare all roots and sources against exact relocated paths. It records a separate status and PHP version. The acceptance bundle requires the isolated worker image.",
+  "sqliteCreateView": "Publish an installed CREATE VIEW under main/temp source shadowing. Check the resolved owning schema and source, ordered effective names and exact rendering.",
+  "sqliteCreateViewGrouped": "Publish an installed grouped view and compare its effective output names, fixed body role and GROUP BY and COUNT semantics in the emitted SQL.",
+  "mutationReplay": {
+    "package": "sql-semantics-sqlite",
+    "path": "src/Ir/Select.php",
+    "change": "append exactly one newline byte",
+    "evidence": "Reconstruct the altered bytes, exact unified diff and detector receipt from the verified candidate source. Reject a wrong after digest or a different injected diff."
+  },
+  "sqliteCreateViewCompound": "Publish an installed compound view and verify the two checked arm roles, exact union operation, ordered output name and rendered definition.",
+  "sqliteCreateViewLocal": "Check an installed view that reads the same local definition twice. Verify the shared concrete object, the two resolved occurrence slots, and the one emitted definition.",
+  "sqliteResolvedViewInput": "Observe an installed SELECT from a previously declared view, including its external kind, absolute schema and consumed slot.",
+  "sqliteMergedJoins": "Both installed distributions must publish the two ordered FULL operands in a view and retain the distinct RIGHT star and explicitly qualified slots.",
+  "mysqlTextLiteral": "Observe installed decoding, checked labels and canonical emission of an adjacent MySQL string with a zero byte and supplementary code point. Inspect both release cohorts' connection collations.",
+  "postgresTextStorage": "Observe a native text declaration through the installed PostgreSQL facade, including its builtin role, decoded default and emitted native SQL.",
+  "postgresTextLiteral": "Publish an installed unqualified SELECT text literal and verify exact decoded bytes, the resolved text role, the native output label and explicitly typed rendering.",
+  "postgresTextMarkers": "Publish an installed PostgreSQL marker with a resolved text input. Verify its exact ordinal, type and native marker rendering.",
+  "postgresTypedColumns": "Exercise a text field written both unqualified and qualified, alongside an integer field. Verify its native kind, exact occurrence slot, output names and rendered read after installation. Observe TextColumnReference in the dialect source namespace. The unqualified declaration precedes a temporary table named text; the installed analyzer preserves its builtin field kind.",
+  "postgresDerivedText": "Publish a native text reference to a derived heading through installed packages. Observe both native kinds, the ordered occurrence and slot, and its corresponding generated ordinal alias.",
+  "postgresTypedReturning": "Through installed analyze(), publish a DELETE with ordered text and integer RETURNING positions and retain both distinct native reference roles and names.",
+  "postgresTypedUpdate": "Publish a text swap through installed analyze(). Observe the two same-target native assignments and their opposite old-row read positions.",
+  "postgresTypedInsert": "Construct an installed mixed VALUES INSERT whose write order differs from the physical declaration. Verify the native slot kinds, exact written order, empty text and preserved integer payload.",
+  "postgresTypedInsertQuery": "Publish an installed SELECT-to-INSERT with two native target kinds, DISTINCT, and a NULL specialized to its checked text destination.",
+  "postgresNullableKinds": "Exercise each nullable kind lookup through installed PHP. A checked native field returns the enum singleton and an absent ordinal returns null."
+}
