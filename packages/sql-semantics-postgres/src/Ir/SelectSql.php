@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
@@ -68,7 +69,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -82,10 +83,22 @@ final class SelectSql
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',
             $expression instanceof TextLiteral => $expression->toString(),
+            $expression instanceof CollatedText => $this->collated($expression, $source, $offset, $qualify),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits the native text operand with its exact explicit collation.
+     */
+    public function collated(CollatedText $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $operand = $expression->operand instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.text)'
+            : $this->expression($expression->operand, $source, $offset, $qualify);
+
+        return '(' . $operand . ' COLLATE pg_catalog."' . $expression->collation->value . '")';
     }
 
     /**

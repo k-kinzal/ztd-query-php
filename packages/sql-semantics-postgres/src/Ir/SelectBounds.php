@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterSignature;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
@@ -66,7 +67,7 @@ final class SelectBounds
                 }
                 match (true) {
                     $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $scope->column($expression, $inputs),
-                    $expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],
+                    $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),
                     $expression instanceof IntegerLiteral, $expression instanceof WideIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,

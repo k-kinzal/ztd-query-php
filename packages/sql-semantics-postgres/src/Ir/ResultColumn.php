@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
@@ -32,7 +33,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression,
+        public readonly Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression,
         public readonly Identifier $name,
     ) {
     }

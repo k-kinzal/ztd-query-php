@@ -52,6 +52,11 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         if (($input['observeMySqlLiterals'] ?? false) === true) {
             $result['literals'] = mysqlLiteralObservations($pdo, $input['sql']);
         }
+        if (($input['observePostgresCollation'] ?? false) === true) {
+            $collation = $pdo->query('SELECT pg_catalog.pg_collation_for("value") FROM (' . $input['sql'] . ') AS "__ztd_collation" LIMIT 1');
+            $result['collation'] = $collation->fetchColumn();
+            $collation->closeCursor();
+        }
         if ($warnings) {
             $result['warningCount'] = warningCount($pdo);
         }

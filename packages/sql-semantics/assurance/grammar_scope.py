@@ -249,6 +249,9 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if "SCONST" in alternative or "Sconst" in alternative:
                         related[alternative] = (*related.get(alternative, ()), "postgres-text-literal-v1.json")
+            for alternative in rules.get("a_expr", ()):
+                if " COLLATE " in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-collated-text-v1.json")
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")

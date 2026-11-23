@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
@@ -78,7 +79,7 @@ final class CompoundShape
                 CastDestination::Text => ResultKind::Text,
             },
             $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
-            $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,
+            $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,

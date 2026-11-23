@@ -79,12 +79,17 @@ if ($dialect === 'postgres') {
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
     $properties['Expression\\TextLiteral'] = ['value' => ['string']];
     $methods['Expression\\TextLiteral'] = ['__construct', 'toString'];
+    $properties['Expression\\CollatedText'] = ['collation' => ['Expression\\TextCollation'],
+        'operand' => ['Expression\\TextLiteral', 'From\\TextColumnReference', 'NullLiteral']];
+    $methods['Expression\\CollatedText'] = ['__construct'];
+    $properties['Expression\\TextCollation'] = $methods['Expression\\TextCollation'] = [];
     $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
     $methods['From\\TextColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
     $methods['TableSource'][] = 'columnKind';
-    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral', 'From\\TextColumnReference');
+    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral',
+        'Expression\\CollatedText', 'From\\TextColumnReference');
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -135,6 +140,7 @@ $internal = ['ExpressionLowering', $selectBounds, 'SelectLowering', 'SelectSql',
 if ($dialect === 'postgres') {
     $internal[] = 'Expression\\IntegerCaseLowering';
     $internal[] = 'Expression\\BuiltinCastLowering';
+    $internal[] = 'Expression\\CollatedTextLowering';
     $internal[] = 'Predicate\\IntegerRangeLowering';
     $internal[] = 'Predicate\\IntegerAtomLowering';
     $internal[] = 'Predicate\\IntegerDistinctnessLowering';
@@ -171,6 +177,7 @@ if ($dialect === 'mysql') {
 if ($dialect === 'postgres') {
     $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
+    $enumCases['Expression\\TextCollation'] = ['C' => 'C'];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
 if ($dialect === 'sqlite') {

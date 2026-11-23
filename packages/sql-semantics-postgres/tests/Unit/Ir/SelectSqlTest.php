@@ -8,8 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
@@ -30,6 +32,13 @@ use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 #[Small]
 final class SelectSqlTest extends TestCase
 {
+    public function testCollatedRetainsTheExplicitTypeOfNull(): void
+    {
+        $expression = new CollatedText(new NullLiteral(), TextCollation::C);
+
+        self::assertSame('(CAST(NULL AS pg_catalog.text) COLLATE pg_catalog."C")', (new SelectSql())->collated($expression, null, 0, true));
+    }
+
     public function testColumnReadsTheNamedPhysicalTextField(): void
     {
         $source = new TableSource(new Identifier('public'), new Identifier('t'), [new Identifier('label')], false, [ColumnKind::Text]);

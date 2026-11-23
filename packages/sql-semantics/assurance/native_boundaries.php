@@ -57,6 +57,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-text-update-boundaries-v2.json', 'e38cfe97d78a85516a6175bca7965bfd06f22ffd7953c6f636d49cc910ab8b07'],
             ['postgres-text-insert-boundaries-v2.json', '8c2787a86847cf6b6e8db819769588e6dc94a5f3d2ed4dc176f00e97e75865cf'],
             ['postgres-text-insert-query-boundaries-v3.json', '99fe1cb60a230a76d15cb58a7c50bec6cc851d90188286d790e5e3ee6fdfac0b'],
+            ['postgres-collated-text-boundaries-v1.json', '09835aa776c76916d1f6375f9fa44ad52dbe129a3c847ffb1a7f8ba334189995'],
         ],
         'sqlite' => [],
     };
@@ -155,6 +156,7 @@ function checkNativeBoundaries(
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
                 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
+                'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Ir\\Expression\\TextCollation', 'Statement\\Expression\\Collation',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',
                 'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering',
                 'Ir\\Predicate\\TruthTest', 'Ir\\Predicate\\TruthOperator', 'Ir\\Predicate\\TruthTestLowering',
