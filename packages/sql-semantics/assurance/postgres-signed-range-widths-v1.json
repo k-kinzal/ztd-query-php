@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/postgres-signed-range-widths-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL int4 and int8 builtin comparison operators with pg_catalog first during analysis.",
+  "extends": ["postgres-int4-range-v1.json", "postgres-int4-distinctness-v1.json", "postgres-signed-comparison-widths-v1.json"],
+  "constructors": {
+    "WideIntegerNull": {
+      "type": "Expression/WideIntegerNull",
+      "role": "A NULL operand with an explicit native bigint type in a signed predicate.",
+      "structure": "The closed native int8 NULL value.",
+      "conditions": "It occupies a signed-comparison operand role and always evaluates to SQL NULL.",
+      "meaning": "Supply SQL NULL with builtin int8 type, distinct from an int4-typed NULL.",
+      "sql": "Write CAST(NULL AS pg_catalog.int8)."
+    }
+  },
+  "existingRoles": ["Predicate/IntegerDistinctness", "Predicate/IntegerRange", "Expression/WideIntegerLiteral", "From/WideIntegerColumnReference", "ColumnReference", "IntegerLiteral", "NullLiteral", "ResultColumn", "Select", "From/Join"],
+  "structure": "The same two or three ordered pure operands can each use either native signed width. Retain both flags of BETWEEN, the polarity of IS DISTINCT FROM, and every exact input slot and literal value.",
+  "conditions": "Analysis resolves every operand to an admitted native signed field or literal, an explicitly typed signed NULL or a bare NULL. An analyzed range still needs a known signed type in each implicit comparison. The owning value validates the type, scope and occurrence of every field. Repeated operands are pure stable row values.",
+  "meaning": "Native signed comparisons agree with the same mathematical comparison for both widths. Distinctness is non-null and treats two NULLs as equal. Range comparisons use three-valued truth, and only TRUE admits a row or a join match. Bare NULL can use canonical int4 NULL in the emitted strict comparisons because every allowed width pair has the same null outcome. Preserve already typed int8 NULL directly.",
+  "sql": "Emit the qualified native integer equality or inclusive order operators and preserve polarity, ordered bounds and symmetric alternatives. Explicit signed NULLs carry their width. Do not re-evaluate SQL or use unqualified operators.",
+  "observations": ["Exact Boolean metadata, names, order and row multiplicity", "Mixed signed widths, all signed endpoint values, two typed NULL widths, and independently nullable or null-extended field occurrences", "Distinctness output and filter, asymmetric and symmetric interval results, negation, and left-join match effects", "Native shadow operator probe and typed field identity in the loaded structural value"],
+  "finite": {
+    "placements": ["projection", "where", "on"],
+    "roles": ["int4-field", "int8-field", "int8-null"],
+    "distinctness": ["distinct", "not-distinct"],
+    "range": ["asymmetric", "not-asymmetric", "symmetric", "not-symmetric"],
+    "identities": 378,
+    "completeness": "Recover ordered roles for every two-operand distinctness and three-operand range, their flags and placement from actual constructed values. Exhaust the two disjoint Cartesian products on both releases."
+  },
+  "analysis": ["Mixed width distinctness and typed int8 NULL", "Native IS NOT DISTINCT FROM across two source occurrences", "Mixed bounds in an inclusive asymmetric interval", "Symmetric bounds with nullable and typed operands", "A nullable wide operand tested in WHERE", "A native LEFT JOIN with a signed range ON predicate", "Bare NULL subject with a known type on each bound", "Wide literals at the signed endpoints"],
+  "exploration": {
+    "seeds": [1877, 12037, 43607],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary all operand roles, both occurrence identities, pure signed endpoints and typed NULLs, every predicate placement, negation and symmetry, nested Boolean conditions and result order."
+  },
+  "negative": ["Wide field with an int4 scope slot", "Wide bounds field from an absent occurrence", "Bare NULL pair in an analyzed implicit range comparison", "Computed signed expression outside the pure leaf roles", "Text comparison outside the signed domain"],
+  "faults": ["Read the wrong signed occurrence", "Replace a wide native NULL width", "Use nullable equality instead of null-safe equality", "Skip the symmetric bounds alternative", "Drop the inclusive endpoint"],
+  "evidence": {
+    "P01": "Bind exact signed width and field coordinates independently for each operand.",
+    "P02": "Check closed pure signed roles and validate visibility and membership at the owner.",
+    "P03": "Retain typed leaves and predicate structure without source SQL or analysis state.",
+    "P04": "Apply each predicate to a projected row, filter or joined pair from its owning scope.",
+    "P05": "Use immutable signed leaves, operand properties and detached relation layouts.",
+    "P06": "Render repeated pure terms against the same references using fully qualified stock operators.",
+    "Q01": "Reject all specified wrong slot, wrong occurrence and unsupported parsed roles.",
+    "Q02": "Exhaust the direct products and check both original and emitted forms in the registered domain.",
+    "Q03": "Compare independent truth-table and join computation with executed native rows.",
+    "Q04": "Inspect declared native types, nullable values, multiplicity and matched or null-extended rows.",
+    "Q05": "Audit typed value storage, lowering and qualified emission in the installed PHP packages."
+  },
+  "open": ["Computed or volatile operands, comparisons with other native types, user-defined operators and row-valued predicates", "Effect-level comparisons for all mutation placements and nonstandard search paths during analysis"],
+  "trust": ["Stock PostgreSQL strict signed operators and signed type identities", "Independent three-valued truth-table and physical fixture evaluator", "Exact PHP and native-engine identity"],
+  "sources": ["https://www.postgresql.org/docs/16/functions-comparison.html", "https://www.postgresql.org/docs/17/functions-comparison.html", "https://www.postgresql.org/docs/17/typeconv-oper.html"]
+}
