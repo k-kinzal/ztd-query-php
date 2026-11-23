@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/postgres-signed-write-widths-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL with stock assignment casts for int4, int8 and text, UTF-8 and standard-conforming strings.",
+  "extends": ["postgres-int8-fields-v1.json", "postgres-boolean-writes-v1.json", "postgres-text-insert-query-v2.json", "postgres-typed-columns-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Mutation/Insert", "Mutation/Insert/WriteSlot", "Mutation/Insert/Destination", "Mutation/InsertCell", "Mutation/InsertQuery", "Mutation/Update", "Mutation/UpdateAssignment", "Mutation/Delete", "Mutation/ReturnedColumn", "From/WideIntegerColumnReference", "From/ColumnKind", "Expression/WideIntegerLiteral", "Expression/BuiltinCast"],
+  "structure": "Each written or returned field identifies an exact target coordinate and its native role. Preserve the source width independently of the destination width. Ordinary VALUES accepts native signed literals or NULL. UPDATE additionally accepts an old-row field. INSERT SELECT accepts resolved signed expressions, including explicit checked int4 or int8 casts. Field-only RETURNING preserves result names, order and native width.",
+  "conditions": "Check the writable destination, distinct destination slots, source ownership and ordered result width before publishing. PostgreSQL assigns either signed width to either signed width or to text. A bare NULL receives its destination type in an ordinary INSERT SELECT. Under DISTINCT an untyped NULL has text type and requires a text destination. A checked cast supplies the explicit signed type before DISTINCT. Narrowing range errors are native evaluation failures.",
+  "meaning": "Copy native signed values exactly on widening and retaining width. A narrowing cast raises 22003 when its value is outside the destination interval. Text assignment produces the native signed decimal value. UPDATE computes all expressions from the old row. RETURNING reads inserted or updated rows and the deleted old rows. Retain NULL, duplicates, order of columns and independent source.",
+  "sql": "Write native int4 and int8 types on numeric literals and checked casts, emit exact input references and destination names using physical coordinates, preserve DISTINCT and filter, and render RETURNING from validated target coordinates.",
+  "observations": ["Native target and source kind and exact field ownership", "Entire affected row bag, result-column names and native type IDs including int8", "Exact full before, after and rollback target snapshots plus the unchanged query source", "Native narrowing errors, untyped DISTINCT and incompatible-type errors"],
+  "finite": {
+    "values": {"destination": ["int4", "int8", "text"], "operand": ["int4", "int8-local", "int8-min", "int8-max", "null"], "mode": ["single", "duplicate"], "identities": 30},
+    "query": {"destination": ["int4", "int8", "text"], "source": ["int4", "int8"], "distinct": [false, true], "filter": ["all", "in-range"], "identities": 24},
+    "update": {"destination": ["int4", "int8", "text"], "operand": ["int4", "int8-local", "int8-min", "int8-max", "null", "old-int4", "old-int8"], "filter": ["all", "one"], "identities": 42},
+    "returning": {"statement": ["insert", "insert-query", "update", "delete"], "layout": ["int8, int4", "int4, int8", "duplicate int8"], "identities": 12},
+    "identities": 108,
+    "completeness": "Recover the input width, destination kind, result width, duplicate policy, reference coordinates, expression shape, predicate and RETURNING layout from observed constructed nodes. Exhaust the fixed typed grid on both releases."
+  },
+  "analysis": ["Mixed int4 and endpoint int8 value cells with reordered write destinations", "Insert wide values into an int4 field and retain 22003", "Swap two signed destination fields of different widths using the old row", "Narrow an out-of-range old int8 field and leave the table unchanged", "Copy signed columns between independently scoped tables under DISTINCT", "Assign an ordinary NULL result to bigint", "Assign a cast-null bigint result under DISTINCT", "Convert a signed int8 value to native decimal text", "Return an int8 field twice with different labels after DELETE", "Expand an ordinary target wildcard including both widths"],
+  "exploration": {
+    "seeds": [3359, 24877, 72901],
+    "casesPerSeed": 28,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary native widths, assignments and destination order, old-row dependencies, multiple rows, nullable data, comparison filters, boundaries, RETURNING aliases and duplicate policy."
+  },
+  "negative": ["Boolean value in a bigint VALUES destination", "Native text value in a signed VALUES destination", "Boolean source in a signed UPDATE destination", "Direct signed field at the wrong target occurrence", "Signed write layout pointing to the wrong declared native width", "Direct untyped DISTINCT NULL into signed target", "Parsed untyped DISTINCT NULL into bigint", "Parsed explicitly typed text into bigint", "Direct wide RETURNING reference pointing to an int4 field", "Unsupported native NUMERIC field in RETURNING"],
+  "faults": ["Narrow the type of a wide VALUES operand", "Reverse two written field positions", "Read the wrong old-row field in UPDATE", "Discard DISTINCT on an independently scoped input", "Return the neighboring signed field in place of int8", "Admit an untyped DISTINCT NULL by assigning it before DISTINCT"],
+  "evidence": {
+    "P01": "Store both assignment widths, real slot coordinates and the typed returning layout.",
+    "P02": "Check scope, width, assignment type, DISTINCT null placement and target ownership before publication.",
+    "P03": "Retain native semantic values and references with no SQL or analysis state.",
+    "P04": "Compose the checked result, input type and destination cast with the statement action.",
+    "P05": "Own immutable typed values and detached ordered arrays.",
+    "P06": "Emit values that yield the same native effects, row types and evaluation failures.",
+    "Q01": "Reject invalid types and field identities at their owning boundary.",
+    "Q02": "Exhaust the fixed direct grid and exercise analyzed and seeded forms independently.",
+    "Q03": "Check typed source, old-row assignment and affected-row result composition.",
+    "Q04": "Compare the SQL and independent effect predictions including full rollback.",
+    "Q05": "Tie the checked constructor and output bodies to the installed packages."
+  },
+  "open": ["Unknown string-to-int8 input conversion", "Expression assignments in VALUES or UPDATE beyond supplied literals and old-row references", "Custom casts, conflict handlers, generated destinations and triggers outside the fixed ordinary fixture"],
+  "trust": ["Pinned real PostgreSQL and stock assignment casts", "Native int4 and int8 value decoding", "Independent exact integer and effect model", "Verified package bytes"],
+  "sources": ["https://www.postgresql.org/docs/17/typeconv-query.html", "https://www.postgresql.org/docs/17/dml-returning.html", "https://www.postgresql.org/docs/17/datatype-numeric.html"]
+}
