@@ -77,6 +77,7 @@ if ($dialect === 'postgres') {
     $methods[$builtinCast] = ['__construct'];
     $properties['Expression\\WideIntegerLiteral'] = ['decimal' => ['string']];
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
+    $properties['Expression\\WideIntegerNull'] = $methods['Expression\\WideIntegerNull'] = [];
     $properties['Expression\\TextLiteral'] = ['value' => ['string']];
     $methods['Expression\\TextLiteral'] = ['__construct', 'toString'];
     $properties['Expression\\CollatedText'] = ['collation' => ['Expression\\TextCollation'],
@@ -109,7 +110,7 @@ if ($dialect === 'postgres') {
     $properties[$caseArm] = ['condition' => ['BooleanLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'],
         'result' => $caseValues];
     $range = 'Predicate\\IntegerRange';
-    $rangeLeaves = ['ColumnReference', 'IntegerLiteral', 'NullLiteral'];
+    $rangeLeaves = ['ColumnReference', 'Expression\\WideIntegerLiteral', 'Expression\\WideIntegerNull', 'From\\WideIntegerColumnReference', 'IntegerLiteral', 'NullLiteral'];
     $properties[$range] = [
         'subject' => $rangeLeaves, 'lower' => $rangeLeaves, 'upper' => $rangeLeaves,
         'negated' => ['bool'], 'symmetric' => ['bool'],

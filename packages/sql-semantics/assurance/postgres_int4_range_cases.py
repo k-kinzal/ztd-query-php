@@ -137,9 +137,9 @@ def negatives(tag):
         yield item(tag, "projection", int4_range(*triple), "unit"), "A tested predicate slot must belong to the SELECT source."
     yield item(tag, "where", int4_range(one, one, ["slot", 0, 1]), "only"), "A predicate slot must belong to a visible input occurrence."
     for sql, message in (
-        ("SELECT (1 + 2) BETWEEN 1 AND 3 AS n", "An int4 comparison operand requires a pure signed integer or NULL."),
-        ("SELECT 1.5 BETWEEN 1 AND 3 AS n", "An int4 comparison operand must resolve to pg_catalog.int4 or NULL."),
-        ("SELECT NULL BETWEEN NULL AND 3 AS n", "Each range comparison requires a known int4 operand."),
+        ("SELECT (1 + 2) BETWEEN 1 AND 3 AS n", "A signed comparison operand requires a pure signed integer or NULL."),
+        ("SELECT 1.5 BETWEEN 1 AND 3 AS n", "A signed comparison operand must resolve to pg_catalog.int4, pg_catalog.int8 or NULL."),
+        ("SELECT NULL BETWEEN NULL AND 3 AS n", "Each range comparison requires a known signed operand."),
     ):
         yield analyzed("postgres", sql, version=tag), message
 

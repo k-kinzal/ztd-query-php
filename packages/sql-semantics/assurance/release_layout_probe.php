@@ -312,6 +312,19 @@ function observePostgresHaving(SqlSemantics\Platform\PostgreSql\Semantics $seman
         $having->operator->value, $having->right::class, $having->right->decimal, $query->toString()];
 }
 
+function observePostgresSignedRangeWidths(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.range_fields (amount bigint)']);
+    $query = $semantics->analyze(
+        'SELECT amount IS NOT DISTINCT FROM CAST(NULL AS bigint) AS exact_null FROM public.range_fields',
+        $context,
+    );
+    $predicate = $query->columns[0]->expression;
+
+    return [$predicate::class, $predicate->left::class, $predicate->left->slot, $predicate->right::class,
+        $predicate->negated, $query->toString()];
+}
+
 function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -541,6 +554,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['groupedBounds'] = observePostgresGroupedBounds($semantics);
             $details['externalSourceKinds'] = observePostgresExternalSourceKinds($semantics);
             $details['groupedHaving'] = observePostgresHaving($semantics);
+            $details['signedRangeWidths'] = observePostgresSignedRangeWidths($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

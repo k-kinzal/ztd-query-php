@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v55.json"
-CONTRACT = "76c030f7f9b2b6fef4977d08d254c40998b577ba6838f67e55b7e555624be1ab"
+CONTRACT_NAME = "release-layout-v56.json"
+CONTRACT = "a41b3b834717e22e35396046b7727bd2a54075e26da09785a38ed0883367531f"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -311,6 +311,13 @@ def verify_probe(raw, catalog):
                 'GROUP BY "__ztd_source"."id" HAVING (pg_catalog.sum("__ztd_source"."amount") '
                 "OPERATOR(pg_catalog.>) CAST(2147483649 AS pg_catalog.int8)) ORDER BY 1 ASC NULLS LAST",
             ], "installed-postgres-grouped-having-mismatch", item)
+            require(item.get("signedRangeWidths") == [
+                pg_ir + "Predicate\\IntegerDistinctness", pg_ir + "From\\WideIntegerColumnReference", 0,
+                pg_ir + "Expression\\WideIntegerNull", True,
+                'SELECT COALESCE(("__ztd_source"."amount" OPERATOR(pg_catalog.=) CAST(NULL AS pg_catalog.int8)), '
+                '("__ztd_source"."amount" IS NULL AND CAST(NULL AS pg_catalog.int8) IS NULL)) AS "exact_null" '
+                'FROM "public"."range_fields" AS "__ztd_source"',
+            ], "installed-postgres-signed-range-widths-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '

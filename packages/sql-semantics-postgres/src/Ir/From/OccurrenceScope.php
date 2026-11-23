@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerNull;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -47,7 +48,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest|WideIntegerColumnReference |WideIntegerLiteral $operand,
+        BooleanColumnReference|BooleanLiteral|ColumnReference|IntegerComparison|IntegerDistinctness|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference|TextComparison|TextLiteral|TruthTest|WideIntegerColumnReference|WideIntegerLiteral|WideIntegerNull $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -62,7 +63,7 @@ final class OccurrenceScope
             $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],
-            $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral, $operand instanceof WideIntegerColumnReference, $operand instanceof WideIntegerLiteral => [],
+            $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral, $operand instanceof WideIntegerColumnReference, $operand instanceof WideIntegerLiteral, $operand instanceof WideIntegerNull => [],
         };
         foreach ($children as $child) {
             $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);

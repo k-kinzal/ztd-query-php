@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerNull;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
@@ -155,9 +156,15 @@ final class SelectSql
     /**
      * Emits a value with the type required by a resolved int4 operand position.
      */
-    public function integerOrNull(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral $value, TableSource|Join|null $source, int $offset, bool $qualify): string
+    public function integerOrNull(Arithmetic|ColumnReference|IntegerCase|IntegerLiteral|NullLiteral|WideIntegerColumnReference|WideIntegerLiteral|WideIntegerNull $value, TableSource|Join|null $source, int $offset, bool $qualify): string
     {
-        return $value instanceof NullLiteral ? 'CAST(NULL AS pg_catalog.int4)' : $this->expression($value, $source, $offset, $qualify);
+        return match (true) {
+            $value instanceof NullLiteral => 'CAST(NULL AS pg_catalog.int4)',
+            $value instanceof WideIntegerNull => 'CAST(NULL AS pg_catalog.int8)',
+            $value instanceof Arithmetic, $value instanceof ColumnReference, $value instanceof IntegerCase,
+            $value instanceof IntegerLiteral, $value instanceof WideIntegerColumnReference, $value instanceof WideIntegerLiteral
+                => $this->expression($value, $source, $offset, $qualify),
+        };
     }
 
     /**

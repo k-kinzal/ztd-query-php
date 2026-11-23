@@ -10,7 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\DistinctTest;
 
 /**
- * Resolves null-safe equality against the exact int4 comparison domain.
+ * Resolves null-safe equality against the exact native signed widths.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */

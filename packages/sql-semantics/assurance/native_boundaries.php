@@ -87,6 +87,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-grouped-result-order-boundaries-v1.json', 'bea8a88bd761a870b6f9cac2d9af79dafb9bd0f1f4c2305ff8bef86e3daf5198'],
             ['postgres-external-source-kinds-boundaries-v1.json', 'e9d773c3db468973e5f2ff12b3b199cb4ac89f5dbb8f83a605894216d348a31f'],
             ['postgres-grouped-having-boundaries-v1.json', '0297473b3f47b36fb10ba90e55b5328000a001f9b1d8c0b001e362b272f4d5c3'],
+            ['postgres-signed-range-widths-boundaries-v1.json', '28cd3860fb2bfbd1a7dea1897cd986b3db57b57376958dee3dc78256afa6782e'],
         ],
         'sqlite' => [],
     };
@@ -189,7 +190,7 @@ function checkNativeBoundaries(
                 'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Ir\\Expression\\TextCollation', 'Statement\\Expression\\Collation',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextComparisonLowering', 'Ir\\Predicate\\Text\\TextOperator',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',
-                'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering',
+                'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering', 'Ir\\Expression\\WideIntegerNull',
                 'Ir\\Predicate\\TruthTest', 'Ir\\Predicate\\TruthOperator', 'Ir\\Predicate\\TruthTestLowering',
                 'Statement\\Expression\\Predicate\\BooleanTest as ParsedTruthTest',
                 'Statement\\Expression\\BinaryOperation', 'Statement\\Expression\\ColumnReference as ParsedColumn',

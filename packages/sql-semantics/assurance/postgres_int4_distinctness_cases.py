@@ -103,8 +103,8 @@ def negatives(tag):
         yield item(tag, "projection", distinctness(left, right), "unit"), "A tested predicate slot must belong to the SELECT source."
     yield (item(tag, "where", distinctness(["slot", 0, 1], one), "only"),
            "A predicate slot must belong to a visible input occurrence.")
-    yield analyzed("postgres", "SELECT (1 + 2) IS DISTINCT FROM 4 AS result", version=tag), "An int4 comparison operand requires a pure signed integer or NULL."
-    yield analyzed("postgres", "SELECT 1.5 IS DISTINCT FROM 2 AS result", version=tag), "An int4 comparison operand must resolve to pg_catalog.int4 or NULL."
+    yield analyzed("postgres", "SELECT (1 + 2) IS DISTINCT FROM 4 AS result", version=tag), "A signed comparison operand requires a pure signed integer or NULL."
+    yield analyzed("postgres", "SELECT 1.5 IS DISTINCT FROM 2 AS result", version=tag), "A signed comparison operand must resolve to pg_catalog.int4, pg_catalog.int8 or NULL."
 
 
 def requests(_engine, tag, specification):

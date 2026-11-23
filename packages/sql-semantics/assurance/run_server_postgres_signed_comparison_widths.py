@@ -178,7 +178,10 @@ def symbol(term, scope):
         return address(term, scope)
     if role in ("comparison", "logic"):
         return role, term[1], symbol(term[2], scope), symbol(term[3], scope)
-    require(role in ("boolean", "integer", "wide-integer", "null"), "postgres-signed-comparison-scalar", term)
+    if role in ("int4-distinctness", "int4-range"):
+        width = 2 if role == "int4-distinctness" else 3
+        return *term[:-width], *(symbol(operand, scope) for operand in term[-width:])
+    require(role in ("boolean", "integer", "wide-integer", "null", "wide-null"), "postgres-signed-comparison-scalar", term)
     return tuple(term)
 
 
@@ -198,8 +201,10 @@ def graph(item):
 def evaluate(term, context):
     if term is None:
         return True
-    if term[0] in ("comparison", "logic"):
+    if term[0] in ("comparison", "logic", "int4-distinctness", "int4-range"):
         return predicate_value(term, lambda operand: evaluate(operand, context))
+    if term[0] in ("null", "wide-null"):
+        return None
     return scalar_value(term, context)
 
 

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Between;
 final class IntegerRangeLowering
 {
     /**
-     * Requires a known int4 operand in each implicit comparison.
+     * Requires a known signed operand in each implicit comparison.
      */
     public function lower(Between $range, SourceBinding|JoinBinding $binding, bool $catalogFirst): IntegerRange
     {
@@ -26,7 +26,7 @@ final class IntegerRangeLowering
         [$subject, $knownSubject] = $operands->lower($range->operand, $binding, $catalogFirst);
         [$lower, $knownLower] = $operands->lower($range->low, $binding, $catalogFirst);
         [$upper, $knownUpper] = $operands->lower($range->high, $binding, $catalogFirst);
-        Check::input($knownSubject || ($knownLower && $knownUpper), 'Each range comparison requires a known int4 operand.');
+        Check::input($knownSubject || ($knownLower && $knownUpper), 'Each range comparison requires a known signed operand.');
 
         return new IntegerRange($subject, $lower, $upper, $range->negated, $range->symmetric);
     }
