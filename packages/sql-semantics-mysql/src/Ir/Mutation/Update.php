@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Ir\ColumnReference;
-use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -35,14 +33,14 @@ final class Update implements SemanticsIR
     use Snapshot;
 
     /**
-     * @var non-empty-list<UpdateAssignment> The assignments in written order
+     * @var non-empty-list<UpdateAssignment|TextUpdateAssignment> The assignments in written order
      */
     public readonly array $assignments;
 
     /**
      * Closes every read and write over the resolved target row.
      *
-     * @param list<UpdateAssignment> $assignments
+     * @param array<array-key, mixed> $assignments
      */
     public function __construct(
         public readonly TableSource $target,
@@ -50,15 +48,17 @@ final class Update implements SemanticsIR
         public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
-        $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);
-        Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
-        foreach ($this->assignments as $assignment) {
-            $slot = $assignment->target->slot;
-            Check::input(($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE write slot must belong to the target.');
-            $value = $assignment->value;
-            Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE read slot must belong to the target.');
+        Check::input(array_is_list($assignments) && $assignments !== [], 'An UPDATE needs a nonempty assignment list.');
+        Check::input(count($assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
+        $scope = new OccurrenceScope();
+        $checked = [];
+        foreach ($assignments as $assignment) {
+            Check::input($assignment instanceof UpdateAssignment || $assignment instanceof TextUpdateAssignment, 'An UPDATE needs a nonempty assignment list.');
+            $scope->updateAssignment($assignment, $target);
+            $checked[] = $assignment;
         }
-        (new OccurrenceScope())->predicate($where, [$target]);
+        $scope->predicate($where, [$target]);
+        $this->assignments = $checked;
     }
 
     /**

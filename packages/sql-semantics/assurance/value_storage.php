@@ -148,6 +148,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'native-assignment-copy') {
+            requireShape($short === 'Mutation\\Update' && $property === 'assignments'
+                && in_array('Mutation/Update::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'checked',
+                'Native UPDATE assignments must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'ordered-table-key-copy') {
             requireShape(
                 $short === 'Schema\\CreateTable' && $property === 'keys'

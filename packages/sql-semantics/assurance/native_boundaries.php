@@ -52,6 +52,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-varchar-presence-boundaries-v1.json', 'fffbc606bf20d51b751ac695b96badb2b64a4ee91c0e3ab9338afc0973240045'],
             ['mysql-varchar-label-boundaries-v1.json', 'ddfd1e58cc81339e59694a5f7250d46c10b482c1d37f4a201a8bbd17835c2fe9'],
             ['mysql-varchar-comparison-boundaries-v1.json', '8d997095c80064880f6c6e3ef6e8c43c90ea4490a909eeb5ef64ce545963b149'],
+            ['mysql-varchar-assignment-boundaries-v1.json', '17bf1801f1d93fc7a69ae05645249e9d4483c0cfc0b62240cb3aa278e586714a'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -192,6 +193,8 @@ function checkNativeBoundaries(
                 'Ir\\From\\ColumnKind', 'Ir\\From\\Varchar', 'Ir\\From\\TextCollation', 'Ir\\From\\TextColumnReference',
                 'Ir\\From\\VarcharLowering', 'Statement\\Type\\Character', 'Statement\\Type\\Kind\\CharacterKind',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextOperator', 'Ir\\Predicate\\Text\\TextComparisonLowering',
+                'Ir\\Mutation\\TextUpdateAssignment', 'Ir\\Mutation\\UpdateAssignmentLowering', 'Ir\\Mutation\\Update',
+                'Model\\Statement\\Type\\Nullability', 'Model\\Contract\\ParameterStyle', 'Model\\Contract\\LexicalSettings',
                 'Statement\\Type\\Integral', 'Statement\\Type\\Kind\\IntegralKind',
                 'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
                 'Statement\\Literal\\Parameter as ParsedParameter',

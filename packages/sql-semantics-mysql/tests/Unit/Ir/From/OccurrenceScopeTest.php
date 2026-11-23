@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Mutation\TextUpdateAssignment;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalOperator;
@@ -68,5 +69,14 @@ final class OccurrenceScopeTest extends TestCase
         $this->expectExceptionMessage('A VARCHAR slot must belong to a visible physical input occurrence.');
 
         $scope->textColumn(new TextColumnReference(1), [$source]);
+    }
+
+    public function testUpdateAssignmentRejectsAnIntegerSlotInATextRead(): void
+    {
+        $table = new TableSource(new Identifier('app'), new Identifier('t'), [new Identifier('label'), new Identifier('id')], [new Varchar(2), ColumnKind::SignedInt]);
+        $assignment = new TextUpdateAssignment(new TextColumnReference(0), new TextColumnReference(1));
+        $this->expectExceptionMessage('A VARCHAR slot must belong to a visible physical input occurrence.');
+
+        (new OccurrenceScope())->updateAssignment($assignment, $table);
     }
 }

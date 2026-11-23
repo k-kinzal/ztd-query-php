@@ -197,6 +197,7 @@ function constructMySqlColumnType(array|string $input): object
     return new SqlSemantics\Platform\MySql\Ir\From\Varchar(
         $input[1],
         SqlSemantics\Platform\MySql\Ir\From\TextCollation::from($input[2]),
+        $input[3] ?? true,
     );
 }
 
@@ -269,7 +270,7 @@ function observeSource(object $source, string $dialect, string $namespace): arra
     } else {
         $types = array_map(
             static fn ($type): array|string => $type instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
-                ? ['varchar', $type->length, $type->collation->value]
+                ? ['varchar', $type->length, $type->collation->value, ...($type->nullable ? [] : [false])]
                 : $type->value,
             $source->columnTypes,
         );
@@ -514,11 +515,13 @@ function constructUpdate(string $platform, array $input): SemanticsIR
     $namespace = $platform . 'Ir\\';
     $statement = $namespace . 'Mutation\\Update';
     $assignment = $namespace . 'Mutation\\UpdateAssignment';
+    $textAssignment = $namespace . 'Mutation\\TextUpdateAssignment';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $target = constructSource($platform, $input['target'], $input['dialect']);
     $sets = [];
     foreach ($input['assignments'] as [$slot, $value]) {
-        $sets[] = new $assignment(constructOperand($namespace, $slot), constructOperand($namespace, $value));
+        $role = $input['dialect'] === 'mysql' && $slot[0] === 'text-slot' ? $textAssignment : $assignment;
+        $sets[] = new $role(constructOperand($namespace, $slot), constructOperand($namespace, $value));
     }
 
     return new $statement(

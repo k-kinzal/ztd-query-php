@@ -130,7 +130,7 @@ if ($dialect === 'postgres') {
 if ($dialect === 'mysql') {
     $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
     $methods['From\\TextColumnReference'] = ['__construct'];
-    $properties['From\\Varchar'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
+    $properties['From\\Varchar'] = ['length' => ['int'], 'collation' => ['From\\TextCollation'], 'nullable' => ['bool']];
     $methods['From\\Varchar'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
@@ -611,6 +611,13 @@ if ($dialect !== 'sqlite') {
     }
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $internal[] = 'Mutation\\UpdateLowering';
+    if ($dialect === 'mysql') {
+        $properties['Mutation\\TextUpdateAssignment'] = [
+            'target' => ['From\\TextColumnReference'], 'value' => ['From\\TextColumnReference', 'Literal\\TextLiteral', 'NullLiteral'],
+        ];
+        $methods['Mutation\\TextUpdateAssignment'] = ['__construct'];
+        $internal[] = 'Mutation\\UpdateAssignmentLowering';
+    }
     $properties['Rows\\LocalProjection'] = ['definition' => ['Rows\\LocalProjection', 'Select'], 'columns' => ['array']];
     $properties['Rows\\LocalResultColumn'] = ['slot' => ['int'], 'name' => ['Identifier']];
     $methods['Rows\\LocalProjection'] = $methods['Select'];
@@ -871,9 +878,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v30.json';
+    $storagePath = __DIR__ . '/value-storage-v31.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '8f517536f70c233f01ba141fa676bce3614f27e71e6e4a7a5e38bdbb38e8c956',
+        hash_file('sha256', $storagePath) === '06d413a96e370b5db4108b5346cbdf8877cc4d36409a682de8bc28a74a5e2547',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -217,14 +217,42 @@ final class SourceBinding
     }
 
     /**
+     * Resolves a writable field for a typed single-table assignment.
+     */
+    public function updateField(string $name): ColumnReference|TextColumnReference
+    {
+        $column = $this->writeDeclaration($name);
+        if (!$column->type instanceof Character) {
+            return $this->slotFor($this->signedWrite($column));
+        }
+
+        return new TextColumnReference($this->allocate($column, (new VarcharLowering())->lower($column)));
+    }
+
+    /**
      * Resolves a name to a writable explicit member with the signed integer role.
      */
     public function writableColumn(string $name): Column
     {
+        return $this->signedWrite($this->writeDeclaration($name));
+    }
+
+    /**
+     * Finds the exact physical declaration shared by native write roles.
+     */
+    public function writeDeclaration(string $name): Column
+    {
         Check::input($this->table !== null, 'A write requires a resolved base table.');
         $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
-        $column = $matches[0];
+        return $matches[0];
+    }
+
+    /**
+     * Restricts a writable field to the signed role.
+     */
+    public function signedWrite(Column $column): Column
+    {
         Check::input(!$column->generated && $column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'A write column must be a writable signed 32-bit integer.');
 
         return $column;

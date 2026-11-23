@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
+use SqlSemantics\Platform\MySql\Model\Statement\Type\Nullability;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 
@@ -35,6 +36,8 @@ final class VarcharLowering
             'The explicit VARCHAR collation requires the matching utf8mb4 character set.',
         );
 
-        return new Varchar((int) $type->length, $collation);
+        Check::input($column->nullability !== Nullability::Dependent, 'A native VARCHAR slot requires known column nullability.');
+
+        return new Varchar((int) $type->length, $collation, $column->nullability === Nullability::Nullable);
     }
 }

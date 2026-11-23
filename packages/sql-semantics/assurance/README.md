@@ -247,6 +247,8 @@ The [VARCHAR mutation domain](mysql-varchar-effects-v1.json) measures UPDATE and
 
 The [VARCHAR comparison domain](mysql-varchar-comparison-v1.json) enumerates seven operators, ordered field, literal and NULL operand roles, and five statement placements. Its independent PAD SPACE rule handles case, byte values, trailing spaces and NULL. SELECT checks ordered column positions, native integer types and row multiplicity. UPDATE and DELETE check the resulting fixture state and trigger events. Run `run_server_mysql_varchar_comparison.py` and replay with `combine_server_mysql_varchar_comparison_evidence.py`.
 
+The [VARCHAR assignment domain](mysql-varchar-assignment-v1.json) checks ordered single-table UPDATE assignments over typed fields, literals and NULL. Its independent model compares final rows, the changed-row count, warning severity, code and field, and the observed trigger records. It checks truncation by Unicode character capacity and the profile’s required-field substitution. Run `run_server_mysql_varchar_assignment.py` and replay with `combine_server_mysql_varchar_assignment_evidence.py`.
+
 ## Native local projections
 
 The [local projection contract](server-local-projection-v4.json) specifies slot reads from an immediate definition and its composition through nested local scopes. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, an ordinary one-use CTE that shadows a physical table. It verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width. A separate probe bypasses an inner scope that reverses its output positions.

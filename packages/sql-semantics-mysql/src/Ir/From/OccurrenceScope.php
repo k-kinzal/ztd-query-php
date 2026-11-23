@@ -8,6 +8,8 @@ use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\MySql\Ir\Mutation\TextUpdateAssignment;
+use SqlSemantics\Platform\MySql\Ir\Mutation\UpdateAssignment;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
@@ -79,6 +81,26 @@ final class OccurrenceScope
     {
         return $input instanceof DerivedSource ? isset($input->definition->columns[$slot])
             : ($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt;
+    }
+
+    /**
+     * Matches the assignment's closed role against the physical target layout.
+     */
+    public function updateAssignment(UpdateAssignment|TextUpdateAssignment $assignment, TableSource $target): void
+    {
+        $value = $assignment->value;
+        if ($assignment instanceof TextUpdateAssignment) {
+            $this->textColumn($assignment->target, [$target]);
+            if ($value instanceof TextColumnReference) {
+                $this->textColumn($value, [$target]);
+            }
+
+            return;
+        }
+
+        $slot = $assignment->target->slot;
+        Check::input(($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE write slot must belong to the target.');
+        Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE read slot must belong to the target.');
     }
 
     /**

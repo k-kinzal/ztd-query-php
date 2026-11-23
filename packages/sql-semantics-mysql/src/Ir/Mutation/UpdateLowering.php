@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
-use SqlSemantics\Platform\MySql\Ir\ColumnReference;
-use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
-use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
-use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
@@ -38,13 +34,10 @@ final class UpdateLowering
         );
         $binding = new SourceBinding($operation, $statement->tables[0]);
         $where = (new PredicateLowering())->lower($statement->where, $binding);
-        $expressions = new ExpressionLowering();
+        $assignmentLowering = new UpdateAssignmentLowering();
         $assignments = [];
         foreach ($statement->assignments as $assignment) {
-            $slot = $binding->slotFor($binding->writableColumn($assignment->column->name->value));
-            $value = $expressions->lower($assignment->value, $binding);
-            Check::input($value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral, 'An UPDATE assignee requires a signed literal, NULL or a row reference.');
-            $assignments[] = new UpdateAssignment($slot, $value);
+            $assignments[] = $assignmentLowering->lower($assignment->column->name->value, $assignment->value, $binding);
         }
         $target = $binding->source();
         Check::input($target !== null, 'An UPDATE requires a resolved target.');

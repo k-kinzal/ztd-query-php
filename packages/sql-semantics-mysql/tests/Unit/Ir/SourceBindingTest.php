@@ -184,4 +184,38 @@ final class SourceBindingTest extends TestCase
 
         self::assertInstanceOf(TextColumnReference::class, $source->field($item->expression));
     }
+
+    public function testWriteDeclarationUsesTheResolvedPhysicalName(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (ID INT)');
+        $query = $inspection->inspect('SELECT ID FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = new SourceBinding($query->binding(), $query->statement->from);
+
+        self::assertSame('ID', $binding->writeDeclaration('id')->name->value);
+    }
+
+    public function testSignedWriteKeepsTheExactDeclaration(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id INT)');
+        $query = $inspection->inspect('SELECT id FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = new SourceBinding($query->binding(), $query->statement->from);
+        $column = $binding->writeDeclaration('id');
+
+        self::assertSame($column, $binding->signedWrite($column));
+    }
+
+    public function testUpdateFieldPreservesTheNativeTargetRole(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (label VARCHAR(8) COLLATE utf8mb4_bin NOT NULL)');
+        $query = $inspection->inspect('SELECT label FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = new SourceBinding($query->binding(), $query->statement->from);
+
+        self::assertInstanceOf(TextColumnReference::class, $binding->updateField('label'));
+    }
 }
