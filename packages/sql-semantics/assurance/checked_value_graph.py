@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v3.json"
-CONTRACT_DIGEST = "53c24cf3e41f9fe9d06e623931fb87100efea277a97721e376d47d3364273e5e"
+CONTRACT = "closed-value-graph-v4.json"
+CONTRACT_DIGEST = "d9b75f222cea331ef20040c9b3d553e1fc292561ee30ca934064cb443b2d4721"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -76,6 +76,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("omit-public-value", "value-closure-typed-inventory"),
         ("inject-open-child", "value-closure-open-edge"),
         ("erase-list-copy", "value-closure-unspecified-array"),
+        ("erase-native-assignment-boundary", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
     )
     evidence = []
@@ -91,6 +92,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = sqlite["Select"]["fields"]["source"] = ["?UnregisteredValue"]
         elif name == "erase-list-copy":
             before = sqlite["Select"]["lists"].pop("columns")
+            after = None
+        elif name == "erase-native-assignment-boundary":
+            before = "Mutation/Update::__construct"
+            mutated["mysql"]["checkedBoundaries"].remove(before)
             after = None
         else:
             path = specification["externalValues"]["sqlite"]["source"]

@@ -15,7 +15,7 @@ from run_server_mysql_varchar_slots import COLLATION, DIAGNOSTICS, SCHEMA, query
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-insert"
-CONTRACT = "0f093a16e6a3e30b6c606164c5146e40ef82c06be5bc08b6876bc93abf433f57"
+CONTRACT = "2fd2869e86715f893955c800e4d63d60f45dd6b9b2ac42df3ab2f95cdbbddbc2"
 NAME = "ir_varchar_insert"
 TARGET = f"{SCHEMA}.{NAME}"
 EVENTS = f"{TARGET}_events"
@@ -35,7 +35,7 @@ DECLARATION = f"CREATE TABLE {TARGET} (row_key INT NOT NULL PRIMARY KEY, nullabl
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-insert-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-insert-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-insert-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -146,6 +146,14 @@ def analyzed(tag):
     yield (f"INSERT INTO {TARGET} (row_key, nullable_value, required_value, empty_value) VALUES "
            "(303, 'N', 'R', ''), (1, 'N', 'R', '')", conflict)
 
+    reordered = ("row_key", "required_value", "nullable_value", "empty_value")
+    after_error = statement(tag, reordered, [row(reordered, 303, required_value=None, nullable_value="q'u", empty_value="a  ")])
+    yield (f"INSERT INTO {TARGET} (row_key, required_value, nullable_value, empty_value) VALUES (303, NULL, 'q''u', 'a  ')", after_error)
+    repeated_null = statement(tag, HEADING, [row(HEADING, 303, required_value=None, empty_value="a"),
+                                             row(HEADING, 202, required_value=None, empty_value="b")])
+    yield (f"INSERT INTO {TARGET} (row_key, nullable_value, required_value, empty_value) VALUES "
+           "(303, 'N', NULL, 'a'), (202, 'N', NULL, 'b')", repeated_null)
+
 
 def negative(tag):
     mismatch = "An INSERT value must match its native destination type."
@@ -208,6 +216,9 @@ def expected(item):
     heading = item["target"]["columns"]
     outcome = {"status": "mutation", "count": len(item["rows"]), "columns": 0}
     occupied = {row[0] for row in after}
+    release = item["release"]
+    complete_failed_row = release in ("mysql-5.6.51", "mysql-5.7.44")
+    null_warnings = set()
     for index, given in enumerate(item["rows"]):
         values = dict(zip(heading, given))
         key = int(values["row_key"])
@@ -221,9 +232,12 @@ def expected(item):
                 if len(item["rows"]) == 1:
                     outcome = {"status": "db-error", "state": "23000", "vendorCode": 1048}
                     warnings.append(["Error", 1048, name])
-                    break
+                    if not complete_failed_row:
+                        break
                 value = ""
-                warnings.append(["Warning", 1048, name])
+                if outcome["status"] == "mutation" and (release == "mysql-5.6.51" or name not in null_warnings):
+                    warnings.append(["Warning", 1048, name])
+                    null_warnings.add(name)
             value, severity = truncated(value, WIDTH[name])
             if severity is not None:
                 warnings.append([severity, 1265, name])
