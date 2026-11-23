@@ -1,9 +1,18 @@
 {
   "revision": "SemanticsIR/postgres-text-conversion-1",
-  "extends": ["postgres-text-literal-v1.json", "postgres-builtin-casts-v3.json", "postgres-typed-parameters-v1.json"],
+  "extends": [
+    "postgres-text-literal-v1.json",
+    "postgres-builtin-casts-v3.json",
+    "postgres-typed-parameters-v1.json"
+  ],
   "approval": "pending-human-review",
-  "dialects": ["PostgreSql"],
-  "profiles": ["pg-16.6", "pg-17.2"],
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
   "requiredScope": "The fixed required language and runtime comparison scope remains in force.",
   "constructors": {
     "Expression/BuiltinCast": {
@@ -29,15 +38,43 @@
     "Exact positional correspondence in repeated and reordered projections"
   ],
   "finite": {
-    "literalInputs": ["null", "false", "true", "int4-min", "int4-zero", "int4-max", "int8-min", "int8-max", "empty-text", "quote-text"],
-    "literalWidths": [1, 2],
-    "parameterInputs": [null, "", "a'b", "値", "a\\b"],
-    "parameterLayouts": ["single", "repeated", "reversed"],
+    "literalInputs": [
+      "null",
+      "false",
+      "true",
+      "int4-min",
+      "int4-zero",
+      "int4-max",
+      "int8-min",
+      "int8-max",
+      "empty-text",
+      "quote-text"
+    ],
+    "literalWidths": [
+      1,
+      2
+    ],
+    "parameterInputs": [
+      null,
+      "",
+      "a'b",
+      "値",
+      "a\\b"
+    ],
+    "parameterLayouts": [
+      "single",
+      "repeated",
+      "reversed"
+    ],
     "identities": 35,
     "completeness": "Independently recover the literal operand role, binding vector and result layout from the emitted graph. Require all twenty literal and fifteen parameter identities."
   },
   "exploration": {
-    "seeds": [8663, 32003, 46769],
+    "seeds": [
+      8663,
+      32003,
+      46769
+    ],
     "casesPerSeed": 24,
     "timeoutSecondsPerRelease": 230,
     "allowedExclusions": [],
@@ -48,7 +85,8 @@
     "A typed text operand stays text through an outer text cast.",
     "Native text marker syntax resolves its input and output OID.",
     "Mixed text and int4 positional inputs preserve their original input order.",
-    "Two independently typed casts of a reused text position consume the same single binding."
+    "Two independently typed casts of a reused text position consume the same single binding.",
+    "A complete declaration context resolves an unqualified text target to the same native marker type."
   ],
   "negative": [
     "A closed root uses the same input position with distinct direct input types.",
@@ -57,9 +95,9 @@
   ],
   "faults": [
     "Emit a different native text type.",
-    "Erase a typed NULL conversion.",
+    "Replace a typed NULL with empty text.",
     "Swap native text input positions.",
-    "Remove exact prepared input OID comparison."
+    "Change the inferred input OID while preserving the output text."
   ],
   "evidence": {
     "P01": "Observe resolved type, operand domain and exact native input positions.",
@@ -77,5 +115,10 @@
   "open": [
     "General conversion from text into other native types, text columns, text functions and collations require further evidence."
   ],
-  "trust": ["Pinned built-in PostgreSQL cast rules", "Read-only native observer with separately measured input signatures", "Reviewed semantic oracle and exact distributed PHP"]
+  "trust": [
+    "Pinned built-in PostgreSQL cast rules",
+    "Read-only native observer with separately measured input signatures",
+    "Reviewed semantic oracle and exact distributed PHP"
+  ],
+  "faultExplanation": "The mandatory NULL fault changes the value. Dropping the cast alone can yield the same native text output through the SELECT default."
 }

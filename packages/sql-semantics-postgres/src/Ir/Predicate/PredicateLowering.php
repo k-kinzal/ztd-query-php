@@ -59,20 +59,11 @@ final class PredicateLowering
         if ($condition instanceof ParsedNot) {
             return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding, $catalogFirst));
         }
-        $expression = new ExpressionLowering();
         if ($condition instanceof ParsedNullTest) {
-            $operand = $condition->operand;
-            while ($operand instanceof Grouped) {
-                $operand = $operand->operand;
-            }
-            $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
-                ? $this->lowerValue($operand, $binding, $catalogFirst)
-                : $expression->lower($operand, $binding, $catalogFirst);
-            Check::input(!$tested instanceof Arithmetic && !$tested instanceof BuiltinCast && !$tested instanceof IntegerCase && !$tested instanceof WideIntegerLiteral && !$tested instanceof TextLiteral, 'A null test needs a supported scalar value.');
-
-            return new NullTest($tested, $condition->negated);
+            return $this->nullTest($condition, $binding, $catalogFirst);
         }
         if ($condition instanceof ParsedComparison) {
+            $expression = new ExpressionLowering();
             $qualifiers = array_column($condition->operator->qualifiers, 'value');
             $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];
             Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');
@@ -86,6 +77,24 @@ final class PredicateLowering
             return new IntegerComparison($operator, $left, $right);
         }
         return $this->leaf($condition, $binding, $catalogFirst);
+    }
+
+    /**
+     * Preserves the explicit scalar or predicate tested for NULL.
+     */
+    public function nullTest(ParsedNullTest $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): NullTest
+    {
+        $expression = new ExpressionLowering();
+        $operand = $condition->operand;
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
+            ? $this->lowerValue($operand, $binding, $catalogFirst)
+            : $expression->lower($operand, $binding, $catalogFirst);
+        Check::input(!$tested instanceof Arithmetic && !$tested instanceof BuiltinCast && !$tested instanceof IntegerCase && !$tested instanceof WideIntegerLiteral && !$tested instanceof TextLiteral, 'A null test needs a supported scalar value.');
+
+        return new NullTest($tested, $condition->negated);
     }
 
     /**

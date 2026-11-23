@@ -41,24 +41,23 @@ final class BuiltinCastLowering
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
-        if ($type->descriptor === Builtin::Text) {
-            Check::input($operand instanceof Constant && $operand->value instanceof StringConstant, 'A text literal cast requires a decoded string constant.');
-
+        if ($type->descriptor === Builtin::Text && $operand instanceof Constant && $operand->value instanceof StringConstant) {
             return new TextLiteral($operand->value->value);
         }
         $target = match ($type->descriptor) {
             Builtin::Int4 => CastDestination::Integer,
             Builtin::Int8 => CastDestination::WideInteger,
             Builtin::Bool => CastDestination::Boolean,
-            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or a text literal.'),
+            Builtin::Text => CastDestination::Text,
+            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or pg_catalog.text.'),
         };
         if ($operand instanceof ParsedNull) {
             return new BuiltinCast($target, new NullLiteral());
         }
         $input = $binding->typeOf($operand);
-        Check::input($input instanceof Known && in_array($input->descriptor, [Builtin::Int4, Builtin::Int8, Builtin::Bool], true), 'The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or NULL.');
+        Check::input($input instanceof Known && in_array($input->descriptor, [Builtin::Int4, Builtin::Int8, Builtin::Bool, Builtin::Text], true), 'The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool, pg_catalog.text or NULL.');
         $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst);
-        Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');
+        Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof TextLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');
 
         return new BuiltinCast($target, $value);
     }

@@ -7,12 +7,14 @@ namespace Tests\Unit\Ir\Predicate;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
 
@@ -44,6 +46,20 @@ final class PredicateLoweringTest extends TestCase
         self::assertInstanceOf(NullTest::class, $predicate);
         self::assertInstanceOf(LogicalPredicate::class, $predicate->operand);
         self::assertSame('NOT', $predicate->operand->operator->value);
+    }
+
+    public function testNullTestRetainsTheSignedConstantAndNegation(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1 WHERE 3 IS NOT NULL');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $test = $operation->statement->where;
+        self::assertInstanceOf(ParsedNullTest::class, $test);
+        $binding = new SourceBinding($operation->binding(), null);
+
+        $value = (new PredicateLowering())->nullTest($test, $binding, true);
+
+        self::assertTrue($value->negated);
+        self::assertEquals(new IntegerLiteral('3'), $value->operand);
     }
 
     public function testLeafReturnsTheClosedNullSafePredicate(): void

@@ -136,7 +136,7 @@ def negatives(tag):
     yield select(tag, [ref(2, "int8")], [0, 0]), "contiguous bound slots"
     yield analyzed("postgres", "SELECT $1::bigint AS a0, $1::boolean AS a1", version=tag), "no direct cast between bigint and boolean"
     yield analyzed("postgres", "SELECT $1::boolean AS a0, $1::bigint AS a1", version=tag), "no direct cast between bigint and boolean"
-    yield analyzed("postgres", "SELECT CAST($1 AS text) AS a0", version=tag), "The cast target must be pg_catalog.int4, pg_catalog.int8 or pg_catalog.bool."
+    yield analyzed("postgres", "SELECT CAST($1 AS text) AS a0", schemas=False, version=tag), "The cast must resolve to a scalar pg_catalog target."
 
 
 def requests(_, tag, specification):

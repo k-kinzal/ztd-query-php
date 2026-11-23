@@ -17,8 +17,9 @@ function admitsTypedParameterProjection(string $sql): bool
 (?(DEFINE)
   (?<projection> SELECT\ (?&field)(?:,\ (?&field)){0,15})
   (?<field> (?&expr)\ AS\ (?:"a[0-9]{1,2}"|a[0-9]{1,2}))
-  (?<expr> (?:\$[1-9][0-9]{0,3}|\((?&expr)\)|CAST\((?&expr)\ AS\ (?&type)\))(?:::(?&type))*)
-  (?<type> (?:pg_catalog\.)?(?:int[48]|bool)|integer|bigint|boolean)
+  (?<expr> (?:\$[1-9][0-9]{0,3}|\((?&expr)\)|CAST\((?&expr)\ AS\ (?&type)\)|(?&literal))(?:::(?&type))*)
+  (?<type> (?:pg_catalog\.)?(?:int[48]|bool|text|varchar)|integer|bigint|boolean)
+  (?<literal> NULL|TRUE|FALSE|-?[0-9]{1,19}|'(?:''|[^'\x00])*')
 )~ixD
 REGEX;
 
@@ -32,14 +33,17 @@ function parameterArgument(mixed $value): string
         $value === true => 'TRUE',
         $value === false => 'FALSE',
         is_int($value) => (string) $value,
-        default => throw new InvalidArgumentException('A parameter input is an exact integer, Boolean or NULL.'),
+        is_string($value) => "pg_catalog.convert_from(pg_catalog.decode('" . bin2hex($value) . "', 'hex'), 'UTF8')",
+        default => throw new InvalidArgumentException('A parameter input is an exact integer, Boolean, UTF-8 text or NULL.'),
     };
 }
 
 function observeTypedProjection(PDO $pdo, array $request): array
 {
     $bindings = $request['bindings'];
-    if (!admitsTypedParameterProjection($request['sql']) || !array_is_list($bindings) || $bindings === [] || count($bindings) > 16) {
+    $constant = ($request['allowConstantProjection'] ?? false) === true;
+    if (!admitsTypedParameterProjection($request['sql']) || !array_is_list($bindings)
+        || ($bindings === [] && !$constant) || count($bindings) > 16) {
         return ['status' => 'outside-observer-scope'];
     }
     $args = implode(', ', array_map('parameterArgument', $bindings));
@@ -51,7 +55,7 @@ function observeTypedProjection(PDO $pdo, array $request): array
             . 'unnest(prepared.parameter_types) WITH ORDINALITY AS t (param, slot) '
             . "WHERE prepared.name = 'ir_typed_projection' ORDER BY slot"
         )->fetchAll(PDO::FETCH_COLUMN);
-        $statement = $pdo->query('EXECUTE ir_typed_projection (' . $args . ')');
+        $statement = $pdo->query('EXECUTE ir_typed_projection' . ($bindings === [] ? '' : ' (' . $args . ')'));
         $fields = [];
         for ($index = 0; $index < $statement->columnCount(); ++$index) {
             $meta = $statement->getColumnMeta($index);

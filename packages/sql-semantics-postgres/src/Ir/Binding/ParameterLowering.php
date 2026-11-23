@@ -76,6 +76,7 @@ final class ParameterLowering
             Builtin::Int4 => CastDestination::Integer,
             Builtin::Int8 => CastDestination::WideInteger,
             Builtin::Bool => CastDestination::Boolean,
+            Builtin::Text => CastDestination::Text,
             default => null,
         };
     }

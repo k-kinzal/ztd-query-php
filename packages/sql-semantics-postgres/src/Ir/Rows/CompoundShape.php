@@ -73,6 +73,7 @@ final class CompoundShape
                 CastDestination::Integer => ResultKind::Integer,
                 CastDestination::WideInteger => ResultKind::WideInteger,
                 CastDestination::Boolean => ResultKind::Boolean,
+                CastDestination::Text => ResultKind::Text,
             },
             $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
             $column instanceof TextLiteral => ResultKind::Text,

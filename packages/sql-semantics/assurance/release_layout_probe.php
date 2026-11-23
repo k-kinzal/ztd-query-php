@@ -184,6 +184,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost the resolved text literal.');
             }
             $details['textLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString()];
+            $preparedText = $semantics->analyze('SELECT $1::pg_catalog.text AS a0');
+            $marker = $preparedText->columns[0]->expression;
+            if ($marker::class !== $parameterRole) {
+                throw new RuntimeException('The installed projection lost the resolved text binding.');
+            }
+            $details['textMarker'] = [$marker->position, $marker->input->value, $preparedText->toString()];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

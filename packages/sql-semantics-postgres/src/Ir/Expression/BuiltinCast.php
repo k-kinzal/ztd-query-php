@@ -30,11 +30,12 @@ final class BuiltinCast
      */
     public function __construct(
         public readonly CastDestination $target,
-        public readonly BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|Parameter|WideIntegerLiteral|self $operand,
+        public readonly BooleanLiteral|ColumnReference|IntegerLiteral|NullLiteral|Parameter|TextLiteral|WideIntegerLiteral|self $operand,
     ) {
         $source = match (true) {
             $operand instanceof BooleanLiteral => CastDestination::Boolean,
             $operand instanceof WideIntegerLiteral => CastDestination::WideInteger,
+            $operand instanceof TextLiteral => CastDestination::Text,
             $operand instanceof self => $operand->target,
             $operand instanceof Parameter => $operand->input,
             $operand instanceof ColumnReference, $operand instanceof IntegerLiteral => CastDestination::Integer,
@@ -44,6 +45,10 @@ final class BuiltinCast
             !($source === CastDestination::Boolean && $target === CastDestination::WideInteger)
                 && !($source === CastDestination::WideInteger && $target === CastDestination::Boolean),
             'PostgreSQL has no direct cast between bigint and boolean.',
+        );
+        Check::input(
+            $source !== CastDestination::Text || $target === CastDestination::Text,
+            'A typed text operand requires a text conversion in this profile.',
         );
     }
 }

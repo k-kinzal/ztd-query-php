@@ -12,8 +12,8 @@ from server_cases import observation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-typed-parameters"
-CONTRACT_NAME = "postgres-typed-parameters-v1.json"
-CONTRACT = "cb0ff021405d0a31297d84c1f047794692d990617b6271cae58fe34b7b82045b"
+CONTRACT_NAME = "postgres-typed-parameters-v2.json"
+CONTRACT = "ead84cd2f2f8292111a668ccefc0952b17815bc6ad3194cd6f889ce1ca1f5a83"
 OBSERVER = "postgres_typed_parameter_observer.php"
 
 

@@ -70,7 +70,7 @@ if ($dialect === 'postgres') {
     $castDestination = 'Expression\\CastDestination';
     $properties[$builtinCast] = [
         'target' => [$castDestination],
-        'operand' => ['Binding\\Parameter', 'BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
+        'operand' => ['Binding\\Parameter', 'BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
     ];
     $properties[$castDestination] = $methods[$castDestination] = [];
     $properties['Binding\\Parameter']['input'] = [$castDestination];
@@ -164,7 +164,7 @@ if ($dialect === 'mysql') {
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {
-    $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool'];
+    $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
 if ($dialect === 'sqlite') {
