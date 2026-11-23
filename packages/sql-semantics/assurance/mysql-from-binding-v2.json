@@ -1,0 +1,55 @@
+{
+  "revision": "SemanticsIR/mysql-from-binding-2",
+  "approval": "pending-human-review",
+  "scope": "Pin the native MySQL merged heading, its order, the preserved column and the physical qualified field order. Pin the comma precedence and local condition scope of the same release bindings.",
+  "artifacts": {
+    "src/Rules/Query/From/Joining.php": {
+      "methods": [
+        "join",
+        "names"
+      ],
+      "sha256": "2040693aefaad22311042f3e68d2fac7fdd9f1a9d7d23c322ec0f015562b27ed"
+    },
+    "src/Rules/Query/Projection.php": {
+      "methods": [
+        "star",
+        "qualified",
+        "field"
+      ],
+      "sha256": "8254e114fe831f811a713697914f4f0bff3abca730148288b0eb30e8bdc7f74e"
+    },
+    "src/Rules/Query/From/FromScope.php": {
+      "sha256": "d2ba0aaffe13ee4459f5c566aa51d8d47b8f0333e944017172909b1ae4d78799",
+      "methods": [
+        "enter",
+        "open"
+      ]
+    },
+    "src/Statement/Relation/TableList.php": {
+      "sha256": "012289ba724a9617f6b145334144df9fb4485af41476251e713710a8073af641",
+      "methods": [
+        "__construct"
+      ]
+    },
+    "src/Lowering/Query/Shared/FromRule.php": {
+      "sha256": "bb7f8bcb3be2c6a91c2131de90ab97db3637252297afe27c2c03f4396da93f9c",
+      "methods": [
+        "tables",
+        "members"
+      ]
+    },
+    "src/Lowering/Query/Modern/FactorRule.php": {
+      "sha256": "5ab31e2caecd33b9f0ca68eb45a7326a8f121c8eeab328a65e919e5b41850290",
+      "methods": [
+        "factor"
+      ]
+    },
+    "src/Lowering/Query/Legacy/FactorRule.php": {
+      "sha256": "278df3fdee3a3bc459c08dad837c1c89d71cbaa895a5b28c848cd8cb50d6676c",
+      "methods": [
+        "factor"
+      ]
+    }
+  },
+  "extends": "mysql-merged-binding-v1.json"
+}

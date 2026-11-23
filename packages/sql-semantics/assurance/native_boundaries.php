@@ -44,12 +44,20 @@ function nativeBoundaryContract(string $dialect): array
         $rules += $additional;
     }
 
-    if ($dialect === 'postgres') {
-        $path = __DIR__ . '/postgres-full-merge-boundaries-v1.json';
-        requireShape(hash_file('sha256', $path) === '99637913a193379b9e03f20b4454f151a50e0e80bb48465f832b4d23e24f0bb3', 'PostgreSQL FULL merge boundary contract differs from its recorded revision');
+    $amendments = match ($dialect) {
+        'mysql' => [['mysql-from-list-boundaries-v1.json', '75520d651cdde8992dcf05de45be54b9cb5d44d3af3f3536b612d6e83d7a443d']],
+        'postgres' => [['postgres-full-merge-boundaries-v2.json', '915303fec9720c04d34b78a6f8cca3b2b11542273ddd6f339c6f33f9e10d4e9d']],
+        'sqlite' => [],
+    };
+    foreach ($amendments as [$name, $digest]) {
+        $path = __DIR__ . '/' . $name;
+        requireShape(hash_file('sha256', $path) === $digest, "Amended boundary contract differs from its recorded revision: $name");
         $amendment = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-        [$name, $digest] = [$amendment['base']['path'], $amendment['base']['sha256']];
-        requireShape(in_array([$name, $digest], $records, true), 'PostgreSQL FULL merge boundary base is not active');
+        $base = [$amendment['base']['path'], $amendment['base']['sha256']];
+        requireShape(in_array($base, $records, true), "Amended boundary contract base is not active: $name");
+        foreach ($amendment['rules'] as $rule) {
+            requireShape($rule['dialects'] === [$dialect], "Amended boundary contract changed its dialect: $name");
+        }
         $rules = array_replace($rules, $amendment['rules']);
     }
 
@@ -162,7 +170,7 @@ function checkNativeBoundaries(
                 'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',
                 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\RangeIntegerLiteral',
-                'Ir\\From\\MergedJoinLowering', 'Ir\\SourceBinding', 'Ir\\Predicate\\PredicateLowering', 'Statement\\Relation\\Join\\JoinOperator', 'Model\\Statement\\Identifier\\Name',
+                'Ir\\From\\MergedJoinLowering', 'Ir\\SourceBinding', 'Ir\\Predicate\\PredicateLowering', 'Statement\\Relation\\Join\\JoinOperator', 'Statement\\Relation\\TableList', 'Model\\Statement\\Identifier\\Name',
                 'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',
                 'Statement\\Literal\\BooleanLiteral as ParsedBoolean', 'Statement\\Literal\\NullLiteral as ParsedNull',
                 'Statement\\Name\\ColumnUse', 'Statement\\Expression\\Operator\\Unary', 'Statement\\Expression\\Operator\\UnaryOperator',

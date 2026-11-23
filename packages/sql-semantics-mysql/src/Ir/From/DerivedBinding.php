@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable as ParsedJoin;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 
 /**
  * Binds the ordered output slots of one independently scoped derived relation.
@@ -35,7 +36,7 @@ final class DerivedBinding
         }
         Check::input($query instanceof Select, 'A derived join input requires a SELECT definition.');
         $from = JoinBinding::ungroup($query->from);
-        Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable, 'A derived join input must be independent of any joined input.');
+        Check::input(!$from instanceof ParsedJoin && !$from instanceof DerivedTable && !$from instanceof TableList, 'A derived join input must be independent of any joined input.');
         $this->value = new DerivedSource((new SelectLowering())->lower($operation, $query));
     }
 

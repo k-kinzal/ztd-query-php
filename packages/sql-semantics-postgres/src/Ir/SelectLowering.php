@@ -58,8 +58,8 @@ final class SelectLowering
             $label = new Identifier($name->value);
             $expression = $field->expression;
             $resolution = $field->resolution;
-            if ($expression === null || ($binding instanceof JoinBinding && $expression instanceof ParsedColumn && $resolution instanceof ResolvedColumn)) {
-                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
+            if ($expression === null || $expression instanceof ParsedColumn) {
+                Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
                 $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);
                 $results[] = new ResultColumn($value, $label);
                 continue;

@@ -782,7 +782,7 @@ try {
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
         ],
         'mysql' => [
-            ['mysql-merged-binding-v1.json', 'f1d64cf6fdb92f60714cdaef8b6cdddaab7b453f9c6e52f43ae1eaea861b82b6', 'MySQL merged binding'],
+            ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
         ],
     };
     foreach ($bindings as [$name, $digest, $label]) {

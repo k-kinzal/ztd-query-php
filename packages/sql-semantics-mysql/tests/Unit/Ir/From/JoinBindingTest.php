@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
+use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
@@ -36,6 +37,26 @@ final class JoinBindingTest extends TestCase
         self::assertInstanceOf(JoinBinding::class, $binding);
         self::assertSame(1, $binding->reference($column->expression)->occurrence);
         self::assertSame(0, $binding->reference($column->expression)->slot);
+    }
+
+    public function testBindKeepsExplicitJoinInsideCommaTree(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE ir_fixture.t (id INTEGER)');
+        $operation = $inspection->inspect('SELECT c.id FROM ir_fixture.t a, ir_fixture.t b LEFT JOIN ir_fixture.t c ON b.id=c.id', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $target = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $target);
+        $binding = JoinBinding::bind($operation->binding(), $operation->statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $reference = $binding->reference($target->expression);
+        $source = $binding->source();
+
+        self::assertSame(2, $reference->occurrence);
+        self::assertSame(JoinKind::Cross, $source->kind);
+        self::assertInstanceOf(Join::class, $source->right);
+        self::assertSame(JoinKind::Left, $source->right->kind);
     }
 
     public function testBindKeepsAnAbsentSource(): void

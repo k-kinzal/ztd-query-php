@@ -23,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable as ParsedJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 
 /**
  * Allocates each resolved column in its own table occurrence while retaining the parsed association.
@@ -58,8 +59,19 @@ final class JoinBinding
     public static function bind(BoundStatement $operation, ?Relation $source): SourceBinding|self
     {
         $source = self::ungroup($source);
+        if (!$source instanceof TableList) {
+            return $source instanceof ParsedJoin ? new self($operation, $source) : new SourceBinding($operation, $source);
+        }
 
-        return $source instanceof ParsedJoin ? new self($operation, $source) : new SourceBinding($operation, $source);
+        $members = $source->members;
+        Check::input(count($members) <= 61, 'A FROM list can have at most 61 input occurrences.');
+        $input = $members[0];
+        foreach (array_slice($members, 1) as $member) {
+            $input = new ParsedJoin($input, JoinOperator::Cross, $member);
+        }
+        Check::invariant($input instanceof ParsedJoin, 'A FROM list contains at least two inputs.');
+
+        return new self($operation, $input);
     }
 
     /**

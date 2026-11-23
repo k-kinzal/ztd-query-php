@@ -190,6 +190,10 @@ def inventory(root):
             update = ("update", "update_stmt", "update_list", "update_elem")
             insert = ("insert", "insert_stmt", "insert_values", "insert_from_constructor", "insert_from_constructor_opt", "values_list")
             selection = ("order_clause", "opt_order_clause", "limit_clause", "opt_limit_clause", "select_options", "select_option")
+            for rule in ("from_clause", "from_tables", "table_reference_list", "table_reference_list_parens", "join_table_list"):
+                for alternative in rules.get(rule, ()):
+                    if "DUAL_SYM" not in alternative:
+                        related[alternative] = ("mysql-from-list-v1.json",)
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif postgres:
             entry = "stmt"
