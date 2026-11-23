@@ -522,6 +522,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
 
     if ($platform === 'MySql') {
+        $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
     if ($platform === 'MySql' || $platform === 'PostgreSql') {
@@ -536,6 +537,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
+            $details['dropView'] = [$result->targets[0]->schema->value, $result->targets[0]->view->value, $result->ifExists];
+        }
         if ($platform === 'MySql' && $role === 'Rows\With\WithProjection') {
             $predecessor = $result->definitions[1]->body;
             $body = $result->body;

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v60.json"
-CONTRACT = "e986aa09b487edec95918f18fdf652b67fcfba0648998f523a5b5b821727ef62"
+CONTRACT_NAME = "release-layout-v61.json"
+CONTRACT = "e16c96fe501413245ba76c3687119322b7a4aa8509dbcd173e03fe95d7ee605d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,9 @@ def verify_probe(raw, catalog):
                 [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
                 for release in ("mysql-5.6.51", "mysql-5.7.44")
             ], "installed-mysql-with-availability-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\View\\DropView"):
+            require(item.get("dropView") == ["app", "absent_view", True] and item["sql"] == 'DROP VIEW IF EXISTS `app`.`absent_view`',
+                    "installed-mysql-drop-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",

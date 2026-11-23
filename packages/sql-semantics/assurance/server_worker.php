@@ -621,6 +621,19 @@ function constructDropTable(string $platform, array $input): SemanticsIR
         : new $statement($targets, $drop['ifExists'], $version);
 }
 
+function constructDropView(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $statement = $namespace . 'Schema\\View\\DropView';
+    $target = $namespace . 'Schema\\View\\ViewName';
+    $name = $namespace . 'Identifier';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $drop = $input['dropView'];
+    $views = array_map(static fn (array $identity): object => new $target(new $name($identity[0]), new $name($identity[1])), $drop['targets']);
+
+    return new $statement($views, $drop['ifExists'], $release::from($input['release']));
+}
+
 function constructTransaction(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -853,6 +866,7 @@ function observeStatement(array $input): array
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
+            isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -902,6 +916,15 @@ function observeStatement(array $input): array
         }
 
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString()];
+    }
+    if ($value::class === $namespace . 'Schema\\View\\DropView') {
+        return [
+            'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'dropView' => [
+                'targets' => array_map(static fn ($target): array => [$target->schema->value, $target->view->value], $value->targets),
+                'ifExists' => $value->ifExists,
+            ],
+        ];
     }
     if ($value::class === $namespace . 'Schema\\DropTable') {
         $observed = ['targets' => [], 'ifExists' => $value->ifExists];

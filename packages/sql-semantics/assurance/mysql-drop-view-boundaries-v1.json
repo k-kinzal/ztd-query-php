@@ -1,0 +1,104 @@
+{
+  "revision": "SemanticsIR/mysql-drop-view-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Absolute view names, dense owned removal targets, declaration resolution and qualified native DROP VIEW emission.",
+  "rules": {
+    "Schema/View/ViewName::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "foreach ([$schema, $view] as $identifier) {",
+        "    Check::input(",
+        "        strpbrk($identifier->value, '/\\\\.') === false && preg_match('/\\A.{1,64}(?<! )\\z/us', $identifier->value) === 1,",
+        "        'An absolute MySQL view name needs 1 to 64 characters without path separators or a trailing space.',",
+        "    );",
+        "}"
+      ]
+    },
+    "Schema/View/ViewName::quoted": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->view->quoted();"
+      ]
+    },
+    "Schema/View/DropView::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = Check::listOf($targets, ViewName::class, 'DROP VIEW needs a nonempty target list.', 1);",
+        "$seen = [];",
+        "foreach ($names as $target) {",
+        "    $key = $target->quoted();",
+        "    Check::input(!isset($seen[$key]), 'DROP VIEW cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->targets = $names;"
+      ]
+    },
+    "Schema/View/DropView::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/View/DropView::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->quoted();",
+        "}",
+        "",
+        "return 'DROP VIEW ' . ($this->ifExists ? 'IF EXISTS ' : '')",
+        "    . implode(', ', $names);"
+      ]
+    },
+    "Schema/View/DropViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'DROP VIEW requires the default native profile.');",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "$lookup = new TableLookup();",
+        "$targets = [];",
+        "foreach ($statement->views as $target) {",
+        "    $resolution = $lookup->find($context, $target);",
+        "    if ($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::View && $resolution->table->complete) {",
+        "        $name = $resolution->table->name;",
+        "    } elseif ($statement->ifExists && $resolution instanceof MissingTable) {",
+        "        $name = $resolution->name;",
+        "    } else {",
+        "        throw new InvalidConstruction('DROP VIEW needs a declared view or a permitted known absence.');",
+        "    }",
+        "    $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "    Check::input(",
+        "        $name->catalog === null && $schema !== SessionDatabase::UNNAMED && isset($schemas[$schema]),",
+        "        'DROP VIEW requires a known absolute view identity.'",
+        "    );",
+        "    $targets[] = new ViewName(new Identifier($schema), new Identifier($name->name->value));",
+        "}",
+        "",
+        "return new DropView($targets, $statement->ifExists, $profile->grammar);"
+      ]
+    }
+  }
+}
