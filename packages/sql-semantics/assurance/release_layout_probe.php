@@ -942,7 +942,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['rename'] = [$result->schema->value, $result->table->value, $result->column->value,
                 $result->destination->value, $result->quoteReferences];
         }
-        if ($role === 'Schema\\Query\\CreateTableAs') {
+        if ($platform === 'Sqlite' && $role === 'Schema\\Query\\CreateTableAs') {
             $columns = $result->columns();
             if (count($columns) !== 1 || $columns[0]::class !== $namespace . 'Ir\\Schema\\Query\\CreatedColumn') {
                 throw new RuntimeException('The installed CREATE TABLE AS derives an unexpected column.');

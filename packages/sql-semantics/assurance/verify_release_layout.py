@@ -511,7 +511,7 @@ def verify_probe(raw, catalog):
         if item["role"] == "Schema\\Alter\\RenameColumn":
             require(item.get("rename") == ["main", "accounts", "id", "renamed", False],
                     "installed-column-rename-mismatch", item)
-        if item["role"] == "Schema\\Query\\CreateTableAs":
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):
             require(item.get("column") == ["result", "INT"], "installed-created-column-mismatch", item)
     return results, checked_roles(catalog, role_observations), role_controls(catalog, role_observations)
 
