@@ -122,7 +122,7 @@ def faults(engine, tag):
     if engine == "mysql":
         padded = leaf(engine, tag, [[["integer", "1", 9, False], "c0"]])
         result.append(RenderFault("erase-materialized-integer-width", "sql-semantics-mysql/src/Ir/SelectSql.php",
-                                  "$expression instanceof IntegerLiteral => $expression->toString(),",
+                                  "$expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral => $expression->toString(),",
                                   "$expression instanceof IntegerLiteral => $expression->decimal,",
                                   case(engine, tag, padded, [0]), "meaning-mismatch"))
     return result
