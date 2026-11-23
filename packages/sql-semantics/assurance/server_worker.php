@@ -601,9 +601,15 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
         };
         $columns[] = new $column(new $name($columnName), $type, $nullable, $default === null ? null : constructOperand($namespace, $default));
     }
+    $coordinate = new $target(new $name($create['target'][0]), new $name($create['target'][1]));
+    if ($input['dialect'] === 'mysql') {
+        $identity = $namespace . 'Schema\\Identity\\TableIdentity';
+        $kind = $namespace . 'From\\ExternalRelationKind';
+        $coordinate = new $identity($coordinate, $kind::from($input['createKind'] ?? 'table'));
+    }
 
     return new $statement(
-        new $target(new $name($create['target'][0]), new $name($create['target'][1])),
+        $coordinate,
         $columns,
         $create['ifNotExists'],
         $release::from($input['release']),
@@ -1209,8 +1215,9 @@ function observeStatement(array $input): array
         ];
     }
     if ($value::class === $namespace . 'Schema\\CreateTable') {
+        $coordinate = $dialect === 'mysql' ? $value->target->name : $value->target;
         $observed = [
-            'target' => [$value->target->schema->value, $value->target->table->value],
+            'target' => [$coordinate->schema->value, $coordinate->table->value],
             'ifNotExists' => $value->ifNotExists,
             'columns' => [],
         ];
@@ -1230,7 +1237,8 @@ function observeStatement(array $input): array
             ];
         }
 
-        return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString()];
+        return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString(),
+            ...($dialect === 'mysql' ? ['createKind' => $value->target->kind->value] : [])];
     }
     if ($value::class === $namespace . 'Schema\\View\\CreateView') {
         if ($dialect === 'postgres') {

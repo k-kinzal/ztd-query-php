@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v77.json"
-CONTRACT = "bb1420e4fb49984dea5c6d8c83b378b667dfc991b3797d74bdbd1d9031a38aca"
+CONTRACT_NAME = "release-layout-v78.json"
+CONTRACT = "3454d0b6866e2449f35473379067d6b311cca942976d78a9bcd3215fc738d536"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -461,6 +461,9 @@ def verify_probe(raw, catalog):
                 "CREATE TABLE `app`.`key_decl` (`lo` SMALLINT NOT NULL, `hi` BIGINT NOT NULL DEFAULT -7, "
                 "PRIMARY KEY (`hi` DESC, `lo`)) ENGINE=InnoDB",
             ], "installed-mysql-primary-key-mismatch", item)
+            temporary = "CREATE TEMPORARY TABLE IF NOT EXISTS `app`.`scratch` (`n` SMALLINT NOT NULL DEFAULT -7) ENGINE=InnoDB"
+            require(item.get("mysqlSessionCreateTable") == ["app", "scratch", "temporary-table", True, temporary, temporary],
+                    "installed-mysql-session-declaration-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],

@@ -173,11 +173,14 @@ function observeMysqlVarcharDeclaration(SqlSemantics\Platform\MySql\Semantics $s
     $location = new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
         new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('varchar_decl')
     );
-    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($location, [$n, $column], true, defaultCollation: $space);
+    $target = new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+        $location, SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($target, [$n, $column], true, defaultCollation: $space);
     $type = $analyzed->columns[1]->storage;
 
     return [
-        $analyzed::class, $analyzed->target->schema->value, $analyzed->target->table->value, $analyzed->ifNotExists,
+        $analyzed::class, $analyzed->target->name->schema->value, $analyzed->target->name->table->value, $analyzed->ifNotExists,
         $analyzed->defaultCollation->value, $analyzed->columns[0]->storage->value, $type::class, $type->length,
         $type->collation->value, $analyzed->columns[1]->nullable, $analyzed->columns[1]->default->value,
         $analyzed->toString(), $direct->toString(), $direct->profileId(),
@@ -198,6 +201,27 @@ function observeMysqlSignedDeclaration(SqlSemantics\Platform\MySql\Semantics $se
     return [array_map(static fn ($field): array => [
         $field->storage->value, $field->storage->bytes(), $field->nullable, $field->default::class, $field->default->decimal,
     ], $value->columns), $value->toString(), $rejected];
+}
+
+function observeMysqlSessionCreateTable(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $analyzed = $semantics->analyze('CREATE TEMPORARY TABLE IF NOT EXISTS app.scratch (n SMALLINT NOT NULL DEFAULT -7)');
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\CreateTable(
+        new SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity(
+            new SqlSemantics\Platform\MySql\Ir\Schema\TableName(
+                new SqlSemantics\Platform\MySql\Ir\Identifier('app'), new SqlSemantics\Platform\MySql\Ir\Identifier('scratch')
+            ),
+            SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::TemporaryTable
+        ),
+        [new SqlSemantics\Platform\MySql\Ir\Schema\TableColumn(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('n'), SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Small,
+            false, new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('-7')
+        )],
+        true
+    );
+
+    return [$analyzed->target->name->schema->value, $analyzed->target->name->table->value,
+        $analyzed->target->kind->value, $direct->target == $analyzed->target, $analyzed->toString(), $direct->toString()];
 }
 
 function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics): array
@@ -645,6 +669,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
             $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
+            $details['mysqlSessionCreateTable'] = observeMysqlSessionCreateTable($semantics);
         }
         if ($platform === 'MySql' && $role === 'Select') {
             $value = $result->columns[0]->expression;

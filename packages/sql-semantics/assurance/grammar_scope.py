@@ -522,6 +522,15 @@ def inventory(root):
             for rule in ("truncate", "truncate_stmt", "opt_table_sym", "opt_table"):
                 for alternative in rules.get(rule, []):
                     related[alternative] = (*related.get(alternative, ()), "mysql-truncate-v2.json")
+            declaration_roles = {
+                "opt_temporary: TEMPORARY",
+                "opt_if_not_exists: IF not EXISTS",
+                "create_table_stmt: CREATE opt_temporary TABLE_SYM opt_if_not_exists table_ident ( table_element_list ) opt_create_table_options_etc",
+                "create2: ( create2a",
+                "create2a: create_field_list ) opt_create_table_options opt_create_partitioning create3",
+            }
+            for alternative in signatures & declaration_roles:
+                related[alternative] = (*related.get(alternative, ()), "mysql-session-create-table-v1.json")
         if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",

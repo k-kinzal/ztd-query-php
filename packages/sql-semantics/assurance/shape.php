@@ -833,6 +833,7 @@ if ($dialect !== 'sqlite') {
         $methods[$tableRename] = ['__construct', 'toString'];
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
         $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\Key\\PrimaryKey'];
+        $properties['Schema\\CreateTable']['target'] = [$identity];
         $properties['Schema\\CharacterStorage'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
         $properties['Schema\\Key\\PrimaryKey'] = ['terms' => ['array']];
         $properties['Schema\\Key\\PrimaryKeyColumn'] = ['slot' => ['int'], 'descending' => ['bool']];

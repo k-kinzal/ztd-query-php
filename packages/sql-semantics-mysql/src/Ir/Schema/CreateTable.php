@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\TextCollation;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -12,15 +14,16 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * The declaration of one ordinary persistent native table.
+ * An ordinary native table declaration in the persistent or session-local namespace.
  *
  * @visibility public
  * @example Reading the target schema
  *     $schema = new \SqlSemantics\Platform\MySql\Ir\Identifier('app');
  *     $name = new \SqlSemantics\Platform\MySql\Ir\Identifier('accounts');
  *     $table = new \SqlSemantics\Platform\MySql\Ir\Schema\TableName($schema, $name);
+ *     $identity = new \SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity($table, \SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::BaseTable);
  *     $column = new \SqlSemantics\Platform\MySql\Ir\Schema\TableColumn($name, \SqlSemantics\Platform\MySql\Ir\Schema\IntegerStorage::Standard);
- *     (new \SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($table, [$column]))->target->schema->value // => 'app'
+ *     (new \SqlSemantics\Platform\MySql\Ir\Schema\CreateTable($identity, [$column]))->target->name->schema->value // => 'app'
  */
 final class CreateTable implements SemanticsIR
 {
@@ -37,7 +40,7 @@ final class CreateTable implements SemanticsIR
      * @param list<TableColumn> $columns The column definitions
      */
     public function __construct(
-        public readonly TableName $target,
+        public readonly TableIdentity $target,
         array $columns,
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
@@ -97,7 +100,8 @@ final class CreateTable implements SemanticsIR
             $columns[] = 'PRIMARY KEY (' . implode(', ', $parts) . ')';
         }
 
-        return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()
+        return 'CREATE ' . ($this->target->kind === ExternalRelationKind::TemporaryTable ? 'TEMPORARY ' : '')
+            . 'TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()
             . ' (' . implode(', ', $columns) . ') ENGINE=InnoDB'
             . ($this->defaultCollation === null ? '' : ' DEFAULT CHARACTER SET utf8mb4 COLLATE ' . $this->defaultCollation->value);
     }

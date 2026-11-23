@@ -37,6 +37,7 @@ CONTRACTS = {
     "mysql-ordered-table-rename-v2.json": "8fd94c11049645a17e8775960a7da377d610ece5deca2bbf4b0953ed27bc1954",
     "mysql-truncate-v2.json": "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d",
     "mysql-session-drop-table-v1.json": "f74032510b22e940d5902b43156e39d1752e5bd51974561ee1ec127d13954da9",
+    "mysql-session-create-table-v1.json": "d128967df8d5696561122f4064c976acc904293f4a301f5b8b432f3d4cdce79a",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
     "mysql-create-view-v2.json": "db587d801c66d83202d9a3841e293f2e82d47565d0fcdc230a6c9b46ec154108",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
