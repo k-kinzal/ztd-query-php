@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
@@ -86,4 +88,11 @@ final class SelectSqlTest extends TestCase
         self::assertSame('`__ztd_c3`', (new SelectSql())->localColumn(3));
     }
 
+
+    public function testColumnUsesTheDeclaredVarcharFieldAndOccurrenceAlias(): void
+    {
+        $source = new TableSource(new Identifier('app'), new Identifier('items'), [new Identifier('label')], [new Varchar(8)]);
+
+        self::assertSame('`__ztd_source_1`.`label`', (new SelectSql())->column(new TextColumnReference(0), $source, 1, true));
+    }
 }

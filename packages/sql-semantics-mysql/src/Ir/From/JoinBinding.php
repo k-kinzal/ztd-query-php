@@ -115,10 +115,25 @@ final class JoinBinding
      */
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {
+        $field = $this->projected($resolution);
+        Check::input($field instanceof ColumnReference, 'The bound column must have the signed 32-bit integer type.');
+
+        return $field;
+    }
+
+    /**
+     * Resolves the source occurrence and native slot used in a projection.
+     * @throws InvalidConstruction When the field is outside the checked input scope
+     */
+    public function projected(ResolvedColumn $resolution): ColumnReference|TextColumnReference
+    {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         foreach ($this->inputs as $occurrence => $binding) {
             if ($binding->relation() === $resolution->relation) {
-                return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);
+                $field = $binding instanceof SourceBinding ? $binding->projected($resolution) : $binding->resolved($resolution);
+
+                return $field instanceof TextColumnReference ? new TextColumnReference($field->slot, $occurrence)
+                    : new ColumnReference($field->slot, $occurrence);
             }
         }
 

@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 /**
@@ -44,10 +45,10 @@ final class ProjectionColumns
             Check::input($name !== null, 'The result must have a resolved name.');
             $label = $labels->lower($statement, $field, $name->value);
             $expression = $field->expression;
-            if ($expression === null) {
+            if ($expression === null || $expression instanceof ColumnUse) {
                 $resolution = $field->resolution;
-                Check::input($resolution instanceof ResolvedColumn, 'A wildcard field must resolve to one visible input slot.');
-                $results[] = new ResultColumn($binding->resolved($resolution), $label);
+                Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
+                $results[] = new ResultColumn($binding->projected($resolution), $label);
                 continue;
             }
             $parameter = $parameters->lower($expression, $parameterPosition + 1);

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
@@ -45,7 +46,7 @@ final class SelectBounds
             $label = $result->name->value;
             if ($label !== ltrim($label, " \t\r\n\v\f")) {
                 $reference = $result->expression;
-                Check::invariant($reference instanceof ColumnReference, 'An intrinsic label belongs to a column reference.');
+                Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
                 $table = $inputs[$reference->occurrence] ?? null;
                 Check::input(
                     $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,
@@ -65,6 +66,7 @@ final class SelectBounds
                         $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
                         'Column slot must belong to the SELECT source.',
                     ),
+                    $expression instanceof TextColumnReference => $scope->textColumn($expression, $inputs),
                     $expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => Check::input($expression->position === ++$position, 'MySQL parameter positions must follow lexical projection order.'),

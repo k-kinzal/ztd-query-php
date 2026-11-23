@@ -28,6 +28,7 @@ CONTRACTS = {
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",
     "mysql-signed-quotient-v1.json": "66925621bd8a6e02a6e006be1163f34622ba75af77497f1958e052b7f9097996",
     "mysql-text-literal-v1.json": "54d594a684f8196c5ed651cb5d2220a5416f8e657bcdd6def6ddb60b6fa71629",
+    "mysql-varchar-slots-v2.json": "3282a89029e03bbab4448271d03cfc292eb18947d3ff0295b245290bea0eb559",
     "postgres-int4-operators-v2.json": "977d858b305d7eb4d33f3061a70781c9dc3412a4280003016b0ae92910f52bfa",
     "sqlite-truth-v2.json": "f32372203fcd2896fd116d876d7d74271f4994821c8b8a237f66006a7299685e",
     "sqlite-unary-v1.json": "c79d1248b2e3e55c4cb4d2b94109811f8393fe824055ef02f92fbe0ab6abb9d6",

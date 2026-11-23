@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -52,9 +53,9 @@ final class Update implements SemanticsIR
         Check::input(count($this->assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
         foreach ($this->assignments as $assignment) {
             $slot = $assignment->target->slot;
-            Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');
+            Check::input(($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE write slot must belong to the target.');
             $value = $assignment->value;
-            Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');
+            Check::input(!$value instanceof ColumnReference || ($target->columnTypes[$value->slot] ?? null) === ColumnKind::SignedInt, 'An UPDATE read slot must belong to the target.');
         }
         (new OccurrenceScope())->predicate($where, [$target]);
     }

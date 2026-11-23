@@ -7,6 +7,9 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -116,5 +119,56 @@ final class SourceBindingTest extends TestCase
         self::assertSame(['lane', 'id'], array_keys($heading));
         self::assertSame('Lane', $heading['lane']->name->value);
         self::assertSame('ID', $heading['id']->name->value);
+    }
+
+    public function testProjectedAndDeclaredKeepOneExactTypedPosition(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (label VARCHAR(32) COLLATE utf8mb4_bin)');
+        $operation = $inspection->inspect('SELECT label, app.t.label FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = $operation->binding();
+        $facts = $binding->facts->query($operation->statement)->fields();
+        self::assertNotNull($facts);
+        $first = $facts->at(0)->resolution;
+        $second = $facts->at(1)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $first);
+        self::assertInstanceOf(ResolvedColumn::class, $second);
+        $source = new SourceBinding($binding, $operation->statement->from);
+        $a = $source->projected($first);
+        $b = $source->projected($second);
+
+        self::assertInstanceOf(TextColumnReference::class, $a);
+        self::assertEquals($a, $b);
+        self::assertSame($source->declared($first), $source->declared($second));
+        self::assertInstanceOf(Varchar::class, $source->source()?->columnTypes[0]);
+    }
+
+    public function testDeclaredResolvesTheVisiblePhysicalColumn(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (id INT)');
+        $operation = $inspection->inspect('SELECT id FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = $operation->binding();
+        $fields = $binding->facts->query($operation->statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(0)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+
+        self::assertSame('id', (new SourceBinding($binding, $operation->statement->from))->declared($resolution)->name->value);
+    }
+
+    public function testAllocateRecordsOneSignedTypeAtTheChosenPosition(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (amount INT)');
+        $operation = $inspection->inspect('SELECT amount FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+        $column = $binding->writableColumn('amount');
+
+        self::assertSame(0, $binding->allocate($column, ColumnKind::SignedInt));
+        self::assertSame([ColumnKind::SignedInt], $binding->source()?->columnTypes);
     }
 }

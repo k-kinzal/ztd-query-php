@@ -80,6 +80,7 @@ function checkValueStorage(
     Parser $parser,
     Standard $printer,
     NodeFinder $finder,
+    array $checkedBoundaries,
 ): void {
     $lists = array_keys(array_filter($propertyDomain, static fn (array $types): bool => $types === ['array']));
     $explicit = [];
@@ -134,6 +135,15 @@ function checkValueStorage(
 
         if ($rule === 'closed-scalar-copy') {
             checkScalarCopy($body, $prefix, $checkClass, $parser, $printer);
+
+            continue;
+        }
+
+        if ($rule === 'native-slot-copy') {
+            requireShape($short === 'TableSource' && $property === 'columnTypes'
+                && in_array('TableSource::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'owned',
+                'Native slot types must come from the verified detached copy.');
 
             continue;
         }

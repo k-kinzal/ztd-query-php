@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -38,6 +39,9 @@ final class Insert implements SemanticsIR
         array $rows,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
+        foreach ($target->columnTypes as $type) {
+            Check::input($type === ColumnKind::SignedInt, 'An INSERT target slot requires the signed INT type.');
+        }
         $width = count($target->columns);
         Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');
         $this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);

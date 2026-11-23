@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -126,5 +127,26 @@ final class JoinBindingTest extends TestCase
         self::assertInstanceOf(JoinBinding::class, $binding);
 
         self::assertEquals(new BooleanLiteral(true), $binding->predicate());
+    }
+
+    public function testProjectedResolvesTheSecondNativeTextOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (label VARCHAR(8) COLLATE utf8mb4_bin)');
+        $operation = $inspection->inspect('SELECT b.label FROM app.t a CROSS JOIN app.t b', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $facts = $operation->binding();
+        $fields = $facts->facts->query($operation->statement)->fields();
+        self::assertNotNull($fields);
+        $resolution = $fields->at(0)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $binding = JoinBinding::bind($facts, $operation->statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $reference = $binding->projected($resolution);
+
+        self::assertInstanceOf(TextColumnReference::class, $reference);
+        self::assertSame(1, $reference->occurrence);
+        self::assertSame(0, $reference->slot);
     }
 }

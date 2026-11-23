@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -28,11 +30,17 @@ final class TableSource
     public readonly array $columns;
 
     /**
+     * @var list<ColumnKind|Varchar> The native type at each corresponding slot
+     */
+    public readonly array $columnTypes;
+
+    /**
      * Establishes a fixed external table identity and an ordered list of unique column slots.
      *
      * @param list<Identifier> $columns The names at those slots
+     * @param array<array-key, mixed> $columnTypes The types in slot order, or empty for signed INT slots
      */
-    public function __construct(public readonly Identifier $schema, public readonly Identifier $table, array $columns)
+    public function __construct(public readonly Identifier $schema, public readonly Identifier $table, array $columns, array $columnTypes = [])
     {
         $names = Check::listOf($columns, Identifier::class, 'A table source needs an ordered list of identifier slots.');
         foreach ([$schema, $table] as $object) {
@@ -50,6 +58,14 @@ final class TableSource
             Check::input(!isset($seen[$key]), 'A table source cannot repeat a column name.');
             $seen[$key] = true;
         }
+        $types = $columnTypes === [] ? array_fill(0, count($names), ColumnKind::SignedInt) : $columnTypes;
+        Check::input(array_is_list($types) && count($types) === count($names), 'A table source needs one native type per input slot.');
+        $owned = [];
+        foreach ($types as $type) {
+            Check::input($type instanceof ColumnKind || $type instanceof Varchar, 'A table source needs checked native slot types.');
+            $owned[] = $type;
+        }
         $this->columns = $names;
+        $this->columnTypes = $owned;
     }
 }

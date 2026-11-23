@@ -235,6 +235,12 @@ The [native parameter contract](server-parameter-v5.json) fixes the binding posi
 
 Run `run_server_parameter.py` with the same native fixture options. Replay all releases with `combine_server_parameter_evidence.py` and the per-release `index.json` paths.
 
+## MySQL physical VARCHAR projections
+
+The [VARCHAR domain](mysql-varchar-slots-v2.json) checks the scoped native field type, textual bytes, ordinal projections, repeated labels and PAD SPACE semantics across the pinned MySQL releases. For DISTINCT it requires one of the original rows from each padded equality class. For ORDER BY it also checks the order of the classes.
+
+Run `run_server_mysql_varchar_slots.py` with the native fixture options and replay the per-release reports with `combine_server_mysql_varchar_slots_evidence.py`.
+
 ## Native local projections
 
 The [local projection contract](server-local-projection-v4.json) specifies slot reads from an immediate definition and its composition through nested local scopes. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, an ordinary one-use CTE that shadows a physical table. It verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width. A separate probe bypasses an inner scope that reverses its output positions.
@@ -333,7 +339,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_re
 
 The evaluator treats outer joins as filtered products with unmatched-row extension, uses SQL truth rules for predicates and checks ordering without constraining ties. It reads fixture data with deliberately different and duplicate rows, NULLs and empty inputs. Separate analyzed cases compare the original and emitted statements, including a self join and ordering by a column with a declared collation. The relational mutations change an occurrence alias, remove NULL-extended rows, drop a filter, reverse an ordering key and bypass the snapshot restoration guard. Run the initial F01–F12 exercise on the same distribution.
 
-The [closed value contract](closed-value-graph-v2.json) fixes the static argument for declared fields and retained children. The source audit requires each nonpromoted readonly field to receive one unconditional constructor initialization. The bundle reconciles the audited fields with the independently extracted inventory, verified list copies and pinned release enums. Its machine-readable graph records the argument's premises and the omission, open-edge, unchecked-list, external-definition and initialization controls.
+The [closed value contract](closed-value-graph-v3.json) fixes the static argument for declared fields and retained children. The source audit requires each nonpromoted readonly field to receive one unconditional constructor initialization. The bundle reconciles the audited fields with the independently extracted inventory, verified list copies and pinned release enums. Its machine-readable graph records the argument's premises and the omission, open-edge, unchecked-list, external-definition and initialization controls.
 
 The [scalar dispatch contract](scalar-dispatch-v3.json) checks that each admitted operand type reaches one explicit branch or a typed delegation. The audit compares the renderer's PHP argument union with the checked fields of the listed callers. Removing a branch, adding a fallback, or narrowing both the signature and dispatch while still accepting a wider field fails the corresponding check. This evidence concerns coverage of the dispatch, with SQL semantics checked by the native comparisons.
 

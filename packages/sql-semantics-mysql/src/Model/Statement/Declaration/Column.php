@@ -25,12 +25,14 @@ final class Column
      * @param TypeDescriptor $type The declared type
      * @param Nullability $nullability Whether the column can hold NULL
      * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
+     * @param Name|null $collation The explicitly declared column collation when available
      */
     public function __construct(
         public readonly Name $name,
         public readonly TypeDescriptor $type,
         public readonly Nullability $nullability = Nullability::Nullable,
         public readonly bool $generated = false,
+        public readonly ?Name $collation = null,
     ) {
     }
 }

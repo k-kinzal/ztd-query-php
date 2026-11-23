@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -66,23 +67,10 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|Parameter|SignedCast|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|Parameter|SignedCast|TextColumnReference|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
-        if ($expression instanceof ColumnReference) {
-            $inputs = $source instanceof Join ? $source->inputs() : [$source];
-            $input = $inputs[$expression->occurrence] ?? null;
-            if ($input instanceof DerivedSource) {
-                Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
-                $name = $this->localColumn($expression->slot);
-            } else {
-                Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
-                $name = $input->columns[$expression->slot]->quoted();
-            }
-
-            return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;
-        }
-
         return match (true) {
+            $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',
             $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',
@@ -92,6 +80,24 @@ final class SelectSql
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits the exact field name and its owning physical or derived occurrence.
+     */
+    public function column(ColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $inputs = $source instanceof Join ? $source->inputs() : [$source];
+        $input = $inputs[$expression->occurrence] ?? null;
+        if ($input instanceof DerivedSource) {
+            Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
+            $name = $this->localColumn($expression->slot);
+        } else {
+            Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
+            $name = $input->columns[$expression->slot]->quoted();
+        }
+
+        return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;
     }
 
     /**

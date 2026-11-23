@@ -128,6 +128,14 @@ if ($dialect === 'postgres') {
     $properties['TableSource']['only'] = ['bool'];
 }
 if ($dialect === 'mysql') {
+    $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $methods['From\\TextColumnReference'] = ['__construct'];
+    $properties['From\\Varchar'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
+    $methods['From\\Varchar'] = ['__construct'];
+    $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
+    $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
+    $properties['TableSource']['columnTypes'] = ['array'];
+    $properties['ResultColumn']['expression'][] = 'From\\TextColumnReference';
     $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
@@ -154,7 +162,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
-    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering');
+    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
 if ($dialect === 'postgres') {
@@ -180,6 +188,8 @@ if ($dialect === 'mysql') {
     sort($properties['ResultColumn']['expression']);
     $internal[] = 'Expression\\IntegralCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
+    $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int'];
+    $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
 }
 if ($dialect === 'postgres') {
     $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
@@ -833,6 +843,7 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
+            ['mysql-varchar-binding-v1.json', 'e71bf44fe6540151b3d46908456671b4423007b856977aca05651bec13de5a64', 'MySQL VARCHAR binding'],
         ],
     };
     foreach ($bindings as [$name, $digest, $label]) {
@@ -847,9 +858,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v29.json';
+    $storagePath = __DIR__ . '/value-storage-v30.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'b4525ce61f0b50a8eb37e9cfdd6f1ee370477e004f0dcc0e340ac4710bdbaf25',
+        hash_file('sha256', $storagePath) === '8f517536f70c233f01ba141fa676bce3614f27e71e6e4a7a5e38bdbb38e8c956',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -992,6 +1003,7 @@ try {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
+                    || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
@@ -1061,7 +1073,7 @@ try {
         requireShape(count($traits) === 1 && count($traits[0]->traits) === 1 && $traits[0]->traits[0]->toString() === $snapshot && $traits[0]->adaptations === [], "Snapshot paths differ in $short");
         $role = str_replace('\\', '/', $short);
         $arrays = $storage[$role] ?? [];
-        checkValueStorage($class, $expected, $arrays, $short, $prefix, $platform . '\\Model\\Diagnostic\\Check', $parser, $printer, $finder);
+        checkValueStorage($class, $expected, $arrays, $short, $prefix, $platform . '\\Model\\Diagnostic\\Check', $parser, $printer, $finder, $checkedBoundaries);
         $checkedValues[$short] = ['kind' => 'final-readonly-fields', 'fields' => (object) $actual, 'lists' => (object) $arrays];
         if ($arrays !== []) {
             $listFields[$role] = array_keys($arrays);

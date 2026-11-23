@@ -72,6 +72,20 @@ final class OccurrenceScope
      */
     public function hasSlot(TableSource|DerivedSource|null $input, int $slot): bool
     {
-        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot]) : isset($input->columns[$slot]);
+        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot])
+            : ($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt;
+    }
+
+    /**
+     * Validates a VARCHAR reference at its owning physical occurrence.
+     * @param list<TableSource|DerivedSource> $inputs
+     */
+    public function textColumn(TextColumnReference $reference, array $inputs): void
+    {
+        $input = $inputs[$reference->occurrence] ?? null;
+        Check::input(
+            $input instanceof TableSource && ($input->columnTypes[$reference->slot] ?? null) instanceof Varchar,
+            'A VARCHAR slot must belong to a visible physical input occurrence.',
+        );
     }
 }

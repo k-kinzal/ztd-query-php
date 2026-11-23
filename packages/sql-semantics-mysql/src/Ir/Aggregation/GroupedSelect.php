@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Aggregation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -59,7 +60,7 @@ final class GroupedSelect implements SemanticsIR
         Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');
         $members = [];
         foreach ($grouping as $key) {
-            Check::input($key->occurrence === 0 && isset($source->columns[$key->slot]), 'Each grouping key must belong to its input.');
+            Check::input($key->occurrence === 0 && ($source->columnTypes[$key->slot] ?? null) === ColumnKind::SignedInt, 'Each grouping key must belong to its input.');
             $members[$key->slot] = true;
         }
         foreach ($results as $result) {
@@ -72,7 +73,7 @@ final class GroupedSelect implements SemanticsIR
                     'An intrinsic MySQL grouped name must equal its physical input field.'
                 );
             } else {
-                Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'The aggregate slot must belong to the group input.');
+                Check::input($value->argument === null || ($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt, 'The aggregate slot must belong to the group input.');
             }
         }
         (new OccurrenceScope())->predicate($where, [$source]);

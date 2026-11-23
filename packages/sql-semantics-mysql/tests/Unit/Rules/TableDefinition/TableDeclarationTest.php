@@ -153,4 +153,14 @@ final class TableDeclarationTest extends TestCase
         self::assertTrue((new TableDeclaration())->named(new Name('A'), [new Name('a')], Comparison::AsciiInsensitive));
         self::assertFalse((new TableDeclaration())->named(new Name('b'), [new Name('a')], Comparison::AsciiInsensitive));
     }
+
+    public function testExplicitCollationReadsTheNamedOrdinaryColumnAttribute(): void
+    {
+        $create = (new Inspection())->inspect('CREATE TABLE t (a VARCHAR(8) COLLATE utf8mb4_bin)');
+        self::assertInstanceOf(CreateTable::class, $create->statement);
+        $definition = $create->statement->elements[0];
+        self::assertInstanceOf(ColumnDefinition::class, $definition);
+
+        self::assertSame('utf8mb4_bin', (new TableDeclaration())->explicitCollation($definition->specification)?->value);
+    }
 }

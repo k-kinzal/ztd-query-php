@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
+use SqlSemantics\Platform\MySql\Ir\From\VarcharLowering;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
@@ -17,6 +21,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 
@@ -31,6 +36,11 @@ final class SourceBinding
      * @var list<Identifier> Names of the consumed columns
      */
     private array $names = [];
+
+    /**
+     * @var list<ColumnKind|Varchar> The native type of each consumed column
+     */
+    private array $columnTypes = [];
 
     /**
      * @var array<int, int> Slot by analysis declaration identity
@@ -82,6 +92,27 @@ final class SourceBinding
      */
     public function resolved(ResolvedColumn $resolution): ColumnReference
     {
+        return $this->slotFor($this->declared($resolution));
+    }
+
+    /**
+     * Resolves the exact native role of a field in the containing projection.
+     */
+    public function projected(ResolvedColumn $resolution): ColumnReference|TextColumnReference
+    {
+        $column = $this->declared($resolution);
+        if (!$column->type instanceof Character) {
+            return $this->slotFor($column);
+        }
+
+        return new TextColumnReference($this->allocate($column, (new VarcharLowering())->lower($column)));
+    }
+
+    /**
+     * Obtains the actual declaration belonging to this source occurrence.
+     */
+    public function declared(ResolvedColumn $resolution): Column
+    {
         Check::input(
             $resolution->relation === $this->source && $resolution->depth === 0,
             'The column must resolve to the projection source.'
@@ -89,7 +120,7 @@ final class SourceBinding
         $column = $resolution->declaration();
         Check::input($column !== null, 'The column must be an explicit member of the projection source.');
 
-        return $this->slotFor($column);
+        return $column;
     }
 
     /**
@@ -97,15 +128,25 @@ final class SourceBinding
      */
     public function slotFor(Column $column): ColumnReference
     {
-        Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
         Check::input($column->type instanceof Integral && $column->type->kind === IntegralKind::Int && !$column->type->unsigned(), 'The bound column must have the signed 32-bit integer type.');
+
+        return new ColumnReference($this->allocate($column, ColumnKind::SignedInt));
+    }
+
+    /**
+     * Allocates one name and type together for the resolved physical position.
+     */
+    public function allocate(Column $column, ColumnKind|Varchar $native): int
+    {
+        Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
         $key = spl_object_id($column);
         if (!isset($this->slots[$key])) {
             $this->slots[$key] = count($this->names);
             $this->names[] = new Identifier($column->name->value);
+            $this->columnTypes[] = $native;
         }
 
-        return new ColumnReference($this->slots[$key]);
+        return $this->slots[$key];
     }
 
     /**
@@ -143,6 +184,7 @@ final class SourceBinding
             new Identifier(($this->table->name->schema ?? $this->operation->context->declarationSchema)->value),
             new Identifier($this->table->name->name->value),
             $this->names,
+            $this->columnTypes,
         );
     }
 

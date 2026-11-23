@@ -197,7 +197,7 @@ def faults(engine):
               "$operator === AggregateOperator::Count && !$distinct", "!$distinct"),
         Fault("ignore-aggregate-scope", "Aggregation/GroupedSelect::__construct",
               "$value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4" if engine == "postgres"
-              else "$value->argument === null || isset($source->columns[$value->argument->slot]),", "true" if engine == "postgres" else "true,"),
+              else "($source->columnTypes[$value->argument->slot] ?? null) === ColumnKind::SignedInt", "true"),
         Fault("ignore-unjoined-result-key", "Aggregation/GroupedSelect::__construct",
               "$value->occurrence === 0 && isset($members[$value->slot]),", "true,"),
         Fault("ignore-negative-ordinal", "ColumnReference::__construct", "$occurrence >= 0,", "true,"),
@@ -223,7 +223,8 @@ def faults(engine):
         Fault("ignore-insert-row-width", "Mutation/Insert::__construct", "count($row->values) === $width,", "true,"),
         Fault("ignore-update-write-scope", "Mutation/Update::__construct",
               "$scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');"
-              if engine == "postgres" else "isset($target->columns[$slot]),", "" if engine == "postgres" else "true,"),
+              if engine == "postgres" else "($target->columnTypes[$slot] ?? null) === ColumnKind::SignedInt,",
+              "" if engine == "postgres" else "true,"),
         Fault("ignore-update-read-occurrence", "Mutation/UpdateAssignment::__construct", "$value->occurrence === 0,", "true,"),
         Fault("allow-repeated-drop-targets", "Schema/DropTable::__construct", "!isset($seen[$key]),", "true,"),
         Fault("allow-invalid-savepoint-role", "Transaction/Transaction::__construct", "$named === ($name !== null),", "true,"),
@@ -284,8 +285,6 @@ def faults(engine):
                             "$operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right]",
                             "$operand instanceof IntegerComparison, $operand instanceof TextComparison => [$operand->left, $operand->right], "
                             "$operand instanceof IntegerDistinctness => [$operand->left]"))
-        shared.append(Fault("accept-holes-in-postgres-parameter-positions", "SelectBounds::check",
-                            "max([0, ...array_keys($positions)]) === count($positions)", "true"))
         shared.append(Fault("skip-text-comparison-right-slot", "From/OccurrenceScope::checkTree",
                             "$operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison =>",
                             "$operand instanceof TextComparison => [$operand->left], "
@@ -404,7 +403,17 @@ def faults(engine):
         shared.extend([
             Fault("accept-invalid-mysql-literal-encoding", "Literal/TextLiteral::__construct", "preg_match('//u', $value) === 1", "true"),
             Fault("confuse-mysql-compound-text-and-integer", "Rows/CompoundShape::type",
-                  "$column instanceof TextLiteral => ResultKind::Text,", "$column instanceof TextLiteral => ResultKind::WideInteger,"),
+                  "$column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,",
+                  "$column instanceof TextLiteral => ResultKind::WideInteger, $column instanceof TextColumnReference => ResultKind::Text,"),
+            Fault("retain-unchecked-mysql-column-type-list", "TableSource::__construct",
+                  "$this->columnTypes = $owned;", "$this->columnTypes = $columnTypes;"),
+            Fault("allow-varchar-in-signed-read", "From/OccurrenceScope::hasSlot",
+                  "($input->columnTypes[$slot] ?? null) === ColumnKind::SignedInt", "isset($input->columns[$slot])"),
+            Fault("skip-varchar-type-check", "From/OccurrenceScope::textColumn",
+                  "($input->columnTypes[$reference->slot] ?? null) instanceof Varchar", "isset($input->columns[$reference->slot])"),
+            Fault("erase-explicit-varchar-collation", "TableDeclaration::explicitCollation",
+                  "count($collations) === 1 ? $collations[0] : null", "null",
+                  "src/Rules/TableDefinition/TableDeclaration.php", "MySQL VARCHAR binding source differs in src/Rules/TableDefinition/TableDeclaration.php"),
             Fault("detach-mysql-text-from-projection", "Ordering/ProjectionColumns::lower", " ?? $strings->lower($expression)", ""),
             Fault("change-mysql-release-collation", "GrammarRelease::textCollation", "=> 'utf8mb4_general_ci',", "=> 'utf8mb4_0900_ai_ci',",
                   "src/Model/Contract/GrammarRelease.php", "MySQL text binding source differs in src/Model/Contract/GrammarRelease.php"),
@@ -431,7 +440,7 @@ def faults(engine):
         shared.append(Fault("allow-negative-integer-padding", "IntegerLiteral::__construct",
                             "$leadingZeroes >= 0 && $leadingZeroes <= self::MAX_LEADING_ZEROES,", "true,"))
     else:
-        shared.append(Fault("ignore-postgres-slot-holes", "SelectBounds::check", "isset($positions[$position]),", "true,"))
+        shared.append(Fault("ignore-postgres-slot-holes", "SelectBounds::check", "max([0, ...array_keys($positions)]) === count($positions)", "true"))
     if engine == "mysql":
         shared.extend([
             Fault("use-left-operand-for-mysql-merge", "From/MergedJoinLowering::predicate",
@@ -547,7 +556,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "mysql-text-literal-boundaries-v1.json", "mysql-text-literal-binding-v1.json", "postgres-join-binding-v3.json", "postgres-create-text-boundaries-v1.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v2.json", "postgres-text-insert-boundaries-v2.json", "postgres-text-insert-query-boundaries-v3.json", "postgres-collated-text-boundaries-v1.json", "postgres-text-comparison-boundaries-v1.json", "postgres-text-comparison-boundaries-v2.json", "postgres-select-bindings-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v2.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v29.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "mysql-text-literal-boundaries-v1.json", "mysql-text-literal-binding-v1.json", "mysql-varchar-slot-boundaries-v1.json", "mysql-varchar-binding-v1.json", "postgres-join-binding-v3.json", "postgres-create-text-boundaries-v1.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v2.json", "postgres-text-insert-boundaries-v2.json", "postgres-text-insert-query-boundaries-v3.json", "postgres-collated-text-boundaries-v1.json", "postgres-text-comparison-boundaries-v1.json", "postgres-text-comparison-boundaries-v2.json", "postgres-select-bindings-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v3.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v30.json", "value-primitives.json")},
         "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},

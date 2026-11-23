@@ -172,14 +172,31 @@ function constructSource(string $platform, array $source, string $dialect): obje
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'TableSource';
 
+    $types = $dialect === 'postgres' ? [
+        $source['only'],
+        array_map($namespace . 'From\\ColumnKind::from', $source['columnKinds'] ?? []),
+    ] : [array_map(constructMySqlColumnType(...), $source['columnTypes'] ?? [])];
+
     return new $table(
         new $identifier($source['schema']),
         new $identifier($source['table']),
         array_map(static fn ($name) => new $identifier($name), $source['columns']),
-        ...($dialect === 'postgres' ? [
-            $source['only'],
-            array_map($namespace . 'From\\ColumnKind::from', $source['columnKinds'] ?? []),
-        ] : []),
+        ...$types,
+    );
+}
+
+function constructMySqlColumnType(array|string $input): object
+{
+    if (is_string($input)) {
+        return SqlSemantics\Platform\MySql\Ir\From\ColumnKind::from($input);
+    }
+    if ($input[0] !== 'varchar') {
+        throw new RuntimeException('Unknown MySQL column type role.');
+    }
+
+    return new SqlSemantics\Platform\MySql\Ir\From\Varchar(
+        $input[1],
+        SqlSemantics\Platform\MySql\Ir\From\TextCollation::from($input[2]),
     );
 }
 
@@ -248,6 +265,16 @@ function observeSource(object $source, string $dialect, string $namespace): arra
         $kinds = array_column($source->columnKinds, 'value');
         if ($kinds !== [] && $kinds !== array_fill(0, count($columns['columns']), 'int4')) {
             $columns['columnKinds'] = $kinds;
+        }
+    } else {
+        $types = array_map(
+            static fn ($type): array|string => $type instanceof SqlSemantics\Platform\MySql\Ir\From\Varchar
+                ? ['varchar', $type->length, $type->collation->value]
+                : $type->value,
+            $source->columnTypes,
+        );
+        if ($types !== array_fill(0, count($columns['columns']), 'int')) {
+            $columns['columnTypes'] = $types;
         }
     }
     return $columns;

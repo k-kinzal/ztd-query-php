@@ -16,8 +16,10 @@ use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Shape\Field;
 use SqlSemantics\Platform\MySql\Model\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
@@ -73,7 +75,28 @@ final class TableDeclaration
     {
         $specification = $definition->specification;
 
-        return new Column($definition->name->column, $specification->dataType(), (new ColumnFlags())->nullability($specification, $keyed), $specification instanceof GeneratedColumn);
+        return new Column(
+            $definition->name->column,
+            $specification->dataType(),
+            (new ColumnFlags())->nullability($specification, $keyed),
+            $specification instanceof GeneratedColumn,
+            $this->explicitCollation($specification),
+        );
+    }
+
+    /**
+     * Preserves a single explicit column collation in its declaration.
+     */
+    public function explicitCollation(ColumnSpecification $specification): ?Name
+    {
+        $collations = [];
+        foreach ($specification->columnAttributes() as $attribute) {
+            if ($attribute instanceof CollateAttribute) {
+                $collations[] = $attribute->collation->name;
+            }
+        }
+
+        return count($collations) === 1 ? $collations[0] : null;
     }
 
     /**
@@ -190,11 +213,11 @@ final class TableDeclaration
         }
         $columns = [];
         foreach ($source->columns as $column) {
-            $columns[] = new Column($column->name, $column->type, $column->nullability, $column->generated);
+            $columns[] = new Column($column->name, $column->type, $column->nullability, $column->generated, $column->collation);
         }
         $implicit = [];
         foreach ($source->implicit as $hidden) {
-            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated));
+            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated, $hidden->column->collation));
         }
 
         return new Table($name, $profile, $columns, $implicit, $source->complete);
@@ -205,7 +228,7 @@ final class TableDeclaration
      */
     public function renamed(Column $column, Name $name): Column
     {
-        return new Column($name, $column->type, $column->nullability, $column->generated);
+        return new Column($name, $column->type, $column->nullability, $column->generated, $column->collation);
     }
 
     /**

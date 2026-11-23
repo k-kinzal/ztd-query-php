@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
@@ -33,6 +34,9 @@ final class InsertQuery implements SemanticsIR
      */
     public function __construct(public readonly TableSource $target, public readonly Select $query)
     {
+        foreach ($target->columnTypes as $type) {
+            Check::input($type === ColumnKind::SignedInt, 'An INSERT target slot requires the signed INT type.');
+        }
         $width = count($target->columns);
         Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');
         Check::input(count($query->columns) === $width, 'Each row of the INSERT query must match the target width.');

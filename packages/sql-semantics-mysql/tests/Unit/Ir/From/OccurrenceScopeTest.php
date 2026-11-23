@@ -9,8 +9,11 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
+use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -50,5 +53,20 @@ final class OccurrenceScopeTest extends TestCase
         self::assertTrue($scope->hasSlot($derived, 0));
         self::assertFalse($scope->hasSlot($derived, 1));
         self::assertFalse($scope->hasSlot(null, 0));
+    }
+
+    public function testTextColumnRejectsTheSignedNeighborAtTheSameOccurrence(): void
+    {
+        $source = new TableSource(
+            new Identifier('app'),
+            new Identifier('items'),
+            [new Identifier('label'), new Identifier('id')],
+            [new Varchar(8), ColumnKind::SignedInt],
+        );
+        $scope = new OccurrenceScope();
+        $scope->textColumn(new TextColumnReference(0), [$source]);
+        $this->expectExceptionMessage('A VARCHAR slot must belong to a visible physical input occurrence.');
+
+        $scope->textColumn(new TextColumnReference(1), [$source]);
     }
 }
