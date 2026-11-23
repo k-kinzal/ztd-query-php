@@ -1,0 +1,150 @@
+{
+  "revision": "SemanticsIR/postgres-create-table-as-1",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "mode": "Native logged and unlogged persistent heap tables in the default tablespace, with the native PostgreSQL search path and explicitly resolved identities.",
+  "extends": [
+    "postgres-materialized-view-v1.json",
+    "postgres-create-view-v2.json",
+    "server-create-table-v2.json",
+    "postgres-values-v3.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Query/CreateTableAs"
+  ],
+  "constructors": {
+    "CreateTableAs": {
+      "type": "Schema/Query/CreateTableAs",
+      "role": "Creates one ordinary table with an effective heading and optional initial rows from an independently resolved query.",
+      "structure": "An absolute table identity, a checked SELECT or VALUES query, an owned complete list of ordered names, a logged or unlogged choice, a collision policy and an initial data policy.",
+      "conditions": "Admission covers a nonempty parameter-free projection with no source or one persistent base-table source, or checked native standalone VALUES. An explicit leading naming list cannot exceed its query width. The effective heading is unique and at most 1600 fields. The full target is non-temporary.",
+      "meaning": "Create the specified relation with its native projected column types. WITH NO DATA leaves it empty and usable. WITH DATA copies the rows once. IF NOT EXISTS leaves a pre-existing relation as it was. A later update to the source changes no copied row.",
+      "sql": "Emit the absolute table, selected persistence, ordered heading, heap access and explicit data policy."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier",
+    "Select",
+    "TableSource",
+    "Rows/Values/ValuesQuery"
+  ],
+  "structure": "A typed query with its own resolved operands and explicit target-side physical metadata.",
+  "conditions": "Use native PostgreSQL and a persistent target. Support normal storage and unlogged heap storage under the same catalog and type resolution. Reject temporary targets, unsupported commit behavior, custom access, storage options and a tablespace; more query placements remain open.",
+  "meaning": "The defining query is used once for column types and optional data. The constructed table thereafter carries independent writable state, with PostgreSQL transaction rollback.",
+  "sql": "Use explicit qualification and effective headings. Keep clause distinctions that affect catalog persistence, collisions or rows.",
+  "environment": {
+    "currentSchema": "public",
+    "writtenSearchPath": "public",
+    "effectiveSearchPath": [
+      "pg_catalog",
+      "public"
+    ],
+    "defaultTableAccessMethod": "heap",
+    "defaultTablespace": "",
+    "encoding": "UTF8",
+    "standardConformingStrings": "on"
+  },
+  "observations": [
+    "Absolute catalog identity, native relation kind, persistence, access method and ordered named field types",
+    "A writable empty table under WITH NO DATA and nullable copied rows with duplicates under WITH DATA",
+    "Same-named decoy remains untouched; collision policy preserves or refuses to replace any occupied relation",
+    "Target-row writes, source independence and transaction rollback, including the error condition when a write targets a view"
+  ],
+  "finite": {
+    "fixture": [
+      "absent",
+      "table",
+      "view"
+    ],
+    "collision": [
+      false,
+      true
+    ],
+    "body": [
+      "base",
+      "values"
+    ],
+    "persistence": [
+      "logged",
+      "unlogged"
+    ],
+    "withData": [
+      false,
+      true
+    ],
+    "identities": 48,
+    "completeness": "Reconstruct all dimensions from loaded PHP, independently check fixture kind and record one case per product identity."
+  },
+  "analysis": [
+    "Unqualified logged declaration takes the context's default creation schema",
+    "Default copies resolved base rows and names",
+    "Qualified unlogged declaration keeps its catalog policy",
+    "VALUES with explicit and partial output aliases",
+    "WITH NO DATA is an empty writable table",
+    "IF NOT EXISTS retains another relation kind",
+    "A base predicate decides which rows to copy",
+    "Quoted target columns remain case sensitive"
+  ],
+  "negative": [
+    "A temporary schema as a direct target",
+    "Incorrect effective heading width",
+    "Duplicate effective name",
+    "Projected positional parameter",
+    "Unsupported temporary declaration",
+    "Storage parameters in an analyzed declaration",
+    "ON COMMIT on a persistent declaration"
+  ],
+  "exploration": {
+    "seeds": [
+      4441,
+      12781,
+      25673
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary source or value roles, nullable/duplicate output, case and position of aliases, initial data, collisions, persistence and schema decoys."
+  },
+  "faults": [
+    "Remove unlogged persistence",
+    "Copy rows despite WITH NO DATA",
+    "Replace the target with a same-named decoy",
+    "Remove IF NOT EXISTS",
+    "Reverse the exact physical heading",
+    "Admit an invalid heading"
+  ],
+  "evidence": {
+    "P01": "Retain the independently resolved query, exact native value kinds, persistent target, heading and policy.",
+    "P02": "Enforce width, ownership and valid placement before publication.",
+    "P03": "Retain operands and identities without analysis state or source SQL.",
+    "P04": "Compose from the checked SELECT or VALUES body and explicit declarative choices.",
+    "P05": "Use closed final values and checked owned headings.",
+    "P06": "Emit the selected creation and initial-state policy faithfully.",
+    "Q01": "Check native PHP value and publication boundaries with positive and specified negative cases.",
+    "Q02": "Enumerate the fixed independent direct domain and replay the named analysis cases.",
+    "Q03": "Check composition of native column names, types and produced rows against an independent table model.",
+    "Q04": "Compare actual catalog, data and transactional effects under the fixed fixture.",
+    "Q05": "Inspect the exact separately installed Composer distributions and replay evidence for their digest."
+  },
+  "open": [
+    "Temporary CTAS, session-local identity and ON COMMIT behavior",
+    "Custom table access methods, storage parameters and tablespaces",
+    "Additional input roles, prepared EXECUTE, privileges and native NOTICE delivery"
+  ],
+  "trust": [
+    "Independent PDO PostgreSQL observations and native heap fixture",
+    "Same externally resolved source identities and PostgreSQL type/collation interpretation",
+    "Exact distributed units and protected fixed verification"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-createtableas.html",
+    "https://www.postgresql.org/docs/17/sql-createtableas.html"
+  ]
+}
