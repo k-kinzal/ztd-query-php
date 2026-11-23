@@ -62,7 +62,7 @@ CONTRACTS = {
     "server-update-v2.json": "38f94fa32e0e19ddbacfba57f71f45e2e0a4ab27b12a6d84b007599a7c142542",
     "server-insert-v1.json": "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79",
     "server-result-v1.json": "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c",
-    "server-join-v2.json": "5ca6ff12aa12a33f2cf9bdbfa6324798d6f56c8cd2f846b23b28160146a279f7",
+    "server-join-v2.json": "43bfd3ddd7271b70a61fb411e918a0a2acac55b2cd01bf5e7069baadb5f93747",
     "mysql-merged-join-v1.json": "3b063b1f41e96040ed7edc592481c8cc2154b36d11b6860b967a90be0789a272",
     "server-delete-v2.json": "3a5763e35bcea1af1f7f1127dd8a157349dd8b2e79451c61e2388ec9b4780858",
     "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",

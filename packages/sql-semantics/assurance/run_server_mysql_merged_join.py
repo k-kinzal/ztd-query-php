@@ -293,7 +293,7 @@ def faults(_, tag):
         RenderFault("drop-second-merged-key", target, "$this->predicate($source->on, $source, $offset)",
                     "$this->predicate($source->on->left, $source, $offset)", normal, "meaning-mismatch"),
         RenderFault("discard-right-rows", target, "$source->kind->value . ' JOIN '", "'INNER' . ' JOIN '", normal, "meaning-mismatch"),
-        RenderFault("drop-projected-merge-field", target, "foreach ($select->columns as $column)", "foreach (array_slice($select->columns, 1) as $column)",
+        RenderFault("drop-projected-merge-field", target, "foreach ($select->columns as $slot => $column)", "foreach (array_slice($select->columns, 1) as $slot => $column)",
                     normal, "meaning-mismatch"),
     ]
 

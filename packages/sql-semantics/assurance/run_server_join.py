@@ -17,7 +17,7 @@ from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, Render
 
 LABEL = "join"
 OBSERVER = "server_observer.php"
-CONTRACT = "5ca6ff12aa12a33f2cf9bdbfa6324798d6f56c8cd2f846b23b28160146a279f7"
+CONTRACT = "43bfd3ddd7271b70a61fb411e918a0a2acac55b2cd01bf5e7069baadb5f93747"
 
 
 def specifications():

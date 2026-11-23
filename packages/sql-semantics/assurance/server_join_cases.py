@@ -186,8 +186,9 @@ def negatives(dialect, tag):
         yield case(dialect, tag, join("FULL", left, right, compare("<", slot(0), slot(0, 1))), fields), "requires integer equality between opposite inputs"
     else:
         yield {
-            "dialect": dialect, "release": tag, "declarations": declarations(dialect),
-            "sql": f"SELECT 1 AS answer FROM ({SCHEMAS[dialect]}.ir_join_accounts a JOIN {SCHEMAS[dialect]}.ir_join_empty c ON 1) NATURAL JOIN {SCHEMAS[dialect]}.ir_join_independent b",
+            "dialect": dialect, "release": tag,
+            "declarations": [*declarations(dialect), f"CREATE TABLE {SCHEMAS[dialect]}.ir_join_distinct (other INT)"],
+            "sql": f"SELECT 1 AS answer FROM ({SCHEMAS[dialect]}.ir_join_accounts a JOIN {SCHEMAS[dialect]}.ir_join_distinct c ON 1) NATURAL JOIN {SCHEMAS[dialect]}.ir_join_independent b",
         }, "two ordinary base-table inputs"
 
 

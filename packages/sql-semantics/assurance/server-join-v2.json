@@ -182,6 +182,6 @@
   "extends": "server-join-v1.json",
   "admissionChange": {
     "positive": "SELECT 1 AS answer FROM ir_fixture.ir_join_accounts a NATURAL JOIN ir_fixture.ir_join_independent b",
-    "replacement": "Use the same tables in a merged join whose left side is itself an ordinary join. This preserves rejection of an unresolved merged prefix while the exact former binary input is covered positively."
+    "replacement": "Join a third declared input with a disjoint heading to the first input before the NATURAL step. The merged left operand is outside the binary boundary and the query has no unrelated ambiguous keys."
   }
 }
