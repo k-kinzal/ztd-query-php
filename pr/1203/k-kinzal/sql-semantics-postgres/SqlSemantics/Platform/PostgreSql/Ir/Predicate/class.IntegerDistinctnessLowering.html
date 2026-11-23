@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IntegerDistinctnessLowering — ZTD Query PHP</title>
 <link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/Ir/Predicate/class.IntegerDistinctnessLowering.html">
-<meta name="description" content="Resolves null-safe equality against the exact int4 comparison domain.">
+<meta name="description" content="Resolves null-safe equality against the exact native signed widths.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ZTD Query PHP">
 <meta property="og:title" content="IntegerDistinctnessLowering — ZTD Query PHP">
-<meta property="og:description" content="Resolves null-safe equality against the exact int4 comparison domain.">
+<meta property="og:description" content="Resolves null-safe equality against the exact native signed widths.">
 <meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/Ir/Predicate/class.IntegerDistinctnessLowering.html">
 <meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -40,7 +40,7 @@
 <div class="notice diff-banner" data-diff="added">Added in working tree, compared to a313b30f917.</div>
 <pre class="signature" data-diff="added"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">IntegerDistinctnessLowering</span></code></pre>
 <div class="notice tone-warn"><strong>Restricted visibility</strong>: declared "@visibility SqlSemantics\Platform\PostgreSql". Code outside that scope must not name this declaration.</div>
-<p class="lede">Resolves null-safe equality against the exact int4 comparison domain.</p>
+<p class="lede">Resolves null-safe equality against the exact native signed widths.</p>
 <section data-diff="added"><h2 id="methods">Methods<a class="anchor" href="#methods">§</a></h2><div class="member" data-diff="added" id="method.lower"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">function</span> <span class="signature-name">lower</span>(
     <span class="sig-param" data-diff="added"><a class="t-name k-class" href="../../../../../../../k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/Statement/Expression/Operator/class.DistinctTest.html" title="SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\DistinctTest">DistinctTest</a> <span class="t-var">$test</span></span>,
     <span class="sig-param" data-diff="added"><a class="t-name k-class" href="../../../../../../../k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/Ir/class.SourceBinding.html" title="SqlSemantics\Platform\PostgreSql\Ir\SourceBinding">SourceBinding</a>|<a class="t-name k-class" href="../../../../../../../k-kinzal/sql-semantics-postgres/SqlSemantics/Platform/PostgreSql/Ir/From/class.JoinBinding.html" title="SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding">JoinBinding</a> <span class="t-var">$binding</span></span>,
