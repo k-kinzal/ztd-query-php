@@ -1,0 +1,105 @@
+{
+  "revision": "SemanticsIR/postgres-drop-view-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect native release, persistent identity, resolved kind, absence and dependency behavior to the loaded PHP.",
+  "rules": {
+    "Schema/View/DropView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = Check::listOf($targets, ViewName::class, 'DROP VIEW needs a nonempty target list.', 1);",
+        "$seen = [];",
+        "foreach ($names as $target) {",
+        "    $key = $target->quoted();",
+        "    Check::input(!isset($seen[$key]), 'DROP VIEW cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "}",
+        "$this->targets = $names;"
+      ]
+    },
+    "Schema/View/DropView::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/View/DropView::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->quoted();",
+        "}",
+        "",
+        "return 'DROP ' . $this->kind->value . ' ' . ($this->ifExists ? 'IF EXISTS ' : '')",
+        "    . implode(', ', $names) . ($this->cascade ? ' CASCADE' : ' RESTRICT');"
+      ]
+    },
+    "Schema/View/DropViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $context->relationNames === Comparison::Sensitive, 'DROP VIEW requires the native profile.');",
+        "[$kind, $declaredKind] = match ($statement->kind) {",
+        "    ObjectKind::View => [ViewRemovalKind::Ordinary, RelationKind::View],",
+        "    ObjectKind::MaterializedView => [ViewRemovalKind::Materialized, RelationKind::MaterializedView],",
+        "    default => throw new InvalidConstruction('DROP VIEW requires a view kind.'),",
+        "};",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "$targets = [];",
+        "foreach ($statement->objects as $target) {",
+        "    Check::input($target instanceof DottedName && count($target->parts) <= 2, 'DROP VIEW needs an ordinary schema and view name.');",
+        "    $resolution = $operation->facts->relation($target)->table;",
+        "    if ($resolution instanceof DeclaredTable) {",
+        "        Check::input($resolution->table->kind === $declaredKind, 'DROP VIEW requires a target of the requested view kind.');",
+        "        $name = $resolution->table->name;",
+        "        $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "    } else {",
+        "        Check::input($statement->ifExists && $context->complete && $resolution === null, 'Optional DROP VIEW needs a known absence in a complete catalog.');",
+        "        $name = $target->qualified();",
+        "        Check::input($name !== null && $name->schema !== null && isset($schemas[$name->schema->value]), 'Optional DROP VIEW needs a known explicit schema.');",
+        "        $schema = $name->schema->value;",
+        "    }",
+        "    Check::input($name->catalog === null, 'DROP VIEW needs an absolute view identity.');",
+        "    $targets[] = new ViewName(new Identifier($schema), new Identifier($name->name->value));",
+        "}",
+        "",
+        "return new DropView($kind, $targets, $statement->ifExists, $statement->behavior === DropBehavior::Cascade, $profile->grammar);"
+      ]
+    },
+    "Schema/View/ViewName::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $schema->value !== 'pg_temp' && preg_match('/\\Apg_(?:toast_)?temp_[0-9]+\\z/D', $schema->value) === 0,",
+        "    'A persistent PostgreSQL view requires an absolute non-temporary schema.',",
+        ");"
+      ]
+    },
+    "Schema/View/ViewName::quoted": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->schema->quoted() . '.' . $this->view->quoted();"
+      ]
+    }
+  }
+}

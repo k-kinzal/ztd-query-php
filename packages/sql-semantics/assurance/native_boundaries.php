@@ -94,6 +94,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-grouped-having-boundaries-v1.json', '0297473b3f47b36fb10ba90e55b5328000a001f9b1d8c0b001e362b272f4d5c3'],
             ['postgres-signed-range-widths-boundaries-v1.json', '28cd3860fb2bfbd1a7dea1897cd986b3db57b57376958dee3dc78256afa6782e'],
             ['postgres-with-projection-boundaries-v1.json', '6ecaa67c79a9468d8b723852a9da02e6fdfdab12de28d543aab8afea892e67e7'],
+            ['postgres-drop-view-boundaries-v1.json', 'f06ff5f3c0110cedeca81290477aed0bf45f2f11c30e146de95420b2c6b1ea74'],
         ],
         'sqlite' => [],
     };
@@ -208,6 +209,7 @@ function checkNativeBoundaries(
                 'Ir\\From\\MergedJoinLowering', 'Statement\\Relation\\JoinKind as ParsedKind', 'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinUsing',
                 'Statement\\Relation\\RelationList', 'Statement\\Relation\\ParenthesizedJoin', 'Statement\\Relation\\TableInput', 'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\Insert\\WriteSlot', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
+                'Statement\\Name\\ObjectKind', 'Statement\\Name\\DottedName', 'Statement\\Option\\DropBehavior',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',
                 'Statement\\Expression\\ColumnReference as ParsedReturnColumn',

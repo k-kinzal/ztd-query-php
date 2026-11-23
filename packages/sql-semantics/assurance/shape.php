@@ -725,6 +725,18 @@ if ($dialect !== 'sqlite') {
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $viewRemoval = 'Schema\\View\\DropView';
+        $viewName = 'Schema\\View\\ViewName';
+        $viewKind = 'Schema\\View\\ViewRemovalKind';
+        $roots[] = $viewRemoval;
+        $internal[] = 'Schema\\View\\DropViewLowering';
+        $properties[$viewRemoval] = ['kind' => [$viewKind], 'targets' => ['array'], 'ifExists' => ['bool'],
+            'cascade' => ['bool'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$viewName] = ['schema' => ['Identifier'], 'view' => ['Identifier']];
+        $properties[$viewKind] = $methods[$viewKind] = [];
+        $enumCases[$viewKind] = ['Ordinary' => 'VIEW', 'Materialized' => 'MATERIALIZED VIEW'];
+        $methods[$viewRemoval] = ['__construct', 'profileId', 'toString'];
+        $methods[$viewName] = ['__construct', 'quoted'];
     } else {
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
         $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\Key\\PrimaryKey'];
@@ -885,6 +897,9 @@ try {
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop'
+            . ' && in_array($statement->kind, [\\' . $platform . '\\Statement\\Name\\ObjectKind::View, \\' . $platform
+            . '\\Statement\\Name\\ObjectKind::MaterializedView], true) => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
@@ -990,9 +1005,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v38.json';
+    $storagePath = __DIR__ . '/value-storage-v39.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '0517abe21508931c2d34e50a31bf3ce7b7a4005c67f66a6d276b3e3a188a63fc',
+        hash_file('sha256', $storagePath) === '5fee3285ee37dd9193d970e9fcb0c10b2ce932283a3716fdafc1e0f8b62d8665',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

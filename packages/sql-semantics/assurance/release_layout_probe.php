@@ -473,6 +473,10 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     if ($platform === 'Sqlite') {
         $declarations[] = "CREATE VIEW main.removable AS SELECT id FROM $table";
     }
+    if ($platform === 'PostgreSql') {
+        $declarations[] = "CREATE VIEW public.removable AS SELECT id FROM $table";
+        $declarations[] = "CREATE MATERIALIZED VIEW public.snapshot AS SELECT id FROM $table";
+    }
     $context = $semantics->context($declarations);
     $reference = $semantics->analyze("SELECT id, accounts.id FROM $table", $context);
     $occurrence = $platform === 'Sqlite' ? 'source' : 'occurrence';
@@ -530,6 +534,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Rows\\With\\WithProjection'] = 'WITH a AS (SELECT 42 AS n), b AS (SELECT n FROM a) SELECT n FROM b';
     }
     if ($platform === 'PostgreSql') {
+        $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
     foreach ($queries as $role => $sql) {
@@ -543,6 +548,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
             $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
                 array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
+            $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);
+            if ($ordinary::class !== $namespace . 'Ir\\Schema\\View\\DropView') {
+                throw new RuntimeException('The installed ordinary view removal lost its concrete kind.');
+            }
+            $details['dropView'] = [$result->kind->value, $result->targets[0]->schema->value, $result->targets[0]->view->value,
+                $result->ifExists, $result->cascade, $ordinary->kind->value, $ordinary->toString()];
         }
         if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
             $details['dropView'] = [$result->targets[0]->schema->value, $result->targets[0]->view->value, $result->ifExists];

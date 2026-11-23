@@ -30,6 +30,8 @@ The six native signed comparison operators retain both operand widths. Mixed int
 
 `BETWEEN`, `IS DISTINCT FROM` and their negated forms also accept pure int4 and int8 operands, including explicit `CAST(NULL AS bigint)`. The IR retains each resolved field, signed literal and typed NULL. BETWEEN preserves both inclusive bounds and their symmetry policy. Distinctness returns a native non-null Boolean.
 
+`DROP VIEW` and `DROP MATERIALIZED VIEW` return `Ir\Schema\View\DropView` with the native kind, absolute names in statement order and both clause policies. Provide view declarations through the analysis context for named targets. An optional absent target requires an explicit known schema in a complete context. The rendered SQL leaves dependency checks and transactional effects to PostgreSQL.
+
 Ordinary VALUES, INSERT SELECT and UPDATE preserve the native widths of signed operands separately from their destination widths. The database performs signed widening or narrowing and reports out-of-range narrowing during evaluation. Field-only RETURNING exposes bigint with its own native slot, including in a resolved target wildcard.
 
 A simple ORDER BY name can select a projected label. The IR records the chosen output position, direction and effective NULL placement. When that label also names a physical input column, PostgreSQL selects the output alias. A qualified field or expression uses the input scope. The sort key owns that scalar even when the result omits it. For DISTINCT, an exact qualified read of a projected field resolves to its output position. The input key roles include native signed 32-bit and 64-bit fields, Boolean and text fields, signed 32-bit arithmetic, builtin casts, and the explicit builtin byte collation.

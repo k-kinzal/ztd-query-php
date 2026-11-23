@@ -651,7 +651,14 @@ function constructDropView(string $platform, array $input): SemanticsIR
     $drop = $input['dropView'];
     $views = array_map(static fn (array $identity): object => new $target(new $name($identity[0]), new $name($identity[1])), $drop['targets']);
 
-    return new $statement($views, $drop['ifExists'], $release::from($input['release']));
+    $version = $release::from($input['release']);
+    if ($input['dialect'] === 'postgres') {
+        $kind = $namespace . 'Schema\\View\\ViewRemovalKind';
+
+        return new $statement($kind::from($drop['kind']), $views, $drop['ifExists'], $drop['cascade'], $version);
+    }
+
+    return new $statement($views, $drop['ifExists'], $version);
 }
 
 function constructTransaction(string $platform, array $input): SemanticsIR
@@ -955,6 +962,7 @@ function observeStatement(array $input): array
             'dropView' => [
                 'targets' => array_map(static fn ($target): array => [$target->schema->value, $target->view->value], $value->targets),
                 'ifExists' => $value->ifExists,
+                ...($dialect === 'postgres' ? ['kind' => $value->kind->value, 'cascade' => $value->cascade] : []),
             ],
         ];
     }

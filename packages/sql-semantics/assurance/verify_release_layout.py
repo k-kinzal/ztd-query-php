@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v62.json"
-CONTRACT = "5e45cf1cb7f3424fab3d825963e847137c907dea5a0cbaddf5f36b2f802d9b04"
+CONTRACT_NAME = "release-layout-v63.json"
+CONTRACT = "1a28b8e11d209b836b4e6467657d6417a42d5afe3ae5905e66c324f01b90b9dd"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -242,6 +242,11 @@ def verify_probe(raw, catalog):
                 [release, "WITH requires MySQL 8.0 or later.", "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\AnalysisException"]
                 for release in ("mysql-5.6.51", "mysql-5.7.44")
             ], "installed-mysql-with-availability-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\DropView"):
+            require(item.get("dropView") == ["MATERIALIZED VIEW", "public", "snapshot", False, True, "VIEW",
+                                             'DROP VIEW IF EXISTS "public"."removable" RESTRICT']
+                    and item["sql"] == 'DROP MATERIALIZED VIEW "public"."snapshot" CASCADE',
+                    "installed-postgres-drop-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["app", "absent_view", True] and item["sql"] == 'DROP VIEW IF EXISTS `app`.`absent_view`',
                     "installed-mysql-drop-view-mismatch", item)
@@ -448,7 +453,7 @@ def verify_probe(raw, catalog):
                     "installed-generated-column-mismatch", item)
             require(item.get("implicitCheck") == ["a", "==", False, " ", "", 1, "=", 0],
                     "installed-implicit-check-presentation-mismatch", item)
-        if item["role"] == "Schema\\View\\CreateView":
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\View\\CreateView"):
             require(item.get("createView") == ["main", "view_result", ["column1"], ["main", "accounts"], False],
                     "installed-view-definition-mismatch", item)
             require(item.get("groupedView") == [["id", "n"], 0, 1, "BINARY",
