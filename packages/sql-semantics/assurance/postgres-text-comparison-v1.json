@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/postgres-text-comparison-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "extends": ["postgres-collated-text-v2.json", "postgres-typed-columns-v2.json", "postgres-text-null-tests-v1.json", "server-join-v2.json"],
+  "profiles": ["pg-16.6/utf8/standard-conforming-strings/native", "pg-17.2/utf8/standard-conforming-strings/native"],
+  "scope": "Compare two native text operands with an explicitly selected stock pg_catalog.C collation and an exact builtin operator. Compose in Boolean result, SELECT filter, ordinary ON, UPDATE filter, DELETE filter and existing Boolean owners.",
+  "constructors": {
+    "Predicate/TextComparison": {
+      "role": "A nullable Boolean comparison of two ordered native text values.",
+      "structure": "An exact operator, two text literal, native text slot or typed NULL operands, and the effective canonical builtin collation.",
+      "conditions": "Both field operands must refer to visible native text slots. In analyzed SQL at least one operand explicitly resolves to pg_catalog.C. Each explicit collation must resolve to the same builtin. The resolved comparison operator is the pg_catalog text/text operator.",
+      "meaning": "A NULL operand yields NULL. Otherwise compare the original UTF-8 byte sequences with the selected operation. A Boolean owner uses its existing truth and placement rules.",
+      "sql": "Render a parenthesized qualified stock operator on the two typed operands. Apply the chosen explicit collation to the left operand using the native operand renderer, independent of which original operand carried the same explicit collation."
+    },
+    "Predicate/TextOperator": {
+      "role": "The builtin comparison operation for PostgreSQL text/text arguments.",
+      "structure": "Six closed alternatives for equality, inequality and ordered comparisons, each with its builtin operator name.",
+      "conditions": "The stock native profile exposes pg_catalog text/text operators with Boolean results and strict null behavior. The SQL alias != resolves to <>.",
+      "meaning": "Interpret the sign of the collation's three-way comparison according to the chosen operation.",
+      "sql": "Emit the selected fixed name through OPERATOR(pg_catalog.symbol)."
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "From/Join", "Predicate/LogicalPredicate", "Predicate/NullTest", "Predicate/TruthTest", "Expression/IntegerCaseArm", "Mutation/Update", "Mutation/Delete"],
+  "externalInterpretation": "Use the same resolved table occurrence and typed column at each slot. The stock builtin collation and pg_catalog text operators retain their catalog definitions.",
+  "observations": ["Exact native bool metadata, ordered result names, text bytes and SQL NULL", "Preserve SQL three-valued logic for Boolean compositions and filter placement", "Preserve duplicate and unmatched rows in SELECT and ordinary joins", "Preserve physical UPDATE and DELETE effects, including rows excluded by SQL NULL"],
+  "finite": {"operators": ["=", "<>", "<", "<=", ">", ">="], "left": ["field", "literal", "null"], "right": ["field", "literal", "null"], "contexts": ["result", "where", "on", "update", "delete"], "identities": 270, "completeness": "Recover operator, ordered operand roles, stock collation and placement from the constructed graph."},
+  "exploration": {"seeds": [1667, 19207, 41771], "casesPerSeed": 20, "timeoutSecondsPerRelease": 360, "allowedExclusions": [], "requiredForms": "Vary ordered text roles, physical positions and occurrences, same and different field values, NULL, UTF-8 byte order, and Boolean nesting."},
+  "analysis": ["Explicit stock collation on left", "Explicit stock collation on right", "Same explicit stock collation on both with != alias", "Checked comparison in ordinary JOIN ON", "Checked comparison in UPDATE WHERE", "Checked comparison in DELETE WHERE", "Checked comparison under IS UNKNOWN or IS NULL"],
+  "negative": ["A text comparison operand points to an int4 slot", "A text comparison operand points outside its owning join", "A comparison is assigned an explicitly qualified foreign operator", "Two operands use conflicting explicit collations", "A FULL join predicate is outside the checked hash-join role"],
+  "faults": ["Reverse a strict comparison", "Exchange ordered operands", "Replace the selected builtin collation with the default", "Resolve a comparison field to the other physical occurrence", "Drop the mutation filter so false and unknown rows are affected"],
+  "evidence": {
+    "P01": "Retain exact operator, effective collation and ordered native operand roles.", "P02": "Validate all reference slots and enclosing statement placement before publication.", "P03": "Retain only native roles and selected identities.", "P04": "Compose with exact Boolean rules and effect boundaries.", "P05": "Use readonly storage and closed role unions.", "P06": "Render exact typed operands and the qualified stock operator.",
+    "Q01": "Reject the registered invalid catalog, reference and placement cases.", "Q02": "Require all 270 finite identities and seeded accepted roles on each pinned release.", "Q03": "Check nested predicates and two-sided references against the owning scope.", "Q04": "Compare independent UTF-8 byte logic, row observations and physical mutations with the native server.", "Q05": "Tie each recorded comparison to the distributed constructor and exact candidate."
+  },
+  "open": ["Implicit text comparison collations", "Other collations or user-defined operators", "Text range and distinctness predicates", "General FULL join over text comparisons"],
+  "trust": ["Builtin PostgreSQL text/text operators and the stock deterministic C collation", "Independent typed fixture and byte comparison", "Audited value graph and renderer"],
+  "sources": ["https://www.postgresql.org/docs/17/functions-comparison.html", "https://www.postgresql.org/docs/17/typeconv-oper.html", "https://www.postgresql.org/docs/17/collation.html"]
+}
