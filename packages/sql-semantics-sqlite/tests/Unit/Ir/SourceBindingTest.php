@@ -37,9 +37,7 @@ final class SourceBindingTest extends TestCase
         self::assertInstanceOf(ResultColumn::class, $result);
 
         $binding = new SourceBinding($operation->binding(), $select->from);
-        $value = $binding->reference($result->expression);
-        self::assertInstanceOf(ColumnReference::class, $value);
-        self::assertSame(0, $value->slot);
+        self::assertSame(0, $binding->reference($result->expression)->slot);
         self::assertSame('A', $binding->source()?->columns[0]->value);
     }
 

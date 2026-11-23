@@ -76,6 +76,7 @@ final class SourceBinding
 
     /**
      * Resolves a scalar name use, including a combined FULL join value.
+     * @throws InvalidConstruction When an operand has no visible binding
      */
     public function scalarValue(Scalar $expression): ColumnReference|Coalesce
     {
@@ -87,6 +88,7 @@ final class SourceBinding
 
     /**
      * Lowers a physical slot or the ordered value of a merged input field.
+     * @throws InvalidConstruction When one of the field inputs is outside the local scope
      */
     public function value(ResolvedColumn $resolution): ColumnReference|Coalesce
     {
