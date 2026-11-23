@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RelationChangeLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\MySql\Semantics;
 
@@ -17,7 +18,7 @@ use SqlSemantics\Platform\MySql\Semantics;
 #[Medium]
 final class RelationChangeLoweringTest extends TestCase
 {
-    public function testLowerKeepsTheThreeDistinctOperationRoles(): void
+    public function testLowerKeepsTheDistinctOperationRoles(): void
     {
         $semantics = new Semantics();
         $declarations = $semantics->context(['CREATE TABLE app.report (id integer)', 'CREATE VIEW app.report_view AS SELECT 6 AS id']);
@@ -25,5 +26,6 @@ final class RelationChangeLoweringTest extends TestCase
         self::assertInstanceOf(DropTable::class, $semantics->analyze('DROP TABLE app.report', $declarations));
         self::assertInstanceOf(DropView::class, $semantics->analyze('DROP VIEW app.report_view', $declarations));
         self::assertInstanceOf(RenameTable::class, $semantics->analyze('RENAME TABLE app.report TO app.archived', $declarations));
+        self::assertInstanceOf(TruncateTable::class, $semantics->analyze('TRUNCATE app.report', $declarations));
     }
 }

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v72.json"
-CONTRACT = "b35d40b85bec8f86e1f9f32e100988506490f7873cd5505ebda165469b3289b5"
+CONTRACT_NAME = "release-layout-v73.json"
+CONTRACT = "91c2bbdbccebaba0db4129b67c7490171f859e63ab4ce50377923c95050fb81c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -512,6 +512,10 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlRenameMoves") == [[origin, staged, origin], [staged, ["app", "archived"], origin]]
                     and item["sql"] == "RENAME TABLE `app`.`accounts` TO `app`.`staged`, `app`.`staged` TO `app`.`archived`",
                     "installed-mysql-ordered-rename-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
+            require(item.get("mysqlTruncate") == ["app", "accounts"]
+                    and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",
+                    "installed-mysql-truncate-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("postgresTruncate") == [True, True, [["public", "accounts", True], ["public", "accounts", False]]]
                     and item["sql"] == 'TRUNCATE TABLE ONLY "public"."accounts", "public"."accounts" RESTART IDENTITY CASCADE',

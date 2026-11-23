@@ -817,6 +817,11 @@ if ($dialect !== 'sqlite') {
         array_push($internal, 'Schema\\Alter\\TableRenameLowering', 'Schema\\Alter\\RelationChangeLowering');
         $properties[$renameTable] = ['moves' => ['array'], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $properties[$tableRename] = ['from' => [$tableName], 'to' => [$tableName], 'origin' => [$tableName]];
+        $truncate = 'Schema\\Truncate\\TruncateTable';
+        $roots[] = $truncate;
+        $internal[] = 'Schema\\Truncate\\TruncateLowering';
+        $properties[$truncate] = ['target' => [$tableName], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$truncate] = ['__construct', 'profileId', 'toString'];
         $methods[$renameTable] = ['__construct', 'profileId', 'toString'];
         $methods[$tableRename] = ['__construct', 'toString'];
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
@@ -990,6 +995,7 @@ try {
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Alter\\DropTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\DropView, $statement instanceof \\' . $platform . '\\Statement\\Alter\\RenameTable'
+                . ', $statement instanceof \\' . $platform . '\\Statement\\Alter\\TruncateTable'
                 . ' => (new \\' . $prefix . 'Schema\\Alter\\RelationChangeLowering())->lower($operation, $statement),')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
@@ -1231,7 +1237,7 @@ try {
                 requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === [
-                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\View\\DropView',
+                        'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\Truncate\\TruncateTable', 'Schema\\View\\DropView',
                     ], 'Unexpected MySQL relation change publication');
             }
             if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RelationChangeLowering') {

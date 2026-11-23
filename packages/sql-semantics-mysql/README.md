@@ -54,4 +54,6 @@ On MySQL 8.0 and later an ordinary `WITH` retains the ordered definition bodies 
 
 `RENAME TABLE` publishes `Ir\Schema\Alter\RenameTable` with the move list in native execution order. Every move records its current name, destination and original table identity. A swap through an intermediate name retains the same origin when that name becomes the next source. Supply the declarations and a named current database for unqualified operands. The checked operation covers persistent base tables.
 
+`TRUNCATE TABLE` publishes `Ir\Schema\Truncate\TruncateTable` for a declared persistent base table. The target retains its exact schema and table spelling. Rendering uses native DDL, including allocation reset, referential restrictions and implicit commit.
+
 Concrete types are under `SqlSemantics\Platform\MySql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

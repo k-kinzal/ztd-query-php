@@ -826,6 +826,23 @@ function observePostgresRename(string $namespace, object $value): array
     ];
 }
 
+function constructMysqlTruncate(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $identifier = $namespace . 'Identifier';
+    $table = $namespace . 'Schema\\TableName';
+    $statement = $namespace . 'Schema\\Truncate\\TruncateTable';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    [$schema, $name] = $input['mysqlTruncate'];
+    return new $statement(new $table(new $identifier($schema), new $identifier($name)), $release::from($input['release']));
+}
+
+function observeMysqlTruncate(object $value): array
+{
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'mysqlTruncate' => [$value->target->schema->value, $value->target->table->value]];
+}
+
 function constructPostgresTruncate(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1116,6 +1133,7 @@ function observeStatement(array $input): array
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
             isset($input['rename']) => constructPostgresRename($platform, $input),
             isset($input['tableRename']) => constructMysqlRename($platform, $input),
+            isset($input['mysqlTruncate']) => constructMysqlTruncate($platform, $input),
             isset($input['truncateTable']) => constructPostgresTruncate($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
@@ -1202,6 +1220,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Alter\\RenameTable') {
         return observeMysqlRename($value);
+    }
+    if ($dialect === 'mysql' && $value::class === $namespace . 'Schema\\Truncate\\TruncateTable') {
+        return observeMysqlTruncate($value);
     }
     if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Truncate\\TruncateTable') {
         return observePostgresTruncate($value);

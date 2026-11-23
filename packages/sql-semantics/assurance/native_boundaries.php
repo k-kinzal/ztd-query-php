@@ -68,6 +68,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-drop-view-boundaries-v1.json', '4efba4950adbee525f68c8efb1473faada655c9aba134cbca0c50a522e7e4dc6'],
             ['mysql-create-view-boundaries-v1.json', 'f1b3f058793119e58c0d97a70bd196c287f858e4cac779cb1553dde07e7a9a03'],
             ['mysql-ordered-table-rename-boundaries-v2.json', '47429c60cbcf1cad80643c5d3d48c59c30029ff2b049e9d994a535ac9bb492d3'],
+            ['mysql-truncate-boundaries-v1.json', 'fc59f04c29a91fb5423d92e050c2018bd2636e6e53e45760a8fad2c4b4f52cee'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -258,6 +259,7 @@ function checkNativeBoundaries(
                 'Ir\\Schema\\TableName',
                 'Ir\\Schema\\DropTableLowering', 'Ir\\Schema\\View\\DropViewLowering',
                 'Statement\\Alter\\DropTable as ParsedDropTable', 'Statement\\Alter\\RenameTable as ParsedRenameTable', 'Statement\\View\\DropView as ParsedDropView',
+                'Statement\\Alter\\TruncateTable as ParsedTruncateTable', 'Ir\\Schema\\Truncate\\TruncateLowering',
                 'Ir\\From\\ExternalRelationKind', 'Model\\Statement\\Declaration\\RelationKind', 'Model\\Statement\\Reference\\Table\\DeclaredTable',
                 'Model\\Statement\\Identifier\\Comparison', 'Statement\\Dml\\WriteTarget', 'Statement\\Relation\\TableReference',
                 'Statement\\Query\\Direction', 'Statement\\Table\\Key\\ColumnPart', 'Statement\\Table\\Key\\IndexDefinition',

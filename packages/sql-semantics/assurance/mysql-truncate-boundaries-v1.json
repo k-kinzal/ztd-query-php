@@ -1,0 +1,69 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Link the closed operation, ordinary persistent binding, exact names and native rendering to the deployed PHP.",
+  "rules": {
+    "Schema/Truncate/TruncateTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Schema/Truncate/TruncateTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/Truncate/TruncateTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'TRUNCATE TABLE ' . $this->target->quoted();"
+      ]
+    },
+    "Schema/Truncate/TruncateLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'TRUNCATE TABLE requires the default native profile.');",
+        "$resolution = $operation->facts->relation($statement)->table;",
+        "Check::input(",
+        "    $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable",
+        "    && !$resolution->table->temporary && $resolution->table->name->catalog === null,",
+        "    'TRUNCATE TABLE requires a resolved persistent base table.',",
+        ");",
+        "$name = $resolution->table->name;",
+        "$schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'TRUNCATE TABLE needs an absolute table identity.');",
+        "$target = new TableName(new Identifier($schema), new Identifier($name->name->value));",
+        "",
+        "return new TruncateTable($target, $profile->grammar);"
+      ]
+    },
+    "Schema/Alter/RelationChangeLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $statement instanceof ParsedDropTable => (new DropTableLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedDropView => (new DropViewLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedRenameTable => (new TableRenameLowering())->lower($operation, $statement),",
+        "    $statement instanceof ParsedTruncateTable => (new TruncateLowering())->lower($operation, $statement),",
+        "};"
+      ]
+    }
+  }
+}

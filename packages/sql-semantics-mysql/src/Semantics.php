@@ -32,6 +32,7 @@ use SqlSemantics\Platform\MySql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateRelationLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\CreateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\DropView;
 use SqlSemantics\Platform\MySql\Ir\Select;
@@ -50,6 +51,7 @@ use SqlSemantics\Platform\MySql\Model\Facade\Splitter;
 use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable as ParsedDrop;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable as ParsedRenameTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable as ParsedTruncateTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete as ParsedDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery as ParsedInsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows as ParsedInsert;
@@ -145,7 +147,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|Update|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -158,7 +160,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateView => (new CreateRelationLowering())->lower($operation, $statement),
-            $statement instanceof ParsedDrop, $statement instanceof ParsedDropView, $statement instanceof ParsedRenameTable => (new RelationChangeLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDrop, $statement instanceof ParsedDropView, $statement instanceof ParsedRenameTable, $statement instanceof ParsedTruncateTable => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
@@ -172,7 +174,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|Update|WithProjection>
+     * @return list<Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RenameTable|Select|Transaction|TruncateTable|Update|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
