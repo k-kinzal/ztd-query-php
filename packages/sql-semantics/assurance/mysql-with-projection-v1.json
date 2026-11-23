@@ -1,0 +1,77 @@
+{
+  "revision": "SemanticsIR/mysql-with-projection-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native MySQL, lower_case_table_names=0, empty sql_mode, utf8mb4 connection and derived_merge enabled.",
+  "extends": ["server-local-projection-v4.json", "mysql-external-views-v1.json", "server-parameter-v6.json"],
+  "additionalPublicRoots": ["Rows/With/WithProjection"],
+  "constructors": {
+    "WithProjection": {
+      "type": "Rows/With/WithProjection",
+      "role": "A complete ordinary WITH program with ordered definitions and a SELECT body.",
+      "structure": "An owned definition list, a closed body and an exact release. Local reads have lexical relation and field coordinates.",
+      "conditions": "Require a release that supports WITH. Validate each definition in its preceding prefix and the body in the complete local scope. Match each independent query's profile and require an unbounded unordered result.",
+      "meaning": "Evaluate each referenced definition in its preceding scope. The body reads the selected relations and positions, preserving exported native types and headings. Projected parameter positions compose by original SQL order through definitions and the body.",
+      "sql": "Emit definitions in order, retaining an explicit WITH boundary. Use generated relation names and ordered, unique internal field names."
+    },
+    "WithDefinition": {
+      "type": "Rows/With/WithDefinition",
+      "role": "A single ordinary local relation definition.",
+      "structure": "A checked SELECT, local projection, independently nested WITH program or read of an earlier definition.",
+      "conditions": "Its containing program checks visibility and heading of any local read. Independent bodies expose a checked nonempty heading and matching profile.",
+      "meaning": "Bind the evaluated body to the definition's exact declaration position.",
+      "sql": "Render its body in the lexical definition with stable names for the exported field positions."
+    },
+    "WithRead": {
+      "type": "Rows/With/WithRead",
+      "role": "A projection over one lexical relation from the owning WITH.",
+      "structure": "A nonnegative definition position and an owned ordered list of local source slots and result names.",
+      "conditions": "The owning WITH checks relation visibility and slot membership. The local result names and size must satisfy MySQL identifier and projection rules.",
+      "meaning": "Read the exact preceding definition and return the selected field positions, in order, with their native types and multiplicity.",
+      "sql": "Qualify every selected field by the internal relation name and the internal field name corresponding to its source position."
+    }
+  },
+  "existingRoles": ["Rows/LocalResultColumn", "Rows/LocalProjection", "Select", "ResultColumn", "Binding/Parameter", "Identifier"],
+  "structure": "The ordinary WITH retains the whole ordered definition sequence, including unused definitions. A definition can export multiple fields even when the body selects only one. Nested independent WITH values have their own lists.",
+  "conditions": "Support exact single-relation local projection reads, independent members and independently nested WITH. At construction reject unsupported releases, cross-release members, future and self references, and missing slots. At analysis accept CTE aliases and explicit headings only when every selected field resolves to its bound definition and exact slot.",
+  "meaning": "The CTE result uses the ordered typed row bag produced by its definition. A local read follows declaration identity, independent of source spelling or shadowing. An unqualified CTE name can shadow a physical name while a qualified external name remains absolute. Preserve the lexical ordering of admitted native positional parameters.",
+  "sql": "Write all declared definitions in order, with quoted names and unique synthetic heading aliases per definition. Keep the result names in the final projection. Nested closed scopes have independent generated aliases.",
+  "observations": ["Exact predecessor and field coordinates, including renamed and repeated fields", "Field order, names, native types, multiplicity and NULL", "Shadowing with a distinguishable qualified physical relation", "Actual prepared-statement marker correspondence and values, including an unused definition", "Release capability before MySQL 8.0"],
+  "finite": {
+    "definitions": [2, 3, 4],
+    "input": ["populated", "empty", "view"],
+    "layout": ["reorder", "repeat"],
+    "resultSelection": ["first", "last"],
+    "identities": 36,
+    "completeness": "Recover the four axes from the observed loaded values and consume the full product exactly once on each capable release."
+  },
+  "analysis": ["Explicit CTE output columns", "Two CTEs with a reversed projection", "An unused definition", "Local name shadowing the external table", "A qualified external table under its shadowed name", "An independent lexical WITH within a definition", "Equivalent qualified and unqualified reads", "Independent external result body", "Direct external view input", "Independent nested WITH inside a derived projection"],
+  "parameterCases": ["Analyzed and direct native marker order across two independent definitions", "Distinct sentinels bound to their ordinal positions when a definition is unused"],
+  "exploration": {
+    "seeds": [1901, 12049, 43613],
+    "casesPerSeed": 16,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary definition count, predecessor and selected slot, external table and view references, empty inputs, literal independent members, nested local programs and independent result bodies."
+  },
+  "negative": ["Empty definition list", "Self reference in an ordinary definition", "Reference to a later definition", "Missing local field", "Cross-release query", "Ordered or bounded independent query", "Unbound SQL input"],
+  "rejectedReleases": ["mysql-5.6.51", "mysql-5.7.44"],
+  "faults": ["Redirect a local read to the wrong earlier definition", "Read the wrong output slot", "Remove a repeated selected position", "Skip visibility validation", "Skip matching the member's language profile"],
+  "evidence": {
+    "P01": "Record exact binding and slot coordinates, release and lexical order of projected parameter positions.",
+    "P02": "Check scope, positions, bounds, release and headings at the containing boundary.",
+    "P03": "Store immutable query bodies, bindings and necessary result labels without the parser or analysis context.",
+    "P04": "Derive each member's relation from its own query or the stated predecessor and field positions.",
+    "P05": "Use final values and detached immutable declaration and projection lists.",
+    "P06": "Emit explicit lexical definitions with unique field aliases and native placeholder order.",
+    "Q01": "Check rejection for malformed, future, unavailable, unsupported or mismatched inputs at their owning constructors.",
+    "Q02": "Exhaust the finite definition space and compare written analysis and direct parameter forms without filtering.",
+    "Q03": "Compare the ordered lexical evaluator with native execution using distinguishable definitions and nullable duplicate fields.",
+    "Q04": "Verify exact native result types, names, values, multiplicity and positional inputs for original and rendered SQL.",
+    "Q05": "Connect loaded PHP constructors, shape rules, rendering and both isolated Composer layouts."
+  },
+  "open": ["Local joins and filters, correlated outer WITH reads, compound and grouped members and outer order or limit", "General recursive definitions and statements with effects", "Projected parameters outside the admitted independent SELECT forms"],
+  "trust": ["Documented ordinary CTE visibility and MySQL native parameter order", "Declared external type metadata and independent row model", "Checked PHP and Composer distributions"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/with.html", "https://dev.mysql.com/doc/refman/9.1/en/with.html"]
+}
