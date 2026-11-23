@@ -621,6 +621,26 @@ function constructDropTable(string $platform, array $input): SemanticsIR
         : new $statement($targets, $drop['ifExists'], $version);
 }
 
+function constructCreateView(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $view = $namespace . 'Schema\\View\\';
+    $statement = $view . 'CreateView';
+    $target = $view . 'ViewName';
+    $name = $namespace . 'Identifier';
+    $column = $view . 'ViewColumn';
+    $create = $input['createView'];
+    [$schema, $relation] = $create['target'];
+    return new $statement(
+        new $target(new $name($schema), new $name($relation)),
+        constructSelect($platform, $create['query'] + ['dialect' => 'mysql', 'release' => $input['release']]),
+        array_map(static fn (string $value): object => new $column(new $name($value)), $create['columns']),
+        ($view . 'ViewCreationPolicy')::from($create['policy']),
+        ($view . 'ViewAlgorithm')::from($create['algorithm']),
+        ($view . 'ViewSecurity')::from($create['security']),
+    );
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -866,6 +886,7 @@ function observeStatement(array $input): array
             isset($input['compound']) => constructSetQuery($platform, $input),
             isset($input['create']) => constructCreateTable($platform, $input),
             isset($input['drop']) => constructDropTable($platform, $input),
+            isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
@@ -916,6 +937,17 @@ function observeStatement(array $input): array
         }
 
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString()];
+    }
+    if ($value::class === $namespace . 'Schema\\View\\CreateView') {
+        return [
+            'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+            'createView' => [
+                'target' => [$value->name->schema->value, $value->name->view->value],
+                'query' => observeSetQuery($namespace, $value->query, $input['dialect']),
+                'columns' => array_map(static fn ($column): string => $column->name->value, $value->columns),
+                'policy' => $value->policy->value, 'algorithm' => $value->algorithm->value, 'security' => $value->security->value,
+            ],
+        ];
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

@@ -522,6 +522,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
 
     if ($platform === 'MySql') {
+        $queries['Schema\\View\\CreateView'] = 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW app.answer (value) AS SELECT 42 AS original';
         $queries['Schema\\View\\DropView'] = 'DROP VIEW IF EXISTS app.absent_view CASCADE';
         $queries['Select'] = 'SELECT CAST(42 AS SIGNED) AS answer, CAST(-1 AS UNSIGNED) AS bound WHERE (NOT NULL) IS NULL';
     }
@@ -537,6 +538,12 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'MySql' && $role === 'Schema\\View\\CreateView') {
+            $legacy = new SqlSemantics\Platform\MySql\Semantics('mysql-5.6.51');
+            $filtered = $legacy->analyze('CREATE VIEW app.filtered AS SELECT 42 AS value FROM DUAL WHERE FALSE');
+            $details['createView'] = [$result->policy->value, $result->algorithm->value, $result->security->value,
+                array_map(static fn ($field): string => $field->name->value, $result->columns), $filtered->toString()];
+        }
         if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
             $details['dropView'] = [$result->targets[0]->schema->value, $result->targets[0]->view->value, $result->ifExists];
         }

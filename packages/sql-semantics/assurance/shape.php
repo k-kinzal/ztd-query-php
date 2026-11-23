@@ -748,6 +748,24 @@ if ($dialect !== 'sqlite') {
         $properties[$viewName] = ['schema' => ['Identifier'], 'view' => ['Identifier']];
         $methods[$viewRemoval] = ['__construct', 'profileId', 'toString'];
         $methods[$viewName] = ['__construct', 'quoted'];
+        $viewCreate = 'Schema\\View\\CreateView';
+        $viewColumn = 'Schema\\View\\ViewColumn';
+        $viewAlgorithm = 'Schema\\View\\ViewAlgorithm';
+        $viewSecurity = 'Schema\\View\\ViewSecurity';
+        $viewPolicy = 'Schema\\View\\ViewCreationPolicy';
+        $roots[] = $viewCreate;
+        array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
+        $pureCollaborators[] = 'Schema\\View\\ViewQueryBounds';
+        $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
+            'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity]];
+        $properties[$viewColumn] = ['name' => ['Identifier']];
+        $methods[$viewCreate] = ['__construct', 'profileId', 'toString'];
+        $methods[$viewColumn] = ['__construct'];
+        $properties[$viewAlgorithm] = $properties[$viewSecurity] = $properties[$viewPolicy] = [];
+        $methods[$viewAlgorithm] = $methods[$viewSecurity] = $methods[$viewPolicy] = [];
+        $enumCases[$viewAlgorithm] = ['Undefined' => 'UNDEFINED', 'Merge' => 'MERGE', 'TempTable' => 'TEMPTABLE'];
+        $enumCases[$viewSecurity] = ['Definer' => 'DEFINER', 'Invoker' => 'INVOKER'];
+        $enumCases[$viewPolicy] = ['RequireNew' => 'require-new', 'Replace' => 'replace', 'Preserve' => 'preserve'];
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
@@ -865,6 +883,7 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
+        . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
@@ -969,9 +988,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v37.json';
+    $storagePath = __DIR__ . '/value-storage-v38.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'c4a421549948150eba78041d62d5b8864e5ab653043538b0bd84d3041a78293e',
+        hash_file('sha256', $storagePath) === '0517abe21508931c2d34e50a31bf3ce7b7a4005c67f66a6d276b3e3a188a63fc',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

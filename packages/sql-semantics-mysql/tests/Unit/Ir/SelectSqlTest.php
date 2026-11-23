@@ -57,7 +57,7 @@ final class SelectSqlTest extends TestCase
             where: new BooleanLiteral(false),
         );
 
-        self::assertSame('SELECT 1 AS `a` FROM (SELECT 1) AS `__ztd_unit` WHERE FALSE', (new SelectSql())->render($select));
+        self::assertSame('SELECT 1 AS `a` FROM DUAL WHERE FALSE', (new SelectSql())->render($select));
     }
 
     public function testExpressionKeepsNegativeValues(): void

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v61.json"
-CONTRACT = "e16c96fe501413245ba76c3687119322b7a4aa8509dbcd173e03fe95d7ee605d"
+CONTRACT_NAME = "release-layout-v62.json"
+CONTRACT = "5e45cf1cb7f3424fab3d825963e847137c907dea5a0cbaddf5f36b2f802d9b04"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -245,6 +245,12 @@ def verify_probe(raw, catalog):
         if (item["platform"], item["role"]) == ("MySql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["app", "absent_view", True] and item["sql"] == 'DROP VIEW IF EXISTS `app`.`absent_view`',
                     "installed-mysql-drop-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\View\\CreateView"):
+            require(item.get("createView") == ["require-new", "TEMPTABLE", "INVOKER", ["value"],
+                                               'CREATE ALGORITHM=UNDEFINED SQL SECURITY DEFINER VIEW `app`.`filtered` (`value`) '
+                                               'AS SELECT 42 AS `__ztd_c0` FROM DUAL WHERE FALSE']
+                    and item["sql"] == 'CREATE ALGORITHM=TEMPTABLE SQL SECURITY INVOKER VIEW `app`.`answer` (`value`) AS SELECT 42 AS `__ztd_c0`',
+                    "installed-mysql-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",

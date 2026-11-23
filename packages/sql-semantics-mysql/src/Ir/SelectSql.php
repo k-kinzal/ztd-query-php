@@ -49,7 +49,7 @@ final class SelectSql
             $sql .= ' FROM ' . $this->from($source);
         } elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)
             && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {
-            $sql .= ' FROM (SELECT 1) AS `__ztd_unit`';
+            $sql .= ' FROM DUAL';
         }
         if ($select->where !== null) {
             $sql .= ' WHERE ' . $this->predicate($select->where, $source);

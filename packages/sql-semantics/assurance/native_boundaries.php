@@ -66,6 +66,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-with-projection-boundaries-v1.json', '187862930a636233380862b33a0c0c1d069367278cb6ef70e945d0fa0f642396'],
             ['mysql-grouped-having-boundaries-v1.json', 'b4418e87b51864f6fb59c01c39517e56d78fdbccb1dd7b1e91c781a9b40cb20e'],
             ['mysql-drop-view-boundaries-v1.json', '4efba4950adbee525f68c8efb1473faada655c9aba134cbca0c50a522e7e4dc6'],
+            ['mysql-create-view-boundaries-v1.json', 'f1b3f058793119e58c0d97a70bd196c287f858e4cac779cb1553dde07e7a9a03'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -255,7 +256,9 @@ function checkNativeBoundaries(
                 'Ir\\Aggregation\\Aggregate', 'Ir\\Aggregation\\AggregateBinding', 'Ir\\Aggregation\\AggregateOperator', 'Ir\\Aggregation\\GroupColumn',
                 'Ir\\Aggregation\\GroupedComparison', 'Ir\\Aggregation\\GroupedKeys', 'Ir\\Aggregation\\HavingLowering', 'Model\\Statement\\Reference\\Column\\AliasTarget',
                 'Statement\\Call\\Aggregate\\Aggregate as ParsedAggregate', 'Statement\\Query\\SelectOption', 'Statement\\Query\\SelectExpression as Target',
-                'Ir\\Schema\\View\\ViewName', 'Ir\\Schema\\View\\DropView', 'Model\\Resolution\\TableLookup', 'Model\\Statement\\Reference\\Table\\MissingTable'] as $name) {
+                'Ir\\Schema\\View\\ViewName', 'Ir\\Schema\\View\\DropView', 'Model\\Resolution\\TableLookup', 'Model\\Statement\\Reference\\Table\\MissingTable',
+                'Ir\\Schema\\View\\CreateView', 'Ir\\Schema\\View\\ViewColumn', 'Ir\\Schema\\View\\ViewAlgorithm', 'Ir\\Schema\\View\\ViewSecurity',
+                'Ir\\Schema\\View\\ViewCreationPolicy', 'Ir\\Schema\\View\\ViewQueryBounds'] as $name) {
                 $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
             }
         }

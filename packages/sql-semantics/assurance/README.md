@@ -255,6 +255,8 @@ The [PostgreSQL grouped HAVING contract](postgres-grouped-having-v1.json) checks
 
 The [MySQL external view contract](mysql-external-views-v1.json) checks absolute base-table and view identities, projected VARCHAR types and collation, and base-only write placement. A live MERGE view, a TEMPTABLE view, a nested renamed heading and a same-named decoy produce distinguishable rows. Load and replay the results with `run_server_mysql_external_views.py` and `combine_server_mysql_external_views_evidence.py` across all nine pinned releases.
 
+The [MySQL CREATE VIEW contract](mysql-create-view-v2.json) checks persistent definitions with a closed ordinary SELECT, declared headings, creation and replacement policy, algorithm, security and native metadata. The fixture checks that a view reads changed source rows and observes the 9.1 IF NOT EXISTS behavior. Use `run_server_mysql_create_view.py` and `combine_server_mysql_create_view_evidence.py` on the pinned matrix.
+
 The [MySQL DROP VIEW contract](mysql-drop-view-v2.json) checks absolute view identities, optional absence, retained objects and the implicit commit. Its isolated fixture distinguishes required-absence effects on MySQL 5.6 and 5.7 from the later pinned releases. Run `run_server_mysql_drop_view.py` and `combine_server_mysql_drop_view_evidence.py` on all nine pins.
 
 The [MySQL numeric HAVING contract](mysql-grouped-having-v2.json) checks a separate group predicate with signed keys and literals, exact numeric aggregates, VARCHAR COUNT and resolved output aliases. It checks the legacy implicit key order for its simple grouped data before MySQL 8.0. Run `run_server_mysql_grouped_having.py` and `combine_server_mysql_grouped_having_evidence.py` across all nine pinned releases.

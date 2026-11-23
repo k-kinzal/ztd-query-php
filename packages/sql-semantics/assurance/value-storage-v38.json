@@ -1,0 +1,382 @@
+{
+  "approval": "pending-human-review",
+  "claims": [
+    "P02 list membership and minimum length",
+    "P05 readonly transitive value edges and detached list storage"
+  ],
+  "dialects": {
+    "mysql": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "ColumnReference",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "rows": [
+          "Mutation/InsertRow",
+          1
+        ]
+      },
+      "Mutation/InsertRow": {
+        "values": [
+          "Mutation/InsertCell",
+          1
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": "native-assignment-copy"
+      },
+      "Rows/LocalProjection": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/RecursiveSeries": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/With/WithProjection": {
+        "definitions": [
+          "Rows/With/WithDefinition",
+          1
+        ]
+      },
+      "Rows/With/WithRead": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Schema/CreateTable": {
+        "columns": [
+          "Schema/TableColumn",
+          1
+        ]
+      },
+      "Schema/DropTable": {
+        "targets": [
+          "Schema/TableName",
+          1
+        ]
+      },
+      "Schema/Key/PrimaryKey": {
+        "terms": [
+          "Schema/Key/PrimaryKeyColumn",
+          1
+        ]
+      },
+      "Schema/View/CreateView": {
+        "columns": [
+          "Schema/View/ViewColumn",
+          1
+        ]
+      },
+      "Schema/View/DropView": {
+        "targets": [
+          "Schema/View/ViewName",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columnTypes": "native-slot-copy",
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    },
+    "postgres": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "ColumnReference",
+          0
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "Expression/IntegerCase": {
+        "arms": [
+          "Expression/IntegerCaseArm",
+          1
+        ]
+      },
+      "Mutation/Delete": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ],
+        "rows": [
+          "Mutation/InsertRow",
+          1
+        ]
+      },
+      "Mutation/Insert/Destination": {
+        "written": [
+          "Mutation/Insert/WriteSlot",
+          1
+        ]
+      },
+      "Mutation/InsertQuery": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/InsertRow": {
+        "values": [
+          "Mutation/InsertCell",
+          1
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": [
+          "Mutation/UpdateAssignment",
+          1
+        ],
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Rows/LocalProjection": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/RecursiveSeries": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Rows/With/WithProjection": {
+        "definitions": [
+          "Rows/With/WithDefinition",
+          1
+        ]
+      },
+      "Rows/With/WithRead": {
+        "columns": [
+          "Rows/LocalResultColumn",
+          1
+        ]
+      },
+      "Schema/CreateTable": {
+        "columns": [
+          "Schema/TableColumn",
+          1
+        ]
+      },
+      "Schema/DropTable": {
+        "targets": [
+          "Schema/TableName",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columnKinds": [
+          "From/ColumnKind",
+          0
+        ],
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    },
+    "sqlite": {
+      "Aggregation/GroupedSelect": {
+        "columns": [
+          "Aggregation/GroupColumn",
+          1
+        ],
+        "keys": [
+          "Aggregation/GroupKey",
+          0
+        ]
+      },
+      "Expression/CaseExpression": {
+        "branches": [
+          "Expression/CaseBranch",
+          1
+        ]
+      },
+      "Expression/Nulls/Coalesce": {
+        "arguments": [
+          "Expression/Nulls/CoalesceArgument",
+          2
+        ]
+      },
+      "Mutation/Delete": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Mutation/Insert": {
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ],
+        "writes": [
+          "ColumnReference",
+          0
+        ]
+      },
+      "Mutation/Update": {
+        "assignments": [
+          "Mutation/UpdateAssignment",
+          1
+        ],
+        "returning": [
+          "Mutation/ReturnedColumn",
+          0
+        ]
+      },
+      "Predicate/FoldedMembership": {
+        "bindings": [
+          "Parameter",
+          0
+        ]
+      },
+      "Predicate/MembershipTest": {
+        "items": [
+          "Predicate/MembershipItem",
+          0
+        ]
+      },
+      "Rows/Compound": {
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ],
+        "steps": [
+          "Rows/CompoundStep",
+          1
+        ]
+      },
+      "Rows/LocalSource": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Rows/RecursiveDefinition": {
+        "step": [
+          "Rows/RecursiveColumn",
+          1
+        ]
+      },
+      "Rows/ValueRow": {
+        "values": "closed-scalar-copy"
+      },
+      "Rows/ValuesQuery": {
+        "rows": [
+          "Rows/ValueRow",
+          1
+        ]
+      },
+      "Schema/CreateTable": {
+        "checks": [
+          "Schema/Predicate/CheckConstraint",
+          0
+        ],
+        "columns": [
+          "Schema/TableColumn",
+          1
+        ],
+        "keys": "ordered-table-key-copy"
+      },
+      "Schema/Key/PrimaryKey": {
+        "terms": [
+          "Schema/Key/KeyTerm",
+          1
+        ]
+      },
+      "Schema/Key/UniqueKey": {
+        "terms": [
+          "Schema/Key/KeyTerm",
+          1
+        ]
+      },
+      "Schema/Predicate/DefinitionSource": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Schema/View/CreateView": {
+        "columns": [
+          "Identifier",
+          1
+        ]
+      },
+      "Select": {
+        "columns": [
+          "ResultColumn",
+          1
+        ],
+        "joins": [
+          "From/Join",
+          0
+        ],
+        "orderBy": [
+          "Ordering/Order",
+          0
+        ]
+      },
+      "TableSource": {
+        "columns": [
+          "Identifier",
+          0
+        ]
+      }
+    }
+  },
+  "exclusions": "External schema truth, SQL fidelity, root clause constraints beyond list storage, and privileged reflection remain separate obligations.",
+  "extends": "value-storage-v37.json",
+  "replaces": "value-storage-v5.json",
+  "requirements": "A published array is assigned in its constructor from a copy of the admitted list elements. Its member type and minimum length are checked. All implicit and explicit constructor paths are free of reference parameters, array aliases and early successful exits. Non-array edges use closed readonly PHP property types. Restoration is blocked by the pinned Snapshot primitive.",
+  "revision": "SemanticsIR/value-storage-38"
+}
