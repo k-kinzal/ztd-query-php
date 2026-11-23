@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v40.json"
-CONTRACT = "702ff2ee0d3d81f4c2a8e979990db7e6287e9eea6fc989f616c520be822cc5aa"
+CONTRACT_NAME = "release-layout-v41.json"
+CONTRACT = "34f05727437e1acf7dd546f5ebf1765ac0de978fb0a2e6a57142ec4e11d34511"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -289,7 +289,7 @@ def verify_probe(raw, catalog):
                 "The TINYINT default is outside the signed storage range.",
             ], "installed-mysql-signed-declaration-mismatch", item)
             require(item.get("mysqlPrimaryKey") == [
-                namespace + "PrimaryKey", namespace + "PrimaryKeyColumn", [[1, True], [0, False]], True, False, None,
+                namespace + "Key\\PrimaryKey", namespace + "Key\\PrimaryKeyColumn", [[1, True], [0, False]], True, False, None,
                 "CREATE TABLE `app`.`key_decl` (`lo` SMALLINT NOT NULL, `hi` BIGINT NOT NULL DEFAULT -7, "
                 "PRIMARY KEY (`hi` DESC, `lo`)) ENGINE=InnoDB",
             ], "installed-mysql-primary-key-mismatch", item)

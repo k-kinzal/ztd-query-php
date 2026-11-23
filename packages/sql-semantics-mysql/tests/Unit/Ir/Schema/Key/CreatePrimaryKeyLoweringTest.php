@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Schema;
+namespace Tests\Unit\Ir\Schema\Key;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Ir\Schema\CreatePrimaryKeyLowering;
+use SqlSemantics\Platform\MySql\Ir\Schema\Key\CreatePrimaryKeyLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;

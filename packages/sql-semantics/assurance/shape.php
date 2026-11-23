@@ -667,19 +667,19 @@ if ($dialect !== 'sqlite') {
         $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
     } else {
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
-        $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\PrimaryKey'];
+        $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\Key\\PrimaryKey'];
         $properties['Schema\\CharacterStorage'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
-        $properties['Schema\\PrimaryKey'] = ['terms' => ['array']];
-        $properties['Schema\\PrimaryKeyColumn'] = ['slot' => ['int'], 'descending' => ['bool']];
+        $properties['Schema\\Key\\PrimaryKey'] = ['terms' => ['array']];
+        $properties['Schema\\Key\\PrimaryKeyColumn'] = ['slot' => ['int'], 'descending' => ['bool']];
         $methods['Schema\\CharacterStorage'] = ['__construct', 'toString'];
-        $methods['Schema\\PrimaryKey'] = $methods['Schema\\PrimaryKeyColumn'] = ['__construct'];
+        $methods['Schema\\Key\\PrimaryKey'] = $methods['Schema\\Key\\PrimaryKeyColumn'] = ['__construct'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Predicate\\RangeIntegerLiteral', 'null'];
         $methods['Schema\\TableColumn'] = ['__construct', 'storageBytes', 'toString'];
         $methods['Schema\\IntegerStorage'] = ['bytes', 'accepts'];
         $enumCases['Schema\\IntegerStorage'] = ['Tiny' => 'TINYINT', 'Small' => 'SMALLINT', 'Medium' => 'MEDIUMINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
         array_push($internal, 'Schema\\CreateColumnStorageLowering', 'Schema\\LiteralDefaultLowering');
-        array_push($internal, 'Schema\\CreatePrimaryKeyLowering', 'Schema\\CreateTableLayoutLowering', 'Schema\\PrimaryColumnPolicy');
+        array_push($internal, 'Schema\\Key\\CreatePrimaryKeyLowering', 'Schema\\CreateTableLayoutLowering', 'Schema\\Key\\PrimaryColumnPolicy');
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
@@ -897,9 +897,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v32.json';
+    $storagePath = __DIR__ . '/value-storage-v33.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'a464096654ccb36131d25590c68c060640f391d0e221edf27c78681debd4b071',
+        hash_file('sha256', $storagePath) === 'ea4733fd4df512ee09810df3c0a8cc82c3c988abf9fbafdfa65dc7e57b34d877',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

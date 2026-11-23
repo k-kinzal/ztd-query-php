@@ -19,7 +19,7 @@ from server_delete_cases import literal
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-primary"
-CONTRACT = "5f8da5f020799ca09bb49bd28fcd6171c45130cd1e8a9b424822b735cf2bffa7"
+CONTRACT = "3e1e5737b0d8101fe7c46fcecce8396f73002aacbb8727ce2c024b628f0e9c91"
 OLD = ("mysql-5.6.51", "mysql-5.7.44")
 OWNER = "A primary key must reference an existing required signed column."
 SEMANTIC = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\SemanticException"
@@ -28,7 +28,7 @@ UNKEYED = {"signed": ["c4", "INTEGER", True, None], "varchar": text_column("c4",
 
 
 def specifications():
-    path = TOOL / "mysql-create-primary-v1.json"
+    path = TOOL / "mysql-create-primary-v2.json"
     require(digest(path) == CONTRACT, "mysql-create-primary-contract-mismatch")
     _, profiles = declaration_specifications()
     return json.loads(path.read_text()), profiles

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Ir\Schema;
+namespace SqlSemantics\Platform\MySql\Ir\Schema\Key;
 
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Selecting the second declared column
- *     (new \SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(1))->slot // => 1
+ *     (new \SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(1))->slot // => 1
  */
 final class PrimaryKeyColumn
 {

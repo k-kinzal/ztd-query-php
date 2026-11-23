@@ -465,8 +465,8 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     $storage = $namespace . 'Schema\\IntegerStorage';
     $characters = $namespace . 'Schema\\CharacterStorage';
     $collation = $namespace . 'From\\TextCollation';
-    $primary = $namespace . 'Schema\\PrimaryKey';
-    $term = $namespace . 'Schema\\PrimaryKeyColumn';
+    $primary = $namespace . 'Schema\\Key\\PrimaryKey';
+    $term = $namespace . 'Schema\\Key\\PrimaryKeyColumn';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $create = $input['create'];
     $columns = [];

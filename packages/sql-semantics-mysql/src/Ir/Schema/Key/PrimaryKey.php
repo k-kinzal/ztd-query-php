@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Ir\Schema;
+namespace SqlSemantics\Platform\MySql\Ir\Schema\Key;
 
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -12,8 +12,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Preserving order in a compound key
- *     $term = new \SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(2);
- *     (new \SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKey([$term]))->terms[0]->slot // => 2
+ *     $term = new \SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(2);
+ *     (new \SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey([$term]))->terms[0]->slot // => 2
  */
 final class PrimaryKey
 {

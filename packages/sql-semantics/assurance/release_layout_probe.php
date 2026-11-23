@@ -141,9 +141,9 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
 {
     $value = $semantics->analyze('CREATE TABLE app.key_decl (lo SMALLINT, hi BIGINT NOT NULL DEFAULT -7, PRIMARY KEY (HI DESC, lo))');
     $key = $value->primaryKey;
-    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKey([
-        new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(1, true),
-        new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(0),
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey([
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(1, true),
+        new SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKeyColumn(0),
     ]);
 
     return [

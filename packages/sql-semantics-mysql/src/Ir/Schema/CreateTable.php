@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
 use SqlSemantics\Platform\MySql\Ir\From\TextCollation;
+use SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryKey;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;

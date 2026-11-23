@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Schema;
+namespace Tests\Unit\Ir\Schema\Key;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
-use SqlSemantics\Platform\MySql\Ir\Schema\PrimaryColumnPolicy;
+use SqlSemantics\Platform\MySql\Ir\Schema\Key\PrimaryColumnPolicy;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
 #[CoversClass(PrimaryColumnPolicy::class)]

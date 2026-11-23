@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Ir\Schema;
+namespace SqlSemantics\Platform\MySql\Ir\Schema\Key;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;

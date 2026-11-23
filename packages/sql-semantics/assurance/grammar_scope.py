@@ -422,7 +422,7 @@ def inventory(root):
                 "key_part: ident opt_ordering_direction",
             }
             for alternative in sorted(signatures & primary_columns):
-                related[alternative] = (*related.get(alternative, ()), "mysql-create-primary-v1.json")
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-primary-v2.json")
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):
