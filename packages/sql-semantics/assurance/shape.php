@@ -754,7 +754,7 @@ if ($dialect !== 'sqlite') {
         $viewSecurity = 'Schema\\View\\ViewSecurity';
         $viewPolicy = 'Schema\\View\\ViewCreationPolicy';
         $roots[] = $viewCreate;
-        array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
+        array_push($internal, 'Schema\\CreateRelationLowering', 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewQueryBounds');
         $pureCollaborators[] = 'Schema\\View\\ViewQueryBounds';
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => ['Select'], 'columns' => ['array'],
             'policy' => [$viewPolicy], 'algorithm' => [$viewAlgorithm], 'security' => [$viewSecurity]];
@@ -883,7 +883,7 @@ try {
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
         . ($dialect === 'mysql'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
-                . '\\Statement\\View\\CreateView => $this->lowerCreation($operation, $statement),'
+                . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
@@ -927,16 +927,6 @@ try {
         requireShape($method !== null && $method->isPublic() && !$method->isStatic()
             && $method->returnType !== null && types($method->returnType, $prefix, 'Semantics') === $return, "Publication signature differs in $name");
         requireShape($printer->prettyPrint($method->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)), "Publication body differs in $name");
-    }
-    if ($dialect === 'mysql') {
-        $creation = $facade->getMethod('lowerCreation');
-        $body = 'return $statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable'
-            . ' ? (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement)'
-            . ' : (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement);';
-        requireShape($creation !== null && $creation->isPrivate() && !$creation->isStatic()
-            && $creation->returnType !== null && types($creation->returnType, $prefix, 'Semantics') === ['Schema\\CreateTable', 'Schema\\View\\CreateView']
-            && $printer->prettyPrint($creation->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)),
-            'Unexpected MySQL declaration publication');
     }
     $primitives = json_decode(file_get_contents(__DIR__ . '/value-primitives.json'), true, 512, JSON_THROW_ON_ERROR);
     foreach ($primitives['artifacts'][$dialect] as $path => $approved) {
@@ -1104,6 +1094,17 @@ try {
                 'Transaction\\TransactionLowering' => 'Transaction\\Transaction',
                 default => null,
             };
+            if ($short === 'Schema\\CreateRelationLowering') {
+                $members = $class->getMethods();
+                $body = 'return $statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable'
+                    . ' ? (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement)'
+                    . ' : (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement);';
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\CreateTable', 'Schema\\View\\CreateView']
+                    && $printer->prettyPrint($members[0]->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)),
+                    'Unexpected MySQL declaration publication');
+            }
             if ($short === 'Schema\\CreateColumnStorageLowering') {
                 $methodsByName = $class->getMethods();
                 requireShape(
