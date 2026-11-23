@@ -1,0 +1,64 @@
+{
+  "revision": "SemanticsIR/postgres-text-declarations-1",
+  "approval": "pending-human-review",
+  "extends": ["postgres-typed-columns-v2.json"],
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "sources": [
+    "https://www.postgresql.org/docs/16/runtime-config-client.html#GUC-SEARCH-PATH",
+    "https://www.postgresql.org/docs/17/runtime-config-client.html#GUC-SEARCH-PATH",
+    "https://www.postgresql.org/docs/17/sql-createtable.html"
+  ],
+  "constructors": {},
+  "existingRoles": ["From/ColumnKind", "From/TextColumnReference", "TableSource"],
+  "binding": "Process declarations in supplied order. An explicit complete catalog settles whether the preceding temporary schema has a relation named text at each definition. If no such relation is declared, the default path resolves the unqualified type to pg_catalog.text. A relation's declared type stays bound after subsequent declarations. The explicitly qualified pg_catalog.text always uses that builtin. An open catalog leaves a possible earlier object unresolved. A declared earlier temporary text relation makes the unqualified type a composite, outside the scalar text form.",
+  "externalInterpretation": "Use the same ordered declarations, native default data-type search path, temporary session state and physical table. Record the exact native type identity at the three fixture tables independently of IR.",
+  "observations": [
+    "A previously declared unqualified text field has the builtin OID 25 after later introduction of the same name.",
+    "An explicitly qualified text field has OID 25 while the earlier temporary composite type is visible.",
+    "The same unqualified type name used after creation of a temporary relation called text denotes its composite row type.",
+    "A complete value that reads a builtin text field retains its physical reference, native type, label, NULL and exact text bytes."
+  ],
+  "finite": {
+    "table": ["before", "qualified"],
+    "projection": ["single", "repeated"],
+    "policy": ["include", "only"],
+    "identities": 8,
+    "completeness": "Recover table, occurrence count, physical slot and ONLY policy from independently observed public values."
+  },
+  "exploration": {
+    "seeds": [1777, 25343],
+    "casesPerSeed": 18,
+    "timeoutSecondsPerRelease": 210,
+    "allowedExclusions": [],
+    "requiredForms": "Vary repeated projections, field order, quoted labels and inherited scan policy across both physically distinct text tables."
+  },
+  "analysis": [
+    "Resolve an unqualified text declaration in a complete catalog before introducing any temporary shadow.",
+    "Preserve the same builtin slot when the temporary shadow is introduced after the declaration.",
+    "Resolve explicitly qualified pg_catalog.text after that shadow has been introduced."
+  ],
+  "negative": [
+    "Reject an unqualified declaration in a partial catalog when a temporary shadow cannot be ruled out.",
+    "Reject a text projection using the composite row type that was declared before the ordinary table."
+  ],
+  "faults": [
+    "Discard complete declaration knowledge during construction of an explicitly complete context.",
+    "Ignore a visible earlier temporary composite when resolving an unqualified type."
+  ],
+  "evidence": {
+    "P01": "Record both the selected slot and the native type chosen under the actual declaration order.",
+    "P02": "Resolve complete declarations and reject the unresolved and incompatible kinds.",
+    "P03": "Use catalog knowledge only while binding; retain the resolved role and coordinates.",
+    "P04": "Compose table headings and type positions with existing projection roles.",
+    "P05": "Use the established immutable field and occurrence values.",
+    "P06": "Compare exact typed rows for both published and original SQL.",
+    "Q01": "Audit complete versus partial catalog propagation and temporary shadow recognition.",
+    "Q02": "Check all direct finite identities and specified positive analyzed inputs.",
+    "Q03": "Compare declaration ordering and both unqualified and qualified type lookup against native server type identities.",
+    "Q04": "Compare SQL through both pinned PostgreSQL releases with native data and deterministic labels.",
+    "Q05": "Bind the selected verifier, runtime declarations and exact staged distribution to the evidence."
+  },
+  "trust": ["The caller's declarations faithfully describe their matching catalog state.", "The PostgreSQL type OID behavior of the pinned releases.", "The independently observed native SQL rows and construction path."]
+}
