@@ -19,6 +19,21 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Medium]
 final class SourceBindingTest extends TestCase
 {
+    public function testMergedHeadingPreservesOrderAndCaseWithoutImplicitFields(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t ("Lane" INTEGER, lane INTEGER, "42" INTEGER)');
+        $operation = $inspection->inspect('SELECT 1 FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+
+        $heading = $binding->mergedHeading();
+
+        self::assertSame([':Lane', ':lane', ':42'], array_keys($heading));
+        self::assertSame($binding->writableColumn('Lane'), $heading[':Lane']);
+        self::assertSame($binding->writableColumn('lane'), $heading[':lane']);
+    }
+
     public function testReferenceAndSourceKeepTheBoundColumnName(): void
     {
         $semantics = new Inspection();

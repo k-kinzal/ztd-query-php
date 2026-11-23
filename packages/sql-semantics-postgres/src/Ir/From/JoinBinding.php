@@ -154,7 +154,7 @@ final class JoinBinding
     /**
      * Resolves the explicit condition or normalizes the checked merged keys.
      */
-    public function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
+    private function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
     {
         $condition = $this->join->condition;
         if (!$this->join->natural && !$condition instanceof JoinUsing) {
