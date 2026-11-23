@@ -27,4 +27,19 @@ final class SourceDeclarationsTest extends TestCase
         self::assertNotSame($bindings[0][0], $bindings[1][0]);
         self::assertSame($bindings[0][1], $bindings[1][1]);
     }
+
+    public function testMergeHeadingPreservesCaseAndDeclarationOrder(): void
+    {
+        $sqlite = new Inspection();
+        $table = $sqlite->inspect('CREATE TABLE t (Lane NUMERIC, Key TEXT)');
+        $operation = $sqlite->inspect('SELECT Lane FROM t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertNotNull($operation->statement->from);
+
+        $heading = (new SourceDeclarations())->mergeHeading($operation->binding(), $operation->statement->from);
+
+        self::assertSame(['lane', 'key'], array_keys($heading));
+        self::assertSame('Lane', $heading['lane']->name->value);
+        self::assertSame('Key', $heading['key']->name->value);
+    }
 }

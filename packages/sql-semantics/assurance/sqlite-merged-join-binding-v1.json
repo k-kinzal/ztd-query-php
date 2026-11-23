@@ -15,7 +15,7 @@
         "locate",
         "uniqueNames"
       ],
-      "sha256": "719a2d1ea50c90408ca8e9e2e0339d6781fd12b8208bdd0baad5b9114420cbaa"
+      "sha256": "bd7da22e39a3b1aa8e0a67e8f39c9fdde92024f4e277f91f3455365edf2c2282"
     },
     "src/Rules/Resolution/ColumnResolver.php": {
       "methods": [

@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Semantics;
 #[Small]
 final class JoinKeyLoweringTest extends TestCase
 {
-    public function testRepeatedNamesKeepOneVisibleSlotAndBothResolvedOperands(): void
+    public function testPredicateWithRepeatedNamesKeepOneVisibleSlotAndBothResolvedOperands(): void
     {
         $sqlite = new Semantics();
         $context = $sqlite->context([

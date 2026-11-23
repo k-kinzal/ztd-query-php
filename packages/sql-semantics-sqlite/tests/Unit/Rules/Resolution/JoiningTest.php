@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
@@ -132,6 +133,17 @@ final class JoiningTest extends TestCase
         self::assertCount(1, $diagnostics);
         self::assertInstanceOf(MissingColumn::class, $diagnostics[0]);
         self::assertSame('zz', $diagnostics[0]->name->value);
+    }
+
+    public function testUniqueNamesKeepsTheFirstSpellingUnderTheSelectedComparison(): void
+    {
+        $upper = new Name('KEY');
+        $lower = new Name('key');
+        $other = new Name('lane');
+        $names = [$upper, $lower, $other, $upper];
+
+        self::assertSame([$upper, $other], (new Joining())->uniqueNames($names, Comparison::AsciiInsensitive));
+        self::assertSame([$upper, $lower, $other], (new Joining())->uniqueNames($names, Comparison::Sensitive));
     }
 
     public function testReplacedSwapsOneRelationByPosition(): void

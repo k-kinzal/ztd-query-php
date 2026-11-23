@@ -83,7 +83,8 @@ final class Joining
     {
         $names = [];
         foreach ($columns as $column) {
-            $names[$comparison->fold($column->value)] ??= $column;
+            $key = $comparison === Comparison::Sensitive ? $column->value : $comparison->fold($column->value);
+            $names[$key] ??= $column;
         }
 
         return array_values($names);
