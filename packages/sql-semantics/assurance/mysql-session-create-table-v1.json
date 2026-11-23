@@ -48,10 +48,12 @@
   ],
   "negative": [
     "Direct view in the table declaration identity",
-    "Direct invalid table name and empty column list",
+    "Direct invalid table name",
+    "Direct empty column list",
     "Temporary declaration without a resolved absolute schema",
     "Temporary non-InnoDB table in the fixed InnoDB profile",
-    "Direct out-of-scope or nullable primary key slot"
+    "Direct out-of-scope primary key slot",
+    "Direct nullable primary key slot"
   ],
   "observations": [
     "Physical name, namespace, engine, ordered column names and storage, native column default metadata and nullability, explicit VARCHAR collation, primary key slots and directions",
