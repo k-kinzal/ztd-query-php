@@ -97,6 +97,7 @@ def checked_methods(guard, dialect, role):
         "checkedLists": healthy["checkedLists"].get(role, []),
         "faults": [fault["name"] for fault in audited["faults"] if fault["role"].startswith(prefix)],
         **({"checkedBindingSources": healthy["checkedBindingSources"]} if (dialect, role) in {
+            ("mysql", "From/Varchar"), ("mysql", "From/TextColumnReference"), ("mysql", "TableSource"),
             ("sqlite", "Predicate/FoldedMembership"), ("sqlite", "Schema/Generation/ColumnGeneration"), ("sqlite", "Schema/View/CreateView"), ("postgres", "Expression/WideIntegerLiteral"),
             ("postgres", "Expression/BuiltinCast"),
         } else {}),

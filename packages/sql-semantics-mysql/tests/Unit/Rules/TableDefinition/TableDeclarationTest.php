@@ -154,13 +154,27 @@ final class TableDeclarationTest extends TestCase
         self::assertFalse((new TableDeclaration())->named(new Name('b'), [new Name('a')], Comparison::AsciiInsensitive));
     }
 
-    public function testExplicitCollationReadsTheNamedOrdinaryColumnAttribute(): void
+    public function testColumnCollationReadsTheNamedOrdinaryColumnAttribute(): void
     {
         $create = (new Inspection())->inspect('CREATE TABLE t (a VARCHAR(8) COLLATE utf8mb4_bin)');
         self::assertInstanceOf(CreateTable::class, $create->statement);
         $definition = $create->statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $definition);
 
-        self::assertSame('utf8mb4_bin', (new TableDeclaration())->explicitCollation($definition->specification)?->value);
+        self::assertSame('utf8mb4_bin', (new TableDeclaration())->columnCollation($definition->specification)?->value);
+    }
+
+    public function testTableCollationAppliesOnlyToAColumnWithNoOverride(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (a VARCHAR(3), b VARCHAR(3) COLLATE utf8mb4_general_ci, c VARCHAR(3) CHARACTER SET utf8mb4) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');
+        self::assertInstanceOf(CreateTable::class, $table->statement);
+        $rule = new TableDeclaration();
+
+        self::assertSame('utf8mb4_bin', $rule->tableCollation($table->statement)?->value);
+        $columns = $table->declarations()[0]->columns;
+        self::assertSame('utf8mb4_bin', $columns[0]->collation?->value);
+        self::assertSame('utf8mb4_general_ci', $columns[1]->collation?->value);
+        self::assertNull($columns[2]->collation);
     }
 }

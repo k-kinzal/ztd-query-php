@@ -24,6 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
 
 /**
  * Derives the declaration a table or view definition provides.
@@ -71,7 +74,7 @@ final class TableDeclaration
     /**
      * Answers the declaration of one column definition; `$keyed` tells whether a table-level primary key includes it.
      */
-    public function column(ColumnDefinition $definition, bool $keyed = false): Column
+    public function column(ColumnDefinition $definition, bool $keyed = false, ?Name $tableCollation = null): Column
     {
         $specification = $definition->specification;
 
@@ -80,14 +83,14 @@ final class TableDeclaration
             $specification->dataType(),
             (new ColumnFlags())->nullability($specification, $keyed),
             $specification instanceof GeneratedColumn,
-            $this->explicitCollation($specification),
+            $this->columnCollation($specification, $tableCollation),
         );
     }
 
     /**
-     * Preserves a single explicit column collation in its declaration.
+     * Resolves the column override before considering the checked table default.
      */
-    public function explicitCollation(ColumnSpecification $specification): ?Name
+    public function columnCollation(ColumnSpecification $specification, ?Name $tableCollation = null): ?Name
     {
         $collations = [];
         foreach ($specification->columnAttributes() as $attribute) {
@@ -96,7 +99,37 @@ final class TableDeclaration
             }
         }
 
-        return count($collations) === 1 ? $collations[0] : null;
+        if ($collations !== []) {
+            return count($collations) === 1 ? $collations[0] : null;
+        }
+        $type = $specification->dataType();
+
+        return $type instanceof Character && !$type->national && $type->charset === null ? $tableCollation : null;
+    }
+
+    /**
+     * Resolves the only native table collation whose character-set identity is checked.
+     */
+    public function tableCollation(CreateTable $definition): ?Name
+    {
+        $collations = [];
+        $charsets = [];
+        foreach ($definition->options as $option) {
+            if ($option instanceof CollationOption) {
+                $collations[] = $option->collation->name;
+            } elseif ($option instanceof CharsetOption) {
+                $charsets[] = $option->charset->name;
+            }
+        }
+        $collation = $collations[0] ?? null;
+        if (count($collations) !== 1 || strtolower($collation->value ?? '') !== 'utf8mb4_bin') {
+            return null;
+        }
+        if ($charsets !== [] && (count($charsets) !== 1 || strtolower($charsets[0]->value ?? '') !== 'utf8mb4')) {
+            return null;
+        }
+
+        return $collation;
     }
 
     /**
@@ -127,10 +160,12 @@ final class TableDeclaration
     {
         $comparison = $derivation->context->columnNames;
         $primary = $this->primaryColumns($definition);
+        $collation = $this->tableCollation($definition);
         $defined = [];
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {
-                $defined[] = [$element, $this->column($element, $this->named($element->name->column, $primary, $comparison))];
+                $keyed = $this->named($element->name->column, $primary, $comparison);
+                $defined[] = [$element, $this->column($element, $keyed, $collation)];
             }
         }
         $selected = [];

@@ -206,6 +206,12 @@ def inventory(root):
             )
             for alternative in grouped_count:
                 related[alternative] = (*related.get(alternative, ()), "mysql-varchar-count-v1.json")
+            for rule in ("default_charset", "default_collation", "create_table_option"):
+                for alternative in rules.get(rule, ()):
+                    if alternative != rule + ":" and (
+                        rule != "create_table_option" or "default_charset" in alternative or "default_collation" in alternative
+                    ):
+                        related[alternative] = (*related.get(alternative, ()), "mysql-varchar-inheritance-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")
