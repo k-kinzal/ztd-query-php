@@ -37,14 +37,15 @@ final class Catalog
         $platform = Platform::shared();
         $binder = new StatementBinder($this->parser);
         $tables = [];
+        $closed = $declarations !== null && $complete;
         foreach ($declarations ?? [] as $sql) {
-            $scope = $platform->context($this->profile, $this->searchPath, $tables, false);
+            $scope = $platform->context($this->profile, $this->searchPath, $tables, $closed);
             $binding = $binder->resolve($sql, $scope);
             Check::input($binding->facts->declarations !== [], 'A catalog definition must declare a relation.');
             array_push($tables, ...$binding->facts->declarations);
         }
 
-        return $platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
+        return $platform->context($this->profile, $this->searchPath, $tables, $closed);
     }
 
     /**

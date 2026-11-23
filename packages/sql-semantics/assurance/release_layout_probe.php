@@ -190,7 +190,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost the resolved text binding.');
             }
             $details['textMarker'] = [$marker->position, $marker->input->value, $preparedText->toString()];
-            $typedContext = $semantics->context(['CREATE TABLE public.typed_table (id integer, label pg_catalog.text)']);
+            $typedContext = $semantics->context(['CREATE TABLE public.typed_table (id integer, label text)', 'CREATE TEMP TABLE text (part integer)']);
             $typed = $semantics->analyze('SELECT label, t.label, t.id FROM public.typed_table t', $typedContext);
             $columns = [];
             foreach ($typed->columns as $column) {

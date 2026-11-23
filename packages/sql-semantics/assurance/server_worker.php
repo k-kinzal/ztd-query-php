@@ -203,7 +203,7 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
 {
     $class = $platform . 'Semantics';
     $semantics = new $class($input['release']);
-    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null));
+    return $semantics->analyze($input['sql'], $semantics->context($input['declarations'] ?: null, $input['complete'] ?? true));
 }
 
 function observeSource(object $source, string $dialect, string $namespace): array

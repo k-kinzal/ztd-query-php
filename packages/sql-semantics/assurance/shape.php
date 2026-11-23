@@ -787,6 +787,7 @@ try {
         ],
         'postgres' => [
             ['postgres-join-binding-v3.json', '5195458168a04370df438fcebfc8b81aa3877fed56f16f72c256ccac96bf0509', 'PostgreSQL join binding'],
+            ['postgres-declaration-binding-sources-v1.json', '98302acdf9adbff1aa2619e30a190de6007ecfe826f5cf70c09407733d51b5b0', 'PostgreSQL declaration binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
         ],
         'mysql' => [

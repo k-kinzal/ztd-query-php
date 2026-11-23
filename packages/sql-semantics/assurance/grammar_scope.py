@@ -224,6 +224,10 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative.endswith((" IS NULL_P", " IS NOT NULL_P")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json")
+            for rule in ("ColumnDef", "GenericType"):
+                for alternative in rules.get(rule, ()):
+                    linked = related.get(alternative, ())
+                    related[alternative] = (*linked, "postgres-text-declarations-v2.json")
             for rule in ("columnref", "target_el"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v2.json")
