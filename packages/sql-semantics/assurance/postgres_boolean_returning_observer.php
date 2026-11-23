@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/server_connection.php';
+require __DIR__ . '/server_predicate_scope.php';
+require __DIR__ . '/server_returning_observation.php';
+
+[$pdo, $environment] = connectFixture('postgres');
+if ($pdo->query('SELECT current_database()')->fetchColumn() !== 'ir_fixture') {
+    throw new RuntimeException('The Boolean mutation observer requires the disposable ir_fixture database.');
+}
+$pdo->exec('DROP TABLE IF EXISTS public.ir_bool_changes');
+$pdo->exec('CREATE TABLE public.ir_bool_changes (id INTEGER, enabled BOOLEAN DEFAULT TRUE, fallback BOOLEAN DEFAULT FALSE)');
+$pdo->exec('INSERT INTO public.ir_bool_changes VALUES (1, TRUE, FALSE), (1, TRUE, FALSE), (2, FALSE, TRUE), (3, NULL, FALSE), (NULL, TRUE, NULL)');
+
+function snapshotBooleanTarget(PDO $pdo): array
+{
+    return $pdo->query('SELECT id, enabled, fallback FROM public.ir_bool_changes')->fetchAll(PDO::FETCH_NUM);
+}
+
+function admittedBooleanMutation(string $sql): bool
+{
+    $name = static fn (string $value): string => '(?:' . $value . '|"' . $value . '")';
+    $table = '(?:public|"public")\\.(?:ir_bool_changes|"ir_bool_changes")';
+    $alias = '(?:f|ir_bool_changes|"?__ztd_source"?)';
+    $column = '(?:' . $alias . '\\.)?' . $name('(?:id|enabled|fallback)');
+    $label = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\x00]|"")+")';
+    $number = '-?[0-9]{1,10}';
+    $int4 = '(?:' . $number . '|CAST\\(' . $number . ' AS pg_catalog\\.int4\\))';
+    $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
+    $operand = '(?:' . $int4 . '|' . $column . ')';
+    $where = '(?: WHERE (?&truth))?';
+    $target = $table . '(?: AS ' . $alias . ')?';
+    $delete = 'DELETE FROM ' . $target . $where;
+    $update = 'UPDATE ' . $target . ' SET ' . $name('id') . '\\h*=\\h*' . $int4 . $where;
+    $row = '\\(' . $int4 . '\\)';
+    $insert = 'INSERT INTO ' . $table . ' \\(' . $name('id') . '\\) (?:VALUES ' . $row . '(?:, ' . $row . ')*'
+        . '|SELECT ' . $int4 . '(?: AS ' . $label . ')?' . $where . ')';
+
+    return preg_match('/\\A(?:' . $delete . '|' . $update . '|' . $insert . ')' . fixtureReturningClause($column, $alias)
+        . '\\z' . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
+}
+
+function observeBooleanMutation(PDO $pdo, string $sql): array
+{
+    if (!admittedBooleanMutation($sql)) {
+        return ['status' => 'outside-observer-scope'];
+    }
+    $before = snapshotBooleanTarget($pdo);
+    $pdo->beginTransaction();
+    try {
+        $statement = $pdo->prepare($sql);
+        $statement->execute();
+        $result = [
+            'status' => 'mutation',
+            'count' => $statement->rowCount(),
+            'columns' => $statement->columnCount(),
+            ...observeReturning($statement, true),
+        ];
+        $statement->closeCursor();
+        $result['after'] = snapshotBooleanTarget($pdo);
+    } catch (PDOException $error) {
+        $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
+    } finally {
+        $pdo->rollBack();
+    }
+
+    return [...$result, 'before' => $before, 'restored' => snapshotBooleanTarget($pdo)];
+}
+
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotBooleanTarget($pdo)], JSON_THROW_ON_ERROR) . "\n";
+while (($line = fgets(STDIN)) !== false) {
+    $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+    $requests = array_is_list($input) ? $input : [$input];
+    $results = array_map(static fn (array $request): array => observeBooleanMutation($pdo, $request['sql']), $requests);
+    echo json_encode(array_is_list($input) ? $results : $results[0], JSON_THROW_ON_ERROR) . "\n";
+}

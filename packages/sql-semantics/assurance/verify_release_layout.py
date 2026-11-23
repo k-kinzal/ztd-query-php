@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v44.json"
-CONTRACT = "6c91b85cb098f1a7ece24844c1ca68f6bd02bdb2cbd757b9d306bd60ab37c696"
+CONTRACT_NAME = "release-layout-v45.json"
+CONTRACT = "b3759690b09d2b28a71d25825af8abd1770a3c131e6cedd8b357323fa3f80e50"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -240,6 +240,11 @@ def verify_probe(raw, catalog):
                     "installed-mysql-text-literal-mismatch", item)
             require(json.dumps(item.get("mysqlVarcharPublication"), sort_keys=True) == json.dumps(mysql_varchar_publication(), sort_keys=True),
                     "installed-mysql-varchar-publication-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Mutation\\Delete"):
+            require(item.get("booleanReturning") == [
+                "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True,
+                ["flag", "id"], 'DELETE FROM "public"."flags" WHERE "enabled" RETURNING "enabled" AS "flag", "id" AS "id"',
+            ], "installed-postgres-boolean-returning-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("booleanFields") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True, True,

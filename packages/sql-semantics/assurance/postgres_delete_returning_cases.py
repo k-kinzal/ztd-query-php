@@ -66,7 +66,7 @@ def negatives(tag):
     start = "DELETE FROM public.ir_delete_target RETURNING "
     yield (analyzed(tag, start + "missing"), "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\SemanticException",
            "Column missing does not exist")
-    yield (analyzed(tag, start + "id", ["CREATE TABLE public.ir_delete_target (id BOOLEAN, delta INTEGER)"]),
+    yield (analyzed(tag, start + "id", ["CREATE TABLE public.ir_delete_target (id BIGINT, delta INTEGER)"]),
            EXCEPTION, "signed 32-bit integer type")
     yield analyzed(tag, start + "id + 1 AS computed"), EXCEPTION, "requires a resolved target column"
 

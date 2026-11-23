@@ -1,0 +1,67 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-returning-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check the exact typed return-field construction, shared target scope and ordered publication on mutations.",
+  "rules": {
+    "Mutation/ReturnedColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($reference->occurrence === 0, 'A returned field must read the single target occurrence.');"
+      ]
+    },
+    "Mutation/ReturningLayout::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(count($fields) <= 1024, 'A mutation can return at most 1024 fields.');",
+        "$scope = new OccurrenceScope();",
+        "foreach ($fields as $field) {",
+        "    $scope->column($field->reference, [$target], 'A returned slot must belong to its target.');",
+        "}"
+      ]
+    },
+    "Mutation/ReturningLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = $output?->fields();",
+        "Check::input($fields !== null, 'RETURNING needs a closed target result layout.');",
+        "$returning = [];",
+        "foreach ($fields as $field) {",
+        "    $operand = $field->expression;",
+        "    while ($operand instanceof Grouped) {",
+        "        $operand = $operand->operand;",
+        "    }",
+        "    Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');",
+        "    $resolution = $field->resolution;",
+        "    Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');",
+        "    $returning[] = new ReturnedColumn($binding->resolved($resolution), new Identifier($field->name->value));",
+        "}",
+        "Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');",
+        "",
+        "return $returning;"
+      ]
+    },
+    "Mutation/ReturningSql::clause": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$fields = [];",
+        "foreach ($returning as $field) {",
+        "    $fields[] = $target->columns[$field->reference->slot]->quoted() . ' AS ' . $field->name->quoted();",
+        "}",
+        "",
+        "return $fields === [] ? '' : ' RETURNING ' . implode(', ', $fields);"
+      ]
+    }
+  }
+}

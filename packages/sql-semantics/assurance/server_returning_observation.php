@@ -17,7 +17,7 @@ function fixtureReturningClause(string $column, string $qualifier): string
 /**
  * Retrieves positional metadata even when no rows satisfy a mutation predicate.
  */
-function observeReturning(PDOStatement $statement): array
+function observeReturning(PDOStatement $statement, bool $withPostgresTypeIds = false): array
 {
     if ($statement->columnCount() === 0) {
         return [];
@@ -25,7 +25,9 @@ function observeReturning(PDOStatement $statement): array
     $fields = [];
     for ($index = 0; $index < $statement->columnCount(); ++$index) {
         $meta = $statement->getColumnMeta($index);
-        $fields[] = [$meta['name'], $meta['native_type']];
+        $fields[] = $withPostgresTypeIds
+            ? [$meta['name'], $meta['native_type'], $meta['pgsql:oid']]
+            : [$meta['name'], $meta['native_type']];
     }
 
     return ['fields' => $fields, 'rows' => $statement->fetchAll(PDO::FETCH_NUM)];

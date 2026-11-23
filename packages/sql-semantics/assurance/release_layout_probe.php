@@ -186,6 +186,20 @@ function observePostgresBooleanFields(SqlSemantics\Platform\PostgreSql\Semantics
         [$value->source->columnKind(0)?->value, $value->source->columnKind(1)?->value], $value->toString()];
 }
 
+function observePostgresBooleanReturning(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled BOOLEAN)']);
+    $value = $semantics->analyze('DELETE FROM public.flags WHERE enabled RETURNING enabled AS flag, id', $context);
+    $field = $value->returning[0];
+    $direct = new SqlSemantics\Platform\PostgreSql\Ir\Mutation\ReturnedColumn(
+        new SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference(0),
+        new SqlSemantics\Platform\PostgreSql\Ir\Identifier('flag'),
+    );
+
+    return [$field->reference::class, $field == $direct, $field->reference == $value->where,
+        [$field->name->value, $value->returning[1]->name->value], $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -278,6 +292,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
+            $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
+        }
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
             $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);

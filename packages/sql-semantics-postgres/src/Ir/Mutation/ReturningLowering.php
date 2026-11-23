@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
-use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference as IrColumnReference;
-use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -41,9 +39,7 @@ final class ReturningLowering
             Check::input($operand === null || $operand instanceof ParsedReturnColumn, 'RETURNING requires a resolved target column.');
             $resolution = $field->resolution;
             Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');
-            $reference = $binding->resolved($resolution);
-            Check::input($reference instanceof IrColumnReference || $reference instanceof TextColumnReference, 'RETURNING requires a signed or text field.');
-            $returning[] = new ReturnedColumn($reference, new Identifier($field->name->value));
+            $returning[] = new ReturnedColumn($binding->resolved($resolution), new Identifier($field->name->value));
         }
         Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');
 
