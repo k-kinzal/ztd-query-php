@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Ir\From;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
@@ -79,5 +80,23 @@ final class SourceDeclarations
         Check::input($localDefinition === null || $usesLocal, 'A WITH SELECT must read its checked local definition.');
 
         return $tables;
+    }
+
+    /**
+     * Maps the unique declared names of an ordinary external source in heading order.
+     * @return array<array-key, Column>
+     */
+    public function mergeHeading(BoundStatement $operation, Relation $source): array
+    {
+        $resolution = $operation->facts->relation($source)->table;
+        Check::input($resolution instanceof DeclaredTable && $resolution->table->complete && $resolution->table->kind === RelationKind::BaseTable, 'A merged join requires complete base-table headings.');
+        $columns = [];
+        foreach ($resolution->table->columns as $column) {
+            $key = Comparison::AsciiInsensitive->fold($column->name->value);
+            Check::input(!isset($columns[$key]), 'A merged join requires distinct names in each heading.');
+            $columns[$key] = $column;
+        }
+
+        return $columns;
     }
 }

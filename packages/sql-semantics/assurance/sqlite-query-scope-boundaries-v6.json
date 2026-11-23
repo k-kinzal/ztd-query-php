@@ -290,8 +290,9 @@
     "From/JoinKeyLowering::predicate": {
       "common": [
         "Check::input(count($chain->steps) === 1 && !$step->operator->right(), 'A merged join needs two ordinary inputs without RIGHT or FULL.');",
-        "$left = $this->columns($operation, $chain->first);",
-        "$right = $this->columns($operation, $step->relation);",
+        "$declarations = new SourceDeclarations();",
+        "$left = $declarations->mergeHeading($operation, $chain->first);",
+        "$right = $declarations->mergeHeading($operation, $step->relation);",
         "$keys = $step->constraint instanceof JoinUsing",
         "    ? array_map(static fn (Name $name): string => NameComparison::AsciiInsensitive->fold($name->value), $step->constraint->columns)",
         "    : array_keys(array_intersect_key($right, $left));",
@@ -309,7 +310,7 @@
         "return $predicate;"
       ]
     },
-    "From/JoinKeyLowering::columns": {
+    "From/SourceDeclarations::mergeHeading": {
       "common": [
         "$resolution = $operation->facts->relation($source)->table;",
         "Check::input($resolution instanceof DeclaredTable && $resolution->table->complete && $resolution->table->kind === RelationKind::BaseTable, 'A merged join requires complete base-table headings.');",

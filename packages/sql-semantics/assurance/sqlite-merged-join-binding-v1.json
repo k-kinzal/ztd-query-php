@@ -12,9 +12,10 @@
     "src/Rules/Resolution/Joining.php": {
       "methods": [
         "join",
-        "locate"
+        "locate",
+        "uniqueNames"
       ],
-      "sha256": "0c2fcbc8b227999683cbbfffe5250c36e11430b40451b81c1c3c48d849a97ac4"
+      "sha256": "719a2d1ea50c90408ca8e9e2e0339d6781fd12b8208bdd0baad5b9114420cbaa"
     },
     "src/Rules/Resolution/ColumnResolver.php": {
       "methods": [

@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 use SqlSemantics\Platform\Sqlite\Model\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\ImplicitSlot;
 use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
@@ -53,7 +55,7 @@ final class Joining
             }
         }
         $outer = $step->operator->right();
-        foreach ($merged as $column) {
+        foreach ($this->uniqueNames($merged, $derivation->context->columnNames) as $column) {
             $from = $this->locate($left, $column->value, $derivation);
             $into = $this->locate($right, $column->value, $derivation);
             if ($from === null || $into === null) {
@@ -70,6 +72,21 @@ final class Joining
         }
 
         return [...($outer ? $this->extend($left) : $left), ...($step->operator->left() ? $this->extend($right) : $right)];
+    }
+
+    /**
+     * Keeps the first spelling of each merged name for the output heading.
+     * @param list<Name> $columns The written or synthesized join keys
+     * @return list<Name>
+     */
+    public function uniqueNames(array $columns, Comparison $comparison): array
+    {
+        $names = [];
+        foreach ($columns as $column) {
+            $names[$comparison->fold($column->value)] ??= $column;
+        }
+
+        return array_values($names);
     }
 
     /**
