@@ -68,7 +68,7 @@ final class Update implements SemanticsIR
             $slot = $assignment->target->slot;
             $scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');
             $value = $assignment->value;
-            if ($value instanceof ColumnReference || $value instanceof TextColumnReference) {
+            if ($value instanceof ColumnReference || $value instanceof TextColumnReference || $value instanceof BooleanColumnReference) {
                 $scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');
             }
             Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');

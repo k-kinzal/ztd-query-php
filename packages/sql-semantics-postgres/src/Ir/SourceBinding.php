@@ -192,15 +192,15 @@ final class SourceBinding
     /**
      * Resolves a declared writable member in the admitted native roles.
      */
-    public function writableColumn(string $name, bool $allowText = false): Column
+    public function writableColumn(string $name): Column
     {
         Check::input($this->table !== null, 'A write requires a resolved base table.');
         $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
         $column = $matches[0];
         Check::input(
-            !$column->generated && !$column->identity && ($column->type === Builtin::Int4 || ($allowText && $column->type === Builtin::Text)),
-            'A write column must be a writable signed 32-bit integer or an admitted text field.',
+            !$column->generated && !$column->identity && in_array($column->type, [Builtin::Int4, Builtin::Text, Builtin::Bool], true),
+            'A write column must be a writable signed 32-bit integer or an admitted text or Boolean field.',
         );
 
         return $column;
@@ -209,11 +209,15 @@ final class SourceBinding
     /**
      * Allocates the native role of a checked mutation destination.
      */
-    public function writeReference(string $name): ColumnReference|TextColumnReference
+    public function writeReference(string $name): ColumnReference|TextColumnReference|BooleanColumnReference
     {
-        $column = $this->writableColumn($name, true);
+        $column = $this->writableColumn($name);
 
-        return $column->type === Builtin::Text ? new TextColumnReference($this->allocate($column)) : $this->slotFor($column);
+        return match ($column->type) {
+            Builtin::Text => new TextColumnReference($this->allocate($column)),
+            Builtin::Bool => new BooleanColumnReference($this->allocate($column)),
+            default => $this->slotFor($column),
+        };
     }
 
     /**

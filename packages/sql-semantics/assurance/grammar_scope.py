@@ -294,13 +294,13 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "postgres-boolean-fields-v1.json")
             for alternative in rules.get("insert_rest", ()):
                 if "SelectStmt" in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v2.json", "postgres-boolean-writes-v1.json")
             for rule in ("values_clause", "insert_column_list", "insert_column_item"):
                 for alternative in rules.get(rule, ()):
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v2.json", "postgres-boolean-writes-v1.json")
             for alternative in rules.get("set_clause", ()):
                 if " '=' a_expr" in alternative or " = a_expr" in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json", "postgres-boolean-writes-v1.json")
             for alternative in rules.get("table_ref", ()):
                 if "select_with_parens" in alternative and "LATERAL" not in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json", "postgres-boolean-fields-v1.json")

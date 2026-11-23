@@ -26,6 +26,8 @@ Ordinary DELETE and UPDATE statements can return named int4 and native text fiel
 
 PostgreSQL INSERT also returns named int4 and native text fields from the inserted row, including text supplied by a database default. When constructing an INSERT directly, build an `Ir\Mutation\Insert\Destination` from the relation and its ordered `Ir\Mutation\Insert\WriteSlot` values. Supply each native kind with its slot. In VALUES, an int4 slot accepts a signed literal or NULL. A text slot also accepts a native text literal. A signed int4 value assigned to text uses the stock PostgreSQL assignment conversion. INSERT SELECT applies that conversion after the SELECT's duplicate policy. The RETURNING list reads slots of the target relation, including fields supplied by its database defaults.
 
+A Boolean destination accepts TRUE, FALSE and NULL in VALUES. UPDATE can also read a Boolean field from the old row, so a two-field swap reads both original values. INSERT SELECT accepts a Boolean-valued result. In a DISTINCT projection, use `CAST(NULL AS pg_catalog.bool)` for a typed NULL.
+
 An ordinary CREATE TABLE can use an int4 or int8 literal as a default for SMALLINT, INTEGER, BIGINT or native text. The IR keeps the source type and exact value. PostgreSQL applies the destination conversion when a row uses the default. A narrowing overflow raises SQLSTATE 22003 at that insertion. Supplying an explicit in-range value bypasses the default.
 
 An ordinary BOOLEAN column holds a native TRUE, FALSE, or NULL default, or omits the default. A quoted input such as `' YE '` uses the builtin Boolean input rules during analysis. Use `BOOLEAN` or `pg_catalog.bool` to select the builtin type explicitly. An unqualified `bool` name requires a declaration context that resolves it.

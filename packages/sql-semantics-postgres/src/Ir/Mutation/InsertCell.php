@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * One explicit signed integer, native text value or SQL NULL.
+ * One explicit signed integer, native text, native Boolean value or SQL NULL.
  *
  * @visibility public
  * @example Writing an explicit NULL cell
@@ -22,7 +23,7 @@ final class InsertCell
     /**
      * Stores the explicit native scalar or NULL.
      */
-    public function __construct(public readonly IntegerLiteral|TextLiteral|null $value)
+    public function __construct(public readonly IntegerLiteral|TextLiteral|BooleanLiteral|null $value)
     {
     }
 
@@ -34,6 +35,7 @@ final class InsertCell
         return match (true) {
             $this->value instanceof IntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)',
             $this->value instanceof TextLiteral => $this->value->toString(),
+            $this->value instanceof BooleanLiteral => $this->value->value ? 'TRUE' : 'FALSE',
             $this->value === null => 'NULL',
         };
     }

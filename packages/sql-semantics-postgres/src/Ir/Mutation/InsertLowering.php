@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
@@ -16,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedQueryInsert;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
  * Resolves the target and closes literal VALUES at the write boundary.
@@ -49,7 +50,7 @@ final class InsertLowering
                 $text = $target->written[$index]->kind === ColumnKind::Text;
                 $item = $expression->lower($value, $empty, $catalogFirst, $text);
                 Check::input(
-                    $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof NullLiteral,
+                    $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof BooleanLiteral || $item instanceof NullLiteral,
                     'A supplied INSERT value requires an explicit native literal or NULL.',
                 );
                 $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);
@@ -66,7 +67,7 @@ final class InsertLowering
     public function lowerQuery(BoundStatement $operation, ParsedQueryInsert $statement): InsertQuery
     {
         $source = $statement->source;
-        Check::input($source instanceof Select, 'The INSERT query requires a simple SELECT.');
+        Check::input($source instanceof ParsedSelect, 'The INSERT query requires a simple SELECT.');
         Check::input(
             $statement->with === null && $statement->overriding === null && $statement->conflict === null,
             'A query INSERT requires an ordinary write without conflict modifiers.'
@@ -77,7 +78,7 @@ final class InsertLowering
             foreach ($query->columns as $position => $column) {
                 Check::input(
                     !$column->expression instanceof NullLiteral || ($target->written[$position]->kind ?? null) === ColumnKind::Text,
-                    'A DISTINCT insert projection cannot assign an untyped NULL to an integer column.'
+                    'A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.'
                 );
             }
         }

@@ -78,6 +78,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-select-bindings-boundaries-v1.json', '9034762ce0de61e958cbba1eb314bdbde112920bb172cd0e87190f059dc4fc79'],
             ['postgres-boolean-fields-boundaries-v1.json', 'f4d06df0e8bfcca315a114851209270de7e19543bcc3d5b4ed8c9760db31545e'],
             ['postgres-boolean-returning-boundaries-v1.json', '37752e21d0c6ade880a6af530b1238d5ce335e5fcc663b3b4e1a378a5da560bb'],
+            ['postgres-boolean-writes-boundaries-v1.json', 'b72bfce51bcb67617dbdb29eca44c831bd80d663bd7327f551b4b4345387c4b2'],
         ],
         'sqlite' => [],
     };
@@ -196,7 +197,7 @@ function checkNativeBoundaries(
                 'Statement\\Expression\\Cast', 'Statement\\Literal\\NullLiteral as ParsedNull', 'Statement\\Expression\\BinaryOperation as ParsedComparison',
                 'Statement\\Expression\\Operator\\BooleanOperation as ParsedLogical', 'Statement\\Expression\\Operator\\BooleanOperator',
                 'Statement\\Expression\\Operator\\Negation as ParsedNot', 'Statement\\Expression\\Predicate\\NullTest as ParsedNullTest',
-                'Model\\Statement\\Type\\Known', 'Statement\\Type\\Descriptor\\Builtin', 'Ir\\Rows\\Compound', 'Ir\\Rows\\CompoundOperator', 'Ir\\Ordering\\ResultLowering', 'Statement\\Literal\\PositionalParameter', 'Statement\\Query\\SetOperation', 'Statement\\Query\\SetQuantifier', 'Ir\\Rows\\ResultKind'] as $name) {
+                'Model\\Statement\\Type\\Known', 'Statement\\Type\\Descriptor\\Builtin', 'Ir\\Rows\\Compound', 'Ir\\Rows\\CompoundOperator', 'Ir\\Rows\\CompoundShape', 'Ir\\Ordering\\ResultLowering', 'Statement\\Literal\\PositionalParameter', 'Statement\\Query\\SetOperation', 'Statement\\Query\\SetQuantifier', 'Ir\\Rows\\ResultKind'] as $name) {
                 $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
             }
         }

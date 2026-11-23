@@ -617,6 +617,7 @@ function observeInsert(string $namespace, object $value, string $dialect): array
         $rows[] = array_map(static fn ($cell): array|string|null => match (true) {
             $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral,
             $cell->value instanceof SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral => ['text', $cell->value->value],
+            $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral => ['boolean', $cell->value->value],
             default => $cell->value?->decimal,
         }, $row->values);
     }
@@ -640,7 +641,11 @@ function constructInsertDestination(string $platform, string $namespace, array $
     $kind = $namespace . 'From\\ColumnKind';
 
     return new $destination($relation, array_map(
-        static fn (array $slot): object => new $writeSlot($slot[1], $kind::from($slot[0] === 'text-slot' ? 'text' : 'int4'), $slot[2] ?? 0),
+        static fn (array $slot): object => new $writeSlot($slot[1], $kind::from(match ($slot[0]) {
+            'slot' => 'int4',
+            'text-slot' => 'text',
+            'bool-slot' => 'bool',
+        }), $slot[2] ?? 0),
         $slots,
     ));
 }
@@ -654,7 +659,11 @@ function observeInsertDestination(string $namespace, object $value, string $dial
     return [
         'target' => observeSource($value->target->relation, $dialect, $namespace),
         'written' => array_map(
-            static fn ($slot): array => $slot->kind->value === 'text' ? ['text-slot', $slot->slot, $slot->occurrence] : ['slot', $slot->slot],
+            static fn ($slot): array => match ($slot->kind->value) {
+                'int4' => ['slot', $slot->slot],
+                'text' => ['text-slot', $slot->slot, $slot->occurrence],
+                'bool' => ['bool-slot', $slot->slot, $slot->occurrence],
+            },
             $value->target->written,
         ),
         'returning' => observeReturnedColumns($namespace, $value->returning),

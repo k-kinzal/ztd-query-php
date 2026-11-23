@@ -594,7 +594,7 @@ if ($dialect !== 'sqlite') {
     $properties['Mutation\\InsertRow'] = ['values' => ['array']];
     $properties['Mutation\\InsertCell'] = ['value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'null']];
     if ($dialect === 'postgres') {
-        $properties['Mutation\\InsertCell']['value'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'null'];
+        $properties['Mutation\\InsertCell']['value'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'IntegerLiteral', 'null'];
         $properties['Mutation\\Insert\\WriteSlot'] = ['slot' => ['int'], 'kind' => ['From\\ColumnKind'], 'occurrence' => ['int']];
         $methods['Mutation\\Insert\\WriteSlot'] = ['__construct'];
     }
@@ -610,8 +610,8 @@ if ($dialect !== 'sqlite') {
     $methods['Mutation\\Update'] = $methods['Select'];
     if ($dialect === 'postgres') {
         $properties['Mutation\\Update']['returning'] = ['array'];
-        $properties['Mutation\\UpdateAssignment']['target'][] = 'From\\TextColumnReference';
-        array_push($properties['Mutation\\UpdateAssignment']['value'], 'Expression\\TextLiteral', 'From\\TextColumnReference');
+        array_push($properties['Mutation\\UpdateAssignment']['target'], 'From\\BooleanColumnReference', 'From\\TextColumnReference');
+        array_push($properties['Mutation\\UpdateAssignment']['value'], 'BooleanLiteral', 'Expression\\TextLiteral', 'From\\BooleanColumnReference', 'From\\TextColumnReference');
         sort($properties['Mutation\\UpdateAssignment']['value']);
     }
     $methods['Mutation\\UpdateAssignment'] = ['__construct'];

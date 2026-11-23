@@ -44,7 +44,7 @@ final class UpdateLoweringTest extends TestCase
         self::assertInstanceOf(Assignment::class, $assignment);
         $binding = new SourceBinding($query->binding(), $query->statement->target);
 
-        $value = (new UpdateLowering())->value($assignment->value, $binding, true, true);
+        $value = (new UpdateLowering())->value($assignment->value, $binding, true, new TextColumnReference(0));
 
         self::assertInstanceOf(TextLiteral::class, $value);
         self::assertSame('', $value->value);

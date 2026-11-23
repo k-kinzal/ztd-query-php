@@ -200,6 +200,25 @@ function observePostgresBooleanReturning(SqlSemantics\Platform\PostgreSql\Semant
         [$field->name->value, $value->returning[1]->name->value], $value->toString()];
 }
 
+function observePostgresBooleanWrites(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (id integer, enabled BOOLEAN, fallback BOOLEAN)']);
+    $literal = $semantics->analyze('INSERT INTO public.flags (enabled,fallback) VALUES (TRUE,NULL)', $context);
+    $query = $semantics->analyze(
+        'INSERT INTO public.flags (fallback) SELECT DISTINCT CAST(NULL AS pg_catalog.bool) AS typed',
+        $context,
+    );
+    $update = $semantics->analyze('UPDATE public.flags SET enabled=fallback, fallback=enabled', $context);
+
+    return [
+        array_map(static fn ($slot): array => [$slot->slot, $slot->kind->value], $literal->target->written),
+        $literal->rows[0]->values[0]->value->value, $literal->rows[0]->values[1]->value, $literal->toString(),
+        $query->query->columns[0]->expression->target->value, $query->query->distinct, $query->toString(),
+        array_map(static fn ($assignment): array => [$assignment->target::class, $assignment->target->slot, $assignment->value->slot], $update->assignments),
+        $update->toString(),
+    ];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -294,6 +313,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $details = [];
         if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
             $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
+            $details['booleanWrites'] = observePostgresBooleanWrites($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
+use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
@@ -14,6 +15,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\CompoundShape;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\ResultKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -57,6 +60,14 @@ final class InsertQuery implements SemanticsIR
                     $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral
                         || $value instanceof ColumnReference || $value instanceof IntegerLiteral,
                     'A query INSERT text target requires text, a checked int4 leaf or NULL.',
+                );
+                continue;
+            }
+            if ($target->written[$position]->kind === ColumnKind::Boolean) {
+                Check::input(
+                    (!$value instanceof Parameter && CompoundShape::type($query, $position) === ResultKind::Boolean)
+                        || ($value instanceof NullLiteral && !$query->distinct),
+                    'A query INSERT Boolean target requires a Boolean result or NULL resolved before DISTINCT.',
                 );
                 continue;
             }

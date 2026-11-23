@@ -14,6 +14,15 @@ $pdo->exec('DROP TABLE IF EXISTS public.ir_bool_changes');
 $pdo->exec('CREATE TABLE public.ir_bool_changes (id INTEGER, enabled BOOLEAN DEFAULT TRUE, fallback BOOLEAN DEFAULT FALSE)');
 $pdo->exec('INSERT INTO public.ir_bool_changes VALUES (1, TRUE, FALSE), (1, TRUE, FALSE), (2, FALSE, TRUE), (3, NULL, FALSE), (NULL, TRUE, NULL)');
 
+$pdo->exec('DROP TABLE IF EXISTS public.ir_bool_inputs');
+$pdo->exec('CREATE TABLE public.ir_bool_inputs (fallback BOOLEAN, id INTEGER, enabled BOOLEAN)');
+$pdo->exec('INSERT INTO public.ir_bool_inputs VALUES (TRUE, 2, FALSE), (TRUE, 2, FALSE), (FALSE, 3, NULL), (NULL, NULL, TRUE), (FALSE, 4, FALSE)');
+
+function snapshotBooleanInputs(PDO $pdo): array
+{
+    return $pdo->query('SELECT fallback, id, enabled FROM public.ir_bool_inputs')->fetchAll(PDO::FETCH_NUM);
+}
+
 function snapshotBooleanTarget(PDO $pdo): array
 {
     return $pdo->query('SELECT id, enabled, fallback FROM public.ir_bool_changes')->fetchAll(PDO::FETCH_NUM);
@@ -42,12 +51,40 @@ function admittedBooleanMutation(string $sql): bool
         . '\\z' . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
 }
 
-function observeBooleanMutation(PDO $pdo, string $sql): array
+function admittedBooleanWrite(string $sql): bool
 {
-    if (!admittedBooleanMutation($sql)) {
+    $target = '(?:public|"public")\\.(?:ir_bool_changes|"ir_bool_changes")';
+    $source = '(?:public|"public")\\.(?:ir_bool_inputs|"ir_bool_inputs")';
+    $alias = '(?:f|s|ir_bool_changes|ir_bool_inputs|"__ztd_source")';
+    $name = '(?:id|"id"|enabled|"enabled"|fallback|"fallback")';
+    $column = '(?:' . $alias . '\\.)?' . $name;
+    $label = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\x00]|"")+")';
+    $number = '-?[0-9]{1,10}';
+    $typed = '(?:CAST\\(' . $number . ' AS pg_catalog\\.int4\\)|CAST\\(NULL AS pg_catalog\\.(?:bool|int4)\\)'
+        . '|CAST\\(\\x27true\\x27 AS pg_catalog\\.text\\))';
+    $scalar = '(?:' . $number . '|' . $typed . '|TRUE|FALSE|NULL)';
+    $operand = '(?:' . $scalar . '|' . $column . ')';
+    $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
+    $where = '(?: WHERE (?&truth))?';
+    $assignment = $name . '\\h*=\\h*' . $operand;
+    $update = 'UPDATE ' . $target . '(?: AS ' . $alias . ')? SET ' . $assignment . '(?:, ' . $assignment . ')*' . $where;
+    $row = '\\(' . $scalar . '(?:,\\h*' . $scalar . ')*\\)';
+    $output = '(?:' . $operand . '|(?&truth))(?: AS ' . $label . ')?';
+    $select = 'SELECT (?:DISTINCT )?' . $output . '(?:,\\h*' . $output . ')*(?: FROM ' . $source . '(?: AS ' . $alias . ')?)?' . $where;
+    $insert = 'INSERT INTO ' . $target . ' \\(' . $name . '(?:,\\h*' . $name . ')*\\)'
+        . ' (?:VALUES ' . $row . '(?:,\\h*' . $row . ')*|' . $select . ')';
+
+    return preg_match('/\\A(?:' . $insert . '|' . $update . ')' . fixtureReturningClause($column, $alias) . '\\z'
+        . fixturePredicateDefinition($operand, $operator, true) . '/iD', $sql) === 1;
+}
+
+function observeBooleanMutation(PDO $pdo, string $sql, bool $observeWrites): array
+{
+    if (!($observeWrites ? admittedBooleanWrite($sql) : admittedBooleanMutation($sql))) {
         return ['status' => 'outside-observer-scope'];
     }
     $before = snapshotBooleanTarget($pdo);
+    $input = $observeWrites ? snapshotBooleanInputs($pdo) : [];
     $pdo->beginTransaction();
     try {
         $statement = $pdo->prepare($sql);
@@ -60,19 +97,24 @@ function observeBooleanMutation(PDO $pdo, string $sql): array
         ];
         $statement->closeCursor();
         $result['after'] = snapshotBooleanTarget($pdo);
+        if ($observeWrites) {
+            $result['inputAfter'] = snapshotBooleanInputs($pdo);
+        }
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
     } finally {
         $pdo->rollBack();
     }
 
-    return [...$result, 'before' => $before, 'restored' => snapshotBooleanTarget($pdo)];
+    return [...$result, 'before' => $before, 'restored' => snapshotBooleanTarget($pdo),
+        ...($observeWrites ? ['inputBefore' => $input, 'inputRestored' => snapshotBooleanInputs($pdo)] : [])];
 }
 
-echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotBooleanTarget($pdo)], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotBooleanTarget($pdo),
+    'input' => snapshotBooleanInputs($pdo)], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $requests = array_is_list($input) ? $input : [$input];
-    $results = array_map(static fn (array $request): array => observeBooleanMutation($pdo, $request['sql']), $requests);
+    $results = array_map(static fn (array $request): array => observeBooleanMutation($pdo, $request['sql'], ($request['observeWrites'] ?? false) === true), $requests);
     echo json_encode(array_is_list($input) ? $results : $results[0], JSON_THROW_ON_ERROR) . "\n";
 }

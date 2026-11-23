@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -53,10 +55,13 @@ final class Insert implements SemanticsIR
         foreach ($this->rows as $row) {
             Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');
             foreach ($row->values as $index => $cell) {
-                Check::input(
-                    !$cell->value instanceof TextLiteral || $target->written[$index]->kind === ColumnKind::Text,
-                    'An inserted cell must match its target native kind.',
-                );
+                $value = $cell->value;
+                $compatible = match ($target->written[$index]->kind) {
+                    ColumnKind::Int4 => $value instanceof IntegerLiteral,
+                    ColumnKind::Text => $value instanceof TextLiteral || $value instanceof IntegerLiteral,
+                    ColumnKind::Boolean => $value instanceof BooleanLiteral,
+                };
+                Check::input($value === null || $compatible, 'An inserted cell must match its target native kind.');
             }
         }
         $checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');

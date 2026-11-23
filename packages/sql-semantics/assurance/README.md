@@ -237,6 +237,8 @@ The [PostgreSQL Boolean field contract](postgres-boolean-fields-v1.json) checks 
 
 The [PostgreSQL Boolean RETURNING contract](postgres-boolean-returning-v1.json) checks native Boolean and signed fields in four mutation roots. The observer compares affected-row count, exact positional types, returned values and physical rows before execution, after execution and after rollback. Run `run_server_postgres_boolean_returning.py` and `combine_server_postgres_boolean_returning_evidence.py` for both pinned releases.
 
+The [PostgreSQL Boolean write contract](postgres-boolean-writes-v1.json) checks native destinations for VALUES, INSERT SELECT and UPDATE. It compares assigned and untouched data, old-row swaps, native result type identifiers and the DISTINCT boundary for untyped NULL. Run the domain with `run_server_postgres_boolean_writes.py` and replay with `combine_server_postgres_boolean_writes_evidence.py` on both pinned releases.
+
 ## Native compound queries
 
 The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.

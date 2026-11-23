@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v45.json"
-CONTRACT = "b3759690b09d2b28a71d25825af8abd1770a3c131e6cedd8b357323fa3f80e50"
+CONTRACT_NAME = "release-layout-v46.json"
+CONTRACT = "507d71f37277fbefb2e45682a0cbc0b138f3bf1b7fcdc1cf03b32a759e77b943"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -245,6 +245,16 @@ def verify_probe(raw, catalog):
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True,
                 ["flag", "id"], 'DELETE FROM "public"."flags" WHERE "enabled" RETURNING "enabled" AS "flag", "id" AS "id"',
             ], "installed-postgres-boolean-returning-mismatch", item)
+            boolean_slot = "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference"
+            require(item.get("booleanWrites") == [
+                [[0, "bool"], [1, "bool"]], True, None,
+                'INSERT INTO "public"."flags" ("enabled", "fallback") VALUES (TRUE, NULL)',
+                "bool", True,
+                'INSERT INTO "public"."flags" ("fallback") SELECT DISTINCT CAST(NULL AS pg_catalog.bool) AS "typed"',
+                [[boolean_slot, 0, 1], [boolean_slot, 1, 0]],
+                'UPDATE "public"."flags" AS "__ztd_source" SET "enabled" = "__ztd_source"."fallback", '
+                '"fallback" = "__ztd_source"."enabled"',
+            ], "installed-postgres-boolean-writes-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("booleanFields") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True, True,

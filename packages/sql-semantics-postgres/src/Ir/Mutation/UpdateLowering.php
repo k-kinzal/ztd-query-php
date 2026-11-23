@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -46,7 +48,7 @@ final class UpdateLowering
         foreach ($statement->assignments as $assignment) {
             Check::input($assignment instanceof ParsedAssignment && $assignment->column->steps === [], 'An UPDATE requires scalar assignments to whole columns.');
             $slot = $binding->writeReference($assignment->column->column->value);
-            $value = $this->value($assignment->value, $binding, $catalogFirst, $slot instanceof TextColumnReference);
+            $value = $this->value($assignment->value, $binding, $catalogFirst, $slot);
             $assignments[] = new UpdateAssignment($slot, $value);
         }
         $returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);
@@ -59,20 +61,18 @@ final class UpdateLowering
     /**
      * Reads a resolved scalar in its assignment context.
      */
-    public function value(Scalar $operand, SourceBinding $binding, bool $catalogFirst, bool $text): ColumnReference|IntegerLiteral|NullLiteral|TextColumnReference|TextLiteral
+    public function value(Scalar $operand, SourceBinding $binding, bool $catalogFirst, ColumnReference|TextColumnReference|BooleanColumnReference $target): ColumnReference|IntegerLiteral|NullLiteral|TextColumnReference|TextLiteral|BooleanColumnReference|BooleanLiteral
     {
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
-        if ($text && $operand instanceof ParsedColumn) {
-            $field = $binding->field($operand);
-            Check::input($field instanceof ColumnReference || $field instanceof TextColumnReference, 'An UPDATE assignment requires a signed or text input field.');
-
-            return $field;
+        if (!$target instanceof ColumnReference && $operand instanceof ParsedColumn) {
+            return $binding->field($operand);
         }
-        $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $text);
+        $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $target instanceof TextColumnReference);
         Check::input(
-            $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral || $value instanceof TextLiteral,
+            $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral
+                || $value instanceof TextLiteral || $value instanceof BooleanLiteral,
             'An UPDATE assignee requires a checked native literal, NULL or a row reference.',
         );
 
