@@ -34,6 +34,7 @@ use SqlSemantics\Platform\Sqlite\Ir\SourceBinding;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit as ParsedLimit;
@@ -45,6 +46,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator;
+use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 
 /**
  * Converts supported clauses into values with their local references already bound.
@@ -58,15 +60,19 @@ final class QueryClauses
      *
      * @return list<Join>
      */
-    public function joins(?Relation $source, SourceBinding $binding): array
+    public function joins(?Relation $source, SourceBinding $binding, BoundStatement $operation): array
     {
         if (!$source instanceof JoinChain) {
             return [];
         }
         $predicates = [];
         foreach ($source->steps as $step) {
-            Check::input($step->constraint === null || $step->constraint instanceof JoinOn, 'The IR join supports an optional ON predicate.');
-            $predicates[] = $this->predicate($step->constraint?->condition, $binding);
+            $predicates[] = match (true) {
+                $step->operator->natural(), $step->constraint instanceof JoinUsing
+                    => (new JoinKeyLowering())->predicate($source, $step, $binding, $operation),
+                $step->constraint instanceof JoinOn => $this->predicate($step->constraint->condition, $binding),
+                $step->constraint === null => null,
+            };
         }
         $joins = [];
         foreach ($source->steps as $index => $step) {
@@ -79,13 +85,13 @@ final class QueryClauses
     }
 
     /**
-     * Resolves a join operation without emitting joins that implicitly merge columns.
+     * Resolves the effective join operation after normalizing merged keys.
      *
      * @throws InvalidConstruction When the operation is outside the supported join domain
      */
     public function kind(JoinOperator $operator): JoinKind
     {
-        Check::input($operator->valid() && !$operator->natural(), 'The IR join requires an explicit input without NATURAL.');
+        Check::input($operator->valid(), 'The IR requires a valid SQLite join operator.');
         $left = $operator->left();
         $right = $operator->right();
 
@@ -94,7 +100,7 @@ final class QueryClauses
             $left => JoinKind::Left,
             $right => JoinKind::Right,
             in_array(JoinKeyword::Cross, $operator->words, true) => JoinKind::Cross,
-            $operator->words === [] || in_array(JoinKeyword::Inner, $operator->words, true) => JoinKind::Inner,
+            $operator->words === [], $operator->natural(), in_array(JoinKeyword::Inner, $operator->words, true) => JoinKind::Inner,
             default => throw new InvalidConstruction('The join operator has no complete IR representation.'),
         };
     }

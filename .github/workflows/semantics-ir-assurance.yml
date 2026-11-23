@@ -148,6 +148,7 @@ jobs:
             ${{ runner.temp }}/semantics-ir-evidence/
             ${{ runner.temp }}/semantics-ir-server-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-relational-evidence/
+            ${{ runner.temp }}/semantics-ir-sqlite-merged-join-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-result-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-delete-evidence/
             ${{ runner.temp }}/semantics-ir-sqlite-values-evidence/

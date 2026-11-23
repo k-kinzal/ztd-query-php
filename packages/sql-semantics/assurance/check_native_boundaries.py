@@ -39,6 +39,13 @@ def faults(engine):
                                 "Comparison::AsciiInsensitive->fold($this->value)", "$this->value"))
     if engine == "sqlite":
         return [*identifier,
+            Fault("reverse-bound-merge-operand", "From/JoinKeyLowering::predicate",
+                  "new ColumnReference($binding->slot(0, $left[$key]), 0),",
+                  "new ColumnReference($binding->slot(1, $right[$key]), 1),"),
+            Fault("allow-unsupported-merged-right-join", "From/JoinKeyLowering::predicate",
+                  "count($chain->steps) === 1 && !$step->operator->right()", "count($chain->steps) === 1"),
+            Fault("forget-right-merged-slot", "Joining::join", "[...$hidden->hidden, $into[1]]", "$hidden->hidden",
+                  "src/Rules/Resolution/Joining.php", "Merged join binding source differs in src/Rules/Resolution/Joining.php"),
             Fault("allow-handler-after-default-values", "Mutation/Insert::__construct",
                   "$handler === InsertConflictHandler::None,", "true,"),
             Fault("ignore-targeted-upsert", "Mutation/InsertLowering::handler",
@@ -410,7 +417,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v1.json", "native-boundaries-v28.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v3.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v16.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v5.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v27.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v1.json", "native-boundaries-v28.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v3.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v16.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v6.json", "sqlite-merged-join-binding-v1.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v2.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v27.json", "value-primitives.json")},
         "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},

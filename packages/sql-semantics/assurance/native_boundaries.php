@@ -15,7 +15,7 @@ function nativeBoundaryContract(string $dialect): array
         'sqlite' => [
             ['sqlite-rename-boundaries-v1.json', '31296dc3a1320f0e40dd162e066cc4df0c90a47f2e7cc21b2d0fad4a5b40da5f'],
             ['sqlite-conflict-boundaries-v3.json', 'e213c39415e301abdf7684710d923ac82b30de9e2ce9b0e3ae361e5297291e84'],
-            ['sqlite-query-scope-boundaries-v5.json', 'b3612dfd1e5a0bf5bf3104ea934d73cb52bbce931465d780597fcc7515939691'],
+            ['sqlite-query-scope-boundaries-v6.json', '01bf39411d74a97832c995cc2278a7fcaf6845430450e64a8462dd043dc1409f'],
             ['sqlite-grouped-boundaries-v5.json', '5e0e16fc9ac50cd6421ad6aa85a9b063b9681e90beb2b7acc021c41afe796f3a'],
             ['sqlite-wildcard-boundaries-v3.json', '0d635b2b4453e99d9a3aeca34b230154ac3003dd6d7bc20a71adff40b4dd3d62'],
             ['sqlite-insert-slots-boundaries-v5.json', '55d984c88686949361c74660945cc67450c02a86b6a69c53aec6f079f46f87c0'],
@@ -104,7 +104,8 @@ function checkNativeBoundaries(
             'Statement\\Expression\\Cast as ParsedCast', 'Statement\\Expression\\Literal\\TextLiteral as ParsedText',
             'Statement\\Expression\\Literal\\BlobLiteral as ParsedBlob', 'Statement\\Expression\\Literal\\NullLiteral as ParsedNull',
             'Statement\\Expression\\BindParameter', 'Statement\\Expression\\ParameterPrefix',
-            'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinChain', 'Statement\\Query\\SetQuantifier', 'Statement\\Query\\With\\WithQuery',
+            'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinChain', 'Statement\\Relation\\JoinUsing',
+            'Statement\\Relation\\JoinKeyword', 'Ir\\From\\JoinKeyLowering', 'Model\\Statement\\Identifier\\Name', 'Statement\\Query\\SetQuantifier', 'Statement\\Query\\With\\WithQuery',
             'Statement\\Query\\Compound', 'Model\\Statement\\Reference\\Table\\CommonTable',
             'Statement\\Relation\\TableInput', 'Model\\Statement\\Declaration\\Table',
                         'Ir\\Schema\\DropTable', 'Ir\\Schema\\DropView', 'Statement\\Schema\\AbsentRelation', 'Statement\\Schema\\SchemaObjectKind',

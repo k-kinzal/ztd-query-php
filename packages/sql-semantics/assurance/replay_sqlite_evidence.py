@@ -38,6 +38,7 @@ import run_sqlite_pattern as pattern
 import run_sqlite_primary_keys as primary_keys
 import run_sqlite_recursive_source as recursive
 import run_sqlite_relational as relational
+import run_sqlite_merged_join as merged_join
 import run_sqlite_result as result
 import run_sqlite_scalars as scalars
 import run_sqlite_transaction as transaction
@@ -73,7 +74,8 @@ DOMAINS = {
     defaults.CONTRACT_NAME: (defaults, defaults.FIXTURE),
     not_null_conflict.CONTRACT_NAME: (not_null_conflict, not_null_conflict.FIXTURE),
     returning.CONTRACT_NAME: (returning, returning.SCHEMA),
-    "sqlite-relational-v1.json": (relational, relational.SCHEMA),
+    "sqlite-relational-v2.json": (relational, relational.SCHEMA),
+    merged_join.CONTRACT_NAME: (merged_join, merged_join.FIXTURE),
     "sqlite-result-v1.json": (result, result.SCHEMA + result.PAGE_DDL + ";" + result.PAGE_ROWS),
     "sqlite-delete-v1.json": (delete, delete.SCHEMA),
     "sqlite-values-v1.json": (values, ""),

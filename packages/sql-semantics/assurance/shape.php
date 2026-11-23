@@ -405,7 +405,7 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropRelationLowering', 'Schema\\CreateTableLowering');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'From\\JoinKeyLowering', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering', 'Schema\\DropRelationLowering', 'Schema\\CreateTableLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
     $internal[] = 'Rows\\LocalInputs';
     $pureCollaborators[] = 'Rows\\LocalInputs';
@@ -772,13 +772,17 @@ try {
             $checkedBindingSources[$relative] = ['sha256' => $expected, 'contract' => basename($path)];
         }
     }
-    $binding = match ($dialect) {
-        'sqlite' => ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
-        'postgres' => ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
-        'mysql' => null,
+    $bindings = match ($dialect) {
+        'sqlite' => [
+            ['sqlite-folded-binding-sources-v3.json', '04a7cf6e55458afc27dcda650193a449aef0665c7c3a241cf1d789c26c2d8dce', 'Folded binding'],
+            ['sqlite-merged-join-binding-v1.json', '0724f04ceaf82bb2c97abbd13f28db0b1fcc926bfef995fb666b26e729ee613c', 'Merged join binding'],
+        ],
+        'postgres' => [
+            ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
+        ],
+        'mysql' => [],
     };
-    if ($binding !== null) {
-        [$name, $digest, $label] = $binding;
+    foreach ($bindings as [$name, $digest, $label]) {
         $bindingRecord = __DIR__ . '/' . $name;
         requireShape(hash_file('sha256', $bindingRecord) === $digest, "$label contract differs from its recorded revision");
         $bindingSources = json_decode(file_get_contents($bindingRecord), true, 512, JSON_THROW_ON_ERROR)['artifacts'];

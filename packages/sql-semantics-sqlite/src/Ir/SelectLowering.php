@@ -62,7 +62,7 @@ final class SelectLowering
 
         $clauses = new QueryClauses();
         $where = $clauses->predicate($statement->where, $binding);
-        $joins = $clauses->joins($statement->from, $binding);
+        $joins = $clauses->joins($statement->from, $binding, $operation);
 
         return new Select(
             $results,
