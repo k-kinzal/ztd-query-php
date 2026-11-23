@@ -15,6 +15,7 @@ LABEL = "postgres-truncate"
 OBSERVER = "postgres_truncate_observer.php"
 CONTRACT_NAME = "postgres-truncate-v1.json"
 CONTRACT = "3c9ef972d86bd023c234796235d58e598ddee4e54e80db2b76b9832aa58f663e"
+OBSERVATION_CONTRACT = "030a9e2ea42a3979cdc9d83cbd2ac922d477fb2f4b947b5e98d433688e61d150"
 COMPLETE_SEEDS = True
 SCHEMA, DECOY = "public", "ir_tr_decoy"
 A, B, CHILD, REF, LEAF, ABSENT = ("ir_tr_" + name for name in ("a", "b", "child", "ref", "leaf", "absent"))
@@ -26,6 +27,8 @@ HEADING = [["id", *TYPES["integer"], True], ["label", *TYPES["text"], False]]
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "postgres-truncate-contract-mismatch")
+    require(digest(TOOL / "postgres-truncate-observation-v1.json") == OBSERVATION_CONTRACT,
+            "postgres-truncate-observation-contract-mismatch")
     return json.loads(path.read_text()), profiles()[1]
 
 
@@ -194,12 +197,18 @@ def normalize(state):
 
 
 def identities(state):
-    return {name: rel["oid"] for name, rel in state["tables"].items()}
+    result = {name: table.get("oid") for name, table in state["tables"].items()}
+    require(all(type(oid) is int and oid > 0 for oid in result.values()) and len(set(result.values())) == len(result),
+            "postgres-truncate-missing-native-identity", result)
+    return result
 
 
 def observation(raw):
-    if raw["status"] != "postgres-truncate-effect":
-        return raw
+    # Keep the unprojected catalog observations in the replay ledger.
+    return raw
+
+
+def semantic_observation(raw):
     original = identities(raw["original"])
     stable = {phase: identities(raw[phase]) == original for phase in ("after", "restored")}
     return {**raw, **{phase: normalize(raw[phase]) for phase in ("original", "after", "restored")}, "stableIdentities": stable}
@@ -229,7 +238,7 @@ def check_observation(item, actual, sql):
     witness = {"sql": sql, "expected": wanted, "observed": actual}
     require(actual["status"] == "postgres-truncate-effect", "postgres-truncate-observer-rejected", witness)
     try:
-        same(wanted, actual)
+        same(wanted, semantic_observation(actual))
     except Failure as error:
         raise Failure(error.signal, witness) from error
 
@@ -252,16 +261,42 @@ def required_forms(*_):
             *(f"{choice}/{value}" for choice in ("cascade", "restart", "repetition", "only") for value in (True, False))}
 
 
+def catalog_control(item):
+    predicted = prediction(item)
+    identifiers = {name: index for index, name in enumerate(predicted["original"]["tables"], 100)}
+    del predicted["stableIdentities"]
+    for phase in ("original", "after", "restored"):
+        state = predicted[phase]
+        predicted[phase] = {
+            **state,
+            "tables": {name: {**relation, "oid": identifiers[name]} for name, relation in state["tables"].items()},
+        }
+    return predicted
+
+
 def controls():
     item = case("pg-17.2", lists()["duplicate-only-first"], cascade=True)
-    check_observation(item, prediction(item), "correct first occurrence")
-    altered = case("pg-17.2", lists()["duplicate-all-first"], cascade=True)
-    try:
-        check_observation(item, prediction(altered), "wrong descendant policy")
-    except Failure as error:
-        same("meaning-mismatch", error.signal)
-        return {"misclassified-repeated-target": {"input": item, **error.detail}}
-    raise Failure("postgres-truncate-comparator-missed-descendants")
+    correct = catalog_control(item)
+    check_observation(item, correct, "correct first occurrence and retained table identity")
+    changed_identity = catalog_control(item)
+    changed_identity["after"]["tables"][coordinate(SCHEMA, A)]["oid"] += 1000
+    missing_identity = catalog_control(item)
+    del missing_identity["after"]["tables"][coordinate(SCHEMA, A)]["oid"]
+    alternative = catalog_control(case("pg-17.2", lists()["duplicate-all-first"], cascade=True))
+    results = {}
+    for name, input_state, signal in [
+        ("misclassified-repeated-target", alternative, "meaning-mismatch"),
+        ("reassigned-table-identity", changed_identity, "meaning-mismatch"),
+        ("missing-table-identity", missing_identity, "postgres-truncate-missing-native-identity"),
+    ]:
+        try:
+            check_observation(item, input_state, name)
+        except Failure as error:
+            same(signal, error.signal)
+            results[name] = {"input": item, **error.detail}
+        else:
+            raise Failure("postgres-truncate-comparator-missed-control", name)
+    return results
 
 
 def boundary(item, response):
