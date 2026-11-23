@@ -950,6 +950,16 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                     [$move->from, $move->to, $move->origin]);
             }
         }
+        if ($platform === 'MySql' && $role === 'Select') {
+            $shadowing = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);
+            $projection = $semantics->analyze('SELECT id, accounts.id FROM app.accounts', $shadowing);
+            $insert = $semantics->analyze('INSERT INTO app.accounts (id) VALUES (3)', $shadowing);
+            $rename = $semantics->analyze('RENAME TABLE app.accounts TO app.archived', $shadowing);
+            $details['mysqlSessionTableSources'] = [$projection->source->schema->value, $projection->source->table->value, $projection->source->kind->value,
+                $projection->columns[0]->expression->slot, $projection->columns[1]->expression->slot, $insert->target->kind->value];
+            $move = $rename->moves[0];
+            $details['mysqlSessionRename'] = [$move->origin->schema->value, $move->origin->table->value, $move->to->table->value];
+        }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $details['mysqlTruncate'] = [$result->target->schema->value, $result->target->table->value];
         }

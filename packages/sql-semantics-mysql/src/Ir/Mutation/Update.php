@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -49,7 +48,7 @@ final class Update implements SemanticsIR
         public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
-        Check::input($target->kind === ExternalRelationKind::BaseTable, 'An UPDATE target must be a base table.');
+        Check::input($target->kind->isTable(), 'An UPDATE target must be a base table.');
         Check::input(array_is_list($assignments) && $assignments !== [], 'An UPDATE needs a nonempty assignment list.');
         Check::input(count($assignments) <= 1024, 'An UPDATE can have at most 1024 assignments.');
         $scope = new OccurrenceScope();

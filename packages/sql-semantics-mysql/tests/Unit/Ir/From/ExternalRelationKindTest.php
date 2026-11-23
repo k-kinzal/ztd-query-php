@@ -15,6 +15,13 @@ final class ExternalRelationKindTest extends TestCase
 {
     public function testIdentifiesTheAdmittedExternalRelations(): void
     {
-        self::assertSame(['table', 'view'], array_column(ExternalRelationKind::cases(), 'value'));
+        self::assertSame(['table', 'temporary-table', 'view'], array_column(ExternalRelationKind::cases(), 'value'));
+    }
+
+    public function testIsTableDistinguishesWritableTablesFromViews(): void
+    {
+        self::assertTrue(ExternalRelationKind::BaseTable->isTable());
+        self::assertTrue(ExternalRelationKind::TemporaryTable->isTable());
+        self::assertFalse(ExternalRelationKind::View->isTable());
     }
 }

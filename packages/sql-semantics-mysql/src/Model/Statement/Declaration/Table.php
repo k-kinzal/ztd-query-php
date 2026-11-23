@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A relation declaration supplied to an analysis context: a table or a view with its columns.
  *
  * The object is the identity of the declaration. Two equal-looking tables are
- * two declarations, and a context that holds both keeps the conflict.
+ * two declarations. A context reports a conflict when both claim the same namespace.
  *
  * @visibility SqlSemantics
  */
@@ -50,6 +50,7 @@ final class Table
         public readonly RelationKind $kind = RelationKind::BaseTable,
         public readonly bool $temporary = false,
     ) {
+        Check::input(!$temporary || $kind === RelationKind::BaseTable, 'Only a base table can be a temporary declaration.');
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');
         $this->implicit = Check::listOf($implicit, ImplicitColumn::class, 'Implicit table columns are a list of implicit column declarations.');
     }

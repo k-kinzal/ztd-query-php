@@ -211,7 +211,7 @@ final class Derivation
     /**
      * Resolves a relation name: the nearest common table of the environment, then the context.
      */
-    public function table(QualifiedName $name, Environment $environment): TableResolution
+    public function table(QualifiedName $name, Environment $environment, bool $preferTemporary = true): TableResolution
     {
         if ($name->schema === null) {
             $common = $environment->commonTable($name->name);
@@ -220,7 +220,7 @@ final class Derivation
             }
         }
 
-        return (new TableLookup())->find($this->context, $name);
+        return (new TableLookup())->find($this->context, $name, $preferTemporary);
     }
 
     /**

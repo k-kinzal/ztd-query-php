@@ -208,7 +208,8 @@ if ($dialect === 'mysql') {
     $internal[] = 'Expression\\IntegralCastLowering';
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
     $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int'];
-    $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'View' => 'view'];
+    $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'TemporaryTable' => 'temporary-table', 'View' => 'view'];
+    $methods['From\\ExternalRelationKind'] = ['isTable'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -1084,8 +1085,9 @@ try {
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v5.json', '1039329131e0b89f6eab37a54962abb072739fc96b62851488ca39c2d07c358a', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v1.json', '169763ecce5ff7b7cc5328061c73cb991603a6906da534434e2a1467daebfb99', 'MySQL ordered rename binding'],
-            ['mysql-drop-view-binding-v1.json', '5627e82996443a60879aefcc976c8f27521d60935eb52accea9cc24b8a1fa985', 'MySQL view removal binding'],
+            ['mysql-ordered-table-rename-binding-v2.json', '399458d90f67df1775c15e309fc7dc3b53a47bfab6f64eaa05839f1122dca8b8', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v1.json', '39a81921ae99209d9169c61bdb8cf316770c4212b38daecbdaa2a6a16d7bd8c9', 'MySQL session table binding'],
+            ['mysql-drop-view-binding-v2.json', '374c5125de55ab2887bc77ad4ad6c219f889046c5b6ca18300251ee5d531484d', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };
@@ -1395,7 +1397,7 @@ try {
             requireShape($class instanceof Enum_ && $class->scalarType?->toString() === 'string', 'Arithmetic operators must be a string enum');
             $operators = [];
             foreach ($class->stmts as $case) {
-                if ($dialect === 'mysql' && $short === 'Schema\\IntegerStorage' && $case instanceof Stmt\ClassMethod) {
+                if ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'From\\ExternalRelationKind'], true) && $case instanceof Stmt\ClassMethod) {
                     continue;
                 }
                 requireShape($case instanceof Stmt\EnumCase && $case->expr instanceof String_, 'An arithmetic operator must be a literal case');

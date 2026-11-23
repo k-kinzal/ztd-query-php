@@ -75,11 +75,11 @@ final class SourceBinding
                 'The source requires a resolved, complete local relation declaration.',
             );
             $kind = match ($resolution->table->kind) {
-                RelationKind::BaseTable => ExternalRelationKind::BaseTable,
+                RelationKind::BaseTable => $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable,
                 RelationKind::View => ExternalRelationKind::View,
                 RelationKind::MaterializedView, RelationKind::ForeignTable, RelationKind::Sequence => throw new InvalidConstruction('The source requires an admitted external relation kind.'),
             };
-            Check::input(!$source instanceof WriteTarget || $kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');
+            Check::input(!$source instanceof WriteTarget || $kind->isTable(), 'A write requires a resolved base table.');
         }
         $this->table = $resolution?->table;
         $this->kind = $kind;
@@ -179,7 +179,7 @@ final class SourceBinding
      */
     public function mergedHeading(): array
     {
-        Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');
+        Check::input($this->table !== null && $this->kind->isTable() && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');
         $heading = [];
         foreach ($this->table->columns as $column) {
             $name = $column->name->value;
@@ -221,7 +221,7 @@ final class SourceBinding
     public function writeTarget(array $names): TableSource
     {
         $target = $this->source();
-        Check::input($target !== null && $target->kind === ExternalRelationKind::BaseTable, 'An INSERT requires a resolved write target.');
+        Check::input($target !== null && $target->kind->isTable(), 'An INSERT requires a resolved write target.');
         $columns = [];
         $types = [];
         foreach ($names as $name) {
@@ -230,7 +230,7 @@ final class SourceBinding
             $types[] = $type;
         }
 
-        return new TableSource($target->schema, $target->table, $columns, $types);
+        return new TableSource($target->schema, $target->table, $columns, $types, $target->kind);
     }
 
     /**
@@ -262,7 +262,7 @@ final class SourceBinding
      */
     public function writeDeclaration(string $name): Column
     {
-        Check::input($this->table !== null && $this->kind === ExternalRelationKind::BaseTable, 'A write requires a resolved base table.');
+        Check::input($this->table !== null && $this->kind->isTable(), 'A write requires a resolved base table.');
         $matches = $this->table->matchingColumns($name, $this->operation->context->columnNames);
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
         return $matches[0];

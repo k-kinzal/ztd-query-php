@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-ordered-table-rename-binding-2",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "de3b4a3c2340add8e2d76ed6e033a5a249376b5e5a10cd9cdd4d0dbea010fbf1",
+      "role": "Keep the static declared relation kind and session-temporary provenance."
+    },
+    "src/Rules/TableChange/Renamings.php": {
+      "sha256": "0372eea4dbf63a2a23fba74143615e99a63c8ee1019344e3c44905f816b2cfbf",
+      "role": "Resolve each origin through earlier moves and reject known occupied names."
+    },
+    "src/Rules/TableChange/Targets.php": {
+      "sha256": "ee53dcf53fef0153b92f8d6c455a164c4cd5b827838395b53e90274359d59a72",
+      "role": "Match the exact current and declared relation identities."
+    },
+    "src/Rules/SessionDatabase.php": {
+      "sha256": "4d3cea3bcaf4b26f6f0d2fead984aa6da2edf36c26674f298d8f8b965a386597",
+      "role": "Supply a named current database for each unqualified spelling."
+    },
+    "src/Statement/Alter/RenameTable.php": {
+      "sha256": "2199f4eff4f0a3cc329b70549f39848a584ce18224493ffefc17f07e4c63644f",
+      "role": "Derive the ordered list of rename operations."
+    },
+    "src/Statement/Alter/TableRenaming.php": {
+      "sha256": "17c18ea5e10827badfcf133fa16def68a279b86cbc2e6e7c743793cb1c3ab19e",
+      "role": "Decode the current and destination coordinates and key the source fact."
+    },
+    "src/Statement/Table/CreateTable.php": {
+      "sha256": "0c8e603ee771c9db007e0d53d69da64255d7d0a7891de779baea3999443c847a",
+      "role": "Record explicit temporary creation through ordinary and derived declarations."
+    },
+    "src/Statement/Table/CreateTableLike.php": {
+      "sha256": "0d4fb4675916e38fc02c105a70f2ee61ec5cd785c3b6192bd4f3b71b0f29c038",
+      "role": "Record the temporary provenance of LIKE's created table separately from its template."
+    }
+  },
+  "extends": "mysql-ordered-table-rename-binding-v1.json"
+}

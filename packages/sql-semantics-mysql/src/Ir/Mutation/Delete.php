@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
@@ -41,7 +40,7 @@ final class Delete implements SemanticsIR
         public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
-        Check::input($target->kind === ExternalRelationKind::BaseTable, 'A DELETE target must be a base table.');
+        Check::input($target->kind->isTable(), 'A DELETE target must be a base table.');
         (new OccurrenceScope())->predicate($where, [$target], 'A DELETE predicate slot must belong to its target.');
     }
 

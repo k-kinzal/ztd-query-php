@@ -373,7 +373,7 @@ def faults(_, tag):
         RenderFault("lose-mysql-view-field-collation", "sql-semantics-mysql/src/Rules/TableDefinition/TableDeclaration.php",
                     "$field->column()?->collation", "null",
                     {"raw": input_sql, "select": item}, "mysql-external-view-collation-lost", request(tag, input_sql)),
-        RenderFault("admit-mysql-view-in-update", ir + "Mutation/Update.php", "$target->kind === ExternalRelationKind::BaseTable", "true",
+        RenderFault("admit-mysql-view-in-update", ir + "Mutation/Update.php", "$target->kind->isTable()", "true",
                     {"boundary": reason}, "mysql-external-view-published-write", invalid),
     ]
 

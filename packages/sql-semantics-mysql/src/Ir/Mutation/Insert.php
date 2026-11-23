@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
-use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
@@ -41,7 +40,7 @@ final class Insert implements SemanticsIR
         array $rows,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
-        Check::input($target->kind === ExternalRelationKind::BaseTable, 'An INSERT target must be a base table.');
+        Check::input($target->kind->isTable(), 'An INSERT target must be a base table.');
         $width = count($target->columns);
         Check::input($width >= 1 && $width <= 1024, 'An INSERT needs between one and 1024 target columns.');
         $this->rows = Check::listOf($rows, InsertRow::class, 'An INSERT needs a nonempty list of rows.', 1);

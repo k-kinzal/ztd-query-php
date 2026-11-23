@@ -45,9 +45,9 @@ final class Targets
     /**
      * Resolves a table name and answers its facts.
      */
-    public function target(Derivation $derivation, QualifiedName $name): RelationFact
+    public function target(Derivation $derivation, QualifiedName $name, bool $preferTemporary = true): RelationFact
     {
-        $resolution = $derivation->table($name, $derivation->environment());
+        $resolution = $derivation->table($name, $derivation->environment(), $preferTemporary);
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {

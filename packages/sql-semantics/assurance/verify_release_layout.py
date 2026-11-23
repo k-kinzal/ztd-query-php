@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v73.json"
-CONTRACT = "91c2bbdbccebaba0db4129b67c7490171f859e63ab4ce50377923c95050fb81c"
+CONTRACT_NAME = "release-layout-v74.json"
+CONTRACT = "8734def1aeb5e7529587bb3e96ce2fcf4e73430db658c8b8c3d52508828c5bca"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -512,6 +512,10 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlRenameMoves") == [[origin, staged, origin], [staged, ["app", "archived"], origin]]
                     and item["sql"] == "RENAME TABLE `app`.`accounts` TO `app`.`staged`, `app`.`staged` TO `app`.`archived`",
                     "installed-mysql-ordered-rename-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Select"):
+            require(item.get("mysqlSessionTableSources") == ["app", "accounts", "temporary-table", 0, 0, "temporary-table"]
+                    and item.get("mysqlSessionRename") == ["app", "accounts", "archived"],
+                    "installed-mysql-session-table-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("mysqlTruncate") == ["app", "accounts"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",

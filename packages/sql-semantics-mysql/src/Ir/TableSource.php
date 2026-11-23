@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
  * A schema-qualified external source and the named column slots it supplies.
  *
  * The slots identify inputs. Evaluation supplies the corresponding table
- * or view and its columns, with their MySQL row values.
+ * or view in the resolved namespace and its columns, with their MySQL row values.
  *
  * @visibility public
  * @example Identifying a column of an external table

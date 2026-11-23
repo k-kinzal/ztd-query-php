@@ -14,5 +14,17 @@ namespace SqlSemantics\Platform\MySql\Ir\From;
 enum ExternalRelationKind: string
 {
     case BaseTable = 'table';
+    case TemporaryTable = 'temporary-table';
     case View = 'view';
+
+    /**
+     * Identifies table roles that can supply writable native slots.
+     */
+    public function isTable(): bool
+    {
+        return match ($this) {
+            self::BaseTable, self::TemporaryTable => true,
+            self::View => false,
+        };
+    }
 }
