@@ -12,12 +12,12 @@ from server_delete_cases import ROWS, negatives, ordered
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-delete-returning"
-CONTRACT = "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6"
+CONTRACT = "6e0a3beb1bd63a4d73a4172dbfce4855f4346d1401f9618638578763569cfa1c"
 OBSERVER = "server_delete_observer.php"
 
 
 def specifications():
-    path, projection = TOOL / "postgres-delete-returning-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "postgres-delete-returning-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "postgres-delete-returning-contract-mismatch")
     record = json.loads(path.read_text())
     require(len(finite_ids("postgres", record, "pg-17.2")) == record["finite"]["identities"], "postgres-delete-returning-domain-size")

@@ -197,8 +197,8 @@ def inventory(root):
             families = ("join_table", "normal_join", "joined_table", "inner_join_type", "outer_join_type", "where_clause")
         elif postgres:
             entry = "stmt"
-            related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v1.json") for alternative in rules.get("DeleteStmt", [])}
-            related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v1.json", "postgres-update-returning-v2.json",
+            related = {alternative: ("server-delete-v2.json", "postgres-delete-returning-v2.json") for alternative in rules.get("DeleteStmt", [])}
+            related["returning_clause: RETURNING target_list"] = ("postgres-delete-returning-v2.json", "postgres-update-returning-v3.json",
                                                                   "postgres-insert-returning-v1.json", "postgres-text-returning-v2.json")
             related.update({alternative: ("postgres-int4-operators-v2.json",) for alternative in (
                 "a_expr: a_expr / a_expr", "a_expr: a_expr % a_expr", "a_expr: a_expr qual_Op a_expr",
@@ -270,7 +270,7 @@ def inventory(root):
                                         if rule == "InsertStmt" else ("server-insert-v1.json",))
         for rule in update:
             for alternative in rules.get(rule, []):
-                related[alternative] = (("server-update-v2.json", "postgres-update-returning-v2.json")
+                related[alternative] = (("server-update-v2.json", "postgres-update-returning-v3.json")
                                         if rule == "UpdateStmt" else ("server-update-v2.json",))
         for rule in transaction:
             for alternative in rules.get(rule, []):

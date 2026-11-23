@@ -68,7 +68,7 @@ def negatives(tag):
     base = "public.ir_update_target SET id=7 RETURNING "
     yield (analyzed(tag, base + "missing"), "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\SemanticException",
            "Column missing does not exist")
-    yield (analyzed(tag, base + "delta", "CREATE TABLE public.ir_update_target (id INTEGER, delta TEXT)"),
+    yield (analyzed(tag, base + "delta", "CREATE TABLE public.ir_update_target (id INTEGER, delta BOOLEAN)"),
            EXCEPTION, "signed 32-bit integer type")
     yield analyzed(tag, base + "id + 1 AS computed"), EXCEPTION, "requires a resolved target column"
 

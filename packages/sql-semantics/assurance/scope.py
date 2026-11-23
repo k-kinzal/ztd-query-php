@@ -10,8 +10,8 @@ TOOL = Path(__file__).resolve().parent
 CONTRACTS = {
     "sqlite-pattern-v1.json": "6385d9428e2767c4e0ac9d53a22b1e4b593af2b7ccd696cbd9f4fe34c5e91d1f",
     "postgres-insert-returning-v1.json": "febe704e789fbe2f5917994c945ae774bcef08328fc7eee18a567e13eb2f38f8",
-    "postgres-update-returning-v2.json": "f5f5710892ada09c1ca26c102c6af730e4b9fbd5c077d2af0cb0847d8e5b0efa",
-    "postgres-delete-returning-v1.json": "7a04ca5e93b74db96447f328ae1a1167ccc4522d38ea31da241b7fd7ffa29ee6",
+    "postgres-update-returning-v3.json": "62d4f171e52118cb614abba4b257be5b2fc7bb699f3868d5d3ca0b0dbd341fff",
+    "postgres-delete-returning-v2.json": "6e0a3beb1bd63a4d73a4172dbfce4855f4346d1401f9618638578763569cfa1c",
     "postgres-builtin-casts-v3.json": "b439bb017cc95d4da5c419bb7e5f6229992d39a311009b1348caa5e2e5d562ad",
     "postgres-typed-parameters-v2.json": "ead84cd2f2f8292111a668ccefc0952b17815bc6ad3194cd6f889ce1ca1f5a83",
     "postgres-boolean-tests-v1.json": "db8f3a718d0eec95297d153076a3af9d8b456e4d706ebd16f10238d3a7fda32d",
