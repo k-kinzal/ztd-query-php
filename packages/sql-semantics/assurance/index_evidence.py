@@ -465,6 +465,7 @@ def main():
     guards = evidence.artifact("native-boundaries/index.json", "provisional-native-construction-shape", True)
     staged = replay_staged(evidence, evidence.artifact("release-layout/index.json", "provisional-staged-composer-layout", True), manifest, classes, checkout)
     role_trace = trace(roles, manifest, tools, sqlite, native, guards, staged)
+    require(base.get("activeDeclarations") == role_trace["activeDeclarations"], "bundle-constructor-declaration-receipt")
     branch_rules = root / "effective-main-rules.json"
     _, rule_link = evidence.checked(branch_rules) if branch_rules.is_file() else (None, None)
     statuses = [] if rule_link is None else [

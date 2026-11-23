@@ -6,8 +6,8 @@ from run import digest, require
 from scope import CONTRACTS, public_scope
 
 
-DECLARATIONS = "constructor-declarations-v9.json"
-DECLARATION_DIGEST = "48c1a7d23ce80512e78fbd482ece953c8f31171e6e467c34164109f41afa6702"
+DECLARATIONS = "constructor-declarations-v10.json"
+DECLARATION_DIGEST = "b56160a011d8a1c76cc26d4879ec73951be0cf7a374fdc222e43647d83a2d4e1"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 FIELDS = {
     "role": ("role", "roles"),
@@ -80,6 +80,28 @@ def role_declaration(record, name, role, supplement):
     return {"contract": name, "role": role, "declaredFields": found, "declaredObligations": planned}
 
 
+def active_declarations(tools):
+    catalog = declaration_contract(tools / DECLARATIONS)
+    supplements = catalog["additions"]
+    unknown = sorted(supplements.keys() - CONTRACTS.keys())
+    require(not unknown, "trace-unregistered-supplement", unknown)
+    records, roles = {}, {}
+    for name, sha256 in CONTRACTS.items():
+        path = tools / name
+        require(digest(path) == sha256, "trace-contract-digest-mismatch", name)
+        record = json.loads(path.read_text())
+        require(supplements.get(name, {}).keys() <= record["constructors"].keys(),
+                "trace-unregistered-supplement-role", name)
+        records[name] = record
+        roles[name] = {role: role_declaration(record, name, role, supplements) for role in record["constructors"]}
+    receipt = {
+        "record": DECLARATIONS, "sha256": DECLARATION_DIGEST, "revision": catalog["revision"],
+        "approval": catalog["approval"], "contracts": len(records),
+        "declarations": sum(map(len, roles.values())),
+    }
+    return receipt, records, roles
+
+
 def checked_methods(guard, dialect, role):
     if guard is None:
         return None
@@ -141,20 +163,11 @@ def installed_roles(staged, constructors):
 
 
 def trace(scope, manifest, tools, sqlite, native, guards, staged):
-    declared = declaration_contract(tools / DECLARATIONS)
-    supplements = declared["additions"]
-    require(supplements.keys() <= CONTRACTS.keys(), "trace-unregistered-supplement")
+    declaration_index, records, declarations = active_declarations(tools)
     native_links = {item["contract"]: item for item in native.values()}
     sqlite_links = {} if sqlite is None else sqlite["domains"]
-    records = {}
     contracts = {}
-    for name, sha256 in CONTRACTS.items():
-        path = tools / name
-        require(digest(path) == sha256, "trace-contract-digest-mismatch", name)
-        record = json.loads(path.read_text())
-        require(supplements.get(name, {}).keys() <= record["constructors"].keys(),
-                "trace-unregistered-supplement-role", name)
-        records[name] = record
+    for name, record in records.items():
         receipts = {}
         if name in native_links:
             receipts["native"] = native_links[name]
@@ -163,14 +176,14 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
         if name == "server-projection-admission-v1.json":
             receipts.update({role: native[role] for role in ("projection", "grouped") if role in native})
         contracts[name] = {
-            "sha256": sha256, "revision": record["revision"], "approval": record["approval"],
+            "sha256": CONTRACTS[name], "revision": record["revision"], "approval": record["approval"],
             "domainEvidence": receipts,
             "evidenceKind": "related-domain" if receipts else "unconfirmed",
             "contractFields": sorted(record.keys() - {"constructors"}),
             "profileFields": [field for field in ("profile", "profiles", "initialExecutableDomain") if record.get(field)],
         }
 
-    contracts[DECLARATIONS] = {"sha256": DECLARATION_DIGEST, "revision": declared["revision"], "approval": declared["approval"],
+    contracts[DECLARATIONS] = {"sha256": DECLARATION_DIGEST, "revision": declaration_index["revision"], "approval": declaration_index["approval"],
                                "evidenceKind": "required-criteria", "domainEvidence": {}}
     values = scope["registeredConstructors"]
     installed = installed_roots(staged, {name: values[name] for name in scope["completeRootTypes"]}, manifest)
@@ -183,12 +196,11 @@ def trace(scope, manifest, tools, sqlite, native, guards, staged):
             "enum": item["enum"],
             "source": item["source"], "sourceDigest": item["sha256"],
             "publishers": [method for method, results in scope["publicationRoutes"].items() if name in results],
-            "declarations": [role_declaration(records[row["record"]], row["record"], row["role"], supplements)
-                             for row in item["contracts"]],
+            "declarations": [declarations[row["record"]][row["role"]] for row in item["contracts"]],
             "supplementalContracts": item["supplementalEvidence"],
             "auditedShape": checked_methods(guards, DIALECTS[dialect], role),
             "installedRootExamples": installed.get(name, []),
             "installedRoleSources": measured.get(name, []),
         }
-    return {"obligations": OBLIGATIONS, "contracts": contracts, "constructors": constructors,
+    return {"obligations": OBLIGATIONS, "contracts": contracts, "constructors": constructors, "activeDeclarations": declaration_index,
             "status": "provisional-constructor-trace"}

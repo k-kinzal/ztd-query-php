@@ -189,7 +189,7 @@ Run `run_server_join.py` with the native fixture environment and the same argume
 
 ## Native row selection
 
-The [native result contract](server-result-v1.json) covers DISTINCT, output ordinals, native and explicit NULL placement, and literal row bounds. Run `run_server_result.py` with the same fixture arguments as the native join runner. The observer retains the database's actual row sequence and native metadata. The evaluator computes ordered equivalence bands and accepts each valid tie selection with its exact row multiplicities. Controls check duplicate loss, excess repetitions, wrong ordering bands, changed NULL placement, and differences in names and types.
+The [native result contract](server-result-v2.json) covers DISTINCT, output ordinals, native and explicit NULL placement, and literal row bounds. Run `run_server_result.py` with the same fixture arguments as the native join runner. The observer retains the database's actual row sequence and native metadata. The evaluator computes ordered equivalence bands and accepts each valid tie selection with its exact row multiplicities. Controls check duplicate loss, excess repetitions, wrong ordering bands, changed NULL placement, and differences in names and types.
 
 Replay the release matrix with `combine_server_result_evidence.py` and the same release paths and options as the native join collector.
 

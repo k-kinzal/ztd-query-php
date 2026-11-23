@@ -458,6 +458,8 @@ def main():
     write_json(grammar_path, grammar_scope)
     for field in ("unregisteredConstructors", "missingConstructors", "unexpectedPublicationRoutes", "unexpectedUnconstrainedRoutes"):
         require(not scope[field], "ir-constructor-ledger-mismatch", {"field": field, "detail": scope[field]})
+    from constructor_trace import active_declarations
+    declarations, _, _ = active_declarations(TOOL)
     db = Database(args.sqlite_library)
     require(db.version == contract["initialExecutableDomain"]["profile"]["version"], "engine-version-mismatch", db.version)
     db.execute(SCHEMA)
@@ -485,6 +487,7 @@ def main():
             "memory": "256m", "pidsLimit": 64, "evidenceMount": False,
         },
         "repositoryAcceptanceProtection": "unconfigured",
+        "activeDeclarations": declarations,
         "inventoryArtifacts": {name: digest(args.out / name) for name in ("inventory.json", "scope.json")},
         "shape": code_shape, "checks": checks, "faults": faults, "initialFaultBudget": fault_budget(),
         "proof": "none", "open": ["full constructor ledger", "server projection evidence is recorded separately", "remaining semantic families and profiles", "human review", "protected acceptance configuration"],
