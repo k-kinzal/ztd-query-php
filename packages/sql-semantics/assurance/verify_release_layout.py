@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v46.json"
-CONTRACT = "507d71f37277fbefb2e45682a0cbc0b138f3bf1b7fcdc1cf03b32a759e77b943"
+CONTRACT_NAME = "release-layout-v47.json"
+CONTRACT = "91ba29bc1013a85314ae7a82319a50fbc91c1a3aaa2370562aeb53fdc1b39f59"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -255,6 +255,12 @@ def verify_probe(raw, catalog):
                 'UPDATE "public"."flags" AS "__ztd_source" SET "enabled" = "__ztd_source"."fallback", '
                 '"fallback" = "__ztd_source"."enabled"',
             ], "installed-postgres-boolean-writes-mismatch", item)
+            require(item.get("booleanInput") == [
+                "SqlSemantics\\Platform\\PostgreSql\\Ir\\BooleanLiteral", False, "bool", True,
+                "A query INSERT Boolean target requires a Boolean result or NULL resolved before DISTINCT.",
+                'INSERT INTO "public"."flags" ("enabled") SELECT FALSE AS "value"',
+                'INSERT INTO "public"."flags" ("enabled") SELECT DISTINCT CAST(TRUE AS pg_catalog.bool) AS "value"',
+            ], "installed-postgres-boolean-input-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("booleanFields") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\BooleanColumnReference", True, True, True,

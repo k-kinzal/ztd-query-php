@@ -51,7 +51,7 @@ function admittedBooleanMutation(string $sql): bool
         . '\\z' . fixturePredicateDefinition($operand, $operator) . '/iD', $sql) === 1;
 }
 
-function admittedBooleanWrite(string $sql): bool
+function admittedBooleanWrite(string $sql, bool $inspectUnknown): bool
 {
     $target = '(?:public|"public")\\.(?:ir_bool_changes|"ir_bool_changes")';
     $source = '(?:public|"public")\\.(?:ir_bool_inputs|"ir_bool_inputs")';
@@ -60,9 +60,14 @@ function admittedBooleanWrite(string $sql): bool
     $column = '(?:' . $alias . '\\.)?' . $name;
     $label = '(?:[A-Za-z_][A-Za-z_0-9]*|"(?:[^"\x00]|"")+")';
     $number = '-?[0-9]{1,10}';
-    $typed = '(?:CAST\\(' . $number . ' AS pg_catalog\\.int4\\)|CAST\\(NULL AS pg_catalog\\.(?:bool|int4)\\)'
-        . '|CAST\\(\\x27true\\x27 AS pg_catalog\\.text\\))';
-    $scalar = '(?:' . $number . '|' . $typed . '|TRUE|FALSE|NULL)';
+    $plain = '(?:TRUE|FALSE|NULL)';
+    $unknown = '\x27(?:[^\x27\x00]|\x27\x27)*\x27';
+    $sourceValue = $inspectUnknown ? '(?:' . $unknown . '|' . $plain . ')' : $plain;
+    $castType = $inspectUnknown ? '(?:pg_catalog\\.bool|public\\.no_checked_bool)' : 'pg_catalog\\.bool';
+    $typed = '(?:CAST\\(' . $number . ' AS pg_catalog\\.int4\\)|CAST\\(NULL AS pg_catalog\\.int4\\)'
+        . '|CAST\\(' . $sourceValue . ' AS ' . $castType . '\\)|CAST\\(\\x27true\\x27 AS pg_catalog\\.text\\))';
+    $literal = $inspectUnknown ? '|' . $unknown . '|\\(' . $unknown . '\\)' : '';
+    $scalar = '(?:' . $number . '|' . $typed . '|' . $plain . $literal . ')';
     $operand = '(?:' . $scalar . '|' . $column . ')';
     $operator = '(?:[<>=]{1,2}|OPERATOR\\(pg_catalog\\.[<>=]{1,2}\\))';
     $where = '(?: WHERE (?&truth))?';
@@ -78,9 +83,9 @@ function admittedBooleanWrite(string $sql): bool
         . fixturePredicateDefinition($operand, $operator, true) . '/iD', $sql) === 1;
 }
 
-function observeBooleanMutation(PDO $pdo, string $sql, bool $observeWrites): array
+function observeBooleanMutation(PDO $pdo, string $sql, bool $observeWrites, bool $inspectUnknown): array
 {
-    if (!($observeWrites ? admittedBooleanWrite($sql) : admittedBooleanMutation($sql))) {
+    if (!($observeWrites ? admittedBooleanWrite($sql, $inspectUnknown) : admittedBooleanMutation($sql))) {
         return ['status' => 'outside-observer-scope'];
     }
     $before = snapshotBooleanTarget($pdo);
@@ -110,11 +115,40 @@ function observeBooleanMutation(PDO $pdo, string $sql, bool $observeWrites): arr
         ...($observeWrites ? ['inputBefore' => $input, 'inputRestored' => snapshotBooleanInputs($pdo)] : [])];
 }
 
+function observeBooleanDefault(PDO $pdo, string $sql): array
+{
+    $target = '(?:public|"public")\\.(?:ir_bool_decode_default|"ir_bool_decode_default")';
+    $field = '(?:enabled|"enabled")';
+    $value = '(?:TRUE|FALSE|\x27(?:[^\x27\x00]|\x27\x27)*\x27)';
+    $pattern = '/\\ACREATE TABLE ' . $target . ' \\(' . $field
+        . ' (?:BOOLEAN|pg_catalog\\.bool)(?: NULL)? DEFAULT ' . $value . '\\)(?: USING heap)?\\z/iD';
+    if (preg_match($pattern, $sql) !== 1) {
+        return ['status' => 'outside-observer-scope'];
+    }
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec($sql);
+        $row = $pdo->query('INSERT INTO public.ir_bool_decode_default DEFAULT VALUES RETURNING enabled');
+        $result = observeReturning($row, true);
+        $row->closeCursor();
+    } finally {
+        $pdo->rollBack();
+    }
+    $restored = $pdo->query("SELECT pg_catalog.to_regclass('public.ir_bool_decode_default') IS NULL")->fetchColumn();
+
+    return ['status' => 'Boolean default', 'restored' => $restored, ...$result];
+}
+
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotBooleanTarget($pdo),
     'input' => snapshotBooleanInputs($pdo)], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $input = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $requests = array_is_list($input) ? $input : [$input];
-    $results = array_map(static fn (array $request): array => observeBooleanMutation($pdo, $request['sql'], ($request['observeWrites'] ?? false) === true), $requests);
+    $results = array_map(
+        static fn (array $request): array => ($request['observeBooleanDefault'] ?? false) === true
+            ? observeBooleanDefault($pdo, $request['sql'])
+            : observeBooleanMutation($pdo, $request['sql'], ($request['observeWrites'] ?? false) === true, ($request['inspectUnknown'] ?? false) === true),
+        $requests,
+    );
     echo json_encode(array_is_list($input) ? $results : $results[0], JSON_THROW_ON_ERROR) . "\n";
 }

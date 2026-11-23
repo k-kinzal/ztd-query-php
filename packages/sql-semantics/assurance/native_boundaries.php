@@ -79,6 +79,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-boolean-fields-boundaries-v1.json', 'f4d06df0e8bfcca315a114851209270de7e19543bcc3d5b4ed8c9760db31545e'],
             ['postgres-boolean-returning-boundaries-v1.json', '37752e21d0c6ade880a6af530b1238d5ce335e5fcc663b3b4e1a378a5da560bb'],
             ['postgres-boolean-writes-boundaries-v1.json', 'b72bfce51bcb67617dbdb29eca44c831bd80d663bd7327f551b4b4345387c4b2'],
+            ['postgres-boolean-write-inputs-boundaries-v1.json', '1f08c01d3d651fb62d3b8da5b451cbe296c8737f071f12afd299ff82fa5b55fc'],
         ],
         'sqlite' => [],
     };
@@ -176,7 +177,7 @@ function checkNativeBoundaries(
             foreach (['Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
-                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
+                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
                 'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Ir\\Expression\\TextCollation', 'Statement\\Expression\\Collation',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextComparisonLowering', 'Ir\\Predicate\\Text\\TextOperator',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',

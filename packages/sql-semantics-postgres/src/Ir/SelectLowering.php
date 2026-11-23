@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
-use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
@@ -67,8 +66,9 @@ final class SelectLowering
                 continue;
             }
             $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
-            $resolvesBareText = $operand === null || $assignment?->columnKind(count($results)) === ColumnKind::Text;
-            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $resolvesBareText), $label);
+            $kind = $assignment?->columnKind(count($results));
+            $value = $parameter ?? $expressions->result($expression, $binding, $catalogFirst, $kind, $statement->distinct !== null, $operand === null);
+            $results[] = new ResultColumn($value, $label);
         }
 
         Check::input($results !== [], 'A complete projection requires at least one resolved output field.');

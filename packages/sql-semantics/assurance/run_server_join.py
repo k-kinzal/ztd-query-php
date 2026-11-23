@@ -246,7 +246,10 @@ def main(domain):
                 result = execute(args, specification, tag, php, db, domain)
                 result.update(candidateEnvironment=php.environment, observerEnvironment=db.environment, comparatorControls=comparator_controls, observerPreparation=preparation)
             db.deadline = time.monotonic() + (len(mutations) + 1) * (FAULT_STARTUP_SECONDS + FAULT_EXECUTION_SECONDS)
-            result["faults"] = check_render_faults(args, db, mutations, lambda item, value, db: probe(item, value, db, domain), script="server_worker.php")
+            fault_probe = getattr(domain, "fault_probe", None)
+            if fault_probe is None:
+                fault_probe = lambda item, value, observer: probe(item, value, observer, domain)
+            result["faults"] = check_render_faults(args, db, mutations, fault_probe, script="server_worker.php")
             registered_faults = len(specification["faults"]) + len(specification.get("dialectFaults", {}).get(args.engine, ()))
             require(len(result["faults"]) == registered_faults, f"server-{label}-faults-incomplete")
     except Exception as error:

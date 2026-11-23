@@ -51,6 +51,9 @@ final class BuiltinCastLowering
             Builtin::Text => CastDestination::Text,
             default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or pg_catalog.text.'),
         };
+        if ($target === CastDestination::Boolean && $operand instanceof Constant && $operand->value instanceof StringConstant) {
+            return new BuiltinCast($target, (new BooleanInput())->fromText($operand->value->value));
+        }
         if ($operand instanceof ParsedNull) {
             return new BuiltinCast($target, new NullLiteral());
         }

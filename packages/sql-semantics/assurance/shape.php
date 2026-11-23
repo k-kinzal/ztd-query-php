@@ -664,7 +664,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         $properties['Schema\\CharacterStorage'] = $methods['Schema\\CharacterStorage'] = [];
         $properties['Schema\\BooleanStorage'] = $methods['Schema\\BooleanStorage'] = [];
-        array_push($internal, 'Schema\\LiteralDefaultLowering', 'Schema\\BooleanDefaultLowering');
+        array_push($internal, 'Expression\\BooleanInput', 'Schema\\LiteralDefaultLowering', 'Schema\\BooleanDefaultLowering');
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];

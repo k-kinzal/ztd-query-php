@@ -239,6 +239,8 @@ The [PostgreSQL Boolean RETURNING contract](postgres-boolean-returning-v1.json) 
 
 The [PostgreSQL Boolean write contract](postgres-boolean-writes-v1.json) checks native destinations for VALUES, INSERT SELECT and UPDATE. It compares assigned and untouched data, old-row swaps, native result type identifiers and the DISTINCT boundary for untyped NULL. Run the domain with `run_server_postgres_boolean_writes.py` and replay with `combine_server_postgres_boolean_writes_evidence.py` on both pinned releases.
 
+The [PostgreSQL Boolean write-input contract](postgres-boolean-write-inputs-v1.json) compares the fixed native input tokens and four assignment and cast contexts. The replay checks every raw input spelling against the observed construction, exact materialized Boolean and native SQLSTATE for rejected forms. Run `run_server_postgres_boolean_write_inputs.py` and `combine_server_postgres_boolean_write_inputs_evidence.py` on both pinned releases.
+
 ## Native compound queries
 
 The [native compound contract](server-compound-v2.json) compares the weighted result rows and output types of UNION, INTERSECT and EXCEPT. The pinned MySQL 5.x releases use left-associated UNION. Later pinned MySQL releases and PostgreSQL also accept parenthesized branches. The evaluator adds, intersects or subtracts integer multiplicities and checks names in leftmost output order.

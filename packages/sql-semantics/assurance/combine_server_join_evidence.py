@@ -82,11 +82,16 @@ def check_faults(path, report, distribution, checkout, domain):
         require(record == json.loads((folder / "result.json").read_text())
                 and record["control"] == "passed" and record["expected"] == record["observed"] == rule.signal
                 and record["file"] == rule.path and record["input"] == rule.item
+                and record.get("request") == rule.request
                 and distribution[f"packages/{rule.path}"] == record["source"]
                 and record["source"] != record["mutation"] == digest(folder / rule.path)
                 and (folder / rule.path).read_text() == after
                 and (folder / "injected.diff").read_text() == delta
                 and type(witness["sql"]) is str and bool(witness["sql"]), f"server-{label}-fault-evidence", name)
+        replay_fault = getattr(domain, "replay_fault", None)
+        if replay_fault is not None:
+            replay_fault(rule, record)
+            continue
         domain.check_fault_witness(rule.item, witness)
         try:
             domain.check_observation(rule.item, witness["observed"], witness["sql"])

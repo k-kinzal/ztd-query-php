@@ -5,7 +5,7 @@ import difflib
 import json
 import time
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from sqlite_engine import Database
@@ -21,13 +21,14 @@ class RenderFault(NamedTuple):
     replacement: str
     item: dict
     signal: str
+    request: Optional[dict] = None
 
 
 def check_render_faults(args, db, fixtures, probe, script="worker.php"):
     healthy = {}
     with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
         for fault in fixtures:
-            response = worker.request(fault.item)
+            response = worker.request(fault.item if fault.request is None else fault.request)
             probe(fault.item, response, db)
             healthy[fault.name] = response
     results = []
@@ -46,7 +47,7 @@ def check_render_faults(args, db, fixtures, probe, script="worker.php"):
             f"a/{fault.path}", f"b/{fault.path}",
         )))
         with Worker(args, time.monotonic() + FAULT_EXECUTION_SECONDS, overlay, script=script, startup_timeout=FAULT_STARTUP_SECONDS) as worker:
-            response = worker.request(fault.item)
+            response = worker.request(fault.item if fault.request is None else fault.request)
             try:
                 probe(fault.item, response, db)
             except Failure as failure:
@@ -56,6 +57,8 @@ def check_render_faults(args, db, fixtures, probe, script="worker.php"):
                     "observed": failure.signal, "detail": failure.detail,
                     "healthyResponse": healthy[fault.name], "mutantResponse": response,
                 }
+                if fault.request is not None:
+                    result["request"] = fault.request
                 write_json(overlay / "result.json", result)
                 require(failure.signal == fault.signal, "wrong-render-fault-signal", result)
                 results.append(result)

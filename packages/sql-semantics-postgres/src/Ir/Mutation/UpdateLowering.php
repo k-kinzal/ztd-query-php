@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -69,7 +70,12 @@ final class UpdateLowering
         if (!$target instanceof ColumnReference && $operand instanceof ParsedColumn) {
             return $binding->field($operand);
         }
-        $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst, $target instanceof TextColumnReference);
+        $kind = match (true) {
+            $target instanceof ColumnReference => ColumnKind::Int4,
+            $target instanceof TextColumnReference => ColumnKind::Text,
+            $target instanceof BooleanColumnReference => ColumnKind::Boolean,
+        };
+        $value = (new ExpressionLowering())->result($operand, $binding, $catalogFirst, $kind);
         Check::input(
             $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral
                 || $value instanceof TextLiteral || $value instanceof BooleanLiteral,

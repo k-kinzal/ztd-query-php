@@ -282,7 +282,7 @@ def inventory(root):
             related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]
                             if any(alternative.endswith(" " + mode) for mode in ("TRUE_P", "FALSE_P", "UNKNOWN"))
                             and " IS " in alternative})
-            related.update({alternative: ("postgres-builtin-casts-v3.json", "postgres-text-conversion-v1.json") for alternative in (
+            related.update({alternative: ("postgres-builtin-casts-v4.json", "postgres-text-conversion-v1.json", "postgres-boolean-write-inputs-v1.json") for alternative in (
                 "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
                 "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
             )})
@@ -294,13 +294,13 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "postgres-boolean-fields-v1.json")
             for alternative in rules.get("insert_rest", ()):
                 if "SelectStmt" in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v2.json", "postgres-boolean-writes-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-query-v2.json", "postgres-boolean-writes-v1.json", "postgres-boolean-write-inputs-v1.json")
             for rule in ("values_clause", "insert_column_list", "insert_column_item"):
                 for alternative in rules.get(rule, ()):
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v2.json", "postgres-boolean-writes-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v2.json", "postgres-boolean-writes-v1.json", "postgres-boolean-write-inputs-v1.json")
             for alternative in rules.get("set_clause", ()):
                 if " '=' a_expr" in alternative or " = a_expr" in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json", "postgres-boolean-writes-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json", "postgres-boolean-writes-v1.json", "postgres-boolean-write-inputs-v1.json")
             for alternative in rules.get("table_ref", ()):
                 if "select_with_parens" in alternative and "LATERAL" not in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json", "postgres-boolean-fields-v1.json")

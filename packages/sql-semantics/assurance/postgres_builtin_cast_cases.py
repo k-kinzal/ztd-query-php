@@ -174,7 +174,7 @@ def negatives(tag):
     yield project(tag, too_deep), "Expression height or expanded node count exceeds"
     yield analyzed("postgres", "SELECT CAST(1 AS SMALLINT)", version=tag), "The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or pg_catalog.text."
     yield analyzed("postgres", "SELECT CAST(2147483648 AS BOOL)", version=tag), "no direct cast between bigint and boolean"
-    yield analyzed("postgres", "SELECT CAST('off' AS BOOL)", version=tag), "The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool, pg_catalog.text or NULL."
+    yield analyzed("postgres", "SELECT CAST('o' AS BOOL)", version=tag), "The Boolean input contains an invalid token."
 
     for value in ("9223372036854775808", "-9223372036854775809"):
         yield project(tag, wide(value)), "outside the signed 64-bit range"

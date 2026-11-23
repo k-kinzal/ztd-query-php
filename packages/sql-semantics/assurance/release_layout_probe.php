@@ -219,6 +219,27 @@ function observePostgresBooleanWrites(SqlSemantics\Platform\PostgreSql\Semantics
     ];
 }
 
+function observePostgresBooleanInput(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.flags (enabled BOOLEAN)']);
+    $ordinary = $semantics->analyze("INSERT INTO public.flags (enabled) SELECT ' Of ' AS value", $context);
+    $distinct = $semantics->analyze(
+        "INSERT INTO public.flags (enabled) SELECT DISTINCT CAST(' YE ' AS pg_catalog.bool) AS value",
+        $context,
+    );
+    $negative = null;
+    try {
+        $semantics->analyze("INSERT INTO public.flags (enabled) SELECT DISTINCT ' YE ' AS value", $context);
+    } catch (SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction $failure) {
+        $negative = $failure->getMessage();
+    }
+    $literal = $ordinary->query->columns[0]->expression;
+    $cast = $distinct->query->columns[0]->expression;
+
+    return [$literal::class, $literal->value, $cast->target->value, $cast->operand->value, $negative,
+        $ordinary->toString(), $distinct->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -314,6 +335,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'PostgreSql' && $role === 'Mutation\\Delete') {
             $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
             $details['booleanWrites'] = observePostgresBooleanWrites($semantics);
+            $details['booleanInput'] = observePostgresBooleanInput($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);

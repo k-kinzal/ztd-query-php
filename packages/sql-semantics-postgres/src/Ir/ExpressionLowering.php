@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BooleanInput;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCastLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedText;
@@ -12,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
@@ -89,6 +91,33 @@ final class ExpressionLowering
             $expression instanceof ParsedColumn => $binding->reference($expression),
             default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
         };
+    }
+
+    /**
+     * Resolves unknown literals at the selected result or assignment boundary.
+     *
+     * @throws InvalidConstruction When the selected native input is invalid
+     */
+    public function result(
+        Scalar $operand,
+        SourceBinding|JoinBinding $binding,
+        bool $catalogFirst,
+        ?ColumnKind $destination,
+        bool $distinct = false,
+        bool $simpleOutput = false,
+    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
+        $bareText = $simpleOutput || $destination === ColumnKind::Text;
+        if ($destination === ColumnKind::Boolean) {
+            $bareText = $distinct;
+            if (!$distinct) {
+                $boolean = (new BooleanInput())->untyped($operand);
+                if ($boolean !== null) {
+                    return $boolean;
+                }
+            }
+        }
+
+        return $this->lower($operand, $binding, $catalogFirst, $bareText);
     }
 
     /**

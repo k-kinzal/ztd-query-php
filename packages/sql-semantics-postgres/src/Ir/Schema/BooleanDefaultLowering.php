@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\BooleanInput;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
@@ -63,12 +64,6 @@ final class BooleanDefaultLowering
      */
     public function fromText(string $value): BooleanLiteral
     {
-        $token = strtr(trim($value, " \t\n\r\f\v"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
-
-        return new BooleanLiteral(match ($token) {
-            't', 'tr', 'tru', 'true', 'y', 'ye', 'yes', 'on', '1' => true,
-            'f', 'fa', 'fal', 'fals', 'false', 'n', 'no', 'of', 'off', '0' => false,
-            default => throw new InvalidConstruction('The Boolean default contains an invalid input token.'),
-        });
+        return (new BooleanInput())->fromText($value, 'The Boolean default contains an invalid input token.');
     }
 }

@@ -291,8 +291,9 @@ def evaluate(term, layout, heading, row):
         return int(term[1])
     if role in ("boolean", "null", "null-test", "truth-test", "comparison", "logic"):
         return predicate_value(term, lambda child: evaluate(child, layout, heading, row))
-    require(term == ["builtin-cast", "bool", ["null"]], "postgres-boolean-writes-oracle-cast", term)
-    return None
+    require(role == "builtin-cast" and term[1] == "bool" and term[2][0] in ("null", "boolean"),
+            "postgres-boolean-writes-oracle-cast", term)
+    return evaluate(term[2], layout, heading, row)
 
 
 def expected(item):

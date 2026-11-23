@@ -13,8 +13,8 @@ from server_cases import fixtures, observation
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-builtin-casts"
-CONTRACT_NAME = "postgres-builtin-casts-v3.json"
-CONTRACT = "b439bb017cc95d4da5c419bb7e5f6229992d39a311009b1348caa5e2e5d562ad"
+CONTRACT_NAME = "postgres-builtin-casts-v4.json"
+CONTRACT = "130440f216087838a22f1a02bfc52424f04a8527b32a8dd0d90706f330e4d3d7"
 OBSERVER = "server_observer.php"
 
 

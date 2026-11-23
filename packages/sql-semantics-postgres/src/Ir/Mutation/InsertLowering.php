@@ -47,8 +47,7 @@ final class InsertLowering
             Check::input(count($row->values) === count($target->written), 'Every inserted row must match the target width.');
             $values = [];
             foreach ($row->values as $index => $value) {
-                $text = $target->written[$index]->kind === ColumnKind::Text;
-                $item = $expression->lower($value, $empty, $catalogFirst, $text);
+                $item = $expression->result($value, $empty, $catalogFirst, $target->written[$index]->kind);
                 Check::input(
                     $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof BooleanLiteral || $item instanceof NullLiteral,
                     'A supplied INSERT value requires an explicit native literal or NULL.',
