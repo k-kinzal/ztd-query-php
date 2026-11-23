@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v74.json"
-CONTRACT = "8734def1aeb5e7529587bb3e96ce2fcf4e73430db658c8b8c3d52508828c5bca"
+CONTRACT_NAME = "release-layout-v75.json"
+CONTRACT = "e90415d2218b6b79f180ebb5427ecae0ccb206777afcac28756a3cadd7f599c7"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -516,6 +516,11 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlSessionTableSources") == ["app", "accounts", "temporary-table", 0, 0, "temporary-table"]
                     and item.get("mysqlSessionRename") == ["app", "accounts", "archived"],
                     "installed-mysql-session-table-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\View\\DropView"):
+            require(item.get("mysqlShadowedViewRemoval") == [
+                ["app", "shadowed_view", False, "DROP VIEW `app`.`shadowed_view`"],
+                ["app", "session_only", True, "DROP VIEW IF EXISTS `app`.`session_only`"],
+            ], "installed-mysql-shadowed-view-removal-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("mysqlTruncate") == ["app", "accounts"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",

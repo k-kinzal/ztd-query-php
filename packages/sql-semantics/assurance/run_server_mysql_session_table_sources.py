@@ -16,6 +16,7 @@ LABEL = "mysql-session-table-sources"
 OBSERVER = "mysql_session_table_sources_observer.php"
 CONTRACT_NAME = "mysql-session-table-sources-v1.json"
 CONTRACT = "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d"
+FAULT_REQUESTS_CONTRACT = "cdedffddeddc30e3884f0140eeee49c18d9c3b4a288f2c0b26866ee440ec12fd"
 COMPLETE_SEEDS = True
 SCHEMA, DECOY = "ir_fixture", "ir_session_decoy"
 TABLE, RENAMED = "ir_session_data", "ir_session_shifted"
@@ -27,6 +28,8 @@ PERSISTENT_BODY = "A checked view reads one persistent base table or an independ
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-session-table-contract-mismatch")
+    require(digest(TOOL / "mysql-session-table-fault-requests-v1.json") == FAULT_REQUESTS_CONTRACT,
+            "mysql-session-fault-requests-contract-mismatch")
     return json.loads(path.read_text()), profiles()[1]
 
 
@@ -352,7 +355,7 @@ def faults(_, tag):
     view, exception, message = list(negatives(tag))[3]
     return [
         RenderFault("lose-temporary-precedence", f"{root}/Model/Construction/Derivation.php",
-                    "->find($this->context, $name, $preferTemporary)", "->find($this->context, $name, false)",
+                    "->find($this->context, $name, $namespace)", "->find($this->context, $name, TableNamespace::PersistentPreferred)",
                     query, STRUCTURE, analyzed_query),
         RenderFault("lose-temporary-insert-destination", source,
                     "new TableSource($target->schema, $target->table, $columns, $types, $target->kind)",
@@ -363,9 +366,9 @@ def faults(_, tag):
                     "? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable",
                     "? ExternalRelationKind::View : ExternalRelationKind::BaseTable", query, STRUCTURE, analyzed_query),
         RenderFault("redirect-temporary-write", f"{root}/Ir/Mutation/Delete.php",
-                    "$this->target->schema->quoted()", repr("`" + DECOY + "`"), predicate, "meaning-mismatch"),
+                    "$this->target->schema->quoted()", repr("`" + DECOY + "`"), predicate, "meaning-mismatch", direct(predicate)),
         RenderFault("erase-temporary-predicate", f"{root}/Ir/Mutation/Delete.php",
-                    "if ($this->where === null)", "if (true)", predicate, "meaning-mismatch"),
+                    "if ($this->where === null)", "if (true)", predicate, "meaning-mismatch", direct(predicate)),
         RenderFault("permit-persistent-view-over-session-table", f"{root}/Ir/Schema/View/ViewQueryBounds.php",
                     "$source->kind === ExternalRelationKind::BaseTable", "$source->kind->isTable()",
                     {"boundary": {"exception": exception, "message": message}}, "mysql-session-invalid-published", view),

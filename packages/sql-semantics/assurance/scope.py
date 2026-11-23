@@ -33,7 +33,7 @@ CONTRACTS = {
     "mysql-text-literal-v1.json": "54d594a684f8196c5ed651cb5d2220a5416f8e657bcdd6def6ddb60b6fa71629",
     "mysql-varchar-slots-v2.json": "3282a89029e03bbab4448271d03cfc292eb18947d3ff0295b245290bea0eb559",
     "mysql-external-views-v1.json": "24ca8bdc80df5f8358b4020de5fad7219da5a2c58d045f4ecb0ff45cd4a8b18d",
-    "mysql-drop-view-v2.json": "a9eb2d0e7a2b78cbdbfdf27b18a750004c297918dea417c2649a5dd3db1e25af",
+    "mysql-drop-view-v3.json": "47bfa7dc6ab719ea2fa3feac56b0d2434c43d194ee0fce699785ebffd0f096da",
     "mysql-ordered-table-rename-v2.json": "8fd94c11049645a17e8775960a7da377d610ece5deca2bbf4b0953ed27bc1954",
     "mysql-truncate-v1.json": "33bda84cb25fd77b42926291742bfd32a3b66616db27c65e00cdc4b3c8406dd4",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",

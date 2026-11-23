@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\TableChange;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Fact\RelationFact;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\IncompleteMembers;
@@ -45,9 +46,9 @@ final class Targets
     /**
      * Resolves a table name and answers its facts.
      */
-    public function target(Derivation $derivation, QualifiedName $name, bool $preferTemporary = true): RelationFact
+    public function target(Derivation $derivation, QualifiedName $name, TableNamespace $namespace = TableNamespace::Visible): RelationFact
     {
-        $resolution = $derivation->table($name, $derivation->environment(), $preferTemporary);
+        $resolution = $derivation->table($name, $derivation->environment(), $namespace);
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {

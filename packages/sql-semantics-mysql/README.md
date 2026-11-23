@@ -18,6 +18,8 @@ The checked complete domain includes signed integers and native VARCHAR projecti
 
 A declared session-temporary table has its own `ExternalRelationKind::TemporaryTable` value. Reads and writes bind to the temporary table when it shares an absolute name with a persistent table. A resolved `RENAME TABLE` continues to address the persistent table of that name. Evaluate the IR in a connection with the corresponding temporary table declaration.
 
+`DROP VIEW` binds in the persistent catalog. A session-temporary table at the same absolute name remains available after removing the view. `DROP VIEW IF EXISTS` can represent an absent persistent view even if a temporary table uses that name.
+
 Declare `COLLATE utf8mb4_bin` on the VARCHAR field or as the table default to read the field by its native position. The declaration can name `CHARACTER SET utf8mb4` explicitly. A field with its own character-set clause needs its own collation. Bare, qualified and wildcard projections of the same field retain the same reference and its declared VARCHAR length. Values retain trailing spaces, and comparisons for ORDER BY and DISTINCT use the collation’s PAD SPACE rules. Use IS NULL and IS NOT NULL on the resolved field in a result, a WHERE filter or a join condition.
 
 Compare a resolved VARCHAR field with another field, a plain text literal or NULL using `=`, `<>`, `<`, `<=`, `>`, `>=` or `<=>`. The field fixes the collation. Ordinary comparisons propagate NULL and `<=>` produces an integer truth value for every operand pair. Use these comparisons as projected results or in SELECT, UPDATE and DELETE filters and local join conditions.

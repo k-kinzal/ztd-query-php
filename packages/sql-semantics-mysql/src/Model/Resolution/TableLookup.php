@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Model\Resolution;
 
 use SqlSemantics\Platform\MySql\Model\Contract\AnalysisContext;
-use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Table;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\ConditionalTable;
@@ -20,7 +19,8 @@ use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\UndeclaredTable;
  *
  * Rule: CORE-TABLE-LOOKUP-001. Schemas are searched in path order; a qualified
  * name searches its schema only. Session-visible references select temporary
- * declarations first. Persistent renames prefer the permanent catalog.
+ * declarations first. View removal consults the permanent catalog.
+ * Renames prefer that catalog and can diagnose a temporary-only origin.
  * Distinct declarations within the selected namespace conflict. No declaration is "missing" in a complete context and
  * "undeclared" in an open one. In an open context a declaration found after
  * the first searched schema is only a candidate, because an undeclared
@@ -34,17 +34,27 @@ final class TableLookup
     /**
      * Resolves a relation name with the namespace precedence of the operation.
      */
-    public function find(AnalysisContext $context, QualifiedName $name, bool $preferTemporary = true): TableResolution
+    public function find(AnalysisContext $context, QualifiedName $name, TableNamespace $namespace = TableNamespace::Visible): TableResolution
     {
         $schemas = $name->schema === null ? $context->searchPath : [$name->schema];
         foreach ($schemas as $position => $schema) {
-            $matches = $context->declared($name, $schema);
+            $declarations = $context->declared($name, $schema);
+            $temporary = [];
+            $persistent = [];
+            foreach ($declarations as $table) {
+                if ($table->temporary) {
+                    $temporary[] = $table;
+                } else {
+                    $persistent[] = $table;
+                }
+            }
+            $matches = match ($namespace) {
+                TableNamespace::Visible => $temporary === [] ? $persistent : $temporary,
+                TableNamespace::Persistent => $persistent,
+                TableNamespace::PersistentPreferred => $persistent === [] ? $temporary : $persistent,
+            };
             if ($matches === []) {
                 continue;
-            }
-            $preferred = array_values(array_filter($matches, static fn (Table $table): bool => $table->temporary === $preferTemporary));
-            if ($preferred !== []) {
-                $matches = $preferred;
             }
             if ($position > 0 && !$context->complete) {
                 return new ConditionalTable($matches, new UndeclaredRelation($name));

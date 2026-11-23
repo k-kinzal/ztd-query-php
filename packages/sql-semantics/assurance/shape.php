@@ -1085,9 +1085,9 @@ try {
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v5.json', '1039329131e0b89f6eab37a54962abb072739fc96b62851488ca39c2d07c358a', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v2.json', '399458d90f67df1775c15e309fc7dc3b53a47bfab6f64eaa05839f1122dca8b8', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v1.json', '39a81921ae99209d9169c61bdb8cf316770c4212b38daecbdaa2a6a16d7bd8c9', 'MySQL session table binding'],
-            ['mysql-drop-view-binding-v2.json', '374c5125de55ab2887bc77ad4ad6c219f889046c5b6ca18300251ee5d531484d', 'MySQL view removal binding'],
+            ['mysql-ordered-table-rename-binding-v3.json', 'ca2b4b3689e9b6548f8ffb8edbbce002278218c0496767093f19ba6890263a89', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v2.json', '6f98ccde7ec2727448740c72abe04c707c85561f0abcbc585bda310d5fc5ccde', 'MySQL session table binding'],
+            ['mysql-drop-view-binding-v3.json', '2636db50624a5ad10cfefb96851b3f5eb21b3e30ac4d759de60449a45af82188', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };

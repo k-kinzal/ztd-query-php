@@ -14,14 +14,15 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-drop-view"
 OBSERVER = "mysql_drop_view_observer.php"
-CONTRACT_NAME = "mysql-drop-view-v2.json"
-CONTRACT = "a9eb2d0e7a2b78cbdbfdf27b18a750004c297918dea417c2649a5dd3db1e25af"
+CONTRACT_NAME = "mysql-drop-view-v3.json"
+CONTRACT = "47bfa7dc6ab719ea2fa3feac56b0d2434c43d194ee0fce699785ebffd0f096da"
+PREVIOUS_CONTRACT = "a9eb2d0e7a2b78cbdbfdf27b18a750004c297918dea417c2649a5dd3db1e25af"
 BASE_CONTRACT = "5365cfb699a105d2c3a29fa5f4d00409867be1a6199542fb9468f4f65713f77c"
 COMPLETE_SEEDS = True
 SCHEMA, OTHER = "ir_fixture", "ir_dv_decoy"
 A, B, MISSING, DECOY = [SCHEMA, "ir_dv_a"], [SCHEMA, "ir_dv_b"], [SCHEMA, "ir_dv_missing"], [OTHER, "ir_dv_a"]
 CHILD = [SCHEMA, "ir_dv_child"]
-AXES = ("targets", "ifExists", "dependent")
+AXES = ("targets", "ifExists", "dependent", "shadowed")
 SEQUENCES = {"first": [A], "second": [B], "both": [A, B], "first-missing": [A, MISSING], "missing-first": [MISSING, A],
              "missing": [MISSING], "cross-schema": [A, DECOY]}
 DECLARATIONS = [
@@ -34,7 +35,8 @@ SEMANTIC = DIAGNOSTICS + "SemanticException"
 
 def specifications():
     path = TOOL / CONTRACT_NAME
-    require(digest(path) == CONTRACT and digest(TOOL / "mysql-drop-view-v1.json") == BASE_CONTRACT, "mysql-drop-view-contract-mismatch")
+    require(digest(path) == CONTRACT and digest(TOOL / "mysql-drop-view-v1.json") == BASE_CONTRACT
+            and digest(TOOL / "mysql-drop-view-v2.json") == PREVIOUS_CONTRACT, "mysql-drop-view-contract-mismatch")
     spec = json.loads(path.read_text())
     groups = spec["absenceEffects"]
     require(set(groups["partialRemovalOnError"]).isdisjoint(groups["atomicRejection"])
@@ -42,12 +44,12 @@ def specifications():
     return spec, {"mysql": drop_contract()[1]["mysql"]}
 
 
-def case(tag, views, optional=False, dependent=False):
-    return {"dialect": "mysql", "release": tag, "dropView": {"targets": views, "ifExists": optional}, "dependent": dependent}
+def case(tag, views, optional=False, dependent=False, shadowed=False):
+    return {"dialect": "mysql", "release": tag, "dropView": {"targets": views, "ifExists": optional}, "dependent": dependent, "shadowed": shadowed}
 
 
-def finite(tag, sequence, optional, dependent):
-    return case(tag, SEQUENCES[sequence], optional, dependent)
+def finite(tag, sequence, optional, dependent, shadowed=False):
+    return case(tag, SEQUENCES[sequence], optional, dependent, shadowed)
 
 
 def finite_ids(_, spec, _tag):
@@ -58,11 +60,12 @@ def finite_ids(_, spec, _tag):
 
 def finite_id(_, actual, item):
     views = actual["dropView"]
-    return next(name for name, choices in SEQUENCES.items() if choices == views["targets"]), views["ifExists"], item["dependent"]
+    return next(name for name, choices in SEQUENCES.items() if choices == views["targets"]), views["ifExists"], item["dependent"], item["shadowed"]
 
 
-def request(tag, sql):
-    return {"dialect": "mysql", "release": tag, "sql": sql, "declarations": DECLARATIONS}
+def request(tag, sql, shadowed=False):
+    session_tables = [f"CREATE TEMPORARY TABLE {schema}.{name} (value int)" for schema, name in (A, MISSING, DECOY)] if shadowed else []
+    return {"dialect": "mysql", "release": tag, "sql": sql, "declarations": [*DECLARATIONS, *session_tables]}
 
 
 def analyzed(tag):
@@ -72,6 +75,9 @@ def analyzed(tag):
     yield f"DROP VIEW {'.'.join(A)} RESTRICT", finite(tag, "first", False, True)
     yield f"DROP VIEW {'.'.join(A)} CASCADE", finite(tag, "first", False, True)
     yield f"DROP VIEW {'.'.join(A)}, {'.'.join(DECOY)}", finite(tag, "cross-schema", False, True)
+    yield f"DROP VIEW {'.'.join(A)}", finite(tag, "first", False, False, True)
+    yield f"DROP VIEW IF EXISTS {'.'.join(MISSING)}", finite(tag, "missing", True, False, True)
+    yield f"DROP VIEW {'.'.join(A)}, {'.'.join(DECOY)}", finite(tag, "cross-schema", False, True, True)
 
 
 def negatives(tag):
@@ -85,13 +91,14 @@ def negatives(tag):
     yield request(tag, f"DROP VIEW {'.'.join(MISSING)}"), {"exception": SEMANTIC, "message": "ir_dv_missing"}
     yield request(tag, "DROP VIEW IF EXISTS outside_fixture.ir_dv_missing"), {
         "exception": INVALID, "message": "DROP VIEW requires a known absolute view identity."}
+    yield request(tag, f"DROP VIEW {'.'.join(MISSING)}", True), {"exception": SEMANTIC, "message": "does not exist"}
 
 
 def seeded(tag, seed, count):
     rng = Random(seed)
     for index in range(count):
         targets = rng.sample((A, B, MISSING, DECOY), 1 + rng.randrange(4))
-        yield case(tag, targets, bool(index % 2), bool(index % 3))
+        yield case(tag, targets, bool(index % 2), bool(index % 3), bool(index % 4 < 2))
 
 
 def requests(_, tag, spec):
@@ -101,7 +108,7 @@ def requests(_, tag, spec):
     authored = list(analyzed(tag))
     require(len(authored) == len(spec["analysis"]), "mysql-drop-view-analysis-count")
     for index, (sql, item) in enumerate(authored):
-        yield f"analyze/{index}", request(tag, sql), item, None
+        yield f"analyze/{index}", request(tag, sql, item["shadowed"]), item, None
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, seed, spec["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{index}", item, item, None
@@ -115,10 +122,12 @@ def check_value(item, reply):
     require(item["dropView"] == reply["dropView"], "mysql-drop-view-graph", {"expected": item, "observed": reply, "sql": reply["sql"]})
 
 
-def snapshot(views, committed):
+def snapshot(views, committed, shadowed=False):
     objects = [[schema, name, "VIEW"] for schema, name in views]
     objects.extend([[SCHEMA, "ir_dv_base", "BASE TABLE"], [SCHEMA, "ir_dv_marker", "BASE TABLE"]])
-    return {"objects": sorted(objects), "base": [None, 7, 7, 31], "marker": [0, 7] if committed else [0]}
+    session = [[".".join(identity), True, [None, value, value]]
+               for identity, value in ((A, 101), (MISSING, 201), (DECOY, 301))] if shadowed else []
+    return {"objects": sorted(objects), "base": [None, 7, 7, 31], "marker": [0, 7] if committed else [0], "temporary": session}
 
 
 def prediction(item):
@@ -128,10 +137,10 @@ def prediction(item):
     failed = absent and not item["dropView"]["ifExists"]
     partial_releases = specifications()[0]["absenceEffects"]["partialRemovalOnError"]
     retained = initial if failed and item["release"] not in partial_releases else [name for name in initial if name not in targets]
-    final = snapshot(retained, True)
+    final = snapshot(retained, True, item["shadowed"])
     diagnostics = [["Error" if failed else "Note", 1051, "Unknown table 'ir_fixture.ir_dv_missing'"]] if absent else []
     return {"status": "view-removal", "result": ["db-error", "42S02", 1051] if failed else ["dropped"],
-            "diagnostics": diagnostics, "active": False, "initial": snapshot(initial, False),
+            "diagnostics": diagnostics, "active": False, "initial": snapshot(initial, False, item["shadowed"]),
             "after": final, "afterRollback": final}
 
 
@@ -145,7 +154,7 @@ def check_preparation(_, environment, prepared):
 
 
 def observer_request(item, sql):
-    return {"sql": sql, "dependent": item["dependent"]}
+    return {"sql": sql, "dependent": item["dependent"], "shadowed": item["shadowed"]}
 
 
 def observation(raw):
@@ -165,6 +174,7 @@ def sample_forms(forms, reply, _, item):
     forms[f"count/{len(views)}"] += 1
     forms[f"optional/{drop['ifExists']}"] += 1
     forms[f"dependent/{item['dependent']}"] += 1
+    forms[f"shadowed/{item['shadowed']}"] += 1
     forms[f"absent/{MISSING in views}"] += 1
     forms[f"decoy/{DECOY in views}"] += 1
     if MISSING in views and A in views:
@@ -173,7 +183,7 @@ def sample_forms(forms, reply, _, item):
 
 def required_forms(*_):
     return {"count/1", "count/2", "count/3", "count/4", "optional/True", "optional/False", "dependent/True", "dependent/False",
-            "absent/True", "absent/False", "decoy/True", "decoy/False", "missing-order/first", "missing-order/later"}
+            "absent/True", "absent/False", "decoy/True", "decoy/False", "missing-order/first", "missing-order/later", "shadowed/True", "shadowed/False"}
 
 
 def controls():
@@ -196,9 +206,20 @@ def boundary(item, reply):
     raise Failure("mysql-drop-view-invalid-published", {"sql": reply["sql"], "observed": reply, "expected": item["boundary"]})
 
 
+def shadow_binding(item, reply):
+    if reply["status"] == "constructed":
+        check_value(item["expected"], reply)
+        return
+    require(rejects(reply, {"exception": INVALID, "message": "DROP VIEW needs a declared view or a permitted known absence."}),
+            "mysql-drop-view-unexpected-shadow-failure", reply)
+    raise Failure("mysql-drop-view-lost-shadowed-binding", {"sql": item["authored"], "expected": item["expected"], "observed": reply})
+
+
 def fault_probe(item, reply, db):
     if "boundary" in item:
         boundary(item, reply)
+    elif "authored" in item:
+        shadow_binding(item, reply)
     else:
         probe(item, reply, db, sys.modules[__name__])
 
@@ -209,6 +230,9 @@ def replay_fault(rule, record):
         if "boundary" in rule.item:
             boundary(rule.item, record["healthyResponse"])
             boundary(rule.item, record["mutantResponse"])
+        elif "authored" in rule.item:
+            shadow_binding(rule.item, record["healthyResponse"])
+            shadow_binding(rule.item, record["mutantResponse"])
         else:
             check_value(rule.item, record["healthyResponse"])
             check_value(rule.item, record["mutantResponse"])
@@ -224,6 +248,8 @@ def replay_fault(rule, record):
 def faults(_, tag):
     path = "sql-semantics-mysql/src/Ir/Schema/View/DropView.php"
     invalid, reason = list(negatives(tag))[1]
+    shadowed_sql = f"DROP VIEW {'.'.join(A)}"
+    shadowed = {"authored": shadowed_sql, "expected": finite(tag, "first", False, False, True)}
     return [
         RenderFault("drop-view-substitute-decoy", path, "$names[] = $target->quoted();", "$names[] = '`ir_dv_decoy`.`ir_dv_a`';",
                     finite(tag, "first", False, True), "meaning-mismatch"),
@@ -233,6 +259,9 @@ def faults(_, tag):
                     finite(tag, "missing-first", True, True), "meaning-mismatch"),
         RenderFault("drop-view-admit-repeated-target", path, "!isset($seen[$key]),", "true,",
                     {"boundary": reason}, "mysql-drop-view-invalid-published", invalid),
+        RenderFault("drop-view-consult-session-overlay", path.replace("DropView.php", "DropViewLowering.php"),
+                    "TableNamespace::Persistent", "TableNamespace::Visible", shadowed,
+                    "mysql-drop-view-lost-shadowed-binding", request(tag, shadowed_sql, True)),
     ]
 
 

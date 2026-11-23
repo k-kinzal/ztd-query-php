@@ -960,6 +960,19 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $move = $rename->moves[0];
             $details['mysqlSessionRename'] = [$move->origin->schema->value, $move->origin->table->value, $move->to->table->value];
         }
+        if ($platform === 'MySql' && $role === 'Schema\\View\\DropView') {
+            $viewNamespaces = $semantics->context([
+                'CREATE VIEW app.shadowed_view AS SELECT 1 AS id',
+                'CREATE TEMPORARY TABLE app.shadowed_view (id int)',
+                'CREATE TEMPORARY TABLE app.session_only (id int)',
+            ]);
+            $shadowed = $semantics->analyze('DROP VIEW app.shadowed_view', $viewNamespaces);
+            $absent = $semantics->analyze('DROP VIEW IF EXISTS app.session_only', $viewNamespaces);
+            $details['mysqlShadowedViewRemoval'] = array_map(
+                static fn ($drop): array => [$drop->targets[0]->schema->value, $drop->targets[0]->view->value, $drop->ifExists, $drop->toString()],
+                [$shadowed, $absent]
+            );
+        }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $details['mysqlTruncate'] = [$result->target->schema->value, $result->target->table->value];
         }

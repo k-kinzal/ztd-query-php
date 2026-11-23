@@ -180,7 +180,7 @@ def inventory(root):
             for rule in ("drop", "drop_view", "drop_view_stmt"):
                 for alternative in rules.get(rule, ()):
                     if " VIEW_SYM " in alternative or (rule != "drop" and alternative != rule + ":"):
-                        related[alternative] = (*related.get(alternative, ()), "mysql-drop-view-v2.json")
+                        related[alternative] = (*related.get(alternative, ()), "mysql-drop-view-v3.json")
             for rule in ("having_clause", "opt_having_clause"):
                 for alternative in rules.get(rule, ()):
                     if " HAVING " in alternative or " HAVING_SYM " in alternative:

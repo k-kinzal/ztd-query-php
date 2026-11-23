@@ -62,7 +62,7 @@ NATIVE = {
     "mysql_text_literal": "mysql-text-literal-v1.json",
     "mysql_varchar_slots": "mysql-varchar-slots-v2.json",
     "mysql_external_views": "mysql-external-views-v1.json",
-    "mysql_drop_view": "mysql-drop-view-v2.json",
+    "mysql_drop_view": "mysql-drop-view-v3.json",
     "mysql_ordered_table_rename": "mysql-ordered-table-rename-v2.json",
     "mysql_truncate": "mysql-truncate-v1.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",

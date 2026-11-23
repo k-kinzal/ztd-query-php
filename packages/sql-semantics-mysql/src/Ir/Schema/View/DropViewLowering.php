@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Resolution\TableLookup;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Table\DeclaredTable;
@@ -42,7 +43,7 @@ final class DropViewLowering
         $lookup = new TableLookup();
         $targets = [];
         foreach ($statement->views as $target) {
-            $resolution = $lookup->find($context, $target);
+            $resolution = $lookup->find($context, $target, TableNamespace::Persistent);
             if ($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::View && $resolution->table->complete) {
                 $name = $resolution->table->name;
             } elseif ($statement->ifExists && $resolution instanceof MissingTable) {

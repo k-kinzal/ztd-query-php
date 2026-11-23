@@ -66,6 +66,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-with-projection-boundaries-v1.json', '187862930a636233380862b33a0c0c1d069367278cb6ef70e945d0fa0f642396'],
             ['mysql-grouped-having-boundaries-v1.json', 'b4418e87b51864f6fb59c01c39517e56d78fdbccb1dd7b1e91c781a9b40cb20e'],
             ['mysql-drop-view-boundaries-v1.json', '4efba4950adbee525f68c8efb1473faada655c9aba134cbca0c50a522e7e4dc6'],
+            ['mysql-drop-view-boundaries-v2.json', 'a61772f65192e9ec90365cfc2c5b3744a476639f3a2ed2fb70aae24f3f9b72f5'],
             ['mysql-create-view-boundaries-v1.json', 'f1b3f058793119e58c0d97a70bd196c287f858e4cac779cb1553dde07e7a9a03'],
             ['mysql-ordered-table-rename-boundaries-v2.json', '47429c60cbcf1cad80643c5d3d48c59c30029ff2b049e9d994a535ac9bb492d3'],
             ['mysql-truncate-boundaries-v1.json', 'fc59f04c29a91fb5423d92e050c2018bd2636e6e53e45760a8fad2c4b4f52cee'],
@@ -285,6 +286,7 @@ function checkNativeBoundaries(
                 'Ir\\Aggregation\\GroupedComparison', 'Ir\\Aggregation\\GroupedKeys', 'Ir\\Aggregation\\HavingLowering', 'Model\\Statement\\Reference\\Column\\AliasTarget',
                 'Statement\\Call\\Aggregate\\Aggregate as ParsedAggregate', 'Statement\\Query\\SelectOption', 'Statement\\Query\\SelectExpression as Target',
                 'Ir\\Schema\\View\\ViewName', 'Ir\\Schema\\View\\DropView', 'Model\\Resolution\\TableLookup', 'Model\\Statement\\Reference\\Table\\MissingTable',
+                'Model\\Resolution\\TableNamespace',
                 'Ir\\Schema\\View\\CreateView', 'Ir\\Schema\\View\\ViewColumn', 'Ir\\Schema\\View\\ViewAlgorithm', 'Ir\\Schema\\View\\ViewSecurity',
                 'Ir\\Schema\\View\\ViewCreationPolicy', 'Ir\\Schema\\View\\ViewQueryBounds'] as $name) {
                 $imports .= 'use ' . $platform . '\\' . $name . ';' . "\n";
