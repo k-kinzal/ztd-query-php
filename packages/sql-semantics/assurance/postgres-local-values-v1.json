@@ -1,0 +1,82 @@
+{
+  "revision": "SemanticsIR/postgres-local-values-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL standalone and lexical VALUES under the existing PostgreSQL UTF-8 profiles.",
+  "extends": ["postgres-values-v3.json", "server-local-projection-v4.json", "postgres-with-projection-v1.json"],
+  "roles": ["Rows/Values/ValuesQuery", "Rows/With/WithDefinition", "Rows/With/WithProjection", "Rows/With/WithRead", "Rows/LocalProjection", "Rows/LocalResultColumn"],
+  "structure": "Accept a complete rectangular constant table where a derived projection or an ordinary WITH member owns an independent query. Local reads record exact definition and field coordinates.",
+  "conditions": "Check each selected slot against the definition width in the owning scope. Independently nested scopes remain separate. Every independent WITH member uses the same release and native parameter signature. Standalone VALUES has no native inputs. Reject lateral placement, unresolved columns, cross-profile nesting, or unsupported outer clauses.",
+  "meaning": "Compute the constant table's native column types and row bag first, then select named columns in the recorded order. An ordinary WITH definition contributes its row bag under the stored materialization policy and can feed later lexical reads. An independent VALUES final body exposes native column names.",
+  "sql": "When a VALUES query supplies a local heading, name its fully known positions by ordinal. Keep the default column1, column2 and subsequent names when a VALUES body is the final observable result. Preserve native materialization placement, duplicate and NULL rows.",
+  "observations": [
+    "Local source category, exact coordinates, labels and selected fields from the loaded structure",
+    "Result names, column order, native PostgreSQL OIDs and typed values",
+    "Duplicate rows and NULL cells through more than one lexical or derived projection",
+    "An unused definition with a native parameter while the VALUES result has no parameters"
+  ],
+  "finite": {
+    "position": ["derived", "with-source", "with-body", "nested-with-source"],
+    "layout": ["forward", "reverse"],
+    "rowBag": ["duplicated", "nullable", "single"],
+    "kind": ["integer", "bigint", "boolean", "text"],
+    "identities": 96,
+    "completeness": "Recover placement, output positions, actual constant row bag family and selected native type from the checked graph. For an independent VALUES body, reverse the observable cell positions themselves."
+  },
+  "analysis": [
+    "A derived VALUES with native column names",
+    "A derived VALUES renamed by its local alias column list",
+    "An ordinary WITH values definition and explicit projected fields",
+    "A MATERIALIZED VALUES definition with duplicate rows",
+    "A NOT MATERIALIZED VALUES definition with a typed output and an untyped NULL",
+    "A WITH query with a terminal constant table",
+    "A derived WITH query whose terminal VALUES body uses its own local heading",
+    "A local WITH read chains through two independent constant table scopes"
+  ],
+  "negative": [
+    "Out-of-bounds direct derived slot",
+    "Out-of-bounds direct WITH slot",
+    "Independent VALUES with the wrong release",
+    "Lateral derived VALUES",
+    "Unknown analyzed output field",
+    "Outer result selection outside the admitted local projection shape"
+  ],
+  "exploration": {
+    "seeds": [2039, 12227, 43651],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary width, exact native types, definition count, materialization, repeated and reordered field reads, nested query scopes, repeated rows, NULL and mixed signed widths."
+  },
+  "faults": [
+    "Use a wrong local source coordinate",
+    "Switch the order of generated VALUES heading aliases",
+    "Replace a VALUES member with a different constant table",
+    "Accept a local field outside its VALUES heading",
+    "Erase a materialization policy"
+  ],
+  "evidence": {
+    "P01": "Keep explicit local source and field coordinates together with the complete native input.",
+    "P02": "Validate widths, native release, scope and parameter signature in the owning boundary.",
+    "P03": "Retain only the constant table, exact binding and semantic result heading.",
+    "P04": "Derive the local result by projecting the complete typed row bag.",
+    "P05": "Preserve closed immutable input values across all compositions.",
+    "P06": "Print the complete native bindings and result columns with exact types, values and duplicate policy.",
+    "Q01": "Reject wrong local slots, profiles and analyzed placements.",
+    "Q02": "Consume the fixed product and authored examples without retries.",
+    "Q03": "Compare the independent lexical and positional evaluator.",
+    "Q04": "Compare native originals and output SQL under the specified types, values and headings.",
+    "Q05": "Attach the expanded direct and analyzed paths to the installed PHP and its exact closed code form."
+  },
+  "open": [
+    "Lateral VALUES, correlated and recursive references",
+    "VALUES through general joins, grouped and bounded query placements or compound set arms",
+    "Additional cell types and runtime expression operands"
+  ],
+  "trust": ["Previously fixed PostgreSQL VALUES and WITH scope rules", "Independent raw PDO observation and row model", "Pinned profile and exact runtime package"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-values.html",
+    "https://www.postgresql.org/docs/17/queries-with.html"
+  ]
+}
