@@ -1,0 +1,71 @@
+{
+  "revision": "SemanticsIR/postgres-text-insert-query-1",
+  "approval": "pending-human-review",
+  "extends": ["server-insert-query-v2.json", "postgres-text-insert-v1.json", "postgres-typed-columns-v2.json"],
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "requiredScope": "The complete required language and role scope remains in force.",
+  "constructors": {
+    "Mutation/InsertQuery": {
+      "role": "An ordered write of the native cells produced by an independent checked SELECT.",
+      "structure": "One destination, one checked SELECT with explicitly typed output roles and one detached RETURNING layout.",
+      "conditions": "Output width and native kind agree with the exact write slot at each position. The definition is unbounded and unordered. Signed expressions remain within the int4 role. Text uses a resolved native text reference or literal. Explicit NULL inhabits the owning destination's kind. The complete root verifies the return coordinates over the target.",
+      "meaning": "Interpret the independent SELECT once for its scoped input rows, filter and duplicate policy. Insert every projected row in that fixed value correspondence and use native defaults for omitted slots.",
+      "sql": "Write the exact target layout and the producing SELECT. Type a NULL with the corresponding native destination kind and preserve source aliasing and DISTINCT."
+    }
+  },
+  "externalInterpretation": "Use the same resolved ordinary input relations and the same writable destination. The input fixture has repeated, distinct and nullable native rows; the target fixture has known values and defaults.",
+  "observations": [
+    "Preserve text values, exact target position, native result metadata and affected rows.",
+    "Preserve input duplicate policy, source predicates and zero-row writes.",
+    "Preserve SQL NULL distinctly from empty text and omit fields with native defaults.",
+    "Observe the exact target before and after the statement and restore both input and output fixture relations."
+  ],
+  "finite": {
+    "source": ["constant", "table"],
+    "layout": ["text", "int-text", "text-int"],
+    "mode": ["value", "nullable", "no-row"],
+    "duplicates": ["all", "distinct"],
+    "identities": 36,
+    "completeness": "Recover origin, positional native layout, NULL form or filter, and duplicate policy from each observed constructed value."
+  },
+  "exploration": {
+    "seeds": [8221, 49943, 58243],
+    "casesPerSeed": 22,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary text field roles, typed constants, explicit NULL, no rows, native int4 positions, DISTINCT and returned slots."
+  },
+  "analysis": [
+    "Insert a bare text projection into a resolved text slot.",
+    "Insert mixed native fields with a target order differing from the physical layout.",
+    "Preserve mixed projection including DISTINCT and typed NULL in text.",
+    "Read a text field from an explicitly aliased independent source under a text presence predicate."
+  ],
+  "negative": [
+    "Directly give a signed expression to a native text target.",
+    "Directly give a native text expression to a signed integer target.",
+    "Provide a narrower SELECT than its destination.",
+    "Use an invalid RETURNING occurrence."
+  ],
+  "faults": [
+    "Read the other source text field for the same destination.",
+    "Discard the duplicate-elimination policy of the producing SELECT.",
+    "Discard the producing SELECT's admission predicate."
+  ],
+  "evidence": {
+    "P01": "Observe the exact source and destination roles, ordinals, native kinds, duplicate policy and filter.",
+    "P02": "Check every input role and native type before publishing the owning INSERT.",
+    "P03": "Retain only the checked query, ordered destination and RETURNING fields.",
+    "P04": "Compose independent query results with the checked positional write in one immutable value.",
+    "P05": "Audit closed readonly definition and detached ordered destination and returning layouts.",
+    "P06": "Compare the emitted native SQL and exact observed result and physical effects.",
+    "Q01": "Refuse wrong write roles and widths at the owner before output.",
+    "Q02": "Require each finite identity, named analysis case and exploratory form.",
+    "Q03": "Independently derive projected rows, duplicate policy and writable position correspondence.",
+    "Q04": "Compare native mutation effects on both releases and expose source, predicate and duplicate faults.",
+    "Q05": "Link the exact measured tree and installed package bytes to independent observations."
+  },
+  "open": ["General computed text expressions, conflict forms, joined INSERT inputs and other native kinds retain separate obligations."],
+  "trust": ["Matching independent input and destination declarations", "Native catalog defaults and SQL effect semantics", "Audited immutable value and native observation rules"]
+}
