@@ -18,7 +18,7 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-assignment"
-CONTRACT = "7bcaa7ea829e8bd2c83d481a3b9a2eedab98328eefbf7ca6d4e3e1ac3592e51f"
+CONTRACT = "7bfd83feaa665f4619e27618f7402f43cd54c333714f37cc27bba2f4919276e2"
 NAME = "ir_varchar_assignment"
 TARGET = f"{SCHEMA}.{NAME}"
 EVENTS = f"{SCHEMA}.{NAME}_events"
@@ -46,7 +46,7 @@ DECLARATION = f"CREATE TABLE {TARGET} ({DEFINITION}) ENGINE=InnoDB"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-assignment-v3.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-assignment-v4.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-assignment-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -86,13 +86,17 @@ def prepare(_engine, db):
                                   f"WHERE TABLE_SCHEMA = '{SCHEMA}' AND TABLE_NAME IN ('{NAME}', '{NAME}_events') "
                                   "ORDER BY TABLE_NAME"})
     settings = db.request({"sql": "SELECT @@sql_notes, @@max_error_count, @@lc_messages"})
-    return {"fixture": response, "outside": outside, "rows": before, "storage": storage, "diagnosticSettings": settings["rows"]}
+    triggers = db.request({"sql": "SELECT TRIGGER_NAME, EVENT_MANIPULATION, ACTION_TIMING FROM information_schema.TRIGGERS "
+                                   f"WHERE TRIGGER_SCHEMA = '{SCHEMA}' AND EVENT_OBJECT_TABLE = '{NAME}'"})
+    return {"fixture": response, "outside": outside, "rows": before, "storage": storage,
+            "diagnosticSettings": settings["rows"], "triggers": triggers["rows"]}
 
 
 def check_preparation(engine, _environment, observed):
     require(engine == "mysql", "mysql-varchar-assignment-engine", engine)
     same({"status": "fixture"}, observed["fixture"])
     same([[1, 64, "en_US"]], observed["diagnosticSettings"])
+    same([[NAME + "_observe", "UPDATE", "AFTER"]], observed["triggers"])
     same([{"status": "outside-observer-scope"}] * 3, observed["outside"])
     same([[NAME, "InnoDB"], [NAME + "_events", "InnoDB"]], observed["storage"]["rows"])
     same([list(row) for row in CONTENTS], observed["rows"]["rows"])
@@ -198,6 +202,15 @@ def analyzed(tag):
     yield (f"UPDATE {TARGET} SET nullable_value = 'a ' WHERE source_value <=> 'a'",
            statement(tag, [assignment("nullable_value", text("a "))], comparison("<=>", select_slot("source_value"), text("a"))))
 
+    assigning = assignment("required_value", ["null"])
+    copying = assignment("nullable_value", select_slot("required_value"))
+    yield (f"UPDATE {TARGET} SET required_value = NULL, nullable_value = required_value, required_value = 'y'",
+           statement(tag, [assigning, copying, assignment("required_value", text("y"))]))
+    yield (f"UPDATE {TARGET} SET required_value = NULL, nullable_value = required_value",
+           statement(tag, [assigning, copying]))
+    yield (f"UPDATE {TARGET} SET required_value = NULL, required_value = NULL",
+           statement(tag, [assigning, assigning]))
+
 
 def negative(tag):
     scope = "A VARCHAR slot must belong to a visible physical input occurrence."
@@ -265,13 +278,15 @@ def expected(item):
     baseline = {"rows": [list(row) for row in CONTENTS], "events": []}
     after, events, diagnostics = [], [], []
     changed = 0
+    deferred_required = item["release"] == "mysql-5.7.44"
+    required_index = HEADING.index("required_value")
     for original in CONTENTS:
         current = list(original)
         if admits(item["where"], lambda term: evaluated(term, original, target)):
             for written, expr in item["assignments"]:
                 dest = address(written, target)
                 value = evaluated(expr, current, target)
-                if value is None and dest == "required_value":
+                if value is None and dest == "required_value" and not deferred_required:
                     diagnostics.append(["Warning", 1048, dest])
                     value = ""
                 if dest in CAPACITY and value is not None and len(value) > CAPACITY[dest]:
@@ -281,6 +296,9 @@ def expected(item):
                     diagnostics.append(["Warning" if fast_copy or has_nonspace else "Note", 1265, dest])
                     value = value[:width]
                 current[HEADING.index(dest)] = value
+            if current[required_index] is None:
+                diagnostics.append(["Warning", 1048, "required_value"])
+                current[required_index] = ""
             events.append([current[0], *original[2:6], *current[2:6]])
             changed += int(tuple(current) != original)
         after.append(current)
