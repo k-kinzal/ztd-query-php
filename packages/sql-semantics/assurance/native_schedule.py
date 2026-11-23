@@ -64,7 +64,7 @@ NATIVE = {
     "mysql_external_views": "mysql-external-views-v1.json",
     "mysql_drop_view": "mysql-drop-view-v3.json",
     "mysql_ordered_table_rename": "mysql-ordered-table-rename-v2.json",
-    "mysql_truncate": "mysql-truncate-v1.json",
+    "mysql_truncate": "mysql-truncate-v2.json",
     "mysql_session_table_sources": "mysql-session-table-sources-v1.json",
     "mysql_create_view": "mysql-create-view-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v2.json",

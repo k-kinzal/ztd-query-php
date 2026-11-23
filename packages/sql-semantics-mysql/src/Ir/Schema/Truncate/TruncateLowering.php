@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Truncate;
 
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
@@ -17,14 +19,14 @@ use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable as ParsedTruncateTable;
 
 /**
- * Resolves the persistent MySQL truncation target before publication.
+ * Resolves the MySQL truncation target and its namespace before publication.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class TruncateLowering
 {
     /**
-     * Publishes the exact persistent relation bound by the analyzer.
+     * Publishes the exact table bound by the analyzer.
      */
     public function lower(BoundStatement $operation, ParsedTruncateTable $statement): TruncateTable
     {
@@ -35,14 +37,15 @@ final class TruncateLowering
         $resolution = $operation->facts->relation($statement)->table;
         Check::input(
             $resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable
-            && !$resolution->table->temporary && $resolution->table->name->catalog === null,
-            'TRUNCATE TABLE requires a resolved persistent base table.',
+            && $resolution->table->name->catalog === null,
+            'TRUNCATE TABLE requires a resolved base table.',
         );
         $name = $resolution->table->name;
         $schema = ($name->schema ?? $context->declarationSchema)->value;
         Check::input($schema !== SessionDatabase::UNNAMED, 'TRUNCATE TABLE needs an absolute table identity.');
+        $kind = $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;
         $target = new TableName(new Identifier($schema), new Identifier($name->name->value));
 
-        return new TruncateTable($target, $profile->grammar);
+        return new TruncateTable(new TableIdentity($target, $kind), $profile->grammar);
     }
 }

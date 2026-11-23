@@ -519,7 +519,7 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "mysql-ordered-table-rename-v2.json")
             for rule in ("truncate", "truncate_stmt", "opt_table_sym", "opt_table"):
                 for alternative in rules.get(rule, []):
-                    related[alternative] = (*related.get(alternative, ()), "mysql-truncate-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "mysql-truncate-v2.json")
         if mysql:
             declarations = {
                 "field_spec: field_ident type opt_attribute",

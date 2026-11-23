@@ -821,7 +821,10 @@ if ($dialect !== 'sqlite') {
         $truncate = 'Schema\\Truncate\\TruncateTable';
         $roots[] = $truncate;
         $internal[] = 'Schema\\Truncate\\TruncateLowering';
-        $properties[$truncate] = ['target' => [$tableName], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $identity = 'Schema\\Identity\\TableIdentity';
+        $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
+        $methods[$identity] = ['__construct', 'quoted'];
+        $properties[$truncate] = ['target' => [$identity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$truncate] = ['__construct', 'profileId', 'toString'];
         $methods[$renameTable] = ['__construct', 'profileId', 'toString'];
         $methods[$tableRename] = ['__construct', 'toString'];

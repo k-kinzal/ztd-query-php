@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Schema\Truncate;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateLowering;
 use SqlSemantics\Platform\MySql\Ir\Schema\Truncate\TruncateTable;
 use SqlSemantics\Platform\MySql\Model\Contract\SearchPath;
@@ -23,7 +24,17 @@ final class TruncateLoweringTest extends TestCase
         $table = $semantics->analyze('TRUNCATE today', $declarations);
 
         self::assertInstanceOf(TruncateTable::class, $table);
-        self::assertSame('logs', $table->target->schema->value);
-        self::assertSame('today', $table->target->table->value);
+        self::assertSame('logs', $table->target->name->schema->value);
+        self::assertSame('today', $table->target->name->table->value);
+    }
+
+    public function testLowerRetainsTheSessionTargetWhenATableShadowsTheSameName(): void
+    {
+        $semantics = new Semantics(searchPath: new SearchPath('logs'));
+        $declarations = $semantics->context(['CREATE TABLE logs.today (id int)', 'CREATE TEMPORARY TABLE logs.today (id int)']);
+        $table = $semantics->analyze('TRUNCATE today', $declarations);
+
+        self::assertInstanceOf(TruncateTable::class, $table);
+        self::assertSame(ExternalRelationKind::TemporaryTable, $table->target->kind);
     }
 }

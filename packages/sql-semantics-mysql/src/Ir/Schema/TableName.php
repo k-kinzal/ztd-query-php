@@ -9,7 +9,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * The identity of an ordinary table in a named persistent schema.
+ * The absolute coordinates of a table in a named MySQL schema.
  *
  * @visibility public
  * @example Quoting both parts of a table identity

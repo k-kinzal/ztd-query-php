@@ -8,12 +8,14 @@ if ($argv[1] !== 'mysql') {
     throw new RuntimeException('The MySQL truncation observer requires MySQL.');
 }
 [$pdo, $environment] = connectFixture('mysql');
-if ($pdo->query('SELECT DATABASE()')->fetchColumn() !== 'ir_fixture') {
+[$catalog] = connectFixture('mysql');
+if ($pdo->query('SELECT DATABASE()')->fetchColumn() !== 'ir_fixture'
+    || $catalog->query('SELECT DATABASE()')->fetchColumn() !== 'ir_fixture') {
     throw new RuntimeException('The MySQL truncation observer requires the disposable ir_fixture database.');
 }
 $pdo->exec('CREATE DATABASE IF NOT EXISTS ir_mtr_decoy');
 if (version_compare($environment[0], '8.0.0', '>=')) {
-    $pdo->exec('SET SESSION information_schema_stats_expiry = 0');
+    $catalog->exec('SET SESSION information_schema_stats_expiry = 0');
 }
 
 function truncateIdentifier(string $identifier): string
@@ -132,7 +134,44 @@ function allowMysqlTruncate(string $sql): bool
     return preg_match('/\ATRUNCATE (?:TABLE )?(?:' . $schema . '\.)?' . $relation . '\z/D', $sql) === 1;
 }
 
-function observeMysqlTruncate(PDO $pdo, array $request): array
+function mysqlTruncateSessionName(?array $identity): ?string
+{
+    if ($identity === null) {
+        return null;
+    }
+    $names = array_map(static fn (array $relation): array => array_slice($relation, 0, 2), truncateRelations('plain'));
+    $names[] = ['ir_fixture', 'ir_mtr_absent'];
+    if (!in_array($identity, $names, true)) {
+        throw new InvalidArgumentException('The session target must be one of the fixed observer coordinates.');
+    }
+    return truncateName($identity[0], $identity[1]);
+}
+
+function setupMysqlTruncateSession(PDO $pdo, string $name, int $variant): void
+{
+    $pdo->exec('CREATE TEMPORARY TABLE ' . $name . ' (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label VARCHAR(20))'
+        . ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin AUTO_INCREMENT=101');
+    $stmt = $pdo->prepare('INSERT INTO ' . $name . ' (label) VALUES (?), (?), (NULL)');
+    $stmt->execute(['session:' . $variant, 'session:' . $variant]);
+}
+
+function mysqlTruncateSessionState(PDO $pdo, ?string $name): ?array
+{
+    if ($name === null) {
+        return null;
+    }
+    $definition = $pdo->query('SHOW CREATE TABLE ' . $name)->fetch(PDO::FETCH_NUM)[1];
+    $statement = $pdo->query('SELECT id, label FROM ' . $name);
+    $fields = [];
+    for ($index = 0; $index < $statement->columnCount(); $index++) {
+        $metadata = $statement->getColumnMeta($index);
+        $fields[] = [$metadata['name'], $metadata['native_type']];
+    }
+    return ['temporary' => str_starts_with($definition, 'CREATE TEMPORARY TABLE '),
+        'fields' => $fields, 'rows' => $statement->fetchAll(PDO::FETCH_NUM)];
+}
+
+function observeMysqlTruncate(PDO $pdo, PDO $catalog, array $request): array
 {
     $sql = $request['sql'];
     $fixture = $request['fixture'];
@@ -143,40 +182,68 @@ function observeMysqlTruncate(PDO $pdo, array $request): array
     }
     resetMysqlTruncate($pdo, $fixture, $variant);
     mysqlTruncateTriggers($pdo, $fixture);
-    $before = mysqlTruncateState($pdo, $fixture);
+    $sessionName = mysqlTruncateSessionName($request['sessionTarget']);
+    if ($sessionName !== null) {
+        setupMysqlTruncateSession($pdo, $sessionName, $variant);
+    }
+    try {
+        return truncateWithBothNamespaces($pdo, $catalog, $request, $sessionName);
+    } finally {
+        if ($sessionName !== null) {
+            $pdo->exec('DROP TEMPORARY TABLE ' . $sessionName);
+        }
+    }
+}
+
+function truncateWithBothNamespaces(PDO $pdo, PDO $catalog, array $request, ?string $sessionName): array
+{
+    $fixture = $request['fixture'];
+    $before = mysqlTruncateState($catalog, $fixture);
+    $sessionBefore = mysqlTruncateSessionState($pdo, $sessionName);
     $settings = $pdo->query('SELECT DATABASE(), @@foreign_key_checks, @@auto_increment_increment, @@auto_increment_offset')->fetch(PDO::FETCH_NUM);
     $pdo->beginTransaction();
     $pdo->exec('INSERT INTO ir_fixture.ir_mtr_marker VALUES (7)');
     try {
-        $affected = $pdo->exec($sql);
+        $affected = $pdo->exec($request['sql']);
         $effect = ['executed', $affected];
     } catch (PDOException $error) {
         $effect = ['db-error', $error->errorInfo[0], $error->errorInfo[1]];
     }
     $pdo->query('SELECT 1')->fetchColumn();
     $active = $pdo->inTransaction();
-    $after = mysqlTruncateState($pdo, $fixture);
+    $after = mysqlTruncateState($catalog, $fixture);
+    $sessionAfter = mysqlTruncateSessionState($pdo, $sessionName);
     if ($active) {
         $pdo->rollBack();
     } else {
         $pdo->exec('ROLLBACK');
     }
-    $afterRollback = mysqlTruncateState($pdo, $fixture);
+    $afterRollback = mysqlTruncateState($catalog, $fixture);
+    $sessionRestored = mysqlTruncateSessionState($pdo, $sessionName);
     $allocated = [];
     foreach (truncateRelations($fixture) as [$schema, $table]) {
-        $pdo->exec('INSERT INTO ' . truncateName($schema, $table) . ' (label) VALUES (NULL)');
-        $allocated[$schema . '.' . $table] = (int) $pdo->lastInsertId();
+        $catalog->exec('INSERT INTO ' . truncateName($schema, $table) . ' (label) VALUES (NULL)');
+        $allocated[$schema . '.' . $table] = (int) $catalog->lastInsertId();
+    }
+    $sessionAllocated = null;
+    if ($sessionName !== null) {
+        $pdo->exec('INSERT INTO ' . $sessionName . ' (label) VALUES (NULL)');
+        $allocatedId = (int) $pdo->lastInsertId();
+        $idCheck = $pdo->prepare('SELECT id FROM ' . $sessionName . ' WHERE id = ?');
+        $idCheck->execute([$allocatedId]);
+        $sessionAllocated = [$allocatedId, $idCheck->fetchColumn()];
     }
     return ['status' => 'mysql-truncate-effect', 'settings' => $settings, 'before' => $before,
-        'effect' => $effect, 'active' => $active, 'after' => $after, 'afterRollback' => $afterRollback, 'allocated' => $allocated];
+        'effect' => $effect, 'active' => $active, 'after' => $after, 'afterRollback' => $afterRollback, 'allocated' => $allocated,
+        'session' => compact('sessionBefore', 'sessionAfter', 'sessionRestored', 'sessionAllocated')];
 }
 
 resetMysqlTruncate($pdo, 'plain', 0);
 mysqlTruncateTriggers($pdo, 'plain');
-echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => mysqlTruncateState($pdo, 'plain')], JSON_THROW_ON_ERROR) . "\n";
+echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => mysqlTruncateState($catalog, 'plain')], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $request = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
     $batch = array_is_list($request);
-    $results = array_map(static fn (array $item): array => observeMysqlTruncate($pdo, $item), $batch ? $request : [$request]);
+    $results = array_map(static fn (array $item): array => observeMysqlTruncate($pdo, $catalog, $item), $batch ? $request : [$request]);
     echo json_encode($batch ? $results : $results[0], JSON_THROW_ON_ERROR) . "\n";
 }

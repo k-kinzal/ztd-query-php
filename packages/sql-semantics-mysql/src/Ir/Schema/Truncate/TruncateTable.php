@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Truncate;
 
-use SqlSemantics\Platform\MySql\Ir\Schema\TableName;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * Clears one resolved persistent MySQL table through native DDL.
+ * Clears one resolved MySQL table through native DDL.
  *
  * @visibility public
  * @example Publishing a persistent truncation
@@ -23,10 +23,10 @@ final class TruncateTable implements SemanticsIR
     use Snapshot;
 
     /**
-     * Retains the absolute identity and the fixed grammar release.
+     * Retains the absolute table, its namespace and the fixed grammar release.
      */
     public function __construct(
-        public readonly TableName $target,
+        public readonly TableIdentity $target,
         public readonly GrammarRelease $release = GrammarRelease::MySql847,
     ) {
     }

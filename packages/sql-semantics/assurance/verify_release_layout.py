@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v75.json"
-CONTRACT = "e90415d2218b6b79f180ebb5427ecae0ccb206777afcac28756a3cadd7f599c7"
+CONTRACT_NAME = "release-layout-v76.json"
+CONTRACT = "45c2838352372fe17ae8c1bdcfb3a6baa2f3a02422eeebea6a9bd6274c4c8189"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -522,7 +522,7 @@ def verify_probe(raw, catalog):
                 ["app", "session_only", True, "DROP VIEW IF EXISTS `app`.`session_only`"],
             ], "installed-mysql-shadowed-view-removal-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
-            require(item.get("mysqlTruncate") == ["app", "accounts"]
+            require(item.get("mysqlTruncate") == ["app", "accounts", "table", "temporary-table"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",
                     "installed-mysql-truncate-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Truncate\\TruncateTable"):

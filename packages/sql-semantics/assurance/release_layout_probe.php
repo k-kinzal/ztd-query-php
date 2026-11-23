@@ -974,7 +974,10 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             );
         }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
-            $details['mysqlTruncate'] = [$result->target->schema->value, $result->target->table->value];
+            $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);
+            $local = $semantics->analyze('TRUNCATE app.accounts', $temporary);
+            $details['mysqlTruncate'] = [$result->target->name->schema->value, $result->target->name->table->value,
+                $result->target->kind->value, $local->target->kind->value];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $details['postgresTruncate'] = [$result->restartIdentity, $result->cascade, []];

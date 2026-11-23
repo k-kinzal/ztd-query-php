@@ -13,20 +13,24 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-truncate"
 OBSERVER = "mysql_truncate_observer.php"
-CONTRACT_NAME = "mysql-truncate-v1.json"
-CONTRACT = "33bda84cb25fd77b42926291742bfd32a3b66616db27c65e00cdc4b3c8406dd4"
+CONTRACT_NAME = "mysql-truncate-v2.json"
+CONTRACT = "ae66fbc18e9d2fc59120550865194a38c82d6f6ad0b1da1f320988562e76414d"
+PREVIOUS_CONTRACT = "33bda84cb25fd77b42926291742bfd32a3b66616db27c65e00cdc4b3c8406dd4"
 OBSERVER_CONTRACT = "5d9d281f54a92ce6f015c0f8e776081522d613a9a9140cb081ea34d6ed75ba2f"
 COMPLETE_SEEDS = True
 SCHEMA, DECOY = "ir_fixture", "ir_mtr_decoy"
 A, UPPER, B, ESCAPED, REF, ABSENT = ("ir_mtr_" + name for name in ("a", "A", "b", "`quote", "ref", "absent"))
-AXES = ("fixture", "target")
+AXES = ("fixture", "target", "kind")
+SESSION = "temporary-table"
 NAME_FAILURE = "An absolute MySQL table name needs 1 to 64 characters without path separators or a trailing space."
-BIND_FAILURE = "TRUNCATE TABLE requires a resolved persistent base table."
+BIND_FAILURE = "TRUNCATE TABLE requires a resolved base table."
+KIND_FAILURE = "A resolved table identity requires a persistent or temporary table."
+ROLE_MISMATCH = "mysql-truncate-target-role"
 
 
 def specifications():
     path = TOOL / CONTRACT_NAME
-    require(digest(path) == CONTRACT, "mysql-truncate-contract-mismatch")
+    require(digest(path) == CONTRACT and digest(TOOL / "mysql-truncate-v1.json") == PREVIOUS_CONTRACT, "mysql-truncate-contract-mismatch")
     require(digest(TOOL / "mysql-truncate-observer-v1.json") == OBSERVER_CONTRACT,
             "mysql-truncate-observer-contract-mismatch")
     return json.loads(path.read_text()), profiles()[1]
@@ -43,8 +47,8 @@ def targets():
     }
 
 
-def case(tag, fixture, target, variant=0):
-    return {"dialect": "mysql", "release": tag, "fixture": fixture, "variant": variant, "mysqlTruncate": target}
+def case(tag, fixture, target, variant=0, kind="table"):
+    return {"dialect": "mysql", "release": tag, "fixture": fixture, "variant": variant, "mysqlTruncate": [*target, kind]}
 
 
 def finite_ids(_, spec, _tag):
@@ -55,9 +59,10 @@ def finite_ids(_, spec, _tag):
 
 
 def finite_id(_, reply, item):
-    names = [role for role, target in targets().items() if target == reply["mysqlTruncate"]]
+    identity = reply["mysqlTruncate"]
+    names = [role for role, target in targets().items() if target == identity[:2]]
     require(len(names) == 1, "mysql-truncate-unregistered-identity", reply)
-    return item["fixture"], names[0]
+    return item["fixture"], names[0], identity[2]
 
 
 def quote(identifier):
@@ -68,9 +73,11 @@ def qualified(target):
     return ".".join(map(quote, target))
 
 
-def analyzed_request(tag, sql, declarations=None, complete=True):
+def analyzed_request(tag, sql, declarations=None, complete=True, temporary=None):
     if declarations is None:
         declarations = [f"CREATE TABLE {qualified(target)} (id int)" for role, target in targets().items() if role != "absent"]
+    if temporary is not None:
+        declarations = [*declarations, f"CREATE TEMPORARY TABLE {qualified(temporary)} (id int)"]
     return {"dialect": "mysql", "release": tag, "currentDatabase": SCHEMA, "declarations": declarations, "sql": sql, "complete": complete}
 
 
@@ -82,6 +89,12 @@ def analyzed(tag):
     yield f"TRUNCATE {UPPER}", case(tag, "plain", names["mixed-case"])
     yield f"TRUNCATE TABLE {qualified(names['escaped'])}", case(tag, "plain", names["escaped"])
     yield f"TRUNCATE TABLE {A}", case(tag, "self-reference", names["primary"])
+    yield f"TRUNCATE {A}", case(tag, "plain", names["primary"], kind=SESSION)
+    yield f"TRUNCATE TABLE {SCHEMA}.{A}", case(tag, "foreign-key-filled", names["primary"], kind=SESSION)
+    yield f"TRUNCATE {ABSENT}", case(tag, "plain", names["absent"], kind=SESSION)
+    yield f"TRUNCATE TABLE {DECOY}.{A}", case(tag, "foreign-key-empty", names["decoy"], kind=SESSION)
+    yield f"TRUNCATE {UPPER}", case(tag, "plain", names["mixed-case"], kind=SESSION)
+    yield f"TRUNCATE TABLE {qualified(names['escaped'])}", case(tag, "plain", names["escaped"], kind=SESSION)
 
 
 def negatives(tag):
@@ -90,7 +103,7 @@ def negatives(tag):
     yield analyzed_request(tag, f"TRUNCATE {ABSENT}"), SEMANTIC, "does not exist"
     yield analyzed_request(tag, f"TRUNCATE {ABSENT}", complete=False), DIAGNOSTIC, BIND_FAILURE
     yield analyzed_request(tag, f"TRUNCATE {A}", [f"CREATE VIEW {SCHEMA}.{A} AS SELECT 1 AS id"]), SEMANTIC, "is a view"
-    yield analyzed_request(tag, f"TRUNCATE {A}", [f"CREATE TEMPORARY TABLE {SCHEMA}.{A} (id int)"]), DIAGNOSTIC, BIND_FAILURE
+    yield case(tag, "plain", targets()["primary"], kind="view"), DIAGNOSTIC, KIND_FAILURE
 
 
 def seeded(tag, spec, seed, count):
@@ -99,17 +112,18 @@ def seeded(tag, spec, seed, count):
         fixture = rng.choice(spec["finite"]["fixture"])
         target = targets()[rng.choice(spec["finite"]["target"])]
         variant = rng.randint(1, 99)
-        yield case(tag, fixture, target, 0 if position == 0 else variant)
+        kind = rng.choice(spec["finite"]["kind"])
+        yield case(tag, fixture, target, 0 if position == 0 else variant, kind)
 
 
 def requests(_, tag, spec):
-    for index, (fixture, target) in enumerate(product(*(spec["finite"][axis] for axis in AXES))):
-        item = case(tag, fixture, targets()[target])
+    for index, (fixture, target, kind) in enumerate(product(*(spec["finite"][axis] for axis in AXES))):
+        item = case(tag, fixture, targets()[target], kind=kind)
         yield f"finite/{index}", item, item, None
     written = list(analyzed(tag))
     require(len(written) == len(spec["analysis"]), "mysql-truncate-analysis-count")
     for index, (sql, item) in enumerate(written):
-        yield f"analyze/{index}", analyzed_request(tag, sql), item, None
+        yield f"analyze/{index}", analyzed_request(tag, sql, temporary=session_target(item)), item, None
     for seed in spec["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, spec, seed, spec["exploration"]["casesPerSeed"])):
             yield f"seed/{seed}/{index}", item, item, None
@@ -155,13 +169,26 @@ def initial(fixture, variant):
     return {"relations": result, "marker": [0], "deleteEvents": []}
 
 
+def session_target(item):
+    scope = item["mysqlTruncate"]
+    return scope[:2] if scope[2] == SESSION else None
+
+
+def temporary_state(variant, full):
+    rows = [[101, f"session:{variant}"], [102, f"session:{variant}"], [103, None]] if full else []
+    return {"temporary": True, "fields": [["id", "LONG"], ["label", "VAR_STRING"]], "rows": rows}
+
+
 def prediction(item):
     previous = initial(item["fixture"], item["variant"])
-    target = coordinate(item["mysqlTruncate"])
+    target = coordinate(item["mysqlTruncate"][:2])
+    session = session_target(item) is not None
     relations = dict(previous["relations"])
     restricted = any(name != target and any(coordinate(key[2:4]) == target for key in relation["references"])
                      for name, relation in relations.items())
-    if target not in relations:
+    if session:
+        effect = ["executed", 0]
+    elif target not in relations:
         effect = ["db-error", "42S02", 1146]
     elif restricted:
         effect = ["db-error", "42000", 1701]
@@ -169,9 +196,15 @@ def prediction(item):
         effect = ["executed", 0]
         relations[target] = {**relations[target], "rows": [], "nextId": 1}
     after = {**previous, "relations": relations, "marker": [0, 7]}
+    temporary = {
+        "sessionBefore": temporary_state(item["variant"], True) if session else None,
+        "sessionAfter": temporary_state(item["variant"], False) if session else None,
+        "sessionRestored": temporary_state(item["variant"], False) if session else None,
+        "sessionAllocated": [1, 1] if session else None,
+    }
     return {"status": "mysql-truncate-effect", "settings": [SCHEMA, 1, 1, 1], "before": previous,
             "effect": effect, "active": False, "after": after, "afterRollback": after,
-            "allocated": {name: relation["nextId"] for name, relation in relations.items()}}
+            "allocated": {name: relation["nextId"] for name, relation in relations.items()}, "session": temporary}
 
 
 def normalize(state):
@@ -182,18 +215,21 @@ def normalize(state):
 def observation(raw):
     if raw["status"] != "mysql-truncate-effect":
         return raw
-    return {**raw, **{phase: normalize(raw[phase]) for phase in ("before", "after", "afterRollback")}}
+    observed_session = {name: ({**entry, "rows": sorted(entry["rows"], key=json.dumps)}
+                               if isinstance(entry, dict) else entry) for name, entry in raw["session"].items()}
+    return {**raw, **{phase: normalize(raw[phase]) for phase in ("before", "after", "afterRollback")}, "session": observed_session}
 
 
 def check_value(item, response):
     require(response["status"] == "constructed"
             and response["profile"] == item["release"] + "/utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
             "mysql-truncate-positive-rejected", response)
-    same(item["mysqlTruncate"], response["mysqlTruncate"])
+    require(item["mysqlTruncate"] == response["mysqlTruncate"], ROLE_MISMATCH,
+            {"sql": response["sql"], "expected": item["mysqlTruncate"], "observed": response["mysqlTruncate"]})
 
 
 def observer_request(item, sql):
-    return {"sql": sql, "fixture": item["fixture"], "variant": item["variant"]}
+    return {"sql": sql, "fixture": item["fixture"], "variant": item["variant"], "sessionTarget": session_target(item)}
 
 
 def prepare(_, db):
@@ -216,16 +252,17 @@ def check_observation(item, actual, sql):
 
 
 def sample_forms(forms, reply, _, item):
-    fixture, target = finite_id(None, reply, item)
+    fixture, target, kind = finite_id(None, reply, item)
     forms[f"fixture/{fixture}"] += 1
     forms[f"target/{target}"] += 1
+    forms[f"kind/{kind}"] += 1
     forms["data/varied" if item["variant"] else "data/base"] += 1
 
 
 def required_forms(*_):
     spec, _ = specifications()
     return {*(f"fixture/{kind}" for kind in spec["finite"]["fixture"]), *(f"target/{kind}" for kind in targets()),
-            "data/base", "data/varied"}
+            *(f"kind/{kind}" for kind in spec["finite"]["kind"]), "data/base", "data/varied"}
 
 
 def controls():
@@ -278,10 +315,12 @@ def faults(_, tag):
     table = f"{root}/Truncate/TruncateTable.php"
     names = targets()
     name_input, name_exception, name_message = list(negatives(tag))[0]
-    bound_input, bound_exception, bound_message = list(negatives(tag))[-1]
+    invalid_kind, kind_exception, kind_message = list(negatives(tag))[-1]
+    local = case(tag, "foreign-key-filled", targets()["primary"], kind=SESSION)
+    local_request = analyzed_request(tag, f"TRUNCATE {A}", temporary=targets()["primary"])
     bad_path = 'strpbrk($identifier->value, \'/\\\\.\') === false && '
     return [
-        RenderFault("truncate-erase-schema", table, "$this->target->quoted()", "$this->target->table->quoted()",
+        RenderFault("truncate-erase-schema", table, "$this->target->quoted()", "$this->target->name->table->quoted()",
                     case(tag, "plain", names["decoy"]), "meaning-mismatch"),
         RenderFault("truncate-redirect-to-decoy", table, "$this->target->quoted()", repr(qualified(names["decoy"])),
                     case(tag, "plain", names["primary"]), "meaning-mismatch"),
@@ -289,10 +328,13 @@ def faults(_, tag):
                     repr("TRUNCATE TABLE " + qualified(names["secondary"])), case(tag, "self-reference", names["primary"]), "meaning-mismatch"),
         RenderFault("truncate-fold-case", table, "$this->target->quoted()", "strtolower($this->target->quoted())",
                     case(tag, "plain", names["mixed-case"]), "meaning-mismatch"),
-        RenderFault("truncate-admit-temporary", f"{root}/Truncate/TruncateLowering.php", "!$resolution->table->temporary && ", "",
-                    {"boundary": {"exception": bound_exception, "message": bound_message}}, "mysql-truncate-invalid-published", bound_input),
+        RenderFault("truncate-erase-session-role", f"{root}/Truncate/TruncateLowering.php",
+                    "$resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable",
+                    "ExternalRelationKind::BaseTable", local, ROLE_MISMATCH, local_request),
         RenderFault("truncate-admit-path-separator", f"{root}/TableName.php", bad_path, "",
                     {"boundary": {"exception": name_exception, "message": name_message}}, "mysql-truncate-invalid-published", name_input),
+        RenderFault("truncate-admit-view-target", f"{root}/Identity/TableIdentity.php", "$kind->isTable()", "true",
+                    {"boundary": {"exception": kind_exception, "message": kind_message}}, "mysql-truncate-invalid-published", invalid_kind),
     ]
 
 

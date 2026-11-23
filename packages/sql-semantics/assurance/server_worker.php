@@ -831,16 +831,20 @@ function constructMysqlTruncate(string $platform, array $input): SemanticsIR
     $namespace = $platform . 'Ir\\';
     $identifier = $namespace . 'Identifier';
     $table = $namespace . 'Schema\\TableName';
+    $identity = $namespace . 'Schema\\Identity\\TableIdentity';
+    $kind = $namespace . 'From\\ExternalRelationKind';
     $statement = $namespace . 'Schema\\Truncate\\TruncateTable';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
-    [$schema, $name] = $input['mysqlTruncate'];
-    return new $statement(new $table(new $identifier($schema), new $identifier($name)), $release::from($input['release']));
+    [$schema, $name, $role] = $input['mysqlTruncate'];
+    $target = new $identity(new $table(new $identifier($schema), new $identifier($name)), $kind::from($role));
+    return new $statement($target, $release::from($input['release']));
 }
 
 function observeMysqlTruncate(object $value): array
 {
+    $target = $value->target;
     return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
-        'mysqlTruncate' => [$value->target->schema->value, $value->target->table->value]];
+        'mysqlTruncate' => [$target->name->schema->value, $target->name->table->value, $target->kind->value]];
 }
 
 function constructPostgresTruncate(string $platform, array $input): SemanticsIR
