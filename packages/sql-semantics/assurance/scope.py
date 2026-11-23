@@ -100,6 +100,7 @@ CONTRACTS = {
     "postgres-drop-view-v1.json": "f38844b5c9ed143cbd9b46e344f721b384c5ce9a969ec85d08e6319e95e8cd4d",
     "postgres-values-v3.json": "602fa84cd6517e5e56f7b4967669399194522ff952e36183d3acf17c08c9c3c8",
     "postgres-local-values-v2.json": "38b6cccb4b5a203d1a5e3414a924e97ba1f9977a5c8db67d396f999ed476b255",
+    "postgres-values-compound-v1.json": "5593e5a6626ca8cf678d51470a767384ac649469f1823ae1251efde76ccf64e2",
     "postgres-int8-fields-v1.json": "233ffe316162ba2bd1d4b5e8d0e2306c8af183c0293ad4c7941d710f97e2c744",
     "postgres-boolean-write-inputs-v1.json": "0c5d1b89315cc86efc5e3ef81a33519acc56fd2cda870d6efbae56dca787d92b",
     "postgres-boolean-writes-v1.json": "da56df05098ff809b75570477e4d71d1dea17ee75b2ce6ca7202a4416b91567e",

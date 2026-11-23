@@ -560,6 +560,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['withValues'] = [count($body->rows), $body->columnKind(0)->value, $body->columnKind(1)->value,
                 $table->body->definition, array_column($table->body->columns, 'slot'), $table->toString()];
         }
+        if ($platform === 'PostgreSql' && $role === 'Rows\\Compound') {
+            $set = $semantics->analyze('VALUES (5),(5) EXCEPT ALL (SELECT 5 AS other UNION ALL VALUES (4000000000))');
+            if ($set::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $set->left::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery'
+                || $set->right::class !== $namespace . 'Ir\\Rows\\Compound'
+                || $set->right->right::class !== $namespace . 'Ir\\Rows\\Values\\ValuesQuery') {
+                throw new RuntimeException('The installed set lost its native constant-table arms.');
+            }
+            $details['valuesCompound'] = [$set->operator->value, $set->all, $set->left->columnKind(0)->value,
+                $set->right->right->columnKind(0)->value, $set->toString()];
+        }
         if ($platform === 'PostgreSql' && $role === 'Rows\\Values\\ValuesQuery') {
             $details['valuesHeading'] = [$result->columnKind(0)->value, $result->columnKind(1)->value, count($result->rows)];
         }

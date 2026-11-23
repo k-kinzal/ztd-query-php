@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v65.json"
-CONTRACT = "77fbe744dcbbd195abf3509105dd1f4300ff845a518ba098d92a07c0048a586e"
+CONTRACT_NAME = "release-layout-v66.json"
+CONTRACT = "058cde827fdda23bf2d0fa469e28946ba60d247ff44e4648dbf555db15a52ca0"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -249,6 +249,11 @@ def verify_probe(raw, catalog):
                             '"__ztd_cte_0"."__ztd_c0" AS "id" FROM "__ztd_cte_0"')
             require(item.get("withValues") == [2, "int4", "bool", 0, [1, 0], local_values],
                     "installed-postgres-local-values-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\Compound"):
+            set_sql = ('VALUES (CAST(5 AS pg_catalog.int4)), (CAST(5 AS pg_catalog.int4)) EXCEPT ALL '
+                       '(SELECT CAST(5 AS pg_catalog.int4) AS "other" UNION ALL VALUES (CAST(4000000000 AS pg_catalog.int8)))')
+            require(item.get("valuesCompound") == ["EXCEPT", True, "int4", "int8", set_sql],
+                    "installed-postgres-values-compound-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Rows\\Values\\ValuesQuery"):
             require(item.get("valuesHeading") == ["bool", "int8", 2] and item["sql"] ==
                     "VALUES (FALSE, NULL), (TRUE, CAST(4000000000 AS pg_catalog.int8))",

@@ -451,10 +451,14 @@ def inventory(root):
                         "table_ref: select_with_parens opt_alias_clause", "simple_select: values_clause",
                     }:
                         related[alternative] = (*related.get(alternative, ()), "postgres-local-values-v2.json")
+                        if alternative == "simple_select: values_clause":
+                            related[alternative] = (*related[alternative], "postgres-values-compound-v1.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):
                     related[alternative] = ("server-compound-v2.json",)
+                    if postgres and rule == "simple_select":
+                        related[alternative] = (*related[alternative], "postgres-values-compound-v1.json")
         for rule in create:
             for alternative in rules.get(rule, []):
                 related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v1.json",

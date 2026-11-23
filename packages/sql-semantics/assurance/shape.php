@@ -426,6 +426,10 @@ if ($dialect === 'sqlite') {
     $properties['Rows\\Compound'] = ['first' => ['Rows\\ValuesQuery', 'Select'], 'limit' => ['?Ordering\\Limit'], 'orderBy' => ['array'], 'steps' => ['array']];
     $properties['Rows\\CompoundStep'] = ['operator' => ['Rows\\CompoundOperator'], 'query' => ['Rows\\ValuesQuery', 'Select']];
     $properties['Rows\\CompoundOperator'] = [];
+    if ($dialect === 'postgres') {
+        $setArms = ['Rows\\Compound', 'Rows\\Values\\ValuesQuery', 'Select'];
+        $properties['Rows\\Compound']['left'] = $properties['Rows\\Compound']['right'] = $setArms;
+    }
     $methods['Rows\\Compound'] = $methods['Select'];
     $methods['Rows\\CompoundStep'] = ['__construct'];
     $methods['Rows\\CompoundOperator'] = [];
@@ -702,6 +706,10 @@ if ($dialect !== 'sqlite') {
         'left' => ['Rows\\Compound', 'Select'], 'operator' => ['Rows\\CompoundOperator'],
         'all' => ['bool'], 'right' => ['Rows\\Compound', 'Select'],
     ];
+    if ($dialect === 'postgres') {
+        $setArms = ['Rows\\Compound', 'Rows\\Values\\ValuesQuery', 'Select'];
+        $properties['Rows\\Compound']['left'] = $properties['Rows\\Compound']['right'] = $setArms;
+    }
     $methods['Rows\\Compound'] = $methods['Select'];
     $properties['Rows\\CompoundOperator'] = $methods['Rows\\CompoundOperator'] = [];
     $properties['Rows\\ResultKind'] = $methods['Rows\\ResultKind'] = [];

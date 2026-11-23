@@ -267,6 +267,8 @@ The [PostgreSQL external source kind contract](postgres-external-source-kinds-v1
 
 The [PostgreSQL lexical VALUES contract](postgres-local-values-v2.json) checks a constant table in an independent derived query or a WITH declaration or terminal body. Its observer compares native output kinds, duplicate and NULL rows, local coordinates and an unused typed parameter declaration. Run `run_server_postgres_local_values.py` and `combine_server_postgres_local_values_evidence.py` on both pinned releases.
 
+The [PostgreSQL VALUES set contract](postgres-values-compound-v1.json) checks native set types, leftmost headings and typed multisets when independently resolved VALUES appears in an arm. It covers UNION, INTERSECT and EXCEPT with their respective duplicate policies, including the parameter type of a sibling SELECT. Run `run_server_postgres_values_compound.py` and `combine_server_postgres_values_compound_evidence.py` on both pinned releases.
+
 The [PostgreSQL standalone VALUES contract](postgres-values-v3.json) fixes rectangular row and cell roles, native whole-column type resolution, duplicate and NULL rows and the built-in output names and type IDs. Its direct width probes exercise the last supported result field. Run `run_server_postgres_values.py` and `combine_server_postgres_values_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.

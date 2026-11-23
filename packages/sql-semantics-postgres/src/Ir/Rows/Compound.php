@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Rows;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterSignature;
+use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -27,10 +28,10 @@ final class Compound implements SemanticsIR
      * Closes two query arms over the same output positions.
      */
     public function __construct(
-        public readonly Select|self $left,
+        public readonly Select|ValuesQuery|self $left,
         public readonly CompoundOperator $operator,
         public readonly bool $all,
-        public readonly Select|self $right,
+        public readonly Select|ValuesQuery|self $right,
     ) {
         Check::input($left->profileId() === $right->profileId(), 'Compound operands must have the same language profile.');
         Check::input(CompoundShape::width($left) === CompoundShape::width($right), 'Compound operands must have the same width.');

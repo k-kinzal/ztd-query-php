@@ -34,7 +34,7 @@ final class ParameterSignature
     /**
      * Confirms that both operands agree on their common native positions.
      */
-    public static function check(Select|Compound $left, Select|Compound $right): void
+    public static function check(Select|ValuesQuery|Compound $left, Select|ValuesQuery|Compound $right): void
     {
         self::checkQueries([$right, $left]);
     }

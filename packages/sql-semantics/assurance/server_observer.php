@@ -64,8 +64,8 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         $pdo->exec('START TRANSACTION READ ONLY');
         $readOnly = true;
     }
-    if (isset($input['withBindings'])) {
-        return measurePostgresWithBindings($pdo, $input, $readOnly);
+    if (isset($input['withBindings']) || isset($input['postgresSetBindings'])) {
+        return measurePostgresBindings($pdo, $input, $readOnly);
     }
     $warnings = ($input['observeWarnings'] ?? false) === true;
     if ($warnings) {
@@ -130,12 +130,13 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
     return $result;
 }
 
-function measurePostgresWithBindings(PDO $pdo, array $input, bool &$readOnly): array
+function measurePostgresBindings(PDO $pdo, array $input, bool &$readOnly): array
 {
-    $bindings = $input['withBindings'];
+    $bindings = $input['withBindings'] ?? $input['postgresSetBindings'];
+    $prefix = isset($input['withBindings']) ? '/\AWITH\s/i' : '/\A(?:SELECT\s|VALUES\s|\()/i';
     $sql = $input['sql'];
     if (!array_is_list($bindings) || count($bindings) !== 1 || !is_int($bindings[0])
-        || preg_match('/\AWITH\s/i', $sql) !== 1 || str_contains($sql, ';')) {
+        || preg_match($prefix, $sql) !== 1 || str_contains($sql, ';')) {
         return ['status' => 'outside-observer-scope'];
     }
     $prepared = false;

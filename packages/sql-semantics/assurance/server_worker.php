@@ -412,6 +412,9 @@ function constructRecursiveSeries(string $platform, array $input): SemanticsIR
 
 function constructSetQuery(string $platform, array $input): SemanticsIR
 {
+    if (isset($input['postgresValues'])) {
+        return constructPostgresValues($platform, $input);
+    }
     if (!isset($input['compound'])) {
         return constructSelect($platform, $input);
     }
@@ -420,11 +423,12 @@ function constructSetQuery(string $platform, array $input): SemanticsIR
     $operator = $namespace . 'CompoundOperator';
     $tree = $input['compound'];
 
+    $profile = array_intersect_key($input, ['dialect' => true, 'release' => true]);
     return new $type(
-        constructSetQuery($platform, $tree['left']),
+        constructSetQuery($platform, $tree['left'] + $profile),
         $operator::from($tree['operator']),
         $tree['all'],
-        constructSetQuery($platform, $tree['right']),
+        constructSetQuery($platform, $tree['right'] + $profile),
     );
 }
 
