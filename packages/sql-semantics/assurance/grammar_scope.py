@@ -232,7 +232,9 @@ def inventory(root):
         for rule in families:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
-                    related[alternative] = ("server-join-v1.json",)
+                    related[alternative] = ("server-join-v2.json",)
+                elif not postgres and ("NATURAL" in alternative or "USING" in alternative or "natural_join" in alternative):
+                    related[alternative] = ("mysql-merged-join-v1.json",)
         for rule in selection:
             for alternative in rules.get(rule, []):
                 related[alternative] = ("server-result-v1.json",)

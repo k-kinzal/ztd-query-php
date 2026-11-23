@@ -102,4 +102,19 @@ final class SourceBindingTest extends TestCase
         self::assertSame(0, $source->resolved($resolution)->slot);
         self::assertSame('amount', $source->source()?->columns[0]->value);
     }
+
+    public function testMergedHeadingKeepsTheDeclaredSpellingInOrder(): void
+    {
+        $mysql = new Inspection();
+        $table = $mysql->inspect('CREATE TABLE app.t (Lane INT, ID INT)');
+        $query = $mysql->inspect('SELECT ID FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = new SourceBinding($query->binding(), $query->statement->from);
+
+        $heading = $binding->mergedHeading();
+
+        self::assertSame(['lane', 'id'], array_keys($heading));
+        self::assertSame('Lane', $heading['lane']->name->value);
+        self::assertSame('ID', $heading['id']->name->value);
+    }
 }

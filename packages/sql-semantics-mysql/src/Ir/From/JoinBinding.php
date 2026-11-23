@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\From;
 
+use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -38,7 +44,6 @@ final class JoinBinding
      */
     public function __construct(private readonly BoundStatement $operation, private readonly ParsedJoin $join)
     {
-        Check::input(!$join->operator->natural() && $join->using === [], 'A joined input requires explicit ON or CROSS without a merged column list.');
         $this->left = self::bindChild($operation, $join->left);
         $this->right = self::bindChild($operation, $join->right);
         $left = $this->left instanceof self ? $this->left->inputs : [$this->left];
@@ -114,18 +119,31 @@ final class JoinBinding
      */
     public function source(): Join
     {
+        $on = $this->predicate();
         $kind = match ($this->join->operator) {
-            JoinOperator::Join, JoinOperator::Cross, JoinOperator::Inner => $this->join->on === null ? JoinKind::Cross : JoinKind::Inner,
-            JoinOperator::Left, JoinOperator::LeftOuter => JoinKind::Left,
-            JoinOperator::Right, JoinOperator::RightOuter => JoinKind::Right,
-            JoinOperator::StraightJoin, JoinOperator::Natural, JoinOperator::NaturalLeft, JoinOperator::NaturalRight,
-            JoinOperator::NaturalInner, JoinOperator::NaturalLeftOuter, JoinOperator::NaturalRightOuter => throw new InvalidConstruction('The join operator has no complete MySQL representation.'),
+            JoinOperator::Join, JoinOperator::Cross, JoinOperator::Inner, JoinOperator::Natural, JoinOperator::NaturalInner
+                => $on === null ? JoinKind::Cross : JoinKind::Inner,
+            JoinOperator::Left, JoinOperator::LeftOuter, JoinOperator::NaturalLeft, JoinOperator::NaturalLeftOuter => JoinKind::Left,
+            JoinOperator::Right, JoinOperator::RightOuter, JoinOperator::NaturalRight, JoinOperator::NaturalRightOuter => JoinKind::Right,
+            JoinOperator::StraightJoin => throw new InvalidConstruction('The join operator has no complete MySQL representation.'),
         };
-        $on = (new PredicateLowering())->lower($this->join->on, $this);
         $left = $this->left->source();
         $right = $this->right->source();
         Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
 
         return new Join($kind, $left, $right, $on);
+    }
+
+    /**
+     * Resolves the explicit or merged condition of this join.
+     */
+    public function predicate(): BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null
+    {
+        if (!$this->join->operator->natural() && $this->join->using === []) {
+            return (new PredicateLowering())->lower($this->join->on, $this);
+        }
+        Check::input($this->left instanceof SourceBinding && $this->right instanceof SourceBinding, 'A merged join requires two ordinary base-table inputs.');
+
+        return (new MergedJoinLowering())->predicate($this->join, $this->left, $this->right);
     }
 }

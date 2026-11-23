@@ -16,7 +16,7 @@ CONTRACT = "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8"
 
 
 def specifications():
-    path, projection, join = (TOOL / filename for filename in ("server-compound-v2.json", "server-projection-v1.json", "server-join-v1.json"))
+    path, projection, join = (TOOL / filename for filename in ("server-compound-v2.json", "server-projection-v1.json", "server-join-v2.json"))
     require(all(digest(path) == expected for path, expected in ((path, CONTRACT), (projection, PROJECTION), (join, JOIN))),
             "server-compound-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]

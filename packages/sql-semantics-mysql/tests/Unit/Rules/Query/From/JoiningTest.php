@@ -46,6 +46,23 @@ final class JoiningTest extends TestCase
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
 
+    public function testJoinOrdersMergedKeysByThePreservedHeading(): void
+    {
+        $mysql = new Inspection();
+        $left = $mysql->inspect('CREATE TABLE app.first_input (id INT, lane INT, first_val INT)');
+        $right = $mysql->inspect('CREATE TABLE app.second_input (lane INT, last_val INT, id INT)');
+        $declarations = [$left, $right];
+        $from = 'FROM app.first_input AS a';
+        $using = $mysql->diagnose("SELECT * $from JOIN app.second_input b USING (lane, id)", $declarations);
+        $rightMerge = $mysql->diagnose("SELECT * $from NATURAL RIGHT JOIN app.second_input b", $declarations);
+        $ordinary = $mysql->diagnose("SELECT * $from RIGHT JOIN app.second_input b ON a.id = b.id", $declarations);
+        $names = static fn ($query): array => array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []);
+
+        self::assertSame(['id', 'lane', 'first_val', 'last_val'], $names($using));
+        self::assertSame(['lane', 'id', 'last_val', 'first_val'], $names($rightMerge));
+        self::assertSame(['id', 'lane', 'first_val', 'lane', 'last_val', 'id'], $names($ordinary));
+    }
+
     public function testNamesAnswersNothingForANaturalJoinOverUndeclaredColumns(): void
     {
         $operation = (new Inspection())->diagnose('SELECT * FROM t NATURAL JOIN u');

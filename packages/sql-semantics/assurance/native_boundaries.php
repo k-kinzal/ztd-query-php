@@ -30,7 +30,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
             ] : []),
-            ['native-boundaries-v28.json', '731e4b4f69ad297baf928e1869e917ab01ba43ad441f521d7c38f0b0d0a3b012'],
+            ['native-boundaries-v29.json', '72974b35bc59b28b405f3063d3469629082aac7bf1d31ca7233bf1430791409a'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
@@ -152,6 +152,7 @@ function checkNativeBoundaries(
                 'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',
                 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\RangeIntegerLiteral',
+                'Ir\\From\\MergedJoinLowering', 'Ir\\SourceBinding', 'Ir\\Predicate\\PredicateLowering', 'Statement\\Relation\\Join\\JoinOperator', 'Model\\Statement\\Identifier\\Name',
                 'Statement\\Expression\\Operator\\Arithmetic as ParsedArithmetic', 'Statement\\Expression\\Predicate\\Between as ParsedRange',
                 'Statement\\Literal\\BooleanLiteral as ParsedBoolean', 'Statement\\Literal\\NullLiteral as ParsedNull',
                 'Statement\\Name\\ColumnUse', 'Statement\\Expression\\Operator\\Unary', 'Statement\\Expression\\Operator\\UnaryOperator',

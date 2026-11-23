@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\From;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
@@ -91,5 +92,18 @@ final class JoinBindingTest extends TestCase
 
         self::assertSame(1, $reference->occurrence);
         self::assertSame(0, $reference->slot);
+    }
+
+    public function testPredicateKeepsAllRowsOfADisjointNaturalOuterJoin(): void
+    {
+        $mysql = new Inspection();
+        $first = $mysql->inspect('CREATE TABLE app.first_input (id INT)');
+        $second = $mysql->inspect('CREATE TABLE app.second_input (other INT)');
+        $query = $mysql->inspect('SELECT 1 FROM app.first_input NATURAL LEFT JOIN app.second_input', [$first, $second]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = JoinBinding::bind($query->binding(), $query->statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        self::assertEquals(new BooleanLiteral(true), $binding->predicate());
     }
 }

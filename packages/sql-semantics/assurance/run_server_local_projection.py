@@ -17,7 +17,7 @@ CONTRACT = "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9"
 
 
 def specifications():
-    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v4.json", "server-projection-v1.json", "server-join-v1.json"))
+    path, projection, join = (TOOL / filename for filename in ("server-local-projection-v4.json", "server-projection-v1.json", "server-join-v2.json"))
     require(all(digest(file) == checksum for file, checksum in ((path, CONTRACT), (projection, PROJECTION), (join, JOIN))),
             "server-local-projection-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]

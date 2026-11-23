@@ -15,7 +15,7 @@ CONTRACT = "57ec24e29d2ed8d9ff1a18cd899165303c9dc3032db1738feb61a973da7842ff"
 
 
 def specifications():
-    entries = (("server-recursive-series-v2.json", CONTRACT), ("server-projection-v1.json", PROJECTION), ("server-join-v1.json", JOIN))
+    entries = (("server-recursive-series-v2.json", CONTRACT), ("server-projection-v1.json", PROJECTION), ("server-join-v2.json", JOIN))
     require(all(digest(TOOL / name) == identity for name, identity in entries), "server-recursive-series-contract-mismatch")
     specification = json.loads((TOOL / entries[0][0]).read_text())
     profiles = json.loads((TOOL / entries[1][0]).read_text())["profiles"]

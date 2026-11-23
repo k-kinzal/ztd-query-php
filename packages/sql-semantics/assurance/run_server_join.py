@@ -17,11 +17,11 @@ from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, Render
 
 LABEL = "join"
 OBSERVER = "server_observer.php"
-CONTRACT = "1dd8c227ba1638bb1591d4f12c3f9f199ba85e50fc6d24fb9e03b57ff8705b71"
+CONTRACT = "5ca6ff12aa12a33f2cf9bdbfa6324798d6f56c8cd2f846b23b28160146a279f7"
 
 
 def specifications():
-    path, projection = TOOL / "server-join-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-join-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-join-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 

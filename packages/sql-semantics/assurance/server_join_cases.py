@@ -187,8 +187,8 @@ def negatives(dialect, tag):
     else:
         yield {
             "dialect": dialect, "release": tag, "declarations": declarations(dialect),
-            "sql": f"SELECT 1 AS answer FROM {SCHEMAS[dialect]}.ir_join_accounts a NATURAL JOIN {SCHEMAS[dialect]}.ir_join_independent b",
-        }, "requires explicit ON or CROSS"
+            "sql": f"SELECT 1 AS answer FROM ({SCHEMAS[dialect]}.ir_join_accounts a JOIN {SCHEMAS[dialect]}.ir_join_empty c ON 1) NATURAL JOIN {SCHEMAS[dialect]}.ir_join_independent b",
+        }, "two ordinary base-table inputs"
 
 
 def value(expression, row, dialect):

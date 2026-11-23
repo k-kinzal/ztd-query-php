@@ -20,7 +20,7 @@ CONTRACT = "8ecb535370bab902634dc06671fd19fecd1bc9d1e770e501a1cb212365738f61"
 def specifications():
     name = TOOL / "server-truth-v2.json"
     projection = TOOL / "server-projection-v1.json"
-    joins = TOOL / "server-join-v1.json"
+    joins = TOOL / "server-join-v2.json"
     require(all(digest(file) == expected for file, expected in ((name, CONTRACT), (projection, PROJECTION), (joins, JOIN))),
             "server-truth-contract-mismatch")
     return json.loads(name.read_text()), json.loads(projection.read_text())["profiles"]

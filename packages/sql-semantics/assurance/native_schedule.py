@@ -17,8 +17,9 @@ NATIVE = {
     "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
     "mysql_signed_casts": "mysql-signed-casts-v2.json",
     "mysql_unsigned_casts": "mysql-unsigned-casts-v3.json",
+    "mysql_merged_join": "mysql-merged-join-v1.json",
     "delete": "server-delete-v2.json",
-    "join": "server-join-v1.json",
+    "join": "server-join-v2.json",
     "result": "server-result-v1.json",
     "insert": "server-insert-v1.json",
     "update": "server-update-v2.json",
@@ -52,6 +53,7 @@ SINGLE_ENGINE = {
     "mysql_signed_quotient": "mysql",
     "mysql_signed_casts": "mysql",
     "mysql_unsigned_casts": "mysql",
+    "mysql_merged_join": "mysql",
 }
 
 

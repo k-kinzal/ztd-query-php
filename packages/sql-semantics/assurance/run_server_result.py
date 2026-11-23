@@ -20,7 +20,7 @@ CONTRACT = "e92fbdaddd2d0b7f29aff440f72bab31fa6065a93820b6ac4d57a431f313056c"
 def specifications():
     path, projection = TOOL / "server-result-v1.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION
-            and digest(TOOL / "server-join-v1.json") == JOIN, "server-result-contract-mismatch")
+            and digest(TOOL / "server-join-v2.json") == JOIN, "server-result-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
 

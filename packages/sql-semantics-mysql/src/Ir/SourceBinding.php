@@ -109,6 +109,24 @@ final class SourceBinding
     }
 
     /**
+     * Exposes a checked ordinary heading to merged join lowering.
+     * @return array<array-key, Column>
+     */
+    public function mergedHeading(): array
+    {
+        Check::input($this->table !== null && $this->table->implicit === [], 'A merged join requires complete visible base-table headings.');
+        $heading = [];
+        foreach ($this->table->columns as $column) {
+            $name = $column->name->value;
+            $key = Comparison::AsciiInsensitive->fold($name);
+            Check::input(preg_match('/\A[\x01-\x7f]+\z/D', $name) === 1 && !isset($heading[$key]), 'A merged join requires distinct ASCII field names.');
+            $heading[$key] = $column;
+        }
+
+        return $heading;
+    }
+
+    /**
      * Identifies the analysis occurrence that this binding owns.
      */
     public function relation(): ?Relation
