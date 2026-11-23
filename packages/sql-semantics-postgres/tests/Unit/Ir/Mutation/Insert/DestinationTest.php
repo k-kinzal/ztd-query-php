@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\WriteSlot;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 
 #[CoversClass(Destination::class)]
