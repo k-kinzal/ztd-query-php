@@ -11,7 +11,7 @@ import run_server_delete
 from combine_server_join_evidence import check_faults
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from run_server import check_profile, same
+from run_server import check_profile, rejects, same
 from run_server_delete import CONTRACT, check_value, observer_probes, required_forms, sample_forms, specifications, tools, version_tag
 from server_delete_cases import ROWS, expected, finite_id, finite_ids, observation, ordered, requests
 
@@ -33,7 +33,7 @@ def replay(path, report, specification):
         require(canonical(matched(key, "attempted")["input"]) == canonical(request), "server-delete-replay-request", key)
         if rejection is not None:
             response = matched(key, "rejected")["response"]
-            require(response["status"] == "rejected" and rejection in response["message"], "server-delete-replay-rejection", key)
+            require(rejects(response, rejection), "server-delete-replay-rejection", key)
             continue
         response = matched(key, "constructed")["response"]
         check_value(item, response)

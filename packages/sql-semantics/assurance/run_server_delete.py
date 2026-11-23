@@ -8,7 +8,7 @@ from pathlib import Path
 
 from evidence_transcript import canonical
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
-from run_server import CONTRACT as PROJECTION, Observer, check_profile, same
+from run_server import CONTRACT as PROJECTION, Observer, check_profile, rejects, same
 from server_delete_cases import ROWS, case, expected, finite_id, finite_ids, literal, observation, ordered, requests
 from sqlite_domain import FAULT_EXECUTION_SECONDS, FAULT_STARTUP_SECONDS, RenderFault, check_render_faults
 
@@ -85,7 +85,7 @@ def execute(args, specification, engine, tag, worker, db):
                 ledger.record(key, "attempted", input=current)
                 response = worker.request(current)
                 if rejection is not None:
-                    require(response["status"] == "rejected" and rejection in response["message"],
+                    require(rejects(response, rejection),
                             "server-delete-negative-boundary", response)
                     ledger.record(key, "rejected", response=response)
                     continue

@@ -12,6 +12,7 @@ OTHER_LEAVES = [["boolean", False], ["boolean", True], ["null"]]
 OPERATORS = ("+", "-", "*")
 ROWS = [(2, 3), (2, 3), (None, -2), (3, None), (-2, 0), (1, -3)]
 CHILD_ROWS = [(-1, 2), (1, 3)]
+POISON_VALUES = ("a", "b", "c", "d", "e", "f", "child", "child")
 VERSIONS = {"mysql": "mysql-9.1.0", "postgres": "pg-17.2"}
 NAMES = {"mysql": ["Id", "delta"], "postgres": ["id", "delta"]}
 SCHEMAS = {"mysql": "ir_fixture", "postgres": "public"}

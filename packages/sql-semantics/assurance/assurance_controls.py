@@ -283,7 +283,7 @@ def storage_controls(args):
     results = []
     for dialect in ("sqlite", "mysql", "postgres"):
         shape(args, dialect=dialect)
-        expected_list_failure = ("Native boundary differs in TableSource::__construct" if dialect == "sqlite"
+        expected_list_failure = ("Native boundary differs in TableSource::__construct" if dialect in {"sqlite", "postgres"}
                                  else r"List was not assigned from one checked local in TableSource::columns")
         for name, replacement in (
             ("store-unchecked-list", "$this->columns = $columns;"),

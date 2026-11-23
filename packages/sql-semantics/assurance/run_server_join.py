@@ -9,7 +9,7 @@ from pathlib import Path
 
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION
-from run_server import Observer, check_profile, check_transport, responses, same
+from run_server import Observer, check_profile, check_transport, rejects, responses, same
 from run_server_delete import tools, version_tag
 from server_cases import observation
 from server_join_cases import case, expected, finite_id, finite_ids, fixture, is_join, join, leaves, requests, slot, table
@@ -124,14 +124,6 @@ def negative_count(specification, engine, tag):
     specific = specification.get("negativeByRelease", {})
     dialect = {"postgres": "additionalPostgreSqlNegatives", "mysql": "additionalMySqlNegatives"}[engine]
     return len(specification["negative"]) + len(specific.get(tag, specific.get("default", ()))) + len(specification.get(dialect, ()))
-
-
-def rejects(response, boundary):
-    if response["status"] != "rejected":
-        return False
-    if isinstance(boundary, str):
-        return boundary in response["message"]
-    return response["exception"] == boundary["exception"] and boundary["message"] in response["message"]
 
 
 def execute(args, specification, tag, worker, db, domain=None):

@@ -9,8 +9,9 @@ import subprocess
 import time
 
 from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, Failure, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
+from postgres_physical_text_admission import negative as postgres_text_negative
 from server_cases import (
-    case, direct_cases, expected, explore, finite_ids, fixtures, node_key, source, source_key,
+    case, direct_cases, expected, explore, finite_ids, fixtures, node_key, POISON_VALUES, source, source_key,
     observation, VERSIONS, SCHEMAS, analyzed, walk,
 )
 
@@ -38,6 +39,14 @@ class Observer(Worker):
 
 def same(expected_value, actual_value):
     compare(json.dumps(expected_value, sort_keys=True), json.dumps(actual_value, sort_keys=True))
+
+
+def rejects(response, boundary):
+    if response["status"] != "rejected":
+        return False
+    if isinstance(boundary, str):
+        return boundary in response["message"]
+    return response["exception"] == boundary["exception"] and boundary["message"] in response["message"]
 
 
 def check_profile(dialect, release, db):
@@ -110,6 +119,9 @@ def check_analyzed(dialect, tag, worker, db, ledger):
     ]
     inputs += ([f"SELECT id FROM ONLY {table}", f"SELECT id FROM {table}"]
                if dialect == "postgres" else ["SELECT 1 AS ' alias ', 2 AS '', 007, +1, -0"])
+    text_projection = f"SELECT poison, a.poison FROM {table} AS a"
+    if dialect == "postgres":
+        inputs.append(text_projection)
     for index, sql in enumerate(inputs):
         key = f"analysis/{index}"
         item = analyzed(dialect, sql, version=tag)
@@ -124,6 +136,13 @@ def check_analyzed(dialect, tag, worker, db, ledger):
         before = observation(db.request({"sql": sql}))
         after = observation(db.request({"sql": result["sql"]}))
         require(before["status"] == "rows", "server-original-rejected", before)
+        if sql == text_projection:
+            reference = [["text-slot", 0, 0], "poison"]
+            require(result["columns"] == [reference, reference]
+                    and result["source"] == {**source(dialect), "columns": ["poison"], "columnKinds": ["text"]},
+                    "server-text-column-resolution", result)
+            same(observation({"status": "rows", "fields": [["poison", "text"], ["poison", "text"]],
+                              "rows": [[value, value] for value in POISON_VALUES]}), before)
         same(before, after)
         ledger.record(key, "compared", original=before, observation=after)
 
@@ -140,7 +159,12 @@ def negatives(dialect):
     namespace = "MySql" if dialect == "mysql" else "PostgreSql"
     grouped = analyzed(dialect, rejection["sql"].format(table=table))
     exception = f"SqlSemantics\\Platform\\{namespace}\\Model\\Diagnostic\\{rejection['exception']}"
-    invalid = [
+    field = analyzed(dialect, f"SELECT poison FROM {table}")
+    boundary = {"message": "signed 32-bit integer type", "exception": None}
+    if dialect == "postgres":
+        kind, boundary = postgres_text_negative("projection")
+        field["declarations"][0] = f"CREATE TABLE {table} (id INT, delta INT, poison {kind})"
+    invalid = [(item, message, None) for item, message in [
         (case(dialect, None, []), "nonempty list"),
         (case(dialect, None, [["slot", 0]]), "belong to the SELECT source"),
         (case(dialect, source(dialect), [["slot", 2]]), "belong to the SELECT source"),
@@ -148,15 +172,14 @@ def negatives(dialect):
         (case(dialect, None, [["integer", "-2147483649"]]), "32-bit range"),
         (case(dialect, None, [["integer", "1"]], ["n\0ame"]), "no NUL" if dialect == "mysql" else "without NUL"),
         (analyzed(dialect, f"SELECT id FROM {table}", schemas=False), "resolved, complete base table"),
-        (analyzed(dialect, f"SELECT poison FROM {table}"), "signed 32-bit integer type"),
-        (grouped, rejection["message"]),
-    ]
+    ]]
+    invalid.extend([(field, boundary["message"], boundary["exception"]), (grouped, rejection["message"], exception)])
     if dialect == "mysql":
-        invalid.append((case(dialect, None, [["integer", "1"]], [" before"]), "cannot start with SQL whitespace"))
+        invalid.append((case(dialect, None, [["integer", "1"]], [" before"]), "cannot start with SQL whitespace", None))
     else:
-        invalid.append((case(dialect, None, [["integer", "1"]], [""]), "nonempty"))
-        invalid.append((analyzed(dialect, "SELECT 1 OPERATOR(public.+) 2"), "pg_catalog operator"))
-    return [(item, signal, exception if item is grouped else None) for item, signal in invalid]
+        invalid.append((case(dialect, None, [["integer", "1"]], [""]), "nonempty", None))
+        invalid.append((analyzed(dialect, "SELECT 1 OPERATOR(public.+) 2"), "pg_catalog operator", None))
+    return invalid
 
 
 def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, observer_factory=Observer):

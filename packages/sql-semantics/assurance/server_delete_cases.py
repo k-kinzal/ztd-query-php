@@ -5,6 +5,7 @@ import json
 import random
 
 from run import require
+from postgres_physical_text_admission import negative as postgres_text_negative
 from server_cases import SCHEMAS
 from server_truth_model import COMPARISONS as OPERATORS, admits
 
@@ -109,10 +110,11 @@ def negatives(dialect, tag):
     yield case(dialect, tag, ["comparison", "=", literal(0), ["slot", 2]]), "must belong to its target"
     yield case(dialect, tag, ["logic", "NOT", ["null-test", False, ["slot", 0, 1]], None]), "must belong to its target"
     yield {"dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation}", "declarations": []}, "resolved, complete base table"
+    kind, boundary = postgres_text_negative("delete") if dialect == "postgres" else ("TEXT", "signed 32-bit integer")
     yield {
         "dialect": dialect, "release": tag, "sql": f"DELETE FROM {relation} WHERE id = 1",
-        "declarations": [f"CREATE TABLE {relation} (id TEXT, delta INTEGER)"],
-    }, "signed 32-bit integer"
+        "declarations": [f"CREATE TABLE {relation} (id {kind}, delta INTEGER)"],
+    }, boundary
     clause = " LIMIT 1" if dialect == "mysql" else f" USING {schema}.ir_delete_control"
     declarations = [base] if dialect == "mysql" else [base, f"CREATE TABLE {schema}.ir_delete_control (id INTEGER, delta INTEGER)"]
     yield {

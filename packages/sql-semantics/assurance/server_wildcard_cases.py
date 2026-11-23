@@ -4,6 +4,7 @@ from itertools import product
 from random import Random
 
 from run import require
+from postgres_physical_text_admission import negative as postgres_text_negative
 from server_cases import NAMES, SCHEMAS, observation
 from server_delete_cases import literal
 from server_join_cases import NAMES_BY_TABLE, case, compare, declarations, expected as projected, join, slot, table
@@ -141,8 +142,9 @@ def negatives(engine, tag):
     base = {"dialect": engine, "release": tag, "declarations": declarations(engine)}
     yield {**base, "sql": f"SELECT * FROM {schema}.unregistered_source"}, "unregistered_source"
     yield {**base, "sql": f"SELECT absent.* FROM {schema}.ir_join_accounts"}, "absent"
-    yield {**base, "declarations": [f"CREATE TABLE {schema}.wrong_shape (payload TEXT)"],
-           "sql": f"SELECT * FROM {schema}.wrong_shape"}, "signed 32-bit integer"
+    kind, boundary = postgres_text_negative("wildcard") if engine == "postgres" else ("TEXT", "signed 32-bit integer")
+    yield {**base, "declarations": [f"CREATE TABLE {schema}.wrong_shape (payload {kind})"],
+           "sql": f"SELECT * FROM {schema}.wrong_shape"}, boundary
 
     if engine == "mysql":
         yield named_slot(tag, LABEL_SOURCE, [[literal(1), " invalid"]]), "result name cannot start with SQL whitespace"

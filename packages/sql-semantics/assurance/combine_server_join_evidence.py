@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
-from run_server import check_profile, check_transport, same
+from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import negative_count, rejects, request_batches, tools, version_tag
+from run_server_join import negative_count, request_batches, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
