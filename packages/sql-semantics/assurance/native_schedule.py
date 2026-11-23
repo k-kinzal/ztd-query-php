@@ -43,7 +43,7 @@ NATIVE = {
     "mysql_derived_varchar": "mysql-derived-varchar-v1.json",
     "mysql_local_varchar": "mysql-local-varchar-v2.json",
     "mysql_create_varchar": "mysql-create-varchar-v1.json",
-    "mysql_create_signed": "mysql-create-signed-v1.json",
+    "mysql_create_signed": "mysql-create-signed-v2.json",
     "mysql_varchar_inheritance": "mysql-varchar-inheritance-v2.json",
     "mysql_explicit_text_collation": "mysql-explicit-text-collation-v1.json",
     "mysql_signed_casts": "mysql-signed-casts-v2.json",

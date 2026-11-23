@@ -7,8 +7,8 @@ from run import TOOL, digest, require
 
 BOUNDARY = "mysql-create-signed-boundaries-v1.json"
 BOUNDARY_DIGEST = "daff522af411c8dac52a3d7d14c477483842c67b572683ea3b7e2bc5274693cf"
-CONTRACT = "mysql-create-signed-v1.json"
-CONTRACT_DIGEST = "5164ef1c4910411d8fdf08b61a6fcd8c9da9f084ae1b0c5eb3c4e2249b44c3fe"
+CONTRACT = "mysql-create-signed-v2.json"
+CONTRACT_DIGEST = "0999b5f1f5de0aff4d2d07e9d9a42ac5c53e9e165f42ad7b8d53a7cb1d7e8312"
 ENUM = {"Tiny": "TINYINT", "Small": "SMALLINT", "Medium": "MEDIUMINT", "Standard": "INTEGER", "Wide": "BIGINT"}
 GUARD = "Schema/IntegerStorage::accepts"
 WIDTH = "Schema/IntegerStorage::bytes"

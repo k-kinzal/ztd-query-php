@@ -19,7 +19,7 @@ from server_delete_cases import literal
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-signed"
-CONTRACT = "5164ef1c4910411d8fdf08b61a6fcd8c9da9f084ae1b0c5eb3c4e2249b44c3fe"
+CONTRACT = "0999b5f1f5de0aff4d2d07e9d9a42ac5c53e9e165f42ad7b8d53a7cb1d7e8312"
 PHYSICAL_BYTES = {"TINYINT": 1, "SMALLINT": 2, "MEDIUMINT": 3, "INTEGER": 4, "BIGINT": 8}
 TEXT = text_column("c1", 2, True, ["text", "𐐷 "])
 ZERO_PADDED = ["integer", "0", 2, True]
@@ -48,7 +48,7 @@ def forms(storage):
 
 
 def specifications():
-    path = TOOL / "mysql-create-signed-v1.json"
+    path = TOOL / "mysql-create-signed-v2.json"
     require(digest(path) == CONTRACT, "mysql-create-signed-contract-mismatch")
     spec = json.loads(path.read_text())
     ranges = {storage: {"bytes": width, "lower": str(interval(storage)[0]), "upper": str(interval(storage)[1])}
