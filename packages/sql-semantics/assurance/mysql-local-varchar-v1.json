@@ -1,0 +1,29 @@
+{
+  "revision": "SemanticsIR/mysql-local-varchar-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native utf8mb4 and empty SQL mode. Use mandatory materialization on MySQL 5.6 and independently check derived_merge=on on later releases.",
+  "extends": ["server-local-projection-v4.json", "mysql-varchar-slots-v2.json", "mysql-derived-varchar-v1.json"],
+  "constructors": {},
+  "existingRoles": ["Rows/LocalProjection", "Rows/LocalResultColumn", "Select", "ResultColumn", "TableSource", "From/TextColumnReference", "From/Varchar"],
+  "scope": "An independently defined chain of one through sixteen native position-only projections with a physical signed INT and stock utf8mb4_bin VARCHAR leaf layout.",
+  "structure": "Every outer result stores an exact ordinal and a name, and its parent holds the independently checked definition. Its native kind and collation are determined by the leaf position reached through every intermediate ordinal. There is one movable definition with no volatile or external effects.",
+  "conditions": "Each listed ordinal addresses its immediate definition, each projection owns a nonempty checked ordered list, and the depth limit is sixteen. The leaf uses one absolute ordinary physical source and may filter or apply DISTINCT. A derived construction and an analyzed local source use the same boundary.",
+  "meaning": "Evaluate the leaf once, including NULL, filtering, and DISTINCT under the native source collations. For each selected row, consume each intermediate ordinal in order. A DISTINCT PAD SPACE tie permits the exact stored bytes of one whole input row. Conserve the row multiplicity after performing each pure local projection.",
+  "sql": "Assign generated column names by ordinal at each local boundary. Write the registered final result labels by position and preserve the exact physical reference. Ordinary single-use independent WITH and derived table inputs use the same checked local structure.",
+  "externalInterpretation": "Resolve two named tables with the same layout and different cardinalities. Verify the length, field types and stock collation identities independently using the disposable server before executing any case.",
+  "observations": ["Native binary-protocol column type, collation identifier and result label by position, including empty results", "Exact typed row bag, case, spaces, NUL, NULL, duplicate aliases and duplicate output ordinals", "Leaf filter and DISTINCT with available PAD SPACE tie representatives before the outer projections", "Exact local name shadow, occurrence identity, and deep composition to the sixteen-boundary endpoint"],
+  "finite": {"depths": [1, 2, 16], "sources": ["populated", "empty"], "outputs": [[0, 1, 2], [2, 0], [1, 1]], "distinct": [false, true], "identities": 36, "completeness": "Independently require the full product of physical source, depth, leaf quantifier and final ordinal layout from the actual value graph. Match every intermediate reversal in each finite case."},
+  "exploration": {"seeds": [5101, 16381, 54347], "casesPerSeed": 20, "timeoutSecondsPerRelease": 220, "allowedExclusions": [], "requiredForms": "Vary one to sixteen layers, stored VARCHAR widths 0 and 8, optional leaf filters, branch reorderings, mixed native fields, duplicate aliases and ordinal reuse, populated and empty fixtures."},
+  "analysis": ["Qualified and unqualified local references address the same exact text slot", "Two nested local boundaries reverse the next visible heading", "A local name shadows the same-named physical table using an ordinary CTE when supported and a derived alias on earlier releases", "A DISTINCT leaf emits the selected PAD SPACE representative"],
+  "negative": ["A local ordinal falls outside its immediate text-bearing layout", "A nested layer has an out-of-range slot", "The definition has a LIMIT", "The local chain has seventeen layers", "The analyzed consumer attempts a computed expression in a position-only role"],
+  "faults": ["Select the wrong local output position", "Add DISTINCT after the outer projection", "Skip one reordered local layer", "Erase DISTINCT from the text leaf"],
+  "evidence": {
+    "P01": "Follow every exact local ordinal to its typed leaf reference.", "P02": "Enforce immediate and nested membership and full depth at construction.", "P03": "Hold the independent checked definition and local positions as the complete semantics.", "P04": "Compose arbitrary admitted position-only layers with a checked physical leaf.", "P05": "Audit the retained readonly definitions and copied position lists.", "P06": "Compare names, native collation and type IDs, and exact typed rows independently.",
+    "Q01": "Check exact rejected local shapes at the owning boundary.", "Q02": "Replay the required finite product and structural exploration.", "Q03": "Check ordinal composition, shadowing and every leaf role shared by direct and analyzed routes.", "Q04": "Compare effect-free rows and binary-protocol field metadata under the same native profile.", "Q05": "Pin the actual package distribution and the independent runner and observer."
+  },
+  "open": ["Computed text leaves, other collations, multiple and recursive CTEs, and dependent subqueries"],
+  "trust": ["Native MySQL result protocol and client field metadata", "Independent projection and PAD SPACE row-admission rules", "Pinned fixtures and session optimizer settings"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/derived-tables.html", "https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html", "https://www.php.net/manual/en/mysqli-result.fetch-fields.php"]
+}
