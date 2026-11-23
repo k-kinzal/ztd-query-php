@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v67.json"
-CONTRACT = "a6cfe16e60025c7d7d443c00a7734401560f1fe60601a62c1b0d9c72c257066a"
+CONTRACT_NAME = "release-layout-v68.json"
+CONTRACT = "64fcb2a6a33bd76f724d38c83f8de1169055319ea751a86232a1ba586527c144"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -265,6 +265,15 @@ def verify_probe(raw, catalog):
             require(item.get("postgresCreateView") == ["public", "ready_rows", ["n"], True, None, False, "LOCAL",
                                                      "public", "accounts", 0] and item["sql"] == expected_sql,
                     "installed-postgres-create-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\CreateMaterializedView"):
+            require(item.get("postgresMaterializedView") == ["public", "materialized_probe", ["n"], "int4", False, False]
+                    and item["sql"] == ('CREATE MATERIALIZED VIEW "public"."materialized_probe" ("n")'
+                                        ' USING heap AS VALUES (CAST(6 AS pg_catalog.int4)) WITH NO DATA'),
+                    "installed-postgres-materialized-view-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\RefreshMaterializedView"):
+            require(item.get("postgresRefreshMaterializedView") == ["public", "snapshot", False]
+                    and item["sql"] == 'REFRESH MATERIALIZED VIEW "public"."snapshot" WITH NO DATA',
+                    "installed-postgres-refresh-materialized-view-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["MATERIALIZED VIEW", "public", "snapshot", False, True, "VIEW",
                                              'DROP VIEW IF EXISTS "public"."removable" RESTRICT']

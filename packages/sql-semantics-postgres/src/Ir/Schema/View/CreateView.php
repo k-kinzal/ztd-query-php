@@ -43,12 +43,7 @@ final class CreateView implements SemanticsIR
     ) {
         $heading = Check::listOf($columns, Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);
         $width = (new ViewDefinitionBounds())->width($query, $name, $checkOption);
-        Check::input(count($heading) === $width && $width <= 1600, 'The view heading must match its query within 1600 columns.');
-        $seen = [];
-        foreach ($heading as $column) {
-            Check::input(!isset($seen[$column->value]), 'A persistent view cannot repeat a column name.');
-            $seen[$column->value] = true;
-        }
+        (new ViewHeading())->check($heading, $width);
         $this->columns = $heading;
     }
 

@@ -690,6 +690,45 @@ function constructCreateView(string $platform, array $input): SemanticsIR
     );
 }
 
+function constructPostgresMaterialization(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $view = $namespace . 'Schema\\View\\';
+    $name = $namespace . 'Identifier';
+    $target = $view . 'ViewName';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $action = $input['materialization'];
+    [$schema, $relation] = $action['target'];
+    $identity = new $target(new $name($schema), new $name($relation));
+    if ($action['operation'] === 'refresh') {
+        $refresh = $view . 'RefreshMaterializedView';
+
+        return new $refresh($identity, $action['withData'], $release::from($input['release']));
+    }
+    $create = $view . 'CreateMaterializedView';
+    return new $create(
+        $identity,
+        constructSetQuery($platform, $action['query'] + ['dialect' => 'postgres', 'release' => $input['release']]),
+        array_map(static fn (string $value): object => new $name($value), $action['columns']),
+        $action['ifNotExists'],
+        $action['withData'],
+    );
+}
+
+function observePostgresMaterialization(string $namespace, object $value): array
+{
+    $create = $value::class === $namespace . 'Schema\\View\\CreateMaterializedView';
+    $target = [$value->name->schema->value, $value->name->view->value];
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'materialization' => [
+            'target' => $target, 'operation' => $create ? 'create' : 'refresh', 'withData' => $value->withData,
+            ...($create ? ['ifNotExists' => $value->ifNotExists, 'columns' => array_column($value->columns, 'value'),
+                'query' => observeSetQuery($namespace, $value->query, 'postgres')] : []),
+        ],
+    ];
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -945,6 +984,7 @@ function observeStatement(array $input): array
             isset($input['postgresValues']) => constructPostgresValues($platform, $input),
             isset($input['createView']) => constructCreateView($platform, $input),
             isset($input['dropView']) => constructDropView($platform, $input),
+            isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -1017,6 +1057,10 @@ function observeStatement(array $input): array
                 'policy' => $value->policy->value, 'algorithm' => $value->algorithm->value, 'security' => $value->security->value,
             ],
         ];
+    }
+    if ($value::class === $namespace . 'Schema\\View\\CreateMaterializedView'
+        || $value::class === $namespace . 'Schema\\View\\RefreshMaterializedView') {
+        return observePostgresMaterialization($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

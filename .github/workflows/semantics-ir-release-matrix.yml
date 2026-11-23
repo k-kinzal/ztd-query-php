@@ -428,21 +428,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-create-view-evidence"
-      - name: Compare MySQL view removal effects
-        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+      - name: Compare PostgreSQL materialized view effects
+        if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
           PYTHONDONTWRITEBYTECODE: '1'
           ENGINE: ${{ matrix.engine }}
           RELEASE: ${{ matrix.release }}
-          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
-          ZTD_IR_MYSQL_USER: root
-          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+          ZTD_IR_POSTGRES_DSN: pgsql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture
+          ZTD_IR_POSTGRES_USER: postgres
+          ZTD_IR_POSTGRES_PASSWORD: ir_fixture
         run: |
-          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_drop_view.py \
+          python3 trusted/packages/sql-semantics/assurance/run_server_postgres_materialized_view.py \
             --engine "$ENGINE" --release "$RELEASE" \
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-mysql-drop-view-evidence"
+            --out "$RUNNER_TEMP/semantics-ir-postgres-materialized-view-evidence"
       - name: Compare PostgreSQL native VALUES matrices
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -458,21 +458,6 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-values-evidence"
-      - name: Compare MySQL view removal effects
-        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
-        env:
-          PYTHONDONTWRITEBYTECODE: '1'
-          ENGINE: ${{ matrix.engine }}
-          RELEASE: ${{ matrix.release }}
-          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
-          ZTD_IR_MYSQL_USER: root
-          ZTD_IR_MYSQL_PASSWORD: ir_fixture
-        run: |
-          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_drop_view.py \
-            --engine "$ENGINE" --release "$RELEASE" \
-            --candidate candidate \
-            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-mysql-drop-view-evidence"
       - name: Compare PostgreSQL VALUES at lexical positions
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -488,21 +473,6 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-local-values-evidence"
-      - name: Compare MySQL view removal effects
-        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
-        env:
-          PYTHONDONTWRITEBYTECODE: '1'
-          ENGINE: ${{ matrix.engine }}
-          RELEASE: ${{ matrix.release }}
-          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
-          ZTD_IR_MYSQL_USER: root
-          ZTD_IR_MYSQL_PASSWORD: ir_fixture
-        run: |
-          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_drop_view.py \
-            --engine "$ENGINE" --release "$RELEASE" \
-            --candidate candidate \
-            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-mysql-drop-view-evidence"
       - name: Compare PostgreSQL VALUES set operands
         if: ${{ !cancelled() && matrix.engine == 'postgres' }}
         env:
@@ -518,21 +488,6 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-postgres-values-compound-evidence"
-      - name: Compare MySQL view removal effects
-        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
-        env:
-          PYTHONDONTWRITEBYTECODE: '1'
-          ENGINE: ${{ matrix.engine }}
-          RELEASE: ${{ matrix.release }}
-          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
-          ZTD_IR_MYSQL_USER: root
-          ZTD_IR_MYSQL_PASSWORD: ir_fixture
-        run: |
-          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_drop_view.py \
-            --engine "$ENGINE" --release "$RELEASE" \
-            --candidate candidate \
-            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
-            --out "$RUNNER_TEMP/semantics-ir-mysql-drop-view-evidence"
       - name: Compare MySQL view declaration effects
         if: ${{ !cancelled() && matrix.engine == 'mysql' }}
         env:
@@ -1775,48 +1730,30 @@ jobs:
         with:
           name: native-postgres-create-view-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-create-view-evidence/
-      - name: Preserve MySQL view removal observations and any failure
-        if: ${{ always() && matrix.engine == 'mysql' }}
+      - name: Preserve PostgreSQL materialized view observations and any failure
+        if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: native-mysql-drop-view-${{ matrix.engine }}-${{ matrix.release }}
-          path: ${{ runner.temp }}/semantics-ir-mysql-drop-view-evidence/
+          name: native-postgres-materialized-view-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-postgres-materialized-view-evidence/
       - name: Preserve PostgreSQL native VALUES observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-postgres-values-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-values-evidence/
-      - name: Preserve MySQL view removal observations and any failure
-        if: ${{ always() && matrix.engine == 'mysql' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: native-mysql-drop-view-${{ matrix.engine }}-${{ matrix.release }}
-          path: ${{ runner.temp }}/semantics-ir-mysql-drop-view-evidence/
       - name: Preserve PostgreSQL lexical VALUES observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-postgres-local-values-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-local-values-evidence/
-      - name: Preserve MySQL view removal observations and any failure
-        if: ${{ always() && matrix.engine == 'mysql' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: native-mysql-drop-view-${{ matrix.engine }}-${{ matrix.release }}
-          path: ${{ runner.temp }}/semantics-ir-mysql-drop-view-evidence/
       - name: Preserve PostgreSQL VALUES set observations and any failure
         if: ${{ always() && matrix.engine == 'postgres' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: native-postgres-values-compound-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-postgres-values-compound-evidence/
-      - name: Preserve MySQL view removal observations and any failure
-        if: ${{ always() && matrix.engine == 'mysql' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: native-mysql-drop-view-${{ matrix.engine }}-${{ matrix.release }}
-          path: ${{ runner.temp }}/semantics-ir-mysql-drop-view-evidence/
       - name: Preserve MySQL view declaration observations and any failure
         if: ${{ always() && matrix.engine == 'mysql' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

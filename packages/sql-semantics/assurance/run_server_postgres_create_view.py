@@ -349,7 +349,7 @@ def faults(_, tag):
                     case(tag, query("base-all"), invoker=True), "meaning-mismatch"),
         RenderFault("postgres-view-lose-check", path, ". $check;", ";",
                     case(tag, query("base-filtered"), check="LOCAL", write=True), "meaning-mismatch"),
-        RenderFault("postgres-view-accept-duplicate-heading", path, "!isset($seen[$column->value]),", "true,",
+        RenderFault("postgres-view-accept-duplicate-heading", path.replace("CreateView.php", "ViewHeading.php"), "!isset($seen[$column->value]),", "true,",
                     {"boundary": {"exception": DIAGNOSTIC, "message": message}}, "postgres-create-view-invalid-published", invalid),
     ]
 

@@ -458,6 +458,11 @@ def inventory(root):
                 for alternative in rules.get(rule, []):
                     if "RECURSIVE" not in alternative:
                         related[alternative] = (*related.get(alternative, ()), "postgres-create-view-v2.json")
+        if postgres:
+            for rule in ("CreateMatViewStmt", "create_mv_target", "RefreshMatViewStmt", "opt_with_data", "OptNoLog", "opt_concurrently"):
+                for alternative in rules.get(rule, []):
+                    if alternative not in {"OptNoLog: UNLOGGED", "opt_concurrently: CONCURRENTLY"}:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-materialized-view-v1.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

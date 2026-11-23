@@ -30,12 +30,14 @@ use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTableLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropRelationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\PersistentDeclarationLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateViewLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\RefreshMaterializedView;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\RefreshMaterializedViewLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Transaction\Transaction;
@@ -62,7 +64,9 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation as ParsedCompo
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable as ParsedDerived;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable as ParsedCreateTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateMaterializedView as ParsedCreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView as ParsedCreateView;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\View\RefreshMaterializedView as ParsedRefreshMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin as ParsedBegin;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit as ParsedCommit;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback as ParsedRollback;
@@ -142,7 +146,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|Select|Transaction|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateMaterializedView|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|Select|Transaction|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -155,8 +159,8 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ValuesList => (new ValuesLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateView => (new CreateViewLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView => (new PersistentDeclarationLowering())->lower($operation, $statement),
+            $statement instanceof ParsedRefreshMaterializedView => (new RefreshMaterializedViewLowering())->lower($operation, $statement),
             $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
@@ -171,7 +175,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|Select|Transaction|Update|ValuesQuery|WithProjection>
+     * @return list<Compound|CreateMaterializedView|CreateTable|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|Select|Transaction|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

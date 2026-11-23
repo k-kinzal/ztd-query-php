@@ -756,6 +756,17 @@ if ($dialect !== 'sqlite') {
         $viewCreate = 'Schema\\View\\CreateView';
         $viewCheck = 'Schema\\View\\ViewCheckOption';
         $roots[] = $viewCreate;
+        $createMaterialized = 'Schema\\View\\CreateMaterializedView';
+        $refreshMaterialized = 'Schema\\View\\RefreshMaterializedView';
+        array_push($roots, $createMaterialized, $refreshMaterialized);
+        array_push($internal, 'Schema\\PersistentDeclarationLowering', 'Schema\\View\\CreateMaterializedViewLowering',
+            'Schema\\View\\RefreshMaterializedViewLowering', 'Schema\\View\\ViewHeading', 'Schema\\View\\ViewQueryLowering');
+        $pureCollaborators[] = 'Schema\\View\\ViewHeading';
+        $properties[$createMaterialized] = ['name' => [$viewName], 'query' => [$valuesQuery, 'Select'],
+            'columns' => ['array'], 'ifNotExists' => ['bool'], 'withData' => ['bool']];
+        $properties[$refreshMaterialized] = ['name' => [$viewName], 'withData' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $methods[$createMaterialized] = $methods[$refreshMaterialized] = ['__construct', 'profileId', 'toString'];
         array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewDefinitionBounds', 'Schema\\View\\ViewOptionsLowering');
         $pureCollaborators[] = 'Schema\\View\\ViewDefinitionBounds';
         $properties[$viewCreate] = ['name' => [$viewName], 'query' => [$valuesQuery, 'Select'], 'columns' => ['array'],
@@ -934,9 +945,11 @@ try {
         . ($dialect === 'mysql'
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
-            : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
-        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView => (new \\'
-            . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),' : '')
+            : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
+                . '\\Statement\\Table\\View\\CreateView, $statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateMaterializedView => (new \\'
+                . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
+            . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\'
         . ($dialect === 'mysql' ? 'DropTableLowering' : 'DropRelationLowering') . '())->lower($operation, $statement),'
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
@@ -1043,9 +1056,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v41.json';
+    $storagePath = __DIR__ . '/value-storage-v42.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '7d42cf467c9e384d22d1a65de1f84b57b8f9412e3e22ba6f0be636e7fd06b9ee',
+        hash_file('sha256', $storagePath) === 'e22a41631d4ccf677d76f1b5c789b7f12b335928ddc79ae21dab933d6944fdf9',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
@@ -1139,6 +1152,8 @@ try {
                 'Schema\\CreateTableLowering' => 'Schema\\CreateTable',
                 'Schema\\Query\\CreateTableAsLowering' => 'Schema\\Query\\CreateTableAs',
                 'Schema\\View\\CreateViewLowering' => 'Schema\\View\\CreateView',
+                'Schema\\View\\CreateMaterializedViewLowering' => 'Schema\\View\\CreateMaterializedView',
+                'Schema\\View\\RefreshMaterializedViewLowering' => 'Schema\\View\\RefreshMaterializedView',
                 'Schema\\CreateColumnLowering' => 'Schema\\TableColumn',
                 'Schema\\DeclaredDatatypeLowering' => 'Schema\\DeclaredDatatypeName',
                 'Expression\\Nulls\\CoalesceLowering' => 'Expression\\Nulls\\Coalesce',
@@ -1154,6 +1169,14 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\View\\DropView'],
                     'Unexpected PostgreSQL relation removal publication');
+            }
+            if ($short === 'Schema\\PersistentDeclarationLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\CreateTable', 'Schema\\View\\CreateMaterializedView', 'Schema\\View\\CreateView',
+                    ], 'Unexpected PostgreSQL persistent declaration publication');
             }
             if ($short === 'Schema\\CreateRelationLowering') {
                 $members = $class->getMethods();
