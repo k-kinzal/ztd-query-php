@@ -1,0 +1,160 @@
+{
+  "revision": "SemanticsIR/mysql-truncate-2",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql"
+  ],
+  "profiles": [
+    "mysql-5.6.51",
+    "mysql-5.7.44",
+    "mysql-8.0.44",
+    "mysql-8.1.0",
+    "mysql-8.2.0",
+    "mysql-8.3.0",
+    "mysql-8.4.7",
+    "mysql-9.0.1",
+    "mysql-9.1.0"
+  ],
+  "mode": "Native MySQL InnoDB persistent and session-temporary tables under utf8mb4, lower_case_table_names=0, empty sql_mode, foreign_key_checks=1 and unit allocation increment and offset.",
+  "extends": [
+    "server-drop-table-v2.json",
+    "mysql-ordered-table-rename-v2.json",
+    "mysql-truncate-v1.json",
+    "mysql-session-table-sources-v1.json"
+  ],
+  "additionalPublicRoots": [
+    "Schema/Truncate/TruncateTable"
+  ],
+  "constructors": {
+    "TruncateTable": {
+      "type": "Schema/Truncate/TruncateTable",
+      "role": "A native MySQL DDL truncation of one resolved persistent or session-local table.",
+      "structure": "One checked TableIdentity with its namespace and the native grammar release.",
+      "conditions": "Construction requires the checked table identity. Analysis resolves one known base table, including a temporary table that shadows the same permanent name. The evaluation connection supplies the same namespace interpretation. Unbound names and views are rejected.",
+      "meaning": "Truncate the resolved table under the native resolver. A persistent InnoDB table is subject to an external referencing table; a session-local table is independent of the permanent table’s dependencies. Success clears the named table, resets allocation and performs an implicit commit in either namespace. Permanent DELETE callbacks are preserved and do not fire.",
+      "sql": "Emit native TRUNCATE TABLE followed by the exactly cased and fully backtick-quoted schema and table names."
+    },
+    "TableIdentity": {
+      "type": "Schema/Identity/TableIdentity",
+      "role": "A checked absolute table reference carrying its persistent or session-local namespace.",
+      "structure": "A validated TableName and an ExternalRelationKind restricted to the two table cases.",
+      "conditions": "The location must be an admitted table namespace. Construction rejects the view case. An analyzed table identity carries its declaration’s persistence.",
+      "meaning": "Select one exact table under the native resolver. Session-local identity refers to the evaluating session’s temporary table, including when a permanent table shares the same absolute name.",
+      "sql": "Quote the schema and name through the fixed native TableName role."
+    }
+  },
+  "existingRoles": [
+    "Schema/TableName",
+    "Identifier"
+  ],
+  "structure": "The resolved operand contains its absolute name and namespace under the fixed grammar and naming profile.",
+  "conditions": "Analysis resolves the table in the native session-visible namespace. The contract admits complete persistent and session-local targets. Direct construction rejects a view as the target kind.",
+  "meaning": "Apply the native row, allocation and transaction effects within the exact interpreted table namespace. A selected temporary table leaves same-name permanent rows, declarations, dependencies and sequence allocation unchanged.",
+  "sql": "Write one TRUNCATE TABLE with exact identifier quoting and qualification.",
+  "observations": [
+    "Before and after row bags, column metadata, index and foreign-key declarations, engine, and next generated identifier",
+    "Same-named schema decoy, case-distinct target and escaped identifier remain distinguishable",
+    "Zero affected count on successful execution, exact SQLSTATE and native error for a referenced or absent target",
+    "No DELETE callback, implicit commit even on the two specified failures, retained marker, and attempted rollback",
+    "Confirm the next identifier by actual insertion after the post-rollback snapshot",
+    "Separate permanent catalog connection witnesses exact permanent rows, headings, dependencies and counter allocation while the evaluating connection owns the matching temporary table.",
+    "Native temporary definition and result fields, duplicate and NULL rows, empty state after truncation and next inserted identifier after the attempted rollback."
+  ],
+  "finite": {
+    "fixture": [
+      "plain",
+      "foreign-key-filled",
+      "foreign-key-empty",
+      "self-reference"
+    ],
+    "target": [
+      "primary",
+      "secondary",
+      "decoy",
+      "mixed-case",
+      "escaped",
+      "absent"
+    ],
+    "identities": 48,
+    "completeness": "Recover the loaded complete target coordinate and namespace and independently measure the persistent and temporary fixture. Require each of the original 24 permanent identities and its temporary counterpart exactly once.",
+    "kind": [
+      "table",
+      "temporary-table"
+    ]
+  },
+  "analysis": [
+    "Unqualified table without the TABLE keyword",
+    "Explicit qualified primary table",
+    "Qualified same-named table in the decoy database",
+    "Case-distinct resolved table",
+    "Qualified identifier containing an escaped backtick",
+    "Ordinary table with a self-reference in the observer fixture",
+    "Temporary table shadows a persistent table with no dependency",
+    "Temporary table shadows a persistent table with an external referencing constraint",
+    "Name present only in the temporary namespace",
+    "Temporary table shadows an absolute name in another schema",
+    "Case-distinct temporary table",
+    "Temporary identifier containing a quoted backtick"
+  ],
+  "negative": [
+    "Path separator in a direct persistent table identifier",
+    "Trailing space in a direct persistent schema identifier",
+    "Missing required analyzed table in a complete catalog",
+    "Unresolved table in an incomplete catalog",
+    "Resolved view used in the table role",
+    "A view kind supplied to the checked role for a resolved truncation target"
+  ],
+  "exploration": {
+    "seeds": [
+      613,
+      2837,
+      6143
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary native catalog topology, resolved name, same-name decoy, case, escaped identifier and fixture row values. The statement has no optional child or operand list. Generate and observe both target namespaces, including ownership with and without a same-named permanent table."
+  },
+  "faults": [
+    "Erase the target schema using an operand in another database",
+    "Redirect to the same-named table in the decoy database",
+    "Always emit a fixed valid truncation",
+    "Fold the case of a resolved table name",
+    "Set a known session-local declaration to the persistent target namespace at publication",
+    "Allow a path separator in a direct table identity",
+    "Allow the view kind to enter the checked table identity"
+  ],
+  "evidence": {
+    "P01": "Fix the absolute table, namespace, native truncation operation, exact case and grammar release.",
+    "P02": "Check the closed table role, reject the view namespace and prevent unresolved targets from being published.",
+    "P03": "Retain only the checked identity and release.",
+    "P04": "Compose the change to the resolved target with the externally interpreted dependency graph.",
+    "P05": "Freeze the absolute tables and closed native namespace and release selections.",
+    "P06": "Emit one fully qualified native statement, preserving row, metadata, trigger and transaction effects.",
+    "Q01": "Check exact PHP construction and binding shape with independent invalid inputs.",
+    "Q02": "Require every fixed finite identity together with authored and seeded positive inputs.",
+    "Q03": "Predict independent row, referential, allocation, trigger and transactional transitions.",
+    "Q04": "Compare predicted state, result and effects to native execution of the rendered SQL.",
+    "Q05": "Connect the observed role to both installed Composer layouts, exact source and protected replay."
+  },
+  "open": [
+    "Other storage engines require storage-specific effect evidence. Temporary table creation and removal have independent DDL obligations.",
+    "Partition and tablespace layouts, handler closure, locking, privileges, replication and production concurrency require additional observations."
+  ],
+  "trust": [
+    "Truthful external interpretation of persistent base-table names and declared engine and foreign-key state",
+    "Native MySQL grammar, exact release and fixture state",
+    "Exact loaded PHP and independent native observer",
+    "Evaluation connects to the session that owns the declared temporary target and to the same permanent catalog."
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/create-temporary-table.html"
+  ],
+  "changes": {
+    "previousRejection": "The prior persistent truncation band rejected an analyzed temporary declaration.",
+    "newRule": "That binding now publishes an explicit session-local table identity, which is checked structurally and compared against both native namespaces.",
+    "faultContinuity": "The earlier temporary-through-persistent fault becomes incorrect publication of the persistent identity for a known temporary declaration. Exercise the real authored input and require the exact structural mismatch."
+  }
+}
