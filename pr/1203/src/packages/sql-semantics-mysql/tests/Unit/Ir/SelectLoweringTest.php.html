@@ -75,7 +75,7 @@
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testLowerRefusesAnUnresolvedSource</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;resolved, complete base table&#039;</span>);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;resolved, complete local relation declaration&#039;</span>);</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        (<span class="tok-kw">new</span> <span class="tok-id">SelectLowering</span>())-&gt;<span class="tok-id">lower</span>((<span class="tok-kw">new</span> <span class="tok-id">Inspection</span>())-&gt;<span class="tok-id">inspect</span>(<span class="tok-str">&#039;SELECT id FROM ir_fixture.accounts&#039;</span>)-&gt;<span class="tok-id">binding</span>());</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
