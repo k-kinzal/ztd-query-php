@@ -129,7 +129,7 @@ function allowMysqlTruncate(string $sql): bool
     $tick = chr(96);
     $schema = '(?:ir_fixture|ir_mtr_decoy|' . $tick . '(?:ir_fixture|ir_mtr_decoy)' . $tick . ')';
     $relation = '(?:ir_mtr_[0-9A-Za-z_]+|' . $tick . 'ir_mtr_(?:[0-9A-Za-z_]|' . $tick . $tick . ')+' . $tick . ')';
-    return preg_match('/\ATRUNCATE TABLE (?:' . $schema . '\.)?' . $relation . '\z/D', $sql) === 1;
+    return preg_match('/\ATRUNCATE (?:TABLE )?(?:' . $schema . '\.)?' . $relation . '\z/D', $sql) === 1;
 }
 
 function observeMysqlTruncate(PDO $pdo, array $request): array

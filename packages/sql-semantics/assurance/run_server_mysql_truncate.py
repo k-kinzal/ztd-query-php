@@ -15,6 +15,7 @@ LABEL = "mysql-truncate"
 OBSERVER = "mysql_truncate_observer.php"
 CONTRACT_NAME = "mysql-truncate-v1.json"
 CONTRACT = "33bda84cb25fd77b42926291742bfd32a3b66616db27c65e00cdc4b3c8406dd4"
+OBSERVER_CONTRACT = "5d9d281f54a92ce6f015c0f8e776081522d613a9a9140cb081ea34d6ed75ba2f"
 COMPLETE_SEEDS = True
 SCHEMA, DECOY = "ir_fixture", "ir_mtr_decoy"
 A, UPPER, B, ESCAPED, REF, ABSENT = ("ir_mtr_" + name for name in ("a", "A", "b", "`quote", "ref", "absent"))
@@ -26,6 +27,8 @@ BIND_FAILURE = "TRUNCATE TABLE requires a resolved persistent base table."
 def specifications():
     path = TOOL / CONTRACT_NAME
     require(digest(path) == CONTRACT, "mysql-truncate-contract-mismatch")
+    require(digest(TOOL / "mysql-truncate-observer-v1.json") == OBSERVER_CONTRACT,
+            "mysql-truncate-observer-contract-mismatch")
     return json.loads(path.read_text()), profiles()[1]
 
 
