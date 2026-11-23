@@ -75,8 +75,6 @@ final class SelectBounds
                 };
             }
         }
-        for ($position = 1; $position <= count($positions); ++$position) {
-            Check::input(isset($positions[$position]), 'PostgreSQL parameter positions must cover the contiguous bound slots.');
-        }
+        Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');
     }
 }

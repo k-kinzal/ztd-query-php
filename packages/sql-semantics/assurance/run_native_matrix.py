@@ -10,12 +10,14 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from importlib import import_module
 from pathlib import Path
 from uuid import uuid4
 
 from native_schedule import NATIVE, SINGLE_ENGINE
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION
+from run_server_delete import version_tag
 from scope import CONTRACTS
 
 FIXTURE_STARTUP_SECONDS = 900
@@ -193,6 +195,30 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
     return key, {"file": str(note.relative_to(logs_root)), "sha256": digest(note), "status": receipt["status"]}
 
 
+def renderer_fault_sources(candidate, profiles, plan):
+    """Bind the registered renderer mutations to this candidate before execution."""
+    inspected, invalid = {}, []
+    for key, jobs in plan.items():
+        engine, release = profiles[key]
+        tag = version_tag(engine, release)
+        inspected[key] = {}
+        for domain, runner, _ in jobs:
+            if domain in {"projection", "recursive_unavailable"}:
+                continue
+            factory = import_module(Path(runner).stem).faults
+            cases = inspected[key][domain] = []
+            for fault in factory(engine, tag):
+                path = candidate / "packages" / fault.path
+                source = path.read_text() if path.is_file() else ""
+                count = source.count(fault.before) if source else 0
+                case = {"id": fault.name, "path": fault.path, "source": digest(path) if source else None,
+                        "matches": count, "wouldChangeSource": count == 1 and fault.before != fault.replacement}
+                cases.append(case)
+                if not case["wouldChangeSource"]:
+                    invalid.append({"release": key, "domain": domain, **case})
+    return {"status": "incomplete" if invalid else "matched", "releases": inspected, "invalid": invalid}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True, type=Path)
@@ -226,6 +252,11 @@ def main():
     manifest = logs / "distribution.json"
     write_json(manifest, distribution)
     plan = {key: list(release_jobs(profiles[key], series)) for key in sorted(selected)}
+    anchors = logs / "renderer-fault-sources.json"
+    anchor_report = renderer_fault_sources(args.candidate, profiles, plan)
+    write_json(anchors, {"candidate": sha, **anchor_report})
+    for fault in anchor_report["invalid"]:
+        print(f"Unmatched renderer fault {fault['release']}/{fault['domain']}/{fault['id']}", flush=True)
 
     def run(key):
         print(f"Running {key}", flush=True)
@@ -240,16 +271,18 @@ def main():
     write_json(logs / "index.json", {
         "candidate": sha,
         "distribution": digest(manifest),
-        "status": "incomplete" if failed else "observed-subset" if selected != profiles.keys() else "observed-matrix",
+        "status": "incomplete" if failed or anchor_report["invalid"] else "observed-subset" if selected != profiles.keys() else "observed-matrix",
         "workflowDigest": digest(workflow),
         "recursiveContractDigest": digest(recursive),
         "launcherDigest": digest(Path(__file__)),
+        "rendererFaultSources": {"path": anchors.name, "digest": digest(anchors), "status": anchor_report["status"]},
         "omittedProfiles": sorted(profiles.keys() - selected),
         "releases": runs,
         "failed": failed,
     })
     verify_candidate(args.candidate, sha, distribution)
     require(not failed, "native-launch-incomplete-matrix", failed)
+    require(not anchor_report["invalid"], "native-launch-renderer-fault-sources", anchor_report["invalid"])
 
 
 if __name__ == "__main__":

@@ -102,6 +102,8 @@ python3 "$verifier/collect_native_replays.py" --layout release --candidate "$can
 
 The container launch, image check, local endpoint discovery and server readiness share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch.
 
+The native launcher records the source and unique match for every scheduled renderer fault in `native-launch/renderer-fault-sources.json`. It continues running the scheduled domains and records an incomplete matrix if any fault cannot be applied. The individual runtime ledgers still require a healthy control and the exact detection signal.
+
 Use `--profile postgres-16.6` to diagnose a single release in a fresh evidence directory. The bundle lists every omitted profile. The local launcher and the manual workflow produce provisional evidence for the same native replay checks.
 
 ### Compare assurance revisions

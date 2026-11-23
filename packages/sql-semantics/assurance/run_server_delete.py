@@ -119,13 +119,18 @@ def faults(engine, tag):
     renderer = f"sql-semantics-{engine}/src/Ir/SelectSql.php"
     quote = chr(96) if engine == "mysql" else '"'
     fork = case(engine, tag, ["comparison", "<", ["slot", 0], literal(1)])
+    comparison = "$left . ' ' . $operator . ' ' . $right"
+    swapped = "$right . ' ' . $operator . ' ' . $left"
+    if engine == "postgres":
+        operator = "$operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';"
+        prefix = operator + "\n\n            return '(' . "
+        comparison, swapped = prefix + comparison, prefix + swapped
     result = [
         RenderFault("wrong-delete-target", path, "$this->target->table->quoted()", f"'{quote}ir_delete_control{quote}'",
                     case(engine, tag, None), "meaning-mismatch"),
         RenderFault("omit-delete-filter", path, "if ($this->where === null)", "if (true)",
                     case(engine, tag, ["boolean", False]), "meaning-mismatch"),
-        RenderFault("reverse-delete-operands", renderer, "$left . ' ' . $operator . ' ' . $right",
-                    "$right . ' ' . $operator . ' ' . $left", fork, "meaning-mismatch"),
+        RenderFault("reverse-delete-operands", renderer, comparison, swapped, fork, "meaning-mismatch"),
         RenderFault("delete-when-negating-null", renderer, "return '(NOT ' . $left . ')';",
                     "return '(NOT ' . ($left === 'NULL' ? 'FALSE' : $left) . ')';",
                     case(engine, tag, ["logic", "NOT", ["null"], None]), "meaning-mismatch"),
