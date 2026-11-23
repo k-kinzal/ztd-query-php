@@ -465,6 +465,8 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     $storage = $namespace . 'Schema\\IntegerStorage';
     $characters = $namespace . 'Schema\\CharacterStorage';
     $collation = $namespace . 'From\\TextCollation';
+    $primary = $namespace . 'Schema\\PrimaryKey';
+    $term = $namespace . 'Schema\\PrimaryKeyColumn';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $create = $input['create'];
     $columns = [];
@@ -482,7 +484,10 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
         $columns,
         $create['ifNotExists'],
         $release::from($input['release']),
-        ...($input['dialect'] === 'mysql' && isset($create['tableCollation']) ? [$collation::from($create['tableCollation'])] : []),
+        ...($input['dialect'] === 'mysql' && isset($create['tableCollation'])
+            ? ['defaultCollation' => $collation::from($create['tableCollation'])] : []),
+        ...($input['dialect'] === 'mysql' && isset($create['primaryKey'])
+            ? ['primaryKey' => new $primary(array_map(static fn ($slot) => new $term($slot[0], $slot[1]), $create['primaryKey']))] : []),
     );
 }
 
@@ -758,6 +763,9 @@ function observeStatement(array $input): array
         ];
         if ($dialect === 'mysql' && $value->defaultCollation !== null) {
             $observed['tableCollation'] = $value->defaultCollation->value;
+        }
+        if ($dialect === 'mysql' && $value->primaryKey !== null) {
+            $observed['primaryKey'] = array_map(static fn ($term): array => [$term->slot, $term->descending], $value->primaryKey->terms);
         }
         foreach ($value->columns as $column) {
             $storage = $column->storage;

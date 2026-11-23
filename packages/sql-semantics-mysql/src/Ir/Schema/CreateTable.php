@@ -41,6 +41,7 @@ final class CreateTable implements SemanticsIR
         public readonly bool $ifNotExists = false,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
         public readonly ?TextCollation $defaultCollation = null,
+        public readonly ?PrimaryKey $primaryKey = null,
     ) {
         $checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);
         Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');
@@ -58,6 +59,15 @@ final class CreateTable implements SemanticsIR
         }
         $bitmap = intdiv($nullBits + ($packed ? 0 : 1) + 7, 8);
         Check::input($bytes + $bitmap <= 65535, 'The declared logical record cannot exceed 65535 bytes.');
+        $legacyDirection = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+        foreach ($primaryKey->terms ?? [] as $term) {
+            $column = $checked[$term->slot] ?? null;
+            Check::input(
+                $column !== null && !$column->nullable && $column->storage instanceof IntegerStorage,
+                'A primary key must reference an existing required signed column.'
+            );
+            Check::input(!$term->descending || !$legacyDirection, 'The grammar release does not store descending primary key parts.');
+        }
         $this->columns = $checked;
     }
 
@@ -77,6 +87,13 @@ final class CreateTable implements SemanticsIR
         $columns = [];
         foreach ($this->columns as $column) {
             $columns[] = $column->toString();
+        }
+        if ($this->primaryKey !== null) {
+            $parts = [];
+            foreach ($this->primaryKey->terms as $term) {
+                $parts[] = $this->columns[$term->slot]->name->quoted() . ($term->descending ? ' DESC' : '');
+            }
+            $columns[] = 'PRIMARY KEY (' . implode(', ', $parts) . ')';
         }
 
         return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()

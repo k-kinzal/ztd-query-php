@@ -1,0 +1,262 @@
+{
+  "revision": "SemanticsIR/mysql-create-primary-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check key list ownership, local slot bounds, full field resolution, release-specific defaults and directions, and canonical PRIMARY emission.",
+  "rules": {
+    "Schema/PrimaryKey::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$checked = Check::listOf($terms, PrimaryKeyColumn::class, 'A primary key needs a nonempty ordered term list.', 1);",
+        "Check::input(count($checked) <= 16, 'A primary key can have at most 16 column positions.');",
+        "$seen = [];",
+        "foreach ($checked as $term) {",
+        "    Check::input(!isset($seen[$term->slot]), 'A primary key cannot repeat a column position.');",
+        "    $seen[$term->slot] = true;",
+        "}",
+        "$this->terms = $checked;"
+      ]
+    },
+    "Schema/PrimaryKeyColumn::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($slot >= 0 && $slot < 128, 'A primary key needs a column slot from 0 through 127.');"
+      ]
+    },
+    "Schema/PrimaryColumnPolicy::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Schema/PrimaryColumnPolicy::effectiveDefault": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($this->release !== GrammarRelease::MySql5651) {",
+        "    Check::input($nullable !== true && !$default instanceof NullLiteral, 'A primary key column cannot admit NULL.');",
+        "} elseif (!$this->inline && $nullable !== false && ($default === null || $default instanceof NullLiteral)) {",
+        "    return new IntegerLiteral('0');",
+        "}",
+        "",
+        "return $default;"
+      ]
+    },
+    "Schema/CreatePrimaryKeyLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input($index === null || $inline === null, 'CREATE TABLE requires at most one primary key.');",
+        "if ($index === null) {",
+        "    return $inline === null ? null : new PrimaryKey([new PrimaryKeyColumn($inline)]);",
+        "}",
+        "Check::input(",
+        "    $index->kind === IndexKind::Primary && $index->options === [] && $index->algorithm === null,",
+        "    'CREATE TABLE requires an ordinary primary key without index options.'",
+        ");",
+        "$legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;",
+        "$terms = [];",
+        "foreach ($index->parts as $part) {",
+        "    Check::input($part instanceof ColumnPart && $part->length === null, 'A primary key requires full named column parts.');",
+        "    $key = new Identifier($part->column->value);",
+        "    $slot = $positions[$key->key()] ?? null;",
+        "    Check::input($slot !== null, 'A primary key column must exist in the owning table.');",
+        "    $terms[] = new PrimaryKeyColumn($slot, !$legacy && $part->direction === Direction::Descending);",
+        "}",
+        "",
+        "return new PrimaryKey($terms);"
+      ]
+    },
+    "Schema/CreateTableLayoutLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$positions = [];",
+        "$definitions = [];",
+        "$inline = null;",
+        "$index = null;",
+        "$flags = new ColumnFlags();",
+        "foreach ($statement->elements as $element) {",
+        "    if ($element instanceof ColumnDefinition) {",
+        "        $name = new Identifier($element->name->column->value);",
+        "        $key = $name->key();",
+        "        $position = count($definitions);",
+        "        Check::input(!isset($positions[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "        $positions[$key] = $position;",
+        "        $definitions[] = $element;",
+        "        if ($flags->flags($element->specification)[2]) {",
+        "            Check::input($inline === null, 'CREATE TABLE requires at most one primary key.');",
+        "            $inline = $position;",
+        "        }",
+        "    } else {",
+        "        Check::input($element instanceof IndexDefinition && $index === null, 'CREATE TABLE requires ordinary columns and at most one primary key.');",
+        "        $index = $element;",
+        "    }",
+        "}",
+        "$primary = (new CreatePrimaryKeyLowering())->lower($index, $inline, $positions, $release);",
+        "$members = [];",
+        "foreach ($primary->terms ?? [] as $term) {",
+        "    $members[$term->slot] = true;",
+        "}",
+        "$policy = new PrimaryColumnPolicy($release, $inline !== null);",
+        "$columns = [];",
+        "$lowering = new CreateColumnLowering();",
+        "foreach ($definitions as $slot => $column) {",
+        "    $columns[] = $lowering->lower($column, $collation, isset($members[$slot]) ? $policy : null);",
+        "}",
+        "",
+        "return [$columns, $primary];"
+      ]
+    },
+    "Schema/CreateTableLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input(",
+        "    $profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings()),",
+        "    'CREATE TABLE requires the default native profile.'",
+        ");",
+        "Check::input(",
+        "    !$statement->temporary() && $statement->query === null && $statement->partitioning === null && !$statement->enclosed,",
+        "    'CREATE TABLE requires a persistent ordinary table with explicit columns.'",
+        ");",
+        "$engine = null;",
+        "$textOptions = false;",
+        "foreach ($statement->options as $option) {",
+        "    if ($option instanceof EngineOption) {",
+        "        Check::input($engine === null && strcasecmp($option->engine->value, 'InnoDB') === 0, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $engine = $option;",
+        "    } else {",
+        "        Check::input($option instanceof CharsetOption || $option instanceof CollationOption, 'CREATE TABLE requires the native InnoDB storage role.');",
+        "        $textOptions = true;",
+        "    }",
+        "}",
+        "$tableCollation = (new TableDeclaration())->tableCollation($statement, $profile->grammar);",
+        "Check::input(!$textOptions || $tableCollation !== null, 'CREATE TABLE needs the exact stock utf8mb4_bin table collation.');",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE TABLE requires a named declaration schema.');",
+        "$name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "[$columns, $key] = (new CreateTableLayoutLowering())->lower($statement, $profile->grammar, $tableCollation);",
+        "",
+        "return new CreateTable(",
+        "    $name,",
+        "    $columns,",
+        "    $statement->ifNotExists,",
+        "    $profile->grammar,",
+        "    $tableCollation === null ? null : TextCollation::Utf8mb4Bin,",
+        "    $key",
+        ");"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$specification = $column->specification;",
+        "Check::input(",
+        "    $column->name->table === null && $specification instanceof OrdinaryColumn && $specification->references === null,",
+        "    'CREATE TABLE requires ordinary unqualified column definitions.'",
+        ");",
+        "$kind = (new CreateColumnStorageLowering())->lower($column, $tableCollation);",
+        "$nullable = null;",
+        "$default = null;",
+        "foreach ($specification->attributes as $attribute) {",
+        "    if ($attribute instanceof CollateAttribute && $kind instanceof CharacterStorage) {",
+        "        continue;",
+        "    }",
+        "    if ($primary?->inline === true && $attribute instanceof KeywordAttribute && $attribute->keyword === ColumnKeyword::PrimaryKey) {",
+        "        continue;",
+        "    }",
+        "    if ($attribute instanceof DefaultLiteral && $default === null) {",
+        "        $default = (new LiteralDefaultLowering())->lower($attribute->value);",
+        "    } elseif ($attribute instanceof KeywordAttribute && $nullable === null) {",
+        "        $nullable = match ($attribute->keyword) {",
+        "            ColumnKeyword::Null => true,",
+        "            ColumnKeyword::NotNull => false,",
+        "            ColumnKeyword::NotSecondary, ColumnKeyword::AutoIncrement, ColumnKeyword::SerialDefaultValue,",
+        "            ColumnKeyword::PrimaryKey, ColumnKeyword::Unique, ColumnKeyword::Visible,",
+        "            ColumnKeyword::Invisible => throw new InvalidConstruction('The column attribute is outside the native declaration domain.'),",
+        "        };",
+        "    } else {",
+        "        throw new InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "if ($primary !== null) {",
+        "    $default = $primary->effectiveDefault($nullable, $default);",
+        "    $nullable = false;",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->column->value), $kind, $nullable ?? true, $default);"
+      ]
+    },
+    "Schema/CreateTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$checked = Check::listOf($columns, TableColumn::class, 'CREATE TABLE needs a nonempty ordered column list.', 1);",
+        "Check::input(count($checked) <= 128, 'The declared table can have at most 128 columns.');",
+        "$seen = [];",
+        "$bytes = 0;",
+        "$nullBits = 0;",
+        "$packed = false;",
+        "foreach ($checked as $column) {",
+        "    $key = $column->name->key();",
+        "    Check::input(!isset($seen[$key]), 'CREATE TABLE cannot repeat a column name.');",
+        "    $seen[$key] = true;",
+        "    $bytes += $column->storageBytes();",
+        "    $nullBits += (int) $column->nullable;",
+        "    $packed = $packed || $column->storage instanceof CharacterStorage;",
+        "}",
+        "$bitmap = intdiv($nullBits + ($packed ? 0 : 1) + 7, 8);",
+        "Check::input($bytes + $bitmap <= 65535, 'The declared logical record cannot exceed 65535 bytes.');",
+        "$legacyDirection = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;",
+        "foreach ($primaryKey->terms ?? [] as $term) {",
+        "    $column = $checked[$term->slot] ?? null;",
+        "    Check::input(",
+        "        $column !== null && !$column->nullable && $column->storage instanceof IntegerStorage,",
+        "        'A primary key must reference an existing required signed column.'",
+        "    );",
+        "    Check::input(!$term->descending || !$legacyDirection, 'The grammar release does not store descending primary key parts.');",
+        "}",
+        "$this->columns = $checked;"
+      ]
+    },
+    "Schema/CreateTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->toString();",
+        "}",
+        "if ($this->primaryKey !== null) {",
+        "    $parts = [];",
+        "    foreach ($this->primaryKey->terms as $term) {",
+        "        $parts[] = $this->columns[$term->slot]->name->quoted() . ($term->descending ? ' DESC' : '');",
+        "    }",
+        "    $columns[] = 'PRIMARY KEY (' . implode(', ', $parts) . ')';",
+        "}",
+        "",
+        "return 'CREATE TABLE ' . ($this->ifNotExists ? 'IF NOT EXISTS ' : '') . $this->target->quoted()",
+        "    . ' (' . implode(', ', $columns) . ') ENGINE=InnoDB'",
+        "    . ($this->defaultCollation === null ? '' : ' DEFAULT CHARACTER SET utf8mb4 COLLATE ' . $this->defaultCollation->value);"
+      ]
+    }
+  }
+}

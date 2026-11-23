@@ -137,6 +137,22 @@ function observeMysqlSignedDeclaration(SqlSemantics\Platform\MySql\Semantics $se
     ], $value->columns), $value->toString(), $rejected];
 }
 
+function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE app.key_decl (lo SMALLINT, hi BIGINT NOT NULL DEFAULT -7, PRIMARY KEY (HI DESC, lo))');
+    $key = $value->primaryKey;
+    $direct = new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKey([
+        new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(1, true),
+        new SqlSemantics\Platform\MySql\Ir\Schema\PrimaryKeyColumn(0),
+    ]);
+
+    return [
+        $key::class, $key->terms[0]::class,
+        array_map(static fn ($term): array => [$term->slot, $term->descending], $key->terms),
+        $direct == $key, $value->columns[0]->nullable, $value->columns[0]->default, $value->toString(),
+    ];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -232,6 +248,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);
+            $details['mysqlPrimaryKey'] = observeMysqlPrimaryKey($semantics);
         }
         if ($platform === 'MySql' && $role === 'Select') {
             $value = $result->columns[0]->expression;

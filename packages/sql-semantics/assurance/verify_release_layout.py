@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v39.json"
-CONTRACT = "b8411172f9b869b54d2ccaa921bd33ad72a860bee8d5d4e7bd8aab023825735f"
+CONTRACT_NAME = "release-layout-v40.json"
+CONTRACT = "702ff2ee0d3d81f4c2a8e979990db7e6287e9eea6fc989f616c520be822cc5aa"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -288,6 +288,11 @@ def verify_probe(raw, catalog):
                 "`c` BIGINT NOT NULL DEFAULT 9223372036854775807, `d` BIGINT NULL DEFAULT -9223372036854775808) ENGINE=InnoDB",
                 "The TINYINT default is outside the signed storage range.",
             ], "installed-mysql-signed-declaration-mismatch", item)
+            require(item.get("mysqlPrimaryKey") == [
+                namespace + "PrimaryKey", namespace + "PrimaryKeyColumn", [[1, True], [0, False]], True, False, None,
+                "CREATE TABLE `app`.`key_decl` (`lo` SMALLINT NOT NULL, `hi` BIGINT NOT NULL DEFAULT -7, "
+                "PRIMARY KEY (`hi` DESC, `lo`)) ENGINE=InnoDB",
+            ], "installed-mysql-primary-key-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\CreateTable"):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],

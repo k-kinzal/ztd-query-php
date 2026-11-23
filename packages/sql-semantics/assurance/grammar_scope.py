@@ -415,6 +415,14 @@ def inventory(root):
             }
             for alternative in sorted(signatures & signed_storage):
                 related[alternative] = (*related.get(alternative, ()), "mysql-create-signed-v2.json")
+            primary_columns = {
+                "opt_primary: PRIMARY_SYM",
+                "constraint_key_type: PRIMARY_SYM KEY_SYM",
+                "key_part: ident",
+                "key_part: ident opt_ordering_direction",
+            }
+            for alternative in sorted(signatures & primary_columns):
+                related[alternative] = (*related.get(alternative, ()), "mysql-create-primary-v1.json")
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):

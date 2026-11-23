@@ -36,6 +36,8 @@ An ordinary InnoDB `CREATE TABLE` can declare `VARCHAR(n)` with the checked `utf
 
 Use `TINYINT`, `SMALLINT`, `MEDIUMINT`, `INTEGER` or `BIGINT` for an ordinary signed declaration. The model checks the exact signed range of a literal default, including both BIGINT endpoints, and retains its decimal value.
 
+An ordinary signed `PRIMARY KEY` retains the ordered positions of its required fields. Inline and table clauses resolve to the same key type. The column layout records effective defaults for the selected release, including the zero default that MySQL 5.6 can assign when a table key makes a column required. Key terms retain descending storage from MySQL 8.0.
+
 Apply an explicit `COLLATE utf8mb4_bin` to a native VARCHAR field or a plain text literal. The explicit role retains the operand’s bytes and takes precedence over implicit field and literal collations when selecting a supported comparison.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.

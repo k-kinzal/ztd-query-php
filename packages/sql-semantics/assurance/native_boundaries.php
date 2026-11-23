@@ -61,6 +61,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-derived-varchar-boundaries-v1.json', 'bed891c263a93d0c62cbcfec908fa171a593d6a55fec81020856a2d94b9b97d7'],
             ['mysql-create-varchar-boundaries-v1.json', 'cca62d6472498414b159b7934303e1250ddcda6103dc2a4f25460dee572b741d'],
             ['mysql-create-signed-boundaries-v1.json', 'daff522af411c8dac52a3d7d14c477483842c67b572683ea3b7e2bc5274693cf'],
+            ['mysql-create-primary-boundaries-v1.json', 'b66b166513ca5bd9fa0a9c2ab4ecc6f8b87b80a478c9ef0742e0fbaf081e3caa'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -210,6 +211,8 @@ function checkNativeBoundaries(
                 'Statement\\Table\\Column\\Kind\\ColumnKeyword', 'Statement\\Table\\Column\\OrdinaryColumn', 'Statement\\Table\\Column\\ColumnDefinition',
                 'Statement\\Table\\Option\\EngineOption', 'Statement\\Table\\Option\\CharsetOption', 'Statement\\Table\\Option\\CollationOption',
                 'Rules\\TableDefinition\\TableDeclaration', 'Rules\\SessionDatabase',
+                'Statement\\Query\\Direction', 'Statement\\Table\\Key\\ColumnPart', 'Statement\\Table\\Key\\IndexDefinition',
+                'Statement\\Table\\Key\\IndexKind', 'Rules\\TableDefinition\\ColumnFlags',
                 'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
                 'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',

@@ -27,7 +27,7 @@ final class CreateColumnLowering
      *
      * @throws InvalidConstruction When the definition has unsupported attributes or values
      */
-    public function lower(ColumnDefinition $column, ?Name $tableCollation = null): TableColumn
+    public function lower(ColumnDefinition $column, ?Name $tableCollation = null, ?PrimaryColumnPolicy $primary = null): TableColumn
     {
         $specification = $column->specification;
         Check::input(
@@ -39,6 +39,9 @@ final class CreateColumnLowering
         $default = null;
         foreach ($specification->attributes as $attribute) {
             if ($attribute instanceof CollateAttribute && $kind instanceof CharacterStorage) {
+                continue;
+            }
+            if ($primary?->inline === true && $attribute instanceof KeywordAttribute && $attribute->keyword === ColumnKeyword::PrimaryKey) {
                 continue;
             }
             if ($attribute instanceof DefaultLiteral && $default === null) {
@@ -54,6 +57,10 @@ final class CreateColumnLowering
             } else {
                 throw new InvalidConstruction('The column attribute is outside the native declaration domain.');
             }
+        }
+        if ($primary !== null) {
+            $default = $primary->effectiveDefault($nullable, $default);
+            $nullable = false;
         }
 
         return new TableColumn(new Identifier($column->name->column->value), $kind, $nullable ?? true, $default);

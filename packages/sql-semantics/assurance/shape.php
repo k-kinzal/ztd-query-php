@@ -667,14 +667,19 @@ if ($dialect !== 'sqlite') {
         $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
     } else {
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
+        $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\PrimaryKey'];
         $properties['Schema\\CharacterStorage'] = ['length' => ['int'], 'collation' => ['From\\TextCollation']];
+        $properties['Schema\\PrimaryKey'] = ['terms' => ['array']];
+        $properties['Schema\\PrimaryKeyColumn'] = ['slot' => ['int'], 'descending' => ['bool']];
         $methods['Schema\\CharacterStorage'] = ['__construct', 'toString'];
+        $methods['Schema\\PrimaryKey'] = $methods['Schema\\PrimaryKeyColumn'] = ['__construct'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
         $properties['Schema\\TableColumn']['default'] = ['IntegerLiteral', 'Literal\\TextLiteral', 'NullLiteral', 'Predicate\\RangeIntegerLiteral', 'null'];
         $methods['Schema\\TableColumn'] = ['__construct', 'storageBytes', 'toString'];
         $methods['Schema\\IntegerStorage'] = ['bytes', 'accepts'];
         $enumCases['Schema\\IntegerStorage'] = ['Tiny' => 'TINYINT', 'Small' => 'SMALLINT', 'Medium' => 'MEDIUMINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
         array_push($internal, 'Schema\\CreateColumnStorageLowering', 'Schema\\LiteralDefaultLowering');
+        array_push($internal, 'Schema\\CreatePrimaryKeyLowering', 'Schema\\CreateTableLayoutLowering', 'Schema\\PrimaryColumnPolicy');
     }
     array_push($internal, 'Schema\\CreateColumnLowering', 'Schema\\CreateTableLowering');
     $properties['Schema\\DropTable'] = [
@@ -877,6 +882,7 @@ try {
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v3.json', '53fe339cbb4fa0e61e745a77ece8f4ac00caa405a57938011745a8f9257cea04', 'MySQL VARCHAR binding'],
+            ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };
     foreach ($bindings as [$name, $digest, $label]) {
@@ -891,9 +897,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v31.json';
+    $storagePath = __DIR__ . '/value-storage-v32.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '06d413a96e370b5db4108b5346cbdf8877cc4d36409a682de8bc28a74a5e2547',
+        hash_file('sha256', $storagePath) === 'a464096654ccb36131d25590c68c060640f391d0e221edf27c78681debd4b071',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -40,12 +40,17 @@ PATTERN
         : "'(?:[^'\\x00]|'')*'";
     $textDefault = '|' . $textLiteral . ($mysql ? '' : '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)');
     $signed = $mysql ? 'TINYINT|MEDIUMINT|' : '';
-    $column = $name('c[0-9]') . ' (?:' . $signed . 'SMALLINT|INTEGER|INT|BIGINT' . $textType . ')(?: NULL| NOT NULL)?'
-        . '(?: DEFAULT (?:NULL|-?[0-9]{1,19}' . $textDefault . '))?';
+    $slot = $name($mysql ? '[cC](?:[0-9]|1[0-6])' : 'c[0-9]');
+    $column = $slot . ' (?:' . $signed . 'SMALLINT|INTEGER|INT|BIGINT' . $textType . ')(?: NULL| NOT NULL)?'
+        . '(?: DEFAULT (?:NULL|-?[0-9]{1,19}' . $textDefault . '))?' . ($mysql ? '(?: PRIMARY KEY| KEY)?' : '');
+    $part = $slot . '(?: ASC| DESC)?';
+    $key = $mysql ? '(?:, (?:CONSTRAINT custom )?PRIMARY KEY(?: custom)? \\(' . $part . '(?:, ' . $part . '){0,15}\\))?' : '';
     $engine = $mysql ? '(?: ENGINE=InnoDB)?(?:(?: DEFAULT)?(?: CHARACTER SET utf8mb4)? COLLATE(?: =)? utf8mb4_(?:bin|general_ci))?'
         : '(?: USING heap)?';
 
-    return preg_match('/\ACREATE TABLE (?:IF NOT EXISTS )?' . $table . ' \(' . $column . '(?:, ' . $column . '){0,9}\)' . $engine . '\z/D', $sql) === 1;
+    $extent = $mysql ? '{0,16}' : '{0,9}';
+
+    return preg_match('/\ACREATE TABLE (?:IF NOT EXISTS )?' . $table . ' \(' . $column . '(?:, ' . $column . ')' . $extent . $key . '\)' . $engine . '\z/D', $sql) === 1;
 }
 
 function createDefault(string $engine, ?string $value, string $kind): int|string|null
@@ -63,7 +68,7 @@ function createDefault(string $engine, ?string $value, string $kind): int|string
     return $kind === 'text' ? (string) (int) $number[1] : (int) $number[1];
 }
 
-function createdCatalog(PDO $pdo, string $schema, bool $mysql, bool $nativeDetails = false): ?array
+function createdCatalog(PDO $pdo, string $schema, bool $mysql, bool $nativeDetails = false, bool $primaryDetails = false): ?array
 {
     $statement = $pdo->query('SELECT ordinal_position, column_name, data_type, is_nullable, column_default, character_maximum_length, collation_name'
         . " FROM information_schema.columns WHERE table_schema = '" . $schema
@@ -93,7 +98,11 @@ function createdCatalog(PDO $pdo, string $schema, bool $mysql, bool $nativeDetai
     $layout = $nativeDetails ? $pdo->query('SELECT table_collation AS tableCollation, row_format AS rowFormat'
         . " FROM information_schema.tables WHERE table_schema = 'ir_fixture' AND table_name = 'ir_create_target'")->fetch(PDO::FETCH_ASSOC) : [];
 
-    return ['engine' => $engine, 'columns' => $fields, ...$layout];
+    $primary = $primaryDetails ? $pdo->query('SELECT index_name, non_unique, seq_in_index, column_name, collation, sub_part, nullable, index_type'
+        . " FROM information_schema.statistics WHERE table_schema = 'ir_fixture' AND table_name = 'ir_create_target'"
+        . " AND index_name = 'PRIMARY' ORDER BY seq_in_index")->fetchAll(PDO::FETCH_NUM) : [];
+
+    return ['engine' => $engine, 'columns' => $fields, ...$layout, ...($primaryDetails ? ['primaryIndex' => $primary] : [])];
 }
 
 function probeDefaultValues(PDO $pdo, string $target, bool $mysql, bool $nativeDetails = false): array
@@ -115,12 +124,25 @@ function probeDefaultValues(PDO $pdo, string $target, bool $mysql, bool $nativeD
     return $result;
 }
 
+function repeatDefaultInsertion(PDO $pdo, string $target): array
+{
+    try {
+        $pdo->exec('INSERT INTO ' . $target . ' () VALUES ()');
+        $status = 'inserted';
+    } catch (PDOException $error) {
+        $status = $error->errorInfo[0];
+    }
+
+    return ['status' => $status, ...mysqlFixtureDiagnostics($pdo)];
+}
+
 function createEffect(PDO $pdo, string $schema, string $target, string $marker, bool $mysql, array $input): array
 {
     if (!admitCreateTable($input['sql'], $schema, $mysql)) {
         return ['status' => 'outside-observer-scope'];
     }
     $nativeDetails = $mysql && ($input['observeNativeDeclaration'] ?? false) === true;
+    $primaryDetails = $nativeDetails && ($input['observePrimaryIndex'] ?? false) === true;
     $pdo->exec('DROP TABLE IF EXISTS ' . $target);
     $pdo->exec('DELETE FROM ' . $marker . ' WHERE value <> 0');
     if ($input['occupied']) {
@@ -139,17 +161,19 @@ function createEffect(PDO $pdo, string $schema, string $target, string $marker, 
         $pdo->query('SELECT 1')->fetchColumn();
     }
     $active = $pdo->inTransaction();
-    $catalog = $active && $status !== 'executed' ? null : createdCatalog($pdo, $schema, $mysql, $nativeDetails);
+    $catalog = $active && $status !== 'executed' ? null : createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails);
     $values = $status === 'executed' ? probeDefaultValues($pdo, $target, $mysql, $nativeDetails) : null;
+    $repeat = $primaryDetails && $status === 'executed' ? repeatDefaultInsertion($pdo, $target) : null;
     if ($active) {
         $pdo->rollBack();
     }
 
-    $after = createdCatalog($pdo, $schema, $mysql, $nativeDetails);
+    $after = createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails);
     $stored = $nativeDetails && $after !== null ? $pdo->query('SELECT * FROM ' . $target)->fetchAll(PDO::FETCH_NUM) : [];
 
     return ['status' => $status, 'active' => $active, 'catalog' => $catalog, 'defaultInsertion' => $values,
             'afterRollback' => $after, ...$diagnostics, ...($nativeDetails ? ['stored' => $stored] : []),
+            ...($primaryDetails ? ['secondInsertion' => $repeat] : []),
             'markerAfterRollback' => $pdo->query('SELECT value FROM ' . $marker . ' ORDER BY value')->fetchAll(PDO::FETCH_COLUMN)];
 }
 

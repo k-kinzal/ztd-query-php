@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable as ParsedCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
@@ -59,19 +58,15 @@ final class CreateTableLowering
         $schema = ($statement->name->schema ?? $context->declarationSchema)->value;
         Check::input($schema !== SessionDatabase::UNNAMED, 'CREATE TABLE requires a named declaration schema.');
         $name = new TableName(new Identifier($schema), new Identifier($statement->name->name->value));
-        $columns = [];
-        $lowering = new CreateColumnLowering();
-        foreach ($statement->elements as $column) {
-            Check::input($column instanceof ColumnDefinition, 'CREATE TABLE requires ordinary column definitions.');
-            $columns[] = $lowering->lower($column, $tableCollation);
-        }
+        [$columns, $key] = (new CreateTableLayoutLowering())->lower($statement, $profile->grammar, $tableCollation);
 
         return new CreateTable(
             $name,
             $columns,
             $statement->ifNotExists,
             $profile->grammar,
-            $tableCollation === null ? null : TextCollation::Utf8mb4Bin
+            $tableCollation === null ? null : TextCollation::Utf8mb4Bin,
+            $key
         );
     }
 }
