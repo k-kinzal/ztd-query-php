@@ -1,0 +1,114 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-prefix-join-1",
+  "extends": [
+    "sqlite-relational-v4.json",
+    "sqlite-merged-join-v2.json"
+  ],
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "requiredScope": "All previously required families, releases and modes remain in scope.",
+  "constructors": {
+    "Select": {
+      "role": "A checked left-associated chain of ordinary base-table joins with explicit predicates and result slots.",
+      "structure": "An ordered left input and one or more ordered join steps. Each step carries its resolved right input and an optional scoped predicate.",
+      "conditions": "A chain with implicit merge syntax and several steps uses INNER, CROSS and LEFT only. Every term has a complete ordinary heading. SELECT checks that each ON reaches only the prefix and its new right input.",
+      "meaning": "Process input pairs in associative order. A USING key uses the first matching visible heading column in the left prefix. NATURAL chooses the common names in right heading order. Preserve non-key duplicate headings and keep right suppressed keys accessible by explicit field qualification.",
+      "sql": "Emit the exact ordered normalized join steps with qualified ON terms and the complete projection."
+    },
+    "ColumnReference": {
+      "role": "The resolved original occurrence and slot selected for a prefix merge or projection.",
+      "structure": "Zero-based input occurrence with one declared column slot.",
+      "conditions": "Each key compares an earlier occurrence with the new right input. None can select an occurrence to the right of its own join step.",
+      "meaning": "Use the selected physical occurrence, including NULL extension performed by earlier left joins. Distinguish duplicated physical columns and successive uses of the same logical key.",
+      "sql": "Use the generated qualifier of the resolved occurrence and its exact declared column name."
+    }
+  },
+  "externalInterpretation": "Both observers use the same absolute base tables, names, affinities, collations and rows. No parser state or declarations persist in the value.",
+  "observations": [
+    "The resolved key can come from the first input or a later earlier occurrence. Pick the first eligible physical name when independent previous inputs expose duplicate key names.",
+    "A preceding LEFT join can contribute NULL to a subsequent equality, while the following LEFT preserves the unmatched prefix.",
+    "Keys introduced on the right become available in the following prefix. NATURAL uses each earlier matching occurrence in the correct operand position. Qualified fields and wildcard headings keep their exact output names and order.",
+    "Observe native typed rows, duplicates, NULL, parameter registration, and absence of writes."
+  ],
+  "finite": {
+    "first": [
+      "INNER",
+      "CROSS",
+      "LEFT"
+    ],
+    "second": [
+      "INNER",
+      "CROSS",
+      "LEFT"
+    ],
+    "firstKey": [
+      "key",
+      "other"
+    ],
+    "secondSource": [
+      0,
+      1
+    ],
+    "completeness": "Visit each of the 36 indexed combinations. Extract both operations, first key identity and the second equality's left occurrence from the published graph."
+  },
+  "exploration": {
+    "seeds": [
+      9337,
+      24229,
+      55997
+    ],
+    "casesPerSeed": 30,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary chain lengths up to five joined inputs, legal previous occurrences, not just adjacent inputs. Generate NONE, single and two-key checks, repeated source names, nonidentical result widths and repeated output slots."
+  },
+  "analysis": [
+    "Admit the exact previous multi-step USING refusal.",
+    "Select an earlier nonadjacent key when additional input does not declare it.",
+    "Select a key introduced by the first right input.",
+    "Pick the leftmost matching name in a preceding unconstrained join, observable through qualified fields.",
+    "A NATURAL merge uses two keys that come from separate earlier occurrences.",
+    "A previous LEFT null-extends the input of a later left equality.",
+    "Both qualified stars and unqualified stars preserve their computed headings."
+  ],
+  "negative": [
+    "A direct ON term reads a later occurrence.",
+    "A direct ON term addresses a missing column slot.",
+    "A prefix includes a RIGHT join and a merge.",
+    "A prefix includes a FULL join and a merge.",
+    "A merge depends on a local definition instead of a complete ordinary heading.",
+    "A USING key is absent from every member of the preceding prefix."
+  ],
+  "faults": [
+    "Emit the first column occurrence in place of a key from a later prefix input.",
+    "Drop the second step's predicate.",
+    "Change one LEFT step to INNER.",
+    "Drop a projected operand."
+  ],
+  "evidence": {
+    "P01": "Verify both sides of each held comparison and every projected identity.",
+    "P02": "Require all shapes to pass the actual SELECT constructor and typed errors to occur at their owners.",
+    "P03": "Re-use the existing immutable typed graph and explicit addresses.",
+    "P04": "Compute one transition per ordered step with independent row pairing.",
+    "P05": "Check exact stored roles, including transitive projection and predicates, against the installed package.",
+    "P06": "Compare original and emitted SQL against independent values and result names.",
+    "Q01": "Reject inaccessible positions and out-of-contract merged chains.",
+    "Q02": "Visit the full finite product, all previously required cases, and all seeded trials.",
+    "Q03": "Carry correct prefix identity through every selected and compared operand.",
+    "Q04": "Use the pinned engine, independent oracle and observable renderer mutants.",
+    "Q05": "Replay applied changes against the candidate source manifest and bound native results."
+  },
+  "open": [
+    "Merged multi-step chains containing RIGHT or FULL require the release's separate coalesced prefix and ambiguity semantics.",
+    "View, derived, local and virtual operands require independent declaration and operator observations."
+  ],
+  "trust": [
+    "SQLite 3.47.2 prefix selection and join rules",
+    "Discriminating independent row fixtures",
+    "The archived runner and actual package identity"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_select.html#the_from_clause",
+    "https://sqlite.org/2024/sqlite-src-3470200.zip"
+  ]
+}
