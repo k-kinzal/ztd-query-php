@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
@@ -31,7 +33,7 @@ final class PredicateLowering
     /**
      * Resolves native signed integer operands or a constant truth value.
      */
-    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null
+    public function lower(?Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
     {
         return $condition === null ? null : $this->lowerValue($condition, $binding);
     }
@@ -39,7 +41,7 @@ final class PredicateLowering
     /**
      * Resolves a checked predicate or truth constant.
      */
-    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest
+    public function lowerValue(Scalar $condition, SourceBinding|JoinBinding $binding): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest
     {
         while ($condition instanceof Grouped) {
             $condition = $condition->operand;
@@ -57,6 +59,10 @@ final class PredicateLowering
         }
         $expression = new ExpressionLowering();
         if ($condition instanceof ParsedComparison) {
+            $text = (new TextComparisonLowering())->lower($condition, $binding);
+            if ($text !== null) {
+                return $text;
+            }
             $operator = IntegerOperator::tryFrom($condition->operator->value);
             Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
             $left = $expression->lower($condition->left, $binding);

@@ -17,13 +17,16 @@ function mysqlVarcharEffectAdmitted(string $sql): bool
     $signedSlot = '(?:' . $qualifier . '\\.)?' . $name('id');
     $column = '(?:' . $qualifier . '\\.)?' . $name('(?:id|label|alternate|empty_value)');
     $signed = '(?:' . $signedSlot . '|NULL|-?[0-9]{1,10})';
-    $operand = '(?:' . $column . '|NULL|-?[0-9]{1,10})';
+    $text = <<<'PATTERN'
+'(?:\\[\s\S]|''|[^'\\])*'
+PATTERN;
+    $operand = '(?:' . $column . '|' . $text . '|NULL|-?[0-9]{1,10})';
     $where = '(?: WHERE (?&truth))?';
     $update = 'UPDATE ' . $table . '(?: AS ' . $alias . ')? SET ' . $signedSlot . '\\h*=\\h*' . $signed . $where;
     $delete = 'DELETE FROM ' . $table . $where;
 
     return preg_match('/\\A(?:' . $update . '|' . $delete . ')\\z'
-        . fixturePredicateDefinition($operand, '(?:[<>=]{1,2}|!=)') . '/iD', $sql) === 1;
+        . fixturePredicateDefinition($operand, '(?:<=>|<=|<>|!=|>=|=|<|>)') . '/iD', $sql) === 1;
 }
 
 /**

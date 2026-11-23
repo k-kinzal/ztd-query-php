@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
@@ -34,7 +35,7 @@ final class Join
         public readonly JoinKind $kind,
         public readonly TableSource|DerivedSource|self $left,
         public readonly TableSource|DerivedSource|self $right,
-        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $on = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $on = null,
     ) {
         $inputs = $this->inputs();
         Check::input(count($inputs) <= 61, 'A joined source can have at most 61 input occurrences.');

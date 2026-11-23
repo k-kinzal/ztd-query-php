@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
@@ -175,7 +176,7 @@ final class JoinBinding
     /**
      * Resolves the explicit or merged condition of this join.
      */
-    public function predicate(): BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null
+    public function predicate(): BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null
     {
         if (!$this->join->operator->natural() && $this->join->using === []) {
             return (new PredicateLowering())->lower($this->join->on, $this);

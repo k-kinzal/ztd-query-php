@@ -182,6 +182,13 @@ def inventory(root):
             for alternative in rules.get("bool_pri", ()):
                 if alternative.upper().endswith((" IS NULL_SYM", " IS NOT NULL_SYM")):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-presence-v1.json")
+            comparison_tokens = {"EQ", "EQUAL_SYM", "GE", "GT_SYM", "LE", "LT", "NE"}
+            for alternative in rules.get("comp_op", ()):
+                if alternative.split(": ", 1)[1] in comparison_tokens:
+                    related[alternative] = (*related.get(alternative, ()), "mysql-varchar-comparison-v1.json")
+            for alternative in rules.get("bool_pri", ()):
+                if alternative in ("bool_pri: bool_pri comp_op predicate", "bool_pri: bool_pri EQUAL_SYM predicate"):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-varchar-comparison-v1.json")
             for rule in ("update_stmt", "delete_stmt"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-effects-v1.json")

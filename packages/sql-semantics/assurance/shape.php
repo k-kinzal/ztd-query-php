@@ -135,7 +135,14 @@ if ($dialect === 'mysql') {
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
     $properties['TableSource']['columnTypes'] = ['array'];
-    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest');
+    $textOperator = 'Predicate\\Text\\TextOperator';
+    $textComparison = 'Predicate\\Text\\TextComparison';
+    $textOperands = ['From\\TextColumnReference', 'Literal\\TextLiteral', 'NullLiteral'];
+    $properties[$textOperator] = $methods[$textOperator] = [];
+    $properties[$textComparison] = ['operator' => [$textOperator], 'left' => $textOperands,
+        'right' => $textOperands, 'collation' => ['From\\TextCollation']];
+    $methods[$textComparison] = ['__construct'];
+    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest', $textComparison);
     $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
@@ -162,7 +169,7 @@ if ($dialect === 'postgres') {
     $internal[] = 'Predicate\\TruthTestLowering';
 }
 if ($dialect === 'mysql') {
-    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering');
+    array_push($internal, 'Literal\\IntegerTokenLowering', 'Predicate\\IntegerRangeLowering', 'From\\VarcharLowering', 'Predicate\\Text\\TextComparisonLowering');
 }
 $pureCollaborators = [$selectBounds, 'SelectSql'];
 if ($dialect === 'postgres') {
@@ -190,6 +197,8 @@ if ($dialect === 'mysql') {
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
     $enumCases['From\\ColumnKind'] = ['SignedInt' => 'int'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
+    $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
+        'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }
 if ($dialect === 'postgres') {
     $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
@@ -483,6 +492,8 @@ if ($dialect !== 'sqlite') {
     $truthValues[] = 'Predicate\\IntegerRange';
     if ($dialect === 'postgres') {
         array_push($truthValues, 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+    } else {
+        $truthValues[] = 'Predicate\\Text\\TextComparison';
     }
     sort($truthValues);
     if ($dialect === 'postgres') {
@@ -548,6 +559,8 @@ if ($dialect !== 'sqlite') {
     array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerRange', 'From\\TextColumnReference');
     if ($dialect === 'postgres') {
         array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+    } else {
+        $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\Text\\TextComparison';
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
 /**
@@ -35,7 +36,7 @@ final class SelectBounds
     public function check(
         array $results,
         TableSource|Join|null $source,
-        BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
@@ -48,7 +49,7 @@ final class SelectBounds
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerRange || $expression instanceof NullTest) {
+                if ($expression instanceof IntegerRange || $expression instanceof NullTest || $expression instanceof TextComparison) {
                     $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
                         : 'A predicate slot must belong to the SELECT source.';
                     $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);

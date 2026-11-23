@@ -50,7 +50,7 @@ function constructOperand(string $namespace, array $data): object
     };
     $operator = $namespace . 'ArithmeticOperator';
     $castTarget = $namespace . 'Expression\\CastDestination';
-    $collation = $namespace . 'Expression\\TextCollation';
+    $collation = $namespace . (str_contains($namespace, '\\MySql\\') ? 'From\\TextCollation' : 'Expression\\TextCollation');
     $textOperator = $namespace . 'Predicate\\Text\\TextOperator';
     $truth = $namespace . 'Predicate\\TruthOperator';
 

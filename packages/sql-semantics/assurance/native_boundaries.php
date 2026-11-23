@@ -51,6 +51,7 @@ function nativeBoundaryContract(string $dialect): array
             ['mysql-varchar-slot-boundaries-v1.json', '07b2a4d8f69b29a9739f3afceaffcb2fe676c2bb64ceef286fd7c3f4df0bc03d'],
             ['mysql-varchar-presence-boundaries-v1.json', 'fffbc606bf20d51b751ac695b96badb2b64a4ee91c0e3ab9338afc0973240045'],
             ['mysql-varchar-label-boundaries-v1.json', 'ddfd1e58cc81339e59694a5f7250d46c10b482c1d37f4a201a8bbd17835c2fe9'],
+            ['mysql-varchar-comparison-boundaries-v1.json', '8d997095c80064880f6c6e3ef6e8c43c90ea4490a909eeb5ef64ce545963b149'],
         ],
         'postgres' => [
             ['postgres-create-text-boundaries-v1.json', 'f2a783062d780bf0fc95fdf27394c04238c992e524c58c3c19b02885538de98b'],
@@ -190,6 +191,7 @@ function checkNativeBoundaries(
                 'Ir\\Literal\\TextLiteral', 'Ir\\Literal\\TextLiteralLowering', 'Statement\\Literal\\EscapeRule', 'Statement\\Literal\\StringLiteral',
                 'Ir\\From\\ColumnKind', 'Ir\\From\\Varchar', 'Ir\\From\\TextCollation', 'Ir\\From\\TextColumnReference',
                 'Ir\\From\\VarcharLowering', 'Statement\\Type\\Character', 'Statement\\Type\\Kind\\CharacterKind',
+                'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextOperator', 'Ir\\Predicate\\Text\\TextComparisonLowering',
                 'Statement\\Type\\Integral', 'Statement\\Type\\Kind\\IntegralKind',
                 'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
                 'Statement\\Literal\\Parameter as ParsedParameter',

@@ -17,6 +17,8 @@ use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextOperator;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -94,5 +96,13 @@ final class SelectSqlTest extends TestCase
         $source = new TableSource(new Identifier('app'), new Identifier('items'), [new Identifier('label')], [new Varchar(8)]);
 
         self::assertSame('`__ztd_source_1`.`label`', (new SelectSql())->column(new TextColumnReference(0), $source, 1, true));
+    }
+
+    public function testTextComparisonUsesTheStockNullSafeOperator(): void
+    {
+        $source = new TableSource(new Identifier('app'), new Identifier('items'), [new Identifier('label')], [new Varchar(8)]);
+        $comparison = new TextComparison(TextOperator::NullSafeEqual, new TextColumnReference(0), new NullLiteral());
+
+        self::assertSame('(`__ztd_source`.`label` <=> NULL)', (new SelectSql())->textComparison($comparison, $source, 0, true));
     }
 }

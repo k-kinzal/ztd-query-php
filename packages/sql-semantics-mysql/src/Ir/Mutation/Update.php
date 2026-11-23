@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -46,7 +47,7 @@ final class Update implements SemanticsIR
     public function __construct(
         public readonly TableSource $target,
         array $assignments,
-        public readonly BooleanLiteral|IntegerComparison|IntegerRange|LogicalPredicate|NullLiteral|NullTest|null $where = null,
+        public readonly BooleanLiteral|IntegerComparison|IntegerRange|TextComparison|LogicalPredicate|NullLiteral|NullTest|null $where = null,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
     ) {
         $this->assignments = Check::listOf($assignments, UpdateAssignment::class, 'An UPDATE needs a nonempty assignment list.', 1);

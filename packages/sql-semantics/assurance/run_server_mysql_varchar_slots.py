@@ -229,6 +229,11 @@ def row_stream(layout):
 
 
 def value(role, row):
+    if role[0] == "text":
+        return role[1]
+    if role[0] == "null":
+        return None
+    require(role[0] in ("slot", "text-slot"), "mysql-varchar-slots-oracle-operand", role)
     _, position, *occurrence = role
     return row[occurrence[0] if occurrence else 0][position]
 

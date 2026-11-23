@@ -10,11 +10,13 @@ use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Comparison as ParsedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -36,6 +38,7 @@ final class ProjectionColumns
     {
         $expressions = new ExpressionLowering();
         $casts = new IntegralCastLowering();
+        $comparisons = new TextComparisonLowering();
         $strings = new TextLiteralLowering();
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
@@ -62,12 +65,13 @@ final class ProjectionColumns
                 $results[] = new ResultColumn((new PredicateLowering())->nullTest($operand, $binding), $label);
                 continue;
             }
+            $comparison = $operand instanceof ParsedComparison ? $comparisons->lower($operand, $binding) : null;
             $parameter = $parameters->lower($expression, $parameterPosition + 1);
             if ($parameter !== null) {
                 ++$parameterPosition;
             }
             $results[] = new ResultColumn(
-                $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),
+                $comparison ?? $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),
                 $label,
             );
         }

@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
@@ -27,7 +28,7 @@ final class NullTest
      * Stores the tested scalar and whether to invert the result.
      */
     public function __construct(
-        public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|self $operand,
+        public readonly BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|TextColumnReference|self $operand,
         public readonly bool $negated = false,
     ) {
     }

@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 
@@ -71,7 +72,7 @@ final class CompoundShape
             $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof ColumnReference => ResultKind::Integer,
-            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
+            $column instanceof Arithmetic, $column instanceof BooleanLiteral, $column instanceof IntegerLiteral, $column instanceof IntegerRange, $column instanceof NullTest, $column instanceof TextComparison, $column instanceof Parameter, $column instanceof SignedCast => ResultKind::WideInteger,
         };
     }
 

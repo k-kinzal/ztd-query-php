@@ -29,10 +29,16 @@ def predicate_value(condition, operand):
         return None if lhs is None or rhs is None else COMPARISONS[symbol](lhs, rhs)
     if role == "text-comparison":
         _, symbol, collation, left, right = condition
-        if collation != "C":
+        if collation not in ("C", "utf8mb4_bin"):
             raise ValueError(f"Unregistered text comparison collation {collation}")
         lhs, rhs = operand(left), operand(right)
-        return None if lhs is None or rhs is None else COMPARISONS[symbol](lhs.encode("utf-8"), rhs.encode("utf-8"))
+        if lhs is None or rhs is None:
+            return lhs is rhs if symbol == "<=>" else None
+        if collation == "utf8mb4_bin":
+            width = max(len(lhs), len(rhs))
+            lhs, rhs = lhs.ljust(width, " "), rhs.ljust(width, " ")
+        relation = COMPARISONS["=" if symbol == "<=>" else symbol]
+        return relation(lhs.encode("utf-8"), rhs.encode("utf-8"))
     if role == "truth-test":
         _, mode, tested = condition
         value = predicate_value(tested, operand)

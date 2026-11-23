@@ -116,7 +116,9 @@ def graph_term(term, target):
         return key, term[1], graph_term(term[2], target)
     if key in ("logic", "comparison"):
         return key, term[1], graph_term(term[2], target), graph_term(term[3], target)
-    require(key in ("null", "integer", "boolean"), "mysql-varchar-effects-reachable-term", term)
+    if key == "text-comparison":
+        return key, term[1], term[2], graph_term(term[3], target), graph_term(term[4], target)
+    require(key in ("null", "integer", "boolean", "text"), "mysql-varchar-effects-reachable-term", term)
     return tuple(term)
 
 
@@ -207,6 +209,8 @@ def expected(item):
     def atom(term, row):
         if term[0] == "integer":
             return int(term[1])
+        if term[0] == "text":
+            return term[1]
         if term[0] == "null":
             return None
         return row[HEADING.index(address(term, target))]

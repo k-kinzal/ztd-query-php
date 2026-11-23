@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\MySql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\MySql\Ir\Predicate\RangeIntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 
@@ -67,7 +68,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|ColumnReference|IntegerLiteral|IntegerRange|BooleanLiteral|NullLiteral|NullTest|Parameter|SignedCast|TextColumnReference|TextComparison|TextLiteral|UnsignedCast|RangeIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -76,11 +77,23 @@ final class SelectSql
             $expression instanceof UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
             $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
+            $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits both text operands; the native field selects the comparison collation.
+     */
+    public function textComparison(TextComparison $comparison, TableSource|Join|null $source, int $offset, bool $qualify): string
+    {
+        $left = $this->expression($comparison->left, $source, $offset, $qualify);
+        $right = $this->expression($comparison->right, $source, $offset, $qualify);
+
+        return '(' . $left . ' ' . $comparison->operator->value . ' ' . $right . ')';
     }
 
     /**
@@ -144,7 +157,7 @@ final class SelectSql
     /**
      * Emits the typed native predicate relative to the scope that owns it.
      */
-    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function predicate(BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|TextComparison|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|TextColumnReference $condition, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         if ($condition instanceof IntegerComparison) {
             $left = $this->expression($condition->left, $source, $offset, $qualify);
