@@ -1,0 +1,43 @@
+{
+  "revision": "SemanticsIR/server-create-table-2",
+  "approval": "pending-human-review",
+  "extends": "server-create-table-v1.json",
+  "dialects": ["MySql", "PostgreSql"],
+  "profiles": "The pinned native releases and name profiles. Omitted access methods resolve to InnoDB on MySQL and heap on PostgreSQL. The fixture uses these defaults and observes each native transaction policy.",
+  "scope": "Create one persistent ordinary table at a resolved schema identity with one or more named SMALLINT, INTEGER or BIGINT columns, nullable or not nullable, and optional explicit NULL or signed 32-bit literal defaults. Preserve IF NOT EXISTS.",
+  "open": ["Non-ASCII MySQL column names, other types, type modifiers, defaults, constraints, temporary and unlogged tables, partitioning, inheritance, LIKE, CREATE TABLE AS and other engine options"],
+  "additionalPublicRoots": ["Schema/CreateTable"],
+  "constructors": {
+    "CreateTable": {
+      "type": "Schema/CreateTable",
+      "role": "Private definition of a named native table",
+      "fields": ["target", "columns", "ifNotExists", "release"],
+      "invariants": ["Dense ordered list of 1 to 128 checked columns", "Names are distinct under the native column comparison", "The relation identity uses the existing checked table-name role"],
+      "meaning": "Create the declared ordered column layout and defaults. IF NOT EXISTS leaves a preexisting object alone. MySQL uses InnoDB and its implicit commit rule. PostgreSQL uses heap and its transactional DDL rule.",
+      "sql": "Emit a schema-qualified CREATE TABLE with every checked column and an explicit checked access method.",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "TableColumn": {
+      "type": "Schema/TableColumn",
+      "role": "An ordered column with signed native integer kind, nullability and an optional literal default",
+      "invariants": ["MySQL column names use ASCII for the pinned case comparison. PostgreSQL column names exclude system attribute names.", "MySQL checks an integer default against the native width. PostgreSQL stores a literal default and checks the assignment on insertion.", "MySQL NOT NULL does not admit an explicit NULL default"],
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    },
+    "IntegerStorage": {
+      "type": "Schema/IntegerStorage",
+      "role": "The signed 16-, 32- or 64-bit native storage role",
+      "obligations": ["P01", "P02", "P03", "P04", "P05", "P06"]
+    }
+  },
+  "analysis": "Resolve the declaration schema and builtin integer kind in the fixed profile. Map only the checked column attributes. Preserve the distinction between no explicit default and explicit NULL where represented.",
+  "observations": ["Created or retained target identity", "Ordinal names, exact native declared types, nullability and default metadata", "Native default insertion values", "Existing object policy", "Transaction and rollback effects"],
+  "finite": {"types": ["SMALLINT", "INTEGER", "BIGINT"], "columnForms": ["nullable without an explicit default", "nullable with explicit NULL", "nullable with an integer default", "NOT NULL with an integer default"], "ifNotExists": [false, true], "priorTarget": [false, true], "completeness": "Observe all 48 constructor and prior-target combinations per release."},
+  "exploration": {"seeds": [3541, 6701, 17183], "casesPerSeed": 20, "timeoutSecondsPerRelease": 185, "allowedExclusions": []},
+  "negative": ["Empty column list", "Repeated column name", "Unsupported definition alternative", "Unresolved declaration schema"],
+  "additionalMySqlNegatives": ["Default outside SMALLINT", "NOT NULL with explicit NULL", "Non-ASCII MySQL column name"],
+  "additionalPostgreSqlNegatives": ["System column name", "Text literal default in signed storage"],
+  "correction": "The PostgreSQL SMALLINT outside-width case creates a table. Its default insertion reports SQLSTATE 22003 and an explicit replacement row succeeds. The signed-default domain compares both effects. MySQL still rejects the case at construction.",
+  "faults": ["Change column order", "Change a signed integer storage role", "Change a nonzero default", "Invert IF NOT EXISTS"],
+  "trust": ["Pinned builtin integer roles and access-method settings", "Disposable ordinary tables", "Independent prediction of catalog and default effects", "Engine and client representation of metadata"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-table.html", "https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html", "https://www.postgresql.org/docs/17/sql-createtable.html"]
+}
