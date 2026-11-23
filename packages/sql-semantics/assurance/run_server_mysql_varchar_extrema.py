@@ -1,5 +1,6 @@
 """Compare native MySQL text extrema with an independent PAD SPACE model."""
 
+from functools import lru_cache
 from itertools import permutations, product
 import json
 from random import Random
@@ -11,8 +12,8 @@ from run_server_join import OBSERVER, main
 from run_server_mysql_explicit_text_collation import observer_request
 from run_server_mysql_varchar_comparison import comparison, text
 from run_server_mysql_varchar_count import (
-    DECLARATIONS, EMPTY, HEADING, PRIMARY, ROWS, address, check_preparation, check_value, ddl, graph, grouped,
-    observation, prepare, ref,
+    DECLARATIONS, EMPTY, HEADING, PRIMARY, ROWS, address, check_preparation as check_tables, check_value, ddl, graph,
+    grouped, observation, prepare as prepare_tables, ref,
 )
 from run_server_mysql_varchar_presence import null_test
 from run_server_mysql_varchar_slots import COLLATION, DIAGNOSTICS, SCHEMA, field, query
@@ -22,14 +23,32 @@ from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-extrema"
-CONTRACT = "bb884261227a9eceaadd18e1a464aa5b64def2ae3f32ed0a013a2dee7e212a96"
+CONTRACT = "a594302b5388ea5a82a95db7d02c382e674baf61ef5f70b532420a8ab621512e"
 FILTERS = {"all": None, "tie": comparison("=", ref("label"), text("a")), "empty": ["boolean", False]}
 
 
+@lru_cache(maxsize=1)
 def specifications():
-    path, profile = TOOL / "mysql-varchar-extrema-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-extrema-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-extrema-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
+
+
+def prepare(engine, db):
+    tables = prepare_tables(engine, db)
+    probes = {name: f"SELECT COERCIBILITY(COUNT(*)) AS count_kind, COERCIBILITY(bucket) AS key_kind FROM {SCHEMA}.{name}"
+              for name in ROWS}
+    return {"tables": tables, "metadata": {name: {"sql": sql, "observed": db.request({"sql": sql})} for name, sql in probes.items()}}
+
+
+def check_preparation(engine, environment, preparation):
+    check_tables(engine, environment, preparation["tables"])
+    count_kind = specifications()[0]["countCoercibility"]["mysql-" + environment["database"][0]]
+    for name in ROWS:
+        response = preparation["metadata"][name]["observed"]
+        same("rows", response["status"])
+        same(["count_kind", "key_kind"], [field[0] for field in response["fields"]])
+        same([[count_kind, 5]], response["rows"])
 
 
 def finite_space(specification):
@@ -150,9 +169,12 @@ def expected(item):
         return representatives(operator, [row[position] for row in records])
 
     kinds = ["LONG" if term[0] == "slot" else "LONGLONG" if term[1] == "count" else "VAR_STRING" for term, _ in columns]
+    count_kind = specifications()[0]["countCoercibility"][item["release"]]
+    metadata = {"LONG": ["binary", "binary", 5], "LONGLONG": ["binary", "binary", count_kind],
+                "VAR_STRING": ["utf8mb4", COLLATION, 2]}
     keys_in_order = sorted(groups, key=lambda key: tuple((value is not None, value) for value in key)) if ordered(item) else groups
     return {"fields": [[label, kind] for (_, label), kind in zip(columns, kinds)],
-            "textMetadata": [["utf8mb4", COLLATION, 2] if kind == "VAR_STRING" else ["binary", "binary", 5] for kind in kinds],
+            "textMetadata": [metadata[kind] for kind in kinds],
             "allowedRows": [[allowed(term, groups[key]) for term, _ in columns] for key in keys_in_order]}
 
 
