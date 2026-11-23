@@ -9,7 +9,7 @@ NATIVE = {
     "postgres_from_list": "postgres-from-list-v2.json",
     "postgres_text_literal": "postgres-text-literal-v1.json",
     "postgres_text_conversion": "postgres-text-conversion-v1.json",
-    "postgres_typed_columns": "postgres-typed-columns-v1.json",
+    "postgres_typed_columns": "postgres-typed-columns-v2.json",
     "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
     "postgres_builtin_casts": "postgres-builtin-casts-v3.json",
     "postgres_typed_parameters": "postgres-typed-parameters-v2.json",

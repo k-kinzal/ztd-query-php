@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir;
+namespace SqlSemantics\Platform\PostgreSql\Ir\From;
 
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -12,7 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the third field of the second input
- *     (new \SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference(2, 1))->occurrence // => 1
+ *     (new \SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference(2, 1))->occurrence // => 1
  */
 final class TextColumnReference
 {

@@ -222,7 +222,7 @@ def inventory(root):
             )})
             for rule in ("columnref", "target_el"):
                 for alternative in rules.get(rule, ()):
-                    related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v2.json")
             for rule in ("AexprConst", "Sconst", "c_expr"):
                 for alternative in rules.get(rule, ()):
                     if "SCONST" in alternative or "Sconst" in alternative:

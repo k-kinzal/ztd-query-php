@@ -79,12 +79,12 @@ if ($dialect === 'postgres') {
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
     $properties['Expression\\TextLiteral'] = ['value' => ['string']];
     $methods['Expression\\TextLiteral'] = ['__construct', 'toString'];
-    $properties['TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
-    $methods['TextColumnReference'] = ['__construct'];
+    $properties['From\\TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $methods['From\\TextColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
     $methods['TableSource'][] = 'columnKind';
-    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral', 'TextColumnReference');
+    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral', 'From\\TextColumnReference');
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];

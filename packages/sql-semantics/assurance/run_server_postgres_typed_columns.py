@@ -13,7 +13,7 @@ from server_join_cases import case, compare, expected as join_expected, is_join,
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-typed-columns"
-CONTRACT = "e158f9960c002dba0e1a27063218013de0e598aa18c72c3441c7ca3cb8611e0b"
+CONTRACT = "8454694fe46150d128c458feed1641860849c2a1a08c1ff53eaf938f714f6a7a"
 LEFT, RIGHT = "ir_typed_left", "ir_typed_right"
 HEADINGS = {
     LEFT: ("id", "label", "weight", "note"),
@@ -33,7 +33,7 @@ DIAGNOSTICS = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\"
 
 
 def specifications():
-    path, profile = TOOL / "postgres-typed-columns-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-typed-columns-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-typed-columns-contract-mismatch")
     return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
