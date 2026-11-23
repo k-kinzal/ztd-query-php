@@ -5,8 +5,8 @@ import json
 
 from run import Failure, TOOL, digest, require
 
-CONTRACT = "closed-value-graph-v4.json"
-CONTRACT_DIGEST = "d9b75f222cea331ef20040c9b3d553e1fc292561ee30ca934064cb443b2d4721"
+CONTRACT = "closed-value-graph-v5.json"
+CONTRACT_DIGEST = "67870ec08c51652f11e0794c3d542defe862ee5a2474348055968aab44be9706"
 DIALECTS = {"mysql": "MySql", "postgres": "PostgreSql", "sqlite": "Sqlite"}
 
 
@@ -77,6 +77,7 @@ def controls(manifest, constructors, outcomes, specification):
         ("inject-open-child", "value-closure-open-edge"),
         ("erase-list-copy", "value-closure-unspecified-array"),
         ("erase-native-assignment-boundary", "value-closure-unverified-list"),
+        ("erase-mysql-drop-target-boundary", "value-closure-unverified-list"),
         ("change-external-definition", "value-closure-external-definition"),
     )
     evidence = []
@@ -95,6 +96,10 @@ def controls(manifest, constructors, outcomes, specification):
             after = None
         elif name == "erase-native-assignment-boundary":
             before = "Mutation/Update::__construct"
+            mutated["mysql"]["checkedBoundaries"].remove(before)
+            after = None
+        elif name == "erase-mysql-drop-target-boundary":
+            before = "Schema/DropTable::__construct"
             mutated["mysql"]["checkedBoundaries"].remove(before)
             after = None
         else:
