@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/postgres-boolean-returning-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Pinned UTF-8 PostgreSQL profile with pg_catalog first, the builtin Boolean type and ordinary heap tables.",
+  "extends": ["postgres-boolean-fields-v1.json", "postgres-text-returning-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Mutation/ReturnedColumn", "Mutation/Delete", "Mutation/Update", "Mutation/Insert", "Mutation/InsertQuery", "From/BooleanColumnReference", "TableSource"],
+  "structure": "A mutation has an ordered RETURNING list with an exact native occurrence-zero reference and a name at each result position. Boolean fields coexist with signed fields, repeated reads and repeated names.",
+  "conditions": "The single resolved target owns each referenced slot. The nominal Boolean, text or signed reference role must agree with the native target kind. The checked signed write operands and all mutation conditions must independently satisfy their owning statement.",
+  "meaning": "INSERT VALUES and INSERT SELECT read the newly inserted row, UPDATE reads the updated row, and DELETE reads the deleted row. Bare Boolean and Boolean NULL filters retain only rows whose condition is TRUE. Defaults belong to the external target, and the fixture fixes distinct Boolean defaults.",
+  "sql": "Render the ordered list of exact target field names and result aliases. Retain the existing signed destination and write values, preserve the checked filter and do not substitute a Boolean value or field.",
+  "observations": ["Affected row count, ordered names and native type identifiers, including empty output", "Native TRUE, FALSE and NULL with multiplicity", "The complete target rows before and after the command and after rollback"],
+  "finite": {
+    "operation": ["insert", "insert-query", "update", "delete"],
+    "layout": ["single", "mixed", "repeated", "reordered"],
+    "field": ["enabled", "fallback"],
+    "mode": ["all", "selected"],
+    "identities": 64,
+    "completeness": "Reconstruct the operation, ordered field coordinates and native roles from the observed PHP graph. Recover the selected field and the mode from its operand or filter, and require exactly one receipt per identity."
+  },
+  "analysis": ["A DELETE using a bare Boolean condition and both qualified and bare RETURNING references", "An UPDATE reading the new signed value beside a native Boolean field", "An INSERT VALUES applying native Boolean defaults", "An empty DELETE with a closed wildcard RETURNING layout", "An INSERT SELECT returning both defaulted Boolean fields and the signed field", "A DELETE testing a Boolean field for NULL"],
+  "exploration": {
+    "seeds": [2999, 19373, 51749],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "All four mutation roots, both native Boolean positions, repeated aliases and slots, reordered fields, empty and nonempty effects, signed operands, varying row count and Boolean conditions."
+  },
+  "negative": ["A Boolean read selects a signed position", "A signed read selects a Boolean position", "A text read selects a Boolean position", "A Boolean read selects a missing target position", "A Boolean read selects a different occurrence"],
+  "faults": ["Return the wrong Boolean field", "Reverse the return layout", "Lose one returned position", "Erase a Boolean filter", "Emit a different signed write value"],
+  "evidence": {
+    "P01": "Bind each result field to its exact scoped native kind and target position.",
+    "P02": "Check native kind, target occurrence, range and mutation-local invariants on every construction route.",
+    "P03": "Retain the checked target identity, operands, references and result names.",
+    "P04": "Determine the result shape and its row source from the owning mutation and ordered result fields.",
+    "P05": "Store readonly references in an owned and ordered result list.",
+    "P06": "Preserve the effect and returned native fields in every admitted output layout.",
+    "Q01": "Reject incompatible or absent read positions at the owning mutation boundary.",
+    "Q02": "Consume all finite direct constructions on each release and exercise every analyzed shape.",
+    "Q03": "Check the mutation and RETURNING observations together.",
+    "Q04": "Compare exact native effect and output against an independent fixture evaluator.",
+    "Q05": "Observe the loaded PHP methods, value classes and installed API."
+  },
+  "open": ["Native Boolean write destinations", "Boolean expression result roles beyond returned target fields", "Trigger, generated column and concurrency effects beyond this fixture"],
+  "trust": ["Isolated target and transaction", "Pinned typed fixture", "Independent mutation evaluator", "Stock PostgreSQL Boolean and signed types", "Observed installed source and methods"],
+  "sources": ["https://www.postgresql.org/docs/17/dml-returning.html", "https://www.postgresql.org/docs/17/datatype-boolean.html"]
+}
