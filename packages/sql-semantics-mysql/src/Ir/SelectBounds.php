@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Ir;
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
+use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\MySql\Ir\From\Join;
 use SqlSemantics\Platform\MySql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\MySql\Ir\From\TextColumnReference;
@@ -43,16 +44,7 @@ final class SelectBounds
         $nodes = 0;
         $position = 0;
         foreach ($results as $result) {
-            $label = $result->name->value;
-            if ($label !== ltrim($label, " \t\r\n\v\f")) {
-                $reference = $result->expression;
-                Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
-                $table = $inputs[$reference->occurrence] ?? null;
-                Check::input(
-                    $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,
-                    'An intrinsic MySQL result name must equal its physical input field.'
-                );
-            }
+            $this->checkLabel($result, $inputs);
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
@@ -75,6 +67,24 @@ final class SelectBounds
                     $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,
                 };
             }
+        }
+    }
+
+    /**
+     * Checks a result name that relies on the physical column's own label.
+     * @param list<TableSource|DerivedSource> $inputs
+     */
+    public function checkLabel(ResultColumn $result, array $inputs): void
+    {
+        $label = $result->name->value;
+        if ($label !== ltrim($label, " \t\r\n\v\f")) {
+            $reference = $result->expression;
+            Check::invariant($reference instanceof ColumnReference || $reference instanceof TextColumnReference, 'An intrinsic label belongs to a column reference.');
+            $table = $inputs[$reference->occurrence] ?? null;
+            Check::input(
+                $table instanceof TableSource && ($table->columns[$reference->slot]->value ?? null) === $label,
+                'An intrinsic MySQL result name must equal its physical input field.'
+            );
         }
     }
 }

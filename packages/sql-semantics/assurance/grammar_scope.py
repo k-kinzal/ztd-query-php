@@ -182,6 +182,9 @@ def inventory(root):
             for alternative in rules.get("bool_pri", ()):
                 if alternative.upper().endswith((" IS NULL_SYM", " IS NOT NULL_SYM")):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-presence-v1.json")
+            for rule in ("update_stmt", "delete_stmt"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-varchar-effects-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

@@ -6,6 +6,7 @@ declare(strict_types=1);
 $engine = $argv[1];
 require __DIR__ . '/server_connection.php';
 require __DIR__ . '/mysql_literal_observation.php';
+require __DIR__ . '/mysql_varchar_effect.php';
 [$pdo, $environment] = connectFixture($engine);
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
@@ -21,6 +22,14 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $pdo->exec($sql);
         }
         return ['status' => 'fixture'];
+    }
+    if (($input['observeMysqlVarcharEffect'] ?? false) === true) {
+        if ($readOnly) {
+            $pdo->exec('ROLLBACK');
+            $readOnly = false;
+        }
+
+        return mysqlVarcharEffect($pdo, $input['sql']);
     }
     if (!$readOnly) {
         $pdo->exec('START TRANSACTION READ ONLY');

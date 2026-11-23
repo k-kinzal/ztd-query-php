@@ -27,4 +27,13 @@ final class SelectBoundsTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    public function testCheckLabelRejectsAnotherPhysicalName(): void
+    {
+        $source = new TableSource(new Identifier('app'), new Identifier('items'), [new Identifier('id')]);
+        $result = new ResultColumn(new ColumnReference(0), new Identifier(' different'));
+        $this->expectExceptionMessage('An intrinsic MySQL result name must equal its physical input field.');
+
+        (new SelectBounds())->checkLabel($result, [$source]);
+    }
 }
