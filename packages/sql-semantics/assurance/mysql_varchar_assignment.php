@@ -37,28 +37,7 @@ function mysqlVarcharAssignment(PDO $pdo, string $sql): array
         return ['status' => 'outside-observer-scope'];
     }
 
-    $before = mysqlVarcharAssignmentSnapshot($pdo);
-    $pdo->beginTransaction();
-    try {
-        $statement = $pdo->prepare($sql);
-        $statement->execute();
-        $result = ['status' => 'mutation', 'count' => $statement->rowCount(), 'columns' => $statement->columnCount()];
-        $statement->closeCursor();
-        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-        try {
-            $result['diagnostics'] = $pdo->query('SHOW WARNINGS')->fetchAll(PDO::FETCH_NUM);
-            $result['warningCount'] = (int) $pdo->query('SHOW COUNT(*) WARNINGS')->fetchColumn();
-        } finally {
-            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        }
-        $result['after'] = mysqlVarcharAssignmentSnapshot($pdo);
-    } catch (PDOException $error) {
-        $result = ['status' => 'db-error', 'state' => $error->errorInfo[0], 'vendorCode' => $error->errorInfo[1]];
-    } finally {
-        $pdo->rollBack();
-    }
-
-    return [...$result, 'before' => $before, 'restored' => mysqlVarcharAssignmentSnapshot($pdo)];
+    return mysqlVarcharWrite($pdo, $sql, mysqlVarcharAssignmentSnapshot(...));
 }
 
 function mysqlVarcharAssignmentSnapshot(PDO $pdo): array

@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\From\Varchar;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Mutation\Insert;
@@ -40,6 +41,15 @@ final class InsertTest extends TestCase
         $target = new TableSource(new Identifier('app'), new Identifier('t'), [new Identifier('b'), new Identifier('a')]);
         $row = new InsertRow([new InsertCell(null)]);
         $this->expectExceptionMessage('must match the target width');
+
+        new Insert($target, [$row]);
+    }
+
+    public function testRejectsAnIntegerCellInAVarcharPosition(): void
+    {
+        $target = new TableSource(new Identifier('app'), new Identifier('t'), [new Identifier('label')], [new Varchar(2)]);
+        $row = new InsertRow([new InsertCell(new IntegerLiteral('1'))]);
+        $this->expectExceptionMessage('An INSERT value must match its native destination type.');
 
         new Insert($target, [$row]);
     }

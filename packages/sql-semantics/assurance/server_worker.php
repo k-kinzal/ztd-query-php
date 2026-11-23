@@ -600,7 +600,8 @@ function observeInsert(string $namespace, object $value, string $dialect): array
     $rows = [];
     foreach ($value->rows as $row) {
         $rows[] = array_map(static fn ($cell): array|string|null => match (true) {
-            $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral => ['text', $cell->value->value],
+            $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral,
+            $cell->value instanceof SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral => ['text', $cell->value->value],
             default => $cell->value?->decimal,
         }, $row->values);
     }

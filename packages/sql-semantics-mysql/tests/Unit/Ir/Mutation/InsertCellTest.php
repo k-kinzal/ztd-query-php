@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\Mutation\InsertCell;
 
 #[CoversClass(InsertCell::class)]
@@ -18,5 +19,12 @@ final class InsertCellTest extends TestCase
     {
         self::assertSame('-2', (new InsertCell(new IntegerLiteral('-2')))->toString());
         self::assertSame('NULL', (new InsertCell(null))->toString());
+    }
+
+    public function testToStringKeepsTheExactQuotedTextBytes(): void
+    {
+        $cell = new InsertCell(new TextLiteral("a'𐐷 "));
+
+        self::assertSame("'a''𐐷 '", $cell->toString());
     }
 }

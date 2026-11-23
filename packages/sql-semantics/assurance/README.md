@@ -249,6 +249,8 @@ The [VARCHAR comparison domain](mysql-varchar-comparison-v1.json) enumerates sev
 
 The [VARCHAR assignment domain](mysql-varchar-assignment-v4.json) checks ordered single-table UPDATE assignments over typed fields, literals and NULL. Its independent model compares final rows, the changed-row count, warning severity, code and field, and the observed trigger records. It checks truncation by Unicode character capacity and the profile’s required-field substitution. Run `run_server_mysql_varchar_assignment.py` and replay with `combine_server_mysql_varchar_assignment_evidence.py`.
 
+The [VARCHAR VALUES domain](mysql-varchar-insert-v1.json) compares the exact typed rows and ordered trigger events of ordinary INSERT. It observes single-row required-NULL errors, multiple-row substitution, and transactional rollback on the registered duplicate keys. Run `run_server_mysql_varchar_insert.py` and replay with `combine_server_mysql_varchar_insert_evidence.py`.
+
 ## Native local projections
 
 The [local projection contract](server-local-projection-v4.json) specifies slot reads from an immediate definition and its composition through nested local scopes. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, an ordinary one-use CTE that shadows a physical table. It verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width. A separate probe bypasses an inner scope that reverses its output positions.

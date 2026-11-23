@@ -3,9 +3,9 @@
 from itertools import product
 import json
 from random import Random
-import re
 import sys
 
+from mysql_varchar_storage import normalize_diagnostics, truncated
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
 from run_server_join import OBSERVER, main
@@ -292,9 +292,8 @@ def expected(item):
                 if dest in CAPACITY and value is not None and len(value) > CAPACITY[dest]:
                     width = CAPACITY[dest]
                     fast_copy = expr[0] == "text-slot" and (CAPACITY[address(expr, target)] <= 63) == (width <= 63)
-                    has_nonspace = any(char not in " \t\n\v\f\r" for char in value[width:])
-                    diagnostics.append(["Warning" if fast_copy or has_nonspace else "Note", 1265, dest])
-                    value = value[:width]
+                    value, severity = truncated(value, width, fast_copy)
+                    diagnostics.append([severity, 1265, dest])
                 current[HEADING.index(dest)] = value
             if current[required_index] is None:
                 diagnostics.append(["Warning", 1048, "required_value"])
@@ -306,24 +305,11 @@ def expected(item):
             "after": {"rows": after, "events": events}, "warningCount": len(diagnostics), "diagnostics": sorted(diagnostics)}
 
 
-def measured_diagnostics(actual):
-    patterns = {
-        1048: r"Column '(required_value)' cannot be null",
-        1265: r"Data truncated for column '(nullable_value|required_value|empty_value)' at row [1-9][0-9]*",
-    }
-    result = []
-    for level, code, message in actual["diagnostics"]:
-        match = re.fullmatch(patterns.get(code, "(?!)"), message)
-        require(match is not None, "mysql-varchar-assignment-unclassified-diagnostic", [level, code, message])
-        result.append([level, code, match[1]])
-    return sorted(result)
-
-
 def check_observation(item, actual, sql):
     wanted = expected(item)
     witness = {"sql": sql, "expected": wanted, "observed": actual}
     require(actual["status"] == "mutation", "mysql-varchar-assignment-native-rejection", witness)
-    require(wanted == {**actual, "diagnostics": measured_diagnostics(actual)}, "meaning-mismatch", witness)
+    require(wanted == {**actual, "diagnostics": normalize_diagnostics(actual["diagnostics"], DESTINATIONS)}, "meaning-mismatch", witness)
 
 
 def check_fault_witness(item, witness):

@@ -195,6 +195,9 @@ def inventory(root):
             for rule in ("update_stmt", "update_list", "update_elem"):
                 for alternative in rules.get(rule, ()):
                     related[alternative] = (*related.get(alternative, ()), "mysql-varchar-assignment-v4.json")
+            for rule in ("insert", "insert_stmt", "insert_values", "insert_from_constructor", "values_list", "insert_column"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "mysql-varchar-insert-v1.json")
             parameters = ("param_marker", "simple_expr", "cast_type")
             local = ("table_factor", "derived_table", "with_clause", "with_list", "common_table_expr")
             compound = ("union_list", "union_clause", "query_expression_body")

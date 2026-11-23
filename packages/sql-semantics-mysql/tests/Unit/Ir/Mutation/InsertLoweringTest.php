@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Mutation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Mutation\InsertLowering;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery as ParsedInsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
@@ -27,7 +28,9 @@ final class InsertLoweringTest extends TestCase
         self::assertSame('val', $value->target->columns[0]->value);
         self::assertSame('id', $value->target->columns[1]->value);
         self::assertNull($value->rows[0]->values[0]->value);
-        self::assertSame('-2', $value->rows[0]->values[1]->value?->decimal);
+        $integer = $value->rows[0]->values[1]->value;
+        self::assertInstanceOf(IntegerLiteral::class, $integer);
+        self::assertSame('-2', $integer->decimal);
     }
 
     public function testLowerQueryRetainsTheInputProjection(): void

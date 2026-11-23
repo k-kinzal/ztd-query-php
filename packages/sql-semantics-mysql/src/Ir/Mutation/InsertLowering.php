@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
@@ -37,13 +39,14 @@ final class InsertLowering
             && $statement->onDuplicate === [], 'A complete INSERT requires the ordinary VALUES operation.');
         $target = (new InsertTargetBinding())->lower($operation, $into);
         $expression = new ExpressionLowering();
+        $text = new TextLiteralLowering();
         $empty = new SourceBinding($operation, null);
         $rows = [];
         foreach ($statement->rows as $row) {
             $values = [];
             foreach ($row->values as $value) {
-                $item = $expression->lower($value, $empty);
-                Check::input($item instanceof IntegerLiteral || $item instanceof NullLiteral, 'A supplied INSERT value requires an integer or NULL literal.');
+                $item = $text->lower($value) ?? $expression->lower($value, $empty);
+                Check::input($item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof NullLiteral, 'A supplied INSERT value requires an integer, text or NULL literal.');
                 $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);
             }
             $rows[] = new InsertRow($values);

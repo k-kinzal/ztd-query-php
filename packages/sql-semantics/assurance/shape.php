@@ -587,7 +587,7 @@ if ($dialect !== 'sqlite') {
     $internal[] = 'Mutation\\InsertTargetBinding';
     $methods['Mutation\\Insert'] = $methods['Select'];
     $properties['Mutation\\InsertRow'] = ['values' => ['array']];
-    $properties['Mutation\\InsertCell'] = ['value' => ['?IntegerLiteral']];
+    $properties['Mutation\\InsertCell'] = ['value' => ['IntegerLiteral', 'Literal\\TextLiteral', 'null']];
     if ($dialect === 'postgres') {
         $properties['Mutation\\InsertCell']['value'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'null'];
         $properties['Mutation\\Insert\\WriteSlot'] = ['slot' => ['int'], 'kind' => ['From\\ColumnKind'], 'occurrence' => ['int']];

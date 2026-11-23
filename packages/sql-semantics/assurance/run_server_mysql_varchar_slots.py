@@ -159,7 +159,7 @@ def negative(tag):
     for length in (-1, 16384):
         unrepresentable = {**target, "columnTypes": [["varchar", length, COLLATION]]}
         yield project(tag, unrepresentable, [[field(0), "bad"]]), "A utf8mb4 VARCHAR length must be between 0 and 16383 characters."
-    yield {"dialect": "mysql", "release": tag, "target": target, "rows": [["1"]]}, "An INSERT target slot requires the signed INT type."
+    yield {"dialect": "mysql", "release": tag, "target": target, "rows": [["1"]]}, "An INSERT value must match its native destination type."
     yield grouped("mysql", tag, target, [], [[aggregate("sum", slot(0)), "bad"]]), "The aggregate slot must belong to the group input."
     sql = f"SELECT label FROM {SCHEMA}.{PRIMARY}"
     yield query(tag, sql, [f"CREATE TABLE {SCHEMA}.{PRIMARY} (label VARCHAR(32) CHARACTER SET utf8mb4)"]), "The text slot requires an explicit utf8mb4_bin collation."

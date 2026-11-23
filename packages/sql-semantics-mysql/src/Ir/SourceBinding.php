@@ -209,11 +209,14 @@ final class SourceBinding
         $target = $this->source();
         Check::input($target !== null, 'An INSERT requires a resolved write target.');
         $columns = [];
+        $types = [];
         foreach ($names as $name) {
-            $columns[] = new Identifier($this->writableColumn($name)->name->value);
+            $column = $this->writableColumn($name);
+            $columns[] = new Identifier($column->name->value);
+            $types[] = $column->type instanceof Character ? (new VarcharLowering())->lower($column) : ColumnKind::SignedInt;
         }
 
-        return new TableSource($target->schema, $target->table, $columns);
+        return new TableSource($target->schema, $target->table, $columns, $types);
     }
 
     /**
@@ -221,20 +224,26 @@ final class SourceBinding
      */
     public function updateField(string $name): ColumnReference|TextColumnReference
     {
-        $column = $this->writeDeclaration($name);
+        $column = $this->writableColumn($name);
         if (!$column->type instanceof Character) {
-            return $this->slotFor($this->signedWrite($column));
+            return $this->slotFor($column);
         }
 
         return new TextColumnReference($this->allocate($column, (new VarcharLowering())->lower($column)));
     }
 
     /**
-     * Resolves a name to a writable explicit member with the signed integer role.
+     * Resolves a name to the exact explicit member of the write target.
      */
     public function writableColumn(string $name): Column
     {
-        return $this->signedWrite($this->writeDeclaration($name));
+        $column = $this->writeDeclaration($name);
+        if ($column->type instanceof Character) {
+            Check::input(!$column->generated, 'A VARCHAR write requires an ordinary writable field.');
+            return $column;
+        }
+
+        return $this->signedWrite($column);
     }
 
     /**
