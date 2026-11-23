@@ -10,6 +10,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\AnalysisContext;
 use SqlSemantics\AnalysisException;
 use SqlSemantics\Analyzer;
+use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
+use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\SemanticException;
@@ -36,6 +39,34 @@ final class SemanticsTest extends TestCase
         self::assertInstanceOf(TableSource::class, $query->source);
         self::assertCount(1, $query->source->columns);
         self::assertEquals($query->columns[0]->expression, $query->columns[1]->expression);
+    }
+
+    public function testAnalyzeResolvesUsingAliasAndPhysicalColumnsInTheRightJoin(): void
+    {
+        $semantics = new Semantics();
+        $context = $semantics->context([
+            'CREATE TABLE public.a (id INTEGER, lane INTEGER, x INTEGER)',
+            'CREATE TABLE public.b (lane INTEGER, y INTEGER, id INTEGER)',
+        ]);
+        $query = $semantics->analyze(
+            'SELECT m.*, a.id AS left_id, b.id AS right_id FROM public.a RIGHT JOIN public.b USING (lane, id) AS m',
+            $context,
+        );
+
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(Join::class, $query->source);
+        self::assertSame(['lane', 'id', 'left_id', 'right_id'], array_map(
+            static fn (ResultColumn $column): string => $column->name->value,
+            $query->columns,
+        ));
+        $merged = $query->columns[1]->expression;
+        $left = $query->columns[2]->expression;
+        self::assertInstanceOf(ColumnReference::class, $merged);
+        self::assertInstanceOf(ColumnReference::class, $left);
+        self::assertSame(1, $merged->occurrence);
+        self::assertSame(0, $left->occurrence);
+        self::assertEquals($merged, $query->columns[3]->expression);
+        self::assertStringContainsString('OPERATOR(pg_catalog.=)', $query->toString());
     }
 
     public function testAnalyzePublishesACompleteProjection(): void

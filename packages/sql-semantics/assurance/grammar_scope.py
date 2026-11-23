@@ -225,13 +225,15 @@ def inventory(root):
             update = ("UpdateStmt", "set_clause_list", "set_clause")
             insert = ("InsertStmt", "insert_rest", "insert_column_list")
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
-            families = ("joined_table", "join_type", "join_qual", "where_clause")
+            families = ("joined_table", "join_type", "join_qual", "join_using_alias", "where_clause")
         else:
             entry = "cmd"
             families = selection = insert = update = transaction = drop = compound = create = parameters = local = ()
         for rule in families:
             for alternative in rules.get(rule, []):
-                if not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
+                if postgres and ("NATURAL" in alternative or "USING" in alternative or "join_using_alias:" in alternative):
+                    related[alternative] = ("postgres-merged-join-v1.json",)
+                elif not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
                     related[alternative] = ("server-join-v2.json",)
                 elif not postgres and ("NATURAL" in alternative or "USING" in alternative or "natural_join" in alternative):
                     related[alternative] = ("mysql-merged-join-v1.json",)

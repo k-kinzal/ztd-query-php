@@ -10,7 +10,9 @@ from run_server import CONTRACT as PROJECTION, same
 from run_server_join import OBSERVER, check_preparation, main, observer_request
 from server_cases import observation
 from server_delete_cases import literal
-from server_join_cases import DATA as BASE_DATA, NAMES_BY_TABLE, declarations as base_declarations, fixture as base_fixture, join, slot, truth, value
+from server_join_cases import expected as join_expected
+from server_join_cases import named_binary_graph as graph
+from server_join_cases import DATA as BASE_DATA, NAMES_BY_TABLE, declarations as base_declarations, fixture as base_fixture, join, slot
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-merged-join"
@@ -177,29 +179,6 @@ def requests(_, tag, spec):
         yield f"negative/{index}", request, None, rule
 
 
-def graph(item):
-    source = item["source"]
-    origins = source["left"], source["right"]
-
-    def address(term):
-        if term[0] != "slot":
-            return tuple(term)
-        occurrence = term[2] if len(term) == 3 else 0
-        return "slot", occurrence, origins[occurrence]["columns"][term[1]]
-
-    def predicate(term):
-        if term is None:
-            return None
-        if term[0] == "comparison":
-            return term[0], term[1], address(term[2]), address(term[3])
-        if term[0] == "logic":
-            return term[0], term[1], predicate(term[2]), predicate(term[3])
-        return tuple(term)
-
-    return (source["kind"], tuple((entry["schema"], entry["table"]) for entry in origins),
-            predicate(source["on"]), tuple((address(term), label) for term, label in item["columns"]))
-
-
 def finite_ids(_, spec, _tag):
     fields = spec["finite"]
     return set(product(fields["joinKinds"], fields["keys"], fields["orientation"], fields["projection"]))
@@ -213,26 +192,7 @@ def finite_id(_, reply, _item):
 
 
 def expected(item):
-    source = item["source"]
-
-    def physical(occurrence):
-        table = occurrence["table"]
-        indexes = [HEADINGS[table].index(name) for name in occurrence["columns"]]
-        return [tuple(row[slot_] for slot_ in indexes) for row in DATA[table]]
-
-    lhs, rhs = physical(source["left"]), physical(source["right"])
-    pairs, matched_right = [], set()
-    for left in lhs:
-        matches = [(index, (left, right)) for index, right in enumerate(rhs) if truth(source["on"], (left, right), "mysql")]
-        pairs.extend(row for _, row in matches)
-        matched_right.update(index for index, _ in matches)
-        if not matches and source["kind"] == "LEFT":
-            pairs.append((left, (None,) * len(source["right"]["columns"])))
-    if source["kind"] == "RIGHT":
-        pairs.extend(((None,) * len(source["left"]["columns"]), row) for index, row in enumerate(rhs) if index not in matched_right)
-    columns = item["columns"]
-    return observation({"status": "rows", "fields": [[label, "LONG" if term[0] == "slot" else "LONGLONG"] for term, label in columns],
-                        "rows": [[value(term, pair, "mysql") for term, _ in columns] for pair in pairs]})
+    return join_expected(item, lambda source: (HEADINGS[source["table"]], DATA[source["table"]]))
 
 
 def check_value(item, reply):

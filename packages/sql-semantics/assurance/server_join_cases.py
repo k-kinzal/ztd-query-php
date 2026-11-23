@@ -213,18 +213,22 @@ def input_width(source):
     return len((source["derived"] if "derived" in source else source)["columns"])
 
 
-def rows(source, dialect, derived_rows=None):
+def rows(source, dialect, derived_rows=None, table_rows=None):
     if source is None:
         return [()]
     if "derived" in source:
         return [(tuple(row),) for row in derived_rows(source["derived"])]
     if not is_join(source):
-        role = next(role for role, relation in NAMES_BY_TABLE.items() if relation == source["table"])
-        physical = DATA[role] + (CHILD_ROWS if role == "accounts" and dialect == "postgres" and not source["only"] else [])
-        columns = [NAMES[dialect].index(column) for column in source["columns"]]
+        if table_rows is None:
+            role = next(role for role, relation in NAMES_BY_TABLE.items() if relation == source["table"])
+            physical = DATA[role] + (CHILD_ROWS if role == "accounts" and dialect == "postgres" and not source["only"] else [])
+            heading = NAMES[dialect]
+        else:
+            heading, physical = table_rows(source)
+        columns = [heading.index(column) for column in source["columns"]]
         return [(tuple(row[index] for index in columns),) for row in physical]
-    left = rows(source["left"], dialect, derived_rows)
-    right = rows(source["right"], dialect, derived_rows)
+    left = rows(source["left"], dialect, derived_rows, table_rows)
+    right = rows(source["right"], dialect, derived_rows, table_rows)
     joined = []
     remaining = set(range(len(right)))
     for lhs in left:
@@ -239,14 +243,37 @@ def rows(source, dialect, derived_rows=None):
     return joined
 
 
-def expected(item):
+def expected(item, table_rows=None):
     dialect = item["dialect"]
     default = "int4" if dialect == "postgres" else "LONGLONG"
     metadata = {"boolean": "bool", "null": "text"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
     fields = [[name, metadata.get(expr[0], default)] for expr, name in item["columns"]]
-    observed = [[value(expr, row, dialect) for expr, _ in item["columns"]] for row in rows(item["source"], dialect)
+    observed = [[value(expr, row, dialect) for expr, _ in item["columns"]] for row in rows(item["source"], dialect, table_rows=table_rows)
                 if truth(item["where"], row, dialect)]
     return observation({"status": "rows", "fields": fields, "rows": observed})
+
+
+def named_binary_graph(item):
+    source = item["source"]
+    origins = source["left"], source["right"]
+
+    def address(term):
+        if term[0] != "slot":
+            return tuple(term)
+        occurrence = term[2] if len(term) == 3 else 0
+        return "slot", occurrence, origins[occurrence]["columns"][term[1]]
+
+    def predicate(term):
+        if term is None:
+            return None
+        if term[0] == "comparison":
+            return term[0], term[1], address(term[2]), address(term[3])
+        if term[0] == "logic":
+            return term[0], term[1], predicate(term[2]), predicate(term[3])
+        return tuple(term)
+
+    return (source["kind"], tuple((entry["schema"], entry["table"], entry.get("only", False)) for entry in origins),
+            predicate(source["on"]), tuple((address(term), label) for term, label in item["columns"]))
 
 
 def requests(dialect, tag, specification):

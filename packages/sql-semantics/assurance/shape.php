@@ -478,10 +478,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         $enumCases['From\\JoinKind']['Full'] = 'FULL';
     }
-    if ($dialect === 'mysql') {
-        $internal[] = 'From\\MergedJoinLowering';
-    }
-    array_push($internal, 'From\\DerivedBinding', 'From\\JoinBinding', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering', 'Ordering\\ResultLowering', 'Ordering\\ResultSql');
+    array_push($internal, 'From\\DerivedBinding', 'From\\JoinBinding', 'From\\MergedJoinLowering', 'From\\OccurrenceScope', 'Predicate\\PredicateLowering', 'Ordering\\ResultLowering', 'Ordering\\ResultSql');
     array_push($pureCollaborators, 'From\\OccurrenceScope', 'Ordering\\ResultSql');
     $internal[] = 'Mutation\\DeleteLowering';
     $properties['Mutation\\Delete'] = [
@@ -781,6 +778,7 @@ try {
             ['sqlite-merged-join-binding-v3.json', '08154530910f68b6a551b2278a048541c0ed919e557f00af01e6f34f6da2e6c4', 'Merged join binding'],
         ],
         'postgres' => [
+            ['postgres-merged-binding-v1.json', '9af57c14df2c7f544bcf782ae115041453043c5fd772db238b75b2ad3671d9b0', 'PostgreSQL merged binding'],
             ['postgres-integer-binding-sources-v1.json', '108d4ad1de0b83709687beaa2c9f405e4f2accae0b5c19d275b6eaf40dd9f738', 'Integer binding'],
         ],
         'mysql' => [

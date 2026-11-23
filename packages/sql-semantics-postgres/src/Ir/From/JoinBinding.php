@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\From;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -17,6 +25,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join as ParsedJoin;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind as ParsedKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
 
 /**
@@ -39,7 +48,6 @@ final class JoinBinding
      */
     public function __construct(private readonly BoundStatement $operation, private readonly ParsedJoin $join, private readonly bool $catalogFirst)
     {
-        Check::input(!$join->natural && ($join->condition === null || $join->condition instanceof JoinOn), 'A joined input requires explicit ON or CROSS without a merged column list.');
         $this->left = self::bindChild($operation, $join->left, $catalogFirst);
         $this->right = self::bindChild($operation, $join->right, $catalogFirst);
         $left = $this->left instanceof self ? $this->left->inputs : [$this->left];
@@ -64,6 +72,7 @@ final class JoinBinding
     public static function bindChild(BoundStatement $operation, Relation $source, bool $catalogFirst): DerivedBinding|SourceBinding|self
     {
         $input = self::ungroup($source);
+        Check::input(!$input instanceof ParsedJoin || (!$input->natural && !$input->condition instanceof JoinUsing), 'A merged join cannot be nested in this source domain.');
 
         return $input instanceof DerivedTable ? new DerivedBinding($operation, $input) : self::bind($operation, $input, $catalogFirst);
     }
@@ -105,11 +114,17 @@ final class JoinBinding
             if ($relation === $resolution->relation) {
                 return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);
             }
-            if ($wholeJoin && $relation !== null
-                && in_array($resolution->slot, $this->operation->facts->relation($relation)->shape->slots, true)) {
-                Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');
-                $bound = $binding->resolved(new ResolvedColumn($relation, $resolution->slot));
-                $expanded = new ColumnReference($bound->slot, $occurrence);
+            if (!$wholeJoin || $relation === null) {
+                continue;
+            }
+            $slots = $this->operation->facts->relation($relation)->shape->slots;
+            for ($slot = $resolution->slot; $slot !== null; $slot = $slot->origin) {
+                if (in_array($slot, $slots, true)) {
+                    Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');
+                    $bound = $binding->resolved(new ResolvedColumn($relation, $slot));
+                    $expanded = new ColumnReference($bound->slot, $occurrence);
+                    break;
+                }
             }
         }
         Check::input($expanded !== null, 'A column must resolve within this join scope.');
@@ -122,19 +137,36 @@ final class JoinBinding
      */
     public function source(): Join
     {
+        $on = $this->predicate();
         $kind = match ($this->join->kind) {
-            ParsedKind::Cross => JoinKind::Cross,
-            ParsedKind::Inner => JoinKind::Inner,
+            ParsedKind::Cross, ParsedKind::Inner => $on === null ? JoinKind::Cross : JoinKind::Inner,
             ParsedKind::Left => JoinKind::Left,
             ParsedKind::Right => JoinKind::Right,
             ParsedKind::Full => JoinKind::Full,
         };
-        $on = (new PredicateLowering())->lower($this->join->condition instanceof JoinOn ? $this->join->condition->condition : null, $this, $this->catalogFirst);
         $left = $this->left->source();
         $right = $this->right->source();
         Check::invariant($left !== null && $right !== null, 'Both checked join sides have sources.');
 
         return new Join($kind, $left, $right, $on);
+    }
+
+    /**
+     * Resolves the explicit condition or normalizes the checked merged keys.
+     */
+    public function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
+    {
+        $condition = $this->join->condition;
+        if (!$this->join->natural && !$condition instanceof JoinUsing) {
+            return (new PredicateLowering())->lower($condition instanceof JoinOn ? $condition->condition : null, $this, $this->catalogFirst);
+        }
+        Check::input(
+            $this->left instanceof SourceBinding && $this->right instanceof SourceBinding
+                && $this->join->kind !== ParsedKind::Full && $this->catalogFirst,
+            'A merged join requires two ordinary table inputs, an INNER, LEFT or RIGHT join, and pg_catalog operator resolution.',
+        );
+
+        return (new MergedJoinLowering())->predicate($this->join, $this->left, $this->right);
     }
 
     /**

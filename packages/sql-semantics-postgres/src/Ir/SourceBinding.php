@@ -104,6 +104,24 @@ final class SourceBinding
     }
 
     /**
+     * Indexes the table's declared heading in its original order.
+     *
+     * @return array<string, Column>
+     */
+    public function mergedHeading(): array
+    {
+        Check::input($this->table !== null, 'A merged join needs a declared input heading.');
+        $heading = [];
+        foreach ($this->table->columns as $column) {
+            $key = ':' . $column->name->value;
+            Check::input(!isset($heading[$key]), 'A merged input heading cannot repeat a field name.');
+            $heading[$key] = $column;
+        }
+
+        return $heading;
+    }
+
+    /**
      * Identifies the analysis occurrence that this binding owns.
      */
     public function relation(): ?Relation
