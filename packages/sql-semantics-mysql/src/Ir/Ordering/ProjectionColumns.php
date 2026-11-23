@@ -9,11 +9,14 @@ use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
+use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
@@ -49,6 +52,14 @@ final class ProjectionColumns
                 $resolution = $field->resolution;
                 Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
                 $results[] = new ResultColumn($binding->projected($resolution), $label);
+                continue;
+            }
+            $operand = $expression;
+            while ($operand instanceof Grouped) {
+                $operand = $operand->operand;
+            }
+            if ($operand instanceof ParsedNullTest) {
+                $results[] = new ResultColumn((new PredicateLowering())->nullTest($operand, $binding), $label);
                 continue;
             }
             $parameter = $parameters->lower($expression, $parameterPosition + 1);

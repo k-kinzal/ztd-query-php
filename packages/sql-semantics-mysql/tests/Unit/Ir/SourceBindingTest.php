@@ -171,4 +171,17 @@ final class SourceBindingTest extends TestCase
         self::assertSame(0, $binding->allocate($column, ColumnKind::SignedInt));
         self::assertSame([ColumnKind::SignedInt], $binding->source()?->columnTypes);
     }
+
+    public function testFieldPreservesTheNativeVarcharKind(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (label VARCHAR(8) COLLATE utf8mb4_bin)');
+        $query = $inspection->inspect('SELECT label FROM app.t', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $item = $query->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
+        $source = new SourceBinding($query->binding(), $query->statement->from);
+
+        self::assertInstanceOf(TextColumnReference::class, $source->field($item->expression));
+    }
 }

@@ -56,8 +56,10 @@ final class SelectBounds
             $pending = [[$result->expression, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
-                if ($expression instanceof IntegerRange) {
-                    $nodes = $scope->checkTree($expression, $inputs, 'A range slot must belong to the SELECT source.', $height, $nodes);
+                if ($expression instanceof IntegerRange || $expression instanceof NullTest) {
+                    $invalid = $expression instanceof IntegerRange ? 'A range slot must belong to the SELECT source.'
+                        : 'A predicate slot must belong to the SELECT source.';
+                    $nodes = $scope->checkTree($expression, $inputs, $invalid, $height, $nodes);
                     continue;
                 }
                 Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');

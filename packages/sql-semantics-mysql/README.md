@@ -16,7 +16,7 @@ echo $ir->toString();
 
 The checked complete domain includes signed integers and native VARCHAR projections. Configure the grammar release and lexical profile before declaring the catalog. Use a database-qualified relation name for binding or configure a current database in the mode.
 
-Declare a VARCHAR field with `COLLATE utf8mb4_bin` to read it by its native position. The declaration can name `CHARACTER SET utf8mb4` explicitly. Bare, qualified and wildcard projections of the same field retain the same reference and its declared VARCHAR length. Values retain trailing spaces, and comparisons for ORDER BY and DISTINCT use the collation’s PAD SPACE rules.
+Declare a VARCHAR field with `COLLATE utf8mb4_bin` to read it by its native position. The declaration can name `CHARACTER SET utf8mb4` explicitly. Bare, qualified and wildcard projections of the same field retain the same reference and its declared VARCHAR length. Values retain trailing spaces, and comparisons for ORDER BY and DISTINCT use the collation’s PAD SPACE rules. Use IS NULL and IS NOT NULL on the resolved field in a result, a WHERE filter or a join condition.
 
 Signed integer `BETWEEN` and `NOT BETWEEN` preserve inclusive bounds, NULL and signed 64-bit range literals. A projected range test has MySQL's native integer truth result.
 

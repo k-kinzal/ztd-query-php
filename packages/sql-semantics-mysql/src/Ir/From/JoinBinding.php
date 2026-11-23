@@ -109,6 +109,17 @@ final class JoinBinding
     }
 
     /**
+     * Resolves a scalar field with the native kind required by a typed read.
+     */
+    public function field(Scalar $scalar): ColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($scalar)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
+
+        return $this->projected($resolution);
+    }
+
+    /**
      * Allocates a checked field in the join occurrence containing its resolved input.
      *
      * @throws InvalidConstruction When the field is outside the checked input scope

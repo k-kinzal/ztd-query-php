@@ -11,6 +11,7 @@ from run_server import CONTRACT as PROJECTION, same
 from run_server_join import OBSERVER, check_value as check_select, main, observer_request
 from server_grouped_cases import aggregate, case as grouped
 from server_join_cases import case, compare, join, slot
+from server_truth_model import admits
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-slots"
@@ -213,10 +214,8 @@ def row_stream(layout):
         columns = [HEADING.index(name) for name in layout["columns"]]
         return [(tuple(row[i] for i in columns),) for row in DATA[layout["table"]]]
     left, right = row_stream(layout["left"]), row_stream(layout["right"])
-    operator, lhs, rhs = layout["on"][1:]
-    require(operator == "=" and len(lhs) == 2 and rhs[2] == 1, "mysql-varchar-slots-unsupported-join-operator", layout["on"])
     observed = [(i, j, a + b) for i, a in enumerate(left) for j, b in enumerate(right)
-                if a[0][lhs[1]] is not None and a[0][lhs[1]] == b[0][rhs[1]]]
+                if admits(layout["on"], lambda term: value(term, a + b))]
     rows = [row for _, _, row in observed]
     if layout["kind"] == "LEFT":
         selected = {i for i, _, _ in observed}

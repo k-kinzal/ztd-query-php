@@ -88,6 +88,17 @@ final class SourceBinding
     }
 
     /**
+     * Resolves a scalar field with the native kind required by a typed read.
+     */
+    public function field(Scalar $expression): ColumnReference|TextColumnReference
+    {
+        $resolution = $this->operation->facts->scalar($expression)->resolution;
+        Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
+
+        return $this->projected($resolution);
+    }
+
+    /**
      * Allocates the occurrence slot of an already resolved projection field.
      */
     public function resolved(ResolvedColumn $resolution): ColumnReference

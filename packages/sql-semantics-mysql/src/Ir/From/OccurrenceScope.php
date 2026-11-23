@@ -43,7 +43,7 @@ final class OccurrenceScope
      * @param list<TableSource|DerivedSource> $inputs The visible input occurrences
      */
     public function checkTree(
-        BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral $operand,
+        BooleanLiteral|ColumnReference|IntegerComparison|IntegerRange|IntegerLiteral|LogicalPredicate|NullLiteral|NullTest|RangeIntegerLiteral|TextColumnReference $operand,
         array $inputs,
         string $invalidSlot,
         int $depth,
@@ -53,12 +53,15 @@ final class OccurrenceScope
         if ($operand instanceof ColumnReference) {
             Check::input($this->hasSlot($inputs[$operand->occurrence] ?? null, $operand->slot), $invalidSlot);
         }
+        if ($operand instanceof TextColumnReference) {
+            $this->textColumn($operand, $inputs);
+        }
         $children = match (true) {
             $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],
             $operand instanceof IntegerComparison => [$operand->left, $operand->right],
             $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],
             $operand instanceof NullTest => [$operand->operand],
-            $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral => [],
+            $operand instanceof BooleanLiteral, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof RangeIntegerLiteral, $operand instanceof TextColumnReference => [],
         };
         foreach ($children as $child) {
             $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);

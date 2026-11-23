@@ -241,6 +241,8 @@ The [VARCHAR domain](mysql-varchar-slots-v2.json) checks the scoped native field
 
 Run `run_server_mysql_varchar_slots.py` with the native fixture options and replay the per-release reports with `combine_server_mysql_varchar_slots_evidence.py`.
 
+The [VARCHAR presence domain](mysql-varchar-presence-v1.json) independently checks IS NULL and IS NOT NULL over a typed field in SELECT output, WHERE and local ON. It preserves native integer truth results and distinguishes empty values from NULL, including join null extension. Run `run_server_mysql_varchar_presence.py` and replay with `combine_server_mysql_varchar_presence_evidence.py`.
+
 ## Native local projections
 
 The [local projection contract](server-local-projection-v4.json) specifies slot reads from an immediate definition and its composition through nested local scopes. The observer compares explicit output names, typed values and multiplicities on derived inputs and, where available, an ordinary one-use CTE that shadows a physical table. It verifies MySQL's optimizer switch and the result types of materialized signed literals, NULL and table fields. The fault probes change the selected slot, row multiplicity, definition and MySQL integer field width. A separate probe bypasses an inner scope that reverses its output positions.

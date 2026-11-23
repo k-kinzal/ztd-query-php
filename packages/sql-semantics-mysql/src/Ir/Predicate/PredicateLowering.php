@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical as ParsedLogical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not as ParsedNot;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest as ParsedNullTest;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 
 /**
  * Resolves the closed Boolean, NULL and signed comparison roles.
@@ -51,19 +52,10 @@ final class PredicateLowering
         if ($condition instanceof ParsedNot) {
             return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding));
         }
-        $expression = new ExpressionLowering();
         if ($condition instanceof ParsedNullTest) {
-            $operand = $condition->operand;
-            while ($operand instanceof Grouped) {
-                $operand = $operand->operand;
-            }
-            $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
-                ? $this->lowerValue($operand, $binding)
-                : $expression->lower($operand, $binding);
-            Check::input(!$tested instanceof Arithmetic, 'A null test needs a supported scalar value.');
-
-            return new NullTest($tested, $condition->negated);
+            return $this->nullTest($condition, $binding);
         }
+        $expression = new ExpressionLowering();
         if ($condition instanceof ParsedComparison) {
             $operator = IntegerOperator::tryFrom($condition->operator->value);
             Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
@@ -78,5 +70,25 @@ final class PredicateLowering
         Check::input($constant instanceof BooleanLiteral || $constant instanceof NullLiteral || $constant instanceof IntegerRange, 'A filter needs a Boolean or signed integer comparison.');
 
         return $constant;
+    }
+
+    /**
+     * Keeps the native scalar reference and preserves the test's polarity.
+     */
+    public function nullTest(ParsedNullTest $condition, SourceBinding|JoinBinding $binding): NullTest
+    {
+        $operand = $condition->operand;
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof ColumnUse) {
+            return new NullTest($binding->field($operand), $condition->negated);
+        }
+        $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
+            ? $this->lowerValue($operand, $binding)
+            : (new ExpressionLowering())->lower($operand, $binding);
+        Check::input(!$tested instanceof Arithmetic, 'A null test needs a supported scalar value.');
+
+        return new NullTest($tested, $condition->negated);
     }
 }

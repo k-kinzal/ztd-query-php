@@ -135,7 +135,7 @@ if ($dialect === 'mysql') {
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['From\\TextCollation'] = $methods['From\\TextCollation'] = [];
     $properties['TableSource']['columnTypes'] = ['array'];
-    $properties['ResultColumn']['expression'][] = 'From\\TextColumnReference';
+    array_push($properties['ResultColumn']['expression'], 'From\\TextColumnReference', 'Predicate\\NullTest');
     $properties['IntegerLiteral']['leadingZeroes'] = ['int'];
     $properties['IntegerLiteral']['negativeZero'] = ['bool'];
     $methods['IntegerLiteral'][] = 'toString';
@@ -545,9 +545,9 @@ if ($dialect !== 'sqlite') {
         'operand' => ['BooleanLiteral', 'ColumnReference', 'IntegerLiteral', 'NullLiteral', 'Predicate\\IntegerComparison', 'Predicate\\LogicalPredicate', 'Predicate\\NullTest'],
         'negated' => ['bool'],
     ];
-    $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\IntegerRange';
+    array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerRange', 'From\\TextColumnReference');
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'From\\TextColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     }
     sort($properties['Predicate\\NullTest']['operand']);
     $methods['Predicate\\LogicalPredicate'] = $methods['Predicate\\NullTest'] = ['__construct'];

@@ -149,4 +149,21 @@ final class JoinBindingTest extends TestCase
         self::assertSame(1, $reference->occurrence);
         self::assertSame(0, $reference->slot);
     }
+
+    public function testFieldRetainsTheExactVarcharOccurrence(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE app.t (label VARCHAR(8) COLLATE utf8mb4_bin)');
+        $query = $inspection->inspect('SELECT b.label FROM app.t a CROSS JOIN app.t b', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $item = $query->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
+        $binding = JoinBinding::bind($query->binding(), $query->statement->from);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $field = $binding->field($item->expression);
+
+        self::assertInstanceOf(TextColumnReference::class, $field);
+        self::assertSame(1, $field->occurrence);
+    }
 }
