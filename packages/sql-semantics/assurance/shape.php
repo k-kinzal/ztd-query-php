@@ -433,7 +433,11 @@ if ($dialect === 'sqlite') {
 }
 if ($dialect !== 'sqlite') {
     if ($dialect === 'mysql') {
-        array_push($internal, 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns');
+        array_push($internal, 'Literal\\TextLiteralLowering', 'Ordering\\ProjectionLabel', 'Ordering\\ProjectionColumns');
+        $properties['Literal\\TextLiteral'] = ['value' => ['string']];
+        $methods['Literal\\TextLiteral'] = ['__construct', 'toString'];
+        $properties['ResultColumn']['expression'][] = 'Literal\\TextLiteral';
+        sort($properties['ResultColumn']['expression']);
     }
     $internal[] = 'Binding\\ParameterLowering';
     array_push($roots, 'Aggregation\\GroupedSelect', 'Rows\\Compound', 'Rows\\LocalProjection', 'Rows\\RecursiveSeries', 'Mutation\\Delete', 'Mutation\\Insert', 'Mutation\\Update', 'Schema\\CreateTable', 'Schema\\DropTable', 'Transaction\\Transaction');
@@ -591,7 +595,7 @@ if ($dialect !== 'sqlite') {
     $properties['Rows\\ResultKind'] = $methods['Rows\\ResultKind'] = [];
     $enumCases['Rows\\CompoundOperator'] = ['Union' => 'UNION', 'Intersect' => 'INTERSECT', 'Except' => 'EXCEPT'];
     $enumCases['Rows\\ResultKind'] = $dialect === 'mysql'
-        ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'UnsignedInteger' => 'uint64', 'DecimalInteger' => 'decimal-integer', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
+        ? ['Integer' => 'int32', 'WideInteger' => 'int64', 'UnsignedInteger' => 'uint64', 'DecimalInteger' => 'decimal-integer', 'Text' => 'text', 'Unknown' => 'unknown', 'NullOnly' => 'null-only']
         : ['Integer' => 'int32', 'WideInteger' => 'int64', 'Boolean' => 'bool', 'Unknown' => 'unknown', 'Text' => 'text'];
     array_push($internal, 'Rows\\CompoundLowering', 'Rows\\CompoundShape');
     $pureCollaborators[] = 'Rows\\CompoundShape';
@@ -806,6 +810,7 @@ try {
         ],
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
+            ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
         ],
     };
     foreach ($bindings as [$name, $digest, $label]) {
@@ -965,6 +970,7 @@ try {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
+                    || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
                 "Unexpected function in $short",
             );

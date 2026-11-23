@@ -148,6 +148,14 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost the unsigned conversion.');
             }
             $details['unsignedCast'] = $unsigned->operand->decimal;
+            $text = $semantics->analyze("SELECT 'it''s \\0' '𐐷' AS `sample`");
+            $literal = $text->columns[0]->expression;
+            if ($literal::class !== $namespace . 'Ir\\Literal\\TextLiteral') {
+                throw new RuntimeException('The installed projection lost the decoded MySQL character role.');
+            }
+            $legacyRelease = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
+            $details['mysqlTextLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString(),
+                $legacyRelease->textCollation(), $text->release->textCollation()];
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';

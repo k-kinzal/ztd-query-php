@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
 use SqlSemantics\Platform\MySql\Ir\Expression\UnsignedCast;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
 use SqlSemantics\Platform\MySql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\MySql\Ir\Select;
@@ -64,6 +65,7 @@ final class CompoundShape
         $column = $query->columns[$position]->expression;
 
         return match (true) {
+            $column instanceof TextLiteral => ResultKind::Text,
             $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof ColumnReference => ResultKind::Integer,
@@ -76,6 +78,9 @@ final class CompoundShape
      */
     public static function merge(ResultKind $left, ResultKind $right, bool $legacy): ResultKind
     {
+        if ($left === ResultKind::Text || $right === ResultKind::Text) {
+            return ResultKind::Text;
+        }
         if ($left === ResultKind::DecimalInteger || $right === ResultKind::DecimalInteger) {
             return ResultKind::DecimalInteger;
         }

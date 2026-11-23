@@ -378,6 +378,14 @@ def faults(engine):
         shared.append(Fault("accept-unrelated-pg-compound-types", "Rows/CompoundShape::merge",
                             "$right === ResultKind::Unknown || $left === $right,", "true,"))
     if engine == "mysql":
+        shared.extend([
+            Fault("accept-invalid-mysql-literal-encoding", "Literal/TextLiteral::__construct", "preg_match('//u', $value) === 1", "true"),
+            Fault("confuse-mysql-compound-text-and-integer", "Rows/CompoundShape::type",
+                  "$column instanceof TextLiteral => ResultKind::Text,", "$column instanceof TextLiteral => ResultKind::WideInteger,"),
+            Fault("detach-mysql-text-from-projection", "Ordering/ProjectionColumns::lower", " ?? $strings->lower($expression)", ""),
+            Fault("change-mysql-release-collation", "GrammarRelease::textCollation", "=> 'utf8mb4_general_ci',", "=> 'utf8mb4_0900_ai_ci',",
+                  "src/Model/Contract/GrammarRelease.php", "MySQL text binding source differs in src/Model/Contract/GrammarRelease.php"),
+        ])
         shared.append(Fault("ignore-signed-cast-slot", "SelectBounds::check",
                             "$expression instanceof SignedCast, $expression instanceof UnsignedCast => $pending[] = [$expression->operand, $height + 1],",
                             "$expression instanceof SignedCast, $expression instanceof UnsignedCast => null,"))

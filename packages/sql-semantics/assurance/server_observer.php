@@ -5,6 +5,7 @@ declare(strict_types=1);
 // This observer is started by the evidence process and never inside the candidate container.
 $engine = $argv[1];
 require __DIR__ . '/server_connection.php';
+require __DIR__ . '/mysql_literal_observation.php';
 [$pdo, $environment] = connectFixture($engine);
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION], JSON_THROW_ON_ERROR) . "\n";
@@ -48,6 +49,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
             $pdo->exec('SET LOCAL search_path = pg_catalog, public');
         }
         $result = ['status' => 'rows', 'fields' => $fields, 'rows' => $rows];
+        if (($input['observeMySqlLiterals'] ?? false) === true) {
+            $result['literals'] = mysqlLiteralObservations($pdo, $input['sql']);
+        }
         if ($warnings) {
             $result['warningCount'] = warningCount($pdo);
         }

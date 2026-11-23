@@ -165,6 +165,8 @@ def inventory(root):
         if "sql-semantics-mysql/resources/" in path:
             entry = "simple_statement" if "simple_statement" in rules else "statement"
             related = {alternative: ("server-delete-v2.json",) for alternative in rules.get("delete_stmt", [])}
+            related.update({alternative: ("mysql-text-literal-v1.json",) for alternative in rules.get("text_literal", ())
+                            if alternative in ("text_literal: TEXT_STRING", "text_literal: text_literal TEXT_STRING_literal")})
             related.update({alternative: ("mysql-signed-quotient-v1.json",) for alternative in (
                 "bit_expr: bit_expr % bit_expr", "bit_expr: bit_expr DIV_SYM bit_expr", "bit_expr: bit_expr MOD_SYM bit_expr",
             )})

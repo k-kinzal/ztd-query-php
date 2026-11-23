@@ -68,4 +68,16 @@ enum GrammarRelease: string
     {
         return 'mysql';
     }
+
+    /**
+     * Gives the connection collation required by this release's native utf8mb4 IR profile.
+     */
+    public function textCollation(): string
+    {
+        return match ($this) {
+            self::MySql5651, self::MySql5744 => 'utf8mb4_general_ci',
+            self::MySql8044, self::MySql810, self::MySql820, self::MySql830, self::MySql847,
+            self::MySql901, self::MySql910 => 'utf8mb4_0900_ai_ci',
+        };
+    }
 }

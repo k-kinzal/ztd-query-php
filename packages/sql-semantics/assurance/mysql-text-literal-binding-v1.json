@@ -1,0 +1,22 @@
+{
+  "revision": "SemanticsIR/mysql-text-literal-binding-1",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Contract/GrammarRelease.php": {
+      "sha256": "75eaec6d58f306bf1890ee56b000f36bade97e7a8e4a3c694311eb854b08e246",
+      "role": "Pin the release-to-collation lookup used by consumers of native utf8mb4 text."
+    },
+    "src/Rules/Strings.php": {
+      "sha256": "44a1eab0dbc55492e4b28facf38f5787e90505bab17236a62a88167035c3f10c",
+      "role": "Pin the lexical decoding rules for doubled delimiters and backslash escapes."
+    },
+    "src/Rules/Query/ItemNaming.php": {
+      "sha256": "c05aa0478ac75feec65bd08065a625dd2184c4c142b0943b3384e42f5abec44c",
+      "role": "Pin the calculation of labels from the first decoded string segment."
+    },
+    "src/Statement/Literal/StringLiteral.php": {
+      "sha256": "a6c83f1d43ad7fe5a4d3733a5ae1a6bc2daa706d08076e0dedce7d2bc1360b08",
+      "role": "Pin concatenation in source order and metadata used during lowering."
+    }
+  }
+}

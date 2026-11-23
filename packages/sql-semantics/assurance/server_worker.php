@@ -29,7 +29,7 @@ function constructOperand(string $namespace, array $data): object
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
         'wide-integer' => 'Expression\\WideIntegerLiteral',
-        'text', 'text-bytes' => 'Expression\\TextLiteral',
+        'text', 'text-bytes' => str_contains($namespace, '\\MySql\\') ? 'Literal\\TextLiteral' : 'Expression\\TextLiteral',
         'parameter' => 'Binding\\Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
@@ -105,7 +105,7 @@ function observeOperand(string $namespace, object $value): array
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
         $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
-        $namespace . 'Expression\\TextLiteral' => ['text', $value->value],
+        $namespace . 'Expression\\TextLiteral', $namespace . 'Literal\\TextLiteral' => ['text', $value->value],
         $namespace . 'Binding\\Parameter' => match (true) {
             !($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter),
             $value->input === SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination::Integer

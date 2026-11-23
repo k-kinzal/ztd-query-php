@@ -45,7 +45,10 @@ function nativeBoundaryContract(string $dialect): array
     }
 
     $amendments = match ($dialect) {
-        'mysql' => [['mysql-from-list-boundaries-v1.json', '75520d651cdde8992dcf05de45be54b9cb5d44d3af3f3536b612d6e83d7a443d']],
+        'mysql' => [
+            ['mysql-from-list-boundaries-v1.json', '75520d651cdde8992dcf05de45be54b9cb5d44d3af3f3536b612d6e83d7a443d'],
+            ['mysql-text-literal-boundaries-v1.json', '46a77328b7d16609bd966a6ac2c1086a7d62e708606f0c7774d22d2a756fdb12'],
+        ],
         'postgres' => [
             ['postgres-query-boundaries-v9.json', '43a22d2bc34a130a0dc8e70842f9b1a04027c28284c2a459dde1c1dc9891cd95'],
             ['postgres-derived-text-boundaries-v1.json', '93ca7467eac18a2c3b8b29b19d6010e524b4dea52bcb48ff8e43e316e1cd30b6'],
@@ -173,6 +176,7 @@ function checkNativeBoundaries(
         }
         if ($dialect === 'mysql') {
             foreach (['Ir\\ArithmeticOperator', 'Ir\\Literal\\IntegerTokenLowering', 'Ir\\Predicate\\IntegerRange',
+                'Ir\\Literal\\TextLiteral', 'Ir\\Literal\\TextLiteralLowering', 'Statement\\Literal\\EscapeRule', 'Statement\\Literal\\StringLiteral',
                 'Ir\\Expression\\SignedCast', 'Ir\\Expression\\UnsignedCast', 'Ir\\Expression\\IntegralCastLowering',
                 'Statement\\Literal\\Parameter as ParsedParameter',
                 'Statement\\Expression\\Conversion\\Cast', 'Statement\\Type\\Kind\\CastKind',

@@ -38,6 +38,14 @@ final class GrammarReleaseTest extends TestCase
         self::assertCount(9, GrammarRelease::cases());
     }
 
+    #[DataProvider('providerReleases')]
+    public function testTextCollationIsFixedForEachRelease(GrammarRelease $release): void
+    {
+        $legacy = str_starts_with($release->value, 'mysql-5.');
+
+        self::assertSame($legacy ? 'utf8mb4_general_ci' : 'utf8mb4_0900_ai_ci', $release->textCollation());
+    }
+
     /**
      * @return list<array{GrammarRelease}>
      */

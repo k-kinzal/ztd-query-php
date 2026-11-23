@@ -5,6 +5,7 @@ from itertools import product
 from random import Random
 
 from evidence_transcript import canonical
+from run import TOOL, digest, require
 from server_cases import SCHEMAS
 from server_compound_cases import leaf, without_profiles
 from server_delete_cases import literal
@@ -107,11 +108,16 @@ def negatives(engine, tag):
     schema = SCHEMAS[engine]
     yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_target (unknown_column) SELECT 1 AS p0",
            "declarations": sql_declarations(engine)}, "unknown_column"
-    yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_text (delta) SELECT 1 AS p0",
-           "declarations": [f"CREATE TABLE {schema}.ir_insert_text (delta TEXT)"]}, "writable signed 32-bit integer"
-
-
+    if engine == "mysql":
+        yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_text (delta) SELECT 1 AS p0",
+               "declarations": [f"CREATE TABLE {schema}.ir_insert_text (delta TEXT)"]}, "writable signed 32-bit integer"
     if engine == "postgres":
+        contract = TOOL / "postgres-query-write-admission-v1.json"
+        require(digest(contract) == "7d4965e16c5fdb36d2d56918bd36e5f683b18b3439dcc8e229219401b8a817ff",
+                "postgres-query-write-admission-mismatch")
+        negative = json.loads(contract.read_text())["negative"]
+        yield {"dialect": engine, "release": tag, "sql": negative["sql"].format(schema=schema),
+               "declarations": sql_declarations(engine)}, {"exception": negative["exception"], "message": negative["message"]}
         yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_target (id) SELECT DISTINCT NULL AS p0",
                "declarations": sql_declarations(engine)}, "cannot assign an untyped NULL"
 

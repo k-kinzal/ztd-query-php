@@ -8,6 +8,7 @@ use SqlSemantics\Platform\MySql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\MySql\Ir\Expression\IntegralCastLowering;
 use SqlSemantics\Platform\MySql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteralLowering;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
 use SqlSemantics\Platform\MySql\Ir\SourceBinding;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
@@ -31,6 +32,7 @@ final class ProjectionColumns
     {
         $expressions = new ExpressionLowering();
         $casts = new IntegralCastLowering();
+        $strings = new TextLiteralLowering();
         $fields = $operation->facts->query($statement)->fields();
         Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
         $results = [];
@@ -52,7 +54,10 @@ final class ProjectionColumns
             if ($parameter !== null) {
                 ++$parameterPosition;
             }
-            $results[] = new ResultColumn($parameter ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding), $label);
+            $results[] = new ResultColumn(
+                $parameter ?? $strings->lower($expression) ?? $casts->lower($expression, $binding) ?? $expressions->lower($expression, $binding),
+                $label,
+            );
         }
 
         Check::input($results !== [], 'A complete projection requires at least one resolved output field.');

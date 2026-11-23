@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v33.json"
-CONTRACT = "20a0823b3b9fef5fed08e64b75dd041b13dce89405d206ade2abfc52b2a140ad"
+CONTRACT_NAME = "release-layout-v34.json"
+CONTRACT = "151273d135a87b024709732d6c19f9033e56993821cc45979689c86df68662ed"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -210,6 +210,9 @@ def verify_probe(raw, catalog):
                     "installed-external-view-input-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Select"):
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
+            require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",
+                                                     "utf8mb4_general_ci", "utf8mb4_0900_ai_ci"],
+                    "installed-mysql-text-literal-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
             require(item.get("wideCast") == ["int4", "int8", "2147483648", "-9223372036854775808"],
