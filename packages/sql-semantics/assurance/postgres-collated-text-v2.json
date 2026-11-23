@@ -1,0 +1,41 @@
+{
+  "revision": "SemanticsIR/postgres-collated-text-2",
+  "approval": "pending-human-review",
+  "previous": {"path": "postgres-collated-text-v1.json", "sha256": "e51053c8961c2e8c037f7491edf5469ac16b938f9a976d0edf7605a2dde57058"},
+  "dialects": ["PostgreSql"],
+  "extends": ["postgres-typed-columns-v2.json", "postgres-text-literal-v1.json", "server-result-v1.json", "server-compound-v2.json"],
+  "profiles": ["pg-16.6/utf8/standard-conforming-strings/native", "pg-17.2/utf8/standard-conforming-strings/native"],
+  "scope": "An explicit builtin pg_catalog.C collation on a PostgreSQL text projection. Preserve native ordering and duplicate handling of the containing SELECT.",
+  "constructors": {
+    "Expression/CollatedText": {
+      "role": "A native text result expression with one explicit resolved collation.",
+      "structure": "One immutable text literal, native text field or NULL operand, plus a closed builtin collation identity.",
+      "conditions": "A reference belongs to a visible scoped text slot. Lower the explicitly qualified pg_catalog.C spelling with a checked text or NULL operand. A nested different collation or another scalar type is outside this role.",
+      "meaning": "Preserve the exact decoded text or NULL and carry the explicit deterministic byte order. The containing SELECT uses that order for positional ordering and text equality under DISTINCT.",
+      "sql": "Group the operand and collate it with pg_catalog.C, quoted as an identifier. Type the NULL operand explicitly as pg_catalog.text."
+    },
+    "Expression/TextCollation": {
+      "role": "A builtin native PostgreSQL collation identity.",
+      "structure": "The closed string enum has one C case in this revision.",
+      "conditions": "The catalog name is pg_catalog.C. The selected database encoding is UTF-8 and the builtin is deterministic.",
+      "meaning": "Compare UTF-8 bytes and use deterministic equality of complete byte sequences.",
+      "sql": "Emit pg_catalog followed by the double-quoted exact collation identifier."
+    }
+  },
+  "existingRoles": ["Select", "ResultColumn", "From/TextColumnReference", "Rows/Compound"],
+  "externalInterpretation": "The same declared native text fields and rows are visible. The builtin C collation has the stock deterministic identity. The pinned test database has an en_US.utf8 default so an omitted collation changes the observed order.",
+  "observations": ["Exact ordered result labels and text metadata", "Preserve original bytes, NULL, repeated rows and semantically guaranteed order", "Observe native collation at every projected position, including duplicate labels and a statement returning no rows", "Observe DISTINCT with equal values and with unique values that differ in case or Unicode normalization", "Same-collation UNION ALL retains text and the duplicate policy"],
+  "finite": {"sources": ["literal", "field"], "directions": ["asc", "desc"], "nulls": ["first", "last"], "distinct": [false, true], "identities": 16, "completeness": "Recover actual operand roles, exact C identity, direction, NULL placement and duplicate policy from each constructed graph."},
+  "exploration": {"seeds": [4799, 14221, 34913], "casesPerSeed": 20, "timeoutSecondsPerRelease": 190, "allowedExclusions": [], "requiredForms": "Vary literals, fields and null operands, result width, order direction, nullable keys, source presence and repeated values."},
+  "analysis": ["Apply the exact qualified builtin collation to untyped text", "Apply the exact qualified builtin collation to a scoped text field", "Apply it to a text-typed NULL", "Compose it with DISTINCT and explicit positional order"],
+  "additionalControls": ["Check both collations of duplicate labels in a SELECT with LIMIT 0.", "Reject a change confined to the second native collation when rows, names, order and types agree."],
+  "negative": ["A text operand references a signed physical slot", "A text operand references an absent occurrence", "A collation has another catalog identity", "A qualified builtin collation is applied to a signed expression"],
+  "faults": ["Omit the explicit collation", "Reverse the selected positional order direction", "Read the other text field", "Omit the text DISTINCT policy", "Omit the collation of the second output while keeping both values and duplicate result labels"],
+  "evidence": {
+    "P01": "Record the exact collation, scalar type and reference position.", "P02": "Enforce the closed operand types and owning SELECT scope.", "P03": "Retain only resolved value and collation identities.", "P04": "Compose with ordered projection, duplicate policy and same-collation UNION ALL.", "P05": "Verify readonly operand storage and installed Composer role paths.", "P06": "Compare DB-native collations, typed ordered values and duplicates.",
+    "Q01": "Reject the named invalid scope, type and catalog witnesses.", "Q02": "Require the complete finite projection product and seeded roles.", "Q03": "Verify exactly how the SELECT structure chooses typed values and order.", "Q04": "Use an independent UTF-8 byte comparator and the native engine's measured collation and result.", "Q05": "Pin the candidate, verifier, fixture and exact enrolled release receipts."
+  },
+  "open": ["Other collations and ambiguous implicit collation selection", "General text comparisons", "Collated operands in casts, writes and other expression roles"],
+  "trust": ["Stock deterministic PostgreSQL builtin C", "Independent byte ordering and fixture observations", "Audited closed graph and exact native renderer"],
+  "sources": ["https://www.postgresql.org/docs/16/collation.html", "https://www.postgresql.org/docs/17/collation.html", "https://www.postgresql.org/docs/17/sql-expressions.html#SQL-SYNTAX-COLLATE-EXPRS"]
+}
