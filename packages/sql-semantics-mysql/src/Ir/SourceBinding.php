@@ -211,9 +211,9 @@ final class SourceBinding
         $columns = [];
         $types = [];
         foreach ($names as $name) {
-            $column = $this->writableColumn($name);
+            [$column, $type] = $this->writableColumn($name);
             $columns[] = new Identifier($column->name->value);
-            $types[] = $column->type instanceof Character ? (new VarcharLowering())->lower($column) : ColumnKind::SignedInt;
+            $types[] = $type;
         }
 
         return new TableSource($target->schema, $target->table, $columns, $types);
@@ -224,26 +224,23 @@ final class SourceBinding
      */
     public function updateField(string $name): ColumnReference|TextColumnReference
     {
-        $column = $this->writableColumn($name);
-        if (!$column->type instanceof Character) {
-            return $this->slotFor($column);
-        }
+        [$column, $type] = $this->writableColumn($name);
+        $slot = $this->allocate($column, $type);
 
-        return new TextColumnReference($this->allocate($column, (new VarcharLowering())->lower($column)));
+        return $type instanceof Varchar ? new TextColumnReference($slot) : new ColumnReference($slot);
     }
 
     /**
-     * Resolves a name to the exact explicit member of the write target.
+     * Resolves a destination and its approved native writing type together.
+     *
+     * @return array{Column, ColumnKind|Varchar}
      */
-    public function writableColumn(string $name): Column
+    public function writableColumn(string $name): array
     {
         $column = $this->writeDeclaration($name);
-        if ($column->type instanceof Character) {
-            Check::input(!$column->generated, 'A VARCHAR write requires an ordinary writable field.');
-            return $column;
-        }
-
-        return $this->signedWrite($column);
+        return $column->type instanceof Character
+            ? [$column, (new VarcharLowering())->lower($column)]
+            : [$this->signedWrite($column), ColumnKind::SignedInt];
     }
 
     /**

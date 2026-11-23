@@ -70,7 +70,7 @@ final class SourceBindingTest extends TestCase
         $operation = $inspection->inspect('SELECT id FROM app.t', [$table]);
         self::assertInstanceOf(Select::class, $operation->statement);
         $binding = new SourceBinding($operation->binding(), $operation->statement->from);
-        $column = $binding->writableColumn('id');
+        [$column] = $binding->writableColumn('id');
         $before = $binding->slotFor($column);
 
         self::assertSame($before->slot, $binding->slotFor($column)->slot);
@@ -84,7 +84,7 @@ final class SourceBindingTest extends TestCase
         $operation = $inspection->inspect('SELECT a FROM app.t', [$table]);
         self::assertInstanceOf(Select::class, $operation->statement);
         $binding = new SourceBinding($operation->binding(), $operation->statement->from);
-        $this->expectExceptionMessage('writable signed 32-bit integer');
+        $this->expectExceptionMessage('ordinary native VARCHAR');
 
         $binding->writableColumn('a');
     }
@@ -166,7 +166,7 @@ final class SourceBindingTest extends TestCase
         $operation = $inspection->inspect('SELECT amount FROM app.t', [$table]);
         self::assertInstanceOf(Select::class, $operation->statement);
         $binding = new SourceBinding($operation->binding(), $operation->statement->from);
-        $column = $binding->writableColumn('amount');
+        [$column] = $binding->writableColumn('amount');
 
         self::assertSame(0, $binding->allocate($column, ColumnKind::SignedInt));
         self::assertSame([ColumnKind::SignedInt], $binding->source()?->columnTypes);
