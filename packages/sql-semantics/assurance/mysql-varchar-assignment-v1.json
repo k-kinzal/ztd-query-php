@@ -1,0 +1,36 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-assignment-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-slots-v2.json", "mysql-varchar-effects-v1.json", "mysql-varchar-comparison-v1.json", "server-update-v2.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Assign a native VARCHAR field, a plain utf8mb4 literal or NULL to a resolved native VARCHAR field in an ordinary single-table UPDATE. Observe exact storage conversions and ordered assignments with the fixed external table definitions.",
+  "constructors": {
+    "Mutation/TextUpdateAssignment": {
+      "role": "One native text assignment in the order of a single-table UPDATE.",
+      "structure": "A native VARCHAR write slot and a VARCHAR read slot, plain UTF-8 text literal or NULL.",
+      "conditions": "Any read or write slot is relative to occurrence zero. The owning UPDATE checks both slots against the resolved VARCHAR layout before publication. The target has a known character capacity, nullability and stock utf8mb4_bin collation.",
+      "meaning": "Read the current row at this assignment position. Store no more Unicode characters than the destination allows. NULL stores as NULL on a nullable destination and as the empty string on a required destination, with a warning in the latter case.",
+      "sql": "Emit the exact native write name, equality delimiter and exact read slot or literal. Emit assignments in their written order."
+    }
+  },
+  "existingRoles": ["From/Varchar", "From/TextColumnReference", "Literal/TextLiteral", "NullLiteral", "TableSource", "Mutation/Update", "Mutation/UpdateAssignment"],
+  "structure": "The native VARCHAR layout stores capacity, collation and nullability for each resolved physical text slot. An UPDATE stores an ordered list of typed assignments and a scoped predicate.",
+  "conditions": "A text slot belongs to the ordinary physical target. Static nullability is known. A text assignment accepts text or NULL and a signed assignment accepts signed roles. Directly constructed values and analyzed SQL meet the same boundary.",
+  "meaning": "Evaluate the predicate on each original row and process selected rows in native single-table order. Later assignments observe the row as changed by earlier ones. Maintain exact text including trailing spaces and preserve NULL, multiplicity and unaffected rows. Compare original and final stored values for the changed-row count.",
+  "sql": "Render stock single-table UPDATE with each exact resolved target and value. Leave storage conversion to the pinned native statement semantics.",
+  "observations": ["Exact before, after and restored table rows including raw bytes, NULL, unchanged rows and column order", "Native changed-row count and zero result columns", "After-update trigger events with exact old and new typed values", "Warning severity, code, destination column and multiplicity for truncation and required NULL substitution. The raw diagnostics include physical row numbers; unordered row identities do not make those numbers semantic."],
+  "finite": {"destinations": ["nullable_value", "required_value", "empty_value"], "inputs": ["field", "fitting", "wide", "padding", "null"], "predicates": ["all", "source-available"], "identities": 30, "completeness": "Recover the exact destination, operand role and filter placement from the constructed UPDATE. Compare the entire destination × input × predicate product with distinct finite IDs."},
+  "exploration": {"seeds": [4673, 11777, 37189], "casesPerSeed": 20, "timeoutSecondsPerRelease": 300, "allowedExclusions": [], "requiredForms": "Vary one to five ordered assignments, same-field and cross-field reads, repeated targets, multibyte, NUL and padding boundaries, each destination capacity, NULL substitution, mixed signed writes and text predicates."},
+  "analysis": ["Truncate an assigned field by character capacity", "Distinguish assignment of NULL to nullable or required VARCHAR", "Resolve a qualified current-row read after a previous assignment", "Preserve a repeated destination and assignment order", "Preserve exact trailing spaces and apply a typed filter"],
+  "negative": ["A text read uses a later occurrence", "A text write uses a later occurrence", "A signed slot is written using a text assignment", "A signed slot is read using a text assignment", "The text assignment right side is a signed literal in analysis", "A text slot has an unresolved or different collation"],
+  "faults": ["Reverse the assignment order", "Change a field read to a different text field", "Lose an explicit trailing space while rendering a literal", "Suppress the UPDATE filter", "Drop the last assignment"],
+  "evidence": {
+    "P01": "Retain actual typed read and write slots, collation, capacity, nullability and assignment position.", "P02": "Limit each operand type at its constructor and validate the resolved roles at the owning UPDATE.", "P03": "Keep only semantic slots and values in the completed graph.", "P04": "Interpret each assignment in ordered row state.", "P05": "Audit exact closed readonly nodes and owned assignment arrays.", "P06": "Compare native stored values, diagnostics and effects against the character-by-character oracle.",
+    "Q01": "Reject all named invalid roles at their guaranteed construction boundaries.", "Q02": "Exhaust all 30 finite identities and inspect seeded cases against independent required forms.", "Q03": "Verify row scope, ordered composition, filters and storage behavior.", "Q04": "Compare exact text bytes, NULL, state, trigger observations, warnings and counts.", "Q05": "Verify the staged installed distribution and the pinned runner, fixtures, contracts and evidence."
+  },
+  "open": ["Text writes using computed expressions, explicit casts, other collations or server modes", "Generated and DEFAULT assignments", "Text insertions, multiple targets and arbitrary SQL contexts"],
+  "trust": ["Native UPDATE storage semantics for stock utf8mb4 VARCHAR and empty sql_mode", "Nullable and required fields are resolved to their actual physical declarations", "Independent character, diagnostic and sequential state evaluator"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/char.html", "https://dev.mysql.com/doc/refman/8.4/en/update.html", "https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html"]
+}
