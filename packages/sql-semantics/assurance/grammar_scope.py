@@ -225,6 +225,8 @@ def inventory(root):
             update = ("UpdateStmt", "set_clause_list", "set_clause")
             insert = ("InsertStmt", "insert_rest", "insert_column_list")
             selection = ("distinct_clause", "sort_clause", "sortby", "limit_clause", "offset_clause", "select_limit")
+            for rule in ("from_clause", "from_list"):
+                related.update({alternative: ("postgres-from-list-v1.json",) for alternative in rules.get(rule, ())})
             families = ("joined_table", "join_type", "join_qual", "join_using_alias", "where_clause")
         else:
             entry = "cmd"

@@ -7,9 +7,13 @@ namespace Tests\Unit\Ir\From;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
@@ -39,6 +43,28 @@ final class JoinBindingTest extends TestCase
         self::assertSame(0, $binding->reference($column->expression)->slot);
     }
 
+    public function testBindClosesCommaOccurrencesInListOrder(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (id INTEGER)');
+        $query = $inspection->inspect('SELECT c.id FROM public.t a, ONLY public.t b, public.t c', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $target = $query->statement->targets[0];
+        self::assertInstanceOf(ExpressionTarget::class, $target);
+
+        $binding = JoinBinding::bind($query->binding(), $query->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+        self::assertSame(2, $binding->reference($target->expression)->occurrence);
+        $source = $binding->source();
+
+        self::assertSame(JoinKind::Cross, $source->kind);
+        self::assertInstanceOf(Join::class, $source->left);
+        self::assertInstanceOf(TableSource::class, $source->left->right);
+        self::assertTrue($source->left->right->only);
+        self::assertInstanceOf(TableSource::class, $source->right);
+        self::assertFalse($source->right->only);
+    }
+
     public function testBindKeepsAnAbsentSource(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1');
@@ -63,6 +89,21 @@ final class JoinBindingTest extends TestCase
 
         self::assertInstanceOf(Known::class, $type);
         self::assertSame(Builtin::Int4, $type->descriptor);
+    }
+
+    public function testPredicateResolvesAnOrdinaryUsingKey(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (id INTEGER)');
+        $query = $inspection->inspect('SELECT 1 FROM public.t a JOIN public.t b USING (id)', [$table]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $binding = JoinBinding::bind($query->binding(), $query->statement->from, true);
+        self::assertInstanceOf(JoinBinding::class, $binding);
+
+        $predicate = $binding->predicate();
+
+        self::assertInstanceOf(IntegerComparison::class, $predicate);
+        self::assertEquals(new ColumnReference(0, 1), $predicate->right);
     }
 
     public function testSourceClosesBothOperandsAndTheOperator(): void

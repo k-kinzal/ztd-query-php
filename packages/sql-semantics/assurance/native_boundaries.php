@@ -30,7 +30,7 @@ function nativeBoundaryContract(string $dialect): array
             ...($dialect === 'postgres' ? [
                 ['postgres-mutation-returning-boundaries-v2.json', '082d7dd3af450a824ec217de545754e2f034eb33027dbb342456531b31dcefc3'],
             ] : []),
-            ['native-boundaries-v30.json', '8821a1eb3076b76aebe24f941e58bfc6cc0bd9a65f814cfc3598249d02f59d8d'],
+            ['native-boundaries-v31.json', '3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55'],
             ['native-insert-query-boundaries-v4.json', '67796e3b509a778308dcdf70c04ebcf7d455e9014faac77c426f6ee105290373'],
         ],
     };
@@ -135,7 +135,7 @@ function checkNativeBoundaries(
                 'Statement\\Expression\\Constructor\\CaseExpression as ParsedCase', 'Statement\\Literal\\BooleanLiteral as ParsedBoolean',
                 'Statement\\Literal\\Constant', 'Statement\\Literal\\IntegerConstant', 'Statement\\Literal\\NumericConstant', 'Ir\\Predicate\\PredicateLowering',
                 'Ir\\From\\MergedJoinLowering', 'Statement\\Relation\\JoinKind as ParsedKind', 'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinUsing',
-                'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
+                'Statement\\Relation\\RelationList', 'Statement\\Relation\\TableInput', 'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',

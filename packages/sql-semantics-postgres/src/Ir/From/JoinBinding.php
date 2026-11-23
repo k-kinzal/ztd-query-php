@@ -27,6 +27,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind as ParsedKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 
 /**
  * Allocates each resolved column in its own table occurrence while retaining the parsed association.
@@ -62,8 +64,22 @@ final class JoinBinding
     public static function bind(BoundStatement $operation, ?Relation $source, bool $catalogFirst): SourceBinding|self
     {
         $source = self::ungroup($source);
+        if (!$source instanceof RelationList) {
+            return $source instanceof ParsedJoin ? new self($operation, $source, $catalogFirst) : new SourceBinding($operation, $source);
+        }
 
-        return $source instanceof ParsedJoin ? new self($operation, $source, $catalogFirst) : new SourceBinding($operation, $source);
+        $items = $source->items;
+        Check::input(count($items) <= 61, 'A FROM list can have at most 61 input occurrences.');
+        foreach ($items as $item) {
+            Check::input($item instanceof TableInput, 'A FROM list in this source domain requires ordinary table inputs.');
+        }
+        $input = $items[0];
+        foreach (array_slice($items, 1) as $item) {
+            $input = new ParsedJoin($input, ParsedKind::Cross, $item);
+        }
+        Check::invariant($input instanceof ParsedJoin, 'A FROM list contains at least two inputs.');
+
+        return new self($operation, $input, $catalogFirst);
     }
 
     /**
@@ -154,7 +170,7 @@ final class JoinBinding
     /**
      * Resolves the explicit condition or normalizes the checked merged keys.
      */
-    private function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
+    public function predicate(): BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TruthTest|null
     {
         $condition = $this->join->condition;
         if (!$this->join->natural && !$condition instanceof JoinUsing) {

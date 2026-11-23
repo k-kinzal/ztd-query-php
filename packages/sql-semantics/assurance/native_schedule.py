@@ -5,6 +5,7 @@ NATIVE = {
     "projection": "server-projection-v1.json",
     "postgres_int4": "postgres-int4-operators-v2.json",
     "postgres_merged_join": "postgres-merged-join-v1.json",
+    "postgres_from_list": "postgres-from-list-v1.json",
     "postgres_boolean_tests": "postgres-boolean-tests-v1.json",
     "postgres_builtin_casts": "postgres-builtin-casts-v3.json",
     "postgres_typed_parameters": "postgres-typed-parameters-v1.json",
@@ -42,6 +43,7 @@ NATIVE = {
 SINGLE_ENGINE = {
     "postgres_int4": "postgres",
     "postgres_merged_join": "postgres",
+    "postgres_from_list": "postgres",
     "postgres_int4_case": "postgres",
     "postgres_boolean_tests": "postgres",
     "postgres_builtin_casts": "postgres",
