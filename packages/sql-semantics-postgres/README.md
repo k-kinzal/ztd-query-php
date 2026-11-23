@@ -22,6 +22,8 @@ A native `BOOLEAN` or `pg_catalog.bool` field is a `BooleanColumnReference` in a
 
 A native BIGINT field retains an int8 reference through grouped projections, joined inputs and derived headings. CAST to integer retains PostgreSQL's range check at execution. Casts from Boolean and native text fields retain their respective operand kinds.
 
+The six native signed comparison operators retain both operand widths. Mixed integer and bigint fields or signed literals can be compared in a result column, WHERE or JOIN ON. A comparison with a NULL field produces a nullable native Boolean result.
+
 Ordinary VALUES, INSERT SELECT and UPDATE preserve the native widths of signed operands separately from their destination widths. The database performs signed widening or narrowing and reports out-of-range narrowing during evaluation. Field-only RETURNING exposes bigint with its own native slot, including in a resolved target wildcard.
 
 A simple ORDER BY name can select a projected label. The IR records the chosen output position, direction and effective NULL placement. When that label also names a physical input column, PostgreSQL selects the output alias. A qualified field or expression uses the input scope. The sort key owns that scalar even when the result omits it. For DISTINCT, an exact qualified read of a projected field resolves to its output position. The input key roles include native signed 32-bit and 64-bit fields, Boolean and text fields, signed 32-bit arithmetic, builtin casts, and the explicit builtin byte collation.

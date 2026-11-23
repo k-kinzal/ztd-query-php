@@ -1,0 +1,258 @@
+{
+  "revision": "SemanticsIR/postgres-signed-comparison-widths-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect exact signed operand types and column allocation to the shared lexical, relational and scalar dispatch.",
+  "rules": {
+    "ExpressionLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($expression instanceof Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if ($expression instanceof BinaryOperation) {",
+        "    return IntegerOperator::tryFrom($expression->operator->name->value) !== null",
+        "        ? (new PredicateLowering())->comparison($expression, $binding, $catalogFirst)",
+        "        : $this->binary($expression, $binding, $catalogFirst);",
+        "}",
+        "$integer = $this->integerLiteral($expression, $catalogFirst);",
+        "if ($integer !== null) {",
+        "    return $integer;",
+        "}",
+        "",
+        "return match (true) {",
+        "    $expression instanceof Cast => (new BuiltinCastLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof Collation => (new CollatedTextLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedCase => (new IntegerCaseLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedNullTest => (new PredicateLowering())->nullTest($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),",
+        "    $expression instanceof Constant && $expression->value instanceof StringConstant && $simpleOutput => new TextLiteral($expression->value->value),",
+        "    $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),",
+        "    $expression instanceof ParsedNull => new NullLiteral(),",
+        "    $expression instanceof ParsedColumn => $binding->reference($expression),",
+        "    default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),",
+        "};"
+      ]
+    },
+    "From/OccurrenceScope::checkTree": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($depth <= 32 && ++$count <= 8192, 'Predicate depth or expanded node count exceeds the IR profile.');",
+        "if ($operand instanceof ColumnReference || $operand instanceof TextColumnReference || $operand instanceof BooleanColumnReference || $operand instanceof WideIntegerColumnReference) {",
+        "    $this->column($operand, $inputs, $invalidSlot);",
+        "}",
+        "$children = match (true) {",
+        "    $operand instanceof LogicalPredicate => $operand->right === null ? [$operand->left] : [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerComparison, $operand instanceof IntegerDistinctness, $operand instanceof TextComparison => [$operand->left, $operand->right],",
+        "    $operand instanceof IntegerRange => [$operand->subject, $operand->lower, $operand->upper],",
+        "    $operand instanceof NullTest, $operand instanceof TruthTest => [$operand->operand],",
+        "    $operand instanceof BooleanLiteral, $operand instanceof BooleanColumnReference, $operand instanceof ColumnReference, $operand instanceof IntegerLiteral, $operand instanceof NullLiteral, $operand instanceof TextColumnReference, $operand instanceof TextLiteral, $operand instanceof WideIntegerColumnReference, $operand instanceof WideIntegerLiteral => [],",
+        "};",
+        "foreach ($children as $child) {",
+        "    $count = $this->checkTree($child, $inputs, $invalidSlot, $depth + 1, $count);",
+        "}",
+        "",
+        "return $count;"
+      ]
+    },
+    "Predicate/PredicateLowering::lowerValue": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($condition instanceof Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition instanceof ParsedLogical) {",
+        "    $operator = match ($condition->operator) {",
+        "        BooleanOperator::And => LogicalOperator::And,",
+        "        BooleanOperator::Or => LogicalOperator::Or,",
+        "    };",
+        "",
+        "    return new LogicalPredicate($operator, $this->lowerValue($condition->left, $binding, $catalogFirst), $this->lowerValue($condition->right, $binding, $catalogFirst));",
+        "}",
+        "if ($condition instanceof ParsedNot) {",
+        "    return new LogicalPredicate(LogicalOperator::Not, $this->lowerValue($condition->operand, $binding, $catalogFirst));",
+        "}",
+        "if ($condition instanceof ParsedNullTest) {",
+        "    return $this->nullTest($condition, $binding, $catalogFirst);",
+        "}",
+        "if ($condition instanceof ParsedComparison) {",
+        "    return $this->comparison($condition, $binding, $catalogFirst);",
+        "}",
+        "",
+        "return $this->leaf($condition, $binding, $catalogFirst);"
+      ]
+    },
+    "Predicate/PredicateLowering::comparison": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$text = (new TextComparisonLowering())->lower($condition, $binding, $catalogFirst);",
+        "if ($text !== null) {",
+        "    return $text;",
+        "}",
+        "$qualifiers = array_column($condition->operator->qualifiers, 'value');",
+        "$allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];",
+        "Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');",
+        "$operator = IntegerOperator::tryFrom($condition->operator->name->value);",
+        "Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');",
+        "",
+        "return new IntegerComparison(",
+        "    $operator,",
+        "    $this->signedOperand($condition->left, $binding, $catalogFirst),",
+        "    $this->signedOperand($condition->right, $binding, $catalogFirst),",
+        ");"
+      ]
+    },
+    "Predicate/PredicateLowering::signedOperand": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "$value = $operand instanceof ParsedColumn ? $binding->field($operand) : (new ExpressionLowering())->integerLiteral($operand, $catalogFirst);",
+        "Check::input(",
+        "    $value instanceof ColumnReference || $value instanceof IntegerLiteral",
+        "        || $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral,",
+        "    'A predicate comparison needs two signed integer operands.',",
+        ");",
+        "",
+        "return $value;"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "",
+        "return match (true) {",
+        "    $column instanceof BuiltinCast, $column instanceof Parameter => match ($column instanceof BuiltinCast ? $column->target : $column->input) {",
+        "        CastDestination::Integer => ResultKind::Integer,",
+        "        CastDestination::WideInteger => ResultKind::WideInteger,",
+        "        CastDestination::Boolean => ResultKind::Boolean,",
+        "        CastDestination::Text => ResultKind::Text,",
+        "    },",
+        "    $column instanceof WideIntegerLiteral, $column instanceof WideIntegerColumnReference => ResultKind::WideInteger,",
+        "    $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,",
+        "    $column instanceof NullLiteral => ResultKind::Unknown,",
+        "    $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerComparison, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,",
+        "    $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,",
+        "};"
+      ]
+    },
+    "SelectBounds::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);",
+        "$scope = new OccurrenceScope();",
+        "$scope->predicate($where, $inputs);",
+        "$nodes = 0;",
+        "$positions = [];",
+        "foreach ($expressions as $root) {",
+        "    $pending = [[$root, 0]];",
+        "    while ($pending !== []) {",
+        "        [$expression, $height] = array_pop($pending);",
+        "        if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {",
+        "            $nodes = $scope->checkTree($expression, $inputs, 'A tested predicate slot must belong to the SELECT source.', $height, $nodes);",
+        "            continue;",
+        "        }",
+        "        Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');",
+        "        if ($expression instanceof IntegerCase) {",
+        "            foreach ($expression->arms as $arm) {",
+        "                $nodes = $scope->checkTree($arm->condition, $inputs, 'A CASE condition slot must belong to the SELECT source.', $height + 1, $nodes);",
+        "                $pending[] = [$arm->result, $height + 1];",
+        "            }",
+        "            if ($expression->otherwise !== null) {",
+        "                $pending[] = [$expression->otherwise, $height + 1];",
+        "            }",
+        "            continue;",
+        "        }",
+        "        match (true) {",
+        "            $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference, $expression instanceof WideIntegerColumnReference => $scope->column($expression, $inputs),",
+        "            $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],",
+        "            $expression instanceof Arithmetic, $expression instanceof IntegerComparison => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),",
+        "            $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),",
+        "            $expression instanceof IntegerLiteral, $expression instanceof WideIntegerLiteral, $expression instanceof BooleanLiteral, $expression instanceof NullLiteral, $expression instanceof TextLiteral => null,",
+        "        };",
+        "    }",
+        "}",
+        "Check::input(max([0, ...array_keys($positions)]) === count($positions), 'PostgreSQL parameter positions must cover the contiguous bound slots.');"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference, $expression instanceof WideIntegerColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',",
+        "    $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof NullTest, $expression instanceof IntegerComparison => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',",
+        "    $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',",
+        "    $expression instanceof TextLiteral => $expression->toString(),",
+        "    $expression instanceof CollatedText => $this->collated($expression, $source, $offset, $qualify),",
+        "    $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof NullLiteral => 'NULL',",
+        "    $expression instanceof Parameter => $expression->toString(),",
+        "    $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    },
+    "SelectSql::predicate": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($condition instanceof IntegerComparison) {",
+        "    $left = $this->expression($condition->left, $source, $offset, $qualify);",
+        "    $right = $this->expression($condition->right, $source, $offset, $qualify);",
+        "    $operator = 'OPERATOR(pg_catalog.' . $condition->operator->value . ')';",
+        "",
+        "    return '(' . $left . ' ' . $operator . ' ' . $right . ')';",
+        "}",
+        "",
+        "if ($condition instanceof LogicalPredicate) {",
+        "    $left = $this->predicate($condition->left, $source, $offset, $qualify);",
+        "    if ($condition->right === null) {",
+        "        return '(NOT ' . $left . ')';",
+        "    }",
+        "",
+        "    return '(' . $left . ' ' . $condition->operator->value . ' ' . $this->predicate($condition->right, $source, $offset, $qualify) . ')';",
+        "}",
+        "if ($condition instanceof NullTest) {",
+        "    $operand = $this->predicate($condition->operand, $source, $offset, $qualify);",
+        "",
+        "    return '(' . $operand . ($condition->negated ? ' IS NOT NULL)' : ' IS NULL)');",
+        "}",
+        "",
+        "return $this->expression($condition, $source, $offset, $qualify);"
+      ]
+    }
+  }
+}

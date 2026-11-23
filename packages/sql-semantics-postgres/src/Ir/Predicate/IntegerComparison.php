@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
 
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
@@ -25,8 +27,8 @@ final class IntegerComparison
      */
     public function __construct(
         public readonly IntegerOperator $operator,
-        public readonly ColumnReference|IntegerLiteral $left,
-        public readonly ColumnReference|IntegerLiteral $right,
+        public readonly ColumnReference|IntegerLiteral|WideIntegerColumnReference|WideIntegerLiteral $left,
+        public readonly ColumnReference|IntegerLiteral|WideIntegerColumnReference|WideIntegerLiteral $right,
     ) {
     }
 }

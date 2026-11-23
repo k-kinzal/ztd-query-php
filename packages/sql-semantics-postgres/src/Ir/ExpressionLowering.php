@@ -15,14 +15,15 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctnessLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRangeLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTestLowering;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -64,13 +65,14 @@ final class ExpressionLowering
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
         bool $simpleOutput = false,
-    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
+    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
         if ($expression instanceof BinaryOperation) {
-            return (new TextComparisonLowering())->lower($expression, $binding, $catalogFirst)
-                ?? $this->binary($expression, $binding, $catalogFirst);
+            return IntegerOperator::tryFrom($expression->operator->name->value) !== null
+                ? (new PredicateLowering())->comparison($expression, $binding, $catalogFirst)
+                : $this->binary($expression, $binding, $catalogFirst);
         }
         $integer = $this->integerLiteral($expression, $catalogFirst);
         if ($integer !== null) {
@@ -105,7 +107,7 @@ final class ExpressionLowering
         ?ColumnKind $destination,
         bool $distinct = false,
         bool $simpleOutput = false,
-    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
+    ): Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|NullTest|TextComparison|TextLiteral|WideIntegerLiteral {
         $bareText = $simpleOutput || $destination === ColumnKind::Text;
         if ($destination === ColumnKind::Boolean) {
             $bareText = $distinct;

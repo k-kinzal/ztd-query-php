@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Predicate;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -14,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest as ParsedNullTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Testing\PostgreSql\Inspection;
@@ -46,6 +48,33 @@ final class PredicateLoweringTest extends TestCase
         self::assertInstanceOf(NullTest::class, $predicate);
         self::assertInstanceOf(LogicalPredicate::class, $predicate->operand);
         self::assertSame('NOT', $predicate->operand->operator->value);
+    }
+
+    public function testComparisonPreservesOperandWidths(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1 WHERE 1 < 9223372036854775807');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $parsed = $operation->statement->where;
+        self::assertInstanceOf(BinaryOperation::class, $parsed);
+
+        $comparison = (new PredicateLowering())->comparison($parsed, new SourceBinding($operation->binding(), null), true);
+
+        self::assertInstanceOf(IntegerComparison::class, $comparison);
+        self::assertInstanceOf(IntegerLiteral::class, $comparison->left);
+        self::assertInstanceOf(WideIntegerLiteral::class, $comparison->right);
+    }
+
+    public function testSignedOperandPreservesAGroupedBigintEndpoint(): void
+    {
+        $operation = (new Inspection())->inspect('SELECT 1 WHERE ((-9223372036854775808)) >= 0');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $parsed = $operation->statement->where;
+        self::assertInstanceOf(BinaryOperation::class, $parsed);
+
+        $operand = (new PredicateLowering())->signedOperand($parsed->left, new SourceBinding($operation->binding(), null), true);
+
+        self::assertInstanceOf(WideIntegerLiteral::class, $operand);
+        self::assertSame('-9223372036854775808', $operand->decimal);
     }
 
     public function testNullTestRetainsTheSignedConstantAndNegation(): void

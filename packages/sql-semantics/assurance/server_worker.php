@@ -40,6 +40,7 @@ function constructOperand(string $namespace, array $data): object
         'bool-slot' => 'From\\BooleanColumnReference',
         'wide-slot' => 'From\\WideIntegerColumnReference',
         'operation' => 'Arithmetic',
+        'comparison' => 'Predicate\\IntegerComparison',
         'int4-case' => 'Expression\\IntegerCase',
         'builtin-cast' => 'Expression\\BuiltinCast',
         'signed-cast' => 'Expression\\SignedCast',
@@ -51,6 +52,7 @@ function constructOperand(string $namespace, array $data): object
         'range-integer' => 'Predicate\\RangeIntegerLiteral',
     };
     $operator = $namespace . 'ArithmeticOperator';
+    $comparison = $namespace . 'Predicate\\IntegerOperator';
     $castTarget = $namespace . 'Expression\\CastDestination';
     $collation = $namespace . (str_contains($namespace, '\\MySql\\') ? 'From\\TextCollation' : 'Expression\\TextCollation');
     $textOperator = $namespace . 'Predicate\\Text\\TextOperator';
@@ -58,6 +60,7 @@ function constructOperand(string $namespace, array $data): object
 
     return match ($data[0]) {
         'integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
+        'comparison' => new $type($comparison::from($data[1]), constructOperand($namespace, $data[2]), constructOperand($namespace, $data[3])),
         'text' => new $type($data[1]),
         'text-bytes' => new $type(hex2bin($data[1])),
         'collated-text' => new $type(constructOperand($namespace, $data[2]), $collation::from($data[1])),
@@ -134,6 +137,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'From\\TextColumnReference' => ['text-slot', $value->slot, $value->occurrence],
         $namespace . 'From\\BooleanColumnReference' => ['bool-slot', $value->slot, $value->occurrence],
         $namespace . 'From\\WideIntegerColumnReference' => ['wide-slot', $value->slot, $value->occurrence],
+        $namespace . 'Predicate\\IntegerComparison' => observePredicate($namespace, $value),
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Expression\\SignedCast' => ['signed-cast', observeOperand($namespace, $value->operand)],
@@ -295,17 +299,11 @@ function constructPredicate(string $namespace, ?array $test): ?object
     if ($test === null) {
         return null;
     }
-    $comparison = $namespace . 'Predicate\\IntegerComparison';
-    $operator = $namespace . 'Predicate\\IntegerOperator';
     $logical = $namespace . 'Predicate\\LogicalPredicate';
     $logicalOperator = $namespace . 'Predicate\\LogicalOperator';
     $nullTest = $namespace . 'Predicate\\NullTest';
     return match ($test[0]) {
-        'comparison' => new $comparison(
-            $operator::from($test[1]),
-            constructOperand($namespace, $test[2]),
-            constructOperand($namespace, $test[3])
-        ),
+        'comparison' => constructOperand($namespace, $test),
         'logic' => new $logical(
             $logicalOperator::from($test[1]),
             constructPredicate($namespace, $test[2]),

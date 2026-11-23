@@ -268,6 +268,16 @@ function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $
 }
 
 
+function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $query = $semantics->analyze('SELECT ((lo)) > id AS result FROM public.bounds_read WHERE id < lo', $context);
+    $expression = $query->columns[0]->expression;
+
+    return [$expression::class, $expression->left::class, $expression->left->slot,
+        $expression->right::class, $expression->right->slot, $query->where->operator->value, $query->toString()];
+}
+
 function observePostgresSignedWrites(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.signed_bounds (id integer, wide bigint)']);
@@ -483,6 +493,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['int8Field'] = observePostgresInt8Field($semantics);
             $details['outputOrder'] = observePostgresOutputOrder($semantics);
             $details['sourceOrder'] = observePostgresSourceOrder($semantics);
+            $details['signedComparison'] = observePostgresSignedComparison($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

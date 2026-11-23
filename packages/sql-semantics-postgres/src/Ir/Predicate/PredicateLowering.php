@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
@@ -68,24 +69,50 @@ final class PredicateLowering
             return $this->nullTest($condition, $binding, $catalogFirst);
         }
         if ($condition instanceof ParsedComparison) {
-            $text = (new TextComparisonLowering())->lower($condition, $binding, $catalogFirst);
-            if ($text !== null) {
-                return $text;
-            }
-            $expression = new ExpressionLowering();
-            $qualifiers = array_column($condition->operator->qualifiers, 'value');
-            $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];
-            Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');
-            $operator = IntegerOperator::tryFrom($condition->operator->name->value);
-            Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
-            $left = $expression->lower($condition->left, $binding, $catalogFirst);
-            $right = $expression->lower($condition->right, $binding, $catalogFirst);
-            Check::input(($left instanceof ColumnReference || $left instanceof IntegerLiteral)
-                && ($right instanceof ColumnReference || $right instanceof IntegerLiteral), 'A predicate comparison needs two signed integer operands.');
-
-            return new IntegerComparison($operator, $left, $right);
+            return $this->comparison($condition, $binding, $catalogFirst);
         }
+
         return $this->leaf($condition, $binding, $catalogFirst);
+    }
+
+    /**
+     * Resolves a built-in text comparison or the exact pair of signed roles.
+     */
+    public function comparison(ParsedComparison $condition, SourceBinding|JoinBinding $binding, bool $catalogFirst): IntegerComparison|TextComparison
+    {
+        $text = (new TextComparisonLowering())->lower($condition, $binding, $catalogFirst);
+        if ($text !== null) {
+            return $text;
+        }
+        $qualifiers = array_column($condition->operator->qualifiers, 'value');
+        $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];
+        Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');
+        $operator = IntegerOperator::tryFrom($condition->operator->name->value);
+        Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
+
+        return new IntegerComparison(
+            $operator,
+            $this->signedOperand($condition->left, $binding, $catalogFirst),
+            $this->signedOperand($condition->right, $binding, $catalogFirst),
+        );
+    }
+
+    /**
+     * Resolves a checked signed field or signed literal of either native width.
+     */
+    public function signedOperand(Scalar $operand, SourceBinding|JoinBinding $binding, bool $catalogFirst): ColumnReference|IntegerLiteral|WideIntegerColumnReference|WideIntegerLiteral
+    {
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        $value = $operand instanceof ParsedColumn ? $binding->field($operand) : (new ExpressionLowering())->integerLiteral($operand, $catalogFirst);
+        Check::input(
+            $value instanceof ColumnReference || $value instanceof IntegerLiteral
+                || $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral,
+            'A predicate comparison needs two signed integer operands.',
+        );
+
+        return $value;
     }
 
     /**

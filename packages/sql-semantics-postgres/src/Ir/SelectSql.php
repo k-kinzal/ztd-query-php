@@ -72,7 +72,7 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
         return match (true) {
             $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference, $expression instanceof WideIntegerColumnReference => $this->column($expression, $source, $offset, $qualify),
@@ -81,7 +81,7 @@ final class SelectSql
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
             $expression instanceof IntegerDistinctness => $this->integerDistinctness($expression, $source, $offset, $qualify),
             $expression instanceof IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),
-            $expression instanceof NullTest => $this->predicate($expression, $source, $offset, $qualify),
+            $expression instanceof NullTest, $expression instanceof IntegerComparison => $this->predicate($expression, $source, $offset, $qualify),
             $expression instanceof TruthTest => $this->truthTest($expression, $source, $offset, $qualify),
             $expression instanceof IntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int4)',
             $expression instanceof WideIntegerLiteral => 'CAST(' . $expression->decimal . ' AS pg_catalog.int8)',

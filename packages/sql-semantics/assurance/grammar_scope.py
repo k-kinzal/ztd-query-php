@@ -369,6 +369,11 @@ def inventory(root):
                     if rule == "set_clause" and alternative != "set_clause: set_target = a_expr":
                         continue
                     related[alternative] = (*related.get(alternative, ()), "postgres-signed-write-widths-v1.json")
+            for rule in ("a_expr", "b_expr"):
+                comparison = {f"{rule}: {rule} {op} {rule}" for op in ("=", "<", ">", "LESS_EQUALS", "GREATER_EQUALS", "NOT_EQUALS", "qual_Op")}
+                for alternative in rules.get(rule, ()):
+                    if alternative in comparison:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-signed-comparison-widths-v1.json")
         for rule in transaction:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("PREPARED", "PREPARE", "REPLICA", "SLAVE")):

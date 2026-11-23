@@ -121,7 +121,7 @@ if ($dialect === 'postgres') {
     $methods[$integerCase] = $methods[$caseArm] = $methods[$range] = $methods[$distinctness] = ['__construct'];
     array_push($properties[$caseArm]['condition'], $range, $distinctness, $truthTest, $textComparison, 'From\\BooleanColumnReference');
     sort($properties[$caseArm]['condition']);
-    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest');
+    array_push($properties['ResultColumn']['expression'], $range, $distinctness, $truthTest, 'Predicate\\NullTest', 'Predicate\\IntegerComparison');
     $properties['Arithmetic']['left'][] = $integerCase;
     $properties['Arithmetic']['right'][] = $integerCase;
     $properties['ResultColumn']['expression'][] = $integerCase;
@@ -561,6 +561,11 @@ if ($dialect !== 'sqlite') {
     $properties['Predicate\\IntegerComparison'] = [
         'operator' => ['Predicate\\IntegerOperator'], 'left' => ['ColumnReference', 'IntegerLiteral'], 'right' => ['ColumnReference', 'IntegerLiteral'],
     ];
+    if ($dialect === 'postgres') {
+        $signed = ['ColumnReference', 'Expression\\WideIntegerLiteral', 'From\\WideIntegerColumnReference', 'IntegerLiteral'];
+        $properties['Predicate\\IntegerComparison']['left'] = $signed;
+        $properties['Predicate\\IntegerComparison']['right'] = $signed;
+    }
     $properties['Predicate\\IntegerOperator'] = [];
     $properties['Predicate\\LogicalPredicate'] = [
         'operator' => ['Predicate\\LogicalOperator'], 'left' => $truthValues, 'right' => $conditions,

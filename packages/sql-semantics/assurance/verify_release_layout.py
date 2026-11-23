@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v51.json"
-CONTRACT = "5832906026e083ed79b1c61e4994c58365ca8aecb73b30652781d0e047cc743d"
+CONTRACT_NAME = "release-layout-v52.json"
+CONTRACT = "828bd8c20decddecbe8f17dc6b9def358075195afd54128bd5f80a91c0d2d957"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -285,6 +285,14 @@ def verify_probe(raw, catalog):
                 'SELECT DISTINCT "__ztd_source"."lo" AS "value", "__ztd_source"."id" AS "id" '
                 'FROM "public"."bounds_read" AS "__ztd_source" ORDER BY 1 DESC NULLS FIRST, 2 ASC NULLS LAST',
             ], "installed-postgres-source-order-mismatch", item)
+            pg_ir = "SqlSemantics\\Platform\\PostgreSql\\Ir\\"
+            require(item.get("signedComparison") == [
+                pg_ir + "Predicate\\IntegerComparison", pg_ir + "From\\WideIntegerColumnReference", 1,
+                pg_ir + "ColumnReference", 0, "<",
+                'SELECT ("__ztd_source"."lo" OPERATOR(pg_catalog.>) "__ztd_source"."id") AS "result" '
+                'FROM "public"."bounds_read" AS "__ztd_source" '
+                'WHERE ("__ztd_source"."id" OPERATOR(pg_catalog.<) "__ztd_source"."lo")',
+            ], "installed-postgres-signed-comparison-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '

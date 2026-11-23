@@ -1,0 +1,103 @@
+{
+  "revision": "SemanticsIR/postgres-physical-text-admission-5",
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "constructors": {},
+  "existingRoles": [
+    "From/BooleanColumnReference",
+    "From/TextColumnReference",
+    "Mutation/Delete",
+    "Select",
+    "From/WideIntegerColumnReference"
+  ],
+  "extends": [
+    "server-projection-v1.json",
+    "wildcard-projection-v2.json",
+    "server-delete-v2.json",
+    "postgres-typed-columns-v2.json",
+    "postgres-physical-text-admission-v1.json",
+    "postgres-boolean-fields-v1.json",
+    "postgres-physical-text-admission-v2.json",
+    "postgres-int8-fields-v1.json",
+    "postgres-physical-text-admission-v3.json",
+    "postgres-signed-write-widths-v1.json",
+    "postgres-physical-text-admission-v4.json",
+    "postgres-signed-comparison-widths-v1.json"
+  ],
+  "profiles": [
+    "pg-16.6/utf8/standard-conforming-strings/native",
+    "pg-17.2/utf8/standard-conforming-strings/native"
+  ],
+  "changes": {
+    "projection": {
+      "previous": "The direct projection of a resolved text field had to be rejected.",
+      "required": "Project the declared text field with both qualified and unqualified spellings. Observe the same resolved occurrence and position twice, text metadata for each result, and the exact UTF-8 rows including repeated values from descendants. The Boolean field contract independently compares native bool results from equally resolved qualified and unqualified reads. The native int8 contract compares precise signed fields and the same occurrence in grouped and ungrouped output.",
+      "negative": {
+        "type": "NUMERIC",
+        "message": "The bound column must have the signed 32-bit integer type."
+      }
+    },
+    "wildcard": {
+      "previous": "A wildcard over a resolved text field had to be rejected.",
+      "required": "The ordinary and joined text stars in the typed-columns contract must expand to the exact typed slots with the original order and names. A closed Boolean member now has the same typed resolution as an explicitly named result. Native int8 members now expand to their checked signed 64-bit slots.",
+      "negative": {
+        "type": "NUMERIC",
+        "message": "The bound column must have the signed 32-bit integer type."
+      }
+    },
+    "delete": {
+      "previous": "The target declaration rejected a text field before binding an int4 comparison.",
+      "required": "Reject the typed text operand of a native signed comparison. The signed width binder takes both accepted integer widths into account at the same boundary.",
+      "negative": {
+        "type": "TEXT",
+        "message": "A predicate comparison needs two signed integer operands."
+      }
+    },
+    "delete-returning": {
+      "previous": "A BIGINT field in a RETURNING layout was not admitted.",
+      "required": "The signed write contract independently observes native int8 fields in the affected row. Keep the rejection for a native NUMERIC result outside the typed slot domain.",
+      "negative": {
+        "type": "NUMERIC",
+        "message": "The bound column must have the signed 32-bit integer type."
+      }
+    },
+    "update-returning": {
+      "previous": "A BIGINT field in a RETURNING layout was not admitted.",
+      "required": "The signed write contract independently observes native int8 fields in the affected row. Keep the rejection for a native NUMERIC result outside the typed slot domain.",
+      "negative": {
+        "type": "NUMERIC",
+        "message": "The bound column must have the signed 32-bit integer type."
+      }
+    }
+  },
+  "preserved": "Keep all existing numeric projection and wildcard finite identities, seeds, budgets, negatives and mutation faults. Each replaced witness still tests one negative in the same position. This supplement adds one positive native projection comparison per PostgreSQL release. MySQL and SQLite inputs are unchanged.",
+  "counterexamples": {
+    "candidate": "330962b3efc8",
+    "domains": [
+      "projection",
+      "wildcard",
+      "delete"
+    ],
+    "outcome": "Both PostgreSQL releases exposed stale negative expectations after the physical text role was added. The original requests and actual outcomes are recorded in their per-release counterexample artifacts.",
+    "next": {
+      "candidate": "803a85c4c3e8",
+      "domain": "projection",
+      "outcome": "Both PostgreSQL releases accepted the former Boolean rejection witness with the new exact bool slot. The native Boolean fields suite observes admitted Boolean values, and the central negative uses a still-unrepresented int8 field."
+    },
+    "signedReturning": {
+      "domains": [
+        "postgres-delete-returning-v3.json",
+        "postgres-update-returning-v4.json"
+      ],
+      "outcome": "The former BIGINT negatives now construct native int8 RETURNING slots. Replace the unsupported type witness with NUMERIC at the same boundary and preserve the result shape and execution budgets."
+    }
+  },
+  "externalInterpretation": "Positive raw and rendered SQL use the same declarations and actual fixture. The unbounded NUMERIC negative is specific to the currently published physical field roles.",
+  "trust": [
+    "Independent expected rows and ordered metadata",
+    "Pinned database images",
+    "Exact verifier and distribution identity during independent replay"
+  ]
+}
