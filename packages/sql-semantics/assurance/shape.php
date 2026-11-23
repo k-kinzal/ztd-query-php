@@ -866,7 +866,7 @@ try {
         'mysql' => [
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
-            ['mysql-varchar-binding-v2.json', '34a42617dda54a58fa2d1ad50cbea42ff33cae79ff60887cb381ddd0eb9d97d2', 'MySQL VARCHAR binding'],
+            ['mysql-varchar-binding-v3.json', '53fe339cbb4fa0e61e745a77ece8f4ac00caa405a57938011745a8f9257cea04', 'MySQL VARCHAR binding'],
         ],
     };
     foreach ($bindings as [$name, $digest, $label]) {

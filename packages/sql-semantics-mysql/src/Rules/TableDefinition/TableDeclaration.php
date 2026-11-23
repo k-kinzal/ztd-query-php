@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\ImplicitColumn;
@@ -110,26 +111,27 @@ final class TableDeclaration
     /**
      * Resolves the only native table collation whose character-set identity is checked.
      */
-    public function tableCollation(CreateTable $definition): ?Name
+    public function tableCollation(CreateTable $definition, GrammarRelease $release): ?Name
     {
         $collations = [];
         $charsets = [];
-        foreach ($definition->options as $option) {
+        foreach ($definition->options as $position => $option) {
             if ($option instanceof CollationOption) {
-                $collations[] = $option->collation->name;
+                $collations[$position] = $option->collation->name;
             } elseif ($option instanceof CharsetOption) {
-                $charsets[] = $option->charset->name;
+                $charsets[$position] = $option->charset->name;
             }
         }
-        $collation = $collations[0] ?? null;
+        $collation = array_values($collations)[0] ?? null;
         if (count($collations) !== 1 || strtolower($collation->value ?? '') !== 'utf8mb4_bin') {
             return null;
         }
-        if ($charsets !== [] && (count($charsets) !== 1 || strtolower($charsets[0]->value ?? '') !== 'utf8mb4')) {
+        if ($charsets !== [] && (count($charsets) !== 1 || strtolower(array_values($charsets)[0]->value ?? '') !== 'utf8mb4')) {
             return null;
         }
 
-        return $collation;
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+        return $legacy && $charsets !== [] && array_key_first($charsets) > array_key_first($collations) ? null : $collation;
     }
 
     /**
@@ -160,7 +162,7 @@ final class TableDeclaration
     {
         $comparison = $derivation->context->columnNames;
         $primary = $this->primaryColumns($definition);
-        $collation = $this->tableCollation($definition);
+        $collation = $this->tableCollation($definition, $derivation->context->profile->grammar);
         $defined = [];
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {

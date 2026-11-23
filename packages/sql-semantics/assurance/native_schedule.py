@@ -38,7 +38,7 @@ NATIVE = {
     "mysql_varchar_assignment": "mysql-varchar-assignment-v4.json",
     "mysql_varchar_insert": "mysql-varchar-insert-v2.json",
     "mysql_varchar_count": "mysql-varchar-count-v1.json",
-    "mysql_varchar_inheritance": "mysql-varchar-inheritance-v1.json",
+    "mysql_varchar_inheritance": "mysql-varchar-inheritance-v2.json",
     "mysql_signed_casts": "mysql-signed-casts-v2.json",
     "mysql_unsigned_casts": "mysql-unsigned-casts-v3.json",
     "mysql_merged_join": "mysql-merged-join-v3.json",

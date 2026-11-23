@@ -253,7 +253,7 @@ The [VARCHAR VALUES domain](mysql-varchar-insert-v2.json) compares the exact typ
 
 The [VARCHAR COUNT domain](mysql-varchar-count-v1.json) checks nullable and duplicate text fields, global zeros, keyed grouping, required legacy group ordering and exact output metadata. Its oracle independently partitions rows and counts exact non-NULL values or PAD SPACE equivalence classes. Run `run_server_mysql_varchar_count.py` and replay with `combine_server_mysql_varchar_count_evidence.py`.
 
-The [VARCHAR inheritance domain](mysql-varchar-inheritance-v1.json) checks a resolved table default and explicit column overrides. It compares the derived physical slot with direct construction and checks native character-set, collation, width and nullability metadata before comparing the results. Run `run_server_mysql_varchar_inheritance.py` and replay with `combine_server_mysql_varchar_inheritance_evidence.py`.
+The [VARCHAR inheritance domain](mysql-varchar-inheritance-v2.json) checks a resolved table default and explicit column overrides. It compares the derived physical slot with direct construction and checks native character-set, collation, width and nullability metadata before comparing the results. Run `run_server_mysql_varchar_inheritance.py` and replay with `combine_server_mysql_varchar_inheritance_evidence.py`.
 
 ## Native local projections
 

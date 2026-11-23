@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\TableDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Statement\Declaration\RelationKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
@@ -171,10 +172,21 @@ final class TableDeclarationTest extends TestCase
         self::assertInstanceOf(CreateTable::class, $table->statement);
         $rule = new TableDeclaration();
 
-        self::assertSame('utf8mb4_bin', $rule->tableCollation($table->statement)?->value);
+        self::assertSame('utf8mb4_bin', $rule->tableCollation($table->statement, $table->profile()->grammar)?->value);
         $columns = $table->declarations()[0]->columns;
         self::assertSame('utf8mb4_bin', $columns[0]->collation?->value);
         self::assertSame('utf8mb4_general_ci', $columns[1]->collation?->value);
         self::assertNull($columns[2]->collation);
+    }
+
+    public function testTableCollationUsesThePinnedReleaseOrder(): void
+    {
+        $table = (new Inspection())->inspect('CREATE TABLE app.t (a VARCHAR(3)) COLLATE utf8mb4_bin DEFAULT CHARSET=utf8mb4');
+        self::assertInstanceOf(CreateTable::class, $table->statement);
+        $rule = new TableDeclaration();
+
+        self::assertNull($rule->tableCollation($table->statement, GrammarRelease::MySql5651));
+        self::assertNull($rule->tableCollation($table->statement, GrammarRelease::MySql5744));
+        self::assertSame('utf8mb4_bin', $rule->tableCollation($table->statement, GrammarRelease::MySql8044)?->value);
     }
 }

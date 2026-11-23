@@ -234,6 +234,7 @@ def main(domain):
         with Observer(args.engine, deadline, domain.OBSERVER) as db:
             check_profile(args.engine, args.release, db)
             preparation = domain.prepare(args.engine, db)
+            write_json(args.out / "observer-preparation.json", preparation)
             domain.check_preparation(args.engine, db.environment, preparation)
             with Worker(args, deadline, script="server_worker.php") as php:
                 result = execute(args, specification, tag, php, db, domain)

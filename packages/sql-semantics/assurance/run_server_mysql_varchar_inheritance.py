@@ -18,13 +18,15 @@ from server_truth_model import admits, predicate_value
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-varchar-inheritance"
-CONTRACT = "0fa23a9c5d643d23b4e1c3a9145dbc80a6613dd6cf5d6b4ec5c91cca1b2f3797"
+CONTRACT = "5bd0a3474cd47e20ec070aca435175f97941a2a40c96bb40d69612687f93d28d"
 CASES = {
     "collation-only": ("ir_varchar_inherit_a", "", "COLLATE utf8mb4_bin"),
     "charset-then-collation": ("ir_varchar_inherit_b", "", "DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_bin"),
     "collation-then-charset": ("ir_varchar_inherit_c", "", "DEFAULT COLLATE utf8mb4_bin DEFAULT CHARSET=utf8mb4"),
     "column-override": ("ir_varchar_inherit_d", "COLLATE utf8mb4_bin", "COLLATE utf8mb4_general_ci"),
 }
+LEGACY = ("mysql-5.6.51", "mysql-5.7.44")
+REVERSED = "collation-then-charset"
 HEADING = ("label", "alternate", "id")
 TYPES = (["varchar", 8, COLLATION], ["varchar", 8, COLLATION, False], "int")
 ROWS = [("a", "Z", 10), ("A", "a", 20), ("a ", "B", 30), (None, "", 40), ("𐐷", "X", 50),
@@ -32,7 +34,7 @@ ROWS = [("a", "Z", 10), ("A", "a", 20), ("a ", "B", 30), (None, "", 40), ("𐐷"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-varchar-inheritance-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-varchar-inheritance-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-varchar-inheritance-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -57,16 +59,22 @@ def prepare(_engine, db):
                               f"WHERE TABLE_SCHEMA = '{SCHEMA}' AND TABLE_NAME IN ({listed}) "
                               "ORDER BY TABLE_NAME, ORDINAL_POSITION"})
     data = {name: observation(db.request({"sql": f"SELECT label, alternate, id FROM {SCHEMA}.{name}"})) for name in names}
-    return {"fixture": receipt, "columns": rows["rows"], "data": data}
+    contrast = db.request({"sql": f"SELECT label = 'a' AS result FROM {SCHEMA}.{CASES[REVERSED][0]} WHERE id = 20"})
+    return {"fixture": receipt, "columns": rows["rows"], "data": data, "nativeReverseCase": contrast}
 
 
-def check_preparation(engine, _environment, actual):
+def check_preparation(engine, environment, actual):
     require(engine == "mysql", "mysql-varchar-inheritance-engine", engine)
     same({"status": "fixture"}, actual["fixture"])
-    expected_columns = [[name, *field_] for name in sorted(actual["data"]) for field_ in (
-        ("label", "varchar", "utf8mb4", COLLATION, 8, "YES"), ("alternate", "varchar", "utf8mb4", COLLATION, 8, "NO"),
-        ("id", "int", None, None, None, "YES"),
-    )]
+    version = environment["database"][0].split("-")[0]
+    legacy = "mysql-" + version in LEGACY
+    expected_columns = []
+    for origin, (name, _, _) in CASES.items():
+        collation = "utf8mb4_general_ci" if legacy and origin == REVERSED else COLLATION
+        expected_columns.extend([[name, "label", "varchar", "utf8mb4", collation, 8, "YES"],
+                                 [name, "alternate", "varchar", "utf8mb4", collation, 8, "NO"],
+                                 [name, "id", "int", None, None, None, "YES"]])
+    same({"status": "rows", "fields": [["result", "LONGLONG"]], "rows": [[int(legacy)]]}, actual["nativeReverseCase"])
     same(sorted(case[0] for case in CASES.values()), sorted(actual["data"]))
     same(expected_columns, actual["columns"])
     raw = {"status": "rows", "fields": [["label", "VAR_STRING"], ["alternate", "VAR_STRING"], ["id", "LONG"]],
@@ -92,10 +100,14 @@ def finite(tag, origin, expression, filter_):
     return {**project(tag, source(origin), [[projection(expression), "value"]]), "where": selection(filter_)}
 
 
-def finite_ids(_, spec, _tag):
+def admitted_origins(tag, origins):
+    return [name for name in origins if tag not in LEGACY or name != REVERSED]
+
+
+def finite_ids(_, spec, tag):
     b = spec["finite"]
-    identities = set(product(b["origin"], b["projection"], b["filter"]))
-    require(len(identities) == b["identities"], "mysql-varchar-inheritance-finite-size", len(identities))
+    identities = set(product(admitted_origins(tag, b["origin"]), b["projection"], b["filter"]))
+    require(len(identities) == b["legacyIdentities" if tag in LEGACY else "identities"], "mysql-varchar-inheritance-finite-size", len(identities))
     return identities
 
 
@@ -109,8 +121,8 @@ def finite_id(_, actual, _item):
 
 
 def analyzed(tag):
-    for key, value in CASES.items():
-        name = value[0]
+    for key in admitted_origins(tag, CASES):
+        name = CASES[key][0]
         sql = (f"SELECT r.label AS value, label <=> NULL AS null_value, r.alternate AS other "
                f"FROM {SCHEMA}.{name} r")
         projection_ = [[field(0), "value"], [projection("null-safe"), "null_value"], [field(1), "other"]]
@@ -129,11 +141,14 @@ def negative(tag):
     )
     for declaration in declarations:
         yield query(tag, sql, [declaration]), "The text slot requires an explicit utf8mb4_bin collation."
+    if tag in LEGACY:
+        qualified = f"{SCHEMA}.{CASES[REVERSED][0]}"
+        yield query(tag, f"SELECT label AS value FROM {qualified}", [definition(REVERSED)]), "The text slot requires an explicit utf8mb4_bin collation."
 
 
 def seeded(tag, seed, budget):
     rng = Random(seed)
-    origins = list(CASES)
+    origins = admitted_origins(tag, CASES)
     for index in range(budget):
         origin = origins[index % len(origins)]
         items = []
@@ -147,11 +162,11 @@ def seeded(tag, seed, budget):
 
 def requests(_, tag, spec):
     b = spec["finite"]
-    for index, vector in enumerate(product(b["origin"], b["projection"], b["filter"])):
+    for index, vector in enumerate(product(admitted_origins(tag, b["origin"]), b["projection"], b["filter"])):
         item = finite(tag, *vector)
         yield f"finite/{index}", item, item, None
     inputs = list(analyzed(tag))
-    require(len(inputs) == len(spec["analysis"]), "mysql-varchar-inheritance-analysis-incomplete")
+    require(len(inputs) == len(spec["analysis"]) - int(tag in LEGACY), "mysql-varchar-inheritance-analysis-incomplete")
     for index, (sql, item) in enumerate(inputs):
         yield f"analysis/{index}", sql, item, None
     for seed in spec["exploration"]["seeds"]:
@@ -241,8 +256,8 @@ def sample_forms(forms, actual, *_):
             forms["comparison/" + term[1]] += 1
 
 
-def required_forms(*_):
-    return {*(f"source/{entry[0]}" for entry in CASES.values()), "width/1", "width/2", "width/3", "field/label",
+def required_forms(_, tag):
+    return {*(f"source/{CASES[origin][0]}" for origin in admitted_origins(tag, CASES)), "width/1", "width/2", "width/3", "field/label",
             "field/alternate", "result/text-slot", "result/text-comparison", "filter/all", "filter/boolean",
             "filter/text-comparison", "filter/null-test", "comparison/=", "comparison/<=>", "comparison/<"}
 
@@ -272,7 +287,7 @@ def faults(_, tag):
                     finite(tag, "charset-then-collation", "null-safe", "all"), "meaning-mismatch"),
         RenderFault("replace-inherited-varchar-binary-comparison", renderer, ordered,
                     "$left . ' COLLATE utf8mb4_general_ci ' . $comparison->operator->value . ' ' . $right",
-                    finite(tag, "collation-then-charset", "equality", "all"), "meaning-mismatch"),
+                    finite(tag, "charset-then-collation" if tag in LEGACY else REVERSED, "equality", "all"), "meaning-mismatch"),
     ]
 
 
