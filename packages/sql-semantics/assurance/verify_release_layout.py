@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v69.json"
-CONTRACT = "5d07c9ca17af72402da447a002126b2d231bc131d269e3970eabc52ac0e6b434"
+CONTRACT_NAME = "release-layout-v70.json"
+CONTRACT = "15badb97fdfd5cdca42fed0f75bc381cb068e45881bf07cd64f557cd0611fb43"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -506,9 +506,17 @@ def verify_probe(raw, catalog):
             ], "installed-merged-join-definition-mismatch", item)
         if item["role"] == "Schema\\DropView":
             require(item.get("dropView") == ["main", "removable", True], "installed-view-removal-mismatch", item)
-        if item["role"] == "Schema\\Alter\\RenameTable":
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Alter\\RenameTable"):
+            require(item.get("postgresRenameTable") == ["public", "accounts", "archived", False]
+                    and item["sql"] == 'ALTER TABLE "public"."accounts" RENAME TO "archived"',
+                    "installed-postgres-rename-table-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\Alter\\RenameColumn"):
+            require(item.get("postgresRenameColumn") == ["public", "accounts", "id", "new Id", True, True]
+                    and item["sql"] == 'ALTER TABLE IF EXISTS ONLY "public"."accounts" RENAME COLUMN "id" TO "new Id"',
+                    "installed-postgres-rename-column-mismatch", item)
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\RenameTable"):
             require(item.get("rename") == ["main", "accounts", "renamed"], "installed-table-rename-mismatch", item)
-        if item["role"] == "Schema\\Alter\\RenameColumn":
+        if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Alter\\RenameColumn"):
             require(item.get("rename") == ["main", "accounts", "id", "renamed", False],
                     "installed-column-rename-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\Query\\CreateTableAs"):

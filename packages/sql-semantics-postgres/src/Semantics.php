@@ -29,11 +29,13 @@ use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\Values\ValuesQuery;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Rows\With\WithProjection;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameColumn;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\Alter\RenameTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\CreateTable;
-use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropRelationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\DropTable;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\PersistentDeclarationLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\Query\CreateTableAs;
+use SqlSemantics\Platform\PostgreSql\Ir\Schema\RelationChangeLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateMaterializedView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\CreateView;
 use SqlSemantics\Platform\PostgreSql\Ir\Schema\View\DropView;
@@ -58,6 +60,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows as Parsed
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect as ParsedInsertQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update as ParsedUpdate;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop as ParsedDrop;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Rename as ParsedRename;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery as ParsedParenthesized;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression as ParsedWith;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
@@ -148,7 +151,7 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, ?Context $context = null): Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|Select|Transaction|Update|ValuesQuery|WithProjection
+    public function analyze(string $sql, ?Context $context = null): Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|Update|ValuesQuery|WithProjection
     {
         $declarations = $this->catalog->resolve($context);
         $operation = $this->binder->resolve($sql, $declarations);
@@ -163,7 +166,7 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
             $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateTableAs, $statement instanceof ParsedCreateView, $statement instanceof ParsedCreateMaterializedView => (new PersistentDeclarationLowering())->lower($operation, $statement),
             $statement instanceof ParsedRefreshMaterializedView => (new RefreshMaterializedViewLowering())->lower($operation, $statement),
-            $statement instanceof ParsedDrop => (new DropRelationLowering())->lower($operation, $statement),
+            $statement instanceof ParsedDrop, $statement instanceof ParsedRename => (new RelationChangeLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
             $statement instanceof ParsedUpdate => (new UpdateLowering())->lower($operation, $statement),
@@ -177,7 +180,7 @@ final class Semantics implements Analyzer
      *
      * No statement is executed for the ones after it.
      *
-     * @return list<Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|Select|Transaction|Update|ValuesQuery|WithProjection>
+     * @return list<Compound|CreateMaterializedView|CreateTable|CreateTableAs|CreateView|Delete|DropTable|DropView|GroupedSelect|Insert|InsertQuery|LocalProjection|RecursiveSeries|RefreshMaterializedView|RenameColumn|RenameTable|Select|Transaction|Update|ValuesQuery|WithProjection>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

@@ -765,6 +765,14 @@ if ($dialect !== 'sqlite') {
         $createAs = 'Schema\\Query\\CreateTableAs';
         $createAsBounds = 'Schema\\Query\\CreateAsBounds';
         $roots[] = $createAs;
+        $renameTable = 'Schema\\Alter\\RenameTable';
+        $renameColumn = 'Schema\\Alter\\RenameColumn';
+        array_push($roots, $renameTable, $renameColumn);
+        array_push($internal, 'Schema\\Alter\\RenameLowering', 'Schema\\Alter\\RenameTargetLowering', 'Schema\\RelationChangeLowering');
+        $properties[$renameTable] = ['target' => ['Schema\\TableName'], 'destination' => ['Identifier'], 'ifExists' => ['bool'],
+            'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
+        $properties[$renameColumn] = [...$properties[$renameTable], 'column' => ['Identifier'], 'only' => ['bool']];
+        $methods[$renameTable] = $methods[$renameColumn] = ['__construct', 'profileId', 'toString'];
         array_push($internal, $createAsBounds, 'Schema\\Query\\CreateTableAsLowering');
         $pureCollaborators[] = $createAsBounds;
         $properties[$createAs] = ['target' => ['Schema\\TableName'], 'query' => [$valuesQuery, 'Select'],
@@ -959,8 +967,10 @@ try {
                 . $prefix . 'Schema\\PersistentDeclarationLowering())->lower($operation, $statement),')
         . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\RefreshMaterializedView => (new \\'
             . $prefix . 'Schema\\View\\RefreshMaterializedViewLowering())->lower($operation, $statement),' : '')
-        . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\'
-        . ($dialect === 'mysql' ? 'DropTableLowering' : 'DropRelationLowering') . '())->lower($operation, $statement),'
+        . ($dialect === 'postgres'
+            ? '$statement instanceof \\' . $platform . '\\Statement\\Object\\Drop, $statement instanceof \\' . $platform . '\\Statement\\Object\\Rename'
+                . ' => (new \\' . $prefix . 'Schema\\RelationChangeLowering())->lower($operation, $statement),'
+            : '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),')
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
@@ -1106,6 +1116,14 @@ try {
         requireShape(count($classes) === 1 && $classes[0]->namespacedName->toString() === $prefix . $short, "Unexpected declared type in $short");
         $class = $classes[0];
         $observed[] = $short;
+        if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn') {
+            $constants = $finder->findInstanceOf($class->stmts, Stmt\ClassConst::class);
+            $system = $constants[0]->consts[0] ?? null;
+            requireShape(count($constants) === 1 && count($constants[0]->consts) === 1 && $constants[0]->isPrivate()
+                && $system->name->toString() === 'SYSTEM_COLUMNS' && $system->value instanceof Expr\Array_
+                && $printer->prettyPrintExpr($system->value) === "['tableoid', 'xmin', 'cmin', 'xmax', 'cmax', 'ctid']",
+                'The PostgreSQL system column set differs');
+        }
         if ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn') {
             $lexical = __DIR__ . '/sqlite-rename-v4.json';
             requireShape(hash_file('sha256', $lexical) === '10291e93677e2e133e691a175dc16a2e78039dccabc6eeefef8534402f148861', 'SQLite rename token contract differs');
@@ -1178,6 +1196,21 @@ try {
                     && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
                     && types($members[0]->returnType, $prefix, $short) === ['Schema\\DropTable', 'Schema\\View\\DropView'],
                     'Unexpected PostgreSQL relation removal publication');
+            }
+            if ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === ['Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable'],
+                    'Unexpected PostgreSQL rename publication');
+            }
+            if ($short === 'Schema\\RelationChangeLowering') {
+                $members = $class->getMethods();
+                requireShape(count($members) === 1 && $members[0]->isPublic() && !$members[0]->isStatic()
+                    && $members[0]->name->toString() === 'lower' && $members[0]->returnType !== null
+                    && types($members[0]->returnType, $prefix, $short) === [
+                        'Schema\\Alter\\RenameColumn', 'Schema\\Alter\\RenameTable', 'Schema\\DropTable', 'Schema\\View\\DropView',
+                    ], 'Unexpected PostgreSQL relation change publication');
             }
             if ($short === 'Schema\\PersistentDeclarationLowering') {
                 $members = $class->getMethods();
@@ -1262,6 +1295,7 @@ try {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'sqlite' && $short === 'Schema\\Alter\\RenameColumn' && in_array($call->name->toString(), ['in_array', 'strtr'], true))
+                    || ($dialect === 'postgres' && $short === 'Schema\\Alter\\RenameColumn' && $call->name->toString() === 'in_array')
                     || ($dialect === 'mysql' && $short === 'TableSource' && $call->name->toString() === 'array_fill')
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')

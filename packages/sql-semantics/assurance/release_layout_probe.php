@@ -538,6 +538,8 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
         $queries['Schema\\View\\CreateMaterializedView'] = 'CREATE MATERIALIZED VIEW materialized_probe (n) AS VALUES (6) WITH NO DATA';
         $queries['Schema\\Query\\CreateTableAs'] = 'CREATE UNLOGGED TABLE copy_probe (n) AS VALUES (6) WITH NO DATA';
+        $queries['Schema\\Alter\\RenameTable'] = 'ALTER TABLE ONLY accounts RENAME TO archived';
+        $queries['Schema\\Alter\\RenameColumn'] = 'ALTER TABLE IF EXISTS ONLY accounts RENAME id TO "new Id"';
         $queries['Schema\\View\\RefreshMaterializedView'] = 'REFRESH MATERIALIZED VIEW snapshot WITH NO DATA';
         $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
@@ -935,10 +937,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         if ($role === 'Schema\\DropView') {
             $details['dropView'] = [$result->schema->value, $result->view->value, $result->ifExists];
         }
-        if ($role === 'Schema\\Alter\\RenameTable') {
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameTable') {
+            $details['postgresRenameTable'] = [$result->target->schema->value, $result->target->table->value,
+                $result->destination->value, $result->ifExists];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\Alter\\RenameColumn') {
+            $details['postgresRenameColumn'] = [$result->target->schema->value, $result->target->table->value,
+                $result->column->value, $result->destination->value, $result->only, $result->ifExists];
+        }
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\RenameTable') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->destination->value];
         }
-        if ($role === 'Schema\\Alter\\RenameColumn') {
+        if ($platform === 'Sqlite' && $role === 'Schema\\Alter\\RenameColumn') {
             $details['rename'] = [$result->schema->value, $result->table->value, $result->column->value,
                 $result->destination->value, $result->quoteReferences];
         }

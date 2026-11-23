@@ -758,6 +758,37 @@ function observePostgresCreateAs(string $namespace, object $value): array
     ];
 }
 
+function constructPostgresRename(string $platform, array $input): SemanticsIR
+{
+    $namespace = $platform . 'Ir\\';
+    $name = $namespace . 'Identifier';
+    $table = $namespace . 'Schema\\TableName';
+    $member = $namespace . 'Schema\\Alter\\RenameColumn';
+    $relation = $namespace . 'Schema\\Alter\\RenameTable';
+    $release = $platform . 'Model\\Contract\\GrammarRelease';
+    $change = $input['rename'];
+    [$schema, $source] = $change['target'];
+    $target = new $table(new $name($schema), new $name($source));
+    $destination = new $name($change['destination']);
+    $version = $release::from($input['release']);
+
+    return $change['role'] === 'column'
+        ? new $member($target, new $name($change['column']), $destination, $change['only'], $change['ifExists'], $version)
+        : new $relation($target, $destination, $change['ifExists'], $version);
+}
+
+function observePostgresRename(string $namespace, object $value): array
+{
+    $member = $value::class === $namespace . 'Schema\\Alter\\RenameColumn';
+    return ['status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+        'rename' => [
+            'role' => $member ? 'column' : 'table', 'target' => [$value->target->schema->value, $value->target->table->value],
+            'destination' => $value->destination->value, 'ifExists' => $value->ifExists,
+            ...($member ? ['column' => $value->column->value, 'only' => $value->only] : []),
+        ],
+    ];
+}
+
 function constructDropView(string $platform, array $input): SemanticsIR
 {
     $namespace = $platform . 'Ir\\';
@@ -1015,6 +1046,7 @@ function observeStatement(array $input): array
             isset($input['dropView']) => constructDropView($platform, $input),
             isset($input['materialization']) => constructPostgresMaterialization($platform, $input),
             isset($input['createTableAs']) => constructPostgresCreateAs($platform, $input),
+            isset($input['rename']) => constructPostgresRename($platform, $input),
             isset($input['command']) => constructTransaction($platform, $input),
             isset($input['target'], $input['assignments']) => constructUpdate($platform, $input),
             isset($input['target'], $input['insertQuery']) => constructInsertQuery($platform, $input),
@@ -1094,6 +1126,9 @@ function observeStatement(array $input): array
     }
     if ($dialect === 'postgres' && $value::class === $namespace . 'Schema\\Query\\CreateTableAs') {
         return observePostgresCreateAs($namespace, $value);
+    }
+    if ($dialect === 'postgres' && in_array($value::class, [$namespace . 'Schema\\Alter\\RenameTable', $namespace . 'Schema\\Alter\\RenameColumn'], true)) {
+        return observePostgresRename($namespace, $value);
     }
     if ($value::class === $namespace . 'Schema\\View\\DropView') {
         return [

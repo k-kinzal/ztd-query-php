@@ -468,6 +468,10 @@ def inventory(root):
                 for alternative in rules.get(rule, []):
                     if rule != "OptTemp" or alternative in {"OptTemp:", "OptTemp: UNLOGGED"}:
                         related[alternative] = (*related.get(alternative, ()), "postgres-create-table-as-v1.json")
+        if postgres:
+            for alternative in rules.get("RenameStmt", []):
+                if alternative.startswith("RenameStmt: ALTER TABLE ") and "CONSTRAINT" not in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-table-rename-v2.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

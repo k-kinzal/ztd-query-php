@@ -1,0 +1,131 @@
+{
+  "revision": "SemanticsIR/postgres-table-rename-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect rename eligibility, optional resolved absence, absolute operands, and inherited column effects to the loaded concrete values.",
+  "rules": {
+    "Schema/Alter/RenameTable::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($ifExists || $target->table->value !== $destination->value, 'A table rename requires a distinct destination name.');"
+      ]
+    },
+    "Schema/Alter/RenameTable::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Alter/RenameTable::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'ALTER TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '') . $this->target->quoted()",
+        "    . ' RENAME TO ' . $this->destination->quoted();"
+      ]
+    },
+    "Schema/Alter/RenameColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input($ifExists || $column->value !== $destination->value, 'A column rename requires a distinct destination name.');",
+        "Check::input(",
+        "    !in_array($column->value, self::SYSTEM_COLUMNS, true) && !in_array($destination->value, self::SYSTEM_COLUMNS, true),",
+        "    'A column rename requires user-column identifiers.',",
+        ");"
+      ]
+    },
+    "Schema/Alter/RenameColumn::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8/standard-conforming-strings/native';"
+      ]
+    },
+    "Schema/Alter/RenameColumn::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return 'ALTER TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '') . ($this->only ? 'ONLY ' : '') . $this->target->quoted()",
+        "    . ' RENAME COLUMN ' . $this->column->quoted() . ' TO ' . $this->destination->quoted();"
+      ]
+    },
+    "Schema/Alter/RenameLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "Check::input($context->profile->parameters === ParameterStyle::Native",
+        "    && $context->relationNames === Comparison::Sensitive && $context->columnNames === Comparison::Sensitive,",
+        "    'ALTER TABLE RENAME requires the native naming profile.');",
+        "$reference = $statement->object;",
+        "$member = $statement->member;",
+        "Check::input($statement->kind === ObjectKind::Table && $reference instanceof RelationTarget",
+        "    && ($member === null || $member->part === RenamedPart::Column), 'The checked rename needs a table or column operation.');",
+        "[$target, $table] = (new RenameTargetLowering())->lower($operation, $reference, $statement->ifExists);",
+        "$destination = new Identifier($statement->newName->value);",
+        "$release = $context->profile->grammar;",
+        "if ($member === null) {",
+        "    return new RenameTable($target, $destination, $statement->ifExists, $release);",
+        "}",
+        "if ($table !== null) {",
+        "    Check::input($table->complete && count($table->matchingColumns($member->name->value, Comparison::Sensitive)) === 1",
+        "        && $table->matchingColumns($destination->value, Comparison::Sensitive) === [],",
+        "        'A column rename requires a unique declared source column and an unused destination.');",
+        "}",
+        "",
+        "return new RenameColumn($target, new Identifier($member->name->value), $destination, $reference->relation->only, $statement->ifExists, $release);"
+      ]
+    },
+    "Schema/Alter/RenameTargetLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$reference = $target->relation->name;",
+        "$resolution = $operation->facts->relation($target)->table;",
+        "Check::input($reference->catalog === null, 'A table rename needs an absolute schema and relation.');",
+        "if ($resolution instanceof DeclaredTable) {",
+        "    $table = $resolution->table;",
+        "    Check::input($table->kind === RelationKind::BaseTable && $table->name->catalog === null,",
+        "        'ALTER TABLE RENAME requires a persistent base table.');",
+        "    $tableSchema = ($table->name->schema ?? $context->declarationSchema)->value;",
+        "",
+        "    return [new TableName(new Identifier($tableSchema), new Identifier($table->name->name->value)), $table];",
+        "}",
+        "Check::input($ifExists && $context->complete && $resolution === null, 'An optional rename requires known absence in a complete catalog.');",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "Check::input($reference->schema !== null && isset($schemas[$reference->schema->value]),",
+        "    'An optional rename requires a known explicit schema.');",
+        "",
+        "return [new TableName(new Identifier($reference->schema->value), new Identifier($reference->name->value)), null];"
+      ]
+    },
+    "Schema/RelationChangeLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $statement instanceof ParsedDrop",
+        "    ? (new DropRelationLowering())->lower($operation, $statement)",
+        "    : (new RenameLowering())->lower($operation, $statement);"
+      ]
+    }
+  }
+}
