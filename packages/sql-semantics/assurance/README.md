@@ -100,7 +100,7 @@ python3 "$verifier/collect_native_replays.py" --layout release --candidate "$can
   --candidate-root "$candidate" --evidence-root "$evidence"
 ```
 
-The container launch, image check, local endpoint discovery and server readiness share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch.
+The container launch, image check, local endpoint discovery and native PDO profile qualification share the fixed 900-second setup deadline. The launcher records the failure phase and cleans up its named fixture after an interrupted launch. The fixture probe ledger retains every startup attempt. The launcher begins the domain budgets after observing the fixed server profile.
 
 The native launcher records the source and unique match for every scheduled renderer fault in `native-launch/renderer-fault-sources.json`. It continues running the scheduled domains and records an incomplete matrix if any fault cannot be applied. The individual runtime ledgers still require a healthy control and the exact detection signal.
 

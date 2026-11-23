@@ -12,11 +12,12 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from importlib import import_module
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 from native_schedule import NATIVE, SINGLE_ENGINE
 from run import TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
-from run_server import CONTRACT as PROJECTION
+from run_server import CONTRACT as PROJECTION, check_profile
 from run_server_delete import version_tag
 from scope import CONTRACTS
 
@@ -114,6 +115,33 @@ def connection(engine, local):
     }
 
 
+def check_fixture_connection(engine, release, environment, deadline, path):
+    """Require a native PDO session before spending the registered domain budgets."""
+    with path.open("w") as log:
+        while True:
+            remaining = startup_remaining(deadline)
+            try:
+                probe = subprocess.run(
+                    ["php", str(TOOL / "server_observer.php"), engine],
+                    input="", text=True, capture_output=True, check=False, env=environment, timeout=min(10, remaining),
+                )
+            except subprocess.TimeoutExpired:
+                event = {"status": "timeout"}
+                log.write(json.dumps(event) + "\n")
+                log.flush()
+                continue
+            event = {"status": "exited", "code": probe.returncode, "stdout": probe.stdout, "stderr": probe.stderr}
+            log.write(json.dumps(event) + "\n")
+            log.flush()
+            if probe.returncode == 0:
+                observed = json.loads(probe.stdout)
+                check_profile(engine, release, SimpleNamespace(environment=observed))
+                return observed
+            require("Connection refused" in probe.stderr or "database system is starting up" in probe.stderr,
+                    "native-launch-fixture-connection", {"engine": engine, "release": release, "log": path.name})
+            time.sleep(min(1, startup_remaining(deadline)))
+
+
 def run_jobs(jobs, args, raw, logs, environment, result):
     for domain, runner, flags in jobs:
         path = logs / f"{domain}.log"
@@ -164,10 +192,15 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
         require(local is not None, "native-launch-unexpected-port", address)
         external = int(local[1])
         ready(engine, external, deadline)
+        phase = "fixture-profile"
+        environment = connection(engine, external)
+        probe_log = logs / "fixture-probe.jsonl"
+        profile = check_fixture_connection(engine, version, environment, deadline, probe_log)
         startup_remaining(deadline)
+        receipt["observedProfile"] = profile
         receipt["startupSeconds"] = round(time.monotonic() - start, 3)
         phase = "execution"
-        run_jobs(jobs, args, raw, logs, connection(engine, external), receipt["executions"])
+        run_jobs(jobs, args, raw, logs, environment, receipt["executions"])
     except (Failure, OSError, ValueError, subprocess.SubprocessError) as error:
         receipt["failure"] = {"phase": phase, "type": type(error).__name__, "detail": str(error)}
         if container is None and phase == "container-launch":
@@ -186,6 +219,9 @@ def run_release(fixture, jobs, args, raw_root, logs_root):
             except (OSError, subprocess.SubprocessError) as error:
                 receipt["cleanupFailure"] = str(error)
 
+    probe_log = logs / "fixture-probe.jsonl"
+    if probe_log.is_file():
+        receipt["fixtureProbe"] = {"path": probe_log.name, "sha256": digest(probe_log)}
     good = (receipt["failure"] is None and "cleanupFailure" not in receipt
             and [entry["domain"] for entry in receipt["executions"]] == receipt["planned"]
             and all(entry["outcome"] == "exited" and entry["exitCode"] == 0 for entry in receipt["executions"]))
