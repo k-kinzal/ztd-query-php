@@ -1,0 +1,49 @@
+{
+  "revision": "SemanticsIR/postgres-source-order-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL built-in B-tree ordering, UTF-8 and standard-compliant strings. External relations and their native collations have the same interpretation on both sides.",
+  "extends": ["postgres-output-order-names-v1.json", "postgres-int8-fields-v1.json", "postgres-collated-text-v2.json", "postgres-int4-operators-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Select", "Ordering/Order", "Ordering/Limit", "ColumnReference", "From/BooleanColumnReference", "From/TextColumnReference", "From/WideIntegerColumnReference", "Arithmetic", "Expression/BuiltinCast", "Expression/CollatedText"],
+  "structure": "A sort key targets either a one-based result position or a closed typed scalar evaluated in the input layout. The input roles are int4, int8, Boolean and text field references, int4 arithmetic, builtin casts and explicitly collated text. Direction, effective NULL placement and key precedence are explicit.",
+  "conditions": "Output positions belong to the projection. Every input reference belongs to the exact source occurrence and type, including nested expressions. All source keys share the SELECT expression bounds and parameter signature. Native DISTINCT only uses projected positions. A resolved input column appearing in the DISTINCT output can be normalized to that exact position. An unqualified simple output name keeps its normal precedence. A name inside an expression binds to the input.",
+  "meaning": "Evaluate each key under its native type and collation and compare keys in precedence order with the recorded direction and NULL placement. Apply LIMIT and OFFSET to that row order. Keep results with equal tuples and all result-column names and types. Equal keys do not order rows relative to one another.",
+  "sql": "Qualify every input field with its generated occurrence alias and emit checked expressions, including parenthesized arithmetic and exact types or collations. Emit a position directly. Write explicit NULL placement. Source keys never add a result column.",
+  "observations": ["Exact key type, input occurrence, storage kind, bound coordinate and direction", "Ordered tuples with NULLs and duplicates", "Raw source SELECT agreement on result metadata and selected order or native error", "Distinct qualified projected key normalized to its owned position", "No source ordering dependency on output aliases within an expression"],
+  "finite": {
+    "source": ["physical", "left-join"],
+    "kind": ["int4", "int8", "boolean", "text", "arithmetic", "cast", "collated"],
+    "direction": ["ascending", "descending"],
+    "nulls": ["implicit", "first", "last"],
+    "identities": 84,
+    "completeness": "Recover source shape, typed key and effective direction from the constructed graph. Recover option tokens independently from each recorded analyzed request. Compare every analyzed cell and each directly constructed counterpart. Projection includes a unique tie-breaker where the fixture could otherwise yield distinct but equally ordered tuples."
+  },
+  "analysis": ["Qualified sort key with a conflicting output label", "Grouped hidden field under a left join", "Nested arithmetic resolves a conflicting name as input", "Qualified key referring to an already projected DISTINCT field", "Wildcard and qualified field under DISTINCT", "Ordering with LIMIT and OFFSET", "Overflow during evaluation of a narrowing sort cast", "DISTINCT sorts the projected Boolean from the NULL-extended side"],
+  "exploration": {
+    "seeds": [1831, 29683, 59359],
+    "casesPerSeed": 28,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary source layout, key kind, key nesting, reference occurrence, key direction, NULL placement, multiple keys and row bounds. Explore arithmetic trees and repeated comparable values."
+  },
+  "negative": ["Missing input field", "An output alias used inside a source expression", "DISTINCT with an unprojected source field", "Direct source key placed under DISTINCT", "Direct wrong source occurrence", "Direct wrong native kind", "Direct wrong field inside sort expression"],
+  "faults": ["Drop the source qualification", "Change source occurrence", "Drop source arithmetic operand", "Use the wrong NULL placement", "Ignore the source field ownership guard", "Resolve the expression against the output instead of the inputs"],
+  "evidence": {
+    "P01": "A key distinguishes the ordered result position from a fully resolved source expression.",
+    "P02": "The SELECT boundary establishes reference scope, native kind, DISTINCT placement, bounds and signature.",
+    "P03": "The order contains only typed operands, positions and native ordering options.",
+    "P04": "The statement combines the key value, precedence and row bound over its owned layout.",
+    "P05": "Final immutable scalar roles and copying of the sort list protect the complete graph.",
+    "P06": "The emitted SQL preserves the chosen source value, NULL placement, precedence, duplicate behavior, and ordered row bounds.",
+    "Q01": "Reject wrong occurrences, wrong kinds and inappropriate DISTINCT placement at the owning boundary.",
+    "Q02": "Exhaust the independently recovered syntax and structure grid and explore larger source keys.",
+    "Q03": "Reuse the checked expression scope with the same projection and external reference bindings.",
+    "Q04": "Compare against native raw and rendered SQL and an independent ordered relation model.",
+    "Q05": "Link source allocation, validated constructors, traversal and renderer to the installed distribution."
+  },
+  "open": ["Explicit USING sort operators, unsupported scalar types, and ORDER BY expressions on other result roots", "DISTINCT matching of projected compound expressions written again as sort expressions", "Cross-profile or user-defined collation equivalence"],
+  "trust": ["Fixed external table identity and type including native text collation", "PostgreSQL default B-tree operators for the admitted types and the corresponding native session", "Installed PHP package and independent fixture and oracle"],
+  "sources": ["https://www.postgresql.org/docs/17/queries-order.html", "https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY", "https://www.postgresql.org/docs/17/collation.html"]
+}
