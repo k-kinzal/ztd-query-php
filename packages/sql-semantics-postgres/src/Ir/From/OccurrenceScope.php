@@ -77,7 +77,7 @@ final class OccurrenceScope
         $input = $inputs[$column->occurrence] ?? null;
         if ($column instanceof TextColumnReference) {
             Check::input(
-                $input instanceof TableSource && $input->columnKind($column->slot) === ColumnKind::Text,
+                $input?->columnKind($column->slot) === ColumnKind::Text,
                 $invalidSlot ?? 'A text slot must belong to the SELECT source with its native kind.'
             );
 
@@ -91,7 +91,6 @@ final class OccurrenceScope
      */
     public function hasSlot(TableSource|DerivedSource|null $input, int $slot): bool
     {
-        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot])
-            : $input?->columnKind($slot) === ColumnKind::Int4;
+        return $input?->columnKind($slot) === ColumnKind::Int4;
     }
 }

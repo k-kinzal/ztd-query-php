@@ -224,6 +224,9 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative.endswith((" IS NULL_P", " IS NOT NULL_P")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json")
+            for alternative in rules.get("table_ref", ()):
+                if "select_with_parens" in alternative and "LATERAL" not in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json")
             for rule in ("ColumnDef", "GenericType"):
                 for alternative in rules.get(rule, ()):
                     linked = related.get(alternative, ())

@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * An independent derived table of ordered signed integer fields.
+ * An independent derived table of ordered signed integer and native text fields.
  *
  * @visibility public
  * @example Constructing a signed input without an external relation
@@ -23,7 +23,7 @@ final class DerivedSource
     use Snapshot;
 
     /**
-     * Establishes the independently printable query and its signed slot domain.
+     * Establishes the independently printable query and its native slot roles.
      */
     public function __construct(public readonly Select $definition)
     {
@@ -31,9 +31,23 @@ final class DerivedSource
         Check::input($definition->orderBy === [] && $definition->limit === null, 'A derived join input must be unordered and unbounded.');
         foreach ($definition->columns as $column) {
             Check::input(
-                $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference,
-                'A derived join field requires a signed literal or a signed column.'
+                $column->expression instanceof IntegerLiteral || $column->expression instanceof ColumnReference
+                    || $column->expression instanceof TextColumnReference,
+                'A derived join field requires a signed literal or a signed column, or a native text column.'
             );
         }
+    }
+
+    /**
+     * Derives the native kind of an exported ordinal from its checked expression.
+     */
+    public function columnKind(int $slot): ?ColumnKind
+    {
+        $column = $this->definition->columns[$slot] ?? null;
+        if ($column === null) {
+            return null;
+        }
+
+        return $column->expression instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4;
     }
 }

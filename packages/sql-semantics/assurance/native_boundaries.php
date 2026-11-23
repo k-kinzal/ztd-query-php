@@ -46,7 +46,10 @@ function nativeBoundaryContract(string $dialect): array
 
     $amendments = match ($dialect) {
         'mysql' => [['mysql-from-list-boundaries-v1.json', '75520d651cdde8992dcf05de45be54b9cb5d44d3af3f3536b612d6e83d7a443d']],
-        'postgres' => [['postgres-query-boundaries-v9.json', '43a22d2bc34a130a0dc8e70842f9b1a04027c28284c2a459dde1c1dc9891cd95']],
+        'postgres' => [
+            ['postgres-query-boundaries-v9.json', '43a22d2bc34a130a0dc8e70842f9b1a04027c28284c2a459dde1c1dc9891cd95'],
+            ['postgres-derived-text-boundaries-v1.json', '93ca7467eac18a2c3b8b29b19d6010e524b4dea52bcb48ff8e43e316e1cd30b6'],
+        ],
         'sqlite' => [],
     };
     foreach ($amendments as [$name, $digest]) {

@@ -202,6 +202,21 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $columns,
                 $typed->toString(),
             ];
+            $joinedText = $semantics->analyze(
+                'SELECT q.label FROM public.typed_table a CROSS JOIN (SELECT label, id FROM public.typed_table) q',
+                $typedContext,
+            );
+            $export = $joinedText->source->right;
+            $reference = $joinedText->columns[0]->expression;
+            if ($export::class !== $namespace . 'Ir\\From\\DerivedSource'
+                || $reference::class !== $namespace . 'Ir\\From\\TextColumnReference') {
+                throw new RuntimeException('The installed analyzer lost the native derived text slot.');
+            }
+            $details['derivedText'] = [
+                $export->columnKind(0)?->value, $export->columnKind(1)?->value,
+                $reference->slot, $reference->occurrence, $joinedText->columns[0]->name->value,
+                str_starts_with($joinedText->toString(), 'SELECT "__ztd_source_1"."__ztd_c0" AS "label" FROM '),
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');
