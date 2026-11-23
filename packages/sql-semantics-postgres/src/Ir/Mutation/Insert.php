@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
@@ -56,11 +57,11 @@ final class Insert implements SemanticsIR
             Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');
             foreach ($row->values as $index => $cell) {
                 $value = $cell->value;
+                $signed = $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral;
                 $compatible = match ($target->written[$index]->kind) {
-                    ColumnKind::Int4 => $value instanceof IntegerLiteral,
-                    ColumnKind::Text => $value instanceof TextLiteral || $value instanceof IntegerLiteral,
+                    ColumnKind::Int4, ColumnKind::Int8 => $signed,
+                    ColumnKind::Text => $value instanceof TextLiteral || $signed,
                     ColumnKind::Boolean => $value instanceof BooleanLiteral,
-                    ColumnKind::Int8 => false,
                 };
                 Check::input($value === null || $compatible, 'An inserted cell must match its target native kind.');
             }

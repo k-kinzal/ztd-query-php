@@ -628,6 +628,7 @@ function observeInsert(string $namespace, object $value, string $dialect): array
             $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral,
             $cell->value instanceof SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral => ['text', $cell->value->value],
             $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral => ['boolean', $cell->value->value],
+            $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral => ['wide-integer', $cell->value->decimal],
             default => $cell->value?->decimal,
         }, $row->values);
     }
@@ -655,6 +656,7 @@ function constructInsertDestination(string $platform, string $namespace, array $
             'slot' => 'int4',
             'text-slot' => 'text',
             'bool-slot' => 'bool',
+            'wide-slot' => 'int8',
         }), $slot[2] ?? 0),
         $slots,
     ));
@@ -673,6 +675,7 @@ function observeInsertDestination(string $namespace, object $value, string $dial
                 'int4' => ['slot', $slot->slot],
                 'text' => ['text-slot', $slot->slot, $slot->occurrence],
                 'bool' => ['bool-slot', $slot->slot, $slot->occurrence],
+                'int8' => ['wide-slot', $slot->slot, $slot->occurrence],
             },
             $value->target->written,
         ),

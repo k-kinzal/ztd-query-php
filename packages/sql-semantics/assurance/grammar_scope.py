@@ -357,6 +357,18 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 related[alternative] = (("server-update-v2.json", "postgres-update-returning-v4.json")
                                         if rule == "UpdateStmt" else ("server-update-v2.json",))
+        if postgres:
+            mutations = ("returning_clause", "DeleteStmt", "InsertStmt", "insert_rest", "insert_column_list",
+                         "UpdateStmt", "set_clause", "set_clause_list")
+            for rule in mutations:
+                for alternative in rules.get(rule, ()):
+                    if alternative == rule + ":":
+                        continue
+                    if rule == "insert_rest" and alternative != "insert_rest: ( insert_column_list ) SelectStmt":
+                        continue
+                    if rule == "set_clause" and alternative != "set_clause: set_target = a_expr":
+                        continue
+                    related[alternative] = (*related.get(alternative, ()), "postgres-signed-write-widths-v1.json")
         for rule in transaction:
             for alternative in rules.get(rule, []):
                 if not any(excluded in alternative for excluded in ("PREPARED", "PREPARE", "REPLICA", "SLAVE")):
@@ -432,7 +444,7 @@ def inventory(root):
         for alternative in sorted(signatures):
             if (alternative.startswith(("insert_stmt:", "insert_query_expression:")) and "insert_query_expression" in alternative.split()
                     or alternative == "insert_rest: ( insert_column_list ) SelectStmt"):
-                related[alternative] = (*related.get(alternative, ()), "server-insert-query-v2.json")
+                related[alternative] = (*related.get(alternative, ()), "server-insert-query-v3.json")
         wildcard_signatures = {
             "select_item: table_wild",
             "select_item_list: *",

@@ -4,6 +4,7 @@ from itertools import product
 from random import Random
 
 from postgres_int4_cases import EXCEPTION
+from postgres_physical_text_admission import negative as physical_negative
 from server_join_cases import slot
 from server_returning_model import fields_from, ordered_returning, project_returned
 from server_update_cases import case as update, expected as effect, literal, observation as update_observation
@@ -68,8 +69,9 @@ def negatives(tag):
     base = "public.ir_update_target SET id=7 RETURNING "
     yield (analyzed(tag, base + "missing"), "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\SemanticException",
            "Column missing does not exist")
-    yield (analyzed(tag, base + "delta", "CREATE TABLE public.ir_update_target (id INTEGER, delta BIGINT)"),
-           EXCEPTION, "signed 32-bit integer type")
+    invalid, boundary = physical_negative("update-returning")
+    yield (analyzed(tag, base + "delta", f"CREATE TABLE public.ir_update_target (id INTEGER, delta {invalid})"),
+           boundary["exception"], boundary["message"])
     yield analyzed(tag, base + "id + 1 AS computed"), EXCEPTION, "requires a resolved target column"
 
 

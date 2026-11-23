@@ -24,6 +24,7 @@ NATIVE = {
     "postgres_int8_fields": "postgres-int8-fields-v1.json",
     "postgres_output_order_names": "postgres-output-order-names-v1.json",
     "postgres_source_order": "postgres-source-order-v1.json",
+    "postgres_signed_write_widths": "postgres-signed-write-widths-v1.json",
     "postgres_boolean_returning": "postgres-boolean-returning-v1.json",
     "postgres_boolean_writes": "postgres-boolean-writes-v1.json",
     "postgres_boolean_write_inputs": "postgres-boolean-write-inputs-v1.json",
@@ -76,7 +77,7 @@ NATIVE = {
     "recursive_series": "server-recursive-series-v2.json",
     "derived_join": "server-derived-join-v2.json",
     "grouped": "server-grouped-v3.json",
-    "insert_query": "server-insert-query-v2.json",
+    "insert_query": "server-insert-query-v3.json",
     "wildcard": "wildcard-projection-v2.json",
 }
 
@@ -107,6 +108,7 @@ SINGLE_ENGINE = {
     "postgres_int8_fields": "postgres",
     "postgres_output_order_names": "postgres",
     "postgres_source_order": "postgres",
+    "postgres_signed_write_widths": "postgres",
     "postgres_boolean_returning": "postgres",
     "postgres_boolean_writes": "postgres",
     "postgres_boolean_write_inputs": "postgres",

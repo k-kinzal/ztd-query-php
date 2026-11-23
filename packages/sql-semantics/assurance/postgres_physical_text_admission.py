@@ -4,12 +4,12 @@ import json
 
 from run import TOOL, digest, require
 
-ADMISSION = "347cb6995fb309333d63330164d1da64b99b568cd18b7b7f16b7bcfdc0ac6a6c"
+ADMISSION = "52f64c9076735c48f875e8aa7c9b0631a98a5fbd931c00d74545cdf09bf758c5"
 INVALID = "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction"
 
 
 def negative(domain):
-    path = TOOL / "postgres-physical-text-admission-v3.json"
+    path = TOOL / "postgres-physical-text-admission-v4.json"
     require(digest(path) == ADMISSION, "postgres-physical-text-admission-mismatch")
     case = json.loads(path.read_text())["changes"][domain]["negative"]
     return case["type"], {"exception": INVALID, "message": case["message"]}

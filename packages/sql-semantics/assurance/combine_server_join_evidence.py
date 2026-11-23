@@ -67,6 +67,7 @@ def replay(path, report, specification, domain=run_server_join):
         require(set(direct) == domain.finite_ids(engine, specification, tag) and set(direct.values()) == {1},
                 f"server-{label}-replay-direct-incomplete", list(direct.items()))
         require(canonical(sorted(direct)) == canonical(report["directFiniteIds"]), f"server-{label}-replay-direct-receipt")
+    if observe_direct is not None or getattr(domain, "COMPLETE_SEEDS", False):
         require(seeds == seed_ids(specification), f"server-{label}-replay-seed-budget")
     require(domain.required_forms(engine, tag) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")
     require(execution["rejected"] == negative_count(specification, engine, tag), f"server-{label}-replay-negative-count")

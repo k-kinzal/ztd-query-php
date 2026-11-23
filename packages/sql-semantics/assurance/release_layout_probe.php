@@ -267,6 +267,23 @@ function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $
         [$value->limit->count, $value->limit->offset], $value->toString()];
 }
 
+
+function observePostgresSignedWrites(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.signed_bounds (id integer, wide bigint)']);
+    $insert = $semantics->analyze(
+        'INSERT INTO public.signed_bounds (wide,id) VALUES (-9223372036854775808,7) RETURNING wide AS low,id',
+        $context,
+    );
+    $update = $semantics->analyze('UPDATE public.signed_bounds SET wide=id,id=wide RETURNING wide', $context);
+    $cell = $insert->rows[0]->values[0]->value;
+    $field = $insert->returning[0]->reference;
+
+    return [$cell::class, $cell->decimal, $insert->target->written[0]->kind->value,
+        $field::class, $field->slot, $field->occurrence, $insert->toString(),
+        $update->assignments[0]->target::class, $update->assignments[1]->value::class, $update->toString()];
+}
+
 function observePostgresSourceOrder(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -380,6 +397,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['booleanReturning'] = observePostgresBooleanReturning($semantics);
             $details['booleanWrites'] = observePostgresBooleanWrites($semantics);
             $details['booleanInput'] = observePostgresBooleanInput($semantics);
+            $details['signedWrites'] = observePostgresSignedWrites($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);

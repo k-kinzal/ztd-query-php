@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
-use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -41,7 +40,6 @@ final class ReturningLowering
             $resolution = $field->resolution;
             Check::input($resolution instanceof ResolvedColumn && $field->name !== null, 'RETURNING needs a resolved named target column.');
             $reference = $binding->resolved($resolution);
-            Check::input(!$reference instanceof WideIntegerColumnReference, 'The bound RETURNING field needs a signed 32-bit integer type, native text or Boolean.');
             $returning[] = new ReturnedColumn($reference, new Identifier($field->name->value));
         }
         Check::input($returning !== [], 'RETURNING needs at least one resolved target field.');

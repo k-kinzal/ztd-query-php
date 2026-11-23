@@ -99,7 +99,7 @@ def negatives(engine, tag):
             [using, f"CREATE TABLE {schema}.ir_insert_restricted (LIKE {schema}.ir_insert_parent INCLUDING IDENTITY)"],
             [using + " PARTITION BY RANGE (n)", f"CREATE TABLE {schema}.ir_insert_restricted PARTITION OF {schema}.ir_insert_parent DEFAULT"],
         ):
-            yield {"dialect": engine, "release": tag, "declarations": schema_sql, "sql": restricted}, "writable signed 32-bit integer"
+            yield {"dialect": engine, "release": tag, "declarations": schema_sql, "sql": restricted}, "writable signed integer"
 
 
 def ordered(snapshot):

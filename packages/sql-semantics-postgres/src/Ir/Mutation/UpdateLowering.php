@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
@@ -63,25 +64,23 @@ final class UpdateLowering
     /**
      * Reads a resolved scalar in its assignment context.
      */
-    public function value(Scalar $operand, SourceBinding $binding, bool $catalogFirst, ColumnReference|TextColumnReference|BooleanColumnReference $target): ColumnReference|IntegerLiteral|NullLiteral|TextColumnReference|TextLiteral|BooleanColumnReference|BooleanLiteral
+    public function value(Scalar $operand, SourceBinding $binding, bool $catalogFirst, ColumnReference|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference $target): ColumnReference|IntegerLiteral|NullLiteral|TextColumnReference|TextLiteral|BooleanColumnReference|BooleanLiteral|WideIntegerColumnReference|WideIntegerLiteral
     {
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
-        if (!$target instanceof ColumnReference && $operand instanceof ParsedColumn) {
-            $field = $binding->field($operand);
-            Check::input(!$field instanceof WideIntegerColumnReference, 'An UPDATE input field needs an admitted assignment type.');
-
-            return $field;
+        if ($operand instanceof ParsedColumn) {
+            return $binding->field($operand);
         }
         $kind = match (true) {
             $target instanceof ColumnReference => ColumnKind::Int4,
+            $target instanceof WideIntegerColumnReference => ColumnKind::Int8,
             $target instanceof TextColumnReference => ColumnKind::Text,
             $target instanceof BooleanColumnReference => ColumnKind::Boolean,
         };
         $value = (new ExpressionLowering())->result($operand, $binding, $catalogFirst, $kind);
         Check::input(
-            $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof NullLiteral
+            $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof NullLiteral
                 || $value instanceof TextLiteral || $value instanceof BooleanLiteral,
             'An UPDATE assignee requires a checked native literal, NULL or a row reference.',
         );

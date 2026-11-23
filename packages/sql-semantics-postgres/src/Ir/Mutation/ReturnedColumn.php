@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -26,7 +27,7 @@ final class ReturnedColumn
     /**
      * Checks the local occurrence. The owning mutation checks the target slot.
      */
-    public function __construct(public readonly ColumnReference|TextColumnReference|BooleanColumnReference $reference, public readonly Identifier $name)
+    public function __construct(public readonly ColumnReference|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference $reference, public readonly Identifier $name)
     {
         Check::input($reference->occurrence === 0, 'A returned field must read the single target occurrence.');
     }

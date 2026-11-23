@@ -18,11 +18,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "insert-query"
 OBSERVER = "server_insert_query_observer.php"
-CONTRACT = "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3"
+CONTRACT = "5ed3c013ca28a7dcb663fa36fe217b13eaffbc4b88cd8e4d4dd65831a48e4f00"
 
 
 def specifications():
-    path = TOOL / "server-insert-query-v2.json"
+    path = TOOL / "server-insert-query-v3.json"
     require(digest(path) == CONTRACT, "server-insert-query-contract-mismatch")
     _, profiles = insert_specification()
     return json.loads(path.read_text()), profiles

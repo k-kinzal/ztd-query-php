@@ -31,12 +31,21 @@ def case(engine, tag, layout, query):
     return {"dialect": engine, "release": tag, "target": literal_case(engine, tag, layout, [])["target"], "insertQuery": query}
 
 
+def typed_distinct_output(engine, query):
+    if engine == "postgres" and query["distinct"]:
+        query["columns"] = [
+            [["builtin-cast", "int4", term] if term == ["null"] else term, name]
+            for term, name in query["columns"]
+        ]
+    return query
+
+
 def finite_cases(engine, tag):
     for layout, source, distinct, where in product(LAYOUTS, SOURCES, (False, True), FILTERS):
         values = [literal(3), ["null"]] if source is None else [slot(1), slot(0)]
         query = leaf(engine, tag, [[value, f"p{i}"] for i, value in enumerate(values[:len(layout)])], table(engine, source), where)
         query["distinct"] = distinct
-        yield case(engine, tag, layout, query)
+        yield case(engine, tag, layout, typed_distinct_output(engine, query))
 
 
 def finite_id(_, response, _item):
@@ -68,7 +77,7 @@ def seeded(engine, tag, seed, maximum):
         query = leaf(engine, tag, [[rng.choice(fields), f"p{i}"] for i in range(len(layout))],
                      table(engine, relation), rng.choice(predicates))
         query["distinct"] = bool(rng.getrandbits(1))
-        yield case(engine, tag, layout, query)
+        yield case(engine, tag, layout, typed_distinct_output(engine, query))
 
 
 def sql_declarations(engine):
@@ -122,6 +131,12 @@ def negatives(engine, tag):
                "declarations": sql_declarations(engine)}, {"exception": negative["exception"], "message": negative["message"]}
         yield {"dialect": engine, "release": tag, "sql": f"INSERT INTO {schema}.ir_insert_target (id) SELECT DISTINCT NULL AS p0",
                "declarations": sql_declarations(engine)}, "cannot assign an untyped NULL"
+        direct = leaf(engine, tag, [[literal(3), "p0"], [["null"], "p1"]])
+        direct["distinct"] = True
+        yield case(engine, tag, ["id", "delta"], direct), {
+            "exception": "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\InvalidConstruction",
+            "message": "A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.",
+        }
 
 
 def requests(engine, tag, specification):
@@ -148,7 +163,8 @@ def source_rows(query):
 def expected(item):
     engine = item["dialect"]
     query = item["insertQuery"]
-    rows = [[value(expression, row, engine) for expression, _ in query["columns"]] for row in source_rows(query)
+    rows = [[None if expression == ["builtin-cast", "int4", ["null"]] else value(expression, row, engine)
+             for expression, _ in query["columns"]] for row in source_rows(query)
             if truth(query["where"], row, engine)]
     if query["distinct"]:
         rows = [json.loads(row) for row in dict.fromkeys(map(canonical, rows))]

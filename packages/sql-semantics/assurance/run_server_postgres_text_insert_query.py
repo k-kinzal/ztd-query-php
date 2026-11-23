@@ -184,7 +184,7 @@ def analysis_sql(tag, sql):
 
 
 def negatives(tag):
-    yield write_query(tag, ("label",), [[["parameter", 1], "v"]]), "A query INSERT text target requires text, a checked int4 leaf or NULL."
+    yield write_query(tag, ("label",), [[["parameter", 1], "v"]]), "A query INSERT text target requires text, a checked signed leaf or NULL."
     yield write_query(tag, ("id",), [[["text", "value"], "v"]]), "Each query INSERT field requires a signed value or NULL."
     yield write_query(tag, ("id", "label"), [[int4(3), "v"]]), "Each row of the INSERT query must match the target width."
     bad = finite(tag, "constant", "text", "value", "all")

@@ -4,6 +4,7 @@ from itertools import product
 from random import Random
 
 from postgres_int4_cases import EXCEPTION
+from postgres_physical_text_admission import negative as physical_negative
 from server_delete_cases import case as deletion, expected as effect, literal, observation as deletion_observation
 from server_returning_model import fields_from, ordered_returning, project_returned
 
@@ -66,8 +67,9 @@ def negatives(tag):
     start = "DELETE FROM public.ir_delete_target RETURNING "
     yield (analyzed(tag, start + "missing"), "SqlSemantics\\Platform\\PostgreSql\\Model\\Diagnostic\\SemanticException",
            "Column missing does not exist")
-    yield (analyzed(tag, start + "id", ["CREATE TABLE public.ir_delete_target (id BIGINT, delta INTEGER)"]),
-           EXCEPTION, "signed 32-bit integer type")
+    invalid, boundary = physical_negative("delete-returning")
+    yield (analyzed(tag, start + "id", [f"CREATE TABLE public.ir_delete_target (id {invalid}, delta INTEGER)"]),
+           boundary["exception"], boundary["message"])
     yield analyzed(tag, start + "id + 1 AS computed"), EXCEPTION, "requires a resolved target column"
 
 

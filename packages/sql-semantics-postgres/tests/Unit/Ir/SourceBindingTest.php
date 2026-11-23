@@ -142,11 +142,11 @@ final class SourceBindingTest extends TestCase
     public function testWritableColumnRejectsAnIneligibleType(): void
     {
         $inspection = new Inspection();
-        $table = $inspection->inspect('CREATE TABLE public.t (a BIGINT)');
+        $table = $inspection->inspect('CREATE TABLE public.t (a NUMERIC)');
         $operation = $inspection->inspect('SELECT a FROM public.t', [$table]);
         self::assertInstanceOf(Select::class, $operation->statement);
         $binding = new SourceBinding($operation->binding(), $operation->statement->from);
-        $this->expectExceptionMessage('writable signed 32-bit integer');
+        $this->expectExceptionMessage('writable signed integer');
 
         $binding->writableColumn('a');
     }

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
-use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
-use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -58,8 +58,9 @@ final class InsertQuery implements SemanticsIR
             if ($target->written[$position]->kind === ColumnKind::Text) {
                 Check::input(
                     $value instanceof TextColumnReference || $value instanceof TextLiteral || $value instanceof NullLiteral
-                        || $value instanceof ColumnReference || $value instanceof IntegerLiteral,
-                    'A query INSERT text target requires text, a checked int4 leaf or NULL.',
+                        || $value instanceof ColumnReference || $value instanceof IntegerLiteral
+                        || $value instanceof WideIntegerColumnReference || $value instanceof WideIntegerLiteral,
+                    'A query INSERT text target requires text, a checked signed leaf or NULL.',
                 );
                 continue;
             }
@@ -71,10 +72,12 @@ final class InsertQuery implements SemanticsIR
                 );
                 continue;
             }
-            Check::input(
-                $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerCase || $value instanceof IntegerLiteral || $value instanceof NullLiteral,
-                'Each query INSERT field requires a signed value or NULL.',
-            );
+            Check::input(!$query->distinct || !$value instanceof NullLiteral, 'A DISTINCT insert projection cannot assign an untyped NULL to a non-text column.');
+            $signed = match (CompoundShape::type($query, $position)) {
+                ResultKind::Integer, ResultKind::WideInteger, ResultKind::Unknown => true,
+                ResultKind::Boolean, ResultKind::Text => false,
+            };
+            Check::input(!$value instanceof Parameter && $signed, 'Each query INSERT field requires a signed value or NULL.');
         }
         $checked = Check::listOf($returning, ReturnedColumn::class, 'A query INSERT needs checked RETURNING fields.');
         (new ReturningLayout())->check($target->relation, $checked);

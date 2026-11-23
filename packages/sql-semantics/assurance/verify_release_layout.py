@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v50.json"
-CONTRACT = "968af83dfb7220aa758fdc56a7289460afcaa348113e277002b8465a157ab676"
+CONTRACT_NAME = "release-layout-v51.json"
+CONTRACT = "5832906026e083ed79b1c61e4994c58365ca8aecb73b30652781d0e047cc743d"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -261,6 +261,16 @@ def verify_probe(raw, catalog):
                 'INSERT INTO "public"."flags" ("enabled") SELECT FALSE AS "value"',
                 'INSERT INTO "public"."flags" ("enabled") SELECT DISTINCT CAST(TRUE AS pg_catalog.bool) AS "value"',
             ], "installed-postgres-boolean-input-mismatch", item)
+            wide = "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference"
+            require(item.get("signedWrites") == [
+                "SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral", "-9223372036854775808", "int8",
+                wide, 0, 0,
+                'INSERT INTO "public"."signed_bounds" ("wide", "id") VALUES '
+                '(CAST(-9223372036854775808 AS pg_catalog.int8), CAST(7 AS pg_catalog.int4)) RETURNING "wide" AS "low", "id" AS "id"',
+                wide, wide,
+                'UPDATE "public"."signed_bounds" AS "__ztd_source" SET "wide" = "__ztd_source"."id", '
+                '"id" = "__ztd_source"."wide" RETURNING "wide" AS "wide"',
+            ], "installed-postgres-signed-writes-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("outputOrder") == [
                 [[1, True, False], [2, False, False]], [2, 1],

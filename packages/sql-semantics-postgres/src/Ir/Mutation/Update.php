@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -68,7 +69,8 @@ final class Update implements SemanticsIR
             $slot = $assignment->target->slot;
             $scope->column($assignment->target, [$target], 'An UPDATE write slot must belong to the target.');
             $value = $assignment->value;
-            if ($value instanceof ColumnReference || $value instanceof TextColumnReference || $value instanceof BooleanColumnReference) {
+            if ($value instanceof ColumnReference || $value instanceof TextColumnReference
+                || $value instanceof BooleanColumnReference || $value instanceof WideIntegerColumnReference) {
                 $scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');
             }
             Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');

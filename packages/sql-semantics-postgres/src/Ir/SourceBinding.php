@@ -202,8 +202,8 @@ final class SourceBinding
         Check::input(count($matches) === 1 && in_array($matches[0], $this->table->columns, true), 'A write column must resolve to a declared target slot.');
         $column = $matches[0];
         Check::input(
-            !$column->generated && !$column->identity && in_array($column->type, [Builtin::Int4, Builtin::Text, Builtin::Bool], true),
-            'A write column must be a writable signed 32-bit integer or an admitted text or Boolean field.',
+            !$column->generated && !$column->identity && in_array($column->type, [Builtin::Int4, Builtin::Int8, Builtin::Text, Builtin::Bool], true),
+            'A write column must be a writable signed integer or an admitted text or Boolean field.',
         );
 
         return $column;
@@ -212,11 +212,12 @@ final class SourceBinding
     /**
      * Allocates the native role of a checked mutation destination.
      */
-    public function writeReference(string $name): ColumnReference|TextColumnReference|BooleanColumnReference
+    public function writeReference(string $name): ColumnReference|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference
     {
         $column = $this->writableColumn($name);
 
         return match ($column->type) {
+            Builtin::Int8 => new WideIntegerColumnReference($this->allocate($column)),
             Builtin::Text => new TextColumnReference($this->allocate($column)),
             Builtin::Bool => new BooleanColumnReference($this->allocate($column)),
             default => $this->slotFor($column),

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
@@ -49,7 +50,8 @@ final class InsertLowering
             foreach ($row->values as $index => $value) {
                 $item = $expression->result($value, $empty, $catalogFirst, $target->written[$index]->kind);
                 Check::input(
-                    $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof BooleanLiteral || $item instanceof NullLiteral,
+                    $item instanceof IntegerLiteral || $item instanceof WideIntegerLiteral || $item instanceof TextLiteral
+                        || $item instanceof BooleanLiteral || $item instanceof NullLiteral,
                     'A supplied INSERT value requires an explicit native literal or NULL.',
                 );
                 $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);

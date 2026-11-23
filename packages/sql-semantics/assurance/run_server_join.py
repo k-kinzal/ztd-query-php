@@ -191,6 +191,7 @@ def execute(args, specification, tag, worker, db, domain=None):
             if observe_direct is not None:
                 require(set(direct) == domain.finite_ids(args.engine, specification, tag) and set(direct.values()) == {1},
                         f"server-{label}-direct-finite-incomplete", list(direct.items()))
+            if observe_direct is not None or getattr(domain, "COMPLETE_SEEDS", False):
                 expected_seeds = seed_ids(specification)
                 actual_seeds = {key for key, events in ledger.events.items() if key.startswith("seed/") and events[-1] == "compared"}
                 require(actual_seeds == expected_seeds, f"server-{label}-seed-budget", sorted(expected_seeds ^ actual_seeds))

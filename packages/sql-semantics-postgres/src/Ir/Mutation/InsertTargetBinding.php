@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\WriteSlot;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
@@ -37,6 +38,7 @@ final class InsertTargetBinding
             $slot = $binding->writeReference($column->column->value);
             $kind = match (true) {
                 $slot instanceof ColumnReference => ColumnKind::Int4,
+                $slot instanceof WideIntegerColumnReference => ColumnKind::Int8,
                 $slot instanceof TextColumnReference => ColumnKind::Text,
                 $slot instanceof BooleanColumnReference => ColumnKind::Boolean,
             };

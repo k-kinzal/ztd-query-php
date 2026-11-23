@@ -70,6 +70,7 @@ CONTRACTS = {
     "sqlite-insert-query-v1.json": "009a9763066a4f9bd707f389f002f30dd9ca71382d5693318dbd7656ac077699",
     "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
     "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
+    "server-insert-query-v3.json": "5ed3c013ca28a7dcb663fa36fe217b13eaffbc4b88cd8e4d4dd65831a48e4f00",
     "sqlite-grouped-v2.json": "2ef368050fa99f784e75c811988bc5ac3951300fd48d575193bc55a8faf74662",
 
     "server-grouped-v3.json": "d927ba45c6a8c77e669b6da5551e099a815d38dc63dd8338b97553d4cd0cb199",
@@ -85,6 +86,7 @@ CONTRACTS = {
     "postgres-create-signed-defaults-v1.json": "ab925fa9e5bd654cb8b6e9b20b4dcff3eeac415322e0398ec6dfd4087b8236a6",
     "postgres-output-order-names-v1.json": "835398078917b8a701f496ad7f14ba52f3cd7f8aac6329de08c7a4294f1d75c9",
     "postgres-source-order-v1.json": "29350c146c94bec3fbf80346f9153fb0dcf6504d8a00ea17fe20f556d91fb978",
+    "postgres-signed-write-widths-v1.json": "5726305480ba26a37d4f3b59444c6e6447d0ca43eed8c4eb284292f4cbcf1e71",
     "postgres-int8-fields-v1.json": "233ffe316162ba2bd1d4b5e8d0e2306c8af183c0293ad4c7941d710f97e2c744",
     "postgres-boolean-write-inputs-v1.json": "0c5d1b89315cc86efc5e3ef81a33519acc56fd2cda870d6efbae56dca787d92b",
     "postgres-boolean-writes-v1.json": "da56df05098ff809b75570477e4d71d1dea17ee75b2ce6ca7202a4416b91567e",
@@ -101,6 +103,7 @@ CONTRACTS = {
     "server-join-v2.json": "43bfd3ddd7271b70a61fb411e918a0a2acac55b2cd01bf5e7069baadb5f93747",
     "postgres-typed-columns-v2.json": "8454694fe46150d128c458feed1641860849c2a1a08c1ff53eaf938f714f6a7a",
     "postgres-physical-text-admission-v3.json": "347cb6995fb309333d63330164d1da64b99b568cd18b7b7f16b7bcfdc0ac6a6c",
+    "postgres-physical-text-admission-v4.json": "52f64c9076735c48f875e8aa7c9b0631a98a5fbd931c00d74545cdf09bf758c5",
     "postgres-physical-text-admission-v2.json": "7a69055459387f62cd5eed479166a0555ae019ee0021a562fda10ccddc4e38db",
     "postgres-physical-text-admission-v1.json": "1904736eef3eadb830e9c4585977468eeae8d1edc14b458fdd98fc1f65a9f3cf",
     "postgres-text-insert-query-v2.json": "c96925357b9e8be0e1cac7a3a4143e660ddb0c996ee770bd08d9e7b96ef8b2ad",
