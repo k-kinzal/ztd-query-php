@@ -97,7 +97,7 @@
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-id">where</span>: <span class="tok-kw">new</span> <span class="tok-id">BooleanLiteral</span>(<span class="tok-id">false</span>),</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        );</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a></span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 AS `a` FROM (SELECT 1) AS `__ztd_unit` WHERE FALSE&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">SelectSql</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$select</span>));</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1 AS `a` FROM DUAL WHERE FALSE&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">SelectSql</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$select</span>));</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    }</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExpressionKeepsNegativeValues</span>(): <span class="tok-id">void</span></span>
