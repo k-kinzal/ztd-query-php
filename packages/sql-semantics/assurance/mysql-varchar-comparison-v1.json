@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-varchar-comparison-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "extends": ["mysql-varchar-slots-v2.json", "mysql-varchar-presence-v1.json", "mysql-varchar-effects-v1.json", "mysql-text-literal-v1.json"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "utf8mb4/lower-case-table-names=0/sql-mode=empty/native",
+  "scope": "Compare native utf8mb4 VARCHAR fields under their resolved utf8mb4_bin collation, and compose in projection, filters, ordinary joins and checked single-target writes.",
+  "constructors": {
+    "Predicate/Text/TextComparison": {
+      "role": "A native integer truth comparison over checked nonbinary text operands.",
+      "structure": "A comparison operator, two ordered text field, plain text literal or NULL operands, and the effective builtin collation.",
+      "conditions": "At least one operand is a checked VARCHAR field. Each text field owns its native utf8mb4_bin reference and lower coercibility than plain text or NULL. Signed operands and other collations require their own comparison roles.",
+      "meaning": "Use PAD SPACE comparison over Unicode code points. The six ordinary comparisons yield NULL for a NULL operand. NULL-safe equality distinguishes both NULL, one NULL and neither NULL.",
+      "sql": "Group both exact typed operands under the native operator. The stock field collation supplies the selection through native coercibility."
+    },
+    "Predicate/Text/TextOperator": {
+      "role": "An exact native text comparison operation.",
+      "structure": "Seven closed operator values, including NULL-safe equality.",
+      "conditions": "The two operands meet the owning text comparison contract. The spellings != and <> select the same inequality.",
+      "meaning": "Evaluate the ordered relation or NULL-safe equality using the named collation.",
+      "sql": "Emit the exact fixed operator spelling."
+    }
+  },
+  "existingRoles": ["From/TextColumnReference", "ResultColumn", "Select", "From/Join", "Predicate/LogicalPredicate", "Predicate/NullTest", "Mutation/Update", "Mutation/Delete"],
+  "observations": ["Native integer truth values and metadata, including NULL versus zero", "Exact case, Unicode bytes, trailing blanks, duplicate and null-extended rows", "Exact affected rows, triggered records and transaction rollback for UPDATE and DELETE"],
+  "finite": {"operators": ["=", "<>", "<", "<=", ">", ">=", "<=>"], "operands": [["field", "field"], ["field", "literal"], ["literal", "field"], ["field", "null"], ["null", "field"]], "placement": ["result", "where", "on", "update", "delete"], "identities": 175, "completeness": "Recover the operator, two ordered roles and owning placement from every constructed value."},
+  "exploration": {"seeds": [4621, 11213, 34147], "casesPerSeed": 20, "timeoutSecondsPerRelease": 320, "allowedExclusions": [], "requiredForms": "Vary the comparison operator, field positions and occurrences, Unicode and padding boundaries, NULL, logical nesting and filter effects."},
+  "analysis": ["PAD SPACE comparison with a text literal", "Resolve != to native inequality", "Observe ordinary NULL and NULL-safe equality", "Compare two VARCHAR fields in JOIN ON", "Filter a signed UPDATE through text comparison", "Filter DELETE through NULL-safe equality"],
+  "negative": ["Two literal operands leave no stock field collation", "A signed slot is referenced as VARCHAR", "An operand references an absent occurrence", "Mix a VARCHAR field and a numeric literal", "Resolve a field outside the approved collation"],
+  "faults": ["Swap ordered operands", "Replace NULL-safe equality with ordinary equality", "Change utf8mb4_bin selection so case differences disappear", "Read the first occurrence instead of the later one", "Remove a text comparison mutation filter"],
+  "evidence": {
+    "P01": "Resolve ordered native operands, coercibility's selected collation and exact comparison operator.", "P02": "Require at least one declared VARCHAR and check each scoped field before publication.", "P03": "Retain only native values and resolved references.", "P04": "Compose under SQL truth and mutation rules.", "P05": "Audit the complete closed readonly value graph.", "P06": "Compare native values, output metadata and effects with an independent PAD SPACE oracle.",
+    "Q01": "Reject the named invalid typing, interpretation and placement witnesses.", "Q02": "Exhaust the fixed 175-case product and seeded explorations.", "Q03": "Check both operand roles, owning scope and logical composition.", "Q04": "Independently observe exact bytes, truth, rows and native mutations.", "Q05": "Pin distributed PHP and controller digests with both staged layouts."
+  },
+  "open": ["General collation and type coercion", "Literal comparisons whose collation depends on another session mode", "Pattern matching and computed text expressions"],
+  "trust": ["Stock MySQL coercibility and PAD SPACE binary collation", "Native fixture has the same external definitions and profile", "Independent truth, order and effect comparison"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/charset-collation-coercibility.html", "https://dev.mysql.com/doc/refman/8.4/en/charset-binary-collations.html", "https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html"]
+}
