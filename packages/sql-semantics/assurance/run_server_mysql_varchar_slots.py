@@ -134,7 +134,7 @@ def query(tag, sql, declarations=DECLARATIONS):
 
 def analyzed(tag):
     left, right = f"{SCHEMA}.{PRIMARY}", f"{SCHEMA}.{SECONDARY}"
-    yield (f"SELECT label AS first_value, t.label AS second_value FROM {left} t",
+    yield (f"SELECT label AS `first_value`, t.label AS `second_value` FROM {left} t",
            project(tag, table(columns=("label",)), [[field(0), "first_value"], [field(0), "second_value"]]))
     yield (f"SELECT * FROM {left}", project(tag, table(), [[slot(i) if name == "id" else field(i), name]
                                                          for i, name in enumerate(HEADING)]))
