@@ -69,7 +69,6 @@ CONTRACTS = {
     "server-projection-admission-v1.json": "cb6cb546e11007dcd00983f2f2ed0acf1d193cb7b17676b035b6384e4e2d46dd",
     "sqlite-insert-query-v1.json": "009a9763066a4f9bd707f389f002f30dd9ca71382d5693318dbd7656ac077699",
     "wildcard-projection-v2.json": "6cb667142ac182d5e6d5b4eb950963c621cec3b4f62303ad72acb8c3ce166789",
-    "server-insert-query-v2.json": "d01c06e098e764c7d813c904298ebfe0f7adf2467b2d24540a9fb4efba6feac3",
     "server-insert-query-v3.json": "5ed3c013ca28a7dcb663fa36fe217b13eaffbc4b88cd8e4d4dd65831a48e4f00",
     "sqlite-grouped-v2.json": "2ef368050fa99f784e75c811988bc5ac3951300fd48d575193bc55a8faf74662",
 
