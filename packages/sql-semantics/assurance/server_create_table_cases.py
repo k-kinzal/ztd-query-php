@@ -67,7 +67,6 @@ def negatives(engine, tag):
     good = ["c0", "INTEGER", True, None]
     yield case(engine, tag, []), "nonempty ordered column list"
     yield case(engine, tag, [good, good]), "cannot repeat a column name"
-    yield case(engine, tag, [["c0", "SMALLINT", True, literal(32768)]]), "outside the signed storage range"
     table = SCHEMAS[engine] + ".ir_create_target" if engine == "mysql" else "ir_create_target"
     invalid_schema = "CREATE TABLE ir_create_target (c0 INTEGER)" if engine == "mysql" else "CREATE TABLE pg_temp.ir_create_target (c0 INTEGER)"
     for sql, reason in (
@@ -76,10 +75,12 @@ def negatives(engine, tag):
     ):
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": []}, reason
     if engine == "mysql":
+        yield case(engine, tag, [["c0", "SMALLINT", True, literal(32768)]]), "outside the signed storage range"
         yield case(engine, tag, [["c0", "INTEGER", False, ["null"]]]), "cannot declare a NULL default"
         yield case(engine, tag, [["É", "INTEGER", True, None]]), "requires an ASCII column name"
     else:
         yield case(engine, tag, [["ctid", "INTEGER", True, None]]), "cannot declare a system column name"
+        yield case(engine, tag, [["c0", "SMALLINT", True, ["text", "number"]]]), "A text default requires native text storage."
 
 
 def requests(engine, tag, specification):

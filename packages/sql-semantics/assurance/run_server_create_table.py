@@ -14,11 +14,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "create-table"
 OBSERVER = "server_create_table_observer.php"
-CONTRACT = "1b9ce10f3903792d68b307e0b92d0bf3008e3ff0af150bfc4b3d8438dde23b4f"
+CONTRACT = "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c"
 
 
 def specifications():
-    path, projection = TOOL / "server-create-table-v1.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-create-table-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-create-table-contract-mismatch")
     return json.loads(path.read_text()), json.loads(projection.read_text())["profiles"]
 
@@ -107,7 +107,7 @@ def faults(engine, tag):
                     case(engine, tag, fields), "meaning-mismatch"),
         RenderFault("widen-signed-column", root + "TableColumn.php", "$this->storage->value", "'BIGINT'",
                     case(engine, tag, fields[:1]), "meaning-mismatch"),
-        RenderFault("replace-declared-default", root + "TableColumn.php", "$this->default->decimal", "'0'",
+        RenderFault("replace-declared-default", root + "TableColumn.php", "' DEFAULT ' . $this->default->decimal", "' DEFAULT 0'",
                     case(engine, tag, fields[:1]), "meaning-mismatch"),
         RenderFault("invert-create-if-not-exists", root + "CreateTable.php", "$this->ifNotExists ? 'IF NOT EXISTS '", "!$this->ifNotExists ? 'IF NOT EXISTS '",
                     case(engine, tag, fields[:1], optional=True, occupied=True), "meaning-mismatch"),

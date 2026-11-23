@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
@@ -30,15 +31,11 @@ final class TableColumn
         public readonly Identifier $name,
         public readonly IntegerStorage|CharacterStorage $storage,
         public readonly bool $nullable = true,
-        public readonly IntegerLiteral|TextLiteral|NullLiteral|null $default = null,
+        public readonly IntegerLiteral|WideIntegerLiteral|TextLiteral|NullLiteral|null $default = null,
     ) {
         $systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];
         Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');
         Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');
-        if ($default instanceof IntegerLiteral && $storage === IntegerStorage::Small) {
-            $integer = (int) $default->decimal;
-            Check::input($integer >= -32768 && $integer <= 32767, 'The SMALLINT default is outside the signed storage range.');
-        }
     }
 
     /**
@@ -50,6 +47,7 @@ final class TableColumn
 
         return $definition . match (true) {
             $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,
+            $this->default instanceof WideIntegerLiteral => ' DEFAULT CAST(' . $this->default->decimal . ' AS pg_catalog.int8)',
             $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),
             $this->default instanceof NullLiteral => ' DEFAULT NULL',
             $this->default === null => '',

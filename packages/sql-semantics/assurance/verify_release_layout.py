@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v41.json"
-CONTRACT = "34f05727437e1acf7dd546f5ebf1765ac0de978fb0a2e6a57142ec4e11d34511"
+CONTRACT_NAME = "release-layout-v42.json"
+CONTRACT = "b36e5a3be6500d51a91298eb54aedfe559ca50c6427701f9618ee6121c7d5186"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -297,6 +297,13 @@ def verify_probe(raw, catalog):
             require(item.get("postgresTextStorage") == ["pg_catalog.text", False, "quote's",
                     'CREATE TABLE "public"."text_decl" ("label" pg_catalog.text NOT NULL DEFAULT CAST(\'quote\'\'s\' AS pg_catalog.text)) USING heap'],
                     "installed-postgres-text-storage-mismatch", item)
+            wide = "SqlSemantics\\Platform\\PostgreSql\\Ir\\Expression\\WideIntegerLiteral"
+            require(item.get("postgresSignedDefault") == [
+                [["SMALLINT", wide, "-9223372036854775808"], ["BIGINT", wide, "7"], ["pg_catalog.text", wide, "9223372036854775807"]],
+                'CREATE TABLE "public"."signed_default_decl" ("minimum" SMALLINT NULL DEFAULT CAST(-9223372036854775808 AS pg_catalog.int8), '
+                '"source_width" BIGINT NULL DEFAULT CAST(7 AS pg_catalog.int8), '
+                '"rendered" pg_catalog.text NULL DEFAULT CAST(9223372036854775807 AS pg_catalog.int8)) USING heap',
+            ], "installed-postgres-signed-default-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

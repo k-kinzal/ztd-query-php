@@ -664,7 +664,7 @@ if ($dialect !== 'sqlite') {
         $internal[] = 'Schema\\LiteralDefaultLowering';
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
-        $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
     } else {
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
         $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\Key\\PrimaryKey'];

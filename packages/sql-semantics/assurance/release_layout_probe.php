@@ -153,6 +153,16 @@ function observeMysqlPrimaryKey(SqlSemantics\Platform\MySql\Semantics $semantics
     ];
 }
 
+function observePostgresSignedDefault(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze('CREATE TABLE public.signed_default_decl (minimum SMALLINT DEFAULT -9223372036854775808, '
+        . 'source_width BIGINT DEFAULT CAST(7 AS pg_catalog.int8), rendered pg_catalog.text DEFAULT 9223372036854775807)');
+
+    return [array_map(static fn ($column): array => [
+        $column->storage->value, $column->default::class, $column->default->decimal,
+    ], $value->columns), $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -245,6 +255,9 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             throw new RuntimeException('The installed analyzer published an unexpected role.');
         }
         $details = [];
+        if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
+            $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
+        }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);
             $details['mysqlSignedDeclaration'] = observeMysqlSignedDeclaration($semantics);

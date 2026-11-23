@@ -219,7 +219,7 @@ Run `run_server_drop_table.py` with the same native fixture options. Replay the 
 
 ## Native table creation
 
-The [native CREATE TABLE contract](server-create-table-v1.json) covers ordinary persistent tables with ordered signed integer columns, nullability and literal defaults. The observer inspects column names, positions, types and defaults and attempts a default insert. It measures IF NOT EXISTS with a preexisting target and compares transaction effects and rollback.
+The [native CREATE TABLE contract](server-create-table-v2.json) covers ordinary persistent tables with ordered signed integer columns, nullability and literal defaults. The observer inspects column names, positions, types and defaults and attempts a default insert. It measures IF NOT EXISTS with a preexisting target and compares transaction effects and rollback.
 
 Run `run_server_create_table.py` with the same native fixture options. Replay all releases with `combine_server_create_table_evidence.py` and the per-release `index.json` paths.
 
@@ -228,6 +228,8 @@ The [MySQL VARCHAR declaration contract](mysql-create-varchar-v1.json) also obse
 The [MySQL signed declaration contract](mysql-create-signed-v2.json) checks the five native signed widths, including both exact BIGINT endpoints, and observes adjacent invalid values in the server. Run `run_server_mysql_create_signed.py` with the MySQL fixtures and replay the nine indexes with `combine_server_mysql_create_signed_evidence.py`. The native constructor audit emits `mysql-signed-storage.json`. It derives the admitted interval from the audited PHP guard for each possible sign and decimal length. The derivation assumes canonical signed operands and PHP's ASCII byte-comparison rules. The independent database suite checks the declared widths, observed catalog defaults, stored values and transaction effects. Revision 2 adds the empty constructor map required by the inventory and leaves the observed domain and decisions fixed in revision 1.
 
 The [MySQL signed primary key contract](mysql-create-primary-v2.json) checks ordered references, the native PRIMARY index, effective field defaults and duplicate insertion. The 5.6 fixture distinguishes the zero default supplied by a table key from an omitted default on an inline key. The 5.6 and 5.7 fixtures resolve DESC index syntax to ascending storage. Run `run_server_mysql_create_primary.py` and replay all nine release indexes with `combine_server_mysql_create_primary_evidence.py`.
+
+The [PostgreSQL signed default contract](postgres-create-signed-defaults-v1.json) preserves the source type, numeric value and deferred assignment. The observer compares catalog operands, successful default rows, SQLSTATE 22003 on narrowing, explicit replacement rows and rollback. Run `run_server_postgres_create_signed_defaults.py` and `combine_server_postgres_create_signed_defaults_evidence.py` for both pinned releases. The revised native CREATE TABLE contract retains the MySQL SMALLINT construction rejection. It measures the PostgreSQL outside-width case as an admitted declaration whose default fails when evaluated.
 
 ## Native compound queries
 

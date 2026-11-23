@@ -38,7 +38,7 @@ function admitCreateTable(string $sql, string $schema, bool $mysql): bool
 '(?:\\[\s\S]|''|[^'\\])*'
 PATTERN
         : "'(?:[^'\\x00]|'')*'";
-    $textDefault = '|' . $textLiteral . ($mysql ? '' : '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)');
+    $textDefault = '|' . $textLiteral . ($mysql ? '' : '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)|CAST\(-?[0-9]{1,19} AS pg_catalog\.int8\)');
     $signed = $mysql ? 'TINYINT|MEDIUMINT|' : '';
     $slot = $name($mysql ? '[cC](?:[0-9]|1[0-6])' : 'c[0-9]');
     $column = $slot . ' (?:' . $signed . 'SMALLINT|INTEGER|INT|BIGINT' . $textType . ')(?: NULL| NOT NULL)?'
@@ -61,24 +61,33 @@ function createDefault(string $engine, ?string $value, string $kind): int|string
     if ($kind === 'text' && preg_match("/\A'((?:[^']|'')*)'::text\z/D", $value, $text) === 1) {
         return str_replace("''", "'", $text[1]);
     }
-    if (preg_match("/\A[(]?'?(-?[0-9]{1,19})'?(?:::(?:smallint|integer|bigint))?[)]?\z/D", $value, $number) !== 1) {
+    if (preg_match("/\A[(]?'?(-?[0-9]{1,19})'?(?:::(?:smallint|integer|bigint))?[)]?(?:::bigint)?\z/D", $value, $number) !== 1) {
         throw new RuntimeException($engine . ' reported an unregistered default shape: ' . $value);
     }
 
     return $kind === 'text' ? (string) (int) $number[1] : (int) $number[1];
 }
 
-function createdCatalog(PDO $pdo, string $schema, bool $mysql, bool $nativeDetails = false, bool $primaryDetails = false): ?array
+function createdCatalog(
+    PDO $pdo,
+    string $schema,
+    bool $mysql,
+    bool $nativeDetails = false,
+    bool $primaryDetails = false,
+    bool $defaultExpressions = false,
+): ?array
 {
     $statement = $pdo->query('SELECT ordinal_position, column_name, data_type, is_nullable, column_default, character_maximum_length, collation_name'
         . " FROM information_schema.columns WHERE table_schema = '" . $schema
         . "' AND table_name = 'ir_create_target' ORDER BY ordinal_position");
     $fields = [];
+    $operands = [];
     $collations = $mysql ? [] : $pdo->query("SELECT a.attname, ns.nspname || '.' || c.collname"
         . ' FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid'
         . ' JOIN pg_catalog.pg_namespace ns ON c.collnamespace = ns.oid'
         . " WHERE a.attrelid = pg_catalog.to_regclass('public.ir_create_target') AND a.attnum > 0")->fetchAll(PDO::FETCH_KEY_PAIR);
     foreach ($statement->fetchAll(PDO::FETCH_NUM) as [$ordinal, $column, $kind, $nullable, $default, $length, $collation]) {
+        $operands[] = $default;
         $literal = $mysql && $kind === 'varchar' ? $default : createDefault($mysql ? 'MySQL' : 'PostgreSQL', $default, $kind);
         $field = [$ordinal, $column, $kind, $nullable === 'YES', $literal, $default !== null];
         $fields[] = match ($kind) {
@@ -102,7 +111,8 @@ function createdCatalog(PDO $pdo, string $schema, bool $mysql, bool $nativeDetai
         . " FROM information_schema.statistics WHERE table_schema = 'ir_fixture' AND table_name = 'ir_create_target'"
         . " AND index_name = 'PRIMARY' ORDER BY seq_in_index")->fetchAll(PDO::FETCH_NUM) : [];
 
-    return ['engine' => $engine, 'columns' => $fields, ...$layout, ...($primaryDetails ? ['primaryIndex' => $primary] : [])];
+    return ['engine' => $engine, 'columns' => $fields, ...$layout, ...($primaryDetails ? ['primaryIndex' => $primary] : []),
+        ...($defaultExpressions ? ['defaultExpressions' => $operands] : [])];
 }
 
 function probeDefaultValues(PDO $pdo, string $target, bool $mysql, bool $nativeDetails = false): array
@@ -136,6 +146,22 @@ function repeatDefaultInsertion(PDO $pdo, string $target): array
     return ['status' => $status, ...mysqlFixtureDiagnostics($pdo)];
 }
 
+function explicitReplacement(PDO $pdo, string $target, array $replacement): array
+{
+    $columns = [];
+    foreach (array_keys($replacement) as $column) {
+        if (!is_string($column) || preg_match('/\A(?:c[0-9]|prior)\z/D', $column) !== 1) {
+            throw new RuntimeException('Unregistered explicit replacement column.');
+        }
+        $columns[] = '"' . $column . '"';
+    }
+    $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+    $statement = $pdo->prepare('INSERT INTO ' . $target . ' (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ') RETURNING *');
+    $statement->execute(array_values($replacement));
+
+    return $statement->fetch(PDO::FETCH_NUM);
+}
+
 function createEffect(PDO $pdo, string $schema, string $target, string $marker, bool $mysql, array $input): array
 {
     if (!admitCreateTable($input['sql'], $schema, $mysql)) {
@@ -143,6 +169,7 @@ function createEffect(PDO $pdo, string $schema, string $target, string $marker, 
     }
     $nativeDetails = $mysql && ($input['observeNativeDeclaration'] ?? false) === true;
     $primaryDetails = $nativeDetails && ($input['observePrimaryIndex'] ?? false) === true;
+    $signedDefaults = !$mysql && isset($input['explicitReplacement']);
     $pdo->exec('DROP TABLE IF EXISTS ' . $target);
     $pdo->exec('DELETE FROM ' . $marker . ' WHERE value <> 0');
     if ($input['occupied']) {
@@ -161,19 +188,21 @@ function createEffect(PDO $pdo, string $schema, string $target, string $marker, 
         $pdo->query('SELECT 1')->fetchColumn();
     }
     $active = $pdo->inTransaction();
-    $catalog = $active && $status !== 'executed' ? null : createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails);
+    $catalog = $active && $status !== 'executed' ? null : createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails, $signedDefaults);
     $values = $status === 'executed' ? probeDefaultValues($pdo, $target, $mysql, $nativeDetails) : null;
     $repeat = $primaryDetails && $status === 'executed' ? repeatDefaultInsertion($pdo, $target) : null;
+    $explicit = $signedDefaults && $status === 'executed' ? explicitReplacement($pdo, $target, $input['explicitReplacement']) : null;
     if ($active) {
         $pdo->rollBack();
     }
 
-    $after = createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails);
-    $stored = $nativeDetails && $after !== null ? $pdo->query('SELECT * FROM ' . $target)->fetchAll(PDO::FETCH_NUM) : [];
+    $after = createdCatalog($pdo, $schema, $mysql, $nativeDetails, $primaryDetails, $signedDefaults);
+    $stored = ($nativeDetails || $signedDefaults) && $after !== null ? $pdo->query('SELECT * FROM ' . $target)->fetchAll(PDO::FETCH_NUM) : [];
 
     return ['status' => $status, 'active' => $active, 'catalog' => $catalog, 'defaultInsertion' => $values,
-            'afterRollback' => $after, ...$diagnostics, ...($nativeDetails ? ['stored' => $stored] : []),
+            'afterRollback' => $after, ...$diagnostics, ...($nativeDetails || $signedDefaults ? ['stored' => $stored] : []),
             ...($primaryDetails ? ['secondInsertion' => $repeat] : []),
+            ...($signedDefaults ? ['explicitReplacement' => $explicit] : []),
             'markerAfterRollback' => $pdo->query('SELECT value FROM ' . $marker . ' ORDER BY value')->fetchAll(PDO::FETCH_COLUMN)];
 }
 
@@ -183,7 +212,13 @@ echo json_encode([
         'schemaCollation' => $pdo->query("SELECT default_collation_name FROM information_schema.schemata WHERE schema_name = 'ir_fixture'")->fetchColumn(),
         'storageSettings' => $pdo->query('SELECT @@innodb_page_size, @@innodb_strict_mode, @@sql_notes, @@max_error_count, @@lc_messages')->fetch(PDO::FETCH_NUM),
     ] : []),
-    ...($mysql ? [] : ['int4TextCastOverrides' => (int) $pdo->query("SELECT count(*) FROM pg_catalog.pg_cast WHERE castsource = 'pg_catalog.int4'::pg_catalog.regtype AND casttarget = 'pg_catalog.text'::pg_catalog.regtype")->fetchColumn()]),
+    ...($mysql ? [] : [
+        'int4TextCastOverrides' => (int) $pdo->query("SELECT count(*) FROM pg_catalog.pg_cast WHERE castsource = 'pg_catalog.int4'::pg_catalog.regtype AND casttarget = 'pg_catalog.text'::pg_catalog.regtype")->fetchColumn(),
+        'int8TextCastOverrides' => (int) $pdo->query("SELECT count(*) FROM pg_catalog.pg_cast WHERE castsource = 'pg_catalog.int8'::pg_catalog.regtype AND casttarget = 'pg_catalog.text'::pg_catalog.regtype")->fetchColumn(),
+        'signedAssignmentCasts' => $pdo->query("SELECT castsource::pg_catalog.regtype::text, casttarget::pg_catalog.regtype::text, castcontext, castfunc::pg_catalog.regprocedure::text"
+            . " FROM pg_catalog.pg_cast WHERE castsource IN ('pg_catalog.int4'::pg_catalog.regtype, 'pg_catalog.int8'::pg_catalog.regtype)"
+            . " AND casttarget IN ('pg_catalog.int2'::pg_catalog.regtype, 'pg_catalog.int4'::pg_catalog.regtype, 'pg_catalog.int8'::pg_catalog.regtype) ORDER BY 1, 2")->fetchAll(PDO::FETCH_NUM),
+    ]),
 ], JSON_THROW_ON_ERROR) . "\n";
 while (($line = fgets(STDIN)) !== false) {
     $item = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
