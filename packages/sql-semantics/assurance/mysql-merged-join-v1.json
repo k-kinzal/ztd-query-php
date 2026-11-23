@@ -14,7 +14,7 @@
     "From/Join": {
       "role": "Normalize a MySQL NATURAL or USING merge of two ordinary complete base-table headings.",
       "structure": "Two ordered input occurrences, resolved join kind and an optional closed ON predicate.",
-      "conditions": "Both operands are ordinary base relations with complete visible headings. Each equality uses a declared signed INT field from both sources. Additional aliases may qualify each input; a merged subtree remains out of this domain.",
+      "conditions": "Both operands are ordinary base relations with complete visible headings with distinct ASCII field names. Each equality uses a declared signed INT field from both sources. Additional aliases may qualify each input; a merged subtree remains out of this domain.",
       "meaning": "Bind the named or common fields, compare them by signed equality in the owning scope and retain the specified unmatched rows. A NATURAL outer join with no common fields uses a true predicate. A NATURAL inner join with no common names is an unfiltered join.",
       "sql": "Emit ordered ordinary join operands and their explicit predicate."
     },
@@ -104,7 +104,7 @@
     "Q05": "Link the checked boundary and native observations to the exact source and controlled fixture."
   },
   "open": [
-    "Non-INT keys, invisible columns, derived headings, aliases on entire joins and merged prefixes require independent contracts and checks."
+    "Non-INT keys, non-ASCII identifier comparison, invisible columns, derived headings, aliases on entire joins and merged prefixes require independent contracts and checks."
   ],
   "trust": [
     "Frozen MySQL SQL mode and name resolution",
