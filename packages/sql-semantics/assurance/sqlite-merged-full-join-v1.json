@@ -1,0 +1,120 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-full-join-1",
+  "extends": [
+    "sqlite-relational-v3.json",
+    "sqlite-merged-right-join-v1.json",
+    "sqlite-coalesce-v1.json"
+  ],
+  "approval": "pending-human-review",
+  "profile": "sqlite-3.47.2/utf8/short-column-names/numbered-parameters",
+  "requiredScope": "All previously required families, releases and modes remain in scope.",
+  "constructors": {
+    "Select": {
+      "role": "Projection over a binary FULL join.",
+      "structure": "An independent left and right occurrence, the FULL kind, an ordered conjunction and explicit result fields.",
+      "conditions": "Both headings are complete ordinary base-table declarations with distinct names. The analyzer checks the binary layout and the owning SELECT checks placement and the full scope.",
+      "meaning": "Join on ordered equality terms and preserve both unmatched sides. A NATURAL join without common names has no predicate.",
+      "sql": "Emit FULL JOIN with the checked ON expression and ordered projection."
+    },
+    "Expression/Nulls/Coalesce": {
+      "role": "Value of one unqualified merged FULL key.",
+      "structure": "Two ordered scoped column references wrapped as the operands of COALESCE.",
+      "conditions": "A FULL merged read has one reference from each input. Each reference belongs to the root. Qualified named fields keep physical bindings.",
+      "meaning": "Read the left value if present, otherwise the right. Do not inherit a column affinity or collation. Both inputs can be NULL.",
+      "sql": "Emit the builtin COALESCE with two operands in the recorded order."
+    },
+    "ResultColumn": {
+      "role": "One named result slot of a FULL join.",
+      "structure": "Resolved expression and exact ordered output label.",
+      "conditions": "The binder names results before publication. An enclosing SELECT or view checks the result scope and composition.",
+      "meaning": "A star, including a qualified left star, retains the left heading for its merged cells and reads their combined values. Explicit qualified fields read physical slots. An unaliased unqualified merged expression takes the native written result label.",
+      "sql": "Emit the resolved value under its explicit output label."
+    }
+  },
+  "externalInterpretation": "The two observers use the same absolute relation declarations, row data, and built-in SQLite operations. The IR retains no catalog object.",
+  "observations": [
+    "All unmatched rows and duplicate matches remain present. NULL join operands never match by equality.",
+    "A matched pair can differ in both spelling case and SQLite storage class. The merged value keeps the left selected spelling and storage class.",
+    "A LEFT qualified wildcard is a separate result shape from explicitly qualified column reads. The former retains native merged values in the left key positions.",
+    "A merged column lacks affinity and implicit collation. Compare its unqualified filter against TEXT and differently cased values while observing both physical types.",
+    "A view over the join retains the exact column names, metadata for coalesced and physical fields, and typed native rows."
+  ],
+  "finite": {
+    "keyLayouts": [
+      "none",
+      "key",
+      "lane",
+      "both"
+    ],
+    "orientation": [
+      "original",
+      "swapped"
+    ],
+    "projections": [
+      "visible",
+      "physical",
+      "combined"
+    ],
+    "completeness": "Observe exactly all 24 tuples through actual graph roles. The combined projection includes a first-nonnull expression when the key set is nonempty."
+  },
+  "exploration": {
+    "seeds": [
+      3847,
+      19013,
+      43499
+    ],
+    "casesPerSeed": 25,
+    "timeoutSeconds": 240,
+    "allowedExclusions": [],
+    "structure": "Vary key count, operation operands and order, projection width and multiplicity, explicit versus combined value references, input orientation, and generated labels."
+  },
+  "analysis": [
+    "Admit the exact previous explicit FULL USING refusal.",
+    "Admit the previous relational NATURAL FULL refusal.",
+    "Admit the previous NATURAL FULL refusal with the native affinity fixture.",
+    "Open and qualified wildcards preserve ordered headings and native coalesced key cells.",
+    "Explicit merged and qualified uses remain distinct, including written spellings, grouping and aliases.",
+    "An unqualified merged string is compared without the left column's NOCASE collation.",
+    "A merged numeric-looking TEXT result has no column affinity.",
+    "FULL NATURAL on disjoint headings has no equality predicate.",
+    "CREATE VIEW preserves names, native declared types and subsequent reads of a merged FULL projection."
+  ],
+  "negative": [
+    "A comparison references a missing slot.",
+    "A coalesced output refers to a missing input occurrence.",
+    "A merged FULL join applies to a prefix of several inputs.",
+    "A merged FULL names a column absent from one complete heading."
+  ],
+  "faults": [
+    "Swap the two combined value operands.",
+    "Omit one equality term.",
+    "Emit only LEFT so unmatched right rows vanish.",
+    "Emit the combined column without its recorded result label."
+  ],
+  "evidence": {
+    "P01": "Observe both occupied scopes and all filtered and projected slots.",
+    "P02": "Check structural constructor rules and exact typed nonadmission witnesses.",
+    "P03": "Normalize using existing closed values and operations.",
+    "P04": "Derive ordered comparisons, matched pairs, both null-extended sides and result expressions independently.",
+    "P05": "Run the closed storage and install correspondence checks for the used roles.",
+    "P06": "Compare original and rendered SQL with typed fixture evaluation in SQLite, including a view declaration and its reads.",
+    "Q01": "Check the owner constraints and recursive expression roles on direct and analyzed graphs.",
+    "Q02": "Require the entire finite product, exact prior witnesses, all scheduled seed trials and no exclusions.",
+    "Q03": "Check both input scopes and the normalized representative against the independent native result.",
+    "Q04": "Compare exact row bags, observed schema and result names and required filter semantics.",
+    "Q05": "Connect the actual normalized result and every applied fault to the exact source manifest and isolated worker."
+  },
+  "open": [
+    "Multi-step merged prefixes, local, derived or view operands and alternate engine modes remain outside these specific observations."
+  ],
+  "trust": [
+    "The pinned native SQLite release and standard builtin profile",
+    "The independent pair model and fixture values",
+    "The selected closed PHP graph and verifier"
+  ],
+  "sources": [
+    "https://sqlite.org/lang_select.html#the_from_clause",
+    "https://sqlite.org/datatype3.html#collation",
+    "https://sqlite.org/2024/sqlite-src-3470200.zip"
+  ]
+}
