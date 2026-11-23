@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Aggregation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultSql;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
+use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 
 /**
  * Emits the checked native grouping roles in query clause order.
@@ -23,14 +26,7 @@ final class GroupedSql
         $renderer = new SelectSql();
         $items = [];
         foreach ($query->columns as $column) {
-            $value = $column->value;
-            if ($value instanceof ColumnReference) {
-                $result = $renderer->expression($value, $query->source);
-            } else {
-                $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $query->source);
-                $result = 'pg_catalog.' . $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';
-            }
-            $items[] = $result . ' AS ' . $column->name->quoted();
+            $items[] = $this->operand($column->value, $query->source, $renderer) . ' AS ' . $column->name->quoted();
         }
         $sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);
         if ($query->where !== null) {
@@ -42,7 +38,27 @@ final class GroupedSql
         }
 
         $sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);
+        if ($query->having instanceof GroupedComparison) {
+            $left = $this->operand($query->having->left, $query->source, $renderer);
+            $right = $this->operand($query->having->right, $query->source, $renderer);
+            $sql .= ' HAVING (' . $left . ' OPERATOR(pg_catalog.' . $query->having->operator->value . ') ' . $right . ')';
+        } elseif ($query->having !== null) {
+            $sql .= ' HAVING ' . $renderer->expression($query->having, $query->source);
+        }
 
         return $sql . (new ResultSql())->render($query, $renderer);
+    }
+
+    /**
+     * Emits an operand from a group result or predicate.
+     */
+    private function operand(Aggregate|ColumnReference|IntegerLiteral|WideIntegerLiteral $value, TableSource $source, SelectSql $renderer): string
+    {
+        if (!$value instanceof Aggregate) {
+            return $renderer->expression($value, $source);
+        }
+        $argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);
+
+        return 'pg_catalog.' . $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';
     }
 }

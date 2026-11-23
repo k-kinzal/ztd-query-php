@@ -68,6 +68,7 @@ final class GroupedSelect implements SemanticsIR
         public readonly BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
+        public readonly GroupedComparison|BooleanLiteral|NullLiteral|null $having = null,
     ) {
         $grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');
         $results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);
@@ -77,11 +78,18 @@ final class GroupedSelect implements SemanticsIR
             Check::input($key->occurrence === 0 && $source->columnKind($key->slot) === ColumnKind::Int4, 'Each grouping key must belong to its input.');
             $members[$key->slot] = true;
         }
+        $operands = [];
         foreach ($results as $result) {
-            $value = $result->value;
+            $operands[] = $result->value;
+        }
+        if ($having instanceof GroupedComparison) {
+            $operands[] = $having->left;
+            $operands[] = $having->right;
+        }
+        foreach ($operands as $value) {
             if ($value instanceof ColumnReference) {
                 Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');
-            } else {
+            } elseif ($value instanceof Aggregate) {
                 Check::input($value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4, 'The aggregate slot must belong to the group input.');
             }
         }

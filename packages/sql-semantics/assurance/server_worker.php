@@ -433,17 +433,12 @@ function constructGrouped(string $platform, array $input): SemanticsIR
     $namespace = $platform . 'Ir\\';
     $name = $namespace . 'Identifier';
     $output = $namespace . 'Aggregation\\GroupColumn';
-    $aggregate = $namespace . 'Aggregation\\Aggregate';
-    $operator = $namespace . 'Aggregation\\AggregateOperator';
     $select = $namespace . 'Aggregation\\GroupedSelect';
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $grouped = $input['grouped'];
     $columns = [];
     foreach ($grouped['columns'] as [$expression, $label]) {
-        $value = $expression[0] === 'aggregate'
-            ? new $aggregate($operator::from($expression[1]), $expression[2] === null ? null : constructOperand($namespace, $expression[2]), $expression[3])
-            : constructOperand($namespace, $expression);
-        $columns[] = new $output($value, new $name($label));
+        $columns[] = new $output(constructGroupOperand($namespace, $expression), new $name($label));
     }
     return new $select(
         constructSource($platform, $grouped['source'], $input['dialect']),
@@ -451,19 +446,53 @@ function constructGrouped(string $platform, array $input): SemanticsIR
         $columns,
         $release::from($input['release']),
         constructPredicate($namespace, $grouped['where']),
-        ...($input['dialect'] === 'postgres' ? constructResultOptions($namespace, $grouped, 'postgres') : []),
+        ...($input['dialect'] === 'postgres' ? [
+            ...constructResultOptions($namespace, $grouped, 'postgres'), constructHaving($namespace, $grouped['having'] ?? null),
+        ] : []),
     );
+}
+
+function constructGroupOperand(string $namespace, array $term): object
+{
+    if ($term[0] !== 'aggregate') {
+        return constructOperand($namespace, $term);
+    }
+    $aggregate = $namespace . 'Aggregation\\Aggregate';
+    $operator = $namespace . 'Aggregation\\AggregateOperator';
+
+    return new $aggregate($operator::from($term[1]), $term[2] === null ? null : constructOperand($namespace, $term[2]), $term[3]);
+}
+
+function constructHaving(string $namespace, ?array $term): ?object
+{
+    if ($term === null || $term[0] !== 'comparison') {
+        return $term === null ? null : constructOperand($namespace, $term);
+    }
+    $comparison = $namespace . 'Aggregation\\GroupedComparison';
+    $operator = $namespace . 'Predicate\\IntegerOperator';
+
+    return new $comparison($operator::from($term[1]), constructGroupOperand($namespace, $term[2]), constructGroupOperand($namespace, $term[3]));
+}
+
+function observeGroupOperand(string $namespace, object $value): array
+{
+    return $value::class === $namespace . 'Aggregation\\Aggregate'
+        ? ['aggregate', $value->operator->value, $value->argument === null ? null : observeOperand($namespace, $value->argument), $value->distinct]
+        : observeOperand($namespace, $value);
+}
+
+function observeHaving(string $namespace, object $value): array
+{
+    return $value::class === $namespace . 'Aggregation\\GroupedComparison'
+        ? ['comparison', $value->operator->value, observeGroupOperand($namespace, $value->left), observeGroupOperand($namespace, $value->right)]
+        : observeOperand($namespace, $value);
 }
 
 function observeGrouped(string $namespace, object $query, string $dialect): array
 {
     $columns = [];
     foreach ($query->columns as $field) {
-        $value = $field->value;
-        $expression = $value::class === $namespace . 'Aggregation\\Aggregate'
-            ? ['aggregate', $value->operator->value, $value->argument === null ? null : observeOperand($namespace, $value->argument), $value->distinct]
-            : observeOperand($namespace, $value);
-        $columns[] = [$expression, $field->name->value];
+        $columns[] = [observeGroupOperand($namespace, $field->value), $field->name->value];
     }
 
     return [
@@ -475,6 +504,7 @@ function observeGrouped(string $namespace, object $query, string $dialect): arra
             ...($dialect === 'postgres' ? [
                 'orderBy' => array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $query->orderBy),
                 'limit' => $query->limit === null ? null : [$query->limit->count, $query->limit->offset],
+                ...($query->having === null ? [] : ['having' => observeHaving($namespace, $query->having)]),
             ] : []),
         ],
     ];

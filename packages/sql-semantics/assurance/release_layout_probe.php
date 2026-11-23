@@ -299,6 +299,19 @@ function observePostgresExternalSourceKinds(SqlSemantics\Platform\PostgreSql\Sem
         $stored->source->columnKind(0)->value, $view->toString(), $stored->toString(), $rejection];
 }
 
+function observePostgresHaving(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.having_input (id integer, amount integer)']);
+    $query = $semantics->analyze(
+        'SELECT id AS key FROM public.having_input GROUP BY id HAVING SUM(amount) > 2147483649 ORDER BY key',
+        $context,
+    );
+    $having = $query->having;
+
+    return [$having::class, $having->left::class, $having->left->operator->value, $having->left->argument->slot,
+        $having->operator->value, $having->right::class, $having->right->decimal, $query->toString()];
+}
+
 function observePostgresSignedComparison(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
@@ -527,6 +540,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['signedComparison'] = observePostgresSignedComparison($semantics);
             $details['groupedBounds'] = observePostgresGroupedBounds($semantics);
             $details['externalSourceKinds'] = observePostgresExternalSourceKinds($semantics);
+            $details['groupedHaving'] = observePostgresHaving($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

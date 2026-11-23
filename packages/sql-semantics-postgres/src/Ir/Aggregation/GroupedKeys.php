@@ -25,7 +25,7 @@ final class GroupedKeys
     public function lower(Select $statement, SourceBinding $binding): array
     {
         Check::input(
-            $statement->having === null && $statement->windows === [] && $statement->distinct === null
+            $statement->windows === [] && $statement->distinct === null
                 && $statement->into === null && $statement->groupQuantifier === null
                 && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),
             'The grouped projection requires an ordinary GROUP BY and checked result clauses.',

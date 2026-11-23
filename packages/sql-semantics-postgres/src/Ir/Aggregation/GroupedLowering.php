@@ -27,7 +27,7 @@ final class GroupedLowering
      */
     public function applies(Select $statement): bool
     {
-        if ($statement->groupBy !== []) {
+        if ($statement->groupBy !== [] || $statement->having !== null) {
             return true;
         }
         foreach ($statement->targets as $target) {
@@ -64,12 +64,13 @@ final class GroupedLowering
                 : $binding->reference($target->expression);
             $columns[] = new GroupColumn($value, new Identifier($name->value));
         }
+        $having = (new HavingLowering())->lower($statement->having, $binding, $aggregate);
         $source = $binding->source();
         Check::input($source !== null && $columns !== [], 'A grouped SELECT needs one resolved input and at least one named result.');
 
         $result = new ResultLowering();
         $order = $result->orders($operation, $statement, null, [], $aggregate->catalogFirst);
 
-        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $order, $result->limit($statement->options?->limit));
+        return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $order, $result->limit($statement->options?->limit), $having);
     }
 }

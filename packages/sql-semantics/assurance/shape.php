@@ -522,6 +522,11 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         $properties['Aggregation\\GroupedSelect']['orderBy'] = ['array'];
         $properties['Aggregation\\GroupedSelect']['limit'] = ['?Ordering\\Limit'];
+        $properties['Aggregation\\GroupedSelect']['having'] = ['Aggregation\\GroupedComparison', 'BooleanLiteral', 'NullLiteral', 'null'];
+        $groupTerms = ['Aggregation\\Aggregate', 'ColumnReference', 'Expression\\WideIntegerLiteral', 'IntegerLiteral'];
+        $properties['Aggregation\\GroupedComparison'] = ['operator' => ['Predicate\\IntegerOperator'], 'left' => $groupTerms, 'right' => $groupTerms];
+        $methods['Aggregation\\GroupedComparison'] = ['__construct'];
+        $internal[] = 'Aggregation\\HavingLowering';
     }
     $properties['Select']['source'] = ['From\\Join', 'TableSource', 'null'];
     $properties['Select']['where'] = $conditions;

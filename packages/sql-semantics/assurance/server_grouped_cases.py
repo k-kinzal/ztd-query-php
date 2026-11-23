@@ -188,7 +188,7 @@ def ordered(item):
     return bool(item["grouped"]["keys"]) and legacy(item["release"])
 
 
-def expected(item):
+def expected(item, admits=None):
     engine = item["dialect"]
     query = item["grouped"]
     keys = [key[1] for key in query["keys"]]
@@ -200,7 +200,8 @@ def expected(item):
             groups.setdefault(group_key, []).append(row)
     partition = sorted(groups, key=lambda values: tuple((value is not None, value) for value in values)) if ordered(item) else groups
     result = {"status": "rows", "fields": [[name, field_type(expr, engine)] for expr, name in query["columns"]],
-              "rows": [[field_value(expr, groups[key], engine) for expr, _ in query["columns"]] for key in partition]}
+              "rows": [[field_value(expr, groups[key], engine) for expr, _ in query["columns"]] for key in partition
+                       if admits is None or admits(groups[key])]}
     return result if ordered(item) else observation(result)
 
 

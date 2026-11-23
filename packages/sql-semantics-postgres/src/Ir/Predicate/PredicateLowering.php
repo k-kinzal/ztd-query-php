@@ -84,17 +84,25 @@ final class PredicateLowering
         if ($text !== null) {
             return $text;
         }
+        return new IntegerComparison(
+            $this->signedOperator($condition, $catalogFirst),
+            $this->signedOperand($condition->left, $binding, $catalogFirst),
+            $this->signedOperand($condition->right, $binding, $catalogFirst),
+        );
+    }
+
+    /**
+     * Resolves an exact builtin signed comparison in row or group scope.
+     */
+    public function signedOperator(ParsedComparison $condition, bool $catalogFirst): IntegerOperator
+    {
         $qualifiers = array_column($condition->operator->qualifiers, 'value');
         $allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];
         Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');
         $operator = IntegerOperator::tryFrom($condition->operator->name->value);
         Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');
 
-        return new IntegerComparison(
-            $operator,
-            $this->signedOperand($condition->left, $binding, $catalogFirst),
-            $this->signedOperand($condition->right, $binding, $catalogFirst),
-        );
+        return $operator;
     }
 
     /**

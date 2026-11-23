@@ -309,6 +309,9 @@ def inventory(root):
             for alternative in rules.get("relation_expr", ()):
                 if "qualified_name" in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-external-source-kinds-v1.json")
+            for alternative in rules.get("having_clause", ()):
+                if "HAVING a_expr" in alternative:
+                    related[alternative] = (*related.get(alternative, ()), "postgres-grouped-having-v1.json")
             for rule in ("ColumnDef", "GenericType"):
                 for alternative in rules.get(rule, ()):
                     linked = related.get(alternative, ())

@@ -77,6 +77,15 @@ final class PredicateLoweringTest extends TestCase
         self::assertSame('-9223372036854775808', $operand->decimal);
     }
 
+    public function testSignedOperatorResolvesAnExplicitCatalogOperator(): void
+    {
+        $statement = (new Inspection())->inspect('SELECT 1 WHERE 3 OPERATOR(pg_catalog.>=) 2')->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertInstanceOf(BinaryOperation::class, $statement->where);
+
+        self::assertSame('>=', (new PredicateLowering())->signedOperator($statement->where, false)->value);
+    }
+
     public function testNullTestRetainsTheSignedConstantAndNegation(): void
     {
         $operation = (new Inspection())->inspect('SELECT 1 WHERE 3 IS NOT NULL');

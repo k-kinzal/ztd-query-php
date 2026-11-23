@@ -89,6 +89,7 @@ CONTRACTS = {
     "postgres-signed-comparison-widths-v1.json": "edd544fd6c147c8188524cd2003d2bcd1bbc18cc28fd4cf382340667fb72c5f7",
     "postgres-grouped-result-order-v1.json": "ce8a7f242a23b4708cb34b6280193d0d86dd28066eee65ce3bdefd1886bc0b9d",
     "postgres-external-source-kinds-v1.json": "c37f2978ffaf44e07bae85e35df9f34cc32a853e1cdabfe5d0e7005a4f1c73c9",
+    "postgres-grouped-having-v1.json": "4993af9c2d074291e62f9a17fcfdcf403e5294a1e813b7948229ff181932f012",
     "postgres-int8-fields-v1.json": "233ffe316162ba2bd1d4b5e8d0e2306c8af183c0293ad4c7941d710f97e2c744",
     "postgres-boolean-write-inputs-v1.json": "0c5d1b89315cc86efc5e3ef81a33519acc56fd2cda870d6efbae56dca787d92b",
     "postgres-boolean-writes-v1.json": "da56df05098ff809b75570477e4d71d1dea17ee75b2ce6ca7202a4416b91567e",

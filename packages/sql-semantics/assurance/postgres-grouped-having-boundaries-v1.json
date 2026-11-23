@@ -1,0 +1,249 @@
+{
+  "revision": "SemanticsIR/postgres-grouped-having-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Link signed HAVING binding, grouped operand scope and native comparison rendering to the checked PHP.",
+  "rules": {
+    "Aggregation/GroupedComparison::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": []
+    },
+    "Aggregation/GroupedSelect::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$grouping = Check::listOf($keys, ColumnReference::class, 'A grouped SELECT needs an owned list of input keys.');",
+        "$results = Check::listOf($columns, GroupColumn::class, 'A grouped SELECT needs a nonempty list of results.', 1);",
+        "Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');",
+        "$members = [];",
+        "foreach ($grouping as $key) {",
+        "    Check::input($key->occurrence === 0 && $source->columnKind($key->slot) === ColumnKind::Int4, 'Each grouping key must belong to its input.');",
+        "    $members[$key->slot] = true;",
+        "}",
+        "$operands = [];",
+        "foreach ($results as $result) {",
+        "    $operands[] = $result->value;",
+        "}",
+        "if ($having instanceof GroupedComparison) {",
+        "    $operands[] = $having->left;",
+        "    $operands[] = $having->right;",
+        "}",
+        "foreach ($operands as $value) {",
+        "    if ($value instanceof ColumnReference) {",
+        "        Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');",
+        "    } elseif ($value instanceof Aggregate) {",
+        "        Check::input($value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4, 'The aggregate slot must belong to the group input.');",
+        "    }",
+        "}",
+        "(new OccurrenceScope())->predicate($where, [$source]);",
+        "$keysInOrder = Check::listOf($orderBy, Order::class, 'A grouped SELECT needs an owned list of output order keys.');",
+        "Check::input(count($keysInOrder) <= 1024, 'A grouped SELECT can have at most 1024 order keys.');",
+        "foreach ($keysInOrder as $key) {",
+        "    Check::input(is_int($key->target) && $key->target <= count($results), 'A grouped order key must select a projected position.');",
+        "}",
+        "$this->keys = $grouping;",
+        "$this->columns = $results;",
+        "$this->orderBy = $keysInOrder;"
+      ]
+    },
+    "Aggregation/GroupedLowering::applies": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($statement->groupBy !== [] || $statement->having !== null) {",
+        "    return true;",
+        "}",
+        "foreach ($statement->targets as $target) {",
+        "    if ($target instanceof Target && $target->expression instanceof ParsedAggregate",
+        "        && AggregateOperator::tryFrom($target->expression->name->last()->value) !== null) {",
+        "        return true;",
+        "    }",
+        "}",
+        "",
+        "return false;"
+      ]
+    },
+    "Aggregation/GroupedLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native, 'A grouped projection requires the native language profile.');",
+        "",
+        "$binding = new SourceBinding($operation, $statement->from);",
+        "$keys = (new GroupedKeys())->lower($statement, $binding);",
+        "$aggregate = new AggregateBinding($operation->context);",
+        "$where = (new PredicateLowering())->lower($statement->where, $binding, $aggregate->catalogFirst);",
+        "$fields = $operation->facts->query($statement)->fields();",
+        "Check::input($fields !== null, 'A grouped projection requires a resolved output shape.');",
+        "$columns = [];",
+        "foreach ($statement->targets as $index => $target) {",
+        "    Check::input($target instanceof Target, 'A grouped projection requires explicit result fields.');",
+        "    $name = $fields->at($index)->name;",
+        "    Check::input($name !== null, 'A grouped result must have a resolved name.');",
+        "    $value = $target->expression instanceof ParsedAggregate",
+        "        ? $aggregate->lower($target->expression, $binding)",
+        "        : $binding->reference($target->expression);",
+        "    $columns[] = new GroupColumn($value, new Identifier($name->value));",
+        "}",
+        "$having = (new HavingLowering())->lower($statement->having, $binding, $aggregate);",
+        "$source = $binding->source();",
+        "Check::input($source !== null && $columns !== [], 'A grouped SELECT needs one resolved input and at least one named result.');",
+        "",
+        "$result = new ResultLowering();",
+        "$order = $result->orders($operation, $statement, null, [], $aggregate->catalogFirst);",
+        "",
+        "return new GroupedSelect($source, $keys, $columns, $profile->grammar, $where, $order, $result->limit($statement->options?->limit), $having);"
+      ]
+    },
+    "Aggregation/GroupedKeys::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $statement->windows === [] && $statement->distinct === null",
+        "        && $statement->into === null && $statement->groupQuantifier === null",
+        "        && ($statement->options->locking ?? []) === [] && !($statement->options->readOnly ?? false),",
+        "    'The grouped projection requires an ordinary GROUP BY and checked result clauses.',",
+        ");",
+        "$keys = [];",
+        "foreach ($statement->groupBy as $key) {",
+        "    Check::input($key instanceof Scalar, 'A grouped projection requires simple grouping keys.');",
+        "    $keys[] = $binding->reference($key);",
+        "}",
+        "",
+        "return $keys;"
+      ]
+    },
+    "Aggregation/GroupedSql::render": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$renderer = new SelectSql();",
+        "$items = [];",
+        "foreach ($query->columns as $column) {",
+        "    $items[] = $this->operand($column->value, $query->source, $renderer) . ' AS ' . $column->name->quoted();",
+        "}",
+        "$sql = 'SELECT ' . implode(', ', $items) . ' FROM ' . $renderer->from($query->source);",
+        "if ($query->where !== null) {",
+        "    $sql .= ' WHERE ' . $renderer->predicate($query->where, $query->source);",
+        "}",
+        "$keys = [];",
+        "foreach ($query->keys as $key) {",
+        "    $keys[] = $renderer->expression($key, $query->source);",
+        "}",
+        "",
+        "$sql .= $keys === [] ? '' : ' GROUP BY ' . implode(', ', $keys);",
+        "if ($query->having instanceof GroupedComparison) {",
+        "    $left = $this->operand($query->having->left, $query->source, $renderer);",
+        "    $right = $this->operand($query->having->right, $query->source, $renderer);",
+        "    $sql .= ' HAVING (' . $left . ' OPERATOR(pg_catalog.' . $query->having->operator->value . ') ' . $right . ')';",
+        "} elseif ($query->having !== null) {",
+        "    $sql .= ' HAVING ' . $renderer->expression($query->having, $query->source);",
+        "}",
+        "",
+        "return $sql . (new ResultSql())->render($query, $renderer);"
+      ]
+    },
+    "Aggregation/GroupedSql::operand": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if (!$value instanceof Aggregate) {",
+        "    return $renderer->expression($value, $source);",
+        "}",
+        "$argument = $value->argument === null ? '*' : $renderer->expression($value->argument, $source);",
+        "",
+        "return 'pg_catalog.' . $value->operator->value . '(' . ($value->distinct ? 'DISTINCT ' : '') . $argument . ')';"
+      ]
+    },
+    "Aggregation/HavingLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($condition instanceof Grouped) {",
+        "    $condition = $condition->operand;",
+        "}",
+        "if ($condition === null) {",
+        "    return null;",
+        "}",
+        "if ($condition instanceof ParsedBoolean) {",
+        "    return new BooleanLiteral($condition->value);",
+        "}",
+        "if ($condition instanceof ParsedNull) {",
+        "    return new NullLiteral();",
+        "}",
+        "Check::input($condition instanceof BinaryOperation, 'HAVING needs a signed group comparison, a Boolean constant or NULL.');",
+        "$operator = (new PredicateLowering())->signedOperator($condition, $aggregate->catalogFirst);",
+        "",
+        "return new GroupedComparison(",
+        "    $operator,",
+        "    $this->operand($condition->left, $binding, $aggregate),",
+        "    $this->operand($condition->right, $binding, $aggregate),",
+        ");"
+      ]
+    },
+    "Aggregation/HavingLowering::operand": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof ParsedAggregate) {",
+        "    return $aggregate->lower($operand, $binding);",
+        "}",
+        "if ($operand instanceof ParsedColumn) {",
+        "    return $binding->reference($operand);",
+        "}",
+        "$literal = (new ExpressionLowering())->integerLiteral($operand, $aggregate->catalogFirst);",
+        "Check::input($literal !== null, 'A HAVING comparison needs signed group values or signed literals.');",
+        "",
+        "return $literal;"
+      ]
+    },
+    "Predicate/PredicateLowering::comparison": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$text = (new TextComparisonLowering())->lower($condition, $binding, $catalogFirst);",
+        "if ($text !== null) {",
+        "    return $text;",
+        "}",
+        "return new IntegerComparison(",
+        "    $this->signedOperator($condition, $catalogFirst),",
+        "    $this->signedOperand($condition->left, $binding, $catalogFirst),",
+        "    $this->signedOperand($condition->right, $binding, $catalogFirst),",
+        ");"
+      ]
+    },
+    "Predicate/PredicateLowering::signedOperator": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$qualifiers = array_column($condition->operator->qualifiers, 'value');",
+        "$allowed = $catalogFirst ? [[], ['pg_catalog']] : [['pg_catalog']];",
+        "Check::input(in_array($qualifiers, $allowed, true), 'A predicate comparison must resolve to a pg_catalog operator.');",
+        "$operator = IntegerOperator::tryFrom($condition->operator->name->value);",
+        "Check::input($operator !== null, 'A predicate comparison needs a supported integer operator.');",
+        "",
+        "return $operator;"
+      ]
+    }
+  }
+}

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v54.json"
-CONTRACT = "9d1848773320be7580be75b288d5eaa4308f02e5e7abf12094363b53ac00bd85"
+CONTRACT_NAME = "release-layout-v55.json"
+CONTRACT = "76c030f7f9b2b6fef4977d08d254c40998b577ba6838f67e55b7e555624be1ab"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -304,6 +304,13 @@ def verify_probe(raw, catalog):
                 'SELECT "__ztd_source"."id" AS "id" FROM ONLY "public"."saved_rows" AS "__ztd_source"',
                 "A DELETE target must be a base table.",
             ], "installed-postgres-external-source-kinds-mismatch", item)
+            require(item.get("groupedHaving") == [
+                pg_ir + "Aggregation\\GroupedComparison", pg_ir + "Aggregation\\Aggregate", "sum", 1,
+                ">", pg_ir + "Expression\\WideIntegerLiteral", "2147483649",
+                'SELECT "__ztd_source"."id" AS "key" FROM "public"."having_input" AS "__ztd_source" '
+                'GROUP BY "__ztd_source"."id" HAVING (pg_catalog.sum("__ztd_source"."amount") '
+                "OPERATOR(pg_catalog.>) CAST(2147483649 AS pg_catalog.int8)) ORDER BY 1 ASC NULLS LAST",
+            ], "installed-postgres-grouped-having-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '
