@@ -30,7 +30,8 @@ final class JoinKeyLowering
      */
     public function predicate(JoinChain $chain, JoinStep $step, SourceBinding $binding, BoundStatement $operation): Comparison|Logical|null
     {
-        Check::input(count($chain->steps) === 1 && !$step->operator->right(), 'A merged join needs two ordinary inputs without RIGHT or FULL.');
+        Check::input(count($chain->steps) === 1, 'A merged join needs two ordinary inputs.');
+        Check::input(!$step->operator->left() || !$step->operator->right(), 'A FULL merge needs a value from both inputs.');
         $declarations = new SourceDeclarations();
         $left = $declarations->mergeHeading($operation, $chain->first);
         $right = $declarations->mergeHeading($operation, $step->relation);

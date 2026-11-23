@@ -113,7 +113,7 @@ final class FromScope
         $visible = [];
         foreach ($input->visible as $relation) {
             if ($single && ($node->alias !== null || !$leading)) {
-                $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit);
+                $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit, $relation->representatives);
             } elseif ($single || $leading || $node->alias !== null || !in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
                 $visible[] = $relation;
             }

@@ -14,7 +14,7 @@ from sqlite_relational_cases import (
     explore, finite_cases, finite_id, finite_ids, ordered, untyped,
 )
 
-CONTRACT = "1bde4be3e45639424b7889ae27fda58bca75d459a158113e5a97be689aa663d8"
+CONTRACT = "88ef9dfe32d2e15b8f8057bb86cd60b23134caa41311ceb77ead24d258251447"
 
 
 def inspect_direct(worker, db, item, ledger=None, key=None):
@@ -93,8 +93,8 @@ def negative_cases():
     yield case(source=LEFT, joins=[["LEFT", RIGHT, ["column", 0, 2]], ["INNER", LEFT, None]], columns=col), "visible occurrence"
     yield case(source=LEFT, columns=col, orders=[[2, False, True]]), "order position must belong to the projection"
     yield case(source=EMPTY, joins=[["CROSS", EMPTY, None]] * 64, columns=col), "at most 64 inputs"
-    yield {"sql": "SELECT ir_left.key FROM ir_left RIGHT JOIN ir_right USING (key)", "declarations": DECLARATIONS}, "without RIGHT or FULL"
-    yield {"sql": "SELECT ir_left.key FROM ir_left NATURAL FULL JOIN ir_right", "declarations": DECLARATIONS}, "without RIGHT or FULL"
+    yield {"sql": "SELECT ir_left.key FROM ir_left JOIN ir_empty ON 1 RIGHT JOIN ir_right USING (key)", "declarations": DECLARATIONS}, "two ordinary inputs"
+    yield {"sql": "SELECT ir_left.key FROM ir_left NATURAL FULL JOIN ir_right", "declarations": DECLARATIONS}, "FULL merge needs a value from both inputs"
     yield {"sql": "SELECT key FROM ir_left ORDER BY key", "declarations": DECLARATIONS}, "projection by ordinal"
     yield {"sql": "SELECT a.key FROM ir_left a LEFT JOIN ir_right b ON c.key = b.key LEFT JOIN ir_left c ON 1",
            "declarations": DECLARATIONS}, "visible occurrence"
@@ -190,7 +190,7 @@ def main():
     args.out = args.out.resolve()
     require(args.candidate != args.out and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True, exist_ok=False)
-    contract = TOOL / "sqlite-relational-v2.json"
+    contract = TOOL / "sqlite-relational-v3.json"
     require(digest(contract) == CONTRACT, "relational-contract-mismatch")
     specification = json.loads(contract.read_text())
     commit, distribution = candidate_distribution(args.candidate)

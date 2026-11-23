@@ -10,6 +10,7 @@ use SqlSemantics\Platform\Sqlite\Model\Resolution\VisibleRelation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Nullability;
@@ -26,8 +27,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
  * keep their declaration. For each column named by USING, or common to both
  * sides of a NATURAL join, the column of the right side is merged into the
  * leftmost column of that name: an unqualified name and the star see the
- * merged column once. Under a RIGHT or FULL join the merged column is the
- * first non-NULL of both, so its type is the choice over both. A USING
+ * merged column once. Under a RIGHT join that position reads the right slot.
+ * Under a FULL join the merged column is the first non-NULL of both, so its
+ * type is the choice over both. A USING
  * column that one side certainly lacks is reported.
  * Source: https://sqlite.org/lang_select.html#the_from_clause. Status: Implemented.
  *
@@ -65,9 +67,13 @@ final class Joining
                 continue;
             }
             $hidden = $right[$into[0]];
-            $right = $this->replaced($right, $into[0], new VisibleRelation($hidden->relation, $hidden->shape, $hidden->alias, $hidden->name, [...$hidden->hidden, $into[1]], $hidden->implicit));
+            $right = $this->replaced($right, $into[0], new VisibleRelation($hidden->relation, $hidden->shape, $hidden->alias, $hidden->name, [...$hidden->hidden, $into[1]], $hidden->implicit, $hidden->representatives));
             if ($outer) {
-                $left = $this->replaced($left, $from[0], $this->coalesced($left[$from[0]], $from[1], $hidden->shape->slots[$into[1]]));
+                $kept = $left[$from[0]];
+                $mergedSlot = $step->operator->left()
+                    ? $this->coalesced($kept, $from[1], $hidden->shape->slots[$into[1]])
+                    : $this->rightRepresentative($kept, $from[1], $hidden->resolved($into[1], true));
+                $left = $this->replaced($left, $from[0], $mergedSlot);
             }
         }
 
@@ -107,6 +113,17 @@ final class Joining
     }
 
     /**
+     * Records what an unqualified name reads without replacing the qualified slot.
+     */
+    public function rightRepresentative(VisibleRelation $kept, int $position, ResolvedColumn $right): VisibleRelation
+    {
+        $representatives = $kept->representatives;
+        $representatives[$position] = $right;
+
+        return new VisibleRelation($kept->relation, $kept->shape, $kept->alias, $kept->name, $kept->hidden, $kept->implicit, $representatives);
+    }
+
+    /**
      * Answers a relation whose merged column takes the first non-NULL of its own slot and the slot merged into it.
      */
     public function coalesced(VisibleRelation $kept, int $position, OutputSlot $other): VisibleRelation
@@ -116,7 +133,7 @@ final class Joining
             $slots[] = $index === $position ? new OutputSlot($slot->name, (new Storages())->either([$slot->type, $other->type]), $slot->nullability->propagate($other->nullability), null, $slot, $slot->unnamed) : $slot;
         }
 
-        return new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit);
+        return new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit, $kept->representatives);
     }
 
     /**
@@ -171,6 +188,7 @@ final class Joining
     public function extend(array $relations): array
     {
         $extended = [];
+        $occurrences = array_map(static fn (VisibleRelation $relation) => $relation->relation, $relations);
         foreach ($relations as $relation) {
             $slots = [];
             foreach ($relation->shape->slots as $slot) {
@@ -180,7 +198,15 @@ final class Joining
             foreach ($relation->implicit as $slot) {
                 $implicit[] = new ImplicitSlot($slot->names, new OutputSlot($slot->slot->name, $slot->slot->type, Nullability::Nullable, null, $slot->slot));
             }
-            $extended[] = new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing), $relation->alias, $relation->name, $relation->hidden, $implicit);
+            $representatives = [];
+            foreach ($relation->representatives as $position => $value) {
+                $slot = $value->slot;
+                if (in_array($value->relation, $occurrences, true) && $slot->nullability !== Nullability::Nullable) {
+                    $slot = new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot, $slot->unnamed);
+                }
+                $representatives[$position] = new ResolvedColumn($value->relation, $slot, $value->depth);
+            }
+            $extended[] = new VisibleRelation($relation->relation, new RowShape($slots, $relation->shape->missing), $relation->alias, $relation->name, $relation->hidden, $implicit, $representatives);
         }
 
         return $extended;

@@ -93,7 +93,9 @@ final class Projection
     {
         foreach ($relation->shape->slots as $position => $slot) {
             if (!$merged || !in_array($position, $relation->hidden, true)) {
-                $items[] = new Field(count($items), new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($relation->relation, $slot));
+                $resolved = $relation->resolved($position, $merged);
+                $value = $resolved->slot;
+                $items[] = new Field(count($items), new OutputSlot($slot->name, $value->type, $value->nullability, null, $value, $slot->unnamed), null, $resolved);
             }
         }
         if (!$relation->shape->complete()) {

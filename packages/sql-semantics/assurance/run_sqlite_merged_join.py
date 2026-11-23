@@ -128,7 +128,7 @@ def negatives():
         ("merge_left NATURAL JOIN merge_right ON 1", "analysis-rejected", "NATURAL"),
         ("merge_left NATURAL JOIN merge_right USING (key)", "analysis-rejected", "NATURAL"),
         ("merge_left JOIN merge_free JOIN merge_right USING (key)", "rejected", "two ordinary inputs"),
-        ("merge_left FULL JOIN merge_right USING (key)", "rejected", "without RIGHT or FULL"),
+        ("merge_left FULL JOIN merge_right USING (key)", "rejected", "FULL merge needs a value from both inputs"),
     )
     for source, status, reason in sql_cases:
         yield {"sql": "SELECT merge_left.key FROM " + source, "declarations": DECLARATIONS}, status, reason

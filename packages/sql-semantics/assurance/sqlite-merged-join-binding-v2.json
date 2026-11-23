@@ -1,0 +1,43 @@
+{
+  "revision": "SemanticsIR/sqlite-merged-join-binding-2",
+  "approval": "pending-human-review",
+  "scope": "Pin the binder that determines merged result value and name, preserves qualified slots, and refuses conflicting clauses.",
+  "artifacts": {
+    "src/Rules/Resolution/FromScope.php": {
+      "methods": [
+        "enter"
+      ],
+      "sha256": "f27fe412602adf12cc35000028be8feac5b1ab4e7a44fe5a3840016a04351e81"
+    },
+    "src/Rules/Resolution/Joining.php": {
+      "methods": [
+        "join",
+        "locate",
+        "uniqueNames",
+        "rightRepresentative",
+        "extend"
+      ],
+      "sha256": "5133e1e1595631483b7de42a60f14fdfc43816740eeaa5abf97a4edfc9bfc7c6"
+    },
+    "src/Rules/Resolution/ColumnResolver.php": {
+      "methods": [
+        "find",
+        "match"
+      ],
+      "sha256": "b12db0bd5344f91c88a90dfed12480daa78b76fc8a2e88ed2dd0d17d1a89da30"
+    },
+    "src/Rules/Query/Projection.php": {
+      "methods": [
+        "expand"
+      ],
+      "sha256": "3dfa2415a71b46204b7feccda8cb2ca0373a920bc76919662e85dd59d1f9660c"
+    },
+    "src/Model/Resolution/VisibleRelation.php": {
+      "methods": [
+        "resolved"
+      ],
+      "sha256": "411251b994c7b9ee63e0833a099bf068d6696ffb79cee595c654bb79168e1d13"
+    }
+  },
+  "extends": "sqlite-merged-join-binding-v1.json"
+}

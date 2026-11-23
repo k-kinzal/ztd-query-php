@@ -318,7 +318,7 @@ Run `run_server_insert_query.py` using the native fixture options. Replay with `
 
 ## SQLite joins, filters and ordering
 
-The [SQLite relational criteria](sqlite-relational-v2.json) extend the initial SQLite projection domain. The [merged join contract](sqlite-merged-join-v1.json) compares explicit join graphs with native USING and NATURAL on ordinary binary inputs. Its separate fixture checks left collation precedence, numeric affinity, unmatched rows and result names. Run `run_sqlite_merged_join.py` with the same fixture arguments. Run the same pinned SQLite 3.47.2 build and isolated PHP image through the separate checker:
+The [SQLite relational criteria](sqlite-relational-v3.json) extend the initial SQLite projection domain. The [merged join contract](sqlite-merged-join-v1.json) compares explicit join graphs with native USING and NATURAL on ordinary binary inputs. Its separate fixture checks left collation precedence, numeric affinity, unmatched rows and result names. The [RIGHT merge contract](sqlite-merged-right-join-v1.json) separately verifies the right representative and the distinction between generated wildcard labels and explicit qualified or unqualified result names. Run `run_sqlite_merged_join.py` or `run_sqlite_merged_right_join.py` with the same fixture arguments. Run the same pinned SQLite 3.47.2 build and isolated PHP image through the separate checker:
 
 ```sh
 relational_evidence=$(mktemp -d)/sqlite-relational-evidence

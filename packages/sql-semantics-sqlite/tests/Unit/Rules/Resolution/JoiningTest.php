@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\QualifiedName;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\OutputSlot;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Shape\RowShape;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Type\Choice;
@@ -93,7 +94,7 @@ final class JoiningTest extends TestCase
         self::assertSame(Nullability::Nullable, $joined[1]->implicit[0]->slot->nullability);
     }
 
-    public function testJoinCoalescesTheMergedColumnAndExtendsTheLeftSideOfARightJoin(): void
+    public function testJoinResolvesTheRightRepresentativeAndExtendsTheLeftSide(): void
     {
         $semantics = new Inspection();
         $t = $semantics->inspect('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
@@ -107,12 +108,29 @@ final class JoiningTest extends TestCase
         $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Right]), $right, new JoinUsing([new Name('a')]));
         $joined = (new Joining())->join($derivation, [new VisibleRelation($left, $leftShape, null, $left->name)], [new VisibleRelation($right, $rightShape, null, $right->name)], $step);
 
-        self::assertInstanceOf(Choice::class, $joined[0]->shape->slots[1]->type);
-        self::assertSame($t->declarations()[0]->columns[1], $joined[0]->shape->slots[1]->declaration());
+        self::assertSame($t->declarations()[0]->columns[1], $joined[0]->resolved(1, false)->declaration());
+        self::assertSame($u->declarations()[0]->columns[0], $joined[0]->resolved(1, true)->declaration());
+        self::assertSame($right, $joined[0]->resolved(1, true)->relation);
         self::assertSame(Nullability::Nullable, $joined[0]->shape->slots[0]->nullability);
         self::assertSame($rightShape, $joined[1]->shape);
         self::assertSame([0], $joined[1]->hidden);
         self::assertSame(Nullability::NotNull, $joined[1]->shape->slots[0]->nullability);
+    }
+
+    public function testRightRepresentativeKeepsNonAdjacentKeysInTheirExactPositions(): void
+    {
+        $left = new TableInput(new QualifiedName(new Name('left_input')));
+        $right = new TableInput(new QualifiedName(new Name('right_input')));
+        $slot = new OutputSlot(new Name('key'), new Known(Storage::Integer), Nullability::NotNull);
+        $visible = new VisibleRelation($left, new RowShape([$slot, $slot, $slot]));
+        $value = new ResolvedColumn($right, $slot);
+        $joining = new Joining();
+        $visible = $joining->rightRepresentative($visible, 2, $value);
+        $visible = $joining->rightRepresentative($visible, 0, $value);
+
+        self::assertSame([2, 0], array_keys($visible->representatives));
+        self::assertSame($right, $visible->resolved(2, true)->relation);
+        self::assertSame($left, $visible->resolved(1, true)->relation);
     }
 
     public function testJoinReportsAUsingColumnThatAClosedSideLacks(): void

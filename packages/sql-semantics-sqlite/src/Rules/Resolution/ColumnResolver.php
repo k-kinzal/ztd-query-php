@@ -124,7 +124,7 @@ final class ColumnResolver
             if ($slot->name === null) {
                 $unnamed = true;
             } elseif ($names->equal($slot->name->value, $column->value) && !($merged && in_array($position, $relation->hidden, true))) {
-                return new ResolvedColumn($relation->relation, $slot, $depth);
+                return $relation->resolved($position, $merged, $depth);
             }
         }
         foreach ($relation->implicit as $implicit) {
