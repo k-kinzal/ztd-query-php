@@ -66,23 +66,10 @@ final class SelectSql
     /**
      * Renders a checked expression occurrence.
      */
-    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    public function expression(Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
     {
-        if ($expression instanceof ColumnReference) {
-            $inputs = $source instanceof Join ? $source->inputs() : [$source];
-            $input = $inputs[$expression->occurrence] ?? null;
-            if ($input instanceof DerivedSource) {
-                Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
-                $name = $this->localColumn($expression->slot);
-            } else {
-                Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
-                $name = $input->columns[$expression->slot]->quoted();
-            }
-
-            return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;
-        }
-
         return match (true) {
+            $expression instanceof ColumnReference, $expression instanceof TextColumnReference => $this->column($expression, $source, $offset, $qualify),
             $expression instanceof Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' OPERATOR(pg_catalog.' . $expression->operator->value . ') ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',
             $expression instanceof BuiltinCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS pg_catalog.' . $expression->target->value . ')',
             $expression instanceof IntegerCase => $this->integerCase($expression, $source, $offset, $qualify),
@@ -96,6 +83,24 @@ final class SelectSql
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',
         };
+    }
+
+    /**
+     * Emits the exact assigned field in the physical or derived input occurrence.
+     */
+    public function column(ColumnReference|TextColumnReference $expression, TableSource|Join|null $source, int $offset = 0, bool $qualify = true): string
+    {
+        $inputs = $source instanceof Join ? $source->inputs() : [$source];
+        $input = $inputs[$expression->occurrence] ?? null;
+        if ($input instanceof DerivedSource) {
+            Check::invariant(isset($input->definition->columns[$expression->slot]), 'A complete SELECT has this derived slot.');
+            $name = $this->localColumn($expression->slot);
+        } else {
+            Check::invariant(isset($input->columns[$expression->slot]), 'A complete SELECT has this source slot.');
+            $name = $input->columns[$expression->slot]->quoted();
+        }
+
+        return ($qualify ? $this->alias($offset + $expression->occurrence) . '.' : '') . $name;
     }
 
     /**

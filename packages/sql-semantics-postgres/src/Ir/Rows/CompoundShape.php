@@ -19,6 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
+use SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
 /**
@@ -76,7 +77,7 @@ final class CompoundShape
                 CastDestination::Text => ResultKind::Text,
             },
             $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
-            $column instanceof TextLiteral => ResultKind::Text,
+            $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof TruthTest => ResultKind::Boolean,
             $column instanceof Arithmetic, $column instanceof ColumnReference, $column instanceof IntegerCase, $column instanceof IntegerLiteral => ResultKind::Integer,

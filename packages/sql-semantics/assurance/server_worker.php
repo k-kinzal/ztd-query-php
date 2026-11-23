@@ -34,6 +34,7 @@ function constructOperand(string $namespace, array $data): object
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
         'slot' => 'ColumnReference',
+        'text-slot' => 'TextColumnReference',
         'operation' => 'Arithmetic',
         'int4-case' => 'Expression\\IntegerCase',
         'builtin-cast' => 'Expression\\BuiltinCast',
@@ -54,7 +55,7 @@ function constructOperand(string $namespace, array $data): object
         'text-bytes' => new $type(hex2bin($data[1])),
         'boolean' => new $type($data[1]),
         'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
-        'slot' => new $type($data[1], $data[2] ?? 0),
+        'slot', 'text-slot' => new $type($data[1], $data[2] ?? 0),
         'null' => new $type(),
         'operation' => new $type(
             $operator::from($data[1]),
@@ -112,6 +113,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'BooleanLiteral' => ['boolean', $value->value],
         $namespace . 'NullLiteral' => ['null'],
         $namespace . 'ColumnReference' => $value->occurrence === 0 ? ['slot', $value->slot] : ['slot', $value->slot, $value->occurrence],
+        $namespace . 'TextColumnReference' => ['text-slot', $value->slot, $value->occurrence],
         $namespace . 'Arithmetic' => ['operation', $value->operator->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Expression\\SignedCast' => ['signed-cast', observeOperand($namespace, $value->operand)],
@@ -157,7 +159,10 @@ function constructSource(string $platform, array $source, string $dialect): obje
         new $identifier($source['schema']),
         new $identifier($source['table']),
         array_map(static fn ($name) => new $identifier($name), $source['columns']),
-        ...($dialect === 'postgres' ? [$source['only']] : []),
+        ...($dialect === 'postgres' ? [
+            $source['only'],
+            array_map($namespace . 'From\\ColumnKind::from', $source['columnKinds'] ?? []),
+        ] : []),
     );
 }
 
@@ -216,12 +221,19 @@ function observeSource(object $source, string $dialect, string $namespace): arra
         throw new RuntimeException('Unknown native table source role.');
     }
 
-    return [
+    $columns = [
         'schema' => $source->schema->value,
         'table' => $source->table->value,
         'columns' => array_map(static fn ($name): string => $name->value, $source->columns),
-        ...($dialect === 'postgres' ? ['only' => $source->only] : []),
     ];
+    if ($dialect === 'postgres') {
+        $columns['only'] = $source->only;
+        $kinds = array_column($source->columnKinds, 'value');
+        if ($kinds !== [] && $kinds !== array_fill(0, count($columns['columns']), 'int4')) {
+            $columns['columnKinds'] = $kinds;
+        }
+    }
+    return $columns;
 }
 
 function constructPredicate(string $namespace, ?array $test): ?object

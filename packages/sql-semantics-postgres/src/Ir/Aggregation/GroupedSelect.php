@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Aggregation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -61,7 +62,7 @@ final class GroupedSelect implements SemanticsIR
         Check::input(count($grouping) <= 16 && count($results) <= 1024, 'The grouping key or result count exceeds the grouped profile.');
         $members = [];
         foreach ($grouping as $key) {
-            Check::input($key->occurrence === 0 && isset($source->columns[$key->slot]), 'Each grouping key must belong to its input.');
+            Check::input($key->occurrence === 0 && $source->columnKind($key->slot) === ColumnKind::Int4, 'Each grouping key must belong to its input.');
             $members[$key->slot] = true;
         }
         foreach ($results as $result) {
@@ -69,7 +70,7 @@ final class GroupedSelect implements SemanticsIR
             if ($value instanceof ColumnReference) {
                 Check::input($value->occurrence === 0 && isset($members[$value->slot]), 'A plain grouped result must read a grouping key.');
             } else {
-                Check::input($value->argument === null || isset($source->columns[$value->argument->slot]), 'The aggregate slot must belong to the group input.');
+                Check::input($value->argument === null || $source->columnKind($value->argument->slot) === ColumnKind::Int4, 'The aggregate slot must belong to the group input.');
             }
         }
         (new OccurrenceScope())->predicate($where, [$source]);

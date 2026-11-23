@@ -9,7 +9,7 @@
     "TableSource": {
       "role": "A resolved ordinary table occurrence with typed consumed slots.",
       "structure": "Absolute schema and table identifiers, ONLY policy, unique ordered column names and one immutable native kind for each consumed position.",
-      "conditions": "The external declaration supplies the stated physical names and types. The name and type vectors have identical length. The ordinary signed-integer shorthand supplies int4 for every named position.",
+      "conditions": "The external declaration supplies the stated physical names and types. An explicit type vector has the same length as the names. An empty type vector intrinsically supplies int4 for every named position.",
       "meaning": "The source provides the table rows and the PostgreSQL values of its named and typed columns. Each occurrence keeps its own scan and column list.",
       "sql": "Read the exact schema-qualified table and render each reference through its checked occurrence."
     },

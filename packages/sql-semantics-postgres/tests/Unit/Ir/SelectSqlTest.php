@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseArm;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
@@ -23,11 +24,20 @@ use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference;
 
 #[CoversClass(SelectSql::class)]
 #[Small]
 final class SelectSqlTest extends TestCase
 {
+    public function testColumnReadsTheNamedPhysicalTextField(): void
+    {
+        $source = new TableSource(new Identifier('public'), new Identifier('t'), [new Identifier('label')], false, [ColumnKind::Text]);
+        $reference = new TextColumnReference(0);
+
+        self::assertSame('"__ztd_source"."label"', (new SelectSql())->column($reference, $source));
+    }
+
     public function testRenderAddsOutputAliases(): void
     {
         $select = new Select([new ResultColumn(new IntegerLiteral('2'), new Identifier('"'))]);

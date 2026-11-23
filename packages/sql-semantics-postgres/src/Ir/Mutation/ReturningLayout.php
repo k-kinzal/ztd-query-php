@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
@@ -23,7 +24,7 @@ final class ReturningLayout
     {
         Check::input(count($fields) <= 1024, 'A mutation can return at most 1024 fields.');
         foreach ($fields as $field) {
-            Check::input(isset($target->columns[$field->reference->slot]), 'A returned slot must belong to its target.');
+            Check::input($target->columnKind($field->reference->slot) === ColumnKind::Int4, 'A returned slot must belong to its target.');
         }
     }
 }

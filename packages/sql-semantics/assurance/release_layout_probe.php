@@ -190,6 +190,18 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 throw new RuntimeException('The installed projection lost the resolved text binding.');
             }
             $details['textMarker'] = [$marker->position, $marker->input->value, $preparedText->toString()];
+            $typedContext = $semantics->context(['CREATE TABLE public.typed_table (id integer, label pg_catalog.text)']);
+            $typed = $semantics->analyze('SELECT label, t.label, t.id FROM public.typed_table t', $typedContext);
+            $columns = [];
+            foreach ($typed->columns as $column) {
+                $field = $column->expression;
+                $columns[] = [substr($field::class, strlen($namespace . 'Ir\\')), $field->slot, $field->occurrence, $column->name->value];
+            }
+            $details['typedColumns'] = [
+                array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
+                $columns,
+                $typed->toString(),
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

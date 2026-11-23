@@ -17,6 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
@@ -130,13 +131,16 @@ final class JoinBinding
         $resolution = $this->operation->facts->scalar($scalar)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
 
-        return $this->resolved($resolution);
+        $field = $this->resolved($resolution);
+        Check::input($field instanceof ColumnReference, 'The operand requires an int4 input slot.');
+
+        return $field;
     }
 
     /**
      * Allocates a checked field in the join occurrence containing its resolved input.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference
     {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');
@@ -145,7 +149,8 @@ final class JoinBinding
         foreach ($this->inputs as $occurrence => $binding) {
             $relation = $binding->relation();
             if ($relation === $resolution->relation) {
-                return new ColumnReference($binding->resolved($resolution)->slot, $occurrence);
+                $expanded = [$binding->resolved($resolution), $occurrence];
+                break;
             }
             if (!$wholeJoin || $relation === null) {
                 continue;
@@ -155,20 +160,24 @@ final class JoinBinding
                 if (in_array($slot, $slots, true)) {
                     Check::input($expanded === null, 'An expanded join field must bind to exactly one input occurrence.');
                     $bound = $binding->resolved(new ResolvedColumn($relation, $slot));
-                    $expanded = new ColumnReference($bound->slot, $occurrence);
+                    $expanded = [$bound, $occurrence];
                     break;
                 }
             }
         }
         Check::input($expanded !== null, 'A column must resolve within this join scope.');
 
-        return $expanded;
+        [$field, $occurrence] = $expanded;
+
+        return $field instanceof TextColumnReference
+            ? new TextColumnReference($field->slot, $occurrence)
+            : new ColumnReference($field->slot, $occurrence);
     }
 
     /**
      * Projects an ordinary slot or the ordered two-source value of a FULL key.
      */
-    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase
+    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase|TextColumnReference
     {
         $slot = $resolution->slot;
         if ($slot->coalescedWith === null) {
@@ -181,7 +190,10 @@ final class JoinBinding
         );
         $left = $this->resolved(new ResolvedColumn($resolution->relation, $slot->origin));
         $right = $this->resolved(new ResolvedColumn($resolution->relation, $slot->coalescedWith));
-        Check::input($left->occurrence === 0 && $right->occurrence === 1, 'A merged field reads its two binary input positions.');
+        Check::input(
+            $left instanceof ColumnReference && $right instanceof ColumnReference && $left->occurrence === 0 && $right->occurrence === 1,
+            'A merged field reads its two binary int4 input positions.',
+        );
 
         return new IntegerCase([new IntegerCaseArm(new NullTest($left, true), $left)], $right);
     }

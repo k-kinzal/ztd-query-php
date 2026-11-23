@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -62,9 +63,9 @@ final class Update implements SemanticsIR
         $written = [];
         foreach ($this->assignments as $assignment) {
             $slot = $assignment->target->slot;
-            Check::input(isset($target->columns[$slot]), 'An UPDATE write slot must belong to the target.');
+            Check::input($target->columnKind($slot) === ColumnKind::Int4, 'An UPDATE write slot must belong to the target.');
             $value = $assignment->value;
-            Check::input(!$value instanceof ColumnReference || isset($target->columns[$value->slot]), 'An UPDATE read slot must belong to the target.');
+            Check::input(!$value instanceof ColumnReference || $target->columnKind($value->slot) === ColumnKind::Int4, 'An UPDATE read slot must belong to the target.');
             Check::input(!isset($written[$slot]), 'A PostgreSQL UPDATE cannot repeat a target slot.');
             $written[$slot] = true;
         }

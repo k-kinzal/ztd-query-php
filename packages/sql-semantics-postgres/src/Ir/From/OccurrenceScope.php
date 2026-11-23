@@ -73,6 +73,7 @@ final class OccurrenceScope
      */
     public function hasSlot(TableSource|DerivedSource|null $input, int $slot): bool
     {
-        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot]) : isset($input->columns[$slot]);
+        return $input instanceof DerivedSource ? isset($input->definition->columns[$slot])
+            : $input?->columnKind($slot) === ColumnKind::Int4;
     }
 }

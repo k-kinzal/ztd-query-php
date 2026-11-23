@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
@@ -67,6 +68,11 @@ final class SelectBounds
                     $expression instanceof ColumnReference => Check::input(
                         $scope->hasSlot($inputs[$expression->occurrence] ?? null, $expression->slot),
                         'Column slot must belong to the SELECT source.',
+                    ),
+                    $expression instanceof TextColumnReference => Check::input(
+                        (($inputs[$expression->occurrence] ?? null) instanceof TableSource)
+                            && $inputs[$expression->occurrence]->columnKind($expression->slot) === ColumnKind::Text,
+                        'A text slot must belong to the SELECT source with its native kind.',
                     ),
                     $expression instanceof BuiltinCast => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert;
 
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
@@ -40,7 +41,7 @@ final class Destination
         $checked = Check::listOf($written, ColumnReference::class, 'An INSERT needs checked target slots.', 1);
         $seen = [];
         foreach ($checked as $column) {
-            Check::input($column->occurrence === 0 && isset($relation->columns[$column->slot]), 'An INSERT write slot must belong to the target.');
+            Check::input($column->occurrence === 0 && $relation->columnKind($column->slot) === ColumnKind::Int4, 'An INSERT write slot must belong to the target.');
             Check::input(!isset($seen[$column->slot]), 'An INSERT cannot repeat a write slot.');
             $seen[$column->slot] = true;
         }

@@ -194,7 +194,7 @@ def negatives(dialect, tag):
 
 def value(expression, row, dialect):
     role = expression[0]
-    if role == "slot":
+    if role in ("slot", "text-slot"):
         return row[expression[2] if len(expression) == 3 else 0][expression[1]]
     if role == "int4-case":
         _, arms, otherwise = expression
@@ -252,7 +252,7 @@ def rows(source, dialect, derived_rows=None, table_rows=None):
 def expected(item, table_rows=None):
     dialect = item["dialect"]
     default = "int4" if dialect == "postgres" else "LONGLONG"
-    metadata = {"boolean": "bool", "null": "text"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
+    metadata = {"boolean": "bool", "null": "text", "text-slot": "text"} if dialect == "postgres" else {"slot": "LONG", "null": "NULL"}
     fields = [[name, metadata.get(expr[0], default)] for expr, name in item["columns"]]
     observed = [[value(expr, row, dialect) for expr, _ in item["columns"]] for row in rows(item["source"], dialect, table_rows=table_rows)
                 if truth(item["where"], row, dialect)]

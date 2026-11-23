@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v24.json"
-CONTRACT = "d8ca0057241a87fb147fd692c735ea6d5c1f253f3bd6b765ff7ea97d5b9c40c0"
+CONTRACT_NAME = "release-layout-v25.json"
+CONTRACT = "8854edf03e4de4f94ec0e68b1dc2ac48bdac8f6113ce69077c1a23d2b8914edd"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -220,6 +220,13 @@ def verify_probe(raw, catalog):
                     "installed-text-literal-mismatch", item)
             require(item.get("textMarker") == [1, "text", 'SELECT CAST($1 AS pg_catalog.text) AS "a0"'],
                     "installed-text-marker-mismatch", item)
+            require(item.get("typedColumns") == [
+                ["text", "int4"],
+                [["TextColumnReference", 0, 0, "label"], ["TextColumnReference", 0, 0, "label"],
+                 ["ColumnReference", 1, 0, "id"]],
+                'SELECT "__ztd_source"."label" AS "label", "__ztd_source"."label" AS "label", '
+                '"__ztd_source"."id" AS "id" FROM "public"."typed_table" AS "__ztd_source"',
+            ], "installed-typed-columns-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

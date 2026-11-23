@@ -79,7 +79,12 @@ if ($dialect === 'postgres') {
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
     $properties['Expression\\TextLiteral'] = ['value' => ['string']];
     $methods['Expression\\TextLiteral'] = ['__construct', 'toString'];
-    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral');
+    $properties['TextColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $methods['TextColumnReference'] = ['__construct'];
+    $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
+    $properties['TableSource']['columnKinds'] = ['array'];
+    $methods['TableSource'][] = 'columnKind';
+    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral', 'TextColumnReference');
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -164,6 +169,7 @@ if ($dialect === 'mysql') {
     $enumCases['ArithmeticOperator'] += ['IntegerDivide' => 'DIV', 'Remainder' => '%'];
 }
 if ($dialect === 'postgres') {
+    $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['ArithmeticOperator'] += ['Divide' => '/', 'Remainder' => '%', 'BitAnd' => '&', 'BitOr' => '|', 'BitXor' => '#'];
 }
@@ -799,9 +805,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v27.json';
+    $storagePath = __DIR__ . '/value-storage-v28.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '42e4617fb2a7893c885123ab2c3f9b1d25363926a4a0f6da4e6ec14b519b8ece',
+        hash_file('sha256', $storagePath) === '4a563359f63ab876bc9debddcbc52b5e81c9ceea15867c9094bdf05edad25d68',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

@@ -30,7 +30,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter|TextLiteral|WideIntegerLiteral $expression,
+        public readonly Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|Parameter|TextColumnReference|TextLiteral|WideIntegerLiteral $expression,
         public readonly Identifier $name,
     ) {
     }

@@ -8,7 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * A reference to a zero-based slot within a visible table occurrence.
+ * A reference to a zero-based int4 slot within a visible occurrence.
  *
  * @visibility public
  * @example Referring to the first source column

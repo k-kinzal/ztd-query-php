@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
@@ -75,6 +76,20 @@ final class SourceBindingTest extends TestCase
 
         self::assertInstanceOf(Known::class, $type);
         self::assertSame(Builtin::Int4, $type->descriptor);
+    }
+
+    public function testAllocateRecordsTheDeclaredNameAndKindTogether(): void
+    {
+        $inspection = new Inspection();
+        $table = $inspection->inspect('CREATE TABLE public.t (label pg_catalog.text)');
+        $operation = $inspection->inspect('SELECT label FROM public.t', [$table]);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $binding = new SourceBinding($operation->binding(), $operation->statement->from);
+        $column = $binding->mergedHeading()[':label'];
+
+        self::assertSame(0, $binding->allocate($column));
+        self::assertSame(0, $binding->allocate($column));
+        self::assertSame(ColumnKind::Text, $binding->source()?->columnKind(0));
     }
 
     public function testSlotForKeepsTheIdentityOfADeclaredColumn(): void

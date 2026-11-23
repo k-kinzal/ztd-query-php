@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Declaration\RelationKind;
@@ -30,6 +32,11 @@ final class SourceBinding
      * @var list<Identifier> Names of the consumed columns
      */
     private array $names = [];
+
+    /**
+     * @var list<ColumnKind> Native kind at each consumed coordinate
+     */
+    private array $kinds = [];
 
     /**
      * @var array<int, int> Slot by analysis declaration identity
@@ -69,13 +76,16 @@ final class SourceBinding
         $resolution = $this->operation->facts->scalar($expression)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'The column must resolve to the projection source.');
 
-        return $this->resolved($resolution);
+        $field = $this->resolved($resolution);
+        Check::input($field instanceof ColumnReference, 'The operand requires an int4 input slot.');
+
+        return $field;
     }
 
     /**
      * Allocates the occurrence slot of an already resolved projection field.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference
     {
         Check::input(
             $resolution->relation === $this->source && $resolution->depth === 0,
@@ -84,7 +94,7 @@ final class SourceBinding
         $column = $resolution->declaration();
         Check::input($column !== null, 'The column must be an explicit member of the projection source.');
 
-        return $this->slotFor($column);
+        return $column->type === Builtin::Text ? new TextColumnReference($this->allocate($column)) : $this->slotFor($column);
     }
 
     /**
@@ -92,15 +102,32 @@ final class SourceBinding
      */
     public function slotFor(Column $column): ColumnReference
     {
-        Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
         Check::input($column->type === Builtin::Int4, 'The bound column must have the signed 32-bit integer type.');
+
+        return new ColumnReference($this->allocate($column));
+    }
+
+    /**
+     * Allocates the declared name and its kind together at the same coordinate.
+     * @throws InvalidConstruction When the declared kind has no closed physical slot
+     */
+    public function allocate(Column $column): int
+    {
+        Check::input($this->table !== null && in_array($column, $this->table->columns, true), 'The column must be an explicit member of the projection source.');
+        $kind = match ($column->type) {
+            Builtin::Int4 => ColumnKind::Int4,
+            Builtin::Text => ColumnKind::Text,
+            default => throw new InvalidConstruction('The declared column has no checked native slot kind.'),
+        };
         $key = spl_object_id($column);
         if (!isset($this->slots[$key])) {
+            $name = new Identifier($column->name->value);
             $this->slots[$key] = count($this->names);
-            $this->names[] = new Identifier($column->name->value);
+            $this->names[] = $name;
+            $this->kinds[] = $kind;
         }
 
-        return new ColumnReference($this->slots[$key]);
+        return $this->slots[$key];
     }
 
     /**
@@ -143,6 +170,7 @@ final class SourceBinding
             new Identifier($this->table->name->name->value),
             $this->names,
             $this->source->table->only,
+            $this->kinds,
         );
     }
 
