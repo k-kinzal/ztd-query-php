@@ -1,0 +1,58 @@
+{
+  "revision": "SemanticsIR/postgres-grouped-having-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "PostgreSQL global and keyed aggregation with signed builtin operands and bound result positions.",
+  "extends": ["server-grouped-v3.json", "postgres-grouped-result-order-v1.json", "postgres-signed-comparison-widths-v1.json"],
+  "constructors": {
+    "GroupedComparison": {
+      "type": "Aggregation/GroupedComparison",
+      "role": "A native signed comparison evaluated once per admitted group.",
+      "structure": "An exact PostgreSQL integer comparison operator and two ordered operands, each a grouping field, builtin aggregate, signed int4 literal or signed int8 literal.",
+      "conditions": "The containing grouped query owns all grouping-key reads and aggregate-argument slots. Each aggregate retains its local argument and duplicate policy.",
+      "meaning": "Compare the signed values after grouping and aggregation. Return unknown if either value is NULL.",
+      "sql": "Emit the native pg_catalog operator between the two ordered operands. Render each grouping field and builtin aggregate in its own role and retain the signed width of every literal."
+    }
+  },
+  "existingRoles": ["Aggregation/Aggregate", "Aggregation/GroupedSelect", "Aggregation/GroupColumn", "ColumnReference", "IntegerLiteral", "Expression/WideIntegerLiteral", "Predicate/IntegerOperator", "BooleanLiteral", "NullLiteral"],
+  "structure": "HAVING is an optional checked group predicate. The predicate is a signed grouped comparison, Boolean constant or SQL NULL. Its field and aggregate reference roles compose separately from the row-level WHERE and result projection.",
+  "conditions": "Analysis resolves HAVING against the grouping scope and the qualified or admitted builtin operator. A bare field must be a checked grouping key. An argument must be a checked int4 slot of the owning relation. Global grouping admits aggregate operands and literal predicates. Reject unbound names, unsupported operators and raw or non-grouped operands at the group boundary.",
+  "meaning": "Apply WHERE to each input row, partition according to GROUP BY or form the global group, evaluate the group predicate, keep TRUE groups, and then apply output ordering and bounds. COUNT over an empty group gives zero and the admitted non-COUNT aggregates give NULL. A NULL condition discards its group.",
+  "sql": "Emit HAVING after GROUP BY and before result ORDER BY, LIMIT and OFFSET. Use absolute input identities, exact native aggregate, ordered operands and explicit integer operator.",
+  "observations": ["Exact output names, positions, signed type IDs and rows", "Typed aggregate results, NULL group keys, global empty input and duplicate-sensitive versus DISTINCT arguments", "Group membership, order and bounds after the group filter and independent of WHERE", "Analyzed native spellings and comparison operand order"],
+  "finite": {
+    "source": ["accounts", "empty"],
+    "aggregate": ["count", "sum", "min", "max"],
+    "operator": ["=", "<>", "<", "<=", ">", ">="],
+    "operands": ["aggregate-literal", "literal-aggregate", "key-aggregate", "aggregate-key"],
+    "identities": 192,
+    "completeness": "Recover the source, operator, aggregate and ordered operand roles from constructed values for all 192 direct identities on each release."
+  },
+  "analysis": ["Hidden COUNT in a keyed HAVING", "A native aggregate compares with its grouped key", "Different row WHERE and group HAVING conditions", "Global empty COUNT compared to zero", "Global nullable aggregate compared to a signed literal", "HAVING SQL NULL discards the group", "HAVING TRUE keeps the empty global group", "Signed bigint literal against aggregate", "Qualified operator and DISTINCT aggregate"],
+  "exploration": {
+    "seeds": [1873, 12011, 43597],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary keyed and global scopes, signed bounds, nullable and Boolean controls, two independent aggregate operands, grouping-key operands, duplicate policy, nested WHERE, result ordering and limits."
+  },
+  "negative": ["Direct ungrouped input field in HAVING", "Direct HAVING key from another occurrence", "Direct aggregate argument outside the declared input", "Analyzed ungrouped field in HAVING", "Analyzed output alias in HAVING without an input field of that name", "Unsupported arithmetic around a HAVING aggregate"],
+  "faults": ["Drop HAVING", "Swap ordered HAVING operands", "Change HAVING comparison operator", "Bypass HAVING grouping-field ownership", "Drop DISTINCT in the HAVING aggregate"],
+  "evidence": {
+    "P01": "The comparison carries an ordered operator and closed signed group operands.",
+    "P02": "The grouped value enforces the input scope for group keys and argument slots.",
+    "P03": "The predicate retains its group operands and operation without parse nodes or context.",
+    "P04": "A separate grouped predicate composes with partitioning, row filters and result layout.",
+    "P05": "All compared operands, reference coordinates and owner fields are readonly and closed.",
+    "P06": "Checked native rendering preserves group filtering, typed results and later ordering or bounds.",
+    "Q01": "Reject unbound or ungrouped fields and every specified invalid argument placement.",
+    "Q02": "Exhaust each signed comparison grid and check construction through analyzed spellings.",
+    "Q03": "Evaluate signed operands against a separate grouped fixture model including global emptiness.",
+    "Q04": "Observe native results, original statement equivalence, exact type IDs and fault witnesses on both releases.",
+    "Q05": "Bind exact constructor, grouped scope and renderer bodies to the installed package bytes."
+  },
+  "open": ["HAVING logical trees, NULL tests, nonintegral comparisons and aggregate expressions", "Grouping sets, inferred functional dependencies and window clauses", "Global literal result projections outside the admitted aggregate projection roots"],
+  "trust": ["Pinned builtin aggregate and comparison behavior", "Closed scalar and query construction", "Independent grouped relation evaluator and native comparison observer", "Checked PHP bytes and controller"],
+  "sources": ["https://www.postgresql.org/docs/16/sql-select.html", "https://www.postgresql.org/docs/17/sql-select.html", "https://www.postgresql.org/docs/17/functions-aggregate.html"]
+}
