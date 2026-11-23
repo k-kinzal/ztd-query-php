@@ -1,0 +1,131 @@
+{
+  "revision": "SemanticsIR/postgres-from-list-2",
+  "extends": [
+    "postgres-from-list-v1.json",
+    "server-join-v2.json"
+  ],
+  "approval": "pending-human-review",
+  "dialects": [
+    "PostgreSql"
+  ],
+  "profiles": [
+    "pg-16.6",
+    "pg-17.2"
+  ],
+  "requiredScope": "The fixed grammar and release scope remains in force.",
+  "constructors": {
+    "From/Join": {
+      "role": "The scoped ordered product of a comma list of ordinary table occurrences.",
+      "structure": "The list expands into a left-associated CROSS tree. Complete explicit INNER, LEFT, RIGHT and FULL operands keep their own topology, local predicate and absolute source occurrences.",
+      "conditions": "Between 2 and 61 checked table occurrences. Each explicit ON condition is local to its own join. Derived and merged children require separate role evidence.",
+      "meaning": "The left-to-right product preserves every duplicate. An empty input removes all combinations. Descendants belong to the specified input unless it declares ONLY. WHERE is applied after the complete product. Explicit joins bind before commas and apply their ON and null extension locally.",
+      "sql": "Emit the product with CROSS JOIN and use an absolute table name and a distinct alias for each occurrence."
+    },
+    "ResultColumn": {
+      "role": "An ordinal output field selected from an occurrence in a FROM list.",
+      "structure": "Result positions pair an explicit label with the already resolved field.",
+      "conditions": "Every int4 slot belongs to the current statement. Wildcard slots follow exact position provenance across product members and explicit join outputs.",
+      "meaning": "Observe names, ordered positions, signed int4 metadata, integer values, NULL and duplicates. No row order is guaranteed.",
+      "sql": "Project the qualified physical field under its fixed output label."
+    }
+  },
+  "externalInterpretation": "Use the same absolute ordinary relations and inheritance definitions under the pinned PostgreSQL profile.",
+  "observations": [
+    "Native result names, ordinals and field types",
+    "Typed row bags with NULL and repeated values",
+    "The same declaration in distinct aliases is observed as distinct occurrences",
+    "An empty list member and inherited rows in a later occurrence are distinguishable",
+    "Outer join members retain only their own unmatched sides. A preceding comma member cannot be addressed by their ON."
+  ],
+  "finite": {
+    "widths": [
+      2,
+      3,
+      4
+    ],
+    "policies": [
+      "inherit",
+      "only"
+    ],
+    "inputs": [
+      "populated",
+      "empty-last"
+    ],
+    "projections": [
+      "all",
+      "last"
+    ],
+    "filters": [
+      "absent",
+      "int4-comparison"
+    ],
+    "identities": 144,
+    "completeness": "Check every product of the six dimension sets from the actual published graph. Width counts FROM members, with an explicit joined member counted once.",
+    "lastItem": [
+      "table",
+      "left-join",
+      "right-join"
+    ]
+  },
+  "exploration": {
+    "seeds": [
+      8861,
+      23003,
+      58147
+    ],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 260,
+    "allowedExclusions": [],
+    "requiredForms": "Between 2 and 6 leaves, repeated table identities with distinct occurrence positions, both inheritance flags, an empty input, labels that need quoting, and WHERE addressing multiple inputs. Observe explicit LEFT and RIGHT subtrees under the product and varying local versus enclosing references."
+  },
+  "analysis": [
+    "Unqualified star keeps declaration order across three occurrences, including repeated table identities.",
+    "A qualified wildcard reads only the last of three occurrences.",
+    "Explicit fields and WHERE read the specified occurrences in a self product.",
+    "ONLY on a later occurrence removes descendants only there.",
+    "An empty input leaves an empty bag with unchanged output metadata.",
+    "A position-dependent filter can read fields from both ends after a four-input product.",
+    "An explicit LEFT member is applied before the product, preserving its own unmatched rows.",
+    "An explicit RIGHT member keeps the right table slots and each qualified alias.",
+    "A nested explicitly joined member preserves both associations and original heading provenance."
+  ],
+  "negative": [
+    "A directly constructed result references a nonexistent occurrence.",
+    "Two source occurrences provide an ambiguous unqualified field.",
+    "The list contains a derived source outside the ordinary-table boundary.",
+    "The list contains an undeclared relation.",
+    "The list exceeds the checked occurrence budget.",
+    "A member ON condition refers to a preceding comma item.",
+    "A merged child is inside a comma product."
+  ],
+  "faults": [
+    "Read a later field from the first occurrence.",
+    "Replace a later scan's ONLY policy with an inherited scan.",
+    "Omit WHERE on the normalized product.",
+    "Flatten a null-extending member to INNER before the product."
+  ],
+  "evidence": {
+    "P01": "Compare ordered external identities and each resolved field reference in the published graph.",
+    "P02": "Verify joint scope and finite budgets at the completed statement boundary.",
+    "P03": "Store only the resolved CROSS tree, references and result labels.",
+    "P04": "Derive the product and filter from explicit leaves, slots and operators.",
+    "P05": "Use the checked immutable closure of existing joins, predicates and results.",
+    "P06": "Compare the rendered SQL and original FROM list using the same external fixtures.",
+    "Q01": "Require typed refusals for invalid occurrences and invalid analysis inputs.",
+    "Q02": "Require every finite identity, seeded case and analyzed case in both registered releases.",
+    "Q03": "Compare projection and filter binding under products with multiple occurrences.",
+    "Q04": "Measure typed metadata and row bags and independently detect each of the three faults.",
+    "Q05": "Bind runtimes, selected controller, mutations and staged source to the exact candidate."
+  },
+  "open": [
+    "Lateral, derived and merged members and unsupported scalar types require evidence. Aliases on a whole explicit join remain unadmitted.",
+    "Widths above 61 remain in the required scope."
+  ],
+  "trust": [
+    "Pinned database and resolved base-table declarations",
+    "The independent relational evaluator and archived execution controller"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-FROM"
+  ]
+}
