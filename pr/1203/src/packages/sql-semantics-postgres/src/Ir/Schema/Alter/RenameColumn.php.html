@@ -57,8 +57,8 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Retaining the descendant policy</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $context = $semantics-&gt;context([&#039;CREATE TABLE reports (id integer)&#039;]);</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;ALTER TABLE ONLY reports RENAME COLUMN id TO report_id&#039;, $context)-&gt;only // =&gt; true</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $declarations = $semantics-&gt;context([&#039;CREATE TABLE reports (id integer)&#039;]);</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $semantics-&gt;analyze(&#039;ALTER TABLE ONLY reports RENAME COLUMN id TO report_id&#039;, $declarations)-&gt;only // =&gt; true</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RenameColumn</span> <span class="tok-kw">implements</span> <span class="tok-id">SemanticsIR</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
