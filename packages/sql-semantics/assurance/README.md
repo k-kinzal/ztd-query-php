@@ -235,6 +235,8 @@ The [PostgreSQL Boolean declaration contract](postgres-create-boolean-v2.json) c
 
 The [PostgreSQL Boolean field contract](postgres-boolean-fields-v1.json) checks typed native reads, qualified and unqualified bindings, NULL extension, filters, DISTINCT and positional ordering. Its observer compares exact type identifiers even for empty results. Run `run_server_postgres_boolean_fields.py` and `combine_server_postgres_boolean_fields_evidence.py` for both pinned releases.
 
+The [PostgreSQL int8 field contract](postgres-int8-fields-v1.json) checks exact native width and coordinates of physical and derived fields. It compares bound result metadata, full signed values, NULL extension, positional order and SQLSTATE 22003 from narrowing. Run the domain with `run_server_postgres_int8_fields.py` and replay with `combine_server_postgres_int8_fields_evidence.py` on both pinned releases.
+
 The [PostgreSQL Boolean RETURNING contract](postgres-boolean-returning-v1.json) checks native Boolean and signed fields in four mutation roots. The observer compares affected-row count, exact positional types, returned values and physical rows before execution, after execution and after rollback. Run `run_server_postgres_boolean_returning.py` and `combine_server_postgres_boolean_returning_evidence.py` for both pinned releases.
 
 The [PostgreSQL Boolean write contract](postgres-boolean-writes-v1.json) checks native destinations for VALUES, INSERT SELECT and UPDATE. It compares assigned and untouched data, old-row swaps, native result type identifiers and the DISTINCT boundary for untyped NULL. Run the domain with `run_server_postgres_boolean_writes.py` and replay with `combine_server_postgres_boolean_writes_evidence.py` on both pinned releases.

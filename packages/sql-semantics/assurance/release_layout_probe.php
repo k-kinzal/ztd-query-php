@@ -240,6 +240,21 @@ function observePostgresBooleanInput(SqlSemantics\Platform\PostgreSql\Semantics 
         $ordinary->toString(), $distinct->toString()];
 }
 
+function observePostgresInt8Field(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (lo bigint, enabled boolean)']);
+    $value = $semantics->analyze(
+        'SELECT ((lo)) AS grouped, b.lo AS resolved, CAST(b.lo AS integer) AS narrow FROM public.bounds_read b',
+        $context,
+    );
+    $first = $value->columns[0]->expression;
+    $second = $value->columns[1]->expression;
+    $narrowed = $value->columns[2]->expression;
+
+    return [$first::class, $first->slot, $first->occurrence, $second == $first, $narrowed->operand == $first, $narrowed->target->value,
+        $value->source->columnKind($first->slot)?->value, $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -418,6 +433,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $columns[] = [substr($field::class, strlen($namespace . 'Ir\\')), $field->slot, $field->occurrence, $column->name->value];
             }
             $details['booleanFields'] = observePostgresBooleanFields($semantics);
+            $details['int8Field'] = observePostgresInt8Field($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

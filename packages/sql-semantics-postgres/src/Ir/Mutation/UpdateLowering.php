@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
@@ -68,7 +69,10 @@ final class UpdateLowering
             $operand = $operand->operand;
         }
         if (!$target instanceof ColumnReference && $operand instanceof ParsedColumn) {
-            return $binding->field($operand);
+            $field = $binding->field($operand);
+            Check::input(!$field instanceof WideIntegerColumnReference, 'An UPDATE input field needs an admitted assignment type.');
+
+            return $field;
         }
         $kind = match (true) {
             $target instanceof ColumnReference => ColumnKind::Int4,

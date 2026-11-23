@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -80,7 +81,7 @@ final class CompoundShape
                 CastDestination::Boolean => ResultKind::Boolean,
                 CastDestination::Text => ResultKind::Text,
             },
-            $column instanceof WideIntegerLiteral => ResultKind::WideInteger,
+            $column instanceof WideIntegerLiteral, $column instanceof WideIntegerColumnReference => ResultKind::WideInteger,
             $column instanceof TextLiteral, $column instanceof TextColumnReference, $column instanceof CollatedText => ResultKind::Text,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof BooleanLiteral, $column instanceof BooleanColumnReference, $column instanceof IntegerRange, $column instanceof IntegerDistinctness, $column instanceof NullTest, $column instanceof TruthTest, $column instanceof TextComparison => ResultKind::Boolean,

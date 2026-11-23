@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir;
 
-use SqlSemantics\Platform\PostgreSql\Ir\Binding\ParameterLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ProjectionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\PredicateLowering;
@@ -14,8 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select as ParsedSelect;
 
 /**
@@ -43,35 +41,12 @@ final class SelectLowering
             'Complete PostgreSQL IR currently supports projections with positional result selection.',
         );
         Check::input($statement->targets !== [], 'A complete SELECT needs a nonempty projection.');
-        $expressions = new ExpressionLowering();
         $searchPath = $operation->context->searchPath;
         $operators = $searchPath[0]->value === 'pg_temp' ? ($searchPath[1]->value ?? null) : $searchPath[0]->value;
         $catalogFirst = $operators === 'pg_catalog';
         $binding = JoinBinding::bind($operation, $statement->from, $catalogFirst);
         $where = (new PredicateLowering())->lower($statement->where, $binding, $catalogFirst);
-        $fields = $operation->facts->query($statement)->fields();
-        Check::input($fields !== null, 'A complete projection requires a resolved output shape.');
-        $results = [];
-        $parameters = new ParameterLowering();
-        foreach ($fields as $field) {
-            $name = $field->name;
-            Check::input($name !== null, 'The result must have a resolved name.');
-            $label = new Identifier($name->value);
-            $expression = $field->expression;
-            $resolution = $field->resolution;
-            if ($expression === null || $expression instanceof ParsedColumn) {
-                Check::input($resolution instanceof ResolvedColumn, 'A projected field must resolve to one visible input slot.');
-                $value = $binding instanceof JoinBinding ? $binding->projected($resolution) : $binding->resolved($resolution);
-                $results[] = new ResultColumn($value, $label);
-                continue;
-            }
-            $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
-            $kind = $assignment?->columnKind(count($results));
-            $value = $parameter ?? $expressions->result($expression, $binding, $catalogFirst, $kind, $statement->distinct !== null, $operand === null);
-            $results[] = new ResultColumn($value, $label);
-        }
-
-        Check::input($results !== [], 'A complete projection requires at least one resolved output field.');
+        $results = (new ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null);
 
         $result = new ResultLowering();
         $order = $result->orders($statement->options->order ?? []);

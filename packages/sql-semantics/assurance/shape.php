@@ -70,7 +70,7 @@ if ($dialect === 'postgres') {
     $castDestination = 'Expression\\CastDestination';
     $properties[$builtinCast] = [
         'target' => [$castDestination],
-        'operand' => ['Binding\\Parameter', 'BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral'],
+        'operand' => ['Binding\\Parameter', 'BooleanLiteral', 'ColumnReference', $builtinCast, 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'From\\BooleanColumnReference', 'From\\TextColumnReference', 'From\\WideIntegerColumnReference', 'IntegerLiteral', 'NullLiteral'],
     ];
     $properties[$castDestination] = $methods[$castDestination] = [];
     $properties['Binding\\Parameter']['input'] = [$castDestination];
@@ -93,11 +93,13 @@ if ($dialect === 'postgres') {
     $methods['From\\TextColumnReference'] = ['__construct'];
     $properties['From\\BooleanColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
     $methods['From\\BooleanColumnReference'] = ['__construct'];
+    $properties['From\\WideIntegerColumnReference'] = ['slot' => ['int'], 'occurrence' => ['int']];
+    $methods['From\\WideIntegerColumnReference'] = ['__construct'];
     $properties['From\\ColumnKind'] = $methods['From\\ColumnKind'] = [];
     $properties['TableSource']['columnKinds'] = ['array'];
     $methods['TableSource'][] = 'columnKind';
     array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral',
-        'Expression\\CollatedText', 'From\\BooleanColumnReference', 'From\\TextColumnReference', $textComparison);
+        'Expression\\CollatedText', 'From\\BooleanColumnReference', 'From\\TextColumnReference', 'From\\WideIntegerColumnReference', $textComparison);
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];
@@ -206,7 +208,7 @@ if ($dialect === 'mysql') {
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }
 if ($dialect === 'postgres') {
-    $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text', 'Boolean' => 'bool'];
+    $enumCases['From\\ColumnKind'] = ['Int4' => 'int4', 'Text' => 'text', 'Boolean' => 'bool', 'Int8' => 'int8'];
     $enumCases['Expression\\CastDestination'] = ['Integer' => 'int4', 'WideInteger' => 'int8', 'Boolean' => 'bool', 'Text' => 'text'];
     $enumCases['Expression\\TextCollation'] = ['C' => 'C'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
@@ -563,7 +565,7 @@ if ($dialect !== 'sqlite') {
     ];
     array_push($properties['Predicate\\NullTest']['operand'], 'Predicate\\IntegerRange', 'From\\TextColumnReference');
     if ($dialect === 'postgres') {
-        array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
+        array_push($properties['Predicate\\NullTest']['operand'], 'From\\BooleanColumnReference', 'From\\WideIntegerColumnReference', 'Predicate\\IntegerDistinctness', 'Predicate\\Text\\TextComparison', 'Predicate\\TruthTest');
     } else {
         $properties['Predicate\\NullTest']['operand'][] = 'Predicate\\Text\\TextComparison';
     }
@@ -664,7 +666,7 @@ if ($dialect !== 'sqlite') {
     if ($dialect === 'postgres') {
         $properties['Schema\\CharacterStorage'] = $methods['Schema\\CharacterStorage'] = [];
         $properties['Schema\\BooleanStorage'] = $methods['Schema\\BooleanStorage'] = [];
-        array_push($internal, 'Expression\\BooleanInput', 'Schema\\LiteralDefaultLowering', 'Schema\\BooleanDefaultLowering');
+        array_push($internal, 'From\\ProjectionLowering', 'Expression\\BooleanInput', 'Schema\\LiteralDefaultLowering', 'Schema\\BooleanDefaultLowering');
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
         $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
         $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];

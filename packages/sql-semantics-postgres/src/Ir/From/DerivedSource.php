@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\From;
 
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -47,13 +48,15 @@ final class DerivedSource
         $expression = $column->expression;
         Check::input(
             $expression instanceof IntegerLiteral || $expression instanceof ColumnReference
-                || $expression instanceof TextColumnReference || $expression instanceof BooleanColumnReference,
-            'A derived join field requires a signed literal, a signed column, a text column or a Boolean column.'
+                || $expression instanceof TextColumnReference || $expression instanceof BooleanColumnReference
+                || $expression instanceof WideIntegerLiteral || $expression instanceof WideIntegerColumnReference,
+            'A derived join field requires a signed literal or a supported native column.'
         );
 
         return match (true) {
             $expression instanceof TextColumnReference => ColumnKind::Text,
             $expression instanceof BooleanColumnReference => ColumnKind::Boolean,
+            $expression instanceof WideIntegerColumnReference, $expression instanceof WideIntegerLiteral => ColumnKind::Int8,
             $expression instanceof ColumnReference, $expression instanceof IntegerLiteral => ColumnKind::Int4,
         };
     }

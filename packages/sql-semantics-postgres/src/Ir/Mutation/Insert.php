@@ -60,6 +60,7 @@ final class Insert implements SemanticsIR
                     ColumnKind::Int4 => $value instanceof IntegerLiteral,
                     ColumnKind::Text => $value instanceof TextLiteral || $value instanceof IntegerLiteral,
                     ColumnKind::Boolean => $value instanceof BooleanLiteral,
+                    ColumnKind::Int8 => false,
                 };
                 Check::input($value === null || $compatible, 'An inserted cell must match its target native kind.');
             }

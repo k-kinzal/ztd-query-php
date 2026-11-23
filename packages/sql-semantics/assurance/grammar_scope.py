@@ -282,14 +282,14 @@ def inventory(root):
             related.update({alternative: ("postgres-boolean-tests-v1.json",) for alternative in rules["a_expr"]
                             if any(alternative.endswith(" " + mode) for mode in ("TRUE_P", "FALSE_P", "UNKNOWN"))
                             and " IS " in alternative})
-            related.update({alternative: ("postgres-builtin-casts-v4.json", "postgres-text-conversion-v1.json", "postgres-boolean-write-inputs-v1.json") for alternative in (
+            related.update({alternative: ("postgres-builtin-casts-v4.json", "postgres-text-conversion-v1.json", "postgres-boolean-write-inputs-v1.json", "postgres-int8-fields-v1.json") for alternative in (
                 "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
                 "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
             )})
             for rule in ("a_expr", "b_expr"):
                 for alternative in rules.get(rule, ()):
                     if alternative.endswith((" IS NULL_P", " IS NOT NULL_P")):
-                        related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json", "postgres-boolean-fields-v1.json")
+                        related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json", "postgres-boolean-fields-v1.json", "postgres-int8-fields-v1.json")
                     if alternative.endswith((" IS TRUE_P", " IS FALSE_P", " IS UNKNOWN", " IS NOT TRUE_P", " IS NOT FALSE_P", " IS NOT UNKNOWN")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-boolean-fields-v1.json")
             for alternative in rules.get("insert_rest", ()):
@@ -303,14 +303,14 @@ def inventory(root):
                     related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v2.json", "postgres-boolean-writes-v1.json", "postgres-boolean-write-inputs-v1.json")
             for alternative in rules.get("table_ref", ()):
                 if "select_with_parens" in alternative and "LATERAL" not in alternative:
-                    related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json", "postgres-boolean-fields-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-derived-text-v1.json", "postgres-boolean-fields-v1.json", "postgres-int8-fields-v1.json")
             for rule in ("ColumnDef", "GenericType"):
                 for alternative in rules.get(rule, ()):
                     linked = related.get(alternative, ())
                     related[alternative] = (*linked, "postgres-text-declarations-v2.json")
             for rule in ("columnref", "target_el"):
                 for alternative in rules.get(rule, ()):
-                    related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v2.json", "postgres-boolean-fields-v1.json")
+                    related[alternative] = (*related.get(alternative, ()), "postgres-typed-columns-v2.json", "postgres-boolean-fields-v1.json", "postgres-int8-fields-v1.json")
             for rule in ("AexprConst", "Sconst", "c_expr"):
                 for alternative in rules.get(rule, ()):
                     if "SCONST" in alternative or "Sconst" in alternative:

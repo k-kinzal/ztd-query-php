@@ -16,4 +16,5 @@ enum ColumnKind: string
     case Int4 = 'int4';
     case Text = 'text';
     case Boolean = 'bool';
+    case Int8 = 'int8';
 }

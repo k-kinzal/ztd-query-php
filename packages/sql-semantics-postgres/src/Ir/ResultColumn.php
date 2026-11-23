@@ -12,6 +12,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
@@ -35,7 +36,7 @@ final class ResultColumn
      * Pairs a closed expression with its semantic result name.
      */
     public function __construct(
-        public readonly Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral $expression,
+        public readonly Arithmetic|BuiltinCast|CollatedText|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanColumnReference|BooleanLiteral|NullLiteral|NullTest|Parameter|TextColumnReference|TextComparison|TextLiteral|WideIntegerLiteral|WideIntegerColumnReference $expression,
         public readonly Identifier $name,
     ) {
     }

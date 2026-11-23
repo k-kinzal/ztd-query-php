@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
@@ -68,7 +69,7 @@ final class SelectBounds
                     continue;
                 }
                 match (true) {
-                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference => $scope->column($expression, $inputs),
+                    $expression instanceof ColumnReference, $expression instanceof TextColumnReference, $expression instanceof BooleanColumnReference, $expression instanceof WideIntegerColumnReference => $scope->column($expression, $inputs),
                     $expression instanceof BuiltinCast, $expression instanceof CollatedText => $pending[] = [$expression->operand, $height + 1],
                     $expression instanceof Arithmetic => array_push($pending, [$expression->right, $height + 1], [$expression->left, $height + 1]),
                     $expression instanceof Parameter => $positions[$expression->position] = ParameterSignature::typeFor($positions[$expression->position] ?? null, $expression),

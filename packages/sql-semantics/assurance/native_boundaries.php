@@ -80,6 +80,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-boolean-returning-boundaries-v1.json', '37752e21d0c6ade880a6af530b1238d5ce335e5fcc663b3b4e1a378a5da560bb'],
             ['postgres-boolean-writes-boundaries-v1.json', 'b72bfce51bcb67617dbdb29eca44c831bd80d663bd7327f551b4b4345387c4b2'],
             ['postgres-boolean-write-inputs-boundaries-v1.json', '4d8fcc71a9c381dc6c3f10a9bda953ae8b799395e8b92d93ad713110a06ad683'],
+            ['postgres-int8-fields-boundaries-v1.json', 'b3ca90d0760af06e4c1d5f4e23ccae910469a0a67800a5cd97bed38d591e5056'],
         ],
         'sqlite' => [],
     };
@@ -177,7 +178,7 @@ function checkNativeBoundaries(
             foreach (['Statement\\Constraint\\Column\\DefaultExpression', 'Statement\\Constraint\\Column\\NotNull', 'Statement\\Constraint\\Column\\NullAllowed',
                 'Statement\\Table\\Element\\ColumnDefinition', 'Statement\\Table\\Element\\ListedColumns', 'Statement\\Table\\Persistence',
                 'Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
-                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
+                'Ir\\ColumnReference as IrColumnReference', 'Ir\\From\\BooleanColumnReference', 'Ir\\From\\WideIntegerColumnReference', 'Ir\\Expression\\BooleanInput', 'Ir\\From\\ProjectionLowering', 'Ir\\From\\ColumnKind', 'Ir\\From\\TextColumnReference', 'Statement\\Manipulation\\TargetTable', 'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
                 'Ir\\Expression\\CollatedText', 'Ir\\Expression\\CollatedTextLowering', 'Ir\\Expression\\TextCollation', 'Statement\\Expression\\Collation',
                 'Ir\\Predicate\\Text\\TextComparison', 'Ir\\Predicate\\Text\\TextComparisonLowering', 'Ir\\Predicate\\Text\\TextOperator',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',

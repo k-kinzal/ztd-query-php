@@ -7,14 +7,19 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Expression;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\From\BooleanColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference as ParsedColumn;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral as ParsedNull;
@@ -58,11 +63,27 @@ final class BuiltinCastLowering
         if ($operand instanceof ParsedNull) {
             return new BuiltinCast($target, new NullLiteral());
         }
+        return new BuiltinCast($target, $this->operand($operand, $binding, $catalogFirst));
+    }
+
+    /**
+     * Resolves a typed source operand without changing its native kind.
+     *
+     * @throws InvalidConstruction When an operand is outside the checked cast domain
+     */
+    public function operand(
+        Scalar $operand,
+        SourceBinding|JoinBinding $binding,
+        bool $catalogFirst,
+    ): BooleanLiteral|BuiltinCast|ColumnReference|IntegerLiteral|WideIntegerLiteral|TextLiteral|BooleanColumnReference|TextColumnReference|WideIntegerColumnReference {
         $input = $binding->typeOf($operand);
         Check::input($input instanceof Known && in_array($input->descriptor, [Builtin::Int4, Builtin::Int8, Builtin::Bool, Builtin::Text], true), 'The cast input must resolve to pg_catalog.int4, pg_catalog.int8, pg_catalog.bool, pg_catalog.text or NULL.');
+        if ($operand instanceof ParsedColumn) {
+            return $binding->field($operand);
+        }
         $value = (new ExpressionLowering())->lower($operand, $binding, $catalogFirst);
         Check::input($value instanceof BooleanLiteral || $value instanceof ColumnReference || $value instanceof IntegerLiteral || $value instanceof WideIntegerLiteral || $value instanceof TextLiteral || $value instanceof BuiltinCast, 'The cast input has no checked scalar role.');
 
-        return new BuiltinCast($target, $value);
+        return $value;
     }
 }

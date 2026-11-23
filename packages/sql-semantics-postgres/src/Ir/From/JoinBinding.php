@@ -137,7 +137,7 @@ final class JoinBinding
     /**
      * Binds a scalar field to its exact occurrence and native column role.
      */
-    public function field(Scalar $scalar): ColumnReference|TextColumnReference|BooleanColumnReference
+    public function field(Scalar $scalar): ColumnReference|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference
     {
         $resolution = $this->operation->facts->scalar($scalar)->resolution;
         Check::input($resolution instanceof ResolvedColumn, 'A column must resolve within this join scope.');
@@ -148,7 +148,7 @@ final class JoinBinding
     /**
      * Allocates a checked field in the join occurrence containing its resolved input.
      */
-    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference|BooleanColumnReference
+    public function resolved(ResolvedColumn $resolution): ColumnReference|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference
     {
         Check::input($resolution->depth === 0, 'A column must resolve within this join scope.');
         Check::input($resolution->slot->coalescedWith === null, 'A merged FULL key is not a physical int4 operand.');
@@ -180,6 +180,7 @@ final class JoinBinding
         return match (true) {
             $field instanceof TextColumnReference => new TextColumnReference($field->slot, $occurrence),
             $field instanceof BooleanColumnReference => new BooleanColumnReference($field->slot, $occurrence),
+            $field instanceof WideIntegerColumnReference => new WideIntegerColumnReference($field->slot, $occurrence),
             $field instanceof ColumnReference => new ColumnReference($field->slot, $occurrence),
         };
     }
@@ -187,7 +188,7 @@ final class JoinBinding
     /**
      * Projects an ordinary slot or the ordered two-source value of a FULL key.
      */
-    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase|TextColumnReference|BooleanColumnReference
+    public function projected(ResolvedColumn $resolution): ColumnReference|IntegerCase|TextColumnReference|BooleanColumnReference|WideIntegerColumnReference
     {
         $slot = $resolution->slot;
         if ($slot->coalescedWith === null) {
