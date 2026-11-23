@@ -15,6 +15,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 
 /**
@@ -66,6 +67,24 @@ final class OccurrenceScope
         }
 
         return $count;
+    }
+
+    /**
+     * Checks the role and occurrence of a projected column.
+     * @param list<TableSource|DerivedSource> $inputs
+     */
+    public function projectedColumn(ColumnReference|TextColumnReference $column, array $inputs): void
+    {
+        $input = $inputs[$column->occurrence] ?? null;
+        if ($column instanceof TextColumnReference) {
+            Check::input(
+                $input instanceof TableSource && $input->columnKind($column->slot) === ColumnKind::Text,
+                'A text slot must belong to the SELECT source with its native kind.'
+            );
+
+            return;
+        }
+        Check::input($this->hasSlot($input, $column->slot), 'Column slot must belong to the SELECT source.');
     }
 
     /**

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\DerivedSource;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
@@ -20,6 +21,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\ResultColumn;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
+use SqlSemantics\Platform\PostgreSql\Ir\TextColumnReference;
 
 #[CoversClass(OccurrenceScope::class)]
 #[Small]
@@ -50,5 +52,14 @@ final class OccurrenceScopeTest extends TestCase
         self::assertTrue($scope->hasSlot($derived, 0));
         self::assertFalse($scope->hasSlot($derived, 1));
         self::assertFalse($scope->hasSlot(null, 0));
+    }
+    public function testProjectedColumnRejectsTheWrongNativeKind(): void
+    {
+        $table = new TableSource(new Identifier('public'), new Identifier('messages'), [new Identifier('label')], false, [ColumnKind::Text]);
+        $scope = new OccurrenceScope();
+        $scope->projectedColumn(new TextColumnReference(0), [$table]);
+        $this->expectExceptionMessage('Column slot must belong to the SELECT source.');
+
+        $scope->projectedColumn(new ColumnReference(0), [$table]);
     }
 }
