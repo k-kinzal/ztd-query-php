@@ -453,6 +453,11 @@ def inventory(root):
                         related[alternative] = (*related.get(alternative, ()), "postgres-local-values-v2.json")
                         if alternative == "simple_select: values_clause":
                             related[alternative] = (*related[alternative], "postgres-values-compound-v1.json")
+        if postgres:
+            for rule in ("ViewStmt", "opt_check_option", "opt_reloptions"):
+                for alternative in rules.get(rule, []):
+                    if "RECURSIVE" not in alternative:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-create-view-v1.json")
         for rule in compound:
             for alternative in rules.get(rule, []):
                 if any(operator in alternative for operator in ("UNION", "INTERSECT", "EXCEPT", "DISTINCT", "ALL")):

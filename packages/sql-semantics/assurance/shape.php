@@ -753,6 +753,16 @@ if ($dialect !== 'sqlite') {
         $methods[$valuesQuery] = ['__construct', 'columnKind', 'profileId', 'toString'];
         $methods[$valuesRow] = ['__construct', 'toString'];
         $methods[$valuesCell] = ['__construct', 'kind', 'toString'];
+        $viewCreate = 'Schema\\View\\CreateView';
+        $viewCheck = 'Schema\\View\\ViewCheckOption';
+        $roots[] = $viewCreate;
+        array_push($internal, 'Schema\\View\\CreateViewLowering', 'Schema\\View\\ViewDefinitionBounds', 'Schema\\View\\ViewOptionsLowering');
+        $pureCollaborators[] = 'Schema\\View\\ViewDefinitionBounds';
+        $properties[$viewCreate] = ['name' => [$viewName], 'query' => [$valuesQuery, 'Select'], 'columns' => ['array'],
+            'replace' => ['bool'], 'securityBarrier' => ['?bool'], 'securityInvoker' => ['?bool'], 'checkOption' => [$viewCheck]];
+        $properties[$viewCheck] = $methods[$viewCheck] = [];
+        $enumCases[$viewCheck] = ['None' => '', 'Local' => 'LOCAL', 'Cascaded' => 'CASCADED'];
+        $methods[$viewCreate] = ['__construct', 'profileId', 'toString'];
         $viewKind = 'Schema\\View\\ViewRemovalKind';
         $roots[] = $viewRemoval;
         $internal[] = 'Schema\\View\\DropViewLowering';
@@ -925,6 +935,8 @@ try {
             ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
                 . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\CreateRelationLowering())->lower($operation, $statement),'
             : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
+        . ($dialect === 'postgres' ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\View\\CreateView => (new \\'
+            . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\'
         . ($dialect === 'mysql' ? 'DropTableLowering' : 'DropRelationLowering') . '())->lower($operation, $statement),'
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
@@ -1031,9 +1043,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v40.json';
+    $storagePath = __DIR__ . '/value-storage-v41.json';
     requireShape(
-        hash_file('sha256', $storagePath) === '287946f88db21c2aa264bf9e93bb2f519013cfa4d8648fa27f5531d95415a8f6',
+        hash_file('sha256', $storagePath) === '7d42cf467c9e384d22d1a65de1f84b57b8f9412e3e22ba6f0be636e7fd06b9ee',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

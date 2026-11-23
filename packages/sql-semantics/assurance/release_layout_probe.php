@@ -535,6 +535,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
     }
     if ($platform === 'PostgreSql') {
         $queries['Schema\\View\\DropView'] = 'DROP MATERIALIZED VIEW snapshot CASCADE';
+        $queries['Schema\\View\\CreateView'] = 'CREATE OR REPLACE VIEW ready_rows (n) WITH (security_invoker=FALSE) AS SELECT id FROM public.accounts WHERE id > 0 WITH LOCAL CHECK OPTION';
         $queries['Rows\\Values\\ValuesQuery'] = 'VALUES (FALSE, NULL), (TRUE, 4000000000)';
         $queries['Select'] = 'SELECT CAST(CAST(42 AS bool) AS integer) AS answer, CAST(CAST(2147483648 AS BIGINT) AS INTEGER) AS narrow, -9223372036854775808 AS exact WHERE (NOT NULL) IS NULL';
     }
@@ -573,6 +574,17 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'PostgreSql' && $role === 'Rows\\Values\\ValuesQuery') {
             $details['valuesHeading'] = [$result->columnKind(0)->value, $result->columnKind(1)->value, count($result->rows)];
+        }
+        if ($platform === 'PostgreSql' && $role === 'Schema\\View\\CreateView') {
+            $input = $result->query;
+            if ($input::class !== $namespace . 'Ir\\Select' || $input->source::class !== $namespace . 'Ir\\TableSource'
+                || $input->columns[0]->expression::class !== $namespace . 'Ir\\ColumnReference') {
+                throw new RuntimeException('The installed view lost its resolved source.');
+            }
+            $details['postgresCreateView'] = [$result->name->schema->value, $result->name->view->value,
+                array_column($result->columns, 'value'), $result->replace, $result->securityBarrier,
+                $result->securityInvoker, $result->checkOption->value,
+                $input->source->schema->value, $input->source->table->value, $input->columns[0]->expression->slot];
         }
         if ($platform === 'PostgreSql' && $role === 'Schema\\View\\DropView') {
             $ordinary = $semantics->analyze('DROP VIEW IF EXISTS public.removable RESTRICT', $context);

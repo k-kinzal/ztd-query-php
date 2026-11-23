@@ -1,0 +1,213 @@
+{
+  "revision": "SemanticsIR/postgres-create-view-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Connect the effective catalog heading, real definition eligibility, clause codecs and native view rendering to the loaded PHP.",
+  "rules": {
+    "Schema/View/CreateView::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$heading = Check::listOf($columns, Identifier::class, 'A persistent view needs a nonempty ordered heading.', 1);",
+        "$width = (new ViewDefinitionBounds())->width($query, $name, $checkOption);",
+        "Check::input(count($heading) === $width && $width <= 1600, 'The view heading must match its query within 1600 columns.');",
+        "$seen = [];",
+        "foreach ($heading as $column) {",
+        "    Check::input(!isset($seen[$column->value]), 'A persistent view cannot repeat a column name.');",
+        "    $seen[$column->value] = true;",
+        "}",
+        "$this->columns = $heading;"
+      ]
+    },
+    "Schema/View/CreateView::profileId": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "return $this->query->profileId();"
+      ]
+    },
+    "Schema/View/CreateView::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$columns = [];",
+        "foreach ($this->columns as $column) {",
+        "    $columns[] = $column->quoted();",
+        "}",
+        "$options = [];",
+        "if ($this->securityBarrier !== null) {",
+        "    $options[] = 'security_barrier=' . ($this->securityBarrier ? 'true' : 'false');",
+        "}",
+        "if ($this->securityInvoker !== null) {",
+        "    $options[] = 'security_invoker=' . ($this->securityInvoker ? 'true' : 'false');",
+        "}",
+        "$settings = $options === [] ? '' : ' WITH (' . implode(', ', $options) . ')';",
+        "$check = $this->checkOption === ViewCheckOption::None ? '' : ' WITH ' . $this->checkOption->value . ' CHECK OPTION';",
+        "",
+        "return 'CREATE ' . ($this->replace ? 'OR REPLACE ' : '') . 'VIEW ' . $this->name->quoted()",
+        "    . ' (' . implode(', ', $columns) . ')' . $settings . ' AS ' . $this->query->toString() . $check;"
+      ]
+    },
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "Check::input($context->profile->parameters === ParameterStyle::Native, 'CREATE VIEW requires the native language profile.');",
+        "Check::input(",
+        "    !$statement->recursive && $statement->persistence === Persistence::Permanent && $statement->name->catalog === null,",
+        "    'CREATE VIEW requires a persistent ordinary view in an absolute schema.'",
+        ");",
+        "$schema = ($statement->name->schema ?? $context->declarationSchema)->value;",
+        "$name = new ViewName(new Identifier($schema), new Identifier($statement->name->name->value));",
+        "[$barrier, $invoker, $check] = (new ViewOptionsLowering())->lower($statement);",
+        "$query = $statement->query;",
+        "while ($query instanceof ParenthesizedQuery) {",
+        "    $query = $query->query;",
+        "}",
+        "$body = match (true) {",
+        "    $query instanceof ParsedSelect => (new SelectLowering())->lower($operation, $query),",
+        "    $query instanceof ValuesList => (new ValuesLowering())->lower($operation, $query),",
+        "    default => throw new InvalidConstruction('A persistent view needs a checked SELECT or standalone VALUES definition.'),",
+        "};",
+        "$fields = $operation->facts->query($query)->fields();",
+        "Check::input($fields !== null && count($statement->columns) <= count($fields), 'The view needs a complete resolved heading.');",
+        "$columns = [];",
+        "foreach ($fields as $position => $field) {",
+        "    $column = $statement->columns[$position] ?? $field->name;",
+        "    Check::input($column !== null, 'Each view field needs a resolved catalog name.');",
+        "    $columns[] = new Identifier($column->value);",
+        "}",
+        "",
+        "return new CreateView($name, $body, $columns, $statement->replace, $barrier, $invoker, $check);"
+      ]
+    },
+    "Schema/View/ViewDefinitionBounds::width": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\PostgreSql\\Ir\\Rows\\Values\\ValuesQuery) {",
+        "    Check::input($check === ViewCheckOption::None, 'A view check option requires a simple base-table projection.');",
+        "",
+        "    return count($query->rows[0]->cells);",
+        "}",
+        "Check::input(",
+        "    !$query->distinct && $query->orderBy === [] && $query->limit === null,",
+        "    'CREATE VIEW requires an unbounded ordinary projection.'",
+        ");",
+        "$source = $query->source;",
+        "Check::input(",
+        "    $source === null || ($source instanceof TableSource && $source->kind === ExternalRelationKind::BaseTable),",
+        "    'CREATE VIEW requires no source or one persistent base table.'",
+        ");",
+        "Check::input($check === ViewCheckOption::None || $source !== null, 'A view check option requires a simple base-table projection.');",
+        "if ($source !== null) {",
+        "    Check::input(",
+        "        $source->schema->value !== 'pg_temp' && preg_match('/\\Apg_(?:toast_)?temp_[0-9]+\\z/D', $source->schema->value) === 0,",
+        "        'CREATE VIEW requires a persistent source schema.'",
+        "    );",
+        "    Check::input(",
+        "        $name->schema->value !== $source->schema->value || $name->view->value !== $source->table->value,",
+        "        'A persistent view definition cannot read its own identity.'",
+        "    );",
+        "}",
+        "foreach ($query->columns as $column) {",
+        "    $expression = $column->expression;",
+        "    while ($expression instanceof BuiltinCast) {",
+        "        $expression = $expression->operand;",
+        "    }",
+        "    Check::input(!$expression instanceof Parameter, 'A persistent view definition cannot bind a native parameter.');",
+        "}",
+        "",
+        "return count($query->columns);"
+      ]
+    },
+    "Schema/View/ViewOptionsLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$options = [];",
+        "foreach ($statement->options as $option) {",
+        "    $key = $option->name->value;",
+        "    Check::input($option->qualifier === null",
+        "        && in_array($key, ['security_barrier', 'security_invoker', 'check_option'], true)",
+        "        && !array_key_exists($key, $options), 'CREATE VIEW requires a distinct supported native option.');",
+        "    $options[$key] = $this->word($option->argument);",
+        "}",
+        "Check::input(",
+        "    $statement->checkOption === null || !array_key_exists('check_option', $options),",
+        "    'CREATE VIEW cannot repeat the check option.'",
+        ");",
+        "$check = match ($statement->checkOption) {",
+        "    CheckOption::Local => ViewCheckOption::Local,",
+        "    CheckOption::Cascaded, CheckOption::Unqualified => ViewCheckOption::Cascaded,",
+        "    null => $this->check($options),",
+        "};",
+        "",
+        "return [$this->flag($options, 'security_barrier'), $this->flag($options, 'security_invoker'), $check];"
+      ]
+    },
+    "Schema/View/ViewOptionsLowering::flag": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if (!array_key_exists($key, $options)) {",
+        "    return null;",
+        "}",
+        "",
+        "return match ($options[$key]) {",
+        "    null, 'true', 'on', 'yes', '1' => true,",
+        "    'false', 'off', 'no', '0' => false,",
+        "    default => throw new InvalidConstruction('A PostgreSQL view security option needs a Boolean value.'),",
+        "};"
+      ]
+    },
+    "Schema/View/ViewOptionsLowering::check": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if (!array_key_exists('check_option', $options)) {",
+        "    return ViewCheckOption::None;",
+        "}",
+        "",
+        "return match ($options['check_option']) {",
+        "    'local' => ViewCheckOption::Local,",
+        "    'cascaded' => ViewCheckOption::Cascaded,",
+        "    default => throw new InvalidConstruction('A PostgreSQL view check option must be local or cascaded.'),",
+        "};"
+      ]
+    },
+    "Schema/View/ViewOptionsLowering::word": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($argument instanceof TypeName) {",
+        "    $word = $argument->designation;",
+        "    Check::input($word instanceof NamedDesignation && $word->modifiers === [] && !$argument->setOf",
+        "        && $argument->array === null && count($word->name->parts) === 1, 'A native view option needs a single word.');",
+        "",
+        "    return strtolower($word->name->parts[0]->value);",
+        "}",
+        "",
+        "return match (true) {",
+        "    $argument === null => null,",
+        "    $argument instanceof Toggle, $argument instanceof StringConstant => strtolower($argument->value),",
+        "    $argument instanceof KeywordWord, $argument instanceof Word => strtolower($argument->word->value),",
+        "    default => throw new InvalidConstruction('CREATE VIEW requires a supported native option value.'),",
+        "};"
+      ]
+    }
+  }
+}

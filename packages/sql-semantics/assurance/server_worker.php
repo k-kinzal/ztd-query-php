@@ -670,6 +670,16 @@ function constructCreateView(string $platform, array $input): SemanticsIR
     $column = $view . 'ViewColumn';
     $create = $input['createView'];
     [$schema, $relation] = $create['target'];
+    if ($input['dialect'] === 'postgres') {
+        return new $statement(
+            new $target(new $name($schema), new $name($relation)),
+            constructSetQuery($platform, $create['query'] + ['dialect' => 'postgres', 'release' => $input['release']]),
+            array_map(static fn (string $value): object => new $name($value), $create['columns']),
+            $create['replace'], $create['securityBarrier'], $create['securityInvoker'],
+            ($view . 'ViewCheckOption')::from($create['checkOption']),
+        );
+    }
+
     return new $statement(
         new $target(new $name($schema), new $name($relation)),
         constructSelect($platform, $create['query'] + ['dialect' => 'mysql', 'release' => $input['release']]),
@@ -986,6 +996,18 @@ function observeStatement(array $input): array
         return ['status' => 'constructed', 'profile' => $value->profileId(), 'create' => $observed, 'sql' => $value->toString()];
     }
     if ($value::class === $namespace . 'Schema\\View\\CreateView') {
+        if ($dialect === 'postgres') {
+            return [
+                'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
+                'createView' => [
+                    'target' => [$value->name->schema->value, $value->name->view->value],
+                    'query' => observeSetQuery($namespace, $value->query, $dialect),
+                    'columns' => array_column($value->columns, 'value'), 'replace' => $value->replace,
+                    'securityBarrier' => $value->securityBarrier, 'securityInvoker' => $value->securityInvoker,
+                    'checkOption' => $value->checkOption->value,
+                ],
+            ];
+        }
         return [
             'status' => 'constructed', 'profile' => $value->profileId(), 'sql' => $value->toString(),
             'createView' => [

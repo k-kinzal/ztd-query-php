@@ -98,6 +98,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-values-boundaries-v1.json', '34c456ad0d952eedfee6cd7b7181f2b0e482b8d08e6ed877d69b7f9c3e4122b9'],
             ['postgres-local-values-boundaries-v1.json', '1b506e898a949b621e5f1978d0e2ffeea419acdbb256421811a5291fb088a6a5'],
             ['postgres-values-compound-boundaries-v1.json', 'fcce910d78706d890cf699858c1dfebbc67398a71fe17102a9a3b31a55c63560'],
+            ['postgres-create-view-boundaries-v1.json', '8417042c43c0ae5fb380cc4e0bd2a3367e965f2d76b60195d044a4ff2b1346c0'],
         ],
         'sqlite' => [],
     };
@@ -214,6 +215,8 @@ function checkNativeBoundaries(
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\Insert\\WriteSlot', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Statement\\Name\\ObjectKind', 'Statement\\Name\\DottedName', 'Statement\\Option\\DropBehavior',
                 'Ir\\Schema\\View\\DropViewLowering', 'Statement\\Query\\ValuesList',
+                'Statement\\Option\\Toggle', 'Statement\\Option\\KeywordWord', 'Statement\\Option\\Word', 'Statement\\Table\\View\\CheckOption',
+                'Statement\\Type\\Designation\\NamedDesignation', 'Statement\\Type\\TypeName',
                 'Ir\\Rows\\Values\\ValuesSql', 'Ir\\Rows\\Values\\ValuesLowering',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v66.json"
-CONTRACT = "058cde827fdda23bf2d0fa469e28946ba60d247ff44e4648dbf555db15a52ca0"
+CONTRACT_NAME = "release-layout-v67.json"
+CONTRACT = "a6cfe16e60025c7d7d443c00a7734401560f1fe60601a62c1b0d9c72c257066a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -258,6 +258,13 @@ def verify_probe(raw, catalog):
             require(item.get("valuesHeading") == ["bool", "int8", 2] and item["sql"] ==
                     "VALUES (FALSE, NULL), (TRUE, CAST(4000000000 AS pg_catalog.int8))",
                     "installed-postgres-values-mismatch", item)
+        if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\CreateView"):
+            expected_sql = ('CREATE OR REPLACE VIEW "public"."ready_rows" ("n") WITH (security_invoker=false) '
+                            'AS SELECT "__ztd_source"."id" AS "id" FROM "public"."accounts" AS "__ztd_source" '
+                            'WHERE ("__ztd_source"."id" OPERATOR(pg_catalog.>) CAST(0 AS pg_catalog.int4)) WITH LOCAL CHECK OPTION')
+            require(item.get("postgresCreateView") == ["public", "ready_rows", ["n"], True, None, False, "LOCAL",
+                                                     "public", "accounts", 0] and item["sql"] == expected_sql,
+                    "installed-postgres-create-view-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Schema\\View\\DropView"):
             require(item.get("dropView") == ["MATERIALIZED VIEW", "public", "snapshot", False, True, "VIEW",
                                              'DROP VIEW IF EXISTS "public"."removable" RESTRICT']
