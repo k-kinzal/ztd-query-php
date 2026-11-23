@@ -109,7 +109,11 @@ def negatives(dialect, tag):
     fields = [[slot(0), "v"]]
     mismatch = {**spec, "release": "mysql-9.1.0" if dialect == "mysql" and tag != "mysql-9.1.0" else
                 "mysql-8.4.7" if dialect == "mysql" else "pg-16.6" if tag != "pg-16.6" else "pg-17.2"}
-    yield case(dialect, tag, join("CROSS", from_, derived({**spec, "columns": [[["null"], "v"]]})), fields), "requires a signed literal or a signed column"
+    null_message = (
+        "A derived join field requires a signed literal or a supported native column."
+        if dialect == "postgres" else "requires a signed literal or a signed column"
+    )
+    yield case(dialect, tag, join("CROSS", from_, derived({**spec, "columns": [[["null"], "v"]]})), fields), rejection(dialect, null_message)
     yield case(dialect, tag, join("CROSS", from_, derived({**spec, "limit": [1, 0]})), fields), "must be unordered and unbounded"
     yield case(dialect, tag, join("CROSS", from_, derived({**spec, "source": join("CROSS", from_, from_)})), fields), "independent of any joined input"
     yield case(dialect, tag, join("CROSS", from_, derived(spec)), [[slot(2, 1), "v"]]), "must belong to the SELECT source"
