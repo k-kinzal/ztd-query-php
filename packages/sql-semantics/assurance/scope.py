@@ -103,6 +103,7 @@ CONTRACTS = {
     "sqlite-scalars-v2.json": "79cf2debd501cb0f486a9d84876fd118d84fd580b60a022eeaba556d86cdf48e",
     "contract-v1.json": "7f607339a5a5424cfc1dba25823cab5cc469c20e1e01d3b314755801a6f9b849",
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
+    "server-projection-publication-v1.json": "044933c3fbc6ee9dddf578ccfea32e06e9e45cf0c61c20bbba7b9bae03f25656",
     "sqlite-relational-v4.json": "0ff018427fb2cb7578a779d6e72330bd8cc14ac69afe9848afd1681feb144f1a",
     "sqlite-merged-join-v3.json": "691715c82cbafd5f102cd3d696822afe399d7931412902b971ac9d871a42d81b",
     "sqlite-merged-prefix-join-v1.json": "00a4e5e70f376fd54722298ee21a0d403d5b7a68d52d11f78e1d077027f166ef",

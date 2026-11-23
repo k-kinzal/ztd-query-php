@@ -18,6 +18,7 @@ from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
 from replay_native_boundary_faults import replay as replay_native_faults
 from run_native_matrix import FIXTURE_STARTUP_SECONDS, RUNNER_SECONDS, release_fixtures, release_jobs
+from run_server import projection_publication
 from run_sqlite_matrix import RUNNER_SECONDS as SQLITE_RUNNER_SECONDS, job_schedule as sqlite_jobs
 from scope import CONTRACTS
 from run import IMAGE, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
@@ -275,6 +276,7 @@ class Evidence:
             if domain == "projection":
                 require(report["admissionContract"] == CONTRACTS["server-projection-admission-v1.json"],
                         "bundle-projection-admission-mismatch", origin)
+                require(report["publication"] == projection_publication(), "bundle-projection-publication-mismatch", origin)
             registered = {engine: settings["releases"] for engine, settings in profiles.items()}
             single_engine = SINGLE_ENGINE.get(domain)
             if single_engine:

@@ -145,7 +145,7 @@ Run `check_native_boundaries.py --candidate /path/to/candidate --tool-autoload /
 
 ## MySQL and PostgreSQL evidence
 
-[Server projection criteria](server-projection-v1.json) add independently checked native domains for MySQL and PostgreSQL. [The MySQL label refinement](server-projection-errata.md) records an observed server rule about output names. The mandatory fixture releases are MySQL 9.1.0 and PostgreSQL 17.2. Other grammar releases and language modes remain distinct engine-test obligations.
+[Server projection criteria](server-projection-v1.json) define independently checked native projection domains for MySQL and PostgreSQL. The [publication amendment](server-projection-publication-v1.json) fixes the analysis route to `Semantics::analyze()`. The [MySQL label refinement](server-projection-errata.md) records the observed output-name rule. Replay requires every release listed in the baseline profiles. Additional language modes remain separate engine-test obligations.
 
 Use PHP with `pdo_mysql` and `pdo_pgsql`. Start disposable MySQL and PostgreSQL containers with an `ir_fixture` database. The manual workflow records the pinned image digests and settings. In a local run, configure the six variables `ZTD_IR_MYSQL_DSN`, `ZTD_IR_MYSQL_USER`, `ZTD_IR_MYSQL_PASSWORD`, `ZTD_IR_POSTGRES_DSN`, `ZTD_IR_POSTGRES_USER` and `ZTD_IR_POSTGRES_PASSWORD` for those disposable databases. The observer creates fresh test tables and uses read-only transactions for candidate SQL. The separate PHP candidate container has no database connection.
 

@@ -10,6 +10,7 @@ import time
 
 from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, Failure, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from postgres_physical_text_admission import negative as postgres_text_negative
+from scope import PUBLICATION, publication_definition
 from server_cases import (
     case, direct_cases, expected, explore, finite_ids, fixtures, node_key, POISON_VALUES, source, source_key,
     observation, VERSIONS, SCHEMAS, analyzed, walk,
@@ -17,8 +18,19 @@ from server_cases import (
 
 CONTRACT = "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97"
 ADMISSION_CONTRACT = "cb6cb546e11007dcd00983f2f2ed0acf1d193cb7b17676b035b6384e4e2d46dd"
+PUBLICATION_AMENDMENT = "044933c3fbc6ee9dddf578ccfea32e06e9e45cf0c61c20bbba7b9bae03f25656"
 DIALECTS = ("mysql", "postgres")
 TRANSPORT = "64a958eac4238161c3c1fb4242af55d7c4042ed1123d984e671e1b5338c9da1e"
+
+
+def projection_publication():
+    contract = TOOL / "server-projection-publication-v1.json"
+    require(digest(contract) == PUBLICATION_AMENDMENT, "server-publication-amendment-mismatch")
+    amended = json.loads(contract.read_text())
+    publication = publication_definition()
+    require(amended["publicationContract"] == PUBLICATION and publication["single"]["method"] == "Semantics::analyze"
+            and "ir" in publication["forbidden"], "server-publication-route-mismatch")
+    return {"amendment": PUBLICATION_AMENDMENT, "contract": PUBLICATION}
 
 
 class Observer(Worker):
@@ -257,6 +269,7 @@ def main():
     args.out.mkdir(parents=True, exist_ok=False)
     contract = TOOL / "server-projection-v1.json"
     require(digest(contract) == CONTRACT, "server-contract-mismatch")
+    publication = projection_publication()
     specification = json.loads(contract.read_text())
     settings = specification["exploration"]
     require(not args.release or args.engine, "release-needs-engine")
@@ -273,6 +286,7 @@ def main():
     index = {
         "status": "provisional-server-projections", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "distribution": digest(args.out / "distribution.json"), "contract": CONTRACT, "admissionContract": ADMISSION_CONTRACT,
+        "publication": publication,
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".php", ".py", ".json", ".md"}},
         "isolation": "none" if args.local else IMAGE, "results": results,
         "open": ["other release and mode server comparisons", "other statement roles", "independently approved repository acceptance"],
