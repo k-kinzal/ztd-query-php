@@ -53,6 +53,9 @@ function measure(PDO $pdo, array $input, bool &$readOnly): array
         }
     } catch (PDOException $error) {
         $result = ['status' => 'db-error', 'state' => $error->errorInfo[0]];
+        if (($input['observeVendorCode'] ?? false) === true) {
+            $result['vendorCode'] = (int) ($error->errorInfo[1] ?? 0);
+        }
         $pdo->exec('ROLLBACK');
         $readOnly = false;
     }

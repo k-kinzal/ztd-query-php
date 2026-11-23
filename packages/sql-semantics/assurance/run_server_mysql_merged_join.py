@@ -7,7 +7,7 @@ import sys
 
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, same
-from run_server_join import OBSERVER, check_preparation, main, observer_request
+from run_server_join import OBSERVER, main, observer_request
 from server_cases import observation
 from server_delete_cases import literal
 from server_join_cases import expected as join_expected
@@ -16,7 +16,7 @@ from server_join_cases import DATA as BASE_DATA, NAMES_BY_TABLE, declarations as
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-merged-join"
-CONTRACT = "3b063b1f41e96040ed7edc592481c8cc2154b36d11b6860b967a90be0789a272"
+CONTRACT = "747346f095ab6d769cdab747949d56fae9a1618bd9565ce0df6073e75b6354a1"
 KINDS = ("INNER", "LEFT", "RIGHT")
 MASKS = {"id": ("id",), "lane": ("lane",), "both": ("id", "lane")}
 SCHEMA = "ir_fixture"
@@ -47,7 +47,7 @@ REFUSALS = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-merged-join-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-merged-join-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-merged-join-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 
@@ -66,7 +66,26 @@ def fixture():
 def prepare(_, db):
     result = db.request({"fixture": list(fixture())})
     same({"status": "fixture"}, result)
-    return result
+    syntax = specifications()[0]["nativeSyntax"]
+    records = {key: {"sql": syntax[key], "observation": observation(db.request({
+        "sql": syntax[key], "observeVendorCode": True,
+    }))} for key in ("positive", "explicit")}
+    return {"status": "fixture", "syntax": records}
+
+
+def check_preparation(engine, environment, prepared):
+    syntax = specifications()[0]["nativeSyntax"]
+    release = environment["database"][0]
+    require(engine == "mysql" and prepared["status"] == "fixture" and set(prepared["syntax"]) == {"positive", "explicit"},
+            "mysql-merged-native-syntax-report", prepared)
+    inputs, keys = (LEFT, RIGHT), MASKS["both"]
+    item = case("mysql-" + release, inputs, "INNER", keys, projected(inputs, "INNER", keys))
+    for key, witness in prepared["syntax"].items():
+        require(witness["sql"] == syntax[key], "mysql-merged-native-syntax-input", witness)
+        if key == "explicit" and release in syntax["legacyReleases"]:
+            same(syntax["legacyDiagnostic"], witness["observation"])
+        else:
+            check_observation(item, witness["observation"], witness["sql"])
 
 
 def reference(inputs, occurrence, name):
@@ -114,8 +133,9 @@ def analyzed(tag):
     common = ("id", "lane")
     yield f"SELECT * FROM {left} a JOIN {right} b USING (lane,id)", case(
         tag, inputs, "INNER", common[::-1], projected(inputs, "INNER", common))
-    yield f"SELECT * FROM {left} a NATURAL INNER JOIN {right} b", case(
-        tag, inputs, "INNER", common, projected(inputs, "INNER", common))
+    syntax = specifications()[0]["nativeSyntax"]
+    form = "positive" if tag.removeprefix("mysql-") in syntax["legacyReleases"] else "explicit"
+    yield syntax[form], case(tag, inputs, "INNER", common, projected(inputs, "INNER", common))
     yield f"SELECT * FROM {left} a NATURAL RIGHT JOIN {right} b", case(
         tag, inputs, "RIGHT", common, projected(inputs, "RIGHT", common))
     yield f"SELECT * FROM {left} a RIGHT JOIN {right} b ON a.id=b.id", case(
@@ -151,6 +171,10 @@ def negatives(tag):
         (f"SELECT 1 FROM {left} JOIN {right} USING(id,ID)", "SemanticException", "ID"),
     ):
         yield analyzed_request(tag, sql), {"exception": REFUSALS + error, "message": message}
+    syntax = specifications()[0]["nativeSyntax"]
+    if tag.removeprefix("mysql-") in syntax["legacyReleases"]:
+        yield analyzed_request(tag, syntax["explicit"]), {
+            "exception": REFUSALS + "AnalysisException", "message": "Unexpected 'INNER'"}
 
 
 def requests(_, tag, spec):

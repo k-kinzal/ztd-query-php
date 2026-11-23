@@ -67,7 +67,7 @@ CONTRACTS = {
     "postgres-merged-join-v2.json": "6a42d825607c6acff928cd80fac716da6d5e3a5d1654a36ef47c145ec16c387f",
     "postgres-full-merged-join-v1.json": "faf12fc5cf9304be68cc1395a344a157fb5dc20a5f5fe04c18517058455f17ec",
     "mysql-from-list-v1.json": "840628765b42c335636c6d7eaf033a3db0b6eb63534d65351a1361ce0d7749f2",
-    "mysql-merged-join-v1.json": "3b063b1f41e96040ed7edc592481c8cc2154b36d11b6860b967a90be0789a272",
+    "mysql-merged-join-v2.json": "747346f095ab6d769cdab747949d56fae9a1618bd9565ce0df6073e75b6354a1",
     "server-delete-v2.json": "3a5763e35bcea1af1f7f1127dd8a157349dd8b2e79451c61e2388ec9b4780858",
     "sqlite-recursive-source-v1.json": "2c5b8873c4d6b80e6f81f3db5423539057e29117e8577bd3f887b6f43f3c52d3",
     "sqlite-compound-v1.json": "c814b6f5abcd51569cd56a6ce03743c595d513964a6191fef253c488176dc24f",

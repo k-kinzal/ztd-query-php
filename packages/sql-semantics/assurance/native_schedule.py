@@ -20,7 +20,7 @@ NATIVE = {
     "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
     "mysql_signed_casts": "mysql-signed-casts-v2.json",
     "mysql_unsigned_casts": "mysql-unsigned-casts-v3.json",
-    "mysql_merged_join": "mysql-merged-join-v1.json",
+    "mysql_merged_join": "mysql-merged-join-v2.json",
     "mysql_from_list": "mysql-from-list-v1.json",
     "delete": "server-delete-v2.json",
     "join": "server-join-v2.json",
