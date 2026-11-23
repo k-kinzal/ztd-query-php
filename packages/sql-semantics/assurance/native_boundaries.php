@@ -79,7 +79,7 @@ function nativeBoundaryContract(string $dialect): array
             ['postgres-boolean-fields-boundaries-v1.json', 'f4d06df0e8bfcca315a114851209270de7e19543bcc3d5b4ed8c9760db31545e'],
             ['postgres-boolean-returning-boundaries-v1.json', '37752e21d0c6ade880a6af530b1238d5ce335e5fcc663b3b4e1a378a5da560bb'],
             ['postgres-boolean-writes-boundaries-v1.json', 'b72bfce51bcb67617dbdb29eca44c831bd80d663bd7327f551b4b4345387c4b2'],
-            ['postgres-boolean-write-inputs-boundaries-v1.json', '1f08c01d3d651fb62d3b8da5b451cbe296c8737f071f12afd299ff82fa5b55fc'],
+            ['postgres-boolean-write-inputs-boundaries-v1.json', '4d8fcc71a9c381dc6c3f10a9bda953ae8b799395e8b92d93ad713110a06ad683'],
         ],
         'sqlite' => [],
     };

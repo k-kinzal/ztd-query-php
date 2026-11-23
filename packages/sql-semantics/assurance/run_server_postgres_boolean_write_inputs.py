@@ -195,7 +195,7 @@ def check_value(item, reply):
 
 def check_observation(item, actual, sql):
     if "createDefault" in item:
-        same({"status": "Boolean default", "restored": True, "fields": [["enabled", "bool", 16]], "rows": [[True]]}, actual)
+        same({"status": "Boolean default", "removedAfterRollback": True, "fields": [["enabled", "bool", 16]], "rows": [[True]]}, actual)
         return
     writes.check_observation(item, actual, sql)
 

@@ -136,7 +136,7 @@ function observeBooleanDefault(PDO $pdo, string $sql): array
     }
     $restored = $pdo->query("SELECT pg_catalog.to_regclass('public.ir_bool_decode_default') IS NULL")->fetchColumn();
 
-    return ['status' => 'Boolean default', 'restored' => $restored, ...$result];
+    return ['status' => 'Boolean default', 'removedAfterRollback' => $restored, ...$result];
 }
 
 echo json_encode(['database' => $environment, 'php' => PHP_VERSION, 'initial' => snapshotBooleanTarget($pdo),
