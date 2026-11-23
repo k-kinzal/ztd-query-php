@@ -46,6 +46,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\SemanticException;
+use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Facade\Catalog;
 use SqlSemantics\Platform\MySql\Model\Facade\Splitter;
 use SqlSemantics\Platform\MySql\Model\Facade\StatementBinder;
@@ -157,9 +158,8 @@ final class Semantics implements Analyzer
             $statement instanceof ParsedCompound, $statement instanceof ParsedParenthesized => (new CompoundLowering())->lower($operation, $statement),
             $statement instanceof ParsedSelect && (new GroupedLowering())->applies($statement) => (new GroupedLowering())->lower($operation, $statement),
             $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateTable => (new CreateTableLowering())->lower($operation, $statement),
+            $statement instanceof ParsedCreateTable, $statement instanceof ParsedCreateView => $this->lowerCreation($operation, $statement),
             $statement instanceof ParsedDrop => (new DropTableLowering())->lower($operation, $statement),
-            $statement instanceof ParsedCreateView => (new CreateViewLowering())->lower($operation, $statement),
             $statement instanceof ParsedDropView => (new DropViewLowering())->lower($operation, $statement),
             $statement instanceof ParsedInsertQuery => (new InsertLowering())->lowerQuery($operation, $statement),
             $statement instanceof ParsedInsert => (new InsertLowering())->lower($operation, $statement),
@@ -189,6 +189,16 @@ final class Semantics implements Analyzer
         }
 
         return $results;
+    }
+
+    /**
+     * Publishes the checked declaration of a table or a view.
+     */
+    private function lowerCreation(BoundStatement $operation, ParsedCreateTable|ParsedCreateView $statement): CreateTable|CreateView
+    {
+        return $statement instanceof ParsedCreateTable
+            ? (new CreateTableLowering())->lower($operation, $statement)
+            : (new CreateViewLowering())->lower($operation, $statement);
     }
 
     /**

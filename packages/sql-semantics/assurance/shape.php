@@ -881,9 +881,11 @@ try {
         . '\\Statement\\Query\\ParenthesizedQuery => (new \\' . $prefix . 'Rows\\CompoundLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select && (new \\' . $prefix . 'Aggregation\\GroupedLowering())->applies($statement) => (new \\' . $prefix . 'Aggregation\\GroupedLowering())->lower($operation, $statement),'
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $kind . '\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
-        . '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),'
+        . ($dialect === 'mysql'
+            ? '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable, $statement instanceof \\' . $platform
+                . '\\Statement\\View\\CreateView => $this->lowerCreation($operation, $statement),'
+            : '$statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable => (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement),')
         . '$statement instanceof \\' . $platform . '\\Statement\\' . $drop . ' => (new \\' . $prefix . 'Schema\\DropTableLowering())->lower($operation, $statement),'
-        . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\CreateView => (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement),' : '')
         . ($dialect === 'mysql' ? '$statement instanceof \\' . $platform . '\\Statement\\View\\DropView => (new \\' . $prefix . 'Schema\\View\\DropViewLowering())->lower($operation, $statement),' : '')
         . '$statement instanceof \\' . $platform . '\\Statement\\'
         . ($dialect === 'mysql' ? 'Dml\\Insert\\InsertQuery' : 'Manipulation\\InsertSelect')
@@ -925,6 +927,16 @@ try {
         requireShape($method !== null && $method->isPublic() && !$method->isStatic()
             && $method->returnType !== null && types($method->returnType, $prefix, 'Semantics') === $return, "Publication signature differs in $name");
         requireShape($printer->prettyPrint($method->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)), "Publication body differs in $name");
+    }
+    if ($dialect === 'mysql') {
+        $creation = $facade->getMethod('lowerCreation');
+        $body = 'return $statement instanceof \\' . $platform . '\\Statement\\Table\\CreateTable'
+            . ' ? (new \\' . $prefix . 'Schema\\CreateTableLowering())->lower($operation, $statement)'
+            . ' : (new \\' . $prefix . 'Schema\\View\\CreateViewLowering())->lower($operation, $statement);';
+        requireShape($creation !== null && $creation->isPrivate() && !$creation->isStatic()
+            && $creation->returnType !== null && types($creation->returnType, $prefix, 'Semantics') === ['Schema\\CreateTable', 'Schema\\View\\CreateView']
+            && $printer->prettyPrint($creation->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)),
+            'Unexpected MySQL declaration publication');
     }
     $primitives = json_decode(file_get_contents(__DIR__ . '/value-primitives.json'), true, 512, JSON_THROW_ON_ERROR);
     foreach ($primitives['artifacts'][$dialect] as $path => $approved) {
