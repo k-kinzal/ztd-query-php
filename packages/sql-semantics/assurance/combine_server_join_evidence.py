@@ -12,7 +12,7 @@ from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import negative_count, request_batches, tools, version_tag
+from run_server_join import negative_count, observe_finite_id, request_batches, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -52,7 +52,7 @@ def replay(path, report, specification, domain=run_server_join):
             if "sql" in request:
                 domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
             if key.startswith("finite/"):
-                seen[domain.finite_id(engine, response, item)] += 1
+                seen[observe_finite_id(domain, engine, response, item, request)] += 1
             elif key.startswith("seed/"):
                 domain.sample_forms(forms, response, engine, item)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))

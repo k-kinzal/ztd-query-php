@@ -26,4 +26,6 @@ PostgreSQL INSERT also returns named int4 and native text fields from the insert
 
 An ordinary CREATE TABLE can use an int4 or int8 literal as a default for SMALLINT, INTEGER, BIGINT or native text. The IR keeps the source type and exact value. PostgreSQL applies the destination conversion when a row uses the default. A narrowing overflow raises SQLSTATE 22003 at that insertion. Supplying an explicit in-range value bypasses the default.
 
+An ordinary BOOLEAN column holds a native TRUE, FALSE, or NULL default, or omits the default. A quoted input such as `' YE '` uses the builtin Boolean input rules during analysis. Use `BOOLEAN` or `pg_catalog.bool` to select the builtin type explicitly. An unqualified `bool` name requires a declaration context that resolves it.
+
 Concrete types are under `SqlSemantics\Platform\PostgreSql\Ir`. See the [semantic roles and checked profiles](../sql-semantics/docs/semantics-ir.md), [catalog construction](../sql-semantics/docs/contexts.md), and [native evidence](../sql-semantics/assurance/README.md).

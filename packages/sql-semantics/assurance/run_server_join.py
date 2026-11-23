@@ -120,6 +120,12 @@ def request_batches(cases, maximum):
         yield pending
 
 
+def observe_finite_id(domain, engine, response, item, request):
+    if "sql" in request:
+        return domain.analysis_finite_id(engine, response, item, request["sql"])
+    return domain.finite_id(engine, response, item)
+
+
 def negative_count(specification, engine, tag):
     specific = specification.get("negativeByRelease", {})
     dialect = {"postgres": "additionalPostgreSqlNegatives", "mysql": "additionalMySqlNegatives"}[engine]
@@ -169,7 +175,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                         details["original"] = original
                     ledger.record(key, "compared", **details)
                     if key.startswith("finite/"):
-                        seen[domain.finite_id(args.engine, response, item)] += 1
+                        seen[observe_finite_id(domain, args.engine, response, item, current)] += 1
                     elif key.startswith("seed/"):
                         domain.sample_forms(forms, response, args.engine, item)
             require(set(seen) == domain.finite_ids(args.engine, specification, tag) and set(seen.values()) == {1},

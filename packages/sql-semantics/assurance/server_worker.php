@@ -464,6 +464,7 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     $column = $namespace . 'Schema\\TableColumn';
     $storage = $namespace . 'Schema\\IntegerStorage';
     $characters = $namespace . 'Schema\\CharacterStorage';
+    $boolean = $namespace . 'Schema\\BooleanStorage';
     $collation = $namespace . 'From\\TextCollation';
     $primary = $namespace . 'Schema\\Key\\PrimaryKey';
     $term = $namespace . 'Schema\\Key\\PrimaryKeyColumn';
@@ -473,6 +474,7 @@ function constructCreateTable(string $platform, array $input): SemanticsIR
     foreach ($create['columns'] as [$columnName, $kind, $nullable, $default]) {
         $type = match (true) {
             $kind === 'pg_catalog.text' && $input['dialect'] === 'postgres' => $characters::from($kind),
+            $kind === 'pg_catalog.bool' && $input['dialect'] === 'postgres' => $boolean::from($kind),
             $input['dialect'] === 'mysql' && is_array($kind) && $kind[0] === 'varchar' => new $characters($kind[1], $collation::from($kind[2])),
             default => $storage::from($kind),
         };

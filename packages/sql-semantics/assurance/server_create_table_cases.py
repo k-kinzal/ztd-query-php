@@ -100,12 +100,14 @@ def default_value(kind, default):
         return None
     if kind == "pg_catalog.text":
         return default[1] if default[0] == "text" else str(int(default[1]))
+    if kind == "pg_catalog.bool":
+        return default[1]
     return int(default[1])
 
 
 def catalog(engine, fields):
     types = {"SMALLINT": "smallint", "INTEGER": "int" if engine == "mysql" else "integer", "BIGINT": "bigint",
-             "pg_catalog.text": "text"}
+             "pg_catalog.text": "text", "pg_catalog.bool": "boolean"}
     result = []
     for index, (name, kind, nullable, default) in enumerate(fields, 1):
         value = default_value(kind, default)

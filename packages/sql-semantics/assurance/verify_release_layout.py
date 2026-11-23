@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v42.json"
-CONTRACT = "b36e5a3be6500d51a91298eb54aedfe559ca50c6427701f9618ee6121c7d5186"
+CONTRACT_NAME = "release-layout-v43.json"
+CONTRACT = "b827938b24b7f2a89a0a07bfb00a6db821d6102652fc49334aa67b5a50a28726"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -304,6 +304,13 @@ def verify_probe(raw, catalog):
                 '"source_width" BIGINT NULL DEFAULT CAST(7 AS pg_catalog.int8), '
                 '"rendered" pg_catalog.text NULL DEFAULT CAST(9223372036854775807 AS pg_catalog.int8)) USING heap',
             ], "installed-postgres-signed-default-mismatch", item)
+            ir = "SqlSemantics\\Platform\\PostgreSql\\Ir\\"
+            role, operand = ir + "Schema\\BooleanStorage", ir + "BooleanLiteral"
+            require(item.get("postgresBooleanDefault") == [
+                [[role, "pg_catalog.bool", False, operand, True], [role, "pg_catalog.bool", True, operand, False]],
+                'CREATE TABLE "public"."bool_decl" ("enabled" pg_catalog.bool NOT NULL DEFAULT TRUE, '
+                '"disabled" pg_catalog.bool NULL DEFAULT FALSE) USING heap',
+            ], "installed-postgres-boolean-default-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

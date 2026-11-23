@@ -1,0 +1,141 @@
+{
+  "revision": "SemanticsIR/postgres-create-boolean-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check the native Boolean storage, typed defaults and exact ASCII input normalization and token rules.",
+  "rules": {
+    "Schema/TableColumn::__construct": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$systemNames = ['tableoid' => true, 'xmin' => true, 'cmin' => true, 'xmax' => true, 'cmax' => true, 'ctid' => true];",
+        "Check::input(!isset($systemNames[$name->value]), 'A PostgreSQL table cannot declare a system column name.');",
+        "Check::input(!$default instanceof TextLiteral || $storage === CharacterStorage::Text, 'A text default requires native text storage.');",
+        "Check::input(!$default instanceof BooleanLiteral || $storage === BooleanStorage::Boolean, 'A Boolean default requires native Boolean storage.');",
+        "Check::input(",
+        "    $storage !== BooleanStorage::Boolean || $default === null || $default instanceof BooleanLiteral || $default instanceof NullLiteral,",
+        "    'The Boolean column requires a Boolean or NULL default.'",
+        ");"
+      ]
+    },
+    "Schema/TableColumn::toString": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$definition = $this->name->quoted() . ' ' . $this->storage->value . ($this->nullable ? ' NULL' : ' NOT NULL');",
+        "",
+        "return $definition . match (true) {",
+        "    $this->default instanceof IntegerLiteral => ' DEFAULT ' . $this->default->decimal,",
+        "    $this->default instanceof WideIntegerLiteral => ' DEFAULT CAST(' . $this->default->decimal . ' AS pg_catalog.int8)',",
+        "    $this->default instanceof TextLiteral => ' DEFAULT ' . $this->default->toString(),",
+        "    $this->default instanceof BooleanLiteral => $this->default->value ? ' DEFAULT TRUE' : ' DEFAULT FALSE',",
+        "    $this->default instanceof NullLiteral => ' DEFAULT NULL',",
+        "    $this->default === null => '',",
+        "};"
+      ]
+    },
+    "Schema/LiteralDefaultLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "if ($kind === BooleanStorage::Boolean) {",
+        "    return (new BooleanDefaultLowering())->lower($operation, $clause->value);",
+        "}",
+        "$path = $operation->context->searchPath;",
+        "$catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';",
+        "$default = (new ExpressionLowering())->lower($clause->value, new SourceBinding($operation, null), $catalogFirst, $kind === CharacterStorage::Text);",
+        "if ($default instanceof BuiltinCast && $default->target === CastDestination::WideInteger",
+        "    && ($default->operand instanceof IntegerLiteral || $default->operand instanceof WideIntegerLiteral)) {",
+        "    return new WideIntegerLiteral($default->operand->decimal);",
+        "}",
+        "Check::input($default instanceof IntegerLiteral || $default instanceof WideIntegerLiteral",
+        "    || $default instanceof TextLiteral || $default instanceof NullLiteral, 'The column requires an integer, text or NULL default.');",
+        "",
+        "return $default;"
+      ]
+    },
+    "Schema/CreateColumnLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "Check::input(",
+        "    $column->storage === null && $column->compression === null && $column->options === [],",
+        "    'CREATE TABLE requires an ordinary column definition.'",
+        ");",
+        "$type = $column->type->typeFact($operation->context);",
+        "Check::input($type instanceof Known && !$column->type->setOf, 'The column requires a supported builtin storage kind.');",
+        "$kind = match ($type->descriptor) {",
+        "    Builtin::Int2 => IntegerStorage::Small,",
+        "    Builtin::Int4 => IntegerStorage::Standard,",
+        "    Builtin::Int8 => IntegerStorage::Wide,",
+        "    Builtin::Text => CharacterStorage::Text,",
+        "    Builtin::Bool => BooleanStorage::Boolean,",
+        "    default => throw new InvalidConstruction('The column requires a supported builtin storage kind.'),",
+        "};",
+        "$nullable = null;",
+        "$default = null;",
+        "$literals = new LiteralDefaultLowering();",
+        "foreach ($column->qualifiers as $qualifier) {",
+        "    if ($qualifier instanceof DefaultExpression && $qualifier->name === null && $default === null) {",
+        "        $default = $literals->lower($operation, $qualifier, $kind);",
+        "    } elseif (($qualifier instanceof NotNull || $qualifier instanceof NullAllowed) && $qualifier->name === null && $nullable === null) {",
+        "        $nullable = $qualifier instanceof NullAllowed;",
+        "    } else {",
+        "        throw new InvalidConstruction('The column attribute is outside the native declaration domain.');",
+        "    }",
+        "}",
+        "",
+        "return new TableColumn(new Identifier($column->name->value), $kind, $nullable ?? true, $default);"
+      ]
+    },
+    "Schema/BooleanDefaultLowering::lower": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "if ($operand instanceof Cast) {",
+        "    $target = $operand->type->typeFact($operation->context);",
+        "    Check::input(",
+        "        $target instanceof Known && $target->descriptor === Builtin::Bool && !$operand->type->setOf,",
+        "        'A Boolean default cast requires pg_catalog.bool.'",
+        "    );",
+        "    $operand = $operand->operand;",
+        "}",
+        "while ($operand instanceof Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "",
+        "return match (true) {",
+        "    $operand instanceof ParsedBoolean => new BooleanLiteral($operand->value),",
+        "    $operand instanceof ParsedNull => new NullLiteral(),",
+        "    $operand instanceof Constant && $operand->value instanceof StringConstant => $this->fromText($operand->value->value),",
+        "    default => throw new InvalidConstruction('A Boolean default requires a literal Boolean input.'),",
+        "};"
+      ]
+    },
+    "Schema/BooleanDefaultLowering::fromText": {
+      "dialects": [
+        "postgres"
+      ],
+      "common": [
+        "$token = strtr(trim($value, \" \\t\\n\\r\\f\\v\"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');",
+        "",
+        "return new BooleanLiteral(match ($token) {",
+        "    't', 'tr', 'tru', 'true', 'y', 'ye', 'yes', 'on', '1' => true,",
+        "    'f', 'fa', 'fal', 'fals', 'false', 'n', 'no', 'of', 'off', '0' => false,",
+        "    default => throw new InvalidConstruction('The Boolean default contains an invalid input token.'),",
+        "});"
+      ]
+    }
+  }
+}

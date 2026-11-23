@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Schema;
 
+use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
@@ -29,8 +30,11 @@ final class LiteralDefaultLowering
     public function lower(
         BoundStatement $operation,
         DefaultExpression $clause,
-        IntegerStorage|CharacterStorage $kind
-    ): IntegerLiteral|WideIntegerLiteral|TextLiteral|NullLiteral {
+        IntegerStorage|CharacterStorage|BooleanStorage $kind
+    ): IntegerLiteral|WideIntegerLiteral|TextLiteral|BooleanLiteral|NullLiteral {
+        if ($kind === BooleanStorage::Boolean) {
+            return (new BooleanDefaultLowering())->lower($operation, $clause->value);
+        }
         $path = $operation->context->searchPath;
         $catalogFirst = ($path[0]->value === 'pg_temp' ? ($path[1]->value ?? null) : $path[0]->value) === 'pg_catalog';
         $default = (new ExpressionLowering())->lower($clause->value, new SourceBinding($operation, null), $catalogFirst, $kind === CharacterStorage::Text);

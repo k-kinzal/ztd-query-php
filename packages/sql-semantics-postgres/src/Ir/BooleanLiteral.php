@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * An explicit truth value in a result column.
+ * A resolved PostgreSQL truth value.
  *
  * @visibility public
  * @example Constructing TRUE
@@ -18,7 +18,7 @@ final class BooleanLiteral
     use Snapshot;
 
     /**
-     * Stores the truth value used in the projection.
+     * Stores the native Boolean value.
      */
     public function __construct(public readonly bool $value)
     {

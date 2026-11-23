@@ -34,13 +34,14 @@ final class CreateColumnLowering
             'CREATE TABLE requires an ordinary column definition.'
         );
         $type = $column->type->typeFact($operation->context);
-        Check::input($type instanceof Known && !$column->type->setOf, 'The column requires builtin integer or text storage.');
+        Check::input($type instanceof Known && !$column->type->setOf, 'The column requires a supported builtin storage kind.');
         $kind = match ($type->descriptor) {
             Builtin::Int2 => IntegerStorage::Small,
             Builtin::Int4 => IntegerStorage::Standard,
             Builtin::Int8 => IntegerStorage::Wide,
             Builtin::Text => CharacterStorage::Text,
-            default => throw new InvalidConstruction('The column requires builtin integer or text storage.'),
+            Builtin::Bool => BooleanStorage::Boolean,
+            default => throw new InvalidConstruction('The column requires a supported builtin storage kind.'),
         };
         $nullable = null;
         $default = null;

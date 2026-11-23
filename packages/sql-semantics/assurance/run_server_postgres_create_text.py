@@ -84,7 +84,7 @@ def analyzed(tag):
 def negatives(tag):
     yield case("postgres", tag, [["c0", "INTEGER", True, ["text", "a value"]]]), "A text default requires native text storage."
     yield analysis(tag, f"CREATE TABLE {TABLE} (c0 text)", ["CREATE TEMPORARY TABLE text (a INTEGER)"]), (
-        "The column requires builtin integer or text storage.")
+        "The column requires a supported builtin storage kind.")
     yield analysis(tag, f'CREATE TABLE {TABLE} (c0 pg_catalog.text COLLATE pg_catalog."C")'), (
         "The column attribute is outside the native declaration domain.")
     yield analysis(tag, f"CREATE TABLE {TABLE} (c0 pg_catalog.text GENERATED ALWAYS AS ('a') STORED)"), (

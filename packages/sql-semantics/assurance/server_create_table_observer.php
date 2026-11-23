@@ -33,12 +33,15 @@ function admitCreateTable(string $sql, string $schema, bool $mysql): bool
     $name = static fn (string $part): string => '(?:' . $quote . $part . $quote . '|' . $part . ')';
     $table = $name($schema) . '\.' . $name('ir_create_target');
     $textType = $mysql ? '|VARCHAR\([0-9]{1,5}\)(?: CHARACTER SET utf8mb4)?(?: COLLATE utf8mb4_(?:bin|general_ci))?'
-        : '|TEXT|(?:pg_catalog\.)?text';
+        : '|TEXT|(?:pg_catalog\.)?text|BOOLEAN|(?:pg_catalog\.)?bool';
     $textLiteral = $mysql ? <<<'PATTERN'
 '(?:\\[\s\S]|''|[^'\\])*'
 PATTERN
-        : "'(?:[^'\\x00]|'')*'";
-    $textDefault = '|' . $textLiteral . ($mysql ? '' : '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)|CAST\(-?[0-9]{1,19} AS pg_catalog\.int8\)');
+        : <<<'PATTERN'
+(?:'(?:[^'\x00]|'')*'|E'(?:\\[\s\S]|''|[^'\\\x00])*')
+PATTERN;
+    $textDefault = '|' . $textLiteral . ($mysql ? '' : '|CAST\(' . $textLiteral . ' AS pg_catalog\.text\)|CAST\(-?[0-9]{1,19} AS pg_catalog\.int8\)'
+        . '|TRUE|FALSE|CAST\((?:TRUE|FALSE|NULL|' . $textLiteral . ') AS pg_catalog\.bool\)');
     $signed = $mysql ? 'TINYINT|MEDIUMINT|' : '';
     $slot = $name($mysql ? '[cC](?:[0-9]|1[0-6])' : 'c[0-9]');
     $column = $slot . ' (?:' . $signed . 'SMALLINT|INTEGER|INT|BIGINT' . $textType . ')(?: NULL| NOT NULL)?'
@@ -53,13 +56,20 @@ PATTERN
     return preg_match('/\ACREATE TABLE (?:IF NOT EXISTS )?' . $table . ' \(' . $column . '(?:, ' . $column . ')' . $extent . $key . '\)' . $engine . '\z/D', $sql) === 1;
 }
 
-function createDefault(string $engine, ?string $value, string $kind): int|string|null
+function createDefault(string $engine, ?string $value, string $kind): int|string|bool|null
 {
     if ($value === null || preg_match('/\ANULL(?:::(?:smallint|integer|bigint|text))?\z/iD', $value) === 1) {
         return null;
     }
     if ($kind === 'text' && preg_match("/\A'((?:[^']|'')*)'::text\z/D", $value, $text) === 1) {
         return str_replace("''", "'", $text[1]);
+    }
+    if ($kind === 'boolean') {
+        return match ($value) {
+            'true' => true,
+            'false' => false,
+            default => throw new RuntimeException('PostgreSQL reported an unregistered Boolean default: ' . $value),
+        };
     }
     if (preg_match("/\A[(]?'?(-?[0-9]{1,19})'?(?:::(?:smallint|integer|bigint))?[)]?(?:::bigint)?\z/D", $value, $number) !== 1) {
         throw new RuntimeException($engine . ' reported an unregistered default shape: ' . $value);

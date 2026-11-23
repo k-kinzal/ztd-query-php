@@ -163,6 +163,16 @@ function observePostgresSignedDefault(SqlSemantics\Platform\PostgreSql\Semantics
     ], $value->columns), $value->toString()];
 }
 
+function observePostgresBooleanDefault(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $value = $semantics->analyze("CREATE TABLE public.bool_decl (enabled pg_catalog.bool NOT NULL DEFAULT ' YE ', "
+        . "disabled BOOLEAN DEFAULT CAST(' of ' AS pg_catalog.bool))");
+
+    return [array_map(static fn ($column): array => [
+        $column->storage::class, $column->storage->value, $column->nullable, $column->default::class, $column->default->value,
+    ], $value->columns), $value->toString()];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -257,6 +267,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         $details = [];
         if ($platform === 'PostgreSql' && $role === 'Schema\\CreateTable') {
             $details['postgresSignedDefault'] = observePostgresSignedDefault($semantics);
+            $details['postgresBooleanDefault'] = observePostgresBooleanDefault($semantics);
         }
         if ($platform === 'MySql' && $role === 'Schema\\CreateTable') {
             $details['mysqlVarcharDeclaration'] = observeMysqlVarcharDeclaration($semantics);

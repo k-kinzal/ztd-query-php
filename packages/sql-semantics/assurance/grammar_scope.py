@@ -367,7 +367,7 @@ def inventory(root):
         for rule in create:
             for alternative in rules.get(rule, []):
                 related[alternative] = (("server-create-table-v2.json", "postgres-create-text-v1.json",
-                                         "postgres-create-signed-defaults-v1.json") if postgres else ("server-create-table-v2.json",))
+                                         "postgres-create-signed-defaults-v1.json", "postgres-create-boolean-v2.json") if postgres else ("server-create-table-v2.json",))
         for rule in parameters:
             for alternative in rules.get(rule, []):
                 if any(token in alternative for token in ("PARAM", "param_marker", "CAST", "TYPECAST", "SIGNED")):

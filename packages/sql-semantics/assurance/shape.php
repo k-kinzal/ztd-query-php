@@ -661,10 +661,12 @@ if ($dialect !== 'sqlite') {
     $enumCases['Schema\\IntegerStorage'] = ['Small' => 'SMALLINT', 'Standard' => 'INTEGER', 'Wide' => 'BIGINT'];
     if ($dialect === 'postgres') {
         $properties['Schema\\CharacterStorage'] = $methods['Schema\\CharacterStorage'] = [];
-        $internal[] = 'Schema\\LiteralDefaultLowering';
+        $properties['Schema\\BooleanStorage'] = $methods['Schema\\BooleanStorage'] = [];
+        array_push($internal, 'Schema\\LiteralDefaultLowering', 'Schema\\BooleanDefaultLowering');
         $enumCases['Schema\\CharacterStorage'] = ['Text' => 'pg_catalog.text'];
-        $properties['Schema\\TableColumn']['storage'] = ['Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
-        $properties['Schema\\TableColumn']['default'] = ['Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
+        $enumCases['Schema\\BooleanStorage'] = ['Boolean' => 'pg_catalog.bool'];
+        $properties['Schema\\TableColumn']['storage'] = ['Schema\\BooleanStorage', 'Schema\\CharacterStorage', 'Schema\\IntegerStorage'];
+        $properties['Schema\\TableColumn']['default'] = ['BooleanLiteral', 'Expression\\TextLiteral', 'Expression\\WideIntegerLiteral', 'IntegerLiteral', 'NullLiteral', 'null'];
     } else {
         $properties['Schema\\CreateTable']['defaultCollation'] = ['?From\\TextCollation'];
         $properties['Schema\\CreateTable']['primaryKey'] = ['?Schema\\Key\\PrimaryKey'];
