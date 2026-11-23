@@ -29,6 +29,7 @@ function constructOperand(string $namespace, array $data): object
     $type = $namespace . match ($data[0]) {
         'integer' => 'IntegerLiteral',
         'wide-integer' => 'Expression\\WideIntegerLiteral',
+        'text', 'text-bytes' => 'Expression\\TextLiteral',
         'parameter' => 'Binding\\Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
@@ -49,6 +50,8 @@ function constructOperand(string $namespace, array $data): object
 
     return match ($data[0]) {
         'integer', 'range-integer', 'wide-integer' => new $type(...array_slice($data, 1)),
+        'text' => new $type($data[1]),
+        'text-bytes' => new $type(hex2bin($data[1])),
         'boolean' => new $type($data[1]),
         'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
         'slot' => new $type($data[1], $data[2] ?? 0),
@@ -99,6 +102,7 @@ function observeOperand(string $namespace, object $value): array
     return match ($value::class) {
         $namespace . 'IntegerLiteral' => ['integer', $value->decimal],
         $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
+        $namespace . 'Expression\\TextLiteral' => ['text', $value->value],
         $namespace . 'Binding\\Parameter' => match (true) {
             !($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter),
             $value->input === SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination::Integer

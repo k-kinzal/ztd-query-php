@@ -30,6 +30,7 @@ final class BuiltinCastLoweringTest extends TestCase
         self::assertInstanceOf(Cast::class, $target->expression);
         $value = (new BuiltinCastLowering())->lower($target->expression, new SourceBinding($operation->binding(), null), true);
 
+        self::assertInstanceOf(BuiltinCast::class, $value);
         self::assertSame(CastDestination::Boolean, $value->target);
         self::assertInstanceOf(BuiltinCast::class, $value->operand);
         self::assertSame(CastDestination::Integer, $value->operand->target);

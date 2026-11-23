@@ -220,6 +220,10 @@ def inventory(root):
                 "a_expr: a_expr TYPECAST Typename", "b_expr: b_expr TYPECAST Typename",
                 "func_expr_common_subexpr: CAST ( a_expr AS Typename )",
             )})
+            for rule in ("AexprConst", "Sconst", "c_expr"):
+                for alternative in rules.get(rule, ()):
+                    if "SCONST" in alternative or "Sconst" in alternative:
+                        related[alternative] = (*related.get(alternative, ()), "postgres-text-literal-v1.json")
             parameters = ("c_expr", "a_expr")
             local = ("table_ref", "with_clause", "cte_list", "common_table_expr")
             compound = ("simple_select", "set_quantifier")
@@ -242,7 +246,7 @@ def inventory(root):
                 elif not any(excluded in alternative for excluded in ("STRAIGHT", "NATURAL", "USING", "natural_join")):
                     related[alternative] = ("server-join-v2.json",)
                 elif not postgres and ("NATURAL" in alternative or "USING" in alternative or "natural_join" in alternative):
-                    related[alternative] = ("mysql-merged-join-v2.json",)
+                    related[alternative] = ("mysql-merged-join-v3.json",)
         for rule in selection:
             for alternative in rules.get(rule, []):
                 related[alternative] = ("server-result-v1.json",)

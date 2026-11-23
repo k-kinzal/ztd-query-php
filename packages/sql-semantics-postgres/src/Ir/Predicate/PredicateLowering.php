@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
@@ -67,7 +68,7 @@ final class PredicateLowering
             $tested = $operand instanceof ParsedLogical || $operand instanceof ParsedNot || $operand instanceof ParsedNullTest || $operand instanceof ParsedComparison
                 ? $this->lowerValue($operand, $binding, $catalogFirst)
                 : $expression->lower($operand, $binding, $catalogFirst);
-            Check::input(!$tested instanceof Arithmetic && !$tested instanceof BuiltinCast && !$tested instanceof IntegerCase && !$tested instanceof WideIntegerLiteral, 'A null test needs a supported scalar value.');
+            Check::input(!$tested instanceof Arithmetic && !$tested instanceof BuiltinCast && !$tested instanceof IntegerCase && !$tested instanceof WideIntegerLiteral && !$tested instanceof TextLiteral, 'A null test needs a supported scalar value.');
 
             return new NullTest($tested, $condition->negated);
         }

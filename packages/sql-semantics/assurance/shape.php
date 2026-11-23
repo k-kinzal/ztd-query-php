@@ -77,7 +77,9 @@ if ($dialect === 'postgres') {
     $methods[$builtinCast] = ['__construct'];
     $properties['Expression\\WideIntegerLiteral'] = ['decimal' => ['string']];
     $methods['Expression\\WideIntegerLiteral'] = ['__construct'];
-    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral');
+    $properties['Expression\\TextLiteral'] = ['value' => ['string']];
+    $methods['Expression\\TextLiteral'] = ['__construct', 'toString'];
+    array_push($properties['ResultColumn']['expression'], $builtinCast, 'Expression\\WideIntegerLiteral', 'Expression\\TextLiteral');
     $integerCase = 'Expression\\IntegerCase';
     $caseArm = 'Expression\\IntegerCaseArm';
     $caseValues = ['Arithmetic', 'ColumnReference', $integerCase, 'IntegerLiteral', 'NullLiteral'];

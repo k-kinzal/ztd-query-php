@@ -65,7 +65,7 @@ final class SelectLowering
                 continue;
             }
             $parameter = $parameters->lower($expression, $operation->context, $inputTypes);
-            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst), $label);
+            $results[] = new ResultColumn($parameter ?? $expressions->lower($expression, $binding, $catalogFirst, $operand === null), $label);
         }
 
         Check::input($results !== [], 'A complete projection requires at least one resolved output field.');

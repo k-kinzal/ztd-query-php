@@ -16,7 +16,9 @@ use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Type\Known;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral as ParsedNull;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 
 /**
@@ -31,20 +33,25 @@ final class BuiltinCastLowering
      *
      * @throws InvalidConstruction When a type or operand is outside the checked domain
      */
-    public function lower(Cast $cast, SourceBinding|JoinBinding $binding, bool $catalogFirst): BuiltinCast
+    public function lower(Cast $cast, SourceBinding|JoinBinding $binding, bool $catalogFirst): BuiltinCast|TextLiteral
     {
         $type = $binding->typeOf($cast);
         Check::input(!$cast->type->setOf && $type instanceof Known, 'The cast must resolve to a scalar pg_catalog target.');
-        $target = match ($type->descriptor) {
-            Builtin::Int4 => CastDestination::Integer,
-            Builtin::Int8 => CastDestination::WideInteger,
-            Builtin::Bool => CastDestination::Boolean,
-            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8 or pg_catalog.bool.'),
-        };
         $operand = $cast->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
+        if ($type->descriptor === Builtin::Text) {
+            Check::input($operand instanceof Constant && $operand->value instanceof StringConstant, 'A text literal cast requires a decoded string constant.');
+
+            return new TextLiteral($operand->value->value);
+        }
+        $target = match ($type->descriptor) {
+            Builtin::Int4 => CastDestination::Integer,
+            Builtin::Int8 => CastDestination::WideInteger,
+            Builtin::Bool => CastDestination::Boolean,
+            default => throw new InvalidConstruction('The cast target must be pg_catalog.int4, pg_catalog.int8, pg_catalog.bool or a text literal.'),
+        };
         if ($operand instanceof ParsedNull) {
             return new BuiltinCast($target, new NullLiteral());
         }

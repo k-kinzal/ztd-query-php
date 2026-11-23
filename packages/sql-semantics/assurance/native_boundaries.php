@@ -46,7 +46,7 @@ function nativeBoundaryContract(string $dialect): array
 
     $amendments = match ($dialect) {
         'mysql' => [['mysql-from-list-boundaries-v1.json', '75520d651cdde8992dcf05de45be54b9cb5d44d3af3f3536b612d6e83d7a443d']],
-        'postgres' => [['postgres-join-boundaries-v3.json', '98c32ccf198b4c7eb20e93287d91cd498d59e07657be528e2a5a61bcb30de8af']],
+        'postgres' => [['postgres-query-boundaries-v4.json', '56f4788f6f51b0453b0dc20a2dbfa4caeccdb48c2d54073a51497255d273907c']],
         'sqlite' => [],
     };
     foreach ($amendments as [$name, $digest]) {
@@ -141,7 +141,7 @@ function checkNativeBoundaries(
         if ($dialect === 'postgres') {
             $imports .= 'use ' . $platform . '\\Ir\\ArithmeticOperator;' . "\n";
             foreach (['Ir\\Expression\\IntegerCase', 'Ir\\Expression\\IntegerCaseArm', 'Ir\\Expression\\IntegerCaseLowering',
-                'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
+                'Ir\\Expression\\BuiltinCast', 'Ir\\Expression\\BuiltinCastLowering', 'Ir\\Expression\\CastDestination', 'Ir\\Expression\\TextLiteral', 'Ir\\Expression\\WideIntegerLiteral', 'Ir\\Binding\\ParameterSignature', 'Ir\\From\\JoinBinding',
                 'Ir\\Predicate\\IntegerRange', 'Ir\\Predicate\\IntegerRangeLowering', 'Ir\\Predicate\\IntegerAtomLowering',
                 'Ir\\Predicate\\IntegerDistinctness', 'Ir\\Predicate\\IntegerDistinctnessLowering',
                 'Ir\\Predicate\\TruthTest', 'Ir\\Predicate\\TruthOperator', 'Ir\\Predicate\\TruthTestLowering',
@@ -150,9 +150,9 @@ function checkNativeBoundaries(
                 'Statement\\Expression\\Operator\\Between as ParsedRange', 'Statement\\Expression\\Operator\\DistinctTest as ParsedDistinctness',
                 'Statement\\Expression\\Operator\\UnaryOperation',
                 'Statement\\Expression\\Constructor\\CaseExpression as ParsedCase', 'Statement\\Literal\\BooleanLiteral as ParsedBoolean',
-                'Statement\\Literal\\Constant', 'Statement\\Literal\\IntegerConstant', 'Statement\\Literal\\NumericConstant', 'Ir\\Predicate\\PredicateLowering',
+                'Statement\\Literal\\Constant', 'Statement\\Literal\\IntegerConstant', 'Statement\\Literal\\NumericConstant', 'Statement\\Literal\\StringConstant', 'Ir\\Predicate\\PredicateLowering',
                 'Ir\\From\\MergedJoinLowering', 'Statement\\Relation\\JoinKind as ParsedKind', 'Statement\\Relation\\JoinOn', 'Statement\\Relation\\JoinUsing',
-                'Statement\\Relation\\RelationList', 'Statement\\Relation\\TableInput', 'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
+                'Statement\\Relation\\RelationList', 'Statement\\Relation\\ParenthesizedJoin', 'Statement\\Relation\\TableInput', 'Model\\Statement\\Identifier\\Name', 'Ir\\SourceBinding', 'Ir\\Mutation\\ReturningSql', 'Ir\\Mutation\\ReturningLayout', 'Ir\\Mutation\\ReturningLowering',
                 'Ir\\Mutation\\Insert\\Destination', 'Ir\\Mutation\\InsertTargetBinding', 'Ir\\Mutation\\InsertCell',
                 'Ir\\Mutation\\ReturnedColumn', 'Model\\Contract\\ParameterStyle', 'Statement\\Manipulation\\CurrentOf',
                 'Statement\\Manipulation\\Assignment\\Assignment as ParsedAssignment',

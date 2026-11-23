@@ -16,7 +16,7 @@ from server_join_cases import DATA as BASE_DATA, NAMES_BY_TABLE, declarations as
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-merged-join"
-CONTRACT = "747346f095ab6d769cdab747949d56fae9a1618bd9565ce0df6073e75b6354a1"
+CONTRACT = "f6ba0df40b63e6aaf88b871fbc47b587576c1fef3af3f1a53487fd17dd440bb5"
 KINDS = ("INNER", "LEFT", "RIGHT")
 MASKS = {"id": ("id",), "lane": ("lane",), "both": ("id", "lane")}
 SCHEMA = "ir_fixture"
@@ -47,7 +47,7 @@ REFUSALS = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\"
 
 
 def specifications():
-    path, profile = TOOL / "mysql-merged-join-v2.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "mysql-merged-join-v3.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "mysql-merged-join-contract-mismatch")
     return json.loads(path.read_text()), {"mysql": json.loads(profile.read_text())["profiles"]["mysql"]}
 

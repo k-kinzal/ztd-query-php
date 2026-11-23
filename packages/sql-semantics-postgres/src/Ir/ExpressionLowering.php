@@ -8,6 +8,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCast;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\BuiltinCastLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCaseLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\WideIntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
@@ -33,6 +34,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral as ParsedNull;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 
 /**
  * Lowers resolved int4 projection operands.
@@ -43,6 +45,7 @@ final class ExpressionLowering
 {
     /**
      * Converts a resolved operand, including the exact builtin operator identity.
+     * @param bool $simpleOutput Whether a simple statement output resolves a bare string as text
      *
      * @throws InvalidConstruction When the operand has no representation in this domain
      */
@@ -50,7 +53,8 @@ final class ExpressionLowering
         Scalar $expression,
         SourceBinding|JoinBinding $binding,
         bool $catalogFirst,
-    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|WideIntegerLiteral {
+        bool $simpleOutput = false,
+    ): Arithmetic|BuiltinCast|ColumnReference|IntegerCase|IntegerLiteral|IntegerDistinctness|IntegerRange|TruthTest|BooleanLiteral|NullLiteral|TextLiteral|WideIntegerLiteral {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
@@ -68,6 +72,7 @@ final class ExpressionLowering
             $expression instanceof ParsedDistinctness => (new IntegerDistinctnessLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedTruthTest => (new TruthTestLowering())->lower($expression, $binding, $catalogFirst),
             $expression instanceof ParsedRange => (new IntegerRangeLowering())->lower($expression, $binding, $catalogFirst),
+            $expression instanceof Constant && $expression->value instanceof StringConstant && $simpleOutput => new TextLiteral($expression->value->value),
             $expression instanceof ParsedBoolean => new BooleanLiteral($expression->value),
             $expression instanceof ParsedNull => new NullLiteral(),
             $expression instanceof ParsedColumn => $binding->reference($expression),

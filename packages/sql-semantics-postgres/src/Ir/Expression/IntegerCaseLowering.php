@@ -74,7 +74,7 @@ final class IntegerCaseLowering
             }
         }
         $result = (new ExpressionLowering())->lower($expression, $binding, $catalogFirst);
-        Check::input(!$result instanceof BooleanLiteral && !$result instanceof BuiltinCast && !$result instanceof IntegerRange && !$result instanceof IntegerDistinctness && !$result instanceof TruthTest && !$result instanceof WideIntegerLiteral, 'An int4 CASE arm requires a signed integer or NULL.');
+        Check::input(!$result instanceof BooleanLiteral && !$result instanceof BuiltinCast && !$result instanceof IntegerRange && !$result instanceof IntegerDistinctness && !$result instanceof TruthTest && !$result instanceof WideIntegerLiteral && !$result instanceof TextLiteral, 'An int4 CASE arm requires a signed integer or NULL.');
 
         return $result;
     }
