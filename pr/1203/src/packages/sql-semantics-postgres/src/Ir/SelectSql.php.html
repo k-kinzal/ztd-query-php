@@ -98,7 +98,7 @@
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-var">$sql</span> .= <span class="tok-str">&#039; WHERE &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">predicate</span>(<span class="tok-var">$select</span>-&gt;<span class="tok-id">where</span>, <span class="tok-var">$source</span>);</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-kw">return</span> <span class="tok-var">$sql</span> . (<span class="tok-kw">new</span> <span class="tok-id">ResultSql</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$select</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-kw">return</span> <span class="tok-var">$sql</span> . (<span class="tok-kw">new</span> <span class="tok-id">ResultSql</span>())-&gt;<span class="tok-id">render</span>(<span class="tok-var">$select</span>, <span class="tok-var">$this</span>);</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    }</span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a></span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
