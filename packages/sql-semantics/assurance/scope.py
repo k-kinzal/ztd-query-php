@@ -112,7 +112,7 @@ CONTRACTS = {
     "postgres-boolean-fields-v1.json": "be21037b2177f59687c4a02f8ef81142aa67bbc92263d2f5f6dc8e4a705b09c1",
     "postgres-create-boolean-v2.json": "5afd7c6f36188d8dad72f4ede3628804b8b0ca96f30d376d334d74f70aeab95d",
     "server-compound-v2.json": "dbbf8f67d81e09156521992de45ac350e7dffdac774200f54fc80511c8d27bf8",
-    "server-drop-table-v1.json": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",
+    "server-drop-table-v2.json": "e0ffff4fc165236fafb583316d1ff8f1ce0a17956089ded17bd65cfc9011b022",
     "server-transaction-v1.json": "c0f7fb70d54ca3321d9104e0a239c62bdf24e48ce65febffb1906faae429dd09",
     "server-update-v2.json": "38f94fa32e0e19ddbacfba57f71f45e2e0a4ab27b12a6d84b007599a7c142542",
     "server-insert-v1.json": "0456225d41ef56fa2e8271102caae8ebb225bf9c76372eaaaa18126b2d8b0f79",

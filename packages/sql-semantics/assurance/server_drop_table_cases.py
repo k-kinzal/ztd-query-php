@@ -64,8 +64,8 @@ def negatives(engine, tag):
     for sql, message in [
         (f"DROP TABLE IF EXISTS {schema}.ir_drop_view", "ordinary table" if engine == "mysql" else "is not a table"),
         ("DROP TABLE IF EXISTS unknown_schema.ir_drop_a", "known explicit schema"),
-        (f"DROP TEMPORARY TABLE {schema}.ir_drop_a" if engine == "mysql" else f"DROP VIEW {schema}.ir_drop_view",
-         "persistent table" if engine == "mysql" else "TABLE object kind"),
+        (f"DROP TEMPORARY TABLE {schema}.ir_drop_a" if engine == "mysql" else f"DROP SEQUENCE {schema}.ir_drop_sequence",
+         "persistent table" if engine == "mysql" else "supported persistent relation kind"),
     ]:
         yield {"dialect": engine, "release": tag, "sql": sql, "declarations": [
             f"CREATE TABLE {schema}.ir_drop_a (value INTEGER)",
