@@ -242,6 +242,15 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 ],
                 $written->assignments,
             );
+            $textInsert = $semantics->analyze(
+                "INSERT INTO public.text_updates (label, id) VALUES ('', 4) RETURNING label, id",
+                $writeContext,
+            );
+            $details['typedInsert'] = [
+                array_map(static fn ($slot): array => [$slot->kind->value, $slot->slot], $textInsert->target->written),
+                $textInsert->rows[0]->values[0]->value->value,
+                $textInsert->rows[0]->values[1]->value->decimal,
+            ];
         }
         if ($platform === 'Sqlite' && $role === 'Select') {
             $joined = $semantics->analyze('WITH source(id) AS (VALUES (?02), (3)) SELECT a.id, b.id FROM source a LEFT JOIN source b ON a.id=b.id');

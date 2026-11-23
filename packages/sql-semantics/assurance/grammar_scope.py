@@ -224,6 +224,9 @@ def inventory(root):
                 for alternative in rules.get(rule, ()):
                     if alternative.endswith((" IS NULL_P", " IS NOT NULL_P")):
                         related[alternative] = (*related.get(alternative, ()), "postgres-text-null-tests-v1.json")
+            for rule in ("values_clause", "insert_column_list", "insert_column_item"):
+                for alternative in rules.get(rule, ()):
+                    related[alternative] = (*related.get(alternative, ()), "postgres-text-insert-v1.json")
             for alternative in rules.get("set_clause", ()):
                 if " '=' a_expr" in alternative or " = a_expr" in alternative:
                     related[alternative] = (*related.get(alternative, ()), "postgres-text-update-v1.json")

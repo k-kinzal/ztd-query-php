@@ -7,7 +7,7 @@ namespace Tests\Unit\Ir\Mutation\Insert;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Identifier;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
@@ -19,7 +19,7 @@ final class DestinationTest extends TestCase
     public function testToStringUsesWriteOrderAndOmitsTheReadOnlySlot(): void
     {
         $relation = new TableSource(new Identifier('public'), new Identifier('t'), [new Identifier('a'), new Identifier('b'), new Identifier('c')]);
-        $destination = new Destination($relation, [new ColumnReference(1), new ColumnReference(0)]);
+        $destination = new Destination($relation, [new WriteSlot(1, ColumnKind::Int4), new WriteSlot(0, ColumnKind::Int4)]);
 
         self::assertSame('"public"."t" ("b", "a")', $destination->toString());
         self::assertSame($relation, $destination->relation);

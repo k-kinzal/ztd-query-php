@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
+use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
+use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\WriteSlot;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Facade\BoundStatement;
@@ -29,7 +32,8 @@ final class InsertTargetBinding
         $written = [];
         foreach ($statement->columns as $column) {
             Check::input($column->steps === [], 'An INSERT column must name a declared target slot.');
-            $written[] = $binding->slotFor($binding->writableColumn($column->column->value));
+            $slot = $binding->writeReference($column->column->value);
+            $written[] = new WriteSlot($slot->slot, $slot instanceof TextColumnReference ? ColumnKind::Text : ColumnKind::Int4);
         }
         $returning = $statement->returning === [] ? [] : (new ReturningLowering())->lower($operation->facts->output, $binding);
         $relation = $binding->source();

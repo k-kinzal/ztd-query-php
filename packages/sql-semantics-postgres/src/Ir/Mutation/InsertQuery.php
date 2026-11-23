@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 use SqlSemantics\Platform\PostgreSql\Ir\Arithmetic;
 use SqlSemantics\Platform\PostgreSql\Ir\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\IntegerCase;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
@@ -47,7 +48,8 @@ final class InsertQuery implements SemanticsIR
             !$query->source instanceof Join && $query->orderBy === [] && $query->limit === null,
             'The INSERT query must be independent, unbounded and unordered.'
         );
-        foreach ($query->columns as $column) {
+        foreach ($query->columns as $position => $column) {
+            Check::input($target->written[$position]->kind === ColumnKind::Int4, 'A query INSERT requires a signed integer target.');
             $value = $column->expression;
             Check::input(
                 $value instanceof ColumnReference || $value instanceof Arithmetic || $value instanceof IntegerCase || $value instanceof IntegerLiteral || $value instanceof NullLiteral,

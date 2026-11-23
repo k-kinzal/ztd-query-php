@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v30.json"
-CONTRACT = "a3c22efa733f1cc0df3584bb3361c1cd66bb4df369a3280cf8783d8b46c218a4"
+CONTRACT_NAME = "release-layout-v31.json"
+CONTRACT = "729bcb17246a6311c6158933b465d0c714c03d92d0357e4863847be33367fb97"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -233,6 +233,8 @@ def verify_probe(raw, catalog):
                     "installed-typed-returning-mismatch", item)
             require(item.get("typedUpdate") == [["From\\TextColumnReference", 0, 1], ["From\\TextColumnReference", 1, 0]],
                     "installed-typed-update-mismatch", item)
+            require(item.get("typedInsert") == [[["text", 0], ["int4", 1]], "", "4"],
+                    "installed-typed-insert-mismatch", item)
         if (item["platform"], item["role"]) == ("Sqlite", "Schema\\CreateTable"):
             require(item.get("keyLayout") == [
                 ["primary", True, 0, False, "BINARY", None], ["unique", True, 1, False, "NOCASE", None],

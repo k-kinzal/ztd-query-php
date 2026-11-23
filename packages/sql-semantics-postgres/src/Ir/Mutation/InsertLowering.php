@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
@@ -41,10 +43,15 @@ final class InsertLowering
         $empty = new SourceBinding($operation, null);
         $rows = [];
         foreach ($statement->rows->rows() as $row) {
+            Check::input(count($row->values) === count($target->written), 'Every inserted row must match the target width.');
             $values = [];
-            foreach ($row->values as $value) {
-                $item = $expression->lower($value, $empty, $catalogFirst);
-                Check::input($item instanceof IntegerLiteral || $item instanceof NullLiteral, 'A supplied INSERT value requires an integer or NULL literal.');
+            foreach ($row->values as $index => $value) {
+                $text = $target->written[$index]->kind === ColumnKind::Text;
+                $item = $expression->lower($value, $empty, $catalogFirst, $text);
+                Check::input(
+                    $item instanceof IntegerLiteral || $item instanceof TextLiteral || $item instanceof NullLiteral,
+                    'A supplied INSERT value requires an explicit native literal or NULL.',
+                );
                 $values[] = new InsertCell($item instanceof NullLiteral ? null : $item);
             }
             $rows[] = new InsertRow($values);

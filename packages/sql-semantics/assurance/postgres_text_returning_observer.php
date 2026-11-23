@@ -36,9 +36,12 @@ function admittedTextMutation(string $sql): bool
     $scalar = '(?:' . $int4 . '|' . $column . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
     $assignment = $name('(?:id|label|note)') . ' = ' . $scalar;
     $update = 'UPDATE (?:ONLY )?' . $table . '(?: AS ' . $alias . ')? SET ' . $assignment . '(?:, ' . $assignment . ')*' . $where;
-    $values = 'VALUES \\(' . $int4 . '\\)(?:, \\(' . $int4 . '\\))*';
+    $cell = '(?:' . $int4 . '|NULL|' . $text . '|CAST\\(' . $text . ' AS pg_catalog\\.text\\))';
+    $row = '\\(' . $cell . '(?:, ' . $cell . ')*\\)';
+    $values = 'VALUES ' . $row . '(?:, ' . $row . ')*';
     $select = 'SELECT ' . $int4 . '(?: AS ' . $name('v') . ')?(?: WHERE FALSE)?';
-    $insert = 'INSERT INTO ' . $table . ' \\(' . $name('id') . '\\) (?:' . $values . '|' . $select . ')';
+    $written = $name('(?:id|label|note)');
+    $insert = 'INSERT INTO ' . $table . ' \\(' . $written . '(?:, ' . $written . ')*\\) (?:' . $values . '|' . $select . ')';
     $returning = fixtureReturningClause($column, $alias);
 
     return preg_match('/\\A(?:' . $delete . '|' . $update . '|' . $insert . ')' . $returning . '\\z'

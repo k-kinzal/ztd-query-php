@@ -283,7 +283,7 @@ def faults(engine):
         shared.append(Fault("accept-unknown-comparison-pair", "Predicate/IntegerRangeLowering::lower",
                             "$knownSubject || ($knownLower && $knownUpper)", "true"))
         shared.append(Fault("admit-invisible-pg-write-slot", "Mutation/Insert/Destination::__construct",
-                            "$column->occurrence === 0 && $relation->columnKind($column->slot) === ColumnKind::Int4", "true"))
+                            "$relation->columnKind($column->slot) === $column->kind", "true"))
         shared.append(Fault("admit-duplicate-pg-write-slot", "Mutation/Insert/Destination::__construct",
                             "!isset($seen[$column->slot]),", "true,"))
         shared.append(Fault("skip-insert-return-layout", "Mutation/Insert::__construct",
@@ -294,6 +294,11 @@ def faults(engine):
                             "$reference->occurrence === 0,", "true,"))
         shared.append(Fault("allow-absent-pg-return-slot", "Mutation/ReturningLayout::check",
                             "$target->columnKind($field->reference->slot) === $kind,", "true,"))
+        shared.append(Fault("admit-nonlocal-postgres-write-slot", "Mutation/Insert/WriteSlot::__construct",
+                            "$occurrence === 0,", "true,"))
+        shared.append(Fault("ignore-postgres-insert-cell-kind", "Mutation/Insert::__construct",
+                            "$cell->value === null || ($cell->value instanceof TextLiteral) === ($target->written[$index]->kind === ColumnKind::Text),",
+                            "true,"))
         shared.append(Fault("ignore-postgres-update-read-native-kind", "Mutation/Update::__construct",
                             "$scope->column($value, [$target], 'An UPDATE read slot must belong to the target.');", ""))
         shared.append(Fault("ignore-postgres-assignment-kind", "Mutation/UpdateAssignment::__construct",
@@ -508,7 +513,7 @@ def main():
         "status": "provisional-native-construction-shape",
         "candidate": identity, "distribution": digest(args.out / "distribution.json"),
         "procedures": {name: digest(TOOL / name) for name in ("shape.php", "native_boundaries.php", "check_native_boundaries.py",
-                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "postgres-join-binding-v3.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v28.json", "value-primitives.json")},
+                       "sqlite-drop-view-boundaries-v1.json", "sqlite-create-view-boundaries-v4.json", "sqlite-view-binding-sources-v2.json", "native-boundaries-v31.json", "mysql-from-binding-v2.json", "mysql-from-list-boundaries-v1.json", "postgres-join-binding-v3.json", "postgres-query-boundaries-v9.json", "postgres-derived-text-boundaries-v1.json", "postgres-text-returning-boundaries-v1.json", "postgres-text-update-boundaries-v1.json", "postgres-text-insert-boundaries-v1.json", FAULT_REPLAY_NAME, "identifier-boundaries-v1.json", "postgres-mutation-returning-boundaries-v2.json", "native-insert-query-boundaries-v4.json", "sqlite-grouped-boundaries-v5.json", "sqlite-wildcard-boundaries-v4.json", "sqlite-insert-slots-boundaries-v5.json", "sqlite-scalar-boundaries-v17.json", "sqlite-numeric-boundaries-v2.json", "sqlite-default-boundaries-v10.json", "sqlite-rename-boundaries-v1.json", "sqlite-rename-v4.json", "sqlite-mutation-returning-boundaries-v3.json", "sqlite-query-scope-boundaries-v9.json", "sqlite-merged-join-binding-v3.json", "sqlite-conflict-boundaries-v3.json", "sqlite-folded-binding-sources-v3.json", "postgres-integer-binding-sources-v1.json", "postgres-declaration-binding-sources-v1.json", "closed-value-graph-v1.json", "checked_value_graph.py", "scalar-dispatch-v3.json", "checked_scalar_dispatch.py", "scalar_dispatch.php", "value_storage.php", "value-storage-v29.json", "value-primitives.json")},
         "faultPlan": {"path": plan_path.name, "sha256": digest(plan_path)},
         "results": results, "valueClosure": {"path": path.name, "sha256": digest(path)},
         "scalarDispatch": {"path": dispatch.name, "sha256": digest(dispatch)},

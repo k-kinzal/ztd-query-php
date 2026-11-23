@@ -201,7 +201,7 @@ final class SourceBinding
     }
 
     /**
-     * Allocates the native role of a checked UPDATE destination.
+     * Allocates the native role of a checked mutation destination.
      */
     public function writeReference(string $name): ColumnReference|TextColumnReference
     {

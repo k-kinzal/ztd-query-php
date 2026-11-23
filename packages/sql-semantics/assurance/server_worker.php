@@ -536,7 +536,7 @@ function constructInsert(string $platform, array $input): SemanticsIR
     foreach ($input['rows'] as $entries) {
         $values = [];
         foreach ($entries as $cell) {
-            $values[] = new $cellClass($cell === null ? null : new $integer($cell));
+            $values[] = new $cellClass(is_array($cell) ? constructOperand($namespace, $cell) : ($cell === null ? null : new $integer($cell)));
         }
         $rows[] = new $rowClass($values);
     }
@@ -553,7 +553,10 @@ function observeInsert(string $namespace, object $value, string $dialect): array
 {
     $rows = [];
     foreach ($value->rows as $row) {
-        $rows[] = array_map(static fn ($cell): ?string => $cell->value?->decimal, $row->values);
+        $rows[] = array_map(static fn ($cell): array|string|null => match (true) {
+            $cell->value instanceof SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral => ['text', $cell->value->value],
+            default => $cell->value?->decimal,
+        }, $row->values);
     }
 
     return [
@@ -571,7 +574,13 @@ function constructInsertDestination(string $platform, string $namespace, array $
     $destination = $namespace . 'Mutation\\Insert\\Destination';
     $slots = $input['written'] ?? array_map(static fn (int $number): array => ['slot', $number], array_keys($input['target']['columns']));
 
-    return new $destination($relation, array_map(static fn (array $slot): object => constructOperand($namespace, $slot), $slots));
+    $writeSlot = $namespace . 'Mutation\\Insert\\WriteSlot';
+    $kind = $namespace . 'From\\ColumnKind';
+
+    return new $destination($relation, array_map(
+        static fn (array $slot): object => new $writeSlot($slot[1], $kind::from($slot[0] === 'text-slot' ? 'text' : 'int4'), $slot[2] ?? 0),
+        $slots,
+    ));
 }
 
 function observeInsertDestination(string $namespace, object $value, string $dialect): array
@@ -582,7 +591,10 @@ function observeInsertDestination(string $namespace, object $value, string $dial
 
     return [
         'target' => observeSource($value->target->relation, $dialect, $namespace),
-        'written' => array_map(static fn ($slot): array => observeOperand($namespace, $slot), $value->target->written),
+        'written' => array_map(
+            static fn ($slot): array => $slot->kind->value === 'text' ? ['text-slot', $slot->slot, $slot->occurrence] : ['slot', $slot->slot],
+            $value->target->written,
+        ),
         'returning' => observeReturnedColumns($namespace, $value->returning),
     ];
 }

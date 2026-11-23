@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**
- * An explicit signed integer or SQL NULL for one supplied position.
+ * One explicit signed integer, native text value or SQL NULL.
  *
  * @visibility public
  * @example Writing an explicit NULL cell
@@ -19,17 +20,21 @@ final class InsertCell
     use Snapshot;
 
     /**
-     * Fixes an explicit integer or NULL cell.
+     * Stores the explicit native scalar or NULL.
      */
-    public function __construct(public readonly ?IntegerLiteral $value)
+    public function __construct(public readonly IntegerLiteral|TextLiteral|null $value)
     {
     }
 
     /**
-     * Writes one cell for the declared signed integer target.
+     * Emits the exact value and its native type.
      */
     public function toString(): string
     {
-        return $this->value === null ? 'NULL' : 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)';
+        return match (true) {
+            $this->value instanceof IntegerLiteral => 'CAST(' . $this->value->decimal . ' AS pg_catalog.int4)',
+            $this->value instanceof TextLiteral => $this->value->toString(),
+            $this->value === null => 'NULL',
+        };
     }
 }

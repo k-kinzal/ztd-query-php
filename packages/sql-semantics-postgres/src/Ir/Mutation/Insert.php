@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Ir\Mutation;
 
+use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ColumnKind;
 use SqlSemantics\Platform\PostgreSql\Ir\Mutation\Insert\Destination;
 use SqlSemantics\Platform\PostgreSql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
@@ -50,6 +52,12 @@ final class Insert implements SemanticsIR
         Check::input(count($this->rows) <= 512 && count($this->rows) * $width <= 8192, 'The supplied INSERT values exceed the profile limits.');
         foreach ($this->rows as $row) {
             Check::input(count($row->values) === $width, 'Every inserted row must match the target width.');
+            foreach ($row->values as $index => $cell) {
+                Check::input(
+                    $cell->value === null || ($cell->value instanceof TextLiteral) === ($target->written[$index]->kind === ColumnKind::Text),
+                    'An inserted cell must match its target native kind.',
+                );
+            }
         }
         $checked = Check::listOf($returning, ReturnedColumn::class, 'An INSERT needs checked RETURNING fields.');
         (new ReturningLayout())->check($target->relation, $checked);
