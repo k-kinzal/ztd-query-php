@@ -24,7 +24,7 @@ final class DropTableLoweringTest extends TestCase
 
         $drop = (new DropTableLowering())->lower($query->binding(), $query->statement);
 
-        self::assertSame('app', $drop->targets[0]->schema->value);
-        self::assertSame('a', $drop->targets[0]->table->value);
+        self::assertSame('app', $drop->targets[0]->name->schema->value);
+        self::assertSame('a', $drop->targets[0]->name->table->value);
     }
 }

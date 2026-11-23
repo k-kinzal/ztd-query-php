@@ -13,5 +13,6 @@ enum TableNamespace
 {
     case Visible;
     case Persistent;
+    case Temporary;
     case PersistentPreferred;
 }

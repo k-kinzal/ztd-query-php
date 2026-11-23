@@ -1,0 +1,39 @@
+{
+  "revision": "SemanticsIR/mysql-session-table-binding-3",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Contract/AnalysisContext.php": {
+      "sha256": "a983942178d81409bb7eaef9583d94db32e39ae775bc8e7606101f7b0e4c13d5",
+      "role": "Collect all matching declaration coordinates without collapsing separate definitions."
+    },
+    "src/Model/Construction/Derivation.php": {
+      "sha256": "5538a564e7ca7adf34226f61a55329699707e49d3df29d94ef490327f27ec839",
+      "role": "Route the CTE and native lookup precedence with retained lexical scope."
+    },
+    "src/Model/Resolution/TableLookup.php": {
+      "sha256": "78ff02773d800472eac2afb20b2bd3a5ec57322ae28a5b18bb56976bfa326acc",
+      "role": "Select the correct native namespace before classifying ambiguity or absence."
+    },
+    "src/Model/Statement/Declaration/Table.php": {
+      "sha256": "de3b4a3c2340add8e2d76ed6e033a5a249376b5e5a10cd9cdd4d0dbea010fbf1",
+      "role": "Require session-local provenance to belong to a checked base-table declaration."
+    },
+    "src/Rules/TableChange/Renamings.php": {
+      "sha256": "22ca3de6dbf820304bdbc71f8230bec965fb55d3d5df6b0c7d5a09a5e948694f",
+      "role": "Select the permanent origin and preserve left-to-right name changes under a temporary overlay."
+    },
+    "src/Rules/TableChange/Targets.php": {
+      "sha256": "637a3ef7310d87531211015e01e6f10b3cc9b274ec60ee9aec23e11b61a50dd5",
+      "role": "Expose the lookup policy while retaining resolved column bindings."
+    },
+    "src/Model/Resolution/TableNamespace.php": {
+      "sha256": "50114b671a72d14541a88a32493f2d9af68a656c719449d70d3c338c4e18a5c8",
+      "role": "Close the operation-specific namespace selection policies."
+    },
+    "src/Statement/Alter/DropTable.php": {
+      "role": "Choose temporary-only resolution for the explicit native DROP modifier before constructing table identities.",
+      "sha256": "10141883ad4f405b89370e4cad0ee560a2743e1052c82aef3d3fec40d19f4f7f"
+    }
+  },
+  "extends": "mysql-session-table-binding-v2.json"
+}

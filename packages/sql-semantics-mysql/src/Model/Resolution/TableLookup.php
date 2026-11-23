@@ -51,6 +51,7 @@ final class TableLookup
             $matches = match ($namespace) {
                 TableNamespace::Visible => $temporary === [] ? $persistent : $temporary,
                 TableNamespace::Persistent => $persistent,
+                TableNamespace::Temporary => $temporary,
                 TableNamespace::PersistentPreferred => $persistent === [] ? $temporary : $persistent,
             };
             if ($matches === []) {

@@ -824,6 +824,9 @@ if ($dialect !== 'sqlite') {
         $identity = 'Schema\\Identity\\TableIdentity';
         $properties[$identity] = ['name' => [$tableName], 'kind' => ['From\\ExternalRelationKind']];
         $methods[$identity] = ['__construct', 'quoted'];
+        $absent = 'Schema\\Identity\\AbsentDropTarget';
+        $properties[$absent] = ['name' => [$tableName]];
+        $methods[$absent] = ['__construct', 'quoted'];
         $properties[$truncate] = ['target' => [$identity], 'release' => [$platform . '\\Model\\Contract\\GrammarRelease']];
         $methods[$truncate] = ['__construct', 'profileId', 'toString'];
         $methods[$renameTable] = ['__construct', 'profileId', 'toString'];
@@ -875,6 +878,8 @@ if ($dialect !== 'sqlite') {
     ];
     if ($dialect === 'postgres') {
         $properties['Schema\\DropTable']['cascade'] = ['bool'];
+    } else {
+        $properties['Schema\\DropTable']['temporaryOnly'] = ['bool'];
     }
     $properties['Schema\\TableName'] = ['schema' => ['Identifier'], 'table' => ['Identifier']];
     $methods['Schema\\DropTable'] = $methods['Select'];
@@ -1088,9 +1093,9 @@ try {
             ['mysql-from-binding-v2.json', 'd46f12a3f933d01aa286fc9ccf2ece3aae09713a6cfe22b86ca861d288460741', 'MySQL FROM binding'],
             ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
             ['mysql-varchar-binding-v5.json', '1039329131e0b89f6eab37a54962abb072739fc96b62851488ca39c2d07c358a', 'MySQL VARCHAR binding'],
-            ['mysql-ordered-table-rename-binding-v3.json', 'ca2b4b3689e9b6548f8ffb8edbbce002278218c0496767093f19ba6890263a89', 'MySQL ordered rename binding'],
-            ['mysql-session-table-binding-v2.json', '6f98ccde7ec2727448740c72abe04c707c85561f0abcbc585bda310d5fc5ccde', 'MySQL session table binding'],
-            ['mysql-drop-view-binding-v3.json', '2636db50624a5ad10cfefb96851b3f5eb21b3e30ac4d759de60449a45af82188', 'MySQL view removal binding'],
+            ['mysql-ordered-table-rename-binding-v4.json', '4b99341a225f348f40a39e89cd0c870e87b6415722c2a855dda8473d17b166f2', 'MySQL ordered rename binding'],
+            ['mysql-session-table-binding-v3.json', 'f9c7f548cb0d727552417e2ebed47e503fe7c6c53181bb70fdba067269ce9692', 'MySQL session table binding'],
+            ['mysql-drop-view-binding-v4.json', 'e9c6e4dd82ac7551a716f5a0924dd325a76b82b75eb0b899d07d758f7fdeb5ee', 'MySQL view removal binding'],
             ['mysql-create-primary-binding-v1.json', '83770e7c7605a81930b1d924dd3090cebcdb754788b3302791e04948c99fe7b3', 'MySQL primary key binding'],
         ],
     };
@@ -1106,9 +1111,9 @@ try {
         }
     }
     $base = $package . '/src/Ir';
-    $storagePath = __DIR__ . '/value-storage-v45.json';
+    $storagePath = __DIR__ . '/value-storage-v46.json';
     requireShape(
-        hash_file('sha256', $storagePath) === 'd31ab78cc49c398c8dc7edf77ebf9e8fb1060da5130b72038546040281043c48',
+        hash_file('sha256', $storagePath) === '8a80b10bb82cde7185817d813df42e49a865e80a30aef02cd164a25228c7feeb',
         'Value storage contract differs from the recorded revision'
     );
     $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];

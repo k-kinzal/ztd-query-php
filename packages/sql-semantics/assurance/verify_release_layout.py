@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v76.json"
-CONTRACT = "45c2838352372fe17ae8c1bdcfb3a6baa2f3a02422eeebea6a9bd6274c4c8189"
+CONTRACT_NAME = "release-layout-v77.json"
+CONTRACT = "bb1420e4fb49984dea5c6d8c83b378b667dfc991b3797d74bdbd1d9031a38aca"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -521,6 +521,12 @@ def verify_probe(raw, catalog):
                 ["app", "shadowed_view", False, "DROP VIEW `app`.`shadowed_view`"],
                 ["app", "session_only", True, "DROP VIEW IF EXISTS `app`.`session_only`"],
             ], "installed-mysql-shadowed-view-removal-mismatch", item)
+        if (item["platform"], item["role"]) == ("MySql", "Schema\\DropTable"):
+            require(item.get("mysqlSessionDrop") == [
+                [False, True, ["table"], "DROP TABLE IF EXISTS `app`.`accounts`"],
+                [False, False, ["temporary-table", "table"], "DROP TABLE `app`.`accounts`, `app`.`retained`"],
+                [True, True, ["temporary-table", "absent"], "DROP TEMPORARY TABLE IF EXISTS `app`.`accounts`, `app`.`retained`"],
+            ], "installed-mysql-session-drop-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Schema\\Truncate\\TruncateTable"):
             require(item.get("mysqlTruncate") == ["app", "accounts", "table", "temporary-table"]
                     and item["sql"] == "TRUNCATE TABLE `app`.`accounts`",

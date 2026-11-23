@@ -653,14 +653,57 @@ function constructDropTable(string $platform, array $input): SemanticsIR
     $release = $platform . 'Model\\Contract\\GrammarRelease';
     $drop = $input['drop'];
     $targets = [];
-    foreach ($drop['targets'] as [$schema, $table]) {
-        $targets[] = new $target(new $name($schema), new $name($table));
-    }
-    $version = $release::from($input['release']);
+    if ($input['dialect'] === 'postgres') {
+        foreach ($drop['targets'] as [$schema, $table]) {
+            $targets[] = new $target(new $name($schema), new $name($table));
+        }
 
-    return $input['dialect'] === 'postgres'
-        ? new $statement($targets, $drop['ifExists'], $drop['cascade'], $version)
-        : new $statement($targets, $drop['ifExists'], $version);
+        return new $statement($targets, $drop['ifExists'], $drop['cascade'], $release::from($input['release']));
+    }
+
+    $absent = $namespace . 'Schema\\Identity\\AbsentDropTarget';
+    $identity = $namespace . 'Schema\\Identity\\TableIdentity';
+    $kind = $namespace . 'From\\ExternalRelationKind';
+    foreach ($drop['targets'] as $operand) {
+        if (!is_array($operand)) {
+            $targets[] = $operand;
+            continue;
+        }
+        [$schema, $table] = $operand;
+        $role = $operand[2] ?? 'table';
+        $coordinate = new $target(new $name($schema), new $name($table));
+        $targets[] = $role === 'absent' ? new $absent($coordinate) : new $identity($coordinate, $kind::from($role));
+    }
+
+    return new $statement($targets, $drop['ifExists'], $release::from($input['release']), $drop['temporaryOnly'] ?? false);
+}
+
+function observeDropTable(string $namespace, object $value, string $dialect): array
+{
+    $targets = [];
+    $nativeTargets = [];
+    foreach ($value->targets as $target) {
+        if ($dialect === 'mysql') {
+            $coordinate = [$target->name->schema->value, $target->name->table->value];
+            $role = match ($target::class) {
+                $namespace . 'Schema\\Identity\\AbsentDropTarget' => 'absent',
+                $namespace . 'Schema\\Identity\\TableIdentity' => $target->kind->value,
+            };
+            $nativeTargets[] = [...$coordinate, $role];
+        } else {
+            $coordinate = [$target->schema->value, $target->table->value];
+        }
+        $targets[] = $coordinate;
+    }
+    $drop = ['targets' => $targets, 'ifExists' => $value->ifExists];
+    if ($dialect === 'postgres') {
+        $drop['cascade'] = $value->cascade;
+    }
+    return [
+        'status' => 'constructed', 'profile' => $value->profileId(), 'drop' => $drop, 'sql' => $value->toString(),
+        ...($dialect === 'mysql' ? ['mysqlDrop' => ['targets' => $nativeTargets, 'ifExists' => $value->ifExists,
+            'temporaryOnly' => $value->temporaryOnly]] : []),
+    ];
 }
 
 function constructCreateView(string $platform, array $input): SemanticsIR
@@ -1242,14 +1285,7 @@ function observeStatement(array $input): array
         ];
     }
     if ($value::class === $namespace . 'Schema\\DropTable') {
-        $observed = ['targets' => [], 'ifExists' => $value->ifExists];
-        foreach ($value->targets as $target) {
-            $observed['targets'][] = [$target->schema->value, $target->table->value];
-        }
-        if ($input['dialect'] === 'postgres') {
-            $observed['cascade'] = $value->cascade;
-        }
-        return ['status' => 'constructed', 'profile' => $value->profileId(), 'drop' => $observed, 'sql' => $value->toString()];
+        return observeDropTable($namespace, $value, $dialect);
     }
     if ($value::class === $namespace . 'Transaction\\Transaction') {
         return [

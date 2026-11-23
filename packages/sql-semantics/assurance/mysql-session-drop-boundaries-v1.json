@@ -1,0 +1,107 @@
+{
+  "revision": "SemanticsIR/mysql-session-drop-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "scope": "Check table and absence roles, detached ordered targets, explicit modifier and matching native binding in the deployed classes.",
+  "rules": {
+    "Schema/Identity/AbsentDropTarget::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": []
+    },
+    "Schema/Identity/AbsentDropTarget::quoted": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->name->quoted();"
+      ]
+    },
+    "Schema/DropTable::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "Check::input(array_is_list($targets) && $targets !== [], 'DROP TABLE needs a nonempty target list.');",
+        "$seen = [];",
+        "$checked = [];",
+        "foreach ($targets as $target) {",
+        "    Check::input($target instanceof TableIdentity || $target instanceof AbsentDropTarget, 'DROP TABLE requires checked target identities.');",
+        "    if ($target instanceof AbsentDropTarget) {",
+        "        Check::input($ifExists, 'An absent DROP TABLE target requires IF EXISTS.');",
+        "    } elseif ($temporaryOnly) {",
+        "        Check::input($target->kind === ExternalRelationKind::TemporaryTable, 'DROP TEMPORARY TABLE requires session-local targets.');",
+        "    }",
+        "    $key = $target->quoted();",
+        "    Check::input(!isset($seen[$key]), 'DROP TABLE cannot repeat a target.');",
+        "    $seen[$key] = true;",
+        "    $checked[] = $target;",
+        "}",
+        "$this->targets = $checked;"
+      ]
+    },
+    "Schema/DropTable::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native';"
+      ]
+    },
+    "Schema/DropTable::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$names = [];",
+        "foreach ($this->targets as $target) {",
+        "    $names[] = $target->quoted();",
+        "}",
+        "",
+        "return 'DROP ' . ($this->temporaryOnly ? 'TEMPORARY ' : '') . 'TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '')",
+        "    . implode(', ', $names);"
+      ]
+    },
+    "Schema/DropTableLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$context = $operation->context;",
+        "$profile = $context->profile;",
+        "Check::input($profile->parameters === ParameterStyle::Native && $profile->lexical->equals(new LexicalSettings())",
+        "    && $context->relationNames === Comparison::Sensitive, 'DROP TABLE requires the default native profile.');",
+        "",
+        "$schemas = [$context->declarationSchema->value => true];",
+        "foreach ($context->tables as $table) {",
+        "    $schemas[($table->name->schema ?? $context->declarationSchema)->value] = true;",
+        "}",
+        "$targets = [];",
+        "foreach ($statement->tables as $target) {",
+        "    $resolution = $operation->facts->relation($target)->table;",
+        "    if ($resolution instanceof DeclaredTable && $resolution->table->kind === RelationKind::BaseTable) {",
+        "        $name = $resolution->table->name;",
+        "        $schema = ($name->schema ?? $context->declarationSchema)->value;",
+        "        $kind = $resolution->table->temporary ? ExternalRelationKind::TemporaryTable : ExternalRelationKind::BaseTable;",
+        "    } elseif ($statement->ifExists && $resolution instanceof AbsentTable) {",
+        "        $name = $resolution->name;",
+        "        $schema = ($name->schema ?? (new SessionDatabase())->named($context))?->value;",
+        "        Check::input($schema !== null && isset($schemas[$schema]), 'Optional DROP TABLE needs a known explicit schema.');",
+        "        $kind = null;",
+        "    } else {",
+        "        throw new InvalidConstruction('DROP TABLE requires an ordinary table or a known schema-qualified absence.');",
+        "    }",
+        "    Check::input($name->catalog === null && $schema !== SessionDatabase::UNNAMED, 'DROP TABLE needs an absolute table identity.');",
+        "    $coordinate = new TableName(new Identifier($schema), new Identifier($name->name->value));",
+        "    $targets[] = $kind === null ? new AbsentDropTarget($coordinate) : new TableIdentity($coordinate, $kind);",
+        "}",
+        "",
+        "return new DropTable($targets, $statement->ifExists, $profile->grammar, $statement->temporary);"
+      ]
+    }
+  }
+}

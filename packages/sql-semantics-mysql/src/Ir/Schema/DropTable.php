@@ -4,46 +4,59 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema;
 
+use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\AbsentDropTarget;
+use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\SemanticsIR;
 
 /**
- * A native removal of named persistent tables.
+ * A native table removal with ordered absolute targets and explicit namespace and absence policies.
  *
  * @visibility public
  * @example Reading the identity of a table to remove
- *     $identity = new \SqlSemantics\Platform\MySql\Ir\Schema\TableName(new \SqlSemantics\Platform\MySql\Ir\Identifier('app'), new \SqlSemantics\Platform\MySql\Ir\Identifier('accounts'));
- *     (new \SqlSemantics\Platform\MySql\Ir\Schema\DropTable([$identity]))->targets[0]->table->value // => 'accounts'
+ *     $name = new \SqlSemantics\Platform\MySql\Ir\Schema\TableName(new \SqlSemantics\Platform\MySql\Ir\Identifier('app'), new \SqlSemantics\Platform\MySql\Ir\Identifier('accounts'));
+ *     $identity = new \SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity($name, \SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind::TemporaryTable);
+ *     (new \SqlSemantics\Platform\MySql\Ir\Schema\DropTable([$identity], temporaryOnly: true))->toString() // => 'DROP TEMPORARY TABLE `app`.`accounts`'
  */
 final class DropTable implements SemanticsIR
 {
     use Snapshot;
 
     /**
-     * @var non-empty-list<TableName> Targets in statement order
+     * @var non-empty-list<TableIdentity|AbsentDropTarget> Targets in statement order
      */
     public readonly array $targets;
 
     /**
      * Closes a table removal over an ordered list of distinct identities.
      *
-     * @param list<TableName> $targets
+     * @param array<array-key, mixed> $targets An ordered list of checked identities or permitted absences
      */
     public function __construct(
         array $targets,
         public readonly bool $ifExists = false,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
+        public readonly bool $temporaryOnly = false,
     ) {
-        $names = Check::listOf($targets, TableName::class, 'DROP TABLE needs a nonempty target list.', 1);
+        Check::input(array_is_list($targets) && $targets !== [], 'DROP TABLE needs a nonempty target list.');
         $seen = [];
-        foreach ($names as $target) {
+        $checked = [];
+        foreach ($targets as $target) {
+            Check::input($target instanceof TableIdentity || $target instanceof AbsentDropTarget, 'DROP TABLE requires checked target identities.');
+            if ($target instanceof AbsentDropTarget) {
+                Check::input($ifExists, 'An absent DROP TABLE target requires IF EXISTS.');
+            } elseif ($temporaryOnly) {
+                Check::input($target->kind === ExternalRelationKind::TemporaryTable, 'DROP TEMPORARY TABLE requires session-local targets.');
+            }
             $key = $target->quoted();
             Check::input(!isset($seen[$key]), 'DROP TABLE cannot repeat a target.');
             $seen[$key] = true;
+            $checked[] = $target;
         }
-        $this->targets = $names;
+        $this->targets = $checked;
     }
 
     /**
@@ -64,7 +77,7 @@ final class DropTable implements SemanticsIR
             $names[] = $target->quoted();
         }
 
-        return 'DROP TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '')
+        return 'DROP ' . ($this->temporaryOnly ? 'TEMPORARY ' : '') . 'TABLE ' . ($this->ifExists ? 'IF EXISTS ' : '')
             . implode(', ', $names);
     }
 }

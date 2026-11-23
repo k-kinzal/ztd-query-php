@@ -157,6 +157,15 @@ function checkValueStorage(
             continue;
         }
 
+        if ($rule === 'native-drop-target-copy') {
+            requireShape($short === 'Schema\\DropTable' && $property === 'targets'
+                && in_array('Schema/DropTable::__construct', $checkedBoundaries, true)
+                && $write->expr instanceof Expr\Variable && $write->expr->name === 'checked',
+                'Native DROP targets must come from the verified detached copy.');
+
+            continue;
+        }
+
         if ($rule === 'ordered-table-key-copy') {
             requireShape(
                 $short === 'Schema\\CreateTable' && $property === 'keys'

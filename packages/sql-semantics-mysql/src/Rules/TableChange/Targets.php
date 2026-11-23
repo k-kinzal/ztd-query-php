@@ -67,9 +67,9 @@ final class Targets
     /**
      * Resolves a table name that IF EXISTS allows to be absent.
      */
-    public function optional(Derivation $derivation, QualifiedName $name, bool $ifExists): RelationFact
+    public function optional(Derivation $derivation, QualifiedName $name, bool $ifExists, TableNamespace $namespace = TableNamespace::Visible): RelationFact
     {
-        $fact = $this->target($derivation, $name);
+        $fact = $this->target($derivation, $name, $namespace);
 
         return $ifExists && $fact->table instanceof MissingTable ? new RelationFact(new RowShape([]), new AbsentTable($name)) : $fact;
     }

@@ -287,6 +287,8 @@ The [MySQL truncation contract](mysql-truncate-v2.json) checks exact persistent 
 
 The [MySQL session table contract](mysql-session-table-sources-v1.json) checks both relational namespaces on two independent connections. It compares source roles, typed query results, mutation counts, retained permanent rows, rollback and persistent rename through an overlay. Run `run_server_mysql_session_table_sources.py` and `combine_server_mysql_session_table_sources_evidence.py` on all nine pinned releases.
 
+The [MySQL session table removal contract](mysql-session-drop-table-v1.json) compares persistent and session-local identities, explicit TEMPORARY lookup, ordered mixed targets, missing-name notes and rollback. Run `run_server_mysql_session_drop_table.py` and `combine_server_mysql_session_drop_table_evidence.py` on all nine pinned releases.
+
 The [PostgreSQL truncation contract](postgres-truncate-v1.json) observes duplicate target order, inherited rows, transitive foreign-key effects, the lifetime of owned sequence state and before/after callback order. Run `run_server_postgres_truncate.py` and `combine_server_postgres_truncate_evidence.py` on both pinned releases.
 
 The [PostgreSQL view removal contract](postgres-drop-view-v1.json) covers persistent ordinary and materialized views. It compares exact qualified targets, dependency failures and transitive cascade, live and materialized rows in surviving objects, and native rollback. Run `run_server_postgres_drop_view.py` and `combine_server_postgres_drop_view_evidence.py` on both pinned releases.

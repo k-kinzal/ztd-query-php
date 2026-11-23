@@ -973,6 +973,20 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 [$shadowed, $absent]
             );
         }
+        if ($platform === 'MySql' && $role === 'Schema\\DropTable') {
+            $temporary = $semantics->context([
+                'CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)',
+                'CREATE TABLE app.retained (id int)',
+            ]);
+            $mixed = $semantics->analyze('DROP TABLE app.accounts, app.retained', $temporary);
+            $local = $semantics->analyze('DROP TEMPORARY TABLE IF EXISTS app.accounts, app.retained', $temporary);
+            $details['mysqlSessionDrop'] = array_map(
+                static fn ($drop): array => [$drop->temporaryOnly, $drop->ifExists,
+                    array_map(static fn ($target): string => isset($target->kind) ? $target->kind->value : 'absent', $drop->targets),
+                    $drop->toString()],
+                [$result, $mixed, $local]
+            );
+        }
         if ($platform === 'MySql' && $role === 'Schema\\Truncate\\TruncateTable') {
             $temporary = $semantics->context(['CREATE TABLE app.accounts (id int)', 'CREATE TEMPORARY TABLE app.accounts (id int)']);
             $local = $semantics->analyze('TRUNCATE app.accounts', $temporary);

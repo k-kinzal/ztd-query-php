@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter;
 use SqlSemantics\Platform\MySql\Model\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Resolution\TableNamespace;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\MySql\Model\Statement\Statement;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
@@ -58,8 +59,9 @@ final class DropTable implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $targets = new Targets();
+        $namespace = $this->temporary ? TableNamespace::Temporary : TableNamespace::Visible;
         foreach ($this->tables as $index => $table) {
-            $fact = $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists));
+            $fact = $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists, $namespace));
             if (!$this->ifExists) {
                 (new RelationKinds())->refuseView($derivation, $table->name, $fact->table, KindRefusal::UnknownTable);
             }

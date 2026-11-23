@@ -1,0 +1,147 @@
+{
+  "revision": "SemanticsIR/server-drop-table-3",
+  "approval": "pending-human-review",
+  "dialects": [
+    "MySql",
+    "PostgreSql"
+  ],
+  "profiles": "The pinned releases and default native name and lexical profiles. Execution uses the same persistent schemas, ordinary base tables and dependency graph. MySQL temporary table shadowing is outside this layer.",
+  "scope": "DROP TABLE of one or more absolute persistent base-table identities, with optional IF EXISTS. PostgreSQL fixes CASCADE or RESTRICT. MySQL accepts RESTRICT and CASCADE as synonyms for its native behavior.",
+  "open": [
+    "TEMPORARY, temporary table shadowing and storage engines other than the test fixture's InnoDB are not evaluated by this evidence",
+    "Other DROP object kinds and dynamic schemas"
+  ],
+  "additionalPublicRoots": [
+    "Schema/DropTable"
+  ],
+  "constructors": {
+    "TableName": {
+      "type": "Schema/TableName",
+      "role": "One absolute schema and ordinary table identity",
+      "fields": [
+        "schema",
+        "table"
+      ],
+      "invariants": [
+        "Both identifiers fit their role in the native language profile",
+        "The PostgreSQL alias pg_temp does not identify an absolute persistent schema"
+      ],
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    },
+    "DropTable": {
+      "type": "Schema/DropTable",
+      "role": "One removal request in statement order",
+      "fields": [
+        "targets",
+        "ifExists",
+        "cascade (PostgreSQL)",
+        "release"
+      ],
+      "invariants": [
+        "Nonempty dense checked target list",
+        "Absolute targets are unique under the fixed relation name comparison"
+      ],
+      "meaning": "Remove the targets and owned objects, using the native missing-object and dependency rules. PostgreSQL restricts external dependencies by default or deletes them under cascade, and its outcome participates in the active transaction. Persistent MySQL DROP implicitly commits and always uses MySQL dependency behavior. The release distinguishes partial removal when a target is missing in MySQL 5.6 and 5.7 from atomic InnoDB DROP in 8.x and 9.x.",
+      "sql": "Emit DROP TABLE, the explicit absence policy, the ordered absolute names, and explicit PostgreSQL dependency policy.",
+      "obligations": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06"
+      ]
+    }
+  },
+  "analysis": "Resolve each name against the visible catalog and require an ordinary persistent table. A complete catalog can establish absence under IF EXISTS for an explicitly named persistent schema. Absolute names retain the operation's runtime missing-object behavior.",
+  "observations": [
+    "Status and typed remaining catalog objects",
+    "Ordered typed rows of retained fixture tables",
+    "Dependent view survival",
+    "Transaction state and state after attempted rollback"
+  ],
+  "finite": {
+    "targetSequences": [
+      "one ordinary table",
+      "alternate ordinary table",
+      "two existing tables",
+      "existing then missing"
+    ],
+    "missingPolicies": [
+      "required",
+      "optional"
+    ],
+    "dependencyPolicies": {
+      "mysql": [
+        "native"
+      ],
+      "postgres": [
+        "restrict",
+        "cascade"
+      ]
+    },
+    "dependencies": [
+      "none",
+      "external view on the first table"
+    ],
+    "completeness": "Require each Cartesian identity from actual constructed targets and policy and the observed fixture configuration."
+  },
+  "exploration": {
+    "seeds": [
+      3907,
+      6977,
+      21313
+    ],
+    "casesPerSeed": 20,
+    "timeoutSecondsPerRelease": 180,
+    "allowedExclusions": []
+  },
+  "negative": [
+    "Empty target list",
+    "Repeated target",
+    "Name outside the role",
+    "Wrong declaration kind",
+    "Unknown optional schema",
+    "MySQL DROP TEMPORARY TABLE and PostgreSQL DROP SEQUENCE outside the checked persistent relation kinds"
+  ],
+  "faults": [
+    "Change a target to a different known table",
+    "Drop the second operand",
+    "Invert IF EXISTS"
+  ],
+  "dialectFaults": {
+    "postgres": [
+      "Replace CASCADE with RESTRICT"
+    ]
+  },
+  "trust": [
+    "Fixed reference interpretation and language settings",
+    "Private transactional fixture and independent catalog observations",
+    "The registered missing-object and dependency cases and their exact native statuses"
+  ],
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/drop-table.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/atomic-ddl.html",
+    "https://www.postgresql.org/docs/17/sql-droptable.html",
+    "https://www.postgresql.org/docs/17/ddl-depend.html"
+  ],
+  "amends": {
+    "file": "server-drop-table-v1.json",
+    "sha256": "6703cdd9ae829f94f64e9a4f263cb40976fb49a1c60f71f9655d6765b2f84fb7",
+    "change": "The checked PostgreSQL DROP VIEW now publishes its own complete value and has an independent positive effect suite. Maintain the non-table rejection through DROP SEQUENCE, whose object role is outside the complete persistent removal kinds."
+  },
+  "extends": "server-drop-table-v2.json",
+  "change": {
+    "scope": "The separate session-table contract extends the case domain. All original persistent finite, authored and seeded cases and faults remain required.",
+    "temporaryNegative": "The original required DROP TEMPORARY TABLE input still rejects because its catalog declares only a persistent table at those coordinates. The native binder now rejects the missing temporary identity at analysis, so the receipt expects SemanticException and the explicit absence message.",
+    "previousExecution": "The new binder emitted the specified missing-temporary diagnostic while the earlier persistent-only criterion still expected a generic unsupported mode.",
+    "supplement": "mysql-session-drop-table-v1.json"
+  }
+}
