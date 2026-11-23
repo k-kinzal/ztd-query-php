@@ -82,6 +82,22 @@ final class ExpressionAffinityTest extends TestCase
         self::assertTrue($rule->field($query->field(2), $query->facts)->determined);
     }
 
+    public function testResolvedFullMergeHasKnownAbsenceOfAffinity(): void
+    {
+        $sqlite = new Inspection();
+        $left = $sqlite->inspect('CREATE TABLE a (key TEXT)');
+        $right = $sqlite->inspect('CREATE TABLE b (key NUMERIC)');
+        $query = $sqlite->inspect('SELECT key, a.key, b.key FROM a FULL JOIN b USING (key)', [$left, $right]);
+        self::assertInstanceOf(Select::class, $query->statement);
+        $rule = new ExpressionAffinity();
+
+        $merged = $rule->column($query->statement, 0, $query->facts);
+        self::assertTrue($merged->determined);
+        self::assertNull($merged->affinity);
+        self::assertSame(Affinity::Text, $rule->column($query->statement, 1, $query->facts)->affinity);
+        self::assertSame(Affinity::Numeric, $rule->column($query->statement, 2, $query->facts)->affinity);
+    }
+
     public function testResolvedReadsADeclarationADerivedTableAndACommonTable(): void
     {
         $semantics = new Inspection();

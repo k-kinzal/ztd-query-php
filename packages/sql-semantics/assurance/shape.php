@@ -763,7 +763,7 @@ try {
     $checkedBindingSources = [];
     if ($dialect === 'sqlite') {
         $path = __DIR__ . '/sqlite-view-binding-sources-v2.json';
-        requireShape(hash_file('sha256', $path) === 'ea75c7b3facc7c99f3115133e0c8d6ab3ac3a7ad826804c8ab54cd1c76a2ed58', 'SQLite view binding contract differs from its fixed revision');
+        requireShape(hash_file('sha256', $path) === 'd2c6fb4e1c60a7493fe40d51be601bab5cf470fed71578fd893bd66356ac3e6f', 'SQLite view binding contract differs from its fixed revision');
         $sources = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR)['artifacts'];
         foreach ($sources as $relative => $expected) {
             $patched = $overlay === '' ? '' : $overlay . '/' . $package . '/' . $relative;
