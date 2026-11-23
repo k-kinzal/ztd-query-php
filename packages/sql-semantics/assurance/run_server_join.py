@@ -126,6 +126,11 @@ def observe_finite_id(domain, engine, response, item, request):
     return domain.finite_id(engine, response, item)
 
 
+def seed_ids(specification):
+    exploration = specification["exploration"]
+    return {f"seed/{seed}/{index}" for seed in exploration["seeds"] for index in range(exploration["casesPerSeed"])}
+
+
 def negative_count(specification, engine, tag):
     specific = specification.get("negativeByRelease", {})
     dialect = {"postgres": "additionalPostgreSqlNegatives", "mysql": "additionalMySqlNegatives"}[engine]
@@ -137,7 +142,8 @@ def execute(args, specification, tag, worker, db, domain=None):
         domain = sys.modules[__name__]
     label = domain.LABEL
     transport = check_transport()
-    seen, forms = Counter(), Counter()
+    seen, direct, forms = Counter(), Counter(), Counter()
+    observe_direct = getattr(domain, "direct_finite_id", None)
     key = current = None
     batch = []
     with (args.out / "events.jsonl").open("w") as output:
@@ -176,15 +182,26 @@ def execute(args, specification, tag, worker, db, domain=None):
                     ledger.record(key, "compared", **details)
                     if key.startswith("finite/"):
                         seen[observe_finite_id(domain, args.engine, response, item, current)] += 1
+                    elif key.startswith("direct/") and observe_direct is not None:
+                        direct[observe_direct(args.engine, response, item, current)] += 1
                     elif key.startswith("seed/"):
                         domain.sample_forms(forms, response, args.engine, item)
             require(set(seen) == domain.finite_ids(args.engine, specification, tag) and set(seen.values()) == {1},
                     f"server-{label}-finite-incomplete", list(seen.items()))
+            if observe_direct is not None:
+                require(set(direct) == domain.finite_ids(args.engine, specification, tag) and set(direct.values()) == {1},
+                        f"server-{label}-direct-finite-incomplete", list(direct.items()))
+                expected_seeds = seed_ids(specification)
+                actual_seeds = {key for key, events in ledger.events.items() if key.startswith("seed/") and events[-1] == "compared"}
+                require(actual_seeds == expected_seeds, f"server-{label}-seed-budget", sorted(expected_seeds ^ actual_seeds))
             require(domain.required_forms(args.engine, tag) <= forms.keys(), f"server-{label}-exploration-incomplete",
                     sorted(domain.required_forms(args.engine, tag) - forms.keys()))
             execution = ledger.verify()
             require(execution["rejected"] == negative_count(specification, args.engine, tag), f"server-{label}-rejections-incomplete")
-            return {"finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution, "transport": transport}
+            return {
+                "finiteIds": sorted(seen), "coverage": dict(forms), "execution": execution, "transport": transport,
+                **({"directFiniteIds": sorted(direct)} if observe_direct is not None else {}),
+            }
         except Exception as error:
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"
             detail = error.detail if isinstance(error, Failure) else None

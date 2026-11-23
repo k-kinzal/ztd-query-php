@@ -237,10 +237,10 @@ def faults(_, tag):
     key = field(LEFT, 0, "id")
     tie_break = select(tag, [[["boolean", True], "same"], [key, "id"]], [[1, False, False], [2, True, True]])
     return [
-        RenderFault("emit-wrong-output-ordinal", renderer, "$key->position .", "($key->position === 1 ? 2 : $key->position) .",
+        RenderFault("emit-wrong-output-ordinal", renderer, "(string) $key->target", "($key->target === 1 ? '2' : (string) $key->target)",
                     simple, "meaning-mismatch"),
-        RenderFault("order-by-shadowed-input-name", renderer, "$key->position .",
-                    "($key->position === 1 ? '\"__ztd_source\".\"id\"' : $key->position) .", shadowed, "meaning-mismatch"),
+        RenderFault("order-by-shadowed-input-name", renderer, "(string) $key->target",
+                    "($key->target === 1 ? '\"__ztd_source\".\"id\"' : (string) $key->target)", shadowed, "meaning-mismatch"),
         RenderFault("reverse-native-output-direction", renderer, "$key->descending ? ' DESC' : ' ASC'",
                     "$key->descending ? ' ASC' : ' DESC'", simple, "meaning-mismatch"),
         RenderFault("reverse-native-output-null-order", renderer, "$key->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST'",

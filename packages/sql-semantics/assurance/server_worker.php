@@ -216,7 +216,12 @@ function constructSelect(string $platform, array $input): SemanticsIR
     $limit = $namespace . 'Ordering\\Limit';
     $keys = [];
     foreach ($input['orderBy'] ?? [] as $raw) {
-        $keys[] = $raw === null ? null : new $order($raw[0], $raw[1], ...($input['dialect'] === 'postgres' ? [$raw[2]] : []));
+        if ($raw === null) {
+            $keys[] = null;
+            continue;
+        }
+        $target = is_array($raw[0]) ? constructOperand($namespace, $raw[0]) : $raw[0];
+        $keys[] = new $order($target, $raw[1], ...($input['dialect'] === 'postgres' ? [$raw[2]] : []));
     }
     $bound = $input['limit'] ?? null;
     $from = $input['source'] === null ? null : constructSource($platform, $input['source'], $input['dialect']);
@@ -407,7 +412,10 @@ function observeSetQuery(string $namespace, object $value, string $dialect): arr
         'source' => $source === null ? null : observeSource($source, $dialect, $namespace),
         'where' => observePredicate($namespace, $value->where),
         'distinct' => $value->distinct,
-        'orderBy' => array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
+        'orderBy' => array_map(static function ($key) use ($dialect, $namespace): array {
+            $target = $dialect === 'postgres' ? $key->target : $key->position;
+            return [is_int($target) ? $target : observeOperand($namespace, $target), $key->descending, $key->nullsFirst];
+        }, $value->orderBy),
         'limit' => $value->limit === null ? null : [$value->limit->count, $value->limit->offset],
     ];
 }

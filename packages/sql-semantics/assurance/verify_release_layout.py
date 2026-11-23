@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v49.json"
-CONTRACT = "f916f51c01f376416d040ab6529fb1fbc38b7614c48e92eee927f7aa737ca528"
+CONTRACT_NAME = "release-layout-v50.json"
+CONTRACT = "968af83dfb7220aa758fdc56a7289460afcaa348113e277002b8465a157ab676"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -267,6 +267,14 @@ def verify_probe(raw, catalog):
                 'SELECT "__ztd_source"."lo" AS "id", "__ztd_source"."id" AS "signed" '
                 'FROM "public"."bounds_read" AS "__ztd_source" ORDER BY 1 DESC NULLS LAST, 2 ASC NULLS LAST LIMIT 2 OFFSET 1',
             ], "installed-postgres-output-order-mismatch", item)
+            require(item.get("sourceOrder") == [
+                "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 1, 0, 1,
+                'SELECT "__ztd_source"."id" AS "lo" FROM "public"."bounds_read" AS "__ztd_source" '
+                'ORDER BY "__ztd_source"."lo" DESC NULLS LAST, 1 ASC NULLS LAST LIMIT 2 OFFSET 1',
+                [1, 2],
+                'SELECT DISTINCT "__ztd_source"."lo" AS "value", "__ztd_source"."id" AS "id" '
+                'FROM "public"."bounds_read" AS "__ztd_source" ORDER BY 1 DESC NULLS FIRST, 2 ASC NULLS LAST',
+            ], "installed-postgres-source-order-mismatch", item)
             require(item.get("int8Field") == [
                 "SqlSemantics\\Platform\\PostgreSql\\Ir\\From\\WideIntegerColumnReference", 0, 0, True, True, "int4", "int8",
                 'SELECT "__ztd_source"."lo" AS "grouped", "__ztd_source"."lo" AS "resolved", '

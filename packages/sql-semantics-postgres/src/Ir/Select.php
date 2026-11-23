@@ -39,7 +39,7 @@ final class Select implements SemanticsIR
     public readonly array $columns;
 
     /**
-     * @var list<Order> The precedence of positional result keys
+     * @var list<Order> The checked sort keys in precedence order
      */
     public readonly array $orderBy;
 
@@ -61,18 +61,23 @@ final class Select implements SemanticsIR
         public readonly ?Limit $limit = null,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
-        (new SelectBounds())->check($results, $source, $where);
         if ($source instanceof Join) {
             foreach ($source->inputs() as $input) {
                 Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');
             }
         }
-        $this->columns = $results;
-        $this->orderBy = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of output keys.');
-        Check::input(count($this->orderBy) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');
-        foreach ($this->orderBy as $key) {
-            Check::input($key->position <= count($results), 'An output order position must belong to the projection.');
+        $keys = Check::listOf($orderBy, Order::class, 'ORDER BY needs an owned list of sort keys.');
+        Check::input(count($keys) <= 1024, 'A SELECT can have at most 1024 order keys in this profile.');
+        foreach ($keys as $key) {
+            if (is_int($key->target)) {
+                Check::input($key->target <= count($results), 'An output order position must belong to the projection.');
+            } else {
+                Check::input(!$distinct, 'A DISTINCT SELECT must order by projected positions.');
+            }
         }
+        (new SelectBounds())->check($results, $source, $where, $keys);
+        $this->columns = $results;
+        $this->orderBy = $keys;
     }
 
     /**

@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\From\Join;
 use SqlSemantics\Platform\PostgreSql\Ir\From\OccurrenceScope;
 use SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference;
 use SqlSemantics\Platform\PostgreSql\Ir\From\WideIntegerColumnReference;
+use SqlSemantics\Platform\PostgreSql\Ir\Ordering\Order;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
@@ -37,11 +38,13 @@ final class SelectBounds
      *
      * @param non-empty-list<ResultColumn> $results The result expressions
      * @param TableSource|Join|null $source The source whose slots may be used
+     * @param list<Order> $keys The ordering expressions in the same input scope
      */
     public function check(
         array $results,
         TableSource|Join|null $source,
         BooleanColumnReference|BooleanLiteral|IntegerComparison|IntegerDistinctness|IntegerRange|LogicalPredicate|NullLiteral|NullTest|TextComparison|TruthTest|null $where = null,
+        array $keys = [],
     ): void {
         Check::input(count($results) <= 1024, 'A SELECT can have at most 1024 result columns in this profile.');
         $inputs = $source instanceof Join ? $source->inputs() : ($source === null ? [] : [$source]);
@@ -49,8 +52,17 @@ final class SelectBounds
         $scope->predicate($where, $inputs);
         $nodes = 0;
         $positions = [];
+        $expressions = [];
         foreach ($results as $result) {
-            $pending = [[$result->expression, 0]];
+            $expressions[] = $result->expression;
+        }
+        foreach ($keys as $key) {
+            if (!is_int($key->target)) {
+                $expressions[] = $key->target;
+            }
+        }
+        foreach ($expressions as $root) {
+            $pending = [[$root, 0]];
             while ($pending !== []) {
                 [$expression, $height] = array_pop($pending);
                 if ($expression instanceof IntegerRange || $expression instanceof IntegerDistinctness || $expression instanceof NullTest || $expression instanceof TruthTest || $expression instanceof TextComparison) {

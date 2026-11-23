@@ -12,7 +12,7 @@ from evidence_transcript import canonical, events, load_replay_contract
 from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import negative_count, observe_finite_id, request_batches, tools, version_tag
+from run_server_join import negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -20,7 +20,9 @@ def replay(path, report, specification, domain=run_server_join):
     engine = report["engine"]
     tag = version_tag(engine, report["release"])
     stream = iter(events(path))
-    seen, forms, execution = Counter(), Counter(), Counter()
+    seen, direct, forms, execution = Counter(), Counter(), Counter(), Counter()
+    observe_direct = getattr(domain, "direct_finite_id", None)
+    seeds = set()
 
     def matched(key, kind):
         frame = next(stream, None)
@@ -53,10 +55,19 @@ def replay(path, report, specification, domain=run_server_join):
                 domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
             if key.startswith("finite/"):
                 seen[observe_finite_id(domain, engine, response, item, request)] += 1
+            elif key.startswith("direct/") and observe_direct is not None:
+                direct[observe_direct(engine, response, item, request)] += 1
             elif key.startswith("seed/"):
                 domain.sample_forms(forms, response, engine, item)
+                require(key not in seeds, f"server-{label}-duplicate-seed-case", key)
+                seeds.add(key)
     require(next(stream, None) is None, f"server-{label}-replay-unconsumed-events", str(path))
     require(set(seen) == domain.finite_ids(engine, specification, tag) and set(seen.values()) == {1}, f"server-{label}-replay-incomplete")
+    if observe_direct is not None:
+        require(set(direct) == domain.finite_ids(engine, specification, tag) and set(direct.values()) == {1},
+                f"server-{label}-replay-direct-incomplete", list(direct.items()))
+        require(canonical(sorted(direct)) == canonical(report["directFiniteIds"]), f"server-{label}-replay-direct-receipt")
+        require(seeds == seed_ids(specification), f"server-{label}-replay-seed-budget")
     require(domain.required_forms(engine, tag) <= forms.keys(), f"server-{label}-replay-coverage-incomplete")
     require(execution["rejected"] == negative_count(specification, engine, tag), f"server-{label}-replay-negative-count")
     require(canonical(sorted(seen)) == canonical(report["finiteIds"]) and forms == report["coverage"]
@@ -128,7 +139,8 @@ def combine(candidate, checkout, paths, output, domain):
         check_faults(path.parent, raw, manifest, checkout, domain)
         counts.update(results)
         releases[role] = {"index": relpath(path, output.parent), "indexDigest": digest(path), "eventsDigest": digest(ledger),
-                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results}
+                          "finite": len(raw["finiteIds"]), "faults": len(raw["faults"]), "execution": results,
+                          **({"directFinite": len(raw["directFiniteIds"])} if "directFiniteIds" in raw else {})}
     verify_candidate(checkout, candidate, manifest)
     missing = sorted(required - releases.keys())
     status = "incomplete" if missing else f"provisional-native-{label}-matrix"

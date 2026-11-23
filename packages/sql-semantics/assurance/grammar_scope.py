@@ -348,7 +348,7 @@ def inventory(root):
             for alternative in rules.get(rule, []):
                 related[alternative] = ("server-result-v1.json",)
                 if postgres and rule in ("sort_clause", "sortby") and "USING" not in alternative:
-                    related[alternative] = (*related[alternative], "postgres-output-order-names-v1.json")
+                    related[alternative] = (*related[alternative], "postgres-output-order-names-v1.json", "postgres-source-order-v1.json")
         for rule in insert:
             for alternative in rules.get(rule, []):
                 related[alternative] = (("server-insert-v1.json", "postgres-insert-returning-v1.json")

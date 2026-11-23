@@ -7,7 +7,10 @@ namespace Tests\Unit\Ir\Ordering;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
+use SqlSemantics\Platform\PostgreSql\Ir\From\ProjectionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Ordering\ResultLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\SelectLowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\LimitCount;
@@ -20,7 +23,7 @@ use SqlSemantics\Testing\PostgreSql\Inspection;
 #[Small]
 final class ResultLoweringTest extends TestCase
 {
-    public function testOrderResolvesTheParsedOutputPosition(): void
+    public function testTargetResolvesTheParsedOutputPosition(): void
     {
         $analyzed = (new Inspection())->inspect('SELECT 1 AS a, 2 AS b ORDER BY 2 DESC');
         $statement = $analyzed->statement;
@@ -29,11 +32,13 @@ final class ResultLoweringTest extends TestCase
         $operation = $analyzed->binding();
         $fields = $operation->facts->query($statement)->fields();
         self::assertNotNull($fields);
+        $binding = JoinBinding::bind($operation, $statement->from, true);
+        $types = [];
+        $results = (new ProjectionLowering())->lower($operation, $statement, $binding, true, $types, null, true);
 
-        $ordered = (new ResultLowering())->order($statement->options->order[0], $operation, $fields);
+        $target = (new ResultLowering())->target($statement->options->order[0], $operation, $fields, $binding, $results, true, false);
 
-        self::assertSame(2, $ordered->position);
-        self::assertTrue($ordered->descending);
+        self::assertSame(2, $target);
     }
 
     public function testOrdersKeepsTheInputPrecedence(): void
@@ -43,10 +48,10 @@ final class ResultLoweringTest extends TestCase
         self::assertInstanceOf(Select::class, $statement);
         self::assertNotNull($statement->options);
 
-        $orders = (new ResultLowering())->orders($statement->options->order, $analyzed->binding(), $statement);
+        $orders = (new SelectLowering())->lower($analyzed->binding())->orderBy;
 
-        self::assertSame(2, $orders[0]->position);
-        self::assertSame(1, $orders[1]->position);
+        self::assertSame(2, $orders[0]->target);
+        self::assertSame(1, $orders[1]->target);
     }
 
     public function testLimitKeepsTheDifferentOperandRoles(): void

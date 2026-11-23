@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Ir\Ordering;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
+use SqlSemantics\Platform\PostgreSql\Ir\SelectSql;
 
 /**
  * Emits the checked sort keys and row bounds in SQL clause order.
@@ -16,11 +17,12 @@ final class ResultSql
     /**
      * Returns the SQL suffix of the checked query result.
      */
-    public function render(Select $select): string
+    public function render(Select $select, SelectSql $sqlPrinter): string
     {
         $terms = [];
         foreach ($select->orderBy as $key) {
-            $terms[] = $key->position . ($key->descending ? ' DESC' : ' ASC');
+            $target = is_int($key->target) ? (string) $key->target : $sqlPrinter->expression($key->target, $select->source);
+            $terms[] = $target . ($key->descending ? ' DESC' : ' ASC');
             $terms[count($terms) - 1] .= $key->nullsFirst ? ' NULLS FIRST' : ' NULLS LAST';
         }
         $sql = $terms === [] ? '' : ' ORDER BY ' . implode(', ', $terms);

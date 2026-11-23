@@ -58,7 +58,7 @@ final class SelectSql
             $sql .= ' WHERE ' . $this->predicate($select->where, $source);
         }
 
-        return $sql . (new ResultSql())->render($select);
+        return $sql . (new ResultSql())->render($select, $this);
     }
 
     /**

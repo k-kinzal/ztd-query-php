@@ -263,8 +263,25 @@ function observePostgresOutputOrder(SqlSemantics\Platform\PostgreSql\Semantics $
         $context,
     );
 
-    return [array_map(static fn ($key): array => [$key->position, $key->descending, $key->nullsFirst], $value->orderBy),
+    return [array_map(static fn ($key): array => [$key->target, $key->descending, $key->nullsFirst], $value->orderBy),
         [$value->limit->count, $value->limit->offset], $value->toString()];
+}
+
+function observePostgresSourceOrder(SqlSemantics\Platform\PostgreSql\Semantics $semantics): array
+{
+    $context = $semantics->context(['CREATE TABLE public.bounds_read (id integer, lo bigint)']);
+    $input = $semantics->analyze(
+        'SELECT a.id AS lo FROM public.bounds_read a ORDER BY a.lo DESC NULLS LAST, 1 LIMIT 2 OFFSET 1',
+        $context,
+    );
+    $distinct = $semantics->analyze(
+        'SELECT DISTINCT a.lo AS value, a.id FROM public.bounds_read a ORDER BY a.lo DESC, a.id',
+        $context,
+    );
+    $reference = $input->orderBy[0]->target;
+
+    return [$reference::class, $reference->slot, $reference->occurrence, count($input->columns), $input->toString(),
+        array_map(static fn ($key) => $key->target, $distinct->orderBy), $distinct->toString()];
 }
 
 foreach (array_keys($roles) as $name) {
@@ -447,6 +464,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['booleanFields'] = observePostgresBooleanFields($semantics);
             $details['int8Field'] = observePostgresInt8Field($semantics);
             $details['outputOrder'] = observePostgresOutputOrder($semantics);
+            $details['sourceOrder'] = observePostgresSourceOrder($semantics);
             $details['typedColumns'] = [
                 array_map(static fn ($kind) => $kind->value, $typed->source->columnKinds),
                 $columns,

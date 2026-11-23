@@ -49,7 +49,7 @@ final class SelectLowering
         $results = (new ProjectionLowering())->lower($operation, $statement, $binding, $catalogFirst, $inputTypes, $assignment, $operand === null);
 
         $result = new ResultLowering();
-        $order = $result->orders($statement->options->order ?? [], $operation, $statement);
+        $order = $result->orders($operation, $statement, $binding, $results, $catalogFirst);
 
         return new Select($results, $binding->source(), $profile->grammar, $where, $statement->distinct !== null, $order, $result->limit($statement->options?->limit));
     }

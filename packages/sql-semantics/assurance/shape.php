@@ -522,6 +522,13 @@ if ($dialect !== 'sqlite') {
     $properties['Select']['orderBy'] = ['array'];
     $properties['Select']['limit'] = ['?Ordering\\Limit'];
     $properties['Ordering\\Order'] = ['position' => ['int'], 'descending' => ['bool'], 'nullsFirst' => ['bool']];
+    if ($dialect === 'postgres') {
+        unset($properties['Ordering\\Order']['position']);
+        $properties['Ordering\\Order']['target'] = [
+            'Arithmetic', 'ColumnReference', 'Expression\\BuiltinCast', 'Expression\\CollatedText',
+            'From\\BooleanColumnReference', 'From\\TextColumnReference', 'From\\WideIntegerColumnReference', 'int',
+        ];
+    }
     $properties['Ordering\\Limit'] = ['count' => [$dialect === 'mysql' ? 'int' : '?int'], 'offset' => ['int']];
     $methods['Ordering\\Order'] = $methods['Ordering\\Limit'] = ['__construct'];
     $properties['From\\Join'] = [
@@ -1069,6 +1076,8 @@ try {
                     || ($dialect === 'mysql' && $short === 'Literal\\TextLiteral' && $call->name->toString() === 'strtr')
                     || ($dialect === 'mysql' && $short === 'Schema\\CreateTable' && $call->name->toString() === 'intdiv')
                     || ($dialect === 'postgres' && $short === 'SelectBounds' && in_array($call->name->toString(), ['array_keys', 'max'], true))
+                    || ($dialect === 'postgres' && in_array($short, ['Ordering\\Order', 'Ordering\\ResultSql', 'Select', 'SelectBounds'], true)
+                        && $call->name->toString() === 'is_int')
                     || ($dialect === 'postgres' && $short === 'From\\DerivedSource' && $call->name->toString() === 'array_keys')
                     || ($dialect === 'postgres' && $short === 'SelectSql' && $call->name->toString() === 'sprintf')),
                 "Unexpected function in $short",
