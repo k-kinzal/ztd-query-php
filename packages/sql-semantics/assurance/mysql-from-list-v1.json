@@ -1,0 +1,81 @@
+{
+  "revision": "SemanticsIR/mysql-from-list-1",
+  "extends": "server-join-v2.json",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": "All nine MySQL releases and modes pinned by server-projection-v1.json.",
+  "requiredScope": "All fixed syntax, version and role obligations remain in force.",
+  "constructors": {
+    "From/Join": {
+      "role": "An ordered comma product of checked FROM items.",
+      "structure": "A left-associated CROSS tree with each already associated member retained as a subtree. Parenthesized product members keep their containment.",
+      "conditions": "Each ordinary source and nested supported join closes its own references. An explicit ON condition sees only its two operand subtrees. The complete statement checks occurrence and expression budgets.",
+      "meaning": "The list takes the row product in source-occurrence order for field layout. Explicit JOIN binds before comma. Each outer operand extends only its own side's results before the list product.",
+      "sql": "Emit explicit parenthesized CROSS and existing scoped JOIN syntax. Generate a distinct alias for each leaf."
+    },
+    "ResultColumn": {
+      "role": "A named result slot over a comma product.",
+      "structure": "An ordered checked scalar with a fixed result heading.",
+      "conditions": "The chosen signed INT slot belongs to its resolved lexical table occurrence, including repeated declarations.",
+      "meaning": "The result preserves native names, positions, signed INT metadata, values, duplicates and NULL.",
+      "sql": "Reference the qualified physical field and preserve its declared label spelling."
+    }
+  },
+  "externalInterpretation": "The oracle and native queries use the same absolute table declarations, signed INT headings and fixture rows under the pinned session profile.",
+  "observations": [
+    "Native result field names and indices, signed INT metadata and NULL",
+    "Rows with duplicate inputs, repeated aliases and empty operands",
+    "WHERE addresses full product scope while ON is local to its join's operands",
+    "Right and left unmatched rows expose physical fields in their declared order"
+  ],
+  "finite": {
+    "prefixWidths": [1, 2, 3],
+    "lastItems": ["base", "left-join", "right-join"],
+    "lastTable": ["populated", "empty"],
+    "projection": ["all", "last"],
+    "filter": ["absent", "compare"],
+    "identities": 72,
+    "completeness": "Require the full set of identities recovered from completed source trees, projection and filters on every release."
+  },
+  "exploration": {
+    "seeds": [3187, 10529, 36137],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 230,
+    "allowedExclusions": [],
+    "requiredForms": "Vary operand layout, left or right extension, duplicate occurrence identity, slot positions, empty sources and nested member products."
+  },
+  "analysis": [
+    "A two-member list exposes both physical headings in order.",
+    "A qualified wildcard selects the third occurrence in a self product.",
+    "A WHERE comparison binds two aliases of the same declaration.",
+    "An empty member removes all combinations and preserves column metadata.",
+    "A lower-precedence comma preserves the RIGHT operand of a local LEFT join.",
+    "A lower-precedence comma preserves the local RIGHT join and post-product WHERE.",
+    "A parenthesized product is the left operand of an outer join.",
+    "A parenthesized product on the right of a comma preserves association and fields."
+  ],
+  "negative": [
+    "A direct scoped result makes an out-of-range occurrence reference.",
+    "An ON condition attempts to use a preceding comma item.",
+    "An unqualified field is ambiguous across two list items.",
+    "A comma item resolves to no declared relation.",
+    "A comma list exceeds the checked input budget."
+  ],
+  "faults": ["Read a later occurrence from the first table", "Lose a local LEFT join's unmatched rows", "Omit WHERE after the complete product"],
+  "evidence": {
+    "P01": "Compare exact occurrence-local field identities and local ON references.",
+    "P02": "Check bounds and closed operand scopes before publication.",
+    "P03": "Store the ordered checked operands without the parse tree.",
+    "P04": "Calculate local matched and unmatched rows before the Cartesian product.",
+    "P05": "Use the closed immutable join, field and result roles.",
+    "P06": "Observe original and emitted SQL on the pinned releases.",
+    "Q01": "Require typed rejection at the established owner for each negative.",
+    "Q02": "Require the declared finite product, seeded cases and analyzed positives.",
+    "Q03": "Check clause precedence, scoped input occurrences and observable NULL extension.",
+    "Q04": "Replay field metadata and typed bags against the independently paired rows.",
+    "Q05": "Record selected controller, distribution bytes and exact applied fault patches."
+  },
+  "open": ["Lateral references, unsupported operands, additional key types and terms above the documented bound remain in scope and require evidence."],
+  "trust": ["Pinned MySQL grammar and database profile", "Independent relational evaluator", "Audited source closure and exact candidate controller linkage"],
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/join.html"]
+}
