@@ -1,0 +1,88 @@
+{
+  "revision": "SemanticsIR/mysql-create-like-1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "mode": "Native MySQL, utf8mb4, empty sql_mode, lower_case_table_names=0, sql_notes=1, InnoDB fixture tables and unit allocation increment and offset.",
+  "extends": ["mysql-session-table-sources-v1.json", "mysql-session-create-table-v1.json"],
+  "additionalPublicRoots": ["Schema/Like/CreateTableLike"],
+  "existingRoles": ["Schema/Identity/TableIdentity", "Schema/TableName", "From/ExternalRelationKind"],
+  "constructors": {
+    "CreateTableLike": {
+      "type": "Schema/Like/CreateTableLike",
+      "role": "Create one empty native table from the declaration of a resolved external table.",
+      "structure": "Two checked and distinctly positioned TableIdentity operands, the native release, and the IF NOT EXISTS policy. The destination kind determines its lifetime. The source kind is the resolved lifetime of the source table.",
+      "conditions": "Both operands have exact absolute coordinates and a table kind. Their coordinates must differ, even across lifetimes. Analysis requires a resolved source in its native session-visible namespace, with a named absolute destination.",
+      "meaning": "Read the designated native source definition and create an empty destination in the selected namespace. Native LIKE copies table columns and indexes under the evaluating release and mode. Source rows, foreign-key definitions and current allocation state are excluded by the operator. A compatible external reference supplies the same source table definition in the same session namespace.",
+      "sql": "Emit CREATE, TEMPORARY for a session-local destination, TABLE, the explicit guard, the qualified destination, LIKE and the qualified source. The parenthesized LIKE spelling has the same operation."
+    }
+  },
+  "structure": "A closed definition-copy operation with two distinct identity roles. The native source definition remains an external relation.",
+  "conditions": "Source resolution happens before publication. Known views, missing or open source resolution, equal source and destination coordinates, and invalid names fail at the appropriate published boundary.",
+  "meaning": "Preserve copied column metadata, defaults, keys, storage semantics, native collision effects and transaction policy while leaving the original source and its rows intact.",
+  "sql": "The source and destination appear once in their native operand positions. Preserve the temporary keyword and existence policy.",
+  "finite": {
+    "sourceSchema": ["primary", "decoy"],
+    "destinationSchema": ["primary", "decoy"],
+    "sourceTopology": ["permanent", "temporary-only", "shadow"],
+    "destinationKind": ["table", "temporary-table"],
+    "destinationTopology": ["absent", "persistent", "temporary", "shadow"],
+    "ifNotExists": [false, true],
+    "identities": 192,
+    "completeness": "Recover both resolved coordinates, the source role from the independent fixture, the destination role, prior topology and existence policy, and compare each identity exactly once."
+  },
+  "exploration": {
+    "seeds": [1091, 7103, 24781],
+    "casesPerSeed": 24,
+    "timeoutSecondsPerRelease": 300,
+    "allowedExclusions": [],
+    "requiredForms": "Vary the selected source, both namespaces, collisions, the guard, qualified destinations, signed storage/default data, index composition, source row multiplicity and source allocation state. Source data differ from copied default values."
+  },
+  "analysis": [
+    "Unqualified source and destination with a named current database",
+    "Parenthesized source syntax",
+    "Fully qualified names with a same-named source decoy",
+    "Copy from a temporary source in the session shadow of a permanent table",
+    "Persistent destination from a temporary-only source",
+    "Temporary destination from a permanent source",
+    "Guarded collision preserves the existing temporary target"
+  ],
+  "negative": [
+    "Direct source and destination with identical absolute coordinates",
+    "Direct source names a view",
+    "Direct destination names a view",
+    "Analyzed source is a known view",
+    "Analyzed complete catalog lacks the source even under IF NOT EXISTS",
+    "Analyzed incomplete catalog leaves the source unresolved",
+    "Analyzed destination has no absolute schema",
+    "Analyzed qualified and unqualified operands resolve to the same coordinate"
+  ],
+  "observations": [
+    "Absolute identities, visibility on the evaluating and catalog connections, real column order, signed widths, defaults, nullability and native index terms",
+    "The source's populated rows remain unchanged and the new table starts empty",
+    "A permanent source's external foreign key can constrain its writes while the copied table permits the corresponding row",
+    "Record actual assigned auto-increment values. An allocated source may start over 100. A fresh copy under the pinned settings begins at 1, and a rolled-back temporary insert can consume that value",
+    "Guarded and required destination collisions, exact SQLSTATE and vendor code, notes and preserved prior rows",
+    "Pending row writes roll back with temporary creation while the new temporary definition survives. Permanent creation commits the surrounding write"
+  ],
+  "faults": [
+    "Omit the temporary destination keyword",
+    "Replace the resolved source with its same-named decoy",
+    "Replace the destination with the other schema's name",
+    "Invert the existing-target policy",
+    "Skip the distinct-coordinate invariant",
+    "Bind a source that is visible through a temporary overlay as persistent"
+  ],
+  "evidence": {
+    "P01": "Both operand coordinates and both lifetimes are explicit and the operation is typed",
+    "P02": "The closed constructor and source resolution reject wrong roles and equal coordinates",
+    "P03": "No parser, definition snapshot, analysis context or emitted SQL stored in the value",
+    "P04": "Copy semantics compose the selected native source definition with destination namespace and existence policy",
+    "P05": "Both child identities and the root are audited sealed readonly values",
+    "P06": "Independent comparison of native copy effects, canonical and authored alternatives, default writes and allocated values"
+  },
+  "trust": ["Pinned stock session and name profiles", "Native definition-copy semantics and exact PDO observers", "Independent fixture prediction", "Fixed source and release inventory"],
+  "open": ["Independent comparisons for all generated column, expression default, CHECK, table option and engine variants"],
+  "calibration": "Raw pinned MySQL 5.6.51 and 8.4.7 CLI execution archive SHA-256 756b2ba0d034a288a383cd8bd293faab6bdf7b6112c15b163d6a323497eba2e6.",
+  "sources": ["https://dev.mysql.com/doc/refman/8.4/en/create-table-like.html", "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"]
+}
