@@ -12,9 +12,25 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v35.json"
-CONTRACT = "cfabae64f56349457b46e5fb1cfd985b59c5813b4648da8048693aa68f144179"
+CONTRACT_NAME = "release-layout-v36.json"
+CONTRACT = "1ec7857975dffd054144240d9a68aadbf086b965d727b7fff9e83bc1a72f0896"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
+
+
+def mysql_varchar_publication():
+    ir = "SqlSemantics\\Platform\\MySql\\Ir\\"
+    text_slot = ir + "From\\TextColumnReference"
+    collated = ir + "Expression\\CollatedText"
+    source = " FROM `app`.`native_source` AS `__ztd_source`"
+    label, signed = "`__ztd_source`.`label`", "`__ztd_source`.`id`"
+    text = f"({label} COLLATE utf8mb4_bin) AS `v`"
+    return {
+        "projection": [collated, text_slot, 0, text_slot, 0, "utf8mb4_bin", 8, f"SELECT {text}, {label} AS `v`{source}"],
+        "group": ["min", text_slot, 0, False, "max", text_slot, 0, True,
+                  f"SELECT min({label}) AS `low`, max(DISTINCT {label}) AS `high`{source}"],
+        "write": [["label", "id"], 2, "utf8mb4_bin", False, "int", True, collated, 0, ir + "ColumnReference", 1,
+                  f"INSERT INTO `app`.`native_target` (`label`, `id`) SELECT DISTINCT {text}, {signed} AS `n`{source}"],
+    }
 
 
 
@@ -213,6 +229,8 @@ def verify_probe(raw, catalog):
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",
                                                      "utf8mb4_general_ci", "utf8mb4_0900_ai_ci"],
                     "installed-mysql-text-literal-mismatch", item)
+            require(json.dumps(item.get("mysqlVarcharPublication"), sort_keys=True) == json.dumps(mysql_varchar_publication(), sort_keys=True),
+                    "installed-mysql-varchar-publication-mismatch", item)
         if (item["platform"], item["role"]) == ("PostgreSql", "Select"):
             require(item.get("nestedCast") == ["int4", "bool", "42"], "installed-builtin-cast-mismatch", item)
             require(item.get("wideCast") == ["int4", "int8", "2147483648", "-9223372036854775808"],

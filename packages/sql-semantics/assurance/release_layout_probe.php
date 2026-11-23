@@ -43,6 +43,39 @@ function observeEnum(string $name): array
     throw new RuntimeException('An installed enum accepts an unknown backing value.');
 }
 
+function observeMysqlVarchar(SqlSemantics\Platform\MySql\Semantics $semantics): array
+{
+    $context = $semantics->context([
+        'CREATE TABLE app.native_source (id INT, label VARCHAR(8)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin',
+        'CREATE TABLE app.native_target (id INT, label VARCHAR(2) COLLATE utf8mb4_bin NOT NULL)',
+    ]);
+    $projection = $semantics->analyze('SELECT label COLLATE utf8mb4_bin AS v, s.label AS v FROM app.native_source s', $context);
+    $grouped = $semantics->analyze('SELECT MIN(label) AS low, MAX(DISTINCT s.label) AS high FROM app.native_source s', $context);
+    $write = $semantics->analyze('INSERT INTO app.native_target (label, id) SELECT DISTINCT s.label COLLATE utf8mb4_bin AS v, s.id AS n FROM app.native_source s', $context);
+    if (!$projection instanceof SqlSemantics\Platform\MySql\Ir\Select
+        || !$grouped instanceof SqlSemantics\Platform\MySql\Ir\Aggregation\GroupedSelect
+        || !$write instanceof SqlSemantics\Platform\MySql\Ir\Mutation\InsertQuery) {
+        throw new RuntimeException('The installed analyzer lost a checked MySQL VARCHAR root.');
+    }
+    $explicit = $projection->columns[0]->expression;
+    $implicit = $projection->columns[1]->expression;
+    $low = $grouped->columns[0]->value;
+    $high = $grouped->columns[1]->value;
+    $destination = $write->target->columnTypes[0];
+    $inherited = $projection->source->columnTypes[0];
+    $first = $write->query->columns[0]->expression;
+    $second = $write->query->columns[1]->expression;
+    return [
+        'projection' => [$explicit::class, $explicit->operand::class, $explicit->operand->slot, $implicit::class, $implicit->slot,
+            $inherited->collation->value, $inherited->length, $projection->toString()],
+        'group' => [$low->operator->value, $low->argument::class, $low->argument->slot, $low->distinct,
+            $high->operator->value, $high->argument::class, $high->argument->slot, $high->distinct, $grouped->toString()],
+        'write' => [array_map(static fn ($column) => $column->value, $write->target->columns),
+            $destination->length, $destination->collation->value, $destination->nullable, $write->target->columnTypes[1]->value,
+            $write->query->distinct, $first::class, $first->operand->slot, $second::class, $second->slot, $write->toString()],
+    ];
+}
+
 foreach (array_keys($roles) as $name) {
     $role = new ReflectionClass($name);
     $path = $role->getFileName();
@@ -156,6 +189,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $legacyRelease = SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease::MySql5651;
             $details['mysqlTextLiteral'] = [$literal->value, $text->columns[0]->name->value, $text->toString(),
                 $legacyRelease->textCollation(), $text->release->textCollation()];
+            $details['mysqlVarcharPublication'] = observeMysqlVarchar($semantics);
         }
         if ($platform === 'PostgreSql' && $role === 'Select') {
             $castRole = $namespace . 'Ir\\Expression\\BuiltinCast';
