@@ -112,10 +112,24 @@
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">hasSlot</span>(<span class="tok-id">TableSource</span>|<span class="tok-id">DerivedSource</span>|<span class="tok-id">null</span> <span class="tok-var">$input</span>, <span class="tok-id">int</span> <span class="tok-var">$slot</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$input</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DerivedSource</span> ? <span class="tok-kw">isset</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">definition</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$slot</span>]) : <span class="tok-kw">isset</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$slot</span>]);</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    }</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>}</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$input</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DerivedSource</span> ? <span class="tok-kw">isset</span>(<span class="tok-var">$input</span>-&gt;<span class="tok-id">definition</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$slot</span>])</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            : (<span class="tok-var">$input</span>-&gt;<span class="tok-id">columnTypes</span>[<span class="tok-var">$slot</span>] ?? <span class="tok-id">null</span>) === <span class="tok-id">ColumnKind</span>::<span class="tok-id">SignedInt</span>;</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * Validates a VARCHAR reference at its owning physical occurrence.</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     * @param list&lt;TableSource|DerivedSource&gt; $inputs</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">textColumn</span>(<span class="tok-id">TextColumnReference</span> <span class="tok-var">$reference</span>, <span class="tok-kw">array</span> <span class="tok-var">$inputs</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    {</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-var">$input</span> = <span class="tok-var">$inputs</span>[<span class="tok-var">$reference</span>-&gt;<span class="tok-id">occurrence</span>] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>            <span class="tok-var">$input</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TableSource</span> &amp;&amp; (<span class="tok-var">$input</span>-&gt;<span class="tok-id">columnTypes</span>[<span class="tok-var">$reference</span>-&gt;<span class="tok-id">slot</span>] ?? <span class="tok-id">null</span>) <span class="tok-kw">instanceof</span> <span class="tok-id">Varchar</span>,</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>            <span class="tok-str">&#039;A VARCHAR slot must belong to a visible physical input occurrence.&#039;</span>,</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        );</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>}</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
