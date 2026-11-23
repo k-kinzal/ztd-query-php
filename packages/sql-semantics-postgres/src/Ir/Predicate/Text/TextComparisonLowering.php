@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
+namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\CollatedTextLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;

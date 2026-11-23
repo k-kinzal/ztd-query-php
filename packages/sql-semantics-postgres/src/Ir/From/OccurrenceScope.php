@@ -14,7 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\LogicalPredicate;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\TableSource;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;

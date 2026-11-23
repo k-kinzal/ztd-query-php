@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
+namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text;
 
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
@@ -15,11 +15,11 @@ use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
  *
  * @visibility public
  * @example Comparing a text slot with a literal by UTF-8 bytes
- *     $operator = \SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextOperator::Less;
+ *     $operator = \SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextOperator::Less;
  *     $left = new \SqlSemantics\Platform\PostgreSql\Ir\From\TextColumnReference(0);
  *     $right = new \SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral('A');
  *     $collation = \SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation::C;
- *     (new \SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparison($operator, $left, $right, $collation))->operator->value // => '<'
+ *     (new \SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison($operator, $left, $right, $collation))->operator->value // => '<'
  */
 final class TextComparison
 {

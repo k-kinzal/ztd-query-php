@@ -1,5 +1,6 @@
 """Compare native PostgreSQL text predicates, filters and physical effects."""
 
+from collections import Counter
 from itertools import product
 import json
 from random import Random
@@ -11,16 +12,18 @@ from run_server_join import check_value as check_select, main
 from run_server_postgres_collated_text import PROFILE_PROBE
 from run_server_postgres_text_returning import (
     COLUMN_TYPES, DECLARATIONS, HEADING, INITIAL, OBSERVER, TABLE, check_preparation as check_fixture,
-    check_value as check_mutation, expected as expected_mutation, mutation, observation,
+    check_value as check_mutation, expected as expected_mutation, int4, mutation, observation,
     prepare as prepare_fixture,
 )
 from run_server_postgres_typed_columns import DIAGNOSTICS
-from server_join_cases import case, join
+from server_compound_cases import case as compound, without_profiles
+from server_grouped_cases import aggregate, case as grouped
+from server_join_cases import case, join, slot
 from server_truth_model import admits, predicate_value
 from sqlite_domain import RenderFault
 
 LABEL = "postgres-text-comparison"
-CONTRACT = "a20efa2ecf7bc86ef4f77a5b4126611c8cc2b53d13d90e67a54f20426772da40"
+CONTRACT = "9472050feb9e35dbdd2464c07962d258ece36e17ab76fbab9a09ce38abc51668"
 INPUT = "ir_text_inputs"
 INPUT_HEADING = ("note", "id", "label")
 INPUT_ROWS = [["other", 7, "copied α"], ["other", 7, "copied α"], ["memo", 8, None], ["blank", 9, ""], [None, 10, "東京"]]
@@ -38,9 +41,12 @@ PROFILE_SQL = (
 
 
 def specifications():
-    path, profile = TOOL / "postgres-text-comparison-v1.json", TOOL / "server-projection-v1.json"
+    path, profile = TOOL / "postgres-text-comparison-v2.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(profile) == PROJECTION, "postgres-text-comparison-contract-mismatch")
-    return json.loads(path.read_text()), {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
+    specification = json.loads(path.read_text())
+    previous = specification["previous"]
+    require(digest(TOOL / previous["path"]) == previous["sha256"], "postgres-text-comparison-previous-contract-mismatch")
+    return specification, {"postgres": json.loads(profile.read_text())["profiles"]["postgres"]}
 
 
 def prepare(engine, db):
@@ -154,6 +160,24 @@ def analyzed(tag):
            select(tag, left, [[["truth-test", "IS UNKNOWN", term], "matches"]]))
 
 
+def compositions(tag):
+    name = f"public.{TABLE}"
+    term = comparison(">", field(0), text("Z"))
+    integer_case = ["int4-case", [[term, int4(9)]], int4(-1)]
+    yield (f"SELECT CASE WHEN label {COLLATE} > 'Z' THEN 9 ELSE -1 END AS v FROM {name}",
+           select(tag, table(heading=("label",)), [[integer_case, "v"]]))
+
+    condition = comparison(">", field(1), text("Z"))
+    group = grouped("postgres", tag, table(heading=("id", "label")), [slot(0)],
+                    [[slot(0), "key"], [aggregate("count"), "count"]], condition)
+    yield f"SELECT id AS key, pg_catalog.count(*) AS count FROM {name} WHERE label {COLLATE} > 'Z' GROUP BY id", group
+
+    left = select(tag, None, [[comparison("<", text("Z"), text("a")), "matches"]])
+    right = select(tag, None, [[comparison("=", ["null"], text("a")), "ignored"]])
+    query = f"SELECT ('Z' {COLLATE}) < 'a' AS matches UNION ALL SELECT (NULL {COLLATE}) = 'a' AS ignored"
+    yield query, compound("postgres", tag, left, "UNION", True, right)
+
+
 def negatives(tag):
     scoped = "A predicate slot must belong to a visible input occurrence."
     yield place(tag, "where", comparison("=", field(0), text("A"))), "InvalidConstruction", scoped
@@ -198,6 +222,11 @@ def requests(_, tag, specification):
     require(len(cases) == len(specification["analysis"]), "postgres-text-comparison-analysis-incomplete")
     for index, (sql, item) in enumerate(cases):
         yield f"analysis/{index}", analysis(tag, sql), item, None
+    combined = list(compositions(tag))
+    require(len(combined) == len(specification["compositions"]), "postgres-text-comparison-compositions-incomplete")
+    for index, (sql, item) in enumerate(combined):
+        yield f"composition/direct/{index}", item, item, None
+        yield f"composition/analyze/{index}", analysis(tag, sql), item, None
     for seed in specification["exploration"]["seeds"]:
         for index, item in enumerate(seeded(tag, seed, specification["exploration"]["casesPerSeed"], bounds["operators"], bounds["contexts"])):
             yield f"seed/{seed}/{index}", item, item, None
@@ -243,17 +272,36 @@ def row_product(source):
 def expected(item):
     if "target" in item:
         return expected_mutation(item)
+    if "compound" in item:
+        node = item["compound"]
+        require((node["operator"], node["all"]) == ("UNION", True), "postgres-text-comparison-oracle-set-role")
+        left, right = expected(node["left"]), expected(node["right"])
+        return observation({**left, "rows": left["rows"] + right["rows"]})
+    if "grouped" in item:
+        node = item["grouped"]
+        require(node["keys"] == [slot(0)] and node["columns"] == [[slot(0), "key"], [aggregate("count"), "count"]],
+                "postgres-text-comparison-oracle-group-role", node)
+        counts = Counter(rows[0][0] for rows in row_product(node["source"])
+                         if admits(node["where"], lambda term: operand(term, rows)))
+        return observation({"status": "rows", "fields": [["key", "int4"], ["count", "int8"]],
+                            "rows": [[key, count] for key, count in counts.items()]})
     values = row_product(item["source"])
     columns = item["columns"]
 
     def project(term, row):
         if term[0] == "text-slot":
             return operand(term, row)
+        if term[0] == "int4-case":
+            arms, otherwise = term[1:]
+            result = next((value for condition, value in arms if admits(condition, lambda child: operand(child, row))), otherwise)
+            require(result[0] == "integer", "postgres-text-comparison-oracle-case-role", result)
+            return int(result[1])
         return predicate_value(term, lambda child: operand(child, row))
 
+    kinds = {"text-slot": "text", "int4-case": "int4", "text-comparison": "bool", "truth-test": "bool"}
     return observation({
         "status": "rows",
-        "fields": [[name, "text" if term[0] == "text-slot" else "bool"] for term, name in columns],
+        "fields": [[name, kinds[term[0]]] for term, name in columns],
         "rows": [[project(term, row) for term, _ in columns] for row in values
                  if admits(item["where"], lambda term: operand(term, row))],
     })
@@ -262,6 +310,12 @@ def expected(item):
 def check_value(item, response):
     if "target" in item:
         check_mutation(item, response)
+    elif "grouped" in item or "compound" in item:
+        kind = "grouped" if "grouped" in item else "compound"
+        wanted = item["grouped"] if kind == "grouped" else without_profiles(item)["compound"]
+        require(response["status"] == "constructed" and response["profile"].startswith(item["release"] + "/"),
+                "postgres-text-comparison-composition-rejected", response)
+        require(response[kind] == wanted, "postgres-text-comparison-composition-shape", {"expected": wanted, "observed": response})
     else:
         check_select(item, response)
         require(all(item[key] == response[key] for key in ("orderBy", "limit", "distinct")),

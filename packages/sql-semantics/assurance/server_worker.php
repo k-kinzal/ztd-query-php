@@ -31,7 +31,7 @@ function constructOperand(string $namespace, array $data): object
         'wide-integer' => 'Expression\\WideIntegerLiteral',
         'text', 'text-bytes' => str_contains($namespace, '\\MySql\\') ? 'Literal\\TextLiteral' : 'Expression\\TextLiteral',
         'collated-text' => 'Expression\\CollatedText',
-        'text-comparison' => 'Predicate\\TextComparison',
+        'text-comparison' => 'Predicate\\Text\\TextComparison',
         'parameter' => 'Binding\\Parameter',
         'boolean' => 'BooleanLiteral',
         'null' => 'NullLiteral',
@@ -51,7 +51,7 @@ function constructOperand(string $namespace, array $data): object
     $operator = $namespace . 'ArithmeticOperator';
     $castTarget = $namespace . 'Expression\\CastDestination';
     $collation = $namespace . 'Expression\\TextCollation';
-    $textOperator = $namespace . 'Predicate\\TextOperator';
+    $textOperator = $namespace . 'Predicate\\Text\\TextOperator';
     $truth = $namespace . 'Predicate\\TruthOperator';
 
     return match ($data[0]) {
@@ -118,7 +118,7 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'Expression\\WideIntegerLiteral' => ['wide-integer', $value->decimal],
         $namespace . 'Expression\\TextLiteral', $namespace . 'Literal\\TextLiteral' => ['text', $value->value],
         $namespace . 'Expression\\CollatedText' => ['collated-text', $value->collation->value, observeOperand($namespace, $value->operand)],
-        $namespace . 'Predicate\\TextComparison' => ['text-comparison', $value->operator->value, $value->collation->value,
+        $namespace . 'Predicate\\Text\\TextComparison' => ['text-comparison', $value->operator->value, $value->collation->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Binding\\Parameter' => match (true) {
             !($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter),
@@ -657,7 +657,7 @@ function observePredicate(string $namespace, ?object $condition): ?array
         $namespace . 'Predicate\\LogicalPredicate' => ['logic', $condition->operator->value, observePredicate($namespace, $condition->left), observePredicate($namespace, $condition->right)],
         $namespace . 'Predicate\\NullTest' => ['null-test', $condition->negated, observePredicate($namespace, $condition->operand)],
         $namespace . 'BooleanLiteral', $namespace . 'NullLiteral', $namespace . 'ColumnReference', $namespace . 'From\\TextColumnReference', $namespace . 'IntegerLiteral',
-        $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness', $namespace . 'Predicate\\TextComparison', $namespace . 'Predicate\\TruthTest' => observeOperand($namespace, $condition),
+        $namespace . 'Predicate\\IntegerRange', $namespace . 'Predicate\\IntegerDistinctness', $namespace . 'Predicate\\Text\\TextComparison', $namespace . 'Predicate\\TruthTest' => observeOperand($namespace, $condition),
     };
 }
 

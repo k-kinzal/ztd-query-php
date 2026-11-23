@@ -20,7 +20,7 @@ use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerDistinctness;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\IntegerRange;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\NullTest;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TruthTest;
 use SqlSemantics\Platform\PostgreSql\Ir\Select;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;

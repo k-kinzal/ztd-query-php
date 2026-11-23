@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Ir\Predicate;
+namespace Tests\Unit\Ir\Predicate\Text;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextCollation;
 use SqlSemantics\Platform\PostgreSql\Ir\Expression\TextLiteral;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextComparisonLowering;
-use SqlSemantics\Platform\PostgreSql\Ir\Predicate\TextOperator;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparisonLowering;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextOperator;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Collation;

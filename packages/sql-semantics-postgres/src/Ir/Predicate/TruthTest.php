@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Ir\Predicate;
 
 use SqlSemantics\Platform\PostgreSql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 
 /**

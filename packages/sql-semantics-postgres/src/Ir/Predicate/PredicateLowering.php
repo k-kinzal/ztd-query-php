@@ -16,6 +16,8 @@ use SqlSemantics\Platform\PostgreSql\Ir\ExpressionLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\PostgreSql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\PostgreSql\Ir\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparison;
+use SqlSemantics\Platform\PostgreSql\Ir\Predicate\Text\TextComparisonLowering;
 use SqlSemantics\Platform\PostgreSql\Ir\SourceBinding;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Scalar;
