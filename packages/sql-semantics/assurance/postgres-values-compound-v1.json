@@ -1,0 +1,85 @@
+{
+  "revision": "SemanticsIR/postgres-values-compound-1",
+  "approval": "pending-human-review",
+  "dialects": ["PostgreSql"],
+  "profiles": ["pg-16.6", "pg-17.2"],
+  "mode": "Native PostgreSQL typed standalone SELECT and VALUES set operands with UTF-8 and the pinned native parameter profile.",
+  "extends": ["server-compound-v2.json", "postgres-values-v3.json", "postgres-local-values-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Rows/Compound", "Rows/CompoundOperator", "Rows/ResultKind", "Rows/Values/ValuesQuery", "Rows/Values/ValuesCell", "Select"],
+  "structure": "A resolved binary set tree accepts a checked VALUES relation as a left or right leaf. The native operator and duplicate policy are stored separately.",
+  "conditions": "Require compatible column kinds, equal widths, the same native profile and the existing checked set tree and signature bounds. A VALUES leaf computes its whole-column result types before set combination, including text for an all-untyped NULL column.",
+  "meaning": "Apply the selected set or bag operation to the typed row multisets. NULLs compare equal for duplicate and multiplicity processing. Preserve the left input's output column names and positions even if a right operand determines the common kind.",
+  "sql": "Emit VALUES as a native arm, parenthesize nested set operators and emit the specified operator and ALL policy. Keep the leftmost heading and native resolved literal type declarations.",
+  "observations": [
+    "Independent set-tree shape, operands, operator, duplicate policy and typed leaf positions",
+    "Exact result names, native type OIDs, values, duplicates, null rows and empty results",
+    "Signed int4 to int8 widening and independently resolved all-untyped VALUES text",
+    "Readiness of a native typed SELECT parameter with a parameter-free VALUES arm"
+  ],
+  "finite": {
+    "operator": ["UNION", "INTERSECT", "EXCEPT"],
+    "all": [false, true],
+    "placement": ["left", "right", "both"],
+    "kind": ["integer", "bigint", "boolean", "text"],
+    "layout": ["matching", "different"],
+    "identities": 144,
+    "completeness": "Recover the exact root operator, duplicate policy and leaf kinds from the loaded tree. Recover output kind and single typed value agreement independently of rendering."
+  },
+  "analysis": [
+    "VALUES on each side of UNION ALL",
+    "VALUES first and named SELECT second under UNION",
+    "Named SELECT first and VALUES second under INTERSECT ALL",
+    "EXCEPT ALL retaining one copy from a duplicated VALUES arm",
+    "Bigint values after a signed integer SELECT and NULL",
+    "An all-untyped VALUES leaf and resolved native text",
+    "Nested right-arm grouping distinguishes EXCEPT from left-association",
+    "A parenthesized standalone VALUES query without a set operator"
+  ],
+  "bindingProbes": ["An explicitly typed int4 SELECT marker and integer VALUES under UNION ALL"],
+  "negative": [
+    "Unequal operand widths",
+    "Incompatible Boolean and signed column kinds",
+    "A standalone all-NULL VALUES leaf paired with a signed integer",
+    "Operands from different native releases",
+    "An inadmissible ordered SELECT arm",
+    "A contextual DEFAULT expression in a VALUES arm"
+  ],
+  "exploration": {
+    "seeds": [2053, 12239, 43661],
+    "casesPerSeed": 28,
+    "timeoutSecondsPerRelease": 240,
+    "allowedExclusions": [],
+    "requiredForms": "Vary native result kind, null cells, duplicates, output positions, operand placement, both grouping directions, every set operator, both bag policies and set widths."
+  },
+  "faults": [
+    "Swap the operands of an asymmetric set operation",
+    "Discard VALUES-derived duplicate rows under UNION ALL",
+    "Remove required right grouping",
+    "Cast a bigint VALUES cell as int4",
+    "Accept an incompatible all-untyped VALUES text arm"
+  ],
+  "evidence": {
+    "P01": "Record every typed VALUES operand and the resolved set structure.",
+    "P02": "Check profile, shape, compatible kinds, depth and signature before the compound is public.",
+    "P03": "Retain only the meaning of the typed arms and selected operator.",
+    "P04": "Combine child row bags with exact native set semantics.",
+    "P05": "Share closed immutable checked values in the whole tree.",
+    "P06": "Preserve operand grouping, duplicate policy and typed heading in native SQL.",
+    "Q01": "Demonstrate explicit rejection at the applicable typed boundary.",
+    "Q02": "Exhaust the finite public construction grid and validate authored examples.",
+    "Q03": "Check independent bag and column type rules at every set node.",
+    "Q04": "Compare typed row bags and headings from native execution on both releases.",
+    "Q05": "Reconcile closed publication routes, source checks and installed Composer probes."
+  },
+  "open": [
+    "Grouped and ordered VALUES set arms or compound result ordering and row bounds",
+    "Additional PostgreSQL type categories, collations and correlated or updating branches"
+  ],
+  "trust": ["Independently documented native set operations and type resolution", "Separate positional and multiplicity evaluator and actual PDO observations", "Pinned PHP distributions and the reviewed checker"],
+  "sources": [
+    "https://www.postgresql.org/docs/16/sql-values.html",
+    "https://www.postgresql.org/docs/17/typeconv-union-case.html",
+    "https://www.postgresql.org/docs/17/queries-union.html"
+  ]
+}
