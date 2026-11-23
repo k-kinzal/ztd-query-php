@@ -13,6 +13,7 @@ from checked_value_graph import certificate
 from constructor_trace import check_scope, trace
 from evidence_transcript import events as execution_events
 from grammar_scope import inventory as grammar_inventory
+from native_counterexample_reduction import CONTROL_RESULTS as NATIVE_REDUCTION_CONTROLS, DIGEST as NATIVE_REDUCTION_DIGEST
 from native_schedule import NATIVE, SINGLE_ENGINE, release_subset, reports as native_reports
 from preflight_sqlite_faults import preflight as sqlite_fault_plan
 from replay_sqlite_faults import CONTRACT as SQLITE_FAULT_REPLAY
@@ -461,6 +462,19 @@ def main():
     sqlite, native = evidence.sqlite(), evidence.native(profiles)
     sqlite_launch = evidence.sqlite_launch()
     controls = evidence.artifact("assurance-controls/index.json", "verified")
+    if controls:
+        cases = json.loads((root / "assurance-controls/index.json").read_text())["controls"]
+        selected = {item["case"]: item for item in cases if item["case"] in NATIVE_REDUCTION_CONTROLS}
+        require(selected.keys() == NATIVE_REDUCTION_CONTROLS.keys(), "bundle-missing-native-reduction-controls")
+        for name, item in selected.items():
+            folder = root / "assurance-controls" / name
+            evidence.checked(folder / "counterexample.json", item["original"])
+            path, _ = evidence.checked(folder / "counterexample.reduction.json", item["reduction"])
+            receipt = json.loads(path.read_text())
+            require(receipt["originalDigest"] == item["original"] and receipt["contract"] == NATIVE_REDUCTION_DIGEST
+                    and item["control"] == "passed" and receipt["status"] == item["observed"] == NATIVE_REDUCTION_CONTROLS[name],
+                    "bundle-native-reduction-control-mismatch", name)
+
     preflight_file = root / "sqlite-fault-preflight/index.json"
     preflight = evidence.record(preflight_file) if preflight_file.is_file() else None
     if preflight:

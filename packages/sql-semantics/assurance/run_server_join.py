@@ -7,6 +7,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from native_counterexample_reduction import record as record_reduction
 from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from run_server import CONTRACT as PROJECTION
 from run_server import Observer, check_profile, check_transport, rejects, responses, same
@@ -144,7 +145,7 @@ def execute(args, specification, tag, worker, db, domain=None):
     transport = check_transport()
     seen, direct, forms = Counter(), Counter(), Counter()
     observe_direct = getattr(domain, "direct_finite_id", None)
-    key = current = None
+    key = current = comparison = None
     batch = []
     with (args.out / "events.jsonl").open("w") as output:
         ledger = Ledger(output)
@@ -173,7 +174,9 @@ def execute(args, specification, tag, worker, db, domain=None):
                     native = responses(db.request, statements, "server-observer-batch-mismatch")
                 for (key, current, item, _), response, raw in zip(batch, replies, native):
                     actual = domain.observation(raw)
+                    comparison = item
                     domain.check_observation(item, actual, response["sql"])
+                    comparison = None
                     details = {"observation": actual}
                     if "sql" in current:
                         original = domain.observation(db.request(domain.observer_request(item, current["sql"])))
@@ -209,11 +212,11 @@ def execute(args, specification, tag, worker, db, domain=None):
             for pending, _, _, _ in batch:
                 if pending in ledger.events and ledger.events[pending][-1] not in {"compared", "rejected"}:
                     ledger.record(pending, "timeout" if signal == "timeout" else "failed", signal=signal, detail=detail)
-            write_json(args.out / "counterexample.json", {
-                "id": key, "original": current, "failure": str(error), "detail": detail, "shrunk": None,
+            record_reduction(args.out / "counterexample.json", {
+                "id": key, "original": current, "failure": str(error), "detail": detail,
                 "signal": signal, "execution": dict(ledger.counts),
                 "attemptedBatch": [entry[1] for entry in batch],
-            })
+            }, comparison, lambda item: probe(item, worker.request(item), db, domain))
             raise
 
 

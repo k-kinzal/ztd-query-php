@@ -593,6 +593,62 @@ def reduction_controls(args):
     return observed
 
 
+def native_reduction_controls(args):
+    from native_counterexample_reduction import CONTROL_RESULTS, record
+
+    columns = [[["slot", 0], f"field{position}"] for position in range(8)]
+    before = {"status": "rows", "fields": [["field", "int4"]], "rows": [[3]]}
+    other_rows = {"expected": before, "observed": {**before, "rows": [[7]]}}
+    other_metadata = {"expected": before, "observed": {**before, "fields": [["field", "int8"]]}}
+    base = {"dialect": "postgres", "release": "pg-17.2", "source": {"schema": "public", "table": "accounts", "columns": ["id"]},
+            "where": None}
+    observed = []
+    for name, expectation in CONTROL_RESULTS.items():
+        long = name == "native-reduce-proposal-budget"
+        input_ = {**base, "columns": columns if long else columns[:2]}
+        if name == "native-reduce-ineligible":
+            input_["orderBy"] = [[1, False, False]]
+        directory = args.out / name
+        directory.mkdir()
+        path = directory / "counterexample.json"
+        shorter = {**input_, "columns": columns[1:2]}
+        visits = 0
+
+        def probe(item):
+            nonlocal visits
+            require(path.is_file(), "missing-native-original-during-reduction")
+            if item == input_:
+                raise Failure("meaning-mismatch", other_rows)
+            if item != shorter:
+                return
+            visits += 1
+            if name == "native-reduce-rejected-construction":
+                raise Failure("positive-construction-failed")
+            if name == "native-reduce-different-comparison":
+                raise Failure("meaning-mismatch", other_metadata)
+            if name == "native-reduce-flaky" and visits == 2:
+                return
+            raise Failure("meaning-mismatch", other_rows)
+
+        record(path, {"original": input_, "signal": "meaning-mismatch", "detail": other_rows}, input_, probe)
+        reduction = path.with_suffix(".reduction.json")
+        result = json.loads(reduction.read_text())
+        require(result["status"] == expectation and result["originalDigest"] == digest(path)
+                and json.loads(path.read_text())["original"] == input_
+                and result["shrunk"] == (shorter if expectation == "reproduced" else None),
+                "native-reduction-control-mismatch", result)
+        outcomes = [entry["outcome"] for entry in result["attempts"]]
+        if long:
+            require(outcomes == ["meaning-mismatch", *["passed"] * 4], "native-reduction-control-budget-mismatch", outcomes)
+        if name == "native-reduce-ineligible":
+            require(outcomes == [], "native-reduction-control-ineligible-probe", outcomes)
+        if name == "native-reduce-different-comparison":
+            require("different-observation-failure" in outcomes, "native-reduction-control-failure-family", outcomes)
+        observed.append({"case": name, "control": "passed", "original": digest(path), "reduction": digest(reduction),
+                         "expected": expectation, "observed": result["status"]})
+    return observed
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("root", "candidate", "tool-autoload", "sqlite-library", "out"):
@@ -606,7 +662,7 @@ def main():
     result = (evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args)
               + storage_controls(args) + dispatch_controls(args) + publication_controls(args) + observer_controls(args) + scope_controls(args, distribution)
               + [declaration_control(args), assurance_revision_control(args), grammar_control(args), native_schedule_control(args)]
-              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution) + reduction_controls(args))
+              + [sqlite_preflight_control(args, distribution)] + fault_replay_controls(args, distribution) + reduction_controls(args) + native_reduction_controls(args))
     require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
     write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
                                         "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})
